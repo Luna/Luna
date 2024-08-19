@@ -2,6 +2,7 @@ package org.enso.table.excel;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import java.util.function.IntFunction;
 
@@ -15,11 +16,20 @@ public class ExcelSheet {
   private final IntFunction<Row> rowSupplier;
   private Sheet sheet;
 
+  public ExcelSheet(Workbook workbook, int sheetIndex) {
+    this(
+        workbook.getSheetAt(sheetIndex).getFirstRowNum(),
+        workbook.getSheetAt(sheetIndex).getLastRowNum(),
+        workbook.getSheetAt(sheetIndex)::getRow,
+        workbook.getSheetAt(sheetIndex));
+  }
+
   public ExcelSheet(int firstRow, int lastRow, IntFunction<Row> rowSupplier, Sheet sheet) {
     this.firstRow = firstRow;
     this.lastRow = lastRow;
     this.rowSupplier = rowSupplier;
     this.use1904Format = ExcelUtils.is1904DateSystem(workbook);
+    this.sheet = sheet;
   }
 
   public int getLastRow() {
