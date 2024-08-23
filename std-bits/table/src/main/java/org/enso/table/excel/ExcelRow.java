@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.ExcelNumberFormat;
 import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.graalvm.polyglot.Context;
 
 /** Wrapper class to handle Excel rows. */
@@ -56,11 +57,28 @@ public interface ExcelRow {
   /** Gets the underlying Apache POI Sheet object. */
   static ExcelRow fromSheet(Sheet sheet, int rowIndex) {
     var row = sheet.getRow(rowIndex - 1);
-    return row == null ? null : new ExcelRowFromSheet(row, row.getFirstCellNum() + 1, row.getLastCellNum());
+    return row == null
+        ? null
+        : new ExcelRowFromSheet(row, row.getFirstCellNum() + 1, row.getLastCellNum());
+  }
+
+  static boolean isEmptyHelper(ExcelRow row, int start, int end) {
+    Context context = Context.getCurrent();
+    int currentEnd = end == -1 ? row.getLastColumn() : end;
+    for (int column = Math.max(row.getFirstColumn(), start);
+        column <= Math.min(row.getLastColumn(), currentEnd);
+        column++) {
+      if (!row.isEmpty(column)) {
+        return false;
+      }
+
+      context.safepoint();
+    }
+    return true;
   }
 
   record ExcelRowFromSheet(Row row, int firstColumn, int lastColumn) implements ExcelRow {
-    private static DataFormatter formatter = new DataFormatter();
+    private static final DataFormatter formatter = new DataFormatter();
 
     public int getRowIndex() {
       return row.getRowNum() + 1;
@@ -136,7 +154,7 @@ public interface ExcelRow {
       switch (cellType) {
         case NUMERIC:
           double dblValue = cell.getNumericCellValue();
-          if (DateUtil.isCellDateFormatted(cell) && DateUtil.isValidExcelDate(dblValue)) {
+          if (DateUtil.isCellDateFormatted(cell)) {
             var dateTime = DateUtil.getLocalDateTime(dblValue);
             if (dateTime.isBefore(LocalDateTime.of(1900, 1, 2, 0, 0))) {
               // Excel stores times as if they are on the 1st January 1900.
@@ -177,18 +195,7 @@ public interface ExcelRow {
     }
 
     public boolean isEmpty(int start, int end) {
-      Context context = Context.getCurrent();
-      int currentEnd = end == -1 ? getLastColumn() : end;
-      for (int column = Math.max(getFirstColumn(), start);
-           column <= Math.min(getLastColumn(), currentEnd);
-           column++) {
-        if (!isEmpty(column)) {
-          return false;
-        }
-
-        context.safepoint();
-      }
-      return true;
+      return isEmptyHelper(this, start, end);
     }
 
   public int findEndRight(int start) {
