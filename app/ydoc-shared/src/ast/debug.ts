@@ -1,7 +1,7 @@
 import { Ast } from './tree'
 
 /** Returns a GraphViz graph illustrating parent/child relationships in the given subtree. */
-export function graphParentPointers(ast: Ast) {
+export function graphParentPointers(ast: Ast, bidirectional?: true): string {
   const sanitize = (id: string) => id.replace('ast:', '').replace(/[^A-Za-z0-9]/g, '')
   const parentToChild = new Array<{ parent: string; child: string }>()
   const childToParent = new Array<{ child: string; parent: string }>()
@@ -15,8 +15,10 @@ export function graphParentPointers(ast: Ast) {
   })
   let result = 'digraph parentPointers {\n'
   for (const { parent, child } of parentToChild) result += `${parent} -> ${child};\n`
-  for (const { child, parent } of childToParent)
-    result += `${child} -> ${parent} [weight=0; color=red; style=dotted];\n`
+  if (bidirectional) {
+    for (const { child, parent } of childToParent)
+      result += `${child} -> ${parent} [weight=0; color=red; style=dotted];\n`
+  }
   result += '}\n'
   return result
 }

@@ -5,14 +5,16 @@ import type { SuggestionEntry } from '@/stores/suggestionDatabase/entry'
 import { assert } from '@/util/assert'
 import { Ast, RawAst } from '@/util/ast'
 import type { AstId, NodeMetadata } from '@/util/ast/abstract'
-import { autospaced, MutableModule } from '@/util/ast/abstract'
+import { MutableModule } from '@/util/ast/abstract'
 import { AliasAnalyzer } from '@/util/ast/aliasAnalysis'
 import { inputNodeFromAst, nodeFromAst, nodeRootExpr } from '@/util/ast/node'
 import { MappedKeyMap, MappedSet } from '@/util/containers'
 import { tryGetIndex } from '@/util/data/array'
 import { recordEqual } from '@/util/data/object'
+import { unwrap } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { ReactiveDb, ReactiveIndex, ReactiveMapping } from '@/util/database/reactiveDb'
+import { tryIdentifier } from '@/util/qualifiedName'
 import {
   nonReactiveView,
   resumeReactivity,
@@ -67,8 +69,10 @@ export class BindingsDb {
     // Add or update bindings.
     for (const [bindingRange, usagesRanges] of analyzer.aliases) {
       const aliasAst = bindingRangeToTree.get(bindingRange)
-      assert(aliasAst != null)
-      if (aliasAst == null) continue
+      if (aliasAst == null) {
+        console.warn(`Binding not found`, bindingRange)
+        continue
+      }
       const aliasAstId = aliasAst.id
       const info = this.bindings.get(aliasAstId)
       if (info == null) {
@@ -350,7 +354,7 @@ export class GraphDb {
     const args = functionAst_.argumentDefinitions
     const update = (
       nodeId: NodeId,
-      ast: Ast.Ast,
+      ast: Ast.Expression | Ast.Statement,
       isInput: boolean,
       isOutput: boolean,
       argIndex: number | undefined,
@@ -400,12 +404,15 @@ export class GraphDb {
   /** Scan a node's content from its outer expression down to, but not including, its inner expression. */
   private updateNodeStructure(
     nodeId: NodeId,
-    ast: Ast.Ast,
+    ast: Ast.Statement | Ast.Expression,
     isOutput: boolean,
     isInput: boolean,
     argIndex?: number,
   ) {
-    const newNode = isInput ? inputNodeFromAst(ast, argIndex ?? 0) : nodeFromAst(ast, isOutput)
+    const newNode =
+      isInput ?
+        inputNodeFromAst(ast as Ast.Expression, argIndex ?? 0)
+      : nodeFromAst(ast as Ast.Statement, isOutput)
     if (!newNode) return
     const oldNode = this.nodeIdToNode.getUntracked(nodeId)
     if (oldNode == null) {
@@ -431,7 +438,6 @@ export class GraphDb {
         primarySubject,
         prefixes,
         conditionalPorts,
-        docs,
         argIndex,
       } = newNode
       const node = resumeReactivity(oldNode)
@@ -440,7 +446,7 @@ export class GraphDb {
       const updateAst = (field: NodeAstField) => {
         if (oldNode[field]?.id !== newNode[field]?.id) node[field] = newNode[field] as any
       }
-      const astFields: NodeAstField[] = ['outerExpr', 'pattern', 'rootExpr', 'innerExpr', 'docs']
+      const astFields: NodeAstField[] = ['outerExpr', 'pattern', 'rootExpr', 'innerExpr']
       astFields.forEach(updateAst)
       if (oldNode.primarySubject !== primarySubject) node.primarySubject = primarySubject
       if (!recordEqual(oldNode.prefixes, prefixes)) node.prefixes = prefixes
@@ -455,7 +461,6 @@ export class GraphDb {
         primarySubject,
         prefixes,
         conditionalPorts,
-        docs,
         argIndex,
       } satisfies NodeDataFromAst
     }
@@ -540,14 +545,10 @@ export class GraphDb {
   /** TODO: Add docs */
   mockNode(binding: string, id: NodeId, code?: string): Node {
     const edit = MutableModule.Transient()
-    const pattern = Ast.parse(binding, edit)
-    const expression = Ast.parse(code ?? '0', edit)
-    const outerExpr = Ast.Assignment.concrete(
-      edit,
-      autospaced(pattern),
-      { node: Ast.Token.new('='), whitespace: ' ' },
-      { node: expression, whitespace: ' ' },
-    )
+    const ident = unwrap(tryIdentifier(binding))
+    const expression = Ast.parseExpression(code ?? '0', edit)!
+    const outerExpr = Ast.Assignment.new(ident, expression, { edit })
+    const pattern = outerExpr.pattern
 
     const node: Node = {
       type: 'component',
@@ -557,11 +558,10 @@ export class GraphDb {
       primarySubject: undefined,
       colorOverride: undefined,
       conditionalPorts: new Set(),
-      docs: undefined,
       outerExpr,
       pattern,
-      rootExpr: Ast.parse(code ?? '0'),
-      innerExpr: Ast.parse(code ?? '0'),
+      rootExpr: expression,
+      innerExpr: expression,
       zIndex: this.highestZIndex,
       argIndex: undefined,
     }
@@ -603,27 +603,36 @@ export function asNodeId(id: ExternalId | undefined): NodeId | undefined {
 }
 
 /** Given an expression at the top level of a block, return the `NodeId` for the expression. */
-export function nodeIdFromOuterExpr(outerExpr: Ast.Ast) {
+export function nodeIdFromOuterExpr(outerExpr: Ast.Statement | Ast.Expression) {
   const { root } = nodeRootExpr(outerExpr)
   return root && asNodeId(root.externalId)
 }
 
 export interface NodeDataFromAst {
   type: NodeType
-  /** The outer expression, usually an assignment expression (`a = b`). */
-  outerExpr: Ast.Ast
+  /**
+   * The statement or root expression.
+   *
+   * If the function has a body block, the nodes derived from the block are statements:
+   * - Assignment expressions (`a = b`)
+   * - Expression-statements (unnamed nodes and output nodes)
+   * If the function has a single-line body, the corresponding node will be an expression.
+   *
+   * Nodes for the function's inputs are have (pattern) expressions at their roots.
+   */
+  outerExpr: Ast.Statement | Ast.Expression
   /** The left side of the assignment expression, if `outerExpr` is an assignment expression. */
-  pattern: Ast.Ast | undefined
+  pattern: Ast.Expression | undefined
   /**
    * The value of the node. The right side of the assignment, if `outerExpr` is an assignment
    * expression, else the entire `outerExpr`.
    */
-  rootExpr: Ast.Ast
+  rootExpr: Ast.Expression
   /**
    * The expression displayed by the node. This is `rootExpr`, minus the prefixes, which are in
    * `prefixes`.
    */
-  innerExpr: Ast.Ast
+  innerExpr: Ast.Expression
   /**
     Prefixes that are present in `rootExpr` but omitted in `innerExpr` to ensure a clean output.
    */
@@ -632,8 +641,6 @@ export interface NodeDataFromAst {
   primarySubject: Ast.AstId | undefined
   /** Ports that are not targetable by default; they can be targeted while holding the modifier key. */
   conditionalPorts: Set<Ast.AstId>
-  /** An AST node containing the node's documentation comment. */
-  docs: Ast.Documented | undefined
   /** The index of the argument in the function's argument list, if the node is an input node. */
   argIndex: number | undefined
 }

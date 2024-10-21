@@ -221,7 +221,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         return Err('Method pointer is not a module method')
       const method = Ast.findModuleMethod(topLevel, ptr.name)
       if (!method) return Err(`No method with name ${ptr.name} in ${modulePath.value}`)
-      return Ok(method)
+      return Ok(method.statement)
     }
 
     /**
@@ -329,7 +329,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
             updatePortValue(edit, usage, undefined)
           }
           const outerExpr = edit.getVersion(node.outerExpr)
-          if (outerExpr) Ast.deleteFromParentBlock(outerExpr)
+          if (outerExpr.isStatement()) Ast.deleteFromParentBlock(outerExpr)
           nodeRects.delete(id)
           nodeHoverAnimations.delete(id)
           deletedNodes.add(id)
@@ -549,7 +549,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     function updatePortValue(
       edit: MutableModule,
       id: PortId,
-      value: Ast.Owned | undefined,
+      value: Ast.Owned<Ast.MutableExpression> | undefined,
     ): boolean {
       const update = getPortPrimaryInstance(id)?.onUpdate
       if (!update) return false
@@ -689,8 +689,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       assert(sourceExpr != null)
       assert(targetExpr != null)
       const lines = body.lines
-      const sourceIdx = lines.findIndex((line) => line.expression?.node.id === sourceExpr)
-      const targetIdx = lines.findIndex((line) => line.expression?.node.id === targetExpr)
+      const sourceIdx = lines.findIndex((line) => line.statement?.node.id === sourceExpr)
+      const targetIdx = lines.findIndex((line) => line.statement?.node.id === targetExpr)
       assert(sourceIdx != null)
       assert(targetIdx != null)
 
@@ -717,7 +717,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
           // Split those lines into two buckets, whether or not they depend on the target.
           const [linesAfter, linesBefore] = partition(linesToSort, (line) =>
-            dependantLines.has(line.expression?.node.id),
+            dependantLines.has(line.statement?.node.id),
           )
 
           // Recombine all lines after splitting, keeping existing dependants below the target.

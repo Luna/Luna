@@ -13,10 +13,7 @@ const textEditor = ref<ComponentInstance<typeof PlainTextEditor>>()
 const textEditorContent = computed(() => textEditor.value?.contentElement)
 
 const graphStore = useGraphStore()
-const { documentation } = useAstDocumentation(
-  graphStore,
-  () => props.node.docs ?? props.node.outerExpr,
-)
+const { documentation } = useAstDocumentation(graphStore, () => props.node.outerExpr)
 
 syncRef(editing, useFocusDelayed(textEditorContent).focused)
 </script>

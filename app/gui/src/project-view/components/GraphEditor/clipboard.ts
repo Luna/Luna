@@ -148,7 +148,7 @@ const spreadsheetDecoder: ClipboardDecoder<CopiedNode[]> = {
   },
 }
 
-const toTable = computed(() => Pattern.parse('__.to Table'))
+const toTable = computed(() => Pattern.parseExpression('__.to Table'))
 
 /** Create Enso Expression generating table from this tsvData. */
 export function tsvTableToEnsoExpression(tsvData: string) {
@@ -186,9 +186,11 @@ export function writeClipboard(data: MimeData) {
 // === Serializing nodes ===
 
 function nodeStructuredData(node: Node): CopiedNode {
+  const documentation =
+    node.outerExpr.isStatement() ? node.outerExpr.documentationText() : undefined
   return {
     expression: node.innerExpr.code(),
-    documentation: node.docs?.documentation(),
+    documentation,
     metadata: node.rootExpr.serializeMetadata(),
     ...(node.pattern ? { binding: node.pattern.code() } : {}),
   }

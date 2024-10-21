@@ -39,7 +39,7 @@ function useSortFilterNodesButton({
   isFilterSortNodeEnabled,
   createNodes,
 }: SortFilterNodesButtonOptions): ComputedRef<ToolbarItem | undefined> {
-  const sortPatternPattern = computed(() => Pattern.parse('(..Name __ __ )'))
+  const sortPatternPattern = computed(() => Pattern.parseExpression('(..Name __ __ )')!)
 
   const sortDirection = computed(() => ({
     asc: '..Ascending',
@@ -53,30 +53,30 @@ function useSortFilterNodesButton({
       .map((sort) =>
         sortPatternPattern.value.instantiateCopied([
           Ast.TextLiteral.new(sort.columnName),
-          Ast.parse(sortDirection.value[sort.sortDirection as SortDirection]),
+          Ast.parseExpression(sortDirection.value[sort.sortDirection as SortDirection])!,
         ]),
       )
     return Ast.Vector.new(module, columnSortExpressions)
   }
 
-  const filterPattern = computed(() => Pattern.parse('__ (__ __)'))
+  const filterPattern = computed(() => Pattern.parseExpression('__ (__ __)')!)
 
   function makeFilterPattern(module: Ast.MutableModule, columnName: string, items: string[]) {
     if (
       (items?.length === 1 && items.indexOf('true') != -1) ||
       (items?.length === 1 && items.indexOf('false') != -1)
     ) {
-      const boolToInclude = items.indexOf('false') != -1 ? Ast.parse('False') : Ast.parse('True')
+      const boolToInclude = Ast.Ident.tryParse(items.indexOf('false') != -1 ? 'False' : 'True')!
       return filterPattern.value.instantiateCopied([
         Ast.TextLiteral.new(columnName),
-        Ast.parse('..Equal'),
+        Ast.parseExpression('..Equal')!,
         boolToInclude,
       ])
     }
     const itemList = items.map((i) => Ast.TextLiteral.new(i))
     return filterPattern.value.instantiateCopied([
       Ast.TextLiteral.new(columnName),
-      Ast.parse('..Is_In'),
+      Ast.parseExpression('..Is_In')!,
       Ast.Vector.new(module, itemList),
     ])
   }

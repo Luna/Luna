@@ -79,7 +79,7 @@ test.each([
     ],
   },
 ])('Read table from $code', ({ code, expectedColumnDefs, expectedRows }) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)!
   expect(tableNewCallMayBeHandled(ast)).toBeTruthy()
   const input = WidgetInput.FromAst(ast)
   const startEdit = vi.fn()
@@ -120,13 +120,13 @@ test.each([
   "Table.new [['a', [123]], ['a'.repeat 170, [123]]]",
   "Table.new [['a', [1, 2, 3, 3 + 1]]]",
 ])('"%s" is not valid input for Table Editor Widget', (code) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)!
   expect(tableNewCallMayBeHandled(ast)).toBeFalsy()
 })
 
 function tableEditFixture(code: string, expectedCode: string) {
   const ast = Ast.parseBlock(code)
-  const inputAst = [...ast.statements()][0]
+  const inputAst = ([...ast.statements()][0] as Ast.MutableExpressionStatement).expression
   assert(inputAst != null)
   const input = WidgetInput.FromAst(inputAst)
   const startEdit = vi.fn(() => ast.module.edit())

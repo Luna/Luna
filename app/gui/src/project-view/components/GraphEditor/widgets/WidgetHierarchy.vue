@@ -8,7 +8,7 @@ const props = defineProps(widgetProps(widgetDefinition))
 
 const spanClass = computed(() => props.input.value.typeName())
 
-function transformChild(child: Ast.Ast | Ast.Token) {
+function transformChild(child: Ast.Expression | Ast.Token) {
   const childInput = WidgetInput.FromAst(child)
   if (props.input.value instanceof Ast.PropertyAccess && child.id === props.input.value.lhs?.id)
     childInput.forcePort = true
@@ -36,8 +36,8 @@ export const widgetDefinition = defineWidget(
 <template>
   <div class="WidgetHierarchy" :class="spanClass">
     <NodeWidget
-      v-for="(child, index) in props.input.value.children()"
-      :key="child.id ?? index"
+      v-for="child in props.input.value.childExpressionsAndTokens()"
+      :key="child.id"
       :input="transformChild(child)"
     />
   </div>

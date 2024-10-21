@@ -572,7 +572,7 @@ function getPlotData(data: Data) {
   return data.data
 }
 
-const filterPattern = computed(() => Pattern.parse('__ (..Between __ __)'))
+const filterPattern = computed(() => Pattern.parseExpression('__ (..Between __ __)'))
 const makeFilterPattern = (
   module: Ast.MutableModule,
   columnName: string,

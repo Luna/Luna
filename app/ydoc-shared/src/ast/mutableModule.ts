@@ -1,7 +1,18 @@
 import * as random from 'lib0/random'
 import * as Y from 'yjs'
-import type { AstId, NodeChild, Owned, RawNodeChild, SyncTokenId } from '.'
-import { Token, asOwned, isTokenId, newExternalId, subtreeRoots } from '.'
+import {
+  AstId,
+  NodeChild,
+  Owned,
+  RawNodeChild,
+  SyncTokenId,
+  Token,
+  asOwned,
+  isTokenId,
+  newExternalId,
+  parseModuleWithSpans,
+  subtreeRoots,
+} from '.'
 import { assert, assertDefined } from '../util/assert'
 import type { SourceRangeEdit } from '../util/data/text'
 import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
@@ -123,7 +134,7 @@ export class MutableModule implements Module {
     if (root) {
       root.syncToCode(code)
     } else {
-      this.replaceRoot(Ast.parse(code, this))
+      this.replaceRoot(parseModuleWithSpans(code, this).root)
     }
   }
 

@@ -30,6 +30,8 @@ export function asOwned<T>(t: T): Owned<T> {
 
 export type NodeChild<T> = { whitespace: string | undefined; node: T }
 export type RawNodeChild = NodeChild<AstId> | NodeChild<SyncTokenId>
+export type ConcreteChild<T> = { whitespace: string; node: T }
+export type RawConcreteChild = ConcreteChild<AstId> | ConcreteChild<SyncTokenId>
 
 /** Create a new random {@link ExternalId}. */
 export function newExternalId(): ExternalId {
