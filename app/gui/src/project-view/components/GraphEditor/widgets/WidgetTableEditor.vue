@@ -129,15 +129,25 @@ const headerEditHandler = new HeaderEditing()
 
 // === Resizing ===
 
-const size = ref(new Vec2(200, 150))
 const graphNav = injectGraphNavigator()
+
+const size = computed(() =>
+  Vec2.FromXY(props.input.value.widgetMetadata('WidgetTableEditor')?.size ?? { x: 200, y: 150 }),
+)
 
 const clientBounds = computed({
   get() {
     return new Rect(Vec2.Zero, size.value.scale(graphNav.scale))
   },
   set(value) {
-    size.value = new Vec2(value.width / graphNav.scale, value.height / graphNav.scale)
+    props.onUpdate({
+      portUpdate: {
+        origin: props.input.portId,
+        metadataKey: 'WidgetTableEditor',
+        metadata: { size: { x: value.width / graphNav.scale, y: value.height / graphNav.scale } },
+      },
+    })
+    // size.value = new Vec2(value.width / graphNav.scale, value.height / graphNav.scale)
   },
 })
 
@@ -191,6 +201,14 @@ const defaultColDef = {
 </script>
 
 <script lang="ts">
+declare module '@/util/ast/abstract' {
+  export interface WidgetsMetadata {
+    WidgetTableEditor?: {
+      size: { x: number; y: number }
+    }
+  }
+}
+
 export const widgetDefinition = defineWidget(
   WidgetInputIsSpecificMethodCall({
     module: 'Standard.Table.Table',

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+import * as Y from 'yjs'
 import type {
   Identifier,
   IdentifierOrOperatorIdentifier,
@@ -53,6 +54,7 @@ export type AstId = string & { [brandAstId]: never }
 /** @internal */
 export interface MetadataFields {
   externalId: ExternalId
+  widget?: FixedMap<WidgetsMetadata>
 }
 export interface NodeMetadataFields {
   position?: { x: number; y: number } | undefined
@@ -66,6 +68,13 @@ const nodeMetadataKeys = allKeys<NodeMetadataFields>({
 })
 export type NodeMetadata = FixedMapView<NodeMetadataFields & MetadataFields>
 export type MutableNodeMetadata = FixedMap<NodeMetadataFields & MetadataFields>
+
+/**
+ *
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface WidgetsMetadata extends Record<string, object> {}
+
 /** @internal */
 interface RawAstFields {
   id: AstId
@@ -103,6 +112,13 @@ export abstract class Ast {
   get nodeMetadata(): NodeMetadata {
     const metadata = this.fields.get('metadata')
     return metadata as FixedMapView<NodeMetadataFields & MetadataFields>
+  }
+
+  widgetMetadata<WidgetKey extends string & keyof WidgetsMetadata>(
+    widgetKey: WidgetKey,
+  ): WidgetsMetadata[WidgetKey] | undefined {
+    const widgetMetadata = this.fields.get('metadata').get('widget')?.get(widgetKey)
+    return widgetMetadata
   }
 
   /** Returns a JSON-compatible object containing all metadata properties. */
@@ -247,6 +263,18 @@ export abstract class MutableAst extends Ast {
   /** TODO: Add docs */
   setExternalId(id: ExternalId) {
     this.fields.get('metadata').set('externalId', id)
+  }
+
+  setWidgetMetadata<WidgetKey extends string & keyof WidgetsMetadata>(
+    widgetKey: WidgetKey,
+    widgetMetadata: WidgetsMetadata[WidgetKey],
+  ) {
+    let widgetsMdMap = this.fields.get('metadata').get('widget')
+    if (widgetsMdMap == null) {
+      widgetsMdMap = new Y.Map() as FixedMap<WidgetsMetadata>
+      this.fields.get('metadata').set('widget', widgetsMdMap)
+    }
+    widgetsMdMap.set(widgetKey, widgetMetadata)
   }
 
   /** TODO: Add docs */
