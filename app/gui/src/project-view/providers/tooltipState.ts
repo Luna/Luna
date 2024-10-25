@@ -31,7 +31,6 @@ const { provideFn, injectFn } = createContextStore('tooltip registry', () => {
       return set ? last(set) : undefined
     },
     registerTooltip(slot: Ref<Slot | undefined>) {
-      console.log('REGISTER TOOLTIP')
       const entry: TooltipEntry = {
         contents: slot,
         key: Symbol(),
