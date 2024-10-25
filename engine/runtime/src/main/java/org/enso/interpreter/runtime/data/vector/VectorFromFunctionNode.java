@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.data.vector;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -106,10 +107,6 @@ public abstract class VectorFromFunctionNode extends Node {
     var ctx = EnsoContext.get(this);
     var problemBehaviorBuiltin = ctx.getBuiltins().problemBehavior();
     var noWrapBuiltin = ctx.getBuiltins().noWrap();
-    var typeError =
-        ctx.getBuiltins()
-            .error()
-            .makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
     if (onProblems instanceof Atom onProblemsAtom) {
       if (isIgnore(onProblemsAtom, problemBehaviorBuiltin)) {
         return OnProblems.IGNORE;
@@ -120,13 +117,20 @@ public abstract class VectorFromFunctionNode extends Node {
       }
     }
     if (!typesLib.hasType(onProblems)) {
-      throw new PanicException(typeError, this);
+      throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
     }
     var onProblemsType = typesLib.getType(onProblems);
     if (onProblemsType == noWrapBuiltin) {
       return OnProblems.NO_WRAP;
     }
-    throw new PanicException(typeError, this);
+    throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
+  }
+
+  @TruffleBoundary
+  private PanicException makeTypeError(Object expected, Object actual, String name) {
+    var ctx = EnsoContext.get(this);
+    var typeError = ctx.getBuiltins().error().makeTypeError(expected, actual, name);
+    return new PanicException(typeError, this);
   }
 
   private static boolean isReportWarning(Atom onProblems, ProblemBehavior problemBehaviorBuiltin) {
