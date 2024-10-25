@@ -416,6 +416,11 @@ main = Nothing
       if (t.isNull()) {
         continue;
       }
+      var type = (Type) ContextUtils.unwrapValue(ctx, t);
+      if (type.isEigenType()) {
+        // Skip checking singleton types
+        continue;
+      }
       switch (t.getMetaSimpleName()) {
           // represented as primitive values without meta object
         case "Float" -> {}
@@ -438,6 +443,17 @@ main = Nothing
 
   @FunctionalInterface
   interface Check {
+
+    /**
+     * @param v Instance of the type
+     * @param type Type. Nullable.
+     * @param expecting Set of types that are tested. The check should remove the currently tested
+     *     type from this set.
+     * @param successfullyRemoved Set of types that already were tested. The check should add the
+     *     currently tested type to this set.
+     * @param w StringBuilder for the error message that will be printed at the end in case of a
+     *     failure.
+     */
     void check(
         Value v, Value type, Set<Value> expecting, Set<Value> successfullyRemoved, StringBuilder w);
   }
