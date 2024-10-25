@@ -12,7 +12,7 @@ import { qnLastSegment, type QualifiedName } from '@/util/qualifiedName'
 import type { ToValue } from '@/util/reactivity'
 import type { ColDef } from 'ag-grid-enterprise'
 import { computed, toValue } from 'vue'
-import { HeaderParams } from './TableHeader.vue'
+import { ColumnSpecificHeaderParams } from './TableHeader.vue'
 
 /** Id of a fake column with "Add new column" option. */
 export const NEW_COLUMN_ID = 'NewColumn'
@@ -40,7 +40,7 @@ export interface ColumnDef extends ColDef<RowData> {
   mainMenuItems: (string | MenuItem<RowData>)[]
   contextMenuItems: (string | MenuItem<RowData>)[]
   rowDrag?: ({ data }: { data: RowData | undefined }) => boolean
-  headerComponentParams?: HeaderParams
+  headerComponentParams?: ColumnSpecificHeaderParams
 }
 
 namespace cellValueConversion {
@@ -361,7 +361,7 @@ export function useTableNewArgument(
             'separator',
             'export',
           ],
-        }) satisfies ColDef<RowData>,
+        }) satisfies ColumnDef,
     )
     cols.unshift(rowIndexColumnDef.value)
     cols.push(newColumnDef.value)

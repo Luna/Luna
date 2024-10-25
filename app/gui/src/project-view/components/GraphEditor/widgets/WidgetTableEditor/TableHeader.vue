@@ -12,24 +12,29 @@ export interface HeaderEditHandlers {
 }
 
 /**
- * Parameters recognized by this header component.
- *
- * They are set through `headerComponentParams` option in AGGrid column definition.
+ * A subset of {@link HeaderParams} which is meant to be specified for columns separately
+ * (not in defaultColumnDef).
  */
-export type HeaderParams = {
-  /**
-   * AgGrid mounts header components as separate "App", so we don't have access to any context.
-   * Threfore the tooltip registry must be provided by props.
-   */
-  tooltipRegistry: TooltipRegistry
-} & (
+export type ColumnSpecificHeaderParams =
   | {
       type: 'astColumn'
       editHandlers: HeaderEditHandlers
     }
   | { type: 'newColumn'; newColumnRequested: () => void }
-  | { type: 'rowIndexColumn ' }
-)
+  | { type: 'rowIndexColumn' }
+
+/**
+ * Parameters recognized by this header component.
+ *
+ * They are set through `headerComponentParams` option in AGGrid column definition.
+ */
+export type HeaderParams = ColumnSpecificHeaderParams & {
+  /**
+   * AgGrid mounts header components as separate "App", so we don't have access to any context.
+   * Threfore the tooltip registry must be provided by props.
+   */
+  tooltipRegistry: TooltipRegistry
+}
 </script>
 
 <script setup lang="ts">
