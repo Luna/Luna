@@ -1,6 +1,5 @@
 package org.enso.interpreter.runtime.data.vector;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -9,8 +8,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import org.enso.interpreter.dsl.BuiltinMethod;
 import org.enso.interpreter.node.callable.dispatch.InvokeFunctionNode;
-import org.enso.interpreter.node.expression.builtin.error.AdditionalWarnings;
-import org.enso.interpreter.node.expression.builtin.error.NoWrap;
 import org.enso.interpreter.node.expression.builtin.error.ProblemBehavior;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
@@ -94,8 +91,7 @@ public abstract class VectorFromFunctionNode extends Node {
     }
     var vector = target.asVector(true);
     if (errorsEncountered >= MAX_MAP_WARNINGS) {
-      CompilerDirectives.transferToInterpreter();
-      var additionalWarnsBuiltin = ctx.getBuiltins().getBuiltinType(AdditionalWarnings.class);
+      var additionalWarnsBuiltin = ctx.getBuiltins().additionalWarnings();
       long additionalWarnsCnt = errorsEncountered - MAX_MAP_WARNINGS;
       var additionalWarns = additionalWarnsBuiltin.newInstance(additionalWarnsCnt);
       var vecWithAdditionalWarns =
@@ -108,8 +104,8 @@ public abstract class VectorFromFunctionNode extends Node {
 
   private OnProblems processOnProblemsArg(Object onProblems, TypesLibrary typesLib) {
     var ctx = EnsoContext.get(this);
-    var problemBehaviorBuiltin = ctx.getBuiltins().getBuiltinType(ProblemBehavior.class);
-    var noWrapBuiltin = ctx.getBuiltins().getBuiltinType(NoWrap.class);
+    var problemBehaviorBuiltin = ctx.getBuiltins().problemBehavior();
+    var noWrapBuiltin = ctx.getBuiltins().noWrap();
     var typeError =
         ctx.getBuiltins()
             .error()
@@ -127,7 +123,7 @@ public abstract class VectorFromFunctionNode extends Node {
       throw new PanicException(typeError, this);
     }
     var onProblemsType = typesLib.getType(onProblems);
-    if (onProblemsType == noWrapBuiltin.getType()) {
+    if (onProblemsType == noWrapBuiltin) {
       return OnProblems.NO_WRAP;
     }
     throw new PanicException(typeError, this);
