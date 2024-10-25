@@ -5,7 +5,7 @@ import { Token, asOwned, isTokenId, newExternalId, subtreeRoots } from '.'
 import { assert, assertDefined } from '../util/assert'
 import type { SourceRangeEdit } from '../util/data/text'
 import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
-import type { AstFields, FixedMap, Mutable } from './tree'
+import type { AstFields, FixedMap, Mutable, WidgetsMetadata } from './tree'
 import {
   Ast,
   MutableAst,
@@ -351,6 +351,7 @@ export class MutableModule implements Module {
     const metadata = new Y.Map() as unknown as FixedMap<object>
     const metadataFields = setAll(metadata, {
       externalId: externalId ?? newExternalId(),
+      widget: new Y.Map() as FixedMap<WidgetsMetadata>,
     })
     const fields = setAll(map_, {
       id,

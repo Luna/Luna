@@ -54,7 +54,7 @@ export type AstId = string & { [brandAstId]: never }
 /** @internal */
 export interface MetadataFields {
   externalId: ExternalId
-  widget?: FixedMap<WidgetsMetadata>
+  widget: FixedMap<WidgetsMetadata>
 }
 export interface NodeMetadataFields {
   position?: { x: number; y: number } | undefined
@@ -116,8 +116,8 @@ export abstract class Ast {
 
   widgetMetadata<WidgetKey extends string & keyof WidgetsMetadata>(
     widgetKey: WidgetKey,
-  ): WidgetsMetadata[WidgetKey] | undefined {
-    const widgetMetadata = this.fields.get('metadata').get('widget')?.get(widgetKey)
+  ): DeepReadonly<WidgetsMetadata[WidgetKey]> | undefined {
+    const widgetMetadata = this.fields.get('metadata').get('widget').get(widgetKey)
     return widgetMetadata
   }
 
@@ -269,12 +269,12 @@ export abstract class MutableAst extends Ast {
     widgetKey: WidgetKey,
     widgetMetadata: WidgetsMetadata[WidgetKey],
   ) {
-    let widgetsMdMap = this.fields.get('metadata').get('widget')
-    if (widgetsMdMap == null) {
-      widgetsMdMap = new Y.Map() as FixedMap<WidgetsMetadata>
-      this.fields.get('metadata').set('widget', widgetsMdMap)
-    }
-    widgetsMdMap.set(widgetKey, widgetMetadata)
+    this.fields.get('metadata').get('widget').set(widgetKey, widgetMetadata)
+    // if (widgetsMdMap == null) {
+    //   widgetsMdMap = new Y.Map() as FixedMap<WidgetsMetadata>
+    //   this.fields.get('metadata').set('widget', widgetsMdMap)
+    // }
+    // widgetsMdMap.set(widgetKey, widgetMetadata)
   }
 
   /** TODO: Add docs */

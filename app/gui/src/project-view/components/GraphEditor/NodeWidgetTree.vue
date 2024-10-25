@@ -10,6 +10,7 @@ import { Ast } from '@/util/ast'
 import type { Vec2 } from '@/util/data/vec2'
 import { iconOfNode } from '@/util/getIconName'
 import { computed, toRef, watch } from 'vue'
+import { WidgetsMetadata } from 'ydoc-shared/ast'
 import { DisplayIcon } from './widgets/WidgetIcon.vue'
 
 const props = defineProps<{
@@ -63,20 +64,29 @@ function selectNode() {
   selection.setSelection(new Set([props.nodeId]))
 }
 
-function handleWidgetUpdates(update: WidgetUpdate) {
+function handleWidgetUpdates<WidgetKey extends string & keyof WidgetsMetadata>(
+  update: WidgetUpdate<WidgetKey>,
+) {
   selectNode()
   const edit = update.edit ?? graph.startEdit()
   if (update.portUpdate) {
-    const { value, origin } = update.portUpdate
+    const { origin } = update.portUpdate
     if (Ast.isAstId(origin)) {
-      const ast =
-        value instanceof Ast.Ast ? value
-        : value == null ? Ast.Wildcard.new(edit)
-        : undefined
-      if (ast) {
-        edit.replaceValue(origin, ast)
-      } else if (typeof value === 'string') {
-        edit.tryGet(origin)?.syncToCode(value)
+      if ('value' in update.portUpdate) {
+        const value = update.portUpdate.value
+        const ast =
+          value instanceof Ast.Ast ? value
+          : value == null ? Ast.Wildcard.new(edit)
+          : undefined
+        if (ast) {
+          edit.replaceValue(origin, ast)
+        } else if (typeof value === 'string') {
+          edit.tryGet(origin)?.syncToCode(value)
+        }
+      }
+      if ('metadata' in update.portUpdate) {
+        const { metadataKey, metadata } = update.portUpdate
+        edit.tryGet(origin)?.setWidgetMetadata(metadataKey, metadata)
       }
     } else {
       console.error(`[UPDATE ${origin}] Invalid top-level origin. Expected expression ID.`)

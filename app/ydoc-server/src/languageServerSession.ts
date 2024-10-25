@@ -567,6 +567,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       const { code, idMapJson, metadataJson } = contentsReceived
       const metadata = fileFormat.tryParseMetadataOrFallback(metadataJson)
       const nodeMeta = Object.entries(metadata.ide.node)
+      const widgetMeta = Object.entries(metadata.ide.widget)
 
       let parsedSpans
       const syncModule = new Ast.MutableModule(this.doc.ydoc)
@@ -612,7 +613,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         (code !== this.syncedCode ||
           idMapJson !== this.syncedIdMap ||
           metadataJson !== this.syncedMetaJson) &&
-        nodeMeta.length !== 0
+        (nodeMeta.length !== 0 || widgetMeta.length !== 0)
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
         astRoot.visitRecursiveAst(ast => {
@@ -636,6 +637,8 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
           const oldColorOverride = metadata.get('colorOverride')
           const newColorOverride = meta.colorOverride
           if (oldColorOverride !== newColorOverride) metadata.set('colorOverride', newColorOverride)
+        }
+        for (const [id, meta] of widgetMeta) {
         }
       }
 
