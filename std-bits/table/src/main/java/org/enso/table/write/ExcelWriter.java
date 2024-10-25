@@ -495,9 +495,6 @@ public class ExcelWriter {
       cell.setCellValue(longStorage.getItem(j));
     } else if (storage instanceof BoolStorage boolStorage) {
       cell.setCellValue(boolStorage.getItem(j));
-    } else if (storage instanceof DateTimeStorage dateTimeStorage) {
-      cell.setCellValue(ExcelUtils.toExcelDateTime(dateTimeStorage.getItem(j)));
-      cell.setCellStyle(getDateTimeStyle(workbook, "yyyy-MM-dd HH:mm:ss"));
     } else {
       Object value = storage.getItemBoxed(j);
       switch (value) {
