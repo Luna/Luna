@@ -3,6 +3,7 @@ package org.enso.table.write;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.function.Function;
 import org.apache.poi.ss.usermodel.Cell;
@@ -504,8 +505,8 @@ public class ExcelWriter {
         case Boolean b -> cell.setCellValue(b);
         case Double d -> cell.setCellValue(d);
         case Long l -> cell.setCellValue(l);
-        case LocalDateTime ldt -> {
-          cell.setCellValue(ExcelUtils.toExcelDateTime(ldt));
+        case ZonedDateTime zdt -> {
+          cell.setCellValue(ExcelUtils.toExcelDateTime(zdt));
           cell.setCellStyle(getDateTimeStyle(workbook, "yyyy-MM-dd HH:mm:ss"));
         }
         case LocalDate ld -> {

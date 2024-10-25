@@ -61,8 +61,8 @@ public class ClientBuilder {
   }
 
   /**
-   * Signs an AWS request using the provided credentials. AccessKey is returned in header plain
-   * text, will reject if credential is AccessKey/SecretKey and AccessKey is secret.
+   * Builds an HttpClient that will sign requests and payloads using the
+   * AWSv4 Signature algorithm.
    */
   public HttpClient createSignedClient(
       String regionName, String serviceName, HttpClient baseClient, String bodySHA256) {

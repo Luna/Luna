@@ -277,7 +277,7 @@ with_hash_and_client http hash_method make_client =
     HTTP.Value http.timeout http.follow_redirects http.proxy http.version http.custom_ssl_context hash_method make_client
 
 ## PRIVATE
-   Build an HTTP client.
+   Build a Java HttpClient with the given settings.
 internal_http_client : HTTP -> Text -> HttpClient
 internal_http_client http hash =
     _ = hash
