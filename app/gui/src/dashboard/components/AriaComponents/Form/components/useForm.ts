@@ -137,6 +137,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       return result
     }
 
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const formMutation = useMutation({
       // We use template literals to make the mutation key more readable in the devtools
@@ -184,9 +185,11 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax,@typescript-eslint/no-unsafe-argument
     const formOnSubmit = formInstance.handleSubmit(formMutation.mutateAsync as any)
 
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isOffline } = useOffline()
 
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useOfflineChange(
       (offline) => {
@@ -199,6 +202,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       { isDisabled: canSubmitOffline },
     )
 
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const submit = useEventCallback(
       (event: React.FormEvent<HTMLFormElement> | null | undefined) => {
@@ -218,6 +222,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       },
     )
 
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const setFormError = useEventCallback((error: string) => {
       formInstance.setError('root.submit', { message: error })
