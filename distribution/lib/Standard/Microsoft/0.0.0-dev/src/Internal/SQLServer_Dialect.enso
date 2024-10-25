@@ -312,6 +312,17 @@ type SQLServer_Dialect
     ## PRIVATE
        Returns a pair of a SQL_Builder for the given expression and a vector of columns
        that have been used in the expression and need to be checked for nulls.
+       SQL Server needs special handling commpared to ther databases as it does not have a
+       boolean data type.
+       This means that you can write
+         SELECT * FROM MyTable WHERE [Column1] > [Column2]
+       but you cannot write
+         SELECT [Column1] > [Column2] FROM MyTable
+       to write the second query you need to write
+         SELECT CASE WHEN [Column1] IS NULL OR [Column2] IS NULL WHEN [Column1] > [Column2] THEN 1 ELSE 0 END FROM MyTable
+       The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
+       as the second element of the pair.
+       The first element of the pair is the SQL_Builder for the expression.
     generate_expression self base_gen expr = case expr of
         SQL_Expression.Column _ _ ->
             wrapped_name = base_gen.generate_expression self expr
