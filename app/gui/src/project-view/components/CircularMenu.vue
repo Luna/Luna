@@ -5,32 +5,28 @@ import DropdownMenu from '@/components/DropdownMenu.vue'
 import MenuButton from '@/components/MenuButton.vue'
 import SvgButton from '@/components/SvgButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 const nodeColor = defineModel<string | undefined>('nodeColor')
+const isVisualizationEnabled = defineModel<boolean>('isVisualizationEnabled', { required: true })
 const props = defineProps<{
   isRecordingEnabledGlobally: boolean
-  isRecordingOverridden: boolean
-  isVisualizationEnabled: boolean
-  isFullMenuVisible: boolean
   isRemovable: boolean
   matchableNodeColors: Set<string>
   documentationUrl: string | undefined
 }>()
 const emit = defineEmits<{
-  'update:isRecordingOverridden': [isRecordingOverridden: boolean]
   'update:isVisualizationEnabled': [isVisualizationEnabled: boolean]
   startEditing: []
   startEditingComment: []
   openFullMenu: []
   delete: []
   createNewNode: []
+  toggleDocPanel: []
 }>()
 
 const isDropdownOpened = ref(false)
 const showColorPicker = ref(false)
-const isVisualizationEnabled = ref(props.isVisualizationEnabled)
-watch(isVisualizationEnabled, (v) => emit('update:isVisualizationEnabled', v))
 
 function closeDropdown() {
   isDropdownOpened.value = false
@@ -56,36 +52,31 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
     <template v-if="!showColorPicker">
       <SvgButton
         name="eye"
-        class="slot1"
+        class="slotS"
         title="Visualization"
         @click.stop="isVisualizationEnabled = !isVisualizationEnabled"
       />
-      <SvgButton
-        name="edit"
-        class="slot2"
-        title="Code Edit"
-        data-testid="edit-button"
-        @click.stop="emit('startEditing')"
-      />
+      <SvgButton name="help" class="slotSW" title="Help" @click.stop="emit('toggleDocPanel')" />
       <DropdownMenu
         v-model:open="isDropdownOpened"
         placement="bottom-start"
         title="More"
-        class="slot3 More"
+        data-testid="more-button"
+        class="slotW More"
       >
         <template #button><SvgIcon name="3_dot_menu" class="moreIcon" /></template>
         <template #entries>
           <MenuButton
-            :modelValue="props.isVisualizationEnabled"
+            :modelValue="isVisualizationEnabled"
             @update:modelValue="emit('update:isVisualizationEnabled', $event)"
             @click.stop="closeDropdown"
           >
             <SvgIcon name="eye" class="rowIcon" />
-            <span v-text="`${props.isVisualizationEnabled ? 'Hide' : 'Show'} Visualization`"></span>
+            <span v-text="`${isVisualizationEnabled ? 'Hide' : 'Show'} Visualization`"></span>
           </MenuButton>
           <MenuButton
-            v-if="documentationUrl"
-            @click.stop="closeDropdown(), openDocs(documentationUrl)"
+            v-if="props.documentationUrl"
+            @click.stop="closeDropdown(), openDocs(props.documentationUrl)"
           >
             <SvgIcon name="help" class="rowIcon" />
             <span>Help</span>
@@ -103,7 +94,7 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
             <SvgIcon name="paint_palette" class="rowIcon" />
             <span>Color Component</span>
           </MenuButton>
-          <MenuButton @click.stop="closeDropdown(), emit('startEditing')">
+          <MenuButton data-testid="edit-button" @click.stop="closeDropdown(), emit('startEditing')">
             <SvgIcon name="edit" class="rowIcon" />
             <span>Code Edit</span>
           </MenuButton>
@@ -202,36 +193,28 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
   }
 }
 
-:deep(.ColorRing .gradient) {
-  clip-path: path(
-    evenodd,
-    'M0,52 A52,52 0,1,1 104,52 A52,52 0,1,1 0, 52 z m52,20 A20,20 0,1,1 52,32 20,20 0,1,1 52,72 z'
-  );
-}
-
 /**
-  * The following styles are used to position the icons in a circular pattern. The slots are named slot1 to slot3 and
-  * are positioned using absolute positioning. The slots are positioned in a circle with slot1 at the bottom and the rest
-  * of the slots are positioned in a clockwise direction along one quarter of the circle.
+  * Styles to position icons in a circular pattern. Slots are named `slot<SIDE>` and positioned using absolute positioning.
+  * The slots form a quarter circle with `slotS` at the bottom, `slotSW` to the left of `slotS`, and `slotW` above `slotSW`.
   * ```
-  * slot3
-  *      slot2
-  *           slot1
+  * slotW
+  *      slotSW
+  *           slotS
   * ```
  */
-.slot1 {
+.slotS {
   position: absolute;
   left: 44px;
   top: 80px;
 }
 
-.slot2 {
+.slotSW {
   position: absolute;
   top: 69.46px;
   left: 18.54px;
 }
 
-.slot3 {
+.slotW {
   position: absolute;
   top: 44px;
   left: 8px;
