@@ -27,7 +27,7 @@ import type {
   ProcessDataFromClipboardParams,
   RowDragEndEvent,
 } from 'ag-grid-enterprise'
-import { computed, markRaw, ref, shallowReactive, shallowRef } from 'vue'
+import { computed, markRaw, ref } from 'vue'
 import type { ComponentExposed } from 'vue-component-type-helpers'
 
 const props = defineProps(widgetProps(widgetDefinition))
