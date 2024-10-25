@@ -27,6 +27,9 @@ export default function NameColumnHeading(props: AssetColumnHeadingProps) {
       }
       className="group flex h-table-row w-full items-center justify-start gap-icon-with-text px-name-column-x"
       onPress={() => {
+        if (sortInfo == null) {
+          return
+        }
         const nextDirection =
           isSortActive ? nextSortDirection(sortInfo.direction) : SortDirection.ascending
         if (nextDirection == null) {
