@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.enso.common.MethodNames;
+import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.type.ConstantsGen;
 import org.enso.interpreter.test.ValuesGenerator.Language;
 import org.enso.test.utils.ContextUtils;
@@ -381,6 +382,11 @@ main = Nothing
     for (var typ : g.allTypes()) {
       if (!typ.isMetaObject()) {
         // skip Nothing
+        continue;
+      }
+      var type = (Type) ContextUtils.unwrapValue(ctx, typ);
+      if (type.isEigenType()) {
+        // Skip singleton types
         continue;
       }
 

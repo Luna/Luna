@@ -302,6 +302,23 @@ public final class ValuesGenerator {
         .type();
   }
 
+  public Value typeNoWrap() {
+    return v("typeNoWrap", """
+    import Standard.Base.Data.Vector.No_Wrap
+    """, "No_Wrap")
+        .type();
+  }
+
+  public Value typeProblemBehavior() {
+    return v(
+            "typeProblemBehavior",
+            """
+    import Standard.Base.Errors.Problem_Behavior.Problem_Behavior
+    """,
+            "Problem_Behavior")
+        .type();
+  }
+
   public Value typeMap() {
     return v(
             "typeMap",
