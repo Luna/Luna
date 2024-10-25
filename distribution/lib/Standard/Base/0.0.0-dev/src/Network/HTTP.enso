@@ -165,8 +165,9 @@ type HTTP
    If encoding is specified without content type, "text/plain" is used as the content type.
    It is an error to specify the content type in both the request body and the header list.
    If the body is not Request_Body.Empty, and no content type is specified, a default is used.
+   Not explicitly private as allows direct testing.
 _resolve_headers : Request -> Vector Header
-private _resolve_headers req =
+_resolve_headers req =
     is_content_type_header h = h.name . equals_ignore_case Header.content_type_header_name
 
     # Check for content type and encoding in the Request_Body.
