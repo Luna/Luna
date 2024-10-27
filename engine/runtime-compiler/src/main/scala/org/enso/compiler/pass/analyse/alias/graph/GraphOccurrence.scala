@@ -51,15 +51,4 @@ object GraphOccurrence {
     identifier: UUID @Identifier,
     externalId: Option[UUID @ExternalID]
   ) extends GraphOccurrence
-
-  // TODO [AA] At some point the analysis should make use of these.
-  /** Represents a global symbol that has been _asked for_ in the program.
-    *
-    * @param id the identifier of the name in the graph
-    * @param symbol the text of the name
-    */
-  sealed case class Global(
-    override val id: Id,
-    override val symbol: Graph.Symbol
-  ) extends GraphOccurrence
 }
