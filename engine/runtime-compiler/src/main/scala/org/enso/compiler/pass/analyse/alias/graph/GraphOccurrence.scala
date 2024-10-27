@@ -9,7 +9,7 @@ import java.util.UUID
   * Note that this is not present in the metadata attached to the [[org.enso.compiler.core.IR]] elements,
   * but only in the alias [[Graph]].
   */
-sealed trait GraphOccurrence extends Serializable {
+sealed trait GraphOccurrence {
   val id: Id
   val symbol: Graph.Symbol
 }
