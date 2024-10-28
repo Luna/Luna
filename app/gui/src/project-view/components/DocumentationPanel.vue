@@ -21,14 +21,14 @@ import type { QualifiedName } from '@/util/qualifiedName'
 import { qnSegments, qnSlice } from '@/util/qualifiedName'
 import { computed, watch } from 'vue'
 
-const props = defineProps<{ selectedEntry: Opt<SuggestionId>; aiMode?: boolean }>()
-const emit = defineEmits<{ 'update:selectedEntry': [id: SuggestionId] }>()
+const props = defineProps<{ aiMode?: boolean }>()
+const selectedEntry = defineModel<SuggestionId | null>({ required: true })
 const db = useSuggestionDbStore()
 
 const documentation = computed<Docs>(() => {
   if (props.aiMode)
     return placeholder('AI assistant mode: write query in natural language and press Enter.')
-  const entry = props.selectedEntry
+  const entry = selectedEntry.value
   return entry ? lookupDocumentation(db.entries, entry) : placeholder('No suggestion selected.')
 })
 
@@ -63,7 +63,7 @@ const name = computed<Opt<QualifiedName>>(() => {
 // === Breadcrumbs ===
 
 const suggestion = computed(() =>
-  props.selectedEntry != null ? db.entries.get(props.selectedEntry) : undefined,
+  selectedEntry.value != null ? db.entries.get(selectedEntry.value) : undefined,
 )
 
 const color = computed(() => groupColorStyle(tryGetIndex(db.groups, suggestion.value?.groupIndex)))
@@ -77,19 +77,16 @@ const documentationUrl = computed(
 const historyStack = new HistoryStack()
 
 // Reset breadcrumbs history when the user selects the entry from the component list.
-watch(
-  () => props.selectedEntry,
-  (entry) => {
-    if (entry && historyStack.current.value !== entry) {
-      historyStack.reset(entry)
-    }
-  },
-)
+watch(selectedEntry, (entry) => {
+  if (entry && historyStack.current.value !== entry) {
+    historyStack.reset(entry)
+  }
+})
 
 // Update displayed documentation page when the user uses breadcrumbs.
 watch(historyStack.current, (current) => {
   if (current) {
-    emit('update:selectedEntry', current)
+    selectedEntry.value = current
   }
 })
 

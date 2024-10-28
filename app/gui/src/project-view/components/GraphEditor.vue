@@ -779,11 +779,7 @@ const documentationEditorFullscreen = ref(false)
         />
       </template>
       <template #help>
-        <ComponentDocumentation
-          :displayedSuggestionId="displayedDocs"
-          :aiMode="aiMode"
-          @update:displayedSuggestionId="displayedDocs = $event"
-        />
+        <ComponentDocumentation v-model="displayedDocs" :aiMode="aiMode" />
       </template>
     </DockPanel>
   </div>
