@@ -257,7 +257,7 @@ private _resolve_form_body (form_data:(Dictionary Text (Text | File))) (url_enco
                 _ : File -> body_builder.add_part_file key value.path
         publisher = body_builder.build
         hash = if hash_function.is_nothing then "" else hash_function body_builder.getContents
-        Resolved_Body.Value body_builder.build body_builder.get_boundary hash
+        Resolved_Body.Value publisher body_builder.get_boundary hash
 
 ## PRIVATE
 if_fetch_method : HTTP_Method -> Function -> Any -> Any ! Illegal_Argument
