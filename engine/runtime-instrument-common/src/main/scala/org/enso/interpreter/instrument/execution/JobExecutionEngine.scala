@@ -37,7 +37,7 @@ final class JobExecutionEngine(
   private val context = interpreterContext.executionService.getContext
 
   private val pendingCancellationsExecutor =
-    context.newFixedThreadPool(1, "pending-cancellations-timer", false)
+    context.newFixedThreadPool(1, "pending-cancellations", false)
 
   private val jobParallelism = context.getJobParallelism
 
@@ -80,12 +80,11 @@ final class JobExecutionEngine(
   private lazy val logger: TruffleLogger =
     runtimeContext.executionService.getLogger
 
-  // Independent Runnable that keeps track of the existing list of pending
-  // job cancellations and kills them if possible/necessary.
+  // Independent Runnable that has a list of jobs that should finish within a pre-determined window
+  // and, if not, are interrupted.
   private class ForceJobCancellations(val pendingJobs: Seq[(Long, RunningJob)])
       extends Runnable {
-    private val forceInterruptTimeout: Long = 10 * 1000
-    logger.log(Level.INFO, "Force job cancel for " + pendingJobs)
+    private val forceInterruptTimeout: Long = 50 * 1000
 
     override def run(): Unit = {
       pendingJobs.sortBy(_._1).foreach {
@@ -97,16 +96,18 @@ final class JobExecutionEngine(
             val timeToCancel =
               forceInterruptTimeout - timeSinceRequestedToCancel
             logger.log(
-              Level.INFO,
-              "About to wait {}ms  to cancel the job {}, wasted {}",
+              Level.FINEST,
+              "About to wait {}ms  to cancel job {}",
               Array[Any](
                 timeToCancel,
-                runningJob.id,
-                timeSinceRequestedToCancel
+                runningJob.id
               )
             )
             runningJob.future.get(timeToCancel, TimeUnit.MILLISECONDS)
-            logger.log(Level.INFO, "Job finished on its own: " + runningJob.id)
+            logger.log(
+              Level.FINEST,
+              "Job {} finished within the allocated soft-cancel time"
+            )
           } catch {
             case _: TimeoutException =>
               val sb = new StringBuilder(
@@ -147,8 +148,9 @@ final class JobExecutionEngine(
     val delayJobCancellation =
       runningJob.job.mayInterruptIfRunning && softAbortFirst || !runningJob.job
         .hasStarted()
-    if (delayJobCancellation) Some(runningJob)
-    else {
+    if (delayJobCancellation) {
+      Some(runningJob)
+    } else {
       runningJob.future.cancel(runningJob.job.mayInterruptIfRunning)
       None
     }
