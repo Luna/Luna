@@ -61,8 +61,7 @@ public class ClientBuilder {
   }
 
   /**
-   * Builds an HttpClient that will sign requests and payloads using the
-   * AWSv4 Signature algorithm.
+   * Builds an HttpClient that will sign requests and payloads using the AWSv4 Signature algorithm.
    */
   public HttpClient createSignedClient(
       String regionName, String serviceName, HttpClient baseClient, String bodySHA256) {
