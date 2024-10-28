@@ -8,10 +8,9 @@ import org.enso.text.Sha3_224VersionCalculator
 import java.util
 import java.util.{Collections, UUID}
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.ExecutorService
+import java.util.concurrent.{ExecutorService, TimeUnit}
 import java.util.logging.Level
-
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{Future, Promise, TimeoutException}
 import scala.util.control.NonFatal
 
 /** This component schedules the execution of jobs. It keeps a queue of
@@ -34,9 +33,6 @@ final class JobExecutionEngine(
 
   private val backgroundJobsRef =
     new AtomicReference[Vector[RunningJob]](Vector.empty)
-
-  private val pendingCancellations =
-    new AtomicReference[Vector[(Long, RunningJob)]](Vector.empty)
 
   private val context = interpreterContext.executionService.getContext
 
@@ -84,67 +80,62 @@ final class JobExecutionEngine(
   private lazy val logger: TruffleLogger =
     runtimeContext.executionService.getLogger
 
-  // Inpendent Thread that keeps track of the existing list of pending
-  // job cancellations.
-  //
-  private class ForceJobCancellations extends Runnable {
-    private val forceInterruptTimeout: Long = 50 * 1000
+  // Independent Runnable that keeps track of the existing list of pending
+  // job cancellations and kills them if possible/necessary.
+  private class ForceJobCancellations(val pendingJobs: Seq[(Long, RunningJob)])
+      extends Runnable {
+    private val forceInterruptTimeout: Long = 10 * 1000
+    logger.log(Level.INFO, "Force job cancel for " + pendingJobs)
 
     override def run(): Unit = {
-      while (pendingCancellations.get().nonEmpty) {
-        val at = System.currentTimeMillis()
-        val pending = pendingCancellations.getAndUpdate(cancellations =>
-          cancellations.filter { case (startTime, runningJob) =>
-            !runningJob.future.isDone && (startTime + forceInterruptTimeout > at)
-          }
-        )
-        val outdated = pending.filter { case (startTime, runningJob) =>
-          (startTime + forceInterruptTimeout <= at) && !runningJob.future.isDone
-        }
-        outdated.foreach { case (_, runningJob: RunningJob) =>
-          val sb = new StringBuilder(
-            "Threaddump when timeout is reached while waiting for the job " + runningJob.id + " to cancel:\n"
-          )
-          Thread.getAllStackTraces.entrySet.forEach { entry =>
-            sb.append(entry.getKey.getName).append("\n")
-            entry.getValue.foreach { e =>
-              sb.append("    ")
-                .append(e.getClassName)
-                .append(".")
-                .append(e.getMethodName)
-                .append("(")
-                .append(e.getFileName)
-                .append(":")
-                .append(e.getLineNumber)
-                .append(")\n")
-            }
-          }
-          logger.log(Level.WARNING, sb.toString())
-          runningJob.future.cancel(runningJob.job.mayInterruptIfRunning)
-        }
-        try {
-          if (pending.length != outdated.length) {
-            // Calculate optimal sleep time to ensure that Job is killed roughly on time
-            val nextToCancel = pending
-              .filter { case (startTime, _) =>
-                startTime + forceInterruptTimeout > at
-              }
-              .sortBy(_._1)
-              .headOption
-            val timeout = nextToCancel
-              .map(j => Math.min(j._1 - at, forceInterruptTimeout))
-              .getOrElse(forceInterruptTimeout)
-            Thread.sleep(timeout)
-          }
-        } catch {
-          case e: InterruptedException =>
+      pendingJobs.sortBy(_._1).foreach {
+        case (timeRequestedToCancel, runningJob) =>
+          try {
+            val now                        = System.currentTimeMillis()
+            val timeSinceRequestedToCancel = now - timeRequestedToCancel
+            assert(timeSinceRequestedToCancel > 0)
+            val timeToCancel =
+              forceInterruptTimeout - timeSinceRequestedToCancel
             logger.log(
-              Level.WARNING,
-              "Encountered InterruptedException while waiting on status of pending jobs",
-              e
+              Level.INFO,
+              "About to wait {}ms  to cancel the job {}, wasted {}",
+              Array[Any](
+                timeToCancel,
+                runningJob.id,
+                timeSinceRequestedToCancel
+              )
             )
-            throw new RuntimeException(e)
-        }
+            runningJob.future.get(timeToCancel, TimeUnit.MILLISECONDS)
+            logger.log(Level.INFO, "Job finished on its own: " + runningJob.id)
+          } catch {
+            case _: TimeoutException =>
+              val sb = new StringBuilder(
+                "Threaddump when timeout is reached while waiting for the job " + runningJob.id + " running in thread " + runningJob.job
+                  .threadNameExecutingJob() + " to cancel:\n"
+              )
+              Thread.getAllStackTraces.entrySet.forEach { entry =>
+                sb.append(entry.getKey.getName).append("\n")
+                entry.getValue.foreach { e =>
+                  sb.append("    ")
+                    .append(e.getClassName)
+                    .append(".")
+                    .append(e.getMethodName)
+                    .append("(")
+                    .append(e.getFileName)
+                    .append(":")
+                    .append(e.getLineNumber)
+                    .append(")\n")
+                }
+              }
+              logger.log(Level.WARNING, sb.toString())
+              runningJob.future.cancel(runningJob.job.mayInterruptIfRunning)
+            case e: Throwable =>
+              logger.log(
+                Level.WARNING,
+                "Encountered exception while waiting on status of pending jobs",
+                e
+              )
+          }
       }
     }
   }
@@ -154,7 +145,8 @@ final class JobExecutionEngine(
     softAbortFirst: Boolean
   ): Option[RunningJob] = {
     val delayJobCancellation =
-      runningJob.job.mayInterruptIfRunning && softAbortFirst
+      runningJob.job.mayInterruptIfRunning && softAbortFirst || !runningJob.job
+        .hasStarted()
     if (delayJobCancellation) Some(runningJob)
     else {
       runningJob.future.cancel(runningJob.job.mayInterruptIfRunning)
@@ -226,8 +218,10 @@ final class JobExecutionEngine(
         jobsToCancel.map(j => (j.job.getClass, j.id))
       )
     }
-    pendingCancellations.updateAndGet(_ ++ jobsToCancel.map((at, _)))
-    pendingCancellationsExecutor.submit(new ForceJobCancellations)
+    if (jobsToCancel.nonEmpty)
+      pendingCancellationsExecutor.submit(
+        new ForceJobCancellations(jobsToCancel.map((at, _)))
+      )
   }
 
   private def runInternal[A](
@@ -268,6 +262,7 @@ final class JobExecutionEngine(
         )
       }
     })
+    job.setJobId(jobId)
     val runningJob = RunningJob(jobId, job, future)
 
     val queue = runningJobsRef.updateAndGet(_ :+ runningJob)
