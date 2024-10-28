@@ -136,8 +136,18 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
     @Override
     protected void processTypeDefinition(Definition.Type typ) {
+      List<AtomType.Constructor> constructors =
+          CollectionConverters$.MODULE$.asJava(typ.members()).stream()
+              .map(
+                  constructorDef ->
+                      new AtomType.Constructor(
+                          constructorDef.name().name(), constructorDef.isPrivate()))
+              .toList();
+
+      AtomType atomType = new AtomType(typ.name().name(), constructors);
       var qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
       var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
+      scopeBuilder.registerType(atomType);
       registerFieldGetters(scopeBuilder, atomTypeScope, typ);
     }
 
