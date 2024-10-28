@@ -26,7 +26,7 @@ public class ExcelUtils {
     if (millis < 0) {
       millis += MILLIS_PER_DAY;
     }
-    if (value < 0) {
+    if (millis != 0 && value < 0) {
       days--;
     }
 
