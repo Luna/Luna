@@ -118,8 +118,11 @@ run nesting:Integer -> Integer =
     j_frames_line.split '=' . last . parse_integer
 
 
+only_on_linux = if System.os == "linux" then Nothing else "Test runs only on Linux"
+
+
 add_specs suite_builder =
-    suite_builder.group "Stack size" \group_builder ->
+    suite_builder.group "Stack size" pending=only_on_linux \group_builder ->
         group_builder.specify "Java stack size of nested Vector.map should be kept reasonably low" <|
             nesting_10 = run 10
             nesting_11 = run 11
