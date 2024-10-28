@@ -34,7 +34,7 @@ export default defineConfig({
   envDir: fileURLToPath(new URL('.', import.meta.url)),
   plugins: [
     wasm(),
-    ...(process.env.NODE_ENV === 'development' ? [] : []),
+    ...(process.env.NODE_ENV === 'development' ? [await VueDevTools()] : []),
     vue({
       customElement: ['**/components/visualizations/**', '**/components/shared/**'],
       template: {
