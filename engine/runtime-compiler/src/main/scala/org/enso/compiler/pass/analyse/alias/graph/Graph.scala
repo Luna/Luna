@@ -1,4 +1,5 @@
-package org.enso.compiler.pass.analyse
+package org.enso.compiler
+package pass.analyse
 package alias.graph
 
 import org.enso.compiler.core.CompilerError
@@ -637,6 +638,17 @@ object Graph {
         .foldLeft(false)(_ || _)
 
       isDirectChildOf || isChildOfChildren
+    }
+
+    private def removeScopeFromParent(scope: Scope): Unit = {
+      childScopes = childScopes.filter(_ != scope)
+    }
+
+    /** Disassociates this Scope from its parent.
+      */
+    private[compiler] def removeScopeFromParent(): Unit = {
+      org.enso.common.Asserts.assertInJvm(this.parent.nonEmpty)
+      this.parent.foreach(_.removeScopeFromParent(this))
     }
   }
 
