@@ -37,7 +37,8 @@ public class MultipartBodyBuilder {
    */
   public byte[] getContents() {
     if (partsSpecificationList.isEmpty()
-        || partsSpecificationList.getLast().type != PartsSpecification.TYPE.FINAL_BOUNDARY) {
+        || partsSpecificationList.get(partsSpecificationList.size() - 1).type
+            != PartsSpecification.TYPE.FINAL_BOUNDARY) {
       throw new IllegalStateException(
           "Must have built the MultipartBodyBuilder, before calling getContents.");
     }
