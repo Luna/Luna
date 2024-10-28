@@ -1,9 +1,6 @@
 package org.enso.table.excel;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 
@@ -52,7 +49,9 @@ public class ExcelUtils {
     }
     LocalDate date = EPOCH_1900.plusDays(days + shift);
 
-    return millis < 1000 ? date : date.atTime(LocalTime.ofNanoOfDay(millis * 1000000));
+    return millis < 1000
+        ? date
+        : date.atTime(LocalTime.ofNanoOfDay(millis * 1000000)).atZone(ZoneId.systemDefault());
   }
 
   /** Converts a {@link Temporal} to an Excel date-time value. */

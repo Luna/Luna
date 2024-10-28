@@ -1,7 +1,6 @@
 package org.enso.table.excel;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -57,7 +56,6 @@ public class ExcelRow {
                   ? date.atStartOfDay(ZoneId.systemDefault())
                   : date;
             }
-            case LocalDateTime dateTime -> dateTime.atZone(ZoneId.systemDefault());
             default -> temporal;
           };
         } else {
