@@ -81,7 +81,8 @@ type AWS
         raw_response = http.request request
         raw_response.decode format=response_format if_unsupported=raw_response.with_materialized_body
 
-    ## Hash a Vector of bytes
+    ## PRIVATE
+       Hash a Vector of bytes using SHA256 (as used by AWS).
     hash_bytes : Vector Integer -> Text
     hash_bytes bytes:Vector = ClientBuilder.getSHA256 bytes
 
