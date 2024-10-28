@@ -3,6 +3,7 @@
  * This file provides a zustand store that contains the state of the Enso devtools.
  */
 import type { PaywallFeatureName } from '#/hooks/billing'
+import * as React from 'react'
 import * as zustand from 'zustand'
 
 /** Configuration for a paywall feature. */
@@ -16,13 +17,23 @@ export interface PaywallDevtoolsFeatureConfiguration {
 
 /** The state of this zustand store. */
 interface EnsoDevtoolsStore {
+  readonly showDevtools: boolean
+  readonly setShowDevtools: (showDevtools: boolean) => void
+  readonly toggleDevtools: () => void
   readonly showVersionChecker: boolean | null
   readonly paywallFeatures: Record<PaywallFeatureName, PaywallDevtoolsFeatureConfiguration>
   readonly setPaywallFeature: (feature: PaywallFeatureName, isForceEnabled: boolean | null) => void
   readonly setEnableVersionChecker: (showVersionChecker: boolean | null) => void
 }
 
-const ensoDevtoolsStore = zustand.createStore<EnsoDevtoolsStore>((set) => ({
+export const ensoDevtoolsStore = zustand.createStore<EnsoDevtoolsStore>((set) => ({
+  showDevtools: false,
+  setShowDevtools: (showDevtools) => {
+    set({ showDevtools })
+  },
+  toggleDevtools: () => {
+    set((state) => ({ showDevtools: !state.showDevtools }))
+  },
   showVersionChecker: false,
   paywallFeatures: {
     share: { isForceEnabled: null },
@@ -66,4 +77,24 @@ export function usePaywallDevtools() {
     features: state.paywallFeatures,
     setFeature: state.setPaywallFeature,
   }))
+}
+
+/** A hook that provides access to the show devtools state. */
+export function useShowDevtools() {
+  return zustand.useStore(ensoDevtoolsStore, (state) => state.showDevtools)
+}
+
+// =================================
+// === DevtoolsProvider ===
+// =================================
+
+/**
+ * Provide the Enso devtools to the app.
+ */
+export function DevtoolsProvider(props: { children: React.ReactNode }) {
+  React.useEffect(() => {
+    window.toggleDevtools = ensoDevtoolsStore.getState().toggleDevtools
+  }, [])
+
+  return <>{props.children}</>
 }
