@@ -17,9 +17,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -32,7 +30,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
  * Wraps an HttpClient to sign requests with AWS signature v4. Designed to be called by
  * EnsoSecretHelper.makeRequest.
  */
-public class SignedHttpClient extends HttpClient {
+class SignedHttpClient extends HttpClient {
   private static final String SCHEME = "AWS4";
   private static final String ALGORITHM = "HMAC-SHA256";
   private static final String TERMINATOR = "aws4_request";
@@ -43,7 +41,7 @@ public class SignedHttpClient extends HttpClient {
   private final HttpClient parent;
   private final String bodyHash;
 
-  public SignedHttpClient(
+  SignedHttpClient(
       String regionName,
       String serviceName,
       AwsCredentialsProvider credentialsProvider,
@@ -156,18 +154,23 @@ public class SignedHttpClient extends HttpClient {
                             k, headerMap.containsKey(k) ? headerMap.get(k).get(0) : null))
             .collect(Collectors.joining("\n"));
 
-    // Create canonical query string (not supported yet).
-    if (url.getQuery() != null) {
-      throw new UnsupportedOperationException("Query parameters are not supported yet.");
-    }
+    // Create canonical query string.
     var queryParameters = "";
+    if (url.getQuery() != null) {
+      var parameters = Arrays.stream(url.getQuery().split("&")).map(p -> p.split("=", 2));
+      queryParameters =
+          parameters
+              .sorted(Comparator.comparing(l -> l[0]))
+              .map(p -> urlEncode(p[0]) + "=" + urlEncode(p[1]))
+              .collect(Collectors.joining("&"));
+    }
 
     // Create canonical request
     var canonicalPath = url.getPath();
     if (!canonicalPath.startsWith("/")) {
       canonicalPath = "/" + canonicalPath;
     }
-    canonicalPath = URLEncoder.encode(canonicalPath, StandardCharsets.UTF_8).replace("%2F", "/");
+    canonicalPath = urlEncode(canonicalPath).replace("%2F", "/");
     var canonicalRequest =
         String.join(
             "\n",
@@ -250,7 +253,7 @@ public class SignedHttpClient extends HttpClient {
    * @param rawData the data to hash
    * @return the SHA-256 hash of the data
    */
-  public static String getSHA256(byte[] rawData) {
+  static String getSHA256(byte[] rawData) {
     try {
       byte[] hash = MessageDigest.getInstance("SHA-256").digest(rawData);
       return bytesToHex(hash);
@@ -269,5 +272,9 @@ public class SignedHttpClient extends HttpClient {
       hexString.append(hex);
     }
     return hexString.toString();
+  }
+
+  private static String urlEncode(String input) {
+    return URLEncoder.encode(input, StandardCharsets.UTF_8);
   }
 }

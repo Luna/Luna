@@ -69,6 +69,10 @@ public class ClientBuilder {
         regionName, serviceName, unsafeBuildCredentialProvider(), baseClient, bodySHA256);
   }
 
+  public static String getSHA256(byte[] rawData) {
+    return SignedHttpClient.getSHA256(rawData);
+  }
+
   /**
    * Instantiates an S3Client configured in such a way that it can query buckets regardless of their
    * region.
