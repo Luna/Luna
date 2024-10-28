@@ -1046,7 +1046,7 @@ add_specs suite_builder =
 
         group_builder.specify "should be able to convert Excel dates from Integer to Date" <|
             numbers = [-100,-1,1,2,50,61,100]
-            dates = numbers.map n-> (Date.new 1899 12 31).date_add n ..Day
+            dates = [Date.new 1899 09 22, Date.new 1899 12 30, Date.new 1900 01 01, Date.new 1900 01 02, Date.new 1900 02 19, Date.new 1900 03 02, Date.new 1900 04 10]
             parsed = numbers.map n-> Date.from_excel n
             parsed . should_equal dates
 
@@ -1055,8 +1055,9 @@ add_specs suite_builder =
 
         group_builder.specify "should be able to convert Excel dates from Integer to Date" <|
             numbers = [-100,-1,1,2,50,61,100]
+            dates = [Date.new 1899 09 22, Date.new 1899 12 30, Date.new 1900 01 01, Date.new 1900 01 02, Date.new 1900 02 19, Date.new 1900 03 02, Date.new 1900 04 10]
             numbers_2 = numbers.map_with_index i->n-> n+(1+i*2)/24
-            date_times = numbers.map_with_index i->n-> ((Date.new 1899 12 31).date_add n ..Day . to_date_time (Time_Of_Day.new hour=1+i*2))
+            date_times = dates.map_with_index i->d-> (d.to_date_time (Time_Of_Day.new hour=1+i*2))
             parsed = numbers_2.map n-> Date_Time.from_excel n
             parsed . should_equal date_times
 
