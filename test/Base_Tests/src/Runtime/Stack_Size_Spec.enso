@@ -61,7 +61,7 @@ enso_bin -> File =
 generate_code nesting_level:Integer -> Text =
     bldr = Vector.Builder.new
     bldr.append "from Standard.Base import all"
-    bldr.append "polyglot java import java.lang.RuntimeException"
+    bldr.append "import Standard.Base.Internal.Extra_Imports.RuntimeException"
     bldr.append '\n'
     bldr.append <| "main = "
     bldr.append <| "    "
