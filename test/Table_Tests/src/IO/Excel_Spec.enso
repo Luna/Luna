@@ -9,6 +9,7 @@ import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 import Standard.Base.Runtime.Ref.Ref
 
 from Standard.Table import Table, Match_Columns, Excel_Format, Excel_Range, Data_Formatter, Delimited_Format, Excel_Workbook, Value_Type
+from Standard.Table.Extensions.Excel_Extensions import all
 
 from Standard.Table.Errors import Invalid_Column_Names, Duplicate_Output_Column_Names, Invalid_Location, Range_Exceeded, Existing_Data, Column_Count_Mismatch, Column_Name_Mismatch, Empty_Sheet
 
@@ -1033,7 +1034,7 @@ add_specs suite_builder =
             table.at "Date13" . to_vector . should_equal [(Date_Time.new 1899 12 28 hour=13),(Date_Time.new 1899 12 29 hour=13),(Date_Time.new 1899 12 30 hour=13),(Date_Time.new 1899 12 31 hour=13),(Date_Time.new 1900 1 1 hour=13),(Date_Time.new 1900 1 2 hour=13),(Date_Time.new 1900 1 3 hour=13),(Date_Time.new 1900 1 4 hour=13),(Date_Time.new 1900 1 5 hour=13),(Date_Time.new 1900 2 28 hour=13),Nothing,(Date_Time.new 1900 3 1 hour=13),(Date_Time.new 1900 3 2 hour=13),(Date_Time.new 1900 3 3 hour=13),(Date_Time.new 1900 3 4 hour=13)]
 
         group_builder.specify "should be able to write and then read dates before 1900-01-01 (treating 1899-12-31 as -1)" <|
-            numbers = [-100,-1,0,1,2,50,61,100]
+            numbers = [-100,-1,1,2,50,61,100]
             dates = numbers.map n-> (Date.new 1899 12 31).date_add n ..Day
             date_times = dates.map d-> d.to_date_time (Time_Of_Day.new 12 34 56)
             table = Table.new [["Num", numbers], ["Date", dates], ["DateTimes", date_times]]
@@ -1042,6 +1043,25 @@ add_specs suite_builder =
             table.write file . should_succeed
             read_table = file.read ..Sheet
             read_table.should_equal table
+
+        group_builder.specify "should be able to convert Excel dates from Integer to Date" <|
+            numbers = [-100,-1,1,2,50,61,100]
+            dates = numbers.map n-> (Date.new 1899 12 31).date_add n ..Day
+            parsed = numbers.map n-> Date.from_excel n
+            parsed . should_equal dates
+
+            Date.from_excel 0 . should_fail_with Illegal_Argument
+            Date.from_excel 60 . should_fail_with Illegal_Argument
+
+        group_builder.specify "should be able to convert Excel dates from Integer to Date" <|
+            numbers = [-100,-1,1,2,50,61,100]
+            numbers_2 = numbers.map_with_index i->n-> n+(1+i*2)/24
+            date_times = numbers.map_with_index i->n-> ((Date.new 1899 12 31).date_add n ..Day . to_date_time (Time_Of_Day.new hour=1+i*2))
+            parsed = numbers_2.map n-> Date_Time.from_excel n
+            parsed . should_equal date_times
+
+            Date_Time.from_excel 0.25 . should_fail_with Illegal_Argument
+            Date_Time.from_excel 60.45 . should_fail_with Illegal_Argument
 
         ci_pending = if Environment.get "CI" != Nothing then "This test takes a lot of time so it is disabled on CI."
         group_builder.specify "should be able to write and read a big XLSX file (>110MB)" pending=ci_pending <|
