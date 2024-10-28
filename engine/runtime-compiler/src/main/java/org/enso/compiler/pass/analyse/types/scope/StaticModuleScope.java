@@ -167,4 +167,8 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
     // TODO conversions in static analysis
     return null;
   }
+
+  public AtomType getType(String name) {
+    return typesDefinedHere.get(name);
+  }
 }

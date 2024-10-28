@@ -129,7 +129,7 @@ public class TypeResolver {
     return resolvedTypeAsTypeObject(resolvedType).instanceType();
   }
 
-  TypeRepresentation buildAtomConstructorType(
+  public TypeRepresentation buildAtomConstructorType(
       TypeRepresentation.TypeObject parentType, AtomTypeInterface.Constructor constructor) {
     boolean hasAnyDefaults =
         constructor.arguments().stream().anyMatch(AtomTypeInterface.Argument::hasDefaultValue);

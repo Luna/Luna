@@ -139,9 +139,11 @@ public class StaticModuleScopeAnalysis implements IRPass {
       List<AtomType.Constructor> constructors =
           CollectionConverters$.MODULE$.asJava(typ.members()).stream()
               .map(
-                  constructorDef ->
-                      new AtomType.Constructor(
-                          constructorDef.name().name(), constructorDef.isPrivate()))
+                  constructorDef -> {
+                    TypeRepresentation type = buildAtomConstructorType(constructorDef);
+                    return new AtomType.Constructor(
+                        constructorDef.name().name(), constructorDef.isPrivate(), type);
+                  })
               .toList();
 
       AtomType atomType = new AtomType(typ.name().name(), constructors);
@@ -149,6 +151,25 @@ public class StaticModuleScopeAnalysis implements IRPass {
       var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
       scopeBuilder.registerType(atomType);
       registerFieldGetters(scopeBuilder, atomTypeScope, typ);
+    }
+
+    private TypeRepresentation buildAtomConstructorType(Definition.Data constructorDef) {
+      boolean hasDefaults = constructorDef.arguments().exists(a -> a.defaultValue().isDefined());
+      if (hasDefaults) {
+        // TODO implement handling of default arguments - not only ctors will need this!
+        return null;
+      }
+
+      var arguments =
+          constructorDef.arguments().map(
+                  (arg) -> {
+                    var typ = arg.ascribedType();
+                    // TODO
+                    return typ != null ? typ : TypeRepresentation.UNKNOWN;
+                  })
+              .toList();
+      var resultType = parentType.instanceType();
+      return TypeRepresentation.buildFunction(arguments, resultType);
     }
 
     @Override

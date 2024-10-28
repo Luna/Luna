@@ -595,15 +595,7 @@ object BindingsMap {
     def allFieldsDefaulted: Boolean = arguments.forall(_.hasDefaultValue)
   }
 
-  case class Argument(
-    name: String,
-    hasDefaultValue: Boolean,
-    typReference: Reference[Expression]
-  ) {
-    def typ(): Option[Expression] = Option(
-      typReference.get(classOf[Expression])
-    )
-  }
+  case class Argument(name: String, hasDefaultValue: Boolean)
 
   /** A representation of a sum type
     *
@@ -629,15 +621,9 @@ object BindingsMap {
           Cons(
             m.name.name,
             m.arguments.map { arg =>
-              val ascribedType: Reference[Expression] =
-                arg.ascribedType match {
-                  case Some(value) => Reference.of(value, true)
-                  case None        => Reference.none()
-                }
               BindingsMap.Argument(
                 arg.name.name,
-                arg.defaultValue.isDefined,
-                ascribedType
+                arg.defaultValue.isDefined
               )
             },
             m.isPrivate
