@@ -255,8 +255,8 @@ private _resolve_form_body (form_data:(Dictionary Text (Text | File))) (url_enco
             case value of
                 _ : Text -> body_builder.add_part_text key value
                 _ : File -> body_builder.add_part_file key value.path
-        ## ToDo: Support hashing a MultipartBodyBuilder.
-        hash = if hash_function.is_nothing then "" else Unimplemented.throw "Hashing a multi-part body is not yet supported."
+        publisher = body_builder.build
+        hash = if hash_function.is_nothing then "" else hash_function body_builder.getContents
         Resolved_Body.Value body_builder.build body_builder.get_boundary hash
 
 ## PRIVATE

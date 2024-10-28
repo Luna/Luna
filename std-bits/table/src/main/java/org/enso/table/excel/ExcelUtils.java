@@ -8,6 +8,9 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 
 public class ExcelUtils {
+  // The epoch for Excel date-time values. Due to 1900-02-29 being a valid date
+  // in Excel, it is actually 1899-12-30. Excel dates are counted from 1 being
+  // 1900-01-01.
   private static final LocalDate EPOCH_1900 = LocalDate.of(1899, 12, 30);
   private static final long MILLIS_PER_DAY = 24 * 60 * 60 * 1000L;
 
@@ -35,9 +38,18 @@ public class ExcelUtils {
       return LocalTime.ofNanoOfDay(millis * 1000000);
     }
 
-    // Deal with mess of Jan and Feb 1900.
-    // In order to avoid issues with 1900-01-00, 1899-12-31 is -1.
-    int shift = days > 0 && days < 60 ? 1 : (days < 0 ? 2 : 0);
+    int shift = 0;
+    if (days > 0 && days < 60) {
+      // Due to a bug in Excel, 1900-02-29 is treated as a valid date.
+      // So within the first two months of 1900, the epoch needs to be 1 day later.
+      shift = 1;
+    } else if (days < 0) {
+      // For days before 1900-01-01, Excel has no representation.
+      // 0 is 1900-01-00 in Excel.
+      // We make -1 as 1899-12-31, -2 as 1899-12-30, etc.
+      // This needs the shift to be 2 days later.
+      shift = 2;
+    }
     LocalDate date = EPOCH_1900.plusDays(days + shift);
 
     return millis < 1000 ? date : date.atTime(LocalTime.ofNanoOfDay(millis * 1000000));
@@ -52,12 +64,16 @@ public class ExcelUtils {
       case LocalDate date -> {
         long days = ChronoUnit.DAYS.between(EPOCH_1900, date);
 
-        // If the Date is between 1900-01-01 and 1900-02-28, EPOCH needs to be 1 day later.
         if (date.getYear() == 1900 && date.getMonthValue() < 3) {
+          // Due to a bug in Excel, 1900-02-29 is treated as a valid date.
+          // So within the first two months of 1900, the epoch needs to be 1 day later.
           days--;
         }
         if (date.getYear() < 1900) {
-          // 31 Dec 1899 should be -1
+          // For days before 1900-01-01, Excel has no representation.
+          // 0 is 1900-01-00 in Excel.
+          // We make -1 as 1899-12-31, -2 as 1899-12-30, etc.
+          // This means the epoch needs to be 2 days later.
           days -= 2;
         }
 
