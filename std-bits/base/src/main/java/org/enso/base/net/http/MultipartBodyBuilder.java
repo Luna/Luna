@@ -31,14 +31,15 @@ public class MultipartBodyBuilder {
   }
 
   /**
-   * Get the content of the multipart form.
-   * The form needs to be built before this.
+   * Get the content of the multipart form. The form needs to be built before this.
    *
    * @return the content of the multipart form.
    */
   public byte[] getContents() {
-    if (partsSpecificationList.isEmpty() || partsSpecificationList.getLast().type != PartsSpecification.TYPE.FINAL_BOUNDARY) {
-      throw new IllegalStateException("Must have built the MultipartBodyBuilder, before calling getContents.");
+    if (partsSpecificationList.isEmpty()
+        || partsSpecificationList.getLast().type != PartsSpecification.TYPE.FINAL_BOUNDARY) {
+      throw new IllegalStateException(
+          "Must have built the MultipartBodyBuilder, before calling getContents.");
     }
 
     var iterator = new PartsIterator();

@@ -31,7 +31,8 @@ public final class UrlencodedBodyBuilder {
    */
   public String getContents() {
     if (contents == null) {
-      throw new IllegalStateException("Must have built the UrlencodedBodyBuilder, before calling getContents.");
+      throw new IllegalStateException(
+          "Must have built the UrlencodedBodyBuilder, before calling getContents.");
     }
 
     return contents;
