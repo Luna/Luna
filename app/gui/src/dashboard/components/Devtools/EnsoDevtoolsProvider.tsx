@@ -3,6 +3,7 @@
  * This file provides a zustand store that contains the state of the Enso devtools.
  */
 import type { PaywallFeatureName } from '#/hooks/billing'
+import { IS_DEV_MODE } from 'enso-common/src/detect'
 import * as React from 'react'
 import * as zustand from 'zustand'
 
@@ -27,12 +28,12 @@ interface EnsoDevtoolsStore {
 }
 
 export const ensoDevtoolsStore = zustand.createStore<EnsoDevtoolsStore>((set) => ({
-  showDevtools: false,
+  showDevtools: IS_DEV_MODE,
   setShowDevtools: (showDevtools) => {
     set({ showDevtools })
   },
   toggleDevtools: () => {
-    set((state) => ({ showDevtools: !state.showDevtools }))
+    set(({ showDevtools }) => ({ showDevtools: !showDevtools }))
   },
   showVersionChecker: false,
   paywallFeatures: {
