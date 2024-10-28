@@ -10,7 +10,6 @@ import { Ast } from '@/util/ast'
 import type { Vec2 } from '@/util/data/vec2'
 import { iconOfNode } from '@/util/getIconName'
 import { computed, toRef, watch } from 'vue'
-import { WidgetsMetadata } from 'ydoc-shared/ast'
 import { DisplayIcon } from './widgets/WidgetIcon.vue'
 
 const props = defineProps<{
@@ -64,9 +63,7 @@ function selectNode() {
   selection.setSelection(new Set([props.nodeId]))
 }
 
-function handleWidgetUpdates<WidgetKey extends string & keyof WidgetsMetadata>(
-  update: WidgetUpdate<WidgetKey>,
-) {
+function handleWidgetUpdates(update: WidgetUpdate) {
   selectNode()
   const edit = update.edit ?? graph.startEdit()
   if (update.portUpdate) {

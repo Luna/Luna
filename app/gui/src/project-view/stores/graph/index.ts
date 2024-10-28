@@ -44,7 +44,6 @@ import {
   type Ref,
   type ShallowRef,
 } from 'vue'
-import { WidgetsMetadata } from 'ydoc-shared/ast'
 import { SourceDocument } from 'ydoc-shared/ast/sourceDocument'
 import type {
   ExpressionUpdate,
@@ -80,9 +79,7 @@ export class PortViewInstance {
   constructor(
     public rect: ShallowRef<Rect | undefined>,
     public nodeId: NodeId,
-    public onUpdate: <WidgetKey extends string & keyof WidgetsMetadata>(
-      update: WidgetUpdate<WidgetKey>,
-    ) => void,
+    public onUpdate: (update: WidgetUpdate) => void,
   ) {
     markRaw(this)
   }

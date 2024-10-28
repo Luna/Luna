@@ -34,15 +34,11 @@ export const nodeMetadata = z
   })
   .passthrough()
 
-export type ImportMetadata = z.infer<typeof importMetadata>
-export const importMetadata = z.object({}).passthrough()
-
 export type IdeMetadata = z.infer<typeof ideMetadata>
 export const ideMetadata = z
   .object({
     node: z.record(z.string().uuid(), nodeMetadata),
-    widget: z.record(z.string().uuid(), z.record(z.string(), z.object({}).passthrough())),
-    import: z.record(z.string(), importMetadata),
+    widget: z.optional(z.record(z.string().uuid(), z.record(z.string(), z.unknown()))),
   })
   .passthrough()
   .default(() => defaultMetadata().ide)

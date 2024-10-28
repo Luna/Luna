@@ -54,7 +54,7 @@ export type AstId = string & { [brandAstId]: never }
 /** @internal */
 export interface MetadataFields {
   externalId: ExternalId
-  widget: FixedMap<WidgetsMetadata>
+  widget: Y.Map<unknown>
 }
 export interface NodeMetadataFields {
   position?: { x: number; y: number } | undefined
@@ -68,12 +68,6 @@ const nodeMetadataKeys = allKeys<NodeMetadataFields>({
 })
 export type NodeMetadata = FixedMapView<NodeMetadataFields & MetadataFields>
 export type MutableNodeMetadata = FixedMap<NodeMetadataFields & MetadataFields>
-
-/**
- *
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface WidgetsMetadata extends Record<string, object> {}
 
 /** @internal */
 interface RawAstFields {
@@ -114,11 +108,12 @@ export abstract class Ast {
     return metadata as FixedMapView<NodeMetadataFields & MetadataFields>
   }
 
-  widgetMetadata<WidgetKey extends string & keyof WidgetsMetadata>(
-    widgetKey: WidgetKey,
-  ): DeepReadonly<WidgetsMetadata[WidgetKey]> | undefined {
-    const widgetMetadata = this.fields.get('metadata').get('widget').get(widgetKey)
-    return widgetMetadata
+  widgetsMetadata(): FixedMapView<Record<string, unknown>> {
+    return this.fields.get('metadata').get('widget')
+  }
+
+  widgetMetadata(widgetKey: string): DeepReadonly<unknown> | undefined {
+    return this.fields.get('metadata').get('widget').get(widgetKey)
   }
 
   /** Returns a JSON-compatible object containing all metadata properties. */
@@ -265,16 +260,12 @@ export abstract class MutableAst extends Ast {
     this.fields.get('metadata').set('externalId', id)
   }
 
-  setWidgetMetadata<WidgetKey extends string & keyof WidgetsMetadata>(
-    widgetKey: WidgetKey,
-    widgetMetadata: WidgetsMetadata[WidgetKey],
-  ) {
+  setWidgetMetadata(widgetKey: string, widgetMetadata: unknown) {
     this.fields.get('metadata').get('widget').set(widgetKey, widgetMetadata)
-    // if (widgetsMdMap == null) {
-    //   widgetsMdMap = new Y.Map() as FixedMap<WidgetsMetadata>
-    //   this.fields.get('metadata').set('widget', widgetsMdMap)
-    // }
-    // widgetsMdMap.set(widgetKey, widgetMetadata)
+  }
+
+  mutableWidgetsMetadata() {
+    return this.fields.get('metadata').get('widget')
   }
 
   /** TODO: Add docs */

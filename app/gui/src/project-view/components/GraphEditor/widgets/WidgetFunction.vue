@@ -15,7 +15,7 @@ import type { MethodCallInfo } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
 import { assert, assertUnreachable } from '@/util/assert'
 import { Ast } from '@/util/ast'
-import type { AstId, WidgetsMetadata } from '@/util/ast/abstract'
+import type { AstId } from '@/util/ast/abstract'
 import {
   ArgumentApplication,
   ArgumentApplicationKey,
@@ -79,9 +79,7 @@ const innerInput = computed(() => {
  * Process an argument value update. Takes care of inserting assigned placeholder values, as well as
  * handling deletions of arguments and rewriting the applications to named as appropriate.
  */
-function handleArgUpdate<WidgetKey extends string & keyof WidgetsMetadata>(
-  update: WidgetUpdate<WidgetKey>,
-): boolean {
+function handleArgUpdate(update: WidgetUpdate): boolean {
   const app = application.value
   if (update.portUpdate && app instanceof ArgumentApplication) {
     if (!('value' in update.portUpdate)) {

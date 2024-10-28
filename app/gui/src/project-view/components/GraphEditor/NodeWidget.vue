@@ -10,7 +10,6 @@ import {
 import { useGraphStore } from '@/stores/graph'
 import { Ast } from '@/util/ast'
 import { computed, getCurrentInstance, proxyRefs, shallowRef, watchEffect, withCtx } from 'vue'
-import { WidgetsMetadata } from 'ydoc-shared/ast'
 
 const props = defineProps<{
   input: WidgetInput
@@ -27,9 +26,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-type UpdateHandler = <WidgetKey extends string & keyof WidgetsMetadata>(
-  update: WidgetUpdate<WidgetKey>,
-) => boolean
+type UpdateHandler = (update: WidgetUpdate) => boolean
 
 const graph = useGraphStore()
 const registry = injectWidgetRegistry()
@@ -59,7 +56,7 @@ const updateHandler = computed(() => {
     parentUsageInfo?.updateHandler ?? (() => console.log('Missing update handler'))
   if (props.onUpdate != null) {
     const localHandler = props.onUpdate
-    return <WidgetKey extends string & keyof WidgetsMetadata>(payload: WidgetUpdate<WidgetKey>) => {
+    return (payload: WidgetUpdate) => {
       const handled = localHandler(payload)
       if (!handled) nextHandler(payload)
     }

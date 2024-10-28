@@ -4,7 +4,7 @@ import type { WidgetConfiguration } from '@/providers/widgetRegistry/configurati
 import type { GraphDb } from '@/stores/graph/graphDatabase'
 import type { Typename } from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
-import { MutableModule, WidgetsMetadata } from '@/util/ast/abstract'
+import { MutableModule } from '@/util/ast/abstract'
 import { ViteHotContext } from 'vite/types/hot.js'
 import { computed, shallowReactive, type Component, type PropType } from 'vue'
 import type { WidgetEditHandlerParent } from './widgetRegistry/editHandler'
@@ -166,11 +166,11 @@ export interface WidgetProps<T> {
  * The handlers interested in a specific port update should apply it using received edit. The edit
  * is committed in {@link NodeWidgetTree}.
  */
-export interface WidgetUpdate<WidgetKey extends string & keyof WidgetsMetadata> {
+export interface WidgetUpdate {
   edit?: MutableModule | undefined
   portUpdate?: { origin: PortId } & (
     | { value: Ast.Owned | string | undefined }
-    | { metadataKey: WidgetKey; metadata: WidgetsMetadata[WidgetKey] }
+    | { metadataKey: string; metadata: unknown }
   )
 }
 
@@ -188,9 +188,7 @@ export function widgetProps<T extends WidgetInput>(_def: WidgetDefinition<T>) {
     },
     nesting: { type: Number, required: true },
     onUpdate: {
-      type: Function as PropType<
-        <WidgetKey extends string & keyof WidgetsMetadata>(update: WidgetUpdate<WidgetKey>) => void
-      >,
+      type: Function as PropType<(update: WidgetUpdate) => void>,
       required: true,
     },
   } as const

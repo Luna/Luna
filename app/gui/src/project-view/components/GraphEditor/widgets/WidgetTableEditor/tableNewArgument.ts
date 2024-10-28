@@ -144,7 +144,7 @@ export function useTableNewArgument(
     addMissingImports(edit: Ast.MutableModule, newImports: RequiredImport[]): void
   },
   suggestions: SuggestionDb,
-  onUpdate: (update: WidgetUpdate<never>) => void,
+  onUpdate: (update: WidgetUpdate) => void,
 ) {
   const errorMessagePreamble = 'Table Editor Widget should not have been matched'
   const columnsAst = computed(() => retrieveColumnsAst(toValue(input).value))

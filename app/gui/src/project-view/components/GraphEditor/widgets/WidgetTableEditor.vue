@@ -27,11 +27,28 @@ import type {
 } from 'ag-grid-enterprise'
 import { computed, ref } from 'vue'
 import type { ComponentExposed } from 'vue-component-type-helpers'
+import { z } from 'zod'
 
 const props = defineProps(widgetProps(widgetDefinition))
 const graph = useGraphStore()
 const suggestionDb = useSuggestionDbStore()
 const grid = ref<ComponentExposed<typeof AgGridTableView<RowData, any>>>()
+
+const configSchema = z.object({ size: z.object({ x: z.number(), y: z.number() }) }).passthrough()
+type Config = z.infer<typeof configSchema>
+
+const DEFAULT_CFG: Config = { size: { x: 200, y: 150 } }
+
+const config = computed(() => {
+  const configObj = props.input.value.widgetMetadata('WidgetTableEditor')
+  if (configObj == null) return DEFAULT_CFG
+  const parsed = configSchema.safeParse(configObj)
+  if (parsed.success) return parsed.data
+  else {
+    console.warn('Table Editor Widget: could not read config; invalid format: ', parsed.error)
+    return DEFAULT_CFG
+  }
+})
 
 const { rowData, columnDefs, moveColumn, moveRow, pasteFromClipboard } = useTableNewArgument(
   () => props.input,
@@ -131,9 +148,7 @@ const headerEditHandler = new HeaderEditing()
 
 const graphNav = injectGraphNavigator()
 
-const size = computed(() =>
-  Vec2.FromXY(props.input.value.widgetMetadata('WidgetTableEditor')?.size ?? { x: 200, y: 150 }),
-)
+const size = computed(() => Vec2.FromXY(config.value.size))
 
 const clientBounds = computed({
   get() {
@@ -201,14 +216,6 @@ const defaultColDef = {
 </script>
 
 <script lang="ts">
-declare module '@/util/ast/abstract' {
-  export interface WidgetsMetadata {
-    WidgetTableEditor?: {
-      size: { x: number; y: number }
-    }
-  }
-}
-
 export const widgetDefinition = defineWidget(
   WidgetInputIsSpecificMethodCall({
     module: 'Standard.Table.Table',
