@@ -168,9 +168,19 @@ public final class Module implements EnsoObject {
       return;
     }
     if (pkg != null && name.isSimple()) {
-      throw new IllegalArgumentException("Simple module name must not be in a package");
+      throw new IllegalArgumentException(
+          "Simple module name must not be in a package, i.e., trying to initialize a module in a"
+              + " package '"
+              + pkg.libraryName().toString()
+              + "' with a simple name '"
+              + name
+              + "'");
     } else if (pkg == null && !name.isSimple()) {
-      throw new IllegalArgumentException("Qualified module name must be in a package");
+      throw new IllegalArgumentException(
+          "Qualified module name must be in a package, i.e., trying to initialize "
+              + "a module with a qualified name '"
+              + name
+              + "' without a package");
     }
   }
 
