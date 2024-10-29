@@ -21,17 +21,18 @@ function docsForSelection() {
 
 const docs = computed(() => docsForSelection())
 // When the selection changes, we cancel the displayed suggestion override that can be in place.
-watch(docs, (_) => (displayedId.value = null))
+watch(docs, (_) => (overrideDisplayed.value = null))
 
-const displayedId = computed<SuggestionId | null>({
-  get: () => overrideDisplayed.value ?? unwrapOr(docs.value, null),
-  set: (value) => (overrideDisplayed.value = value),
-})
+const displayedId = computed(() => overrideDisplayed.value ?? unwrapOr(docs.value, null))
 </script>
 
 <template>
-  <DocumentationPanel v-if="displayedId" v-model="displayedId" />
-  <div v-else-if="!docs.ok" class="help-placeholder">{{ docs.error.payload }}.</div>
+  <DocumentationPanel
+    v-if="displayedId"
+    :selectedEntry="displayedId"
+    @update:selectedEntry="overrideDisplayed = $event"
+  />
+  <div v-else-if="!displayedId && !docs.ok" class="help-placeholder">{{ docs.error.payload }}.</div>
 </template>
 
 <style scoped>
