@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::prelude::*;
 
 use crate::ci_gen::not_default_branch;
@@ -58,7 +60,6 @@ impl RunsOn for RunnerLabel {
             RunnerLabel::MacOS => Some("MacOS".to_string()),
             RunnerLabel::Linux => Some("Linux".to_string()),
             RunnerLabel::Windows => Some("Windows".to_string()),
-            RunnerLabel::MacOS12 => Some("MacOS12".to_string()),
             RunnerLabel::MacOS13 => Some("MacOS13".to_string()),
             RunnerLabel::MacOSLatest => Some("MacOSLatest".to_string()),
             RunnerLabel::LinuxLatest => Some("LinuxLatest".to_string()),
@@ -87,7 +88,7 @@ impl RunsOn for OS {
 impl RunsOn for (OS, Arch) {
     fn runs_on(&self) -> Vec<RunnerLabel> {
         match self {
-            (OS::MacOS, Arch::X86_64) => vec![RunnerLabel::MacOS12],
+            (OS::MacOS, Arch::X86_64) => vec![RunnerLabel::MacOS13],
             (os, Arch::X86_64) => runs_on(*os, RunnerType::SelfHosted),
             (OS::MacOS, Arch::AArch64) => {
                 let mut ret = runs_on(OS::MacOS, RunnerType::SelfHosted);
@@ -308,6 +309,10 @@ fn build_job_ensuring_cloud_tests_run_on_github(
     cloud_tests_enabled: bool,
 ) -> Job {
     if cloud_tests_enabled {
+        if target.0 != OS::Linux {
+            panic!("If the Cloud tests are enabled, they require GitHub hosted runner for Cloud auth, so they only run on Linux.");
+        }
+
         run_steps_builder.build_job(job_name, RunnerLabel::LinuxLatest)
     } else {
         run_steps_builder.build_job(job_name, target)
@@ -321,6 +326,9 @@ const GRAAL_EDITION_FOR_EXTRA_TESTS: graalvm::Edition = graalvm::Edition::Commun
 
 impl JobArchetype for SnowflakeTests {
     fn job(&self, target: Target) -> Job {
+        if target.0 != OS::Linux {
+            panic!("Snowflake tests currently require GitHub hosted runner for Cloud auth, so they only run on Linux.");
+        }
         let job_name = "Snowflake Tests";
         let mut job = RunStepsBuilder::new("backend test std-snowflake")
             .customize(move |step| {
@@ -350,17 +358,16 @@ impl JobArchetype for SnowflakeTests {
                         crate::libraries_tests::snowflake::env::ENSO_SNOWFLAKE_WAREHOUSE,
                     );
 
-                // Temporarily disabled until we can get the Cloud auth fixed.
-                // Snowflake does not rely on cloud anyway, so it can be disabled.
-                // But it will rely once we add datalink tests, so this should be fixed soon.
-                // let updated_main_step = enable_cloud_tests(main_step);
+                // Snowflake tests are run only in the 'Extra' job, so it is okay to run it with
+                // Enso Cloud as well. They need it to test data link integration.
+                let updated_main_step = enable_cloud_tests(main_step);
 
                 vec![
-                    main_step,
+                    updated_main_step,
                     step::extra_stdlib_test_reporter(target, GRAAL_EDITION_FOR_EXTRA_TESTS),
                 ]
             })
-            .build_job(job_name, target)
+            .build_job(job_name, RunnerLabel::LinuxLatest)
             .with_permission(Permission::Checks, Access::Write);
         job.env(env::GRAAL_EDITION, GRAAL_EDITION_FOR_EXTRA_TESTS);
         job
@@ -547,6 +554,16 @@ impl JobArchetype for PackageIde {
                     "ENSO_TEST_USER_PASSWORD",
                 );
             steps.push(test_step);
+
+            // After the E2E tests run, they create a credentials file in user home directory.
+            // If that file is not cleaned up, future runs of our tests may randomly get
+            // authenticated into Enso Cloud. We want to run tests as an authenticated
+            // user only when we explicitly set that up, not randomly. So we clean the credentials
+            // file.
+            let cloud_credentials_path = "$HOME/.enso/credentials";
+            let cleanup_credentials_step = shell(format!("rm {cloud_credentials_path}"));
+            steps.push(cleanup_credentials_step);
+
             steps
         })
         .build_job("Package New IDE", target)

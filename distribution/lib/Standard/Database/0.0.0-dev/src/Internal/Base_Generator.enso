@@ -13,6 +13,7 @@ import project.Internal.IR.SQL_Expression.SQL_Expression
 import project.Internal.IR.SQL_Join_Kind.SQL_Join_Kind
 import project.Internal.IR.Traversal_Helpers
 import project.SQL.SQL_Builder
+import project.SQL_Statement.SQL_Statement
 from project.Dialect import Temp_Table_Style
 from project.Errors import Unsupported_Database_Operation
 from project.Internal.IR.Operation_Metadata import Row_Number_Metadata
@@ -43,8 +44,7 @@ type Dialect_Operations
 
     ## PRIVATE
        Checks if an operation is supported by the dialect.
-    is_supported : Text -> Boolean
-    is_supported self operation =
+    is_operation_supported self operation:Text -> Boolean =
         self.operations_dict.contains_key operation
 
 ## PRIVATE
@@ -57,7 +57,7 @@ type Dialect_Operations
 type SQL_Generator
     ## We can use a Hashset for the let-binding names, since they are guaranteed
        to be distinct and not result in any shadowing.
-    Value (let_bindings_ref : Ref Hashset)
+    private Value (let_bindings_ref : Ref Hashset)
 
     ## PRIVATE
     private new -> SQL_Generator = SQL_Generator.Value (Ref.new Hashset.empty)
@@ -118,7 +118,12 @@ type SQL_Generator
         From_Spec.Table name as_name _ ->
             dialect.wrap_identifier name ++ alias dialect as_name
         From_Spec.Query raw_sql as_name ->
-            SQL_Builder.code raw_sql . paren ++ alias dialect as_name
+            subquery = case raw_sql of
+                prepared_statement : SQL_Statement ->
+                    SQL_Builder.from_fragments prepared_statement.fragments
+                raw_code : Text ->
+                    SQL_Builder.code raw_code
+            subquery.paren ++ alias dialect as_name
         From_Spec.Literal_Values vecs column_names as_name ->
             Runtime.assert (vecs.length == column_names.length) "Vectors and column names must have the same length"
             dialect.make_table_literal vecs column_names as_name
@@ -162,6 +167,10 @@ type SQL_Generator
         base_expression ++ collation ++ order_suffix ++ nulls_suffix
 
     ## PRIVATE
+    default_generate_column self dialect expr:(SQL_Expression | Order_Descriptor | Query) name:Text -> SQL_Builder =
+        self.generate_expression dialect expr ++ alias dialect name
+
+    ## PRIVATE
         Generates SQL code corresponding to a SELECT statement.
 
         Arguments:
@@ -170,11 +179,10 @@ type SQL_Generator
     generate_select_query_sql : Dialect -> Vector (Pair Text SQL_Expression) -> Context -> SQL_Builder
     generate_select_query_sql self dialect columns ctx =
         gen_exprs exprs = exprs.map (self.generate_expression dialect)
-        gen_column pair = (self.generate_expression dialect pair.second) ++ alias dialect pair.first
 
         generated_columns = case columns of
             Nothing -> SQL_Builder.code "*"
-            _ -> SQL_Builder.join ", " (columns.map gen_column)
+            _ -> SQL_Builder.join ", " (columns.map (c-> dialect.generate_column_for_select self expr=c.second name=c.first))
 
         from_part = self.generate_from_part dialect ctx.from_spec
         where_part = (SQL_Builder.join " AND " (gen_exprs ctx.where_filters)) . prefix_if_present " WHERE "

@@ -46,7 +46,6 @@ polyglot java import org.enso.table.data.column.operation.unary.IsNothingOperati
 polyglot java import org.enso.table.data.column.operation.unary.NotOperation
 polyglot java import org.enso.table.data.column.operation.unary.TextLengthOperation
 polyglot java import org.enso.table.data.column.operation.unary.TruncatedTimePartOperation
-polyglot java import org.enso.table.data.column.operation.unary.UnaryDecimalRoundOperation
 polyglot java import org.enso.table.data.column.operation.unary.UnaryRoundOperation
 polyglot java import org.enso.table.data.column.operation.UnaryOperation
 polyglot java import org.enso.table.data.column.storage.Storage as Java_Storage
@@ -930,11 +929,8 @@ type Column
                 case precise_value_type.is_integer of
                     True ->
                         self.rename new_name
-                    False -> case precise_value_type.is_decimal of
-                        True ->
-                            apply_unary_operation self UnaryDecimalRoundOperation.TRUNCATE_INSTANCE
-                        False ->
-                            apply_unary_operation self UnaryRoundOperation.TRUNCATE_INSTANCE
+                    False ->
+                        apply_unary_operation self UnaryRoundOperation.TRUNCATE_INSTANCE
             False -> case precise_value_type == Value_Type.Date_Time of
                 True ->
                     fun = _.date
@@ -959,11 +955,7 @@ type Column
                 new_name = naming_helper.function_name "ceil" [self]
                 self.rename new_name
             False ->
-                case self.inferred_precise_value_type.is_decimal of
-                    True ->
-                        apply_unary_operation self UnaryDecimalRoundOperation.CEIL_INSTANCE
-                    False ->
-                        apply_unary_operation self UnaryRoundOperation.CEIL_INSTANCE
+                apply_unary_operation self UnaryRoundOperation.CEIL_INSTANCE
 
     ## GROUP Standard.Base.Rounding
        ICON math
@@ -983,11 +975,7 @@ type Column
                 new_name = naming_helper.function_name "floor" [self]
                 self.rename new_name
             False ->
-                case self.inferred_precise_value_type.is_decimal of
-                    True ->
-                        apply_unary_operation self UnaryDecimalRoundOperation.FLOOR_INSTANCE
-                    False ->
-                        apply_unary_operation self UnaryRoundOperation.FLOOR_INSTANCE
+                apply_unary_operation self UnaryRoundOperation.FLOOR_INSTANCE
 
     ## GROUP Standard.Base.Logical
        ICON operators
@@ -1007,8 +995,8 @@ type Column
     coalesce self values =
         vec = Vector.unify_vector_or_element values
         new_name = self.naming_helper.function_name "coalesce" [self]+vec
-        result = if values.is_empty then self else
-            values.fold self acc-> v-> acc.fill_nothing v
+        result = if vec.is_empty then self else
+            vec.fold self acc-> v-> acc.fill_nothing v
         result.rename new_name
 
     ## GROUP Standard.Base.Math
@@ -1504,7 +1492,7 @@ type Column
 
                 builder = make_string_builder length
                 0.up_to length . each i->
-                    replaced = do_replace i (storage.getItem i)
+                    replaced = do_replace i (storage.getItemBoxed i)
                     builder.append replaced
 
                 Column.from_storage new_name builder.seal
@@ -1514,7 +1502,7 @@ type Column
        Applies the specified cleansings to the text in each row.
 
        Arguments:
-       - remove: A vector of the text cleanings to remove from the text. The text cleansings are 
+       - remove: A vector of the text cleanings to remove from the text. The text cleansings are
           applied in the order they are provided. The same text cleansing can be used multiple
           times. The text cleansings are:
             - ..Leading_Whitespace: Removes all whitspace from the start of the string.
@@ -2278,7 +2266,7 @@ type Column
             if valid_index.not then default else
                 storage = self.java_column.getStorage
                 if storage.isNothing index then Nothing else
-                    java_to_enso <| storage.getItem index
+                    java_to_enso <| storage.getItemBoxed index
 
     ## PRIVATE
        ICON data_input
@@ -2347,7 +2335,7 @@ type Column
     to_js_object self =
         name = self.java_column.getName
         storage = self.java_column.getStorage
-        storage_proxy = Array_Proxy.new storage.size i-> storage.getItem i
+        storage_proxy = Array_Proxy.new storage.size i-> storage.getItemBoxed i
         storage_json = Vector.from_polyglot_array storage_proxy
         JS_Object.from_pairs [["name", name], ["data", storage_json]]
 
@@ -2772,7 +2760,7 @@ run_vectorized_binary_op_with_fallback_problem_handling column name operand fall
    - ix: The index in the column from which to get the item.
 get_item_as_text : Column -> Integer -> Text
 get_item_as_text column ix =
-    item = column.getItem ix
+    item = column.getItemBoxed ix
     ## TODO This special handling of `Text` is because `"a".to_text` evaluates
        to "'a'" and not just "a". The code can be simplified once the following
        task is implemented:

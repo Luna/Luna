@@ -18,7 +18,8 @@ await appConfig.readEnvironmentFromFile()
 // === Bundling ===
 // ================
 
-/** Get the bundler options using the environment.
+/**
+ * Get the bundler options using the environment.
  *
  * The following environment variables are required:
  * - `ENSO_BUILD_IDE` - output directory for bundled client files;
@@ -56,9 +57,8 @@ export function bundlerOptions(
     define: {
       'process.env.PROJECT_MANAGER_IN_BUNDLE_PATH': JSON.stringify(projectManagerInBundlePath),
       'process.env.ELECTRON_DEV_MODE': JSON.stringify(String(devMode)),
-      'process.env.GUI_CONFIG_PATH': JSON.stringify(path.resolve('../../gui2/vite.config.ts')),
+      'process.env.GUI_CONFIG_PATH': JSON.stringify(path.resolve('../../gui/vite.config.ts')),
     },
-    /* eslint-enable @typescript-eslint/naming-convention */
     sourcemap: 'linked',
     external: ['electron', 'vite', 'lightningcss'],
   }

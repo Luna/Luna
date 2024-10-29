@@ -1,15 +1,20 @@
 package org.enso.table.excel;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.ExcelNumberFormat;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.usermodel.Row;
 import org.graalvm.polyglot.Context;
 
 /** Wrapper class to handle Excel rows. */
 public class ExcelRow {
+  private static final DataFormatter formatter = new DataFormatter();
+
   private final Row row;
   private final int firstColumn;
   private final int lastColumn;
@@ -38,20 +43,21 @@ public class ExcelRow {
     switch (cellType) {
       case NUMERIC:
         double dblValue = cell.getNumericCellValue();
-        if (DateUtil.isCellDateFormatted(cell) && DateUtil.isValidExcelDate(dblValue)) {
-          var dateTime = DateUtil.getLocalDateTime(dblValue);
-          if (dateTime.isBefore(LocalDateTime.of(1900, 1, 2, 0, 0))) {
-            // Excel stores times as if they are on the 1st January 1900.
-            // Due to the 1900 leap year bug might be 31st December 1899.
-            return dateTime.toLocalTime();
+        var nf = ExcelNumberFormat.from(cell, null);
+        if (nf != null && DateUtil.isADateFormat(nf.getIdx(), nf.getFormat())) {
+          var temporal = ExcelUtils.fromExcelDateTime(dblValue);
+          if (temporal == null) {
+            return null;
           }
-          if (dateTime.getHour() == 0 && dateTime.getMinute() == 0 && dateTime.getSecond() == 0) {
-            var dateFormat = cell.getCellStyle().getDataFormatString();
-            if (!dateFormat.contains("h") && !dateFormat.contains("H")) {
-              return dateTime.toLocalDate();
+          return switch (temporal) {
+            case LocalDate date -> {
+              var dateFormat = cell.getCellStyle().getDataFormatString();
+              yield (dateFormat.contains("h") || dateFormat.contains("H"))
+                  ? date.atStartOfDay(ZoneId.systemDefault())
+                  : date;
             }
-          }
-          return dateTime.atZone(ZoneId.systemDefault());
+            default -> temporal;
+          };
         } else {
           if (dblValue == (long) dblValue) {
             return (long) dblValue;
@@ -109,6 +115,37 @@ public class ExcelRow {
       context.safepoint();
     }
     return column;
+  }
+
+  /** Returns the formatted cell value. */
+  public String getFormattedCell(int col) {
+    var cell = get(col);
+    if (cell == null) {
+      return "";
+    }
+
+    var rawCellType = cell.getCellType();
+    var cellType =
+        rawCellType == CellType.FORMULA ? cell.getCachedFormulaResultType() : rawCellType;
+
+    return switch (cellType) {
+      case ERROR ->
+      // Want to show the error message rather than empty.
+      FormulaError.forInt(cell.getErrorCellValue()).getString();
+      case NUMERIC -> {
+        // Special handling for Number or Date cells as want to keep formatting.
+        var format = ExcelNumberFormat.from(cell, null);
+        var value = cell.getNumericCellValue();
+        yield format == null
+            ? Double.toString(value)
+            : formatter.formatRawCellContents(value, format.getIdx(), format.getFormat());
+      }
+      default -> {
+        // Use the default read and then toString.
+        var value = getCellValue(col);
+        yield value == null ? "" : value.toString();
+      }
+    };
   }
 
   public String[] getCellsAsText(int startCol, int endCol) {
