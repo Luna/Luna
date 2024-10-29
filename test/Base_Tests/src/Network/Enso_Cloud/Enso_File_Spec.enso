@@ -151,7 +151,7 @@ add_specs suite_builder setup:Cloud_Tests_Setup = suite_builder.group "Enso Clou
         f.size . should_equal (kilobytes_to_write * 1024)
 
         # And now try to download it
-        v = f.read ..Bytes
+        v = f.read Bytes
         v.should_be_a Vector
         v.length . should_equal f.size
 
