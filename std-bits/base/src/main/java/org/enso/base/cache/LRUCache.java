@@ -259,7 +259,7 @@ public class LRUCache<M> {
   private record CacheEntry<M>(File responseData, M metadata, long size, ZonedDateTime expiry) {}
 
   /**
-   * A record to define the contents and propaerties of something to be cached.
+   * A record to define the contents and properties of something to be cached.
    *
    * @param stream The InputStream providing the contents of the thing to be cached.
    * @param sizeMaybe (Optional) The size of the data provided by the InputStream
