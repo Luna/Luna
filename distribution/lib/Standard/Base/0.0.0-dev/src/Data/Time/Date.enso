@@ -830,9 +830,18 @@ type Date
         format.format_date self
 
     ## PRIVATE
-       Convert to a Enso code representation of this Date.
+       GROUP convert
+       ICON enso_logo
+       Convert the value to a corresponding Enso code representation.
+
+       > Example
+         Getting the Enso code of the date 29-October-2024.
+
+             (Date.new 2024 10 29).pretty
+             ## Returns a Text
+                Date.new 2024 10 29
     pretty : Text
-    pretty self = "(Date.new " + self.year.to_text + " " + self.month.to_text + " " + self.day.to_text + ")"
+    pretty self = "Date.new " + self.year.to_text + " " + self.month.to_text + " " + self.day.to_text
 
     ## PRIVATE
        Gets the default drop down option for Date.
