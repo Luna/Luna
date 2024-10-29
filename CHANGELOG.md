@@ -9,12 +9,17 @@
 - [Copying and pasting in Table Editor Widget now works properly][11332]
 - [Fix invisible selection in Table Input Widget][11358]
 - [Enable cloud file browser in local projects][11383]
+- [Changed the way of adding new column in Table Input Widget][11388]. The
+  "virtual column" is replaced with an explicit (+) button.
+- [New dropdown-based component menu][11398].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
 [11332]: https://github.com/enso-org/enso/pull/11332
 [11358]: https://github.com/enso-org/enso/pull/11358
 [11383]: https://github.com/enso-org/enso/pull/11383
+[11388]: https://github.com/enso-org/enso/pull/11388
+[11398]: https://github.com/enso-org/enso/pull/11398
 
 #### Enso Standard Library
 
@@ -23,10 +28,12 @@
 - [The user may set description and labels of an Enso Cloud asset
   programmatically.][11255]
 - [DB_Table may be saved as a Data Link.][11371]
+- [Support for dates before 1900 in Excel and signed AWS requests.][11373]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
 [11371]: https://github.com/enso-org/enso/pull/11371
+[11373]: https://github.com/enso-org/enso/pull/11373
 
 #### Enso Language & Runtime
 
