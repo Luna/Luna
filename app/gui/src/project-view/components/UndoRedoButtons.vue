@@ -20,12 +20,12 @@ const graphStore = useGraphStore()
     </template>
     <template #right>
       <SvgButton
-        title="Write All"
+        title="Redo"
         class="iconButton"
         name="redo"
         draggable="false"
         :disabled="!graphStore.undoManager.canRedo.value"
-        @click.stop="graphStore.undoManager.redo()"
+        @click.stop="graphStore.undoManager.redo"
       />
     </template>
   </ControlButtons>
