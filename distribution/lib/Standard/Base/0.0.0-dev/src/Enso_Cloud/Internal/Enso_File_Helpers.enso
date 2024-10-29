@@ -93,8 +93,8 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
             chunk_size = 10000000
 
             Asset_Cache.invalidate destination
-            upload_setup = Utils.http_request_as_json HTTP_Method.Post (base_uri / "start") error_handlers=error_handlers <|
-                JS_Object.from_pairs [["fileName", file_name], ["size", file_size]]
+            upload_start_payload = JS_Object.from_pairs [["fileName", file_name], ["size", file_size]]
+            upload_setup = Utils.http_request_as_json HTTP_Method.Post (base_uri / "start") upload_start_payload error_handlers=error_handlers
 
             upload_setup.if_not_error <|
                 presigned_urls = get_required_field "presignedUrls" upload_setup expected_type=Vector
