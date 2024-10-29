@@ -5,7 +5,7 @@ import * as z from 'zod'
 
 import { Button, Checkbox, Dialog, Form, Text } from '#/components/AriaComponents'
 import { useAuth } from '#/providers/AuthProvider'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
+import { useLocalStorage, useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import LocalStorage from '#/utilities/LocalStorage'
 
@@ -74,28 +74,31 @@ export function AgreementsModal() {
   const { localStorage } = useLocalStorage()
   const { session } = useAuth()
 
-  const cachedTosHash = localStorage.get('termsOfService')?.versionHash
+  const [cachedTosHash] = useLocalStorageState('termsOfService')
+  const [cachedPrivacyPolicyHash] = useLocalStorageState('privacyPolicy')
+
   const { data: tosHash } = useSuspenseQuery({
     ...latestTermsOfServiceQueryOptions,
     // If the user has already accepted the EULA, we don't need to
     // block user interaction with the app while we fetch the latest version.
     // We can use the local version hash as the initial data.
     // and refetch in the background to check for updates.
-    ...(cachedTosHash != null && {
-      initialData: { hash: cachedTosHash },
+    ...(cachedTosHash?.versionHash != null && {
+      initialData: { hash: cachedTosHash.versionHash },
     }),
     select: (data) => data.hash,
   })
-  const cachedPrivacyPolicyHash = localStorage.get('privacyPolicy')?.versionHash
   const { data: privacyPolicyHash } = useSuspenseQuery({
     ...latestPrivacyPolicyQueryOptions,
-    ...(cachedPrivacyPolicyHash != null && {
-      initialData: { hash: cachedPrivacyPolicyHash },
+    ...(cachedPrivacyPolicyHash?.versionHash != null && {
+      initialData: { hash: cachedPrivacyPolicyHash.versionHash },
     }),
     select: (data) => data.hash,
   })
 
-  const isLatest = tosHash === cachedTosHash && privacyPolicyHash === cachedPrivacyPolicyHash
+  const isLatest =
+    tosHash === cachedTosHash?.versionHash &&
+    privacyPolicyHash === cachedPrivacyPolicyHash?.versionHash
   const isAccepted = cachedTosHash != null
   const shouldDisplay = !(isAccepted && isLatest)
 
@@ -128,8 +131,9 @@ export function AgreementsModal() {
         <Form
           schema={formSchema}
           defaultValues={{
-            agreedToTos: tosHash === cachedTosHash ? ['agree'] : [],
-            agreedToPrivacyPolicy: privacyPolicyHash === cachedPrivacyPolicyHash ? ['agree'] : [],
+            agreedToTos: tosHash === cachedTosHash?.versionHash ? ['agree'] : [],
+            agreedToPrivacyPolicy:
+              privacyPolicyHash === cachedPrivacyPolicyHash?.versionHash ? ['agree'] : [],
           }}
           testId="agreements-form"
           method="dialog"
