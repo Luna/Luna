@@ -2594,7 +2594,7 @@ type Column
     pretty self =
         name = self.name.pretty
         data = self.to_vector.map .pretty . join ", "
-        "(Column.from_vector " + name + " [" + data + "])"
+        "Column.from_vector " + name + " [" + data + "]"
 
 ## PRIVATE
 
