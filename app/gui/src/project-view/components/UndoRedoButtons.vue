@@ -1,36 +1,32 @@
 <script setup lang="ts">
 import SvgButton from '@/components/SvgButton.vue'
-import { useProjectStore } from '@/stores/project'
+import { useGraphStore } from '@/stores/graph'
 import ControlButtons from './ControlButtons.vue'
 
-const project = useProjectStore()
+const graphStore = useGraphStore()
 </script>
 
 <template>
-  <ControlButtons class="RecordControl">
+  <ControlButtons class="UndoRedoButtons">
     <template #left>
       <SvgButton
-        title="Refresh"
+        title="Undo"
         class="iconButton"
-        name="refresh"
+        name="undo"
         draggable="false"
-        @click.stop="project.executionContext.recompute()"
+        :disabled="!graphStore.undoManager.canUndo.value"
+        @click.stop="graphStore.undoManager.undo"
       />
     </template>
     <template #right>
       <SvgButton
         title="Write All"
         class="iconButton"
-        name="workflow_play"
+        name="redo"
         draggable="false"
-        @click.stop="project.executionContext.recompute('all', 'Live')"
+        :disabled="!graphStore.undoManager.canRedo.value"
+        @click.stop="graphStore.undoManager.redo()"
       />
     </template>
   </ControlButtons>
 </template>
-
-<style scoped>
-.iconButton:active {
-  color: #ba4c40;
-}
-</style>
