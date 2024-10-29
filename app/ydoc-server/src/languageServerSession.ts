@@ -649,7 +649,6 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
           }
           const widgetsMetadata = syncModule.getVersion(ast).mutableWidgetsMetadata()
           for (const [widgetKey, widgetMeta] of Object.entries(meta)) {
-            // TODO how to check for changes?
             widgetsMetadata.set(widgetKey, widgetMeta)
           }
         }

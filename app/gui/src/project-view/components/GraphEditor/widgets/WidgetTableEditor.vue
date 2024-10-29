@@ -162,7 +162,6 @@ const clientBounds = computed({
         metadata: { size: { x: value.width / graphNav.scale, y: value.height / graphNav.scale } },
       },
     })
-    // size.value = new Vec2(value.width / graphNav.scale, value.height / graphNav.scale)
   },
 })
 

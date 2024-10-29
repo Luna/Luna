@@ -163,6 +163,9 @@ export interface WidgetProps<T> {
  * port may not represent any existing AST node) with `edit` containing any additional modifications
  * (like inserting necessary imports).
  *
+ * The same way widgets may set their metadata (as this is also technically an AST modification).
+ * Every widget type should set it's name as `metadataKey`.
+ *
  * The handlers interested in a specific port update should apply it using received edit. The edit
  * is committed in {@link NodeWidgetTree}.
  */

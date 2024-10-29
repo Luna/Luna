@@ -108,10 +108,12 @@ export abstract class Ast {
     return metadata as FixedMapView<NodeMetadataFields & MetadataFields>
   }
 
+  /** Get metadata of all widgets assigned to this node. */
   widgetsMetadata(): FixedMapView<Record<string, unknown>> {
     return this.fields.get('metadata').get('widget')
   }
 
+  /** Get metadata of given widget assigned to this node. */
   widgetMetadata(widgetKey: string): DeepReadonly<unknown> | undefined {
     return this.fields.get('metadata').get('widget').get(widgetKey)
   }
@@ -260,10 +262,12 @@ export abstract class MutableAst extends Ast {
     this.fields.get('metadata').set('externalId', id)
   }
 
+  /** Set the new widget's metadata. */
   setWidgetMetadata(widgetKey: string, widgetMetadata: unknown) {
     this.fields.get('metadata').get('widget').set(widgetKey, widgetMetadata)
   }
 
+  /** Get map of all widget's metadata. */
   mutableWidgetsMetadata() {
     return this.fields.get('metadata').get('widget')
   }
