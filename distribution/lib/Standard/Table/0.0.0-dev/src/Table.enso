@@ -3742,7 +3742,7 @@ type Table
     ## PRIVATE
     pretty : Text
     pretty self =
-        data = self.columns.map c->("[" + c.name.pretty + ", [" + (c.to_vector.map .pretty . join ", ") + "]]") . join ", "
+        data = self.columns.map c->("[" + c.name.pretty + ", " + c.to_vector.pretty + "]") . join ", "
         "Table.new [" + data + "]"
 
 ## PRIVATE

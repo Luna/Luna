@@ -2593,7 +2593,7 @@ type Column
     pretty : Text
     pretty self =
         name = self.name.pretty
-        data = self.to_vector.map .pretty . join ", "
+        data = self.to_vector.pretty
         "Column.from_vector " + name + " [" + data + "]"
 
 ## PRIVATE
