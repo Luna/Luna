@@ -2,6 +2,7 @@ package org.enso.interpreter.runtime.data.vector;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -43,19 +44,73 @@ public abstract class VectorFromFunctionNode extends Node {
   abstract Object execute(
       VirtualFrame frame, State state, long length, Function func, Object onProblems);
 
-  @Specialization
-  Object doIt(
+  @Specialization(guards = "onProblemsAtom == onProblemsAtomCached", limit = "3")
+  Object doItCached(
       VirtualFrame frame,
       State state,
       long length,
       Function func,
       Object onProblemsAtom,
-      @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
-      @Cached("build()") AppendWarningNode appendWarningNode,
-      @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
-      @CachedLibrary(limit = "3") TypesLibrary typesLib,
-      @Cached BranchProfile errorEncounteredProfile,
-      @Cached HasContextEnabledNode hasContextEnabledNode) {
+      @Cached("onProblemsAtom") Object onProblemsAtomCached,
+      @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
+      @Shared @Cached("build()") AppendWarningNode appendWarningNode,
+      @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
+      @Shared @CachedLibrary(limit = "3") TypesLibrary typesLib,
+      @Shared @Cached BranchProfile errorEncounteredProfile,
+      @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
+    return doIt(
+        frame,
+        state,
+        length,
+        func,
+        onProblemsAtomCached,
+        warnsLib,
+        typesLib,
+        invokeFunctionNode,
+        appendWarningNode,
+        errorEncounteredProfile,
+        hasContextEnabledNode);
+  }
+
+  @Specialization(replaces = "doItCached")
+  Object doItUncached(
+      VirtualFrame frame,
+      State state,
+      long length,
+      Function func,
+      Object onProblemsAtom,
+      @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
+      @Shared @Cached("build()") AppendWarningNode appendWarningNode,
+      @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
+      @Shared @CachedLibrary(limit = "3") TypesLibrary typesLib,
+      @Shared @Cached BranchProfile errorEncounteredProfile,
+      @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
+    return doIt(
+        frame,
+        state,
+        length,
+        func,
+        onProblemsAtom,
+        warnsLib,
+        typesLib,
+        invokeFunctionNode,
+        appendWarningNode,
+        errorEncounteredProfile,
+        hasContextEnabledNode);
+  }
+
+  private Object doIt(
+      VirtualFrame frame,
+      State state,
+      long length,
+      Function func,
+      Object onProblemsAtom,
+      WarningsLibrary warnsLib,
+      TypesLibrary typesLib,
+      InvokeFunctionNode invokeFunctionNode,
+      AppendWarningNode appendWarningNode,
+      BranchProfile errorEncounteredProfile,
+      HasContextEnabledNode hasContextEnabledNode) {
     var ctx = EnsoContext.get(this);
     var onProblems = processOnProblemsArg(onProblemsAtom, typesLib);
     var len = Math.toIntExact(length);
