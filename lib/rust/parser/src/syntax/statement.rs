@@ -377,11 +377,8 @@ fn take_doc_line<'s>(
             continue;
         };
         if let StatementPrefix::Documentation(_) = content {
-            let mut newlines = take_trailing_newlines(
-                prefixes,
-                &mut trailing_newlines,
-                first_newline,
-            );
+            let mut newlines =
+                take_trailing_newlines(prefixes, &mut trailing_newlines, first_newline);
             let Some(Line { newline, content: Some(StatementPrefix::Documentation(docs)) }) =
                 prefixes.pop()
             else {
@@ -391,7 +388,7 @@ fn take_doc_line<'s>(
             newlines.reverse();
             return Some(DocLine { docs, newlines });
         } else {
-            break
+            break;
         }
     }
     None
@@ -408,8 +405,8 @@ fn parse_expression_statement<'s>(
     debug_assert!(line.items.len() <= start);
     let expression = apply_private_keywords(expression, line.items.drain(..), visibility_context);
     let mut first_newline = line.newline;
-    let expression = expression
-        .map(|expression| to_statement(prefixes, &mut first_newline, expression));
+    let expression =
+        expression.map(|expression| to_statement(prefixes, &mut first_newline, expression));
     Line { newline: first_newline, content: expression }
 }
 

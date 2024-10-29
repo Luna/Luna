@@ -100,7 +100,8 @@ where T: serde::Serialize + Reflect {
         let vec = list.to_vec().unwrap();
         if vec[0].as_symbol().unwrap() == "ExpressionStatement" {
             match &vec[1..] {
-                [Value::Cons(doc_line), Value::Cons(expr)] if doc_line.cdr().is_null() => return expr.cdr().to_owned(),
+                [Value::Cons(doc_line), Value::Cons(expr)] if doc_line.cdr().is_null() =>
+                    return expr.cdr().to_owned(),
                 _ => {}
             }
         };
