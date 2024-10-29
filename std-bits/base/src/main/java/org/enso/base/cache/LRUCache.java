@@ -133,8 +133,8 @@ public class LRUCache<M> {
         throw new ResponseTooLargeException(getMaxFileSize());
       }
     } finally {
+      outputStream.close();
       if (!successful) {
-        outputStream.close();
         if (!temp.delete()) {
           logger.log(Level.WARNING, "Unable to delete cache file (key {})", cacheKey);
         }
