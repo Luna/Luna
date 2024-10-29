@@ -840,7 +840,7 @@ type Date_Time
     pretty : Text
     pretty self =
         parts = Vector.build builder->
-            builder.append "(Date_Time.new " + self.year.to_text + " " + self.month.to_text + " " + self.day.to_text
+            builder.append ("(Date_Time.new " + self.year.to_text + " " + self.month.to_text + " " + self.day.to_text)
             if self.hour != 0 then builder.append ((if builder.length!=1 then " hour=" else " ") + self.hour.to_text)
             if self.minute != 0 then builder.append ((if builder.length!=2 then " minute=" else " ") + self.minute.to_text)
             if self.second != 0 then builder.append ((if builder.length!=3 then " second=" else " ") + self.second.to_text)
