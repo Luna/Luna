@@ -63,7 +63,7 @@ type HTTP
 
          See `Data.fetch` for information about response caching.
     fetch : (URI | Text) -> HTTP_Method -> Vector (Header | Pair Text Text) -> Cache_Policy -> Response ! Request_Error | HTTP_Error
-    fetch (uri:(URI | Text)) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) (cache_policy:Cache_Policy = ..Default) = if_fetch_method <|
+    fetch (uri:(URI | Text)) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) (cache_policy:Cache_Policy = ..Default) = if_fetch_method method <|
         request = Request.new method uri (Header.unify_vector headers) Request_Body.Empty
         HTTP.new.request request cache_policy=cache_policy
 
