@@ -137,10 +137,10 @@ export function makeComponentList(db: SuggestionDb, filtering: Filtering): Compo
  * In practice, these hierarchies are at most two levels deep.
  */
 function populateAdditionalSelfTypes(db: SuggestionDb, list: QualifiedName[], name: QualifiedName) {
-  const entry = db.getEntryByQualifiedName(name)
+  let entry = db.getEntryByQualifiedName(name)
   // We don’t need to add `Any` to the list, because the caller already did that.
-  if (entry?.parentType != null && entry.parentType !== ANY_TYPE) {
+  while (entry != null && entry.parentType != null && entry.parentType !== ANY_TYPE) {
     list.push(entry.parentType)
-    populateAdditionalSelfTypes(db, list, entry.parentType)
+    entry = db.getEntryByQualifiedName(entry.parentType)
   }
 }
