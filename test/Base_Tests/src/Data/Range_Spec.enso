@@ -565,7 +565,7 @@ add_specs suite_builder = suite_builder.group "Range" group_builder->
         range_2 = 0.up_to 10 . with_step 2
         range_3 = 20.down_to 0 . with_step 3
 
-        range.to_text . should_equal "(Between 1 10 1)"
+        range.to_text . should_equal "(Between 1 100 1)"
         range_2.to_text . should_equal "(Between 0 10 2)"
         range_3.to_text . should_equal "(Between 20 0 -3)"
 
