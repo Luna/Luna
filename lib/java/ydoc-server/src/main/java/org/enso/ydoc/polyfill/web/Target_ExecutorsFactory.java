@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadFactory;
 final class Target_ExecutorsFactory {
   @Substitute
   private static ThreadFactory virtualThreadFactory() {
-    return Thread.ofPlatform().name("Emulating loom", 0).factory();
+    return Thread.ofPlatform().name("emulating-loom-helidon-server-", 0).factory();
   }
 
   @Substitute
