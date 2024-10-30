@@ -1,4 +1,5 @@
 import project.Any.Any
+import project.Any.Any
 import project.Data.Array_Proxy.Array_Proxy
 import project.Data.Filter_Condition.Filter_Condition
 import project.Data.Numbers.Integer
@@ -589,7 +590,7 @@ type Range
     pretty self =
         start = self.start.pretty
         end = self.end.pretty
-        "Range.new " + start + " " + end + (if self.step.abs == 1 then "" else " " + self.step.pretty)
+        "Range.new " + start + " " + end + (if self.step.abs == 1 then "" else " step=" + self.step.abs.pretty)
 
 ## PRIVATE
 throw_zero_step_error = Error.throw (Illegal_State.Error "A range with step = 0 is ill-formed.")
