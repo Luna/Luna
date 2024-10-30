@@ -185,6 +185,15 @@ fn expression_documentation() {
         (ExpressionStatement ((#((Section " The value of x"))) #(())) (Ident x)));
 }
 
+#[test]
+fn unused_documentation() {
+    test!("## First docs\n## More docs\n\n## More docs after a gap",
+        (Documentation (#((Section " First docs"))))
+        (Documentation (#((Section " More docs"))))
+        ()
+        (Documentation (#((Section " More docs after a gap")))));
+}
+
 
 // === Type Definitions ===
 

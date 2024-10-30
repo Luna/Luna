@@ -2,7 +2,7 @@ import { usePlacement } from '@/components/ComponentBrowser/placement'
 import { createContextStore } from '@/providers'
 import type { PortId } from '@/providers/portInfo'
 import type { WidgetUpdate } from '@/providers/widgetRegistry'
-import { GraphDb, nodeIdFromOuterExpr, type NodeId } from '@/stores/graph/graphDatabase'
+import { GraphDb, nodeIdFromOuterAst, type NodeId } from '@/stores/graph/graphDatabase'
 import {
   addImports,
   detectImportConflicts,
@@ -328,8 +328,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
             updatePortValue(edit, usage, undefined)
           }
-          const outerExpr = edit.getVersion(node.outerExpr)
-          if (outerExpr.isStatement()) Ast.deleteFromParentBlock(outerExpr)
+          const outerAst = edit.getVersion(node.outerAst)
+          if (outerAst.isStatement()) Ast.deleteFromParentBlock(outerAst)
           nodeRects.delete(id)
           nodeHoverAnimations.delete(id)
           deletedNodes.add(id)
@@ -665,7 +665,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       const body = func.bodyExpressions()
       const result: NodeId[] = []
       for (const expr of body) {
-        const nodeId = nodeIdFromOuterExpr(expr)
+        const nodeId = nodeIdFromOuterAst(expr)
         if (nodeId && ids.has(nodeId)) result.push(nodeId)
       }
       return result
@@ -683,8 +683,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       sourceNodeId: NodeId,
       targetNodeId: NodeId,
     ) {
-      const sourceExpr = db.nodeIdToNode.get(sourceNodeId)?.outerExpr.id
-      const targetExpr = db.nodeIdToNode.get(targetNodeId)?.outerExpr.id
+      const sourceExpr = db.nodeIdToNode.get(sourceNodeId)?.outerAst.id
+      const targetExpr = db.nodeIdToNode.get(targetNodeId)?.outerAst.id
       const body = edit.getVersion(unwrap(getExecutedMethodAst(edit))).bodyAsBlock()
       assert(sourceExpr != null)
       assert(targetExpr != null)
@@ -700,7 +700,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         const deps = reachable([targetNodeId], (node) => db.nodeDependents.lookup(node))
 
         const dependantLines = new Set(
-          Array.from(deps, (id) => db.nodeIdToNode.get(id)?.outerExpr.id),
+          Array.from(deps, (id) => db.nodeIdToNode.get(id)?.outerAst.id),
         )
         // Include the new target itself in the set of lines that must be placed after source node.
         dependantLines.add(targetExpr)

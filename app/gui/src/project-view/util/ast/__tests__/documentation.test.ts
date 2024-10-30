@@ -71,7 +71,7 @@ test.each([
 
 test('Creating comments', () => {
   const block = Ast.parseBlock('2 + 2')
-  block.module.replaceRoot(block)
+  block.module.setRoot(block)
   const statement = [...block.statements()][0]! as Ast.MutableExpressionStatement
   const docText = 'Calculate five'
   statement.setDocumentationText(docText)
@@ -81,7 +81,7 @@ test('Creating comments', () => {
 test('Creating comments: indented', () => {
   const block = Ast.parseBlock('main =\n    x = 1')
   const module = block.module
-  module.replaceRoot(block)
+  module.setRoot(block)
   const main = module.getVersion(Ast.findModuleMethod(block, 'main')!.statement)
   const statement = [...main.bodyAsBlock().statements()][0]! as Ast.MutableAssignment
   const docText = 'The smallest natural number'

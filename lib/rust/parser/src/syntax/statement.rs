@@ -408,9 +408,8 @@ impl<'s> StatementPrefixes<'s> {
         let mut empty_lines = self.newlines.drain(..).map(block::Line::from);
         let mut prev_trailing_newlines_start = 0;
         for (newline_before_prefix, prefix, trailing_newlines_start) in self.prefixes.drain(..) {
-            let trailing_newlines =
-                mem::replace(&mut prev_trailing_newlines_start, trailing_newlines_start)
-                    - prev_trailing_newlines_start;
+            let trailing_newlines = trailing_newlines_start - prev_trailing_newlines_start;
+            prev_trailing_newlines_start = trailing_newlines_start;
             lines.extend((&mut empty_lines).take(trailing_newlines));
             lines.push(block::Line {
                 newline:    newline_before_prefix,

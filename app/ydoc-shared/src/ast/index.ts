@@ -3,8 +3,8 @@ import { reachable } from '../util/data/graph'
 import type { ExternalId } from '../yjsModel'
 import type { Module } from './mutableModule'
 import type { SyncTokenId } from './token'
-import type { AstId } from './tree'
-import { App, Ast, Group, MutableAst, OprApp, Wildcard } from './tree'
+import type { AstId, Mutable, MutableAst } from './tree'
+import { App, Ast, Group, OprApp, Wildcard } from './tree'
 
 export * from './mutableModule'
 export * from './parse'
@@ -30,8 +30,6 @@ export function asOwned<T>(t: T): Owned<T> {
 
 export type NodeChild<T> = { whitespace: string | undefined; node: T }
 export type RawNodeChild = NodeChild<AstId> | NodeChild<SyncTokenId>
-export type ConcreteChild<T> = { whitespace: string; node: T }
-export type RawConcreteChild = ConcreteChild<AstId> | ConcreteChild<SyncTokenId>
 
 /** Create a new random {@link ExternalId}. */
 export function newExternalId(): ExternalId {

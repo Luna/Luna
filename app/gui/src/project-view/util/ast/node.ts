@@ -27,7 +27,7 @@ export function nodeRootExpr(ast: Ast.Statement | Ast.Expression): {
 export function inputNodeFromAst(ast: Ast.Expression, argIndex: number): NodeDataFromAst {
   return {
     type: 'input',
-    outerExpr: ast,
+    outerAst: ast,
     pattern: undefined,
     rootExpr: ast,
     innerExpr: ast,
@@ -47,7 +47,7 @@ export function nodeFromAst(ast: Ast.Statement, isOutput: boolean): NodeDataFrom
   const primaryApplication = primaryApplicationSubject(innerExpr)
   return {
     type,
-    outerExpr: ast,
+    outerAst: ast,
     pattern: assignment?.pattern,
     rootExpr: root,
     innerExpr,

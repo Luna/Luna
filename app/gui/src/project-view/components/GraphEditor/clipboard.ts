@@ -186,8 +186,7 @@ export function writeClipboard(data: MimeData) {
 // === Serializing nodes ===
 
 function nodeStructuredData(node: Node): CopiedNode {
-  const documentation =
-    node.outerExpr.isStatement() ? node.outerExpr.documentationText() : undefined
+  const documentation = node.outerAst.isStatement() ? node.outerAst.documentationText() : undefined
   return {
     expression: node.innerExpr.code(),
     documentation,
@@ -206,6 +205,6 @@ export function clipboardNodeData(nodes: CopiedNode[]): MimeData {
 export function nodesToClipboardData(nodes: Node[]): MimeData {
   return {
     ...clipboardNodeData(nodes.map(nodeStructuredData)),
-    'text/plain': nodes.map((node) => node.outerExpr.code()).join('\n'),
+    'text/plain': nodes.map((node) => node.outerAst.code()).join('\n'),
   }
 }

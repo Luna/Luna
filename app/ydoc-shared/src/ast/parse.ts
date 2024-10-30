@@ -96,7 +96,7 @@ export function normalize(rootIn: Ast): Ast {
   const module = MutableModule.Transient()
   const tree = rawParseModule(printed.code)
   const { root: parsed, spans } = abstract(module, tree, printed.code)
-  module.replaceRoot(parsed)
+  module.setRoot(parsed)
   setExternalIds(module, spans, idMap)
   return parsed
 }
@@ -303,13 +303,6 @@ class Abstractor {
         const docLine = tree.docLine && this.abstractDocLine(tree.docLine)
         const expression = this.abstractExpression(tree.expression)
         node = ExpressionStatement.concrete(this.module, docLine, expression)
-        /*
-        if (docLine == null) {
-          // If this node has the same span
-          this.toRaw.set(node.id, tree)
-          return { node, whitespace }
-        }
-         */
         break
       }
       case RawAst.Tree.Type.Import: {
@@ -572,6 +565,11 @@ export function printAst(
     if (!isTokenId(child.node) && ast.module.get(child.node) === undefined) continue
     if (prevIsNewline) currentLineIndent = child.whitespace
     const token = isTokenId(child.node) ? ast.module.getToken(child.node) : undefined
+    // Every line in a block starts with a newline token. In an AST produced by the parser, the newline token at the
+    // first line of a module is zero-length. In order to handle whitespace correctly if the lines of a module are
+    // rearranged, if a zero-length newline is encountered within a block, it is printed as an ordinary newline
+    // character, and if an ordinary newline is found at the beginning of the output, it is not printed; however if the
+    // output begins with a newline including a (plain) comment, we print the line as we would in any other block.
     if (
       token?.tokenType_ == RawAst.Token.Type.Newline &&
       isFirstToken &&
@@ -614,6 +612,11 @@ export function printAst(
   const span = nodeKey(offset + leadingWhitespace, code.length - leadingWhitespace)
   map.setIfUndefined(info.nodes, span, (): Ast[] => []).unshift(ast)
   return code
+}
+
+/** Parse the input as a complete module. */
+export function parseModule(code: string, module?: MutableModule): Owned<MutableBodyBlock> {
+  return parseModuleWithSpans(code, module).root
 }
 
 /** Parse the input as a body block, not the top level of a module. */
@@ -678,7 +681,7 @@ export function parseExtended(code: string, idMap?: IdMap | undefined, inModule?
   const module = inModule ?? MutableModule.Transient()
   const { root, spans, toRaw } = module.transact(() => {
     const { root, spans, toRaw } = abstract(module, rawRoot, code)
-    root.module.replaceRoot(root)
+    root.module.setRoot(root)
     if (idMap) setExternalIds(root.module, spans, idMap)
     return { root, spans, toRaw }
   })
@@ -690,7 +693,7 @@ export function parseExtended(code: string, idMap?: IdMap | undefined, inModule?
 /** Return the number of `Ast`s in the tree, including the provided root. */
 export function astCount(ast: Ast): number {
   let count = 0
-  ast.visitRecursiveAst(_subtree => {
+  ast.visitRecursive(_subtree => {
     count += 1
   })
   return count
@@ -1026,7 +1029,7 @@ function syncTree(
     target.fields.get('metadata').set('externalId', newExternalId())
   }
   const newRoot = syncRoot ? target : newContent
-  newRoot.visitRecursiveAst(ast => {
+  newRoot.visitRecursive(ast => {
     const syncFieldsFrom = toSync.get(ast.id)
     const editAst = edit.getVersion(ast)
     if (syncFieldsFrom) {

@@ -6,7 +6,7 @@ import * as Y from 'yjs'
 
 test('Module reactivity: applyEdit', async () => {
   const beforeEdit = Ast.parseBlock('func arg1 arg2')
-  beforeEdit.module.replaceRoot(beforeEdit)
+  beforeEdit.module.setRoot(beforeEdit)
 
   const module = reactiveModule(new Y.Doc(), () => {})
   module.applyEdit(beforeEdit.module)
@@ -38,7 +38,7 @@ test('Module reactivity: applyEdit', async () => {
 
 test('Module reactivity: Direct Edit', async () => {
   const beforeEdit = Ast.parseExpression('func arg1 arg2')
-  beforeEdit.module.replaceRoot(beforeEdit)
+  beforeEdit.module.setRoot(beforeEdit)
 
   const module = reactiveModule(new Y.Doc(), () => {})
   module.applyEdit(beforeEdit.module)
@@ -59,8 +59,8 @@ test('Module reactivity: Direct Edit', async () => {
 })
 
 test('Module reactivity: Tracking access to ancestors', async () => {
-  const { root: beforeEdit } = Ast.parseModuleWithSpans('main = 23\nother = f')
-  beforeEdit.module.replaceRoot(beforeEdit)
+  const beforeEdit = Ast.parseModule('main = 23\nother = f')
+  beforeEdit.module.setRoot(beforeEdit)
 
   const module = reactiveModule(new Y.Doc(), () => {})
   module.applyEdit(beforeEdit.module)

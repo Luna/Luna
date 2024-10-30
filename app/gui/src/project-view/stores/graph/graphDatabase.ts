@@ -125,7 +125,7 @@ export class BindingsDb {
       bindingRanges.add(binding)
       for (const usage of usages) bindingRanges.add(usage)
     }
-    ast.visitRecursiveAst((ast) => {
+    ast.visitRecursive((ast) => {
       const span = getSpan(ast.id)
       assert(span != null)
       if (bindingRanges.has(span)) {
@@ -157,13 +157,13 @@ export class GraphDb {
 
   private nodeIdToPatternExprIds = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     const exprs: AstId[] = []
-    if (entry.pattern) entry.pattern.visitRecursiveAst((ast) => void exprs.push(ast.id))
+    if (entry.pattern) entry.pattern.visitRecursive((ast) => void exprs.push(ast.id))
     return Array.from(exprs, (expr) => [id, expr])
   })
 
   private nodeIdToExprIds = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     const exprs: AstId[] = []
-    entry.innerExpr.visitRecursiveAst((ast) => void exprs.push(ast.id))
+    entry.innerExpr.visitRecursive((ast) => void exprs.push(ast.id))
     return Array.from(exprs, (expr) => [id, expr])
   })
 
@@ -199,7 +199,7 @@ export class GraphDb {
   nodeOutputPorts = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     if (entry.pattern == null) return []
     const ports = new Set<AstId>()
-    entry.pattern.visitRecursiveAst((ast) => {
+    entry.pattern.visitRecursive((ast) => {
       if (this.bindings.bindings.has(ast.id)) {
         ports.add(ast.id)
         return false
@@ -387,7 +387,7 @@ export class GraphDb {
       update(nodeId, argPattern, true, false, index)
     })
     body.forEach((outerAst, index) => {
-      const nodeId = nodeIdFromOuterExpr(outerAst)
+      const nodeId = nodeIdFromOuterAst(outerAst)
       if (!nodeId) return
       const isLastInBlock = index === body.length - 1
       update(nodeId, outerAst, false, isLastInBlock, undefined)
@@ -431,7 +431,7 @@ export class GraphDb {
     } else {
       const {
         type,
-        outerExpr,
+        outerAst,
         pattern,
         rootExpr,
         innerExpr,
@@ -446,7 +446,7 @@ export class GraphDb {
       const updateAst = (field: NodeAstField) => {
         if (oldNode[field]?.id !== newNode[field]?.id) node[field] = newNode[field] as any
       }
-      const astFields: NodeAstField[] = ['outerExpr', 'pattern', 'rootExpr', 'innerExpr']
+      const astFields: NodeAstField[] = ['outerAst', 'pattern', 'rootExpr', 'innerExpr']
       astFields.forEach(updateAst)
       if (oldNode.primarySubject !== primarySubject) node.primarySubject = primarySubject
       if (!recordEqual(oldNode.prefixes, prefixes)) node.prefixes = prefixes
@@ -454,7 +454,7 @@ export class GraphDb {
       // Ensure new fields can't be added to `NodeAstData` without this code being updated.
       const _allFieldsHandled = {
         type,
-        outerExpr,
+        outerAst,
         pattern,
         rootExpr,
         innerExpr,
@@ -480,7 +480,7 @@ export class GraphDb {
   updateExternalIds(topLevel: Ast.Ast) {
     const idToExternalNew = new Map()
     const idFromExternalNew = new Map()
-    topLevel.visitRecursiveAst((ast) => {
+    topLevel.visitRecursive((ast) => {
       idToExternalNew.set(ast.id, ast.externalId)
       idFromExternalNew.set(ast.externalId, ast.id)
     })
@@ -547,8 +547,8 @@ export class GraphDb {
     const edit = MutableModule.Transient()
     const ident = unwrap(tryIdentifier(binding))
     const expression = Ast.parseExpression(code ?? '0', edit)!
-    const outerExpr = Ast.Assignment.new(ident, expression, { edit })
-    const pattern = outerExpr.pattern
+    const outerAst = Ast.Assignment.new(ident, expression, { edit })
+    const pattern = outerAst.pattern
 
     const node: Node = {
       type: 'component',
@@ -558,7 +558,7 @@ export class GraphDb {
       primarySubject: undefined,
       colorOverride: undefined,
       conditionalPorts: new Set(),
-      outerExpr,
+      outerAst,
       pattern,
       rootExpr: expression,
       innerExpr: expression,
@@ -574,7 +574,7 @@ export class GraphDb {
 
 /** Source code data of the specific node. */
 interface NodeSource {
-  /** The outer AST of the node (see {@link NodeDataFromAst.outerExpr}). */
+  /** The outer AST of the node (see {@link NodeDataFromAst.outerAst}). */
   outerAst: Ast.Ast
   /**
    * Whether the node is `output` of the function or not. Mutually exclusive with `isInput`.
@@ -602,30 +602,30 @@ export function asNodeId(id: ExternalId | undefined): NodeId | undefined {
   return id != null ? (id as NodeId) : undefined
 }
 
-/** Given an expression at the top level of a block, return the `NodeId` for the expression. */
-export function nodeIdFromOuterExpr(outerExpr: Ast.Statement | Ast.Expression) {
-  const { root } = nodeRootExpr(outerExpr)
+/** Given the outermost AST for a node, returns its {@link NodeId}. */
+export function nodeIdFromOuterAst(outerAst: Ast.Statement | Ast.Expression) {
+  const { root } = nodeRootExpr(outerAst)
   return root && asNodeId(root.externalId)
 }
 
 export interface NodeDataFromAst {
   type: NodeType
   /**
-   * The statement or root expression.
+   * The statement or top-level expression.
    *
    * If the function has a body block, the nodes derived from the block are statements:
    * - Assignment expressions (`a = b`)
    * - Expression-statements (unnamed nodes and output nodes)
    * If the function has a single-line body, the corresponding node will be an expression.
    *
-   * Nodes for the function's inputs are have (pattern) expressions at their roots.
+   * Nodes for the function's inputs have (pattern) expressions as their outer ASTs.
    */
-  outerExpr: Ast.Statement | Ast.Expression
-  /** The left side of the assignment expression, if `outerExpr` is an assignment expression. */
+  outerAst: Ast.Statement | Ast.Expression
+  /** The left side of the assignment expression, if `outerAst` is an assignment expression. */
   pattern: Ast.Expression | undefined
   /**
-   * The value of the node. The right side of the assignment, if `outerExpr` is an assignment
-   * expression, else the entire `outerExpr`.
+   * The value of the node. The right side of the assignment, if `outerAst` is an assignment
+   * expression, else the entire `outerAst`.
    */
   rootExpr: Ast.Expression
   /**

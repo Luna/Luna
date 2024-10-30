@@ -3,7 +3,6 @@ import { isIconName } from '@/util/iconName'
 import type { DefineComponent, PropType } from 'vue'
 import * as z from 'zod'
 
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Visualization =
   | DefineComponent<
       // Props
@@ -31,7 +30,6 @@ export type Visualization =
       // Emits
       {}
     >
-/* eslint-enable @typescript-eslint/no-empty-object-type */
 
 export const VisualizationModule = z.object({
   // This is UNSAFE, but unavoidable as the type of `Visualization` is impossible to statically

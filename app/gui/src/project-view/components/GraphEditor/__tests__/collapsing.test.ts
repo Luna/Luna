@@ -8,7 +8,7 @@ import { tryIdentifier } from '@/util/qualifiedName'
 import { expect, test } from 'vitest'
 import { watchEffect } from 'vue'
 import { Identifier } from 'ydoc-shared/ast'
-import { nodeIdFromOuterExpr } from '../../../stores/graph/graphDatabase'
+import { nodeIdFromOuterAst } from '../../../stores/graph/graphDatabase'
 
 // ===============================
 // === Collapse Analysis Tests ===
@@ -224,7 +224,7 @@ main =
 // ================================
 
 test('Perform collapse', () => {
-  const { root } = Ast.parseModuleWithSpans(
+  const root = Ast.parseModule(
     [
       'main =',
       '    keep1 = 1',
@@ -234,7 +234,7 @@ test('Perform collapse', () => {
       '    target = extract2',
     ].join('\n'),
   )
-  root.module.replaceRoot(root)
+  root.module.setRoot(root)
   const before = findExpressions(root, {
     'keep1 = 1': Ast.Assignment,
     'extract1 = keep1': Ast.Assignment,
@@ -282,7 +282,7 @@ test('Perform collapse', () => {
   })
   expect(collapsedNodeIds).toStrictEqual(
     [after['target = extract2'], after['extract2 = extract1 + 1'], after['extract1 = keep1']].map(
-      nodeIdFromOuterExpr,
+      nodeIdFromOuterAst,
     ),
   )
   expect(outputAstId).toBe(after['target'].expression.id)

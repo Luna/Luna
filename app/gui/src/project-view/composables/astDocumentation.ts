@@ -16,6 +16,9 @@ export function useAstDocumentation(graphStore: GraphStore, ast: ToValue<Ast.Ast
         graphStore.edit((edit) => {
           if (astValue?.isStatement()) {
             const editAst = edit.getVersion(astValue)
+            // If the statement can have documentation attached (for example, it is a `Function`, `Assignment`, or
+            // `ExpressionStatement`), do so. If in cannot (for example, it is an `import` declaration), an error will
+            // be reported below.
             if ('setDocumentationText' in editAst) {
               editAst.setDocumentationText(text)
               return

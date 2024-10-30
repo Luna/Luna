@@ -27,6 +27,7 @@ import {
   parseExpression,
   print,
 } from 'ydoc-shared/ast'
+
 export * from 'ydoc-shared/ast'
 
 /** Given an output of {@link serializeExpression}, returns a deserialized expression. */
@@ -263,6 +264,10 @@ export function copyIntoNewModule<T extends Ast>(ast: T): Owned<Mutable<T>> {
   const module = MutableModule.Transient()
   module.importCopy(ast)
   return module.getVersion(ast) as Owned<Mutable<T>>
+}
+
+export function readonly<T extends Ast>(value: Owned<T> | Mutable<T>): T {
+  return value as any
 }
 
 declare const tokenKey: unique symbol

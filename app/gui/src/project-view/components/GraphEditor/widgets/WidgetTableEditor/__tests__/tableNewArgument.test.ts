@@ -126,8 +126,9 @@ test.each([
 
 function tableEditFixture(code: string, expectedCode: string) {
   const ast = Ast.parseBlock(code)
-  const inputAst = ([...ast.statements()][0] as Ast.MutableExpressionStatement).expression
-  assert(inputAst != null)
+  const firstStatement = [...ast.statements()][0]
+  assert(firstStatement instanceof Ast.MutableExpressionStatement)
+  const inputAst = firstStatement.expression
   const input = WidgetInput.FromAst(inputAst)
   const startEdit = vi.fn(() => ast.module.edit())
   const onUpdate = vi.fn((update) => {

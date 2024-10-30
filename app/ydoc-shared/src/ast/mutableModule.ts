@@ -2,6 +2,7 @@ import * as random from 'lib0/random'
 import * as Y from 'yjs'
 import {
   AstId,
+  MutableBodyBlock,
   NodeChild,
   Owned,
   RawNodeChild,
@@ -10,7 +11,7 @@ import {
   asOwned,
   isTokenId,
   newExternalId,
-  parseModuleWithSpans,
+  parseModule,
   subtreeRoots,
 } from '.'
 import { assert, assertDefined } from '../util/assert'
@@ -96,37 +97,27 @@ export class MutableModule implements Module {
     return this.ydoc.transact(f, origin)
   }
 
-  /** TODO: Add docs */
+  /** Return the top-level block of the module. */
   root(): MutableAst | undefined {
     return this.rootPointer()?.expression
   }
 
-  /** TODO: Add docs */
-  replaceRoot(newRoot: Owned | undefined): Owned | undefined {
+  /** Set the given block to be the top-level block of the module. */
+  setRoot(newRoot: Owned<MutableBodyBlock> | undefined) {
     if (newRoot) {
       const rootPointer = this.rootPointer()
       if (rootPointer) {
-        return rootPointer.expression.replace(newRoot)
+        rootPointer.expression.replace(newRoot)
       } else {
         invalidFields(this, this.baseObject('Invalid', undefined, ROOT_ID), {
           whitespace: '',
           node: newRoot,
         })
-        return undefined
       }
     } else {
       const oldRoot = this.root()
-      if (!oldRoot) return
-      this.nodes.delete(ROOT_ID)
-      oldRoot.fields.set('parent', undefined)
-      return asOwned(oldRoot)
+      if (oldRoot) oldRoot.fields.set('parent', undefined)
     }
-  }
-
-  /** TODO: Add docs */
-  syncRoot(root: Owned) {
-    this.replaceRoot(root)
-    this.gc()
   }
 
   /** TODO: Add docs */
@@ -135,7 +126,7 @@ export class MutableModule implements Module {
     if (root) {
       root.syncToCode(code)
     } else {
-      this.replaceRoot(parseModuleWithSpans(code, this).root)
+      this.setRoot(parseModule(code, this))
     }
   }
 
@@ -180,7 +171,7 @@ export class MutableModule implements Module {
   /** @internal */
   importCopy<T extends Ast>(ast: T): Owned<Mutable<T>> {
     assert(ast.module !== this)
-    ast.visitRecursiveAst(ast => this.nodes.set(ast.id, ast.fields.clone() as any))
+    ast.visitRecursive(ast => this.nodes.set(ast.id, ast.fields.clone() as any))
     const fields = this.nodes.get(ast.id)
     assertDefined(fields)
     fields.set('parent', undefined)
@@ -342,11 +333,6 @@ export class MutableModule implements Module {
   /** TODO: Add docs */
   take(id: AstId): Owned {
     return this.replace(id, Wildcard.new(this)) || asOwned(this.get(id))
-  }
-
-  /** TODO: Add docs */
-  updateValue<T extends MutableAst>(id: AstId, f: (x: Owned) => Owned<T>): T | undefined {
-    return this.tryGet(id)?.updateValue(f)
   }
 
   /////////////////////////////////////////////

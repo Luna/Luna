@@ -3,10 +3,21 @@ import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { WidgetInput, defineWidget, widgetProps } from '@/providers/widgetRegistry'
 import { Ast } from '@/util/ast'
 import { computed } from 'vue'
+import { isToken } from 'ydoc-shared/ast'
 
 const props = defineProps(widgetProps(widgetDefinition))
 
 const spanClass = computed(() => props.input.value.typeName())
+
+function* expressionChildren(expression: Ast.Expression) {
+  for (const child of expression.children()) {
+    if (isToken(child) || child.isExpression()) {
+      yield child
+    } else {
+      console.error('Unable to render non-expression AST node in component', child)
+    }
+  }
+}
 
 function transformChild(child: Ast.Expression | Ast.Token) {
   const childInput = WidgetInput.FromAst(child)
@@ -36,7 +47,7 @@ export const widgetDefinition = defineWidget(
 <template>
   <div class="WidgetHierarchy" :class="spanClass">
     <NodeWidget
-      v-for="child in props.input.value.childExpressionsAndTokens()"
+      v-for="child in expressionChildren(props.input.value)"
       :key="child.id"
       :input="transformChild(child)"
     />

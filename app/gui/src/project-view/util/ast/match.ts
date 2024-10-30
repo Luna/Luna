@@ -16,7 +16,7 @@ export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
   private readonly placeholder: string
 
   private constructor(template: Ast.Owned<T>, placeholder: string) {
-    this.template = template
+    this.template = Ast.readonly(template)
     this.placeholders = findPlaceholders(template, placeholder)
     this.placeholder = placeholder
   }
@@ -62,7 +62,10 @@ export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
   }
 
   /** Create a new concrete example of the pattern, with the placeholders replaced with the given subtrees. */
-  instantiate(edit: Ast.MutableModule, subtrees: Ast.Owned<Ast.MutableExpression>[]): Ast.Owned<T> {
+  instantiate(
+    edit: Ast.MutableModule,
+    subtrees: Ast.Owned<Ast.MutableExpression>[],
+  ): Ast.Owned<Ast.Mutable<T>> {
     const template = edit.copy(this.template)
     const placeholders = findPlaceholders(template, this.placeholder).map((ast) => edit.tryGet(ast))
     for (const [placeholder, replacement] of zipLongest(placeholders, subtrees)) {
@@ -70,8 +73,7 @@ export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
       assertDefined(replacement)
       placeholder.replace(replacement)
     }
-    // Cast `Owned<Mutable<T>>` to `Owned<T>`. We require `T extends MutableAst`.
-    return template as any
+    return template
   }
 
   /**
@@ -81,7 +83,7 @@ export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
   instantiateCopied(
     subtrees: (Ast.Expression | Ast.MutableExpression)[],
     edit?: Ast.MutableModule,
-  ): Ast.Owned<T> {
+  ): Ast.Owned<Ast.Mutable<T>> {
     const module = edit ?? Ast.MutableModule.Transient()
     return this.instantiate(
       module,

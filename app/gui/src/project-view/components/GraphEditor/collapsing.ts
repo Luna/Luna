@@ -1,4 +1,4 @@
-import { GraphDb, NodeId, nodeIdFromOuterExpr } from '@/stores/graph/graphDatabase'
+import { GraphDb, NodeId, nodeIdFromOuterAst } from '@/stores/graph/graphDatabase'
 import { assert } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { Identifier, isIdentifier, moduleMethodNames } from '@/util/ast/abstract'
@@ -170,7 +170,7 @@ export function performCollapse(
   graphDb: GraphDb,
   currentMethodName: string,
 ): CollapsingResult {
-  const nodeIdToStatementId = (nodeId: NodeId) => graphDb.nodeIdToNode.get(nodeId)!.outerExpr.id
+  const nodeIdToStatementId = (nodeId: NodeId) => graphDb.nodeIdToNode.get(nodeId)!.outerAst.id
   const preparedInfo = {
     args: info.extracted.inputs,
     statementsToExtract: new Set([...info.extracted.ids].map(nodeIdToStatementId)),
@@ -192,12 +192,11 @@ export function performCollapseImpl(
     topLevel,
     currentMethodName,
   )!
-  info.statementsToExtract.delete(info.statementToReplace)
 
   // Update the definition of the refactored function.
   const extractedLines = currentMethod
     .bodyAsBlock()
-    .extractIf((stmt) => info.statementsToExtract.has(stmt.id))
+    .extractIf(({ id }) => info.statementsToExtract.has(id) && id !== info.statementToReplace)
   const collapsedCall = Ast.App.PositionalSequence(
     Ast.PropertyAccess.new(edit, Ast.Ident.new(edit, MODULE_NAME), collapsedName),
     info.args.map((arg) => Ast.Ident.new(edit, arg)),
@@ -215,7 +214,7 @@ export function performCollapseImpl(
   })
 
   const collapsedNodeIds = extractedLines
-    .map(({ statement }) => statement && nodeIdFromOuterExpr(statement.node))
+    .map(({ statement }) => statement && nodeIdFromOuterAst(statement.node))
     .filter((id) => id != null)
     .reverse()
 

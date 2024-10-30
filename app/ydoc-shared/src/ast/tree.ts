@@ -1,10 +1,5 @@
 // Declaration-merging is used to implement mixin types in this file.
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
-
-// Although to the typechecker an empty interface extending a type is equivalent to a type alias resolving to the type,
-// my IDE (JetBrains) resolves type aliases (even if they point to the internal name of an unexported type), but leaves
-// intact references to an interface.
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 import * as Y from 'yjs'
 import {
   Identifier,
@@ -16,7 +11,6 @@ import {
   NodeChild,
   Owned,
   ROOT_ID,
-  RawConcreteChild,
   RawNodeChild,
   SpanMap,
   SyncTokenId,
@@ -42,7 +36,6 @@ import { is_numeric_literal } from './ffi'
 import * as RawAst from './generated/ast'
 import {
   applyTextEditsToAst,
-  parseBlock,
   parseExpression,
   parseStatement,
   print,
@@ -54,6 +47,9 @@ export type DeepReadonly<T> = T
 
 declare const brandAstId: unique symbol
 export type AstId = string & { [brandAstId]: never }
+
+export type ConcreteChild<T> = { whitespace: string; node: T }
+export type RawConcreteChild = ConcreteChild<AstId> | ConcreteChild<SyncTokenId>
 
 /** @internal */
 export interface MetadataFields {
@@ -88,13 +84,24 @@ const astFieldKeys = allKeys<RawAstFields>({
   metadata: null,
 })
 
-/** TODO: Add docs */
+/**
+ * Base class for "first class" AST types. The kinds of AST data include:
+ * - Subtypes of `Ast`, including {@link Expression} and {@link Statement}. These are high-level types representing
+ *   meaningful substructures of the AST; they have unique IDs, can be mutated, and support many common operations.
+ * - {@link Token}s: All AST types are ultimately composed of tokens representing their constituent code.
+ * - Structured field data: Types organizing {@link Token}s into structures representing parts of {@link Ast}s. Some
+ *   structured field data includes Y.Js types, such as the metadata maps; field data is otherwise immutable, and is
+ *   get/set through accessors of the `Ast` types.
+ */
 export abstract class Ast {
   readonly module: Module
   /** @internal */
   readonly fields: FixedMapView<AstFields>
 
-  /** TODO: Add docs */
+  /**
+   * Return a stable unique identifier for this AST object. This can be used to retrieve the object from the module, or
+   * from any module derived from this module (e.g. by calling {@link MutableModule.edit}).
+   */
   get id(): AstId {
     return this.fields.get('id')
   }
@@ -116,12 +123,12 @@ export abstract class Ast {
     return false
   }
 
-  /** Returns whether this type can be an expression. */
+  /** Type predicate for {@link Expression}. */
   isExpression(): this is Expression {
     return this.isAllowedInExpressionContext()
   }
 
-  /** Returns whether this type can be a statement. */
+  /** Type predicate for {@link Statement}. */
   isStatement(): this is Statement {
     return this.isAllowedInStatementContext()
   }
@@ -157,28 +164,16 @@ export abstract class Ast {
     return this.id === other.id
   }
 
-  /** TODO: Add docs */
+  /** Return source code representing this node. */
   code(): string {
     return print(this).code
   }
 
   /** TODO: Add docs */
-  visitRecursive(visit: (node: Ast | Token) => void): void {
-    visit(this)
-    for (const child of this.children()) {
-      if (isToken(child)) {
-        visit(child)
-      } else {
-        child.visitRecursive(visit)
-      }
-    }
-  }
-
-  /** TODO: Add docs */
-  visitRecursiveAst(visit: (ast: Ast) => void | boolean): void {
+  visitRecursive(visit: (ast: Ast) => void | boolean): void {
     if (visit(this) === false) return
     for (const child of this.children()) {
-      if (!isToken(child)) child.visitRecursiveAst(visit)
+      if (!isToken(child)) child.visitRecursive(visit)
     }
   }
 
@@ -204,19 +199,6 @@ export abstract class Ast {
     }
   }
 
-  /** Returns child expressions and tokens. */
-  *childExpressionsAndTokens(): IterableIterator<Expression | Token> {
-    for (const child of this.children()) {
-      if (isToken(child)) {
-        yield child
-      } else {
-        if (child.isExpression()) yield child
-        else if (child instanceof ExpressionStatement) yield child.expression
-        else if (child instanceof Assignment) yield child.expression
-      }
-    }
-  }
-
   /** TODO: Add docs */
   get parentId(): AstId | undefined {
     const parentId = this.fields.get('parent')
@@ -226,27 +208,6 @@ export abstract class Ast {
   /** TODO: Add docs */
   parent(): Ast | undefined {
     return this.module.get(this.parentId)
-  }
-
-  /** TODO: Add docs */
-  static parseBlock(source: string, module?: MutableModule): Owned<MutableBodyBlock> {
-    return parseBlock(source, module)
-  }
-
-  /** TODO: Add docs */
-  static parseStatement(
-    source: string,
-    module?: MutableModule,
-  ): Owned<MutableStatement> | undefined {
-    return parseStatement(source, module)
-  }
-
-  /** TODO: Add docs */
-  static parseExpression(
-    source: string,
-    module?: MutableModule,
-  ): Owned<MutableExpression> | undefined {
-    return parseExpression(source, module)
   }
 
   ////////////////////
@@ -904,13 +865,13 @@ export class MutableApp extends App implements MutableExpression {
   declare readonly module: MutableModule
   declare readonly fields: FixedMap<AstFields & AppFields>
 
-  setFunction<T extends MutableExpression>(value: Owned<T>) {
+  setFunction(value: Owned<MutableExpression>) {
     setNode(this.fields, 'function', this.claimChild(value))
   }
   setArgumentName(name: StrictIdentLike | undefined) {
     this.fields.set('nameSpecification', nameSpecification(name))
   }
-  setArgument<T extends MutableExpression>(value: Owned<T>) {
+  setArgument(value: Owned<MutableExpression>) {
     setNode(this.fields, 'argument', this.claimChild(value))
   }
 }

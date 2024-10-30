@@ -101,7 +101,7 @@ export interface UnqualifiedImport {
 /** Read imports from given module block */
 export function readImports(ast: Ast.BodyBlock): Import[] {
   const imports: Import[] = []
-  ast.visitRecursiveAst((node) => {
+  ast.visitRecursive((node) => {
     if (node instanceof Ast.Import) {
       const recognized = recognizeImport(node)
       if (recognized) {
