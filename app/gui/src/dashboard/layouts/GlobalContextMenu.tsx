@@ -17,7 +17,6 @@ import type * as backendModule from '#/services/Backend'
 import type Backend from '#/services/Backend'
 import { BackendType } from '#/services/Backend'
 import { inputFiles } from '#/utilities/input'
-import { memo } from 'react'
 
 /** Props for a {@link GlobalContextMenu}. */
 export interface GlobalContextMenuProps {
@@ -33,7 +32,7 @@ export interface GlobalContextMenuProps {
 }
 
 /** A context menu available everywhere in the directory. */
-export const GlobalContextMenu = memo(function GlobalContextMenu(props: GlobalContextMenuProps) {
+export const GlobalContextMenu = function GlobalContextMenu(props: GlobalContextMenuProps) {
   // For some reason, applying the ReactCompiler for this component breaks the copy-paste functionality
   // eslint-disable-next-line react-compiler/react-compiler
   'use no memo'
@@ -150,7 +149,6 @@ export const GlobalContextMenu = memo(function GlobalContextMenu(props: GlobalCo
           hidden={hidden}
           action="paste"
           doAction={() => {
-            console.log('GlobalContextMenu Paste Root', { directoryKey, hasPasteData })
             unsetModal()
             doPaste(rootDirectoryId, rootDirectoryId)
           }}
@@ -158,4 +156,4 @@ export const GlobalContextMenu = memo(function GlobalContextMenu(props: GlobalCo
       )}
     </ContextMenu>
   )
-})
+}
