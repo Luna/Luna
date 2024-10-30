@@ -3,7 +3,7 @@ import { reachable } from '../util/data/graph'
 import type { ExternalId } from '../yjsModel'
 import type { Module } from './mutableModule'
 import type { SyncTokenId } from './token'
-import type { AstId, Mutable, MutableAst } from './tree'
+import type { AstId, MutableAst } from './tree'
 import { App, Ast, Group, OprApp, Wildcard } from './tree'
 
 export * from './mutableModule'
