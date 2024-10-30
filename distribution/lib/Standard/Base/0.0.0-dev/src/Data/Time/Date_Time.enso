@@ -856,7 +856,7 @@ type Date_Time
             if self.millisecond != 0 then builder.append ((if builder.length!=4 then " millisecond=" else " ") + self.millisecond.to_text)
             if self.microsecond != 0 then builder.append ((if builder.length!=5 then " microsecond=" else " ") + self.microsecond.to_text)
             if self.nanosecond != 0 then builder.append ((if builder.length!=6 then " nanosecond=" else " ") + self.nanosecond.to_text)
-            if self.zone != Time_Zone.system then builder.append ((if builder.length!=7 then " zone=" else " ") + self.zone.pretty)
+            if self.zone != Time_Zone.system then builder.append ((if builder.length!=7 then " zone=(" else " (") + self.zone.pretty + ")")
         parts.join ""
 
     ## PRIVATE
