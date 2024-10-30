@@ -182,6 +182,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     useBackendMutationState(backend, 'undoDeleteAsset', {
       predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
     }).length !== 0
+
   const isCloud = isCloudCategory(category)
 
   const { data: projectState } = useQuery({
@@ -224,11 +225,13 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   }, [rawItem])
 
   const rawItemRef = useSyncRef(rawItem)
+
   React.useEffect(() => {
     // Mutation is HIGHLY INADVISABLE in React, however it is useful here as we want to update the
     // parent's state while avoiding re-rendering the parent.
     rawItemRef.current.item = asset
   }, [asset, rawItemRef])
+
   const setAsset = setAssetHooks.useSetAsset(asset, setItem)
 
   React.useEffect(() => {

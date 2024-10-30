@@ -1,12 +1,7 @@
 /** @file A context menu available everywhere in the directory. */
 import { useStore } from 'zustand'
 
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
 import AssetListEventType from '#/events/AssetListEventType'
-
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -14,10 +9,15 @@ import ContextMenuEntry from '#/components/ContextMenuEntry'
 import UpsertDatalinkModal from '#/modals/UpsertDatalinkModal'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
 
+import { useDispatchAssetListEvent } from '#/layouts/AssetsTable/EventListProvider'
 import { useDriveStore } from '#/providers/DriveProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
+import type * as backendModule from '#/services/Backend'
 import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
+import { BackendType } from '#/services/Backend'
 import { inputFiles } from '#/utilities/input'
+import { memo } from 'react'
 
 /** Props for a {@link GlobalContextMenu}. */
 export interface GlobalContextMenuProps {
@@ -33,18 +33,31 @@ export interface GlobalContextMenuProps {
 }
 
 /** A context menu available everywhere in the directory. */
-export default function GlobalContextMenu(props: GlobalContextMenuProps) {
-  const { hidden = false, backend, directoryKey, directoryId, rootDirectoryId } = props
+export const GlobalContextMenu = memo(function GlobalContextMenu(props: GlobalContextMenuProps) {
+  // For some reason, applying the ReactCompiler for this component breaks the copy-paste functionality
+  // eslint-disable-next-line react-compiler/react-compiler
+  'use no memo'
+
+  const {
+    hidden = false,
+    backend,
+    directoryKey = null,
+    directoryId = null,
+    rootDirectoryId,
+  } = props
   const { doPaste } = props
-  const { setModal, unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const isCloud = backend.type === backendModule.BackendType.remote
+
+  const { getText } = useText()
+  const { setModal, unsetModal } = useSetModal()
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
+
   const driveStore = useDriveStore()
   const hasPasteData = useStore(
     driveStore,
     (storeState) => (storeState.pasteData?.data.ids.size ?? 0) > 0,
   )
+
+  const isCloud = backend.type === BackendType.remote
 
   return (
     <ContextMenu aria-label={getText('globalContextMenuLabel')} hidden={hidden}>
@@ -137,6 +150,7 @@ export default function GlobalContextMenu(props: GlobalContextMenuProps) {
           hidden={hidden}
           action="paste"
           doAction={() => {
+            console.log('GlobalContextMenu Paste Root', { directoryKey, hasPasteData })
             unsetModal()
             doPaste(rootDirectoryId, rootDirectoryId)
           }}
@@ -144,4 +158,4 @@ export default function GlobalContextMenu(props: GlobalContextMenuProps) {
       )}
     </ContextMenu>
   )
-}
+})

@@ -99,20 +99,9 @@ export function AgreementsModal() {
   const isLatest =
     tosHash === cachedTosHash?.versionHash &&
     privacyPolicyHash === cachedPrivacyPolicyHash?.versionHash
+
   const isAccepted = cachedTosHash != null
   const shouldDisplay = !(isAccepted && isLatest)
-
-  const formSchema = Form.useFormSchema((schema) =>
-    schema.object({
-      // The user must agree to the ToS to proceed.
-      agreedToTos: schema
-        .array(schema.string())
-        .min(1, { message: getText('licenseAgreementCheckboxError') }),
-      agreedToPrivacyPolicy: schema
-        .array(schema.string())
-        .min(1, { message: getText('privacyPolicyCheckboxError') }),
-    }),
-  )
 
   if (shouldDisplay) {
     // Note that this produces warnings about missing a `<Heading slot="title">`, even though
@@ -129,7 +118,17 @@ export function AgreementsModal() {
         id="agreements-modal"
       >
         <Form
-          schema={formSchema}
+          schema={(schema) =>
+            schema.object({
+              // The user must agree to the ToS to proceed.
+              agreedToTos: schema
+                .array(schema.string())
+                .min(1, { message: getText('licenseAgreementCheckboxError') }),
+              agreedToPrivacyPolicy: schema
+                .array(schema.string())
+                .min(1, { message: getText('privacyPolicyCheckboxError') }),
+            })
+          }
           defaultValues={{
             agreedToTos: tosHash === cachedTosHash?.versionHash ? ['agree'] : [],
             agreedToPrivacyPolicy:
@@ -178,7 +177,7 @@ export function AgreementsModal() {
         </Form>
       </Dialog>
     )
-  } else {
-    return <Outlet context={session} />
   }
+
+  return <Outlet context={session} />
 }

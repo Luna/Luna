@@ -363,7 +363,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   const inputBindings = useInputBindings()
   const navigator2D = useNavigator2D()
   const toastAndLog = useToastAndLog()
-  const previousCategoryRef = useRef(category)
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const setCanCreateAssets = useSetCanCreateAssets()
@@ -501,7 +500,8 @@ export default function AssetsTable(props: AssetsTableProps) {
   // This reduces the amount of rerenders by batching them together, so they happen less often.
   useQuery({
     queryKey: [backend.type, 'refetchListDirectory'],
-    queryFn: () => queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }),
+    queryFn: () =>
+      queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }).then(() => null),
     refetchInterval:
       enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
     refetchOnMount: 'always',
@@ -850,10 +850,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     (ratio) => ratio >= MINIMUM_DROPZONE_INTERSECTION_RATIO,
     true,
   )
-
-  useEffect(() => {
-    previousCategoryRef.current = category
-  })
 
   const setTargetDirectory = useEventCallback(
     (targetDirectory: AssetTreeNode<DirectoryAsset> | null) => {
@@ -2044,6 +2040,9 @@ export default function AssetsTable(props: AssetsTableProps) {
   const doCopy = useEventCallback(() => {
     unsetModal()
     const { selectedKeys } = driveStore.getState()
+
+    console.log('doCopy', selectedKeys)
+
     setPasteData({
       type: 'copy',
       data: { backendType: backend.type, category, ids: selectedKeys },
@@ -2067,7 +2066,11 @@ export default function AssetsTable(props: AssetsTableProps) {
   const cutAndPaste = useCutAndPaste(category)
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
     unsetModal()
+
     const { pasteData } = driveStore.getState()
+
+    console.trace('doPaste', pasteData, { newParentKey, newParentId })
+
     if (
       pasteData?.data.backendType === backend.type &&
       canTransferBetweenCategories(pasteData.data.category, category)
