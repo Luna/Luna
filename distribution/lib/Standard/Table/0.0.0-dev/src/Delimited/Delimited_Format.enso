@@ -98,8 +98,7 @@ type Delimited_Format
     get_dropdown_options = [Option "Delimited" "..Delimited"]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "CSV" ["*.csv"], File_Name_Pattern.Value "Tab Delimited" ["*.tsv", "*.tab"], File_Name_Pattern.Value "Delimited Flat Files" ["*.csv", "*.tsv", "*.tab"]]
 
     ## PRIVATE

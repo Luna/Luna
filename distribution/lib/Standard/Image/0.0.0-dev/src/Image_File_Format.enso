@@ -41,8 +41,7 @@ type Image_File_Format
     get_dropdown_options = [Option "Image" "..Image"]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         patterns = supported.map ext-> "*" + ext
         [File_Name_Pattern.Value "Image" [patterns]]
 

@@ -45,8 +45,7 @@ type Tableau_Format
     get_dropdown_options = [Option "Tableau Hyper" "..Hyper_File"]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "Tableau Hyper" ["*.hyper"]]
 
     ## PRIVATE

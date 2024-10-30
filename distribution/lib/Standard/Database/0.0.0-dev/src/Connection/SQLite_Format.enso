@@ -55,8 +55,7 @@ type SQLite_Format
     get_dropdown_options = [Option "SQLite" "..SQLite"]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "SQLite Database" ["*.sqlite", "*.db"]]
 
     ## PRIVATE

@@ -108,8 +108,7 @@ type Excel_Format
         [workbook, sheet, range]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "Excel" ["*.xls", "*.xlsx", "*.xlsm", "*.xlt"]]
 
     ## PRIVATE

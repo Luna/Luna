@@ -52,8 +52,7 @@ type XML_Format
     get_dropdown_options = [Option "XML" (Meta.get_qualified_type_name XML_Format)]
 
     ## PRIVATE
-    get_name_patterns : Vector File_Name_Pattern
-    get_name_patterns =
+    get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "XML" ["*.xml"]]
 
     ## PRIVATE
