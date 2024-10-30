@@ -58,7 +58,7 @@ class ImportExportTest
     .option(RuntimeOptions.LOG_LEVEL, Level.WARNING.getName())
     .option(RuntimeOptions.DISABLE_IR_CACHES, "true")
     .option(RuntimeOptions.STRICT_ERRORS, "false")
-    .logHandler(System.err)
+    .logHandler(out)
     .option(
       RuntimeOptions.LANGUAGE_HOME_OVERRIDE,
       Paths
