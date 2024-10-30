@@ -5,7 +5,7 @@ import * as React from 'react'
 // === useRefresh ===
 // ==================
 
-// This must not be a `symbol` as it cannot be sent to Playwright.
+// This must not be a `symbol` as it cannot be sent to Playright.
 /** The type of the state returned by {@link useRefresh}. */
 export interface RefreshState {}
 

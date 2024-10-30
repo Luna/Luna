@@ -10,13 +10,13 @@ import { zipLongest } from '@/util/data/iterable'
  *   will be returned.
  * - It can be instantiated, by providing an expression to be substituted for each placeholder.
  */
-export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
+export class Pattern<T extends Ast.Ast = Ast.Expression> {
   private readonly template: T
   private readonly placeholders: Ast.AstId[]
   private readonly placeholder: string
 
-  private constructor(template: Ast.Owned<T>, placeholder: string) {
-    this.template = Ast.readonly(template)
+  private constructor(template: Ast.Owned<Ast.Mutable<T>>, placeholder: string) {
+    this.template = Ast.dropOwned(template)
     this.placeholders = findPlaceholders(template, placeholder)
     this.placeholder = placeholder
   }
@@ -35,8 +35,8 @@ export class Pattern<T extends Ast.MutableAst = Ast.MutableExpression> {
    * Given a function that constructs an AST value when provided an expression, creates a `Pattern` that constructs an
    * equivalent AST value when instantiated with an expression.
    */
-  static new<T extends Ast.MutableAst>(
-    f: (placeholder: Ast.Owned<Ast.MutableExpression>) => Ast.Owned<T>,
+  static new<T extends Ast.Ast>(
+    f: (placeholder: Ast.Owned<Ast.MutableExpression>) => Ast.Owned<Ast.Mutable<T>>,
     placeholder: string = '__',
   ): Pattern<T> {
     assert(Ast.isIdentifier(placeholder))

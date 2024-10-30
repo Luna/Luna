@@ -266,8 +266,9 @@ export function copyIntoNewModule<T extends Ast>(ast: T): Owned<Mutable<T>> {
   return module.getVersion(ast) as Owned<Mutable<T>>
 }
 
-export function readonly<T extends Ast>(value: Owned<T> | Mutable<T>): T {
-  return value as any
+/** Safely cast an owned mutable value to its base type. */
+export function dropOwned<T extends Ast>(value: Owned<Mutable<T>>): T {
+  return value as unknown as T
 }
 
 declare const tokenKey: unique symbol
