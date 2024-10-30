@@ -103,7 +103,7 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
                 upload_id = get_required_field "uploadId" upload_setup expected_type=Text
                 source_path = get_required_field "sourcePath" upload_setup expected_type=Text
 
-                Runtime.assert (presigned_urls * chunk_size >= file_size) "The sum of the chunk sizes must be greater than or equal to the file size."
+                Runtime.assert (presigned_urls.length * chunk_size >= file_size) "The sum of the chunk sizes must be greater than or equal to the file size."
 
                 # Currently we upload chunks one-by-one, in the future this could be done in parallel.
                 parts = payload.with_input_stream [File_Access.Read] input_stream->
