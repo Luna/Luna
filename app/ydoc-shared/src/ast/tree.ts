@@ -262,7 +262,7 @@ export abstract class MutableAst extends Ast {
     this.fields.get('metadata').set('externalId', id)
   }
 
-  /** Set the new widget's metadata. */
+  /** Set the widget's new metadata. */
   setWidgetMetadata(widgetKey: string, widgetMetadata: unknown) {
     this.fields.get('metadata').get('widget').set(widgetKey, widgetMetadata)
   }

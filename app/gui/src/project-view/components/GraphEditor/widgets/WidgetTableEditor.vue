@@ -36,7 +36,7 @@ const graph = useGraphStore()
 const suggestionDb = useSuggestionDbStore()
 const grid = ref<ComponentExposed<typeof AgGridTableView<RowData, any>>>()
 
-const configSchema = z.object({ size: z.object({ x: z.number(), y: z.number() }) }).passthrough()
+const configSchema = z.object({ size: z.object({ x: z.number(), y: z.number() }) })
 type Config = z.infer<typeof configSchema>
 
 const DEFAULT_CFG: Config = { size: { x: 200, y: 150 } }
