@@ -30,7 +30,7 @@ export namespace WidgetInput {
     }
   }
 
-  /** TODO: Add docs */
+  /** A string representation of widget's value - the code in case of AST value. */
   export function valueRepr(input: WidgetInput): string | undefined {
     if (typeof input.value === 'string') return input.value
     else return input.value?.code()
@@ -55,27 +55,24 @@ export namespace WidgetInput {
       isPlaceholder(input) || input.value instanceof nodeType
   }
 
-  /**
-   * Returns whether the input's value is an AST expression, which will be the case if it is actual code in the module
-   * (as opposed to a placeholder).
-   */
+  /** Check if input's value is existing AST node (not placeholder or token). */
   export function isAst(input: WidgetInput): input is WidgetInput & { value: Ast.Expression } {
     return input.value instanceof Ast.Ast && input.value.isExpression()
   }
 
-  /** Rule out token inputs. */
+  /** Check if input's value is existing AST node or placeholder. Rule out token inputs. */
   export function isAstOrPlaceholder(
     input: WidgetInput,
   ): input is WidgetInput & { value: Ast.Expression | string | undefined } {
     return isPlaceholder(input) || isAst(input)
   }
 
-  /** TODO: Add docs */
+  /** Check if input's value is an AST token. */
   export function isToken(input: WidgetInput): input is WidgetInput & { value: Ast.Token } {
     return input.value instanceof Ast.Token
   }
 
-  /** Returns whether the input value is among certain AST types that are considered likely function calls. */
+  /** Check if input's value is an AST which potentially may be a function call. */
   export function isFunctionCall(input: WidgetInput): input is WidgetInput & {
     value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp | Ast.AutoscopedIdentifier
   } {
@@ -165,15 +162,18 @@ export interface WidgetProps<T> {
  * port may not represent any existing AST node) with `edit` containing any additional modifications
  * (like inserting necessary imports).
  *
+ * The same way widgets may set their metadata (as this is also technically an AST modification).
+ * Every widget type should set it's name as `metadataKey`.
+ *
  * The handlers interested in a specific port update should apply it using received edit. The edit
  * is committed in {@link NodeWidgetTree}.
  */
 export interface WidgetUpdate {
   edit?: MutableModule | undefined
-  portUpdate?: {
-    value: Ast.Owned<Ast.MutableExpression> | string | undefined
-    origin: PortId
-  }
+  portUpdate?: { origin: PortId } & (
+    | { value: Ast.Owned<Ast.MutableExpression> | string | undefined }
+    | { metadataKey: string; metadata: unknown }
+  )
 }
 
 /**
