@@ -597,21 +597,22 @@ function getAstPatternFilterAndSort(
   maxY: number,
 ) {
   return Pattern.new<Ast.Expression>((ast) =>
-    series.reduce<Ast.Owned<Ast.MutableExpression>>((pattern, s) =>
+    series.reduce<Ast.Owned<Ast.MutableExpression>>(
+      (pattern, s) =>
         Ast.OprApp.new(
-            ast.module,
-            pattern,
-            '.',
-            Ast.App.positional(
-                Ast.Ident.new(ast.module, Ast.identifier('filter')!),
-                makeFilterPattern(ast.module, s!, minY, maxY),
-            ),
+          ast.module,
+          pattern,
+          '.',
+          Ast.App.positional(
+            Ast.Ident.new(ast.module, Ast.identifier('filter')!),
+            makeFilterPattern(ast.module, s!, minY, maxY),
+          ),
         ),
-        Ast.App.positional(
-            Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
-            makeFilterPattern(ast.module, xColName, minX, maxX),
-        )
-    )
+      Ast.App.positional(
+        Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
+        makeFilterPattern(ast.module, xColName, minX, maxX),
+      ),
+    ),
   )
 }
 const createNewFilterNode = () => {
