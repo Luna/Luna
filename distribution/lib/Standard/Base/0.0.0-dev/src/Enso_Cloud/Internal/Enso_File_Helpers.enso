@@ -89,8 +89,6 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
             payload = pair.first : File
             result = pair.second
             file_size = payload.size
-            # Based on MAX_CHUNK_SIZE in s3.rs
-            chunk_size = 10000000
 
             Asset_Cache.invalidate destination
             upload_start_payload = JS_Object.from_pairs [["fileName", file_name], ["size", file_size]]
@@ -103,9 +101,8 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
                 upload_id = get_required_field "uploadId" upload_setup expected_type=Text
                 source_path = get_required_field "sourcePath" upload_setup expected_type=Text
 
-                Runtime.assert (presigned_urls.length * chunk_size >= file_size) "The sum of the chunk sizes must be greater than or equal to the file size."
-
                 # Currently we upload chunks one-by-one, in the future this could be done in parallel.
+                chunk_size = (file_size / presigned_urls.length).ceil
                 parts = payload.with_input_stream [File_Access.Read] input_stream->
                     presigned_urls.map_with_index i-> part_url->
                         chunk_bytes = input_stream.read_n_bytes chunk_size
