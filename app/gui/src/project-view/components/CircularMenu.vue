@@ -12,11 +12,13 @@ const isVisualizationEnabled = defineModel<boolean>('isVisualizationEnabled', { 
 const props = defineProps<{
   isRecordingEnabledGlobally: boolean
   isRemovable: boolean
+  isEnterable: boolean
   matchableNodeColors: Set<string>
   documentationUrl: string | undefined
 }>()
 const emit = defineEmits<{
   'update:isVisualizationEnabled': [isVisualizationEnabled: boolean]
+  enterNode: []
   startEditing: []
   startEditingComment: []
   openFullMenu: []
@@ -94,7 +96,19 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
             <SvgIcon name="paint_palette" class="rowIcon" />
             <span>Color Component</span>
           </MenuButton>
-          <MenuButton data-testid="edit-button" @click.stop="closeDropdown(), emit('startEditing')">
+          <MenuButton
+            v-if="isEnterable"
+            data-testid="enter-node-button"
+            @click.stop="closeDropdown(), emit('enterNode')"
+          >
+            <SvgIcon name="open" class="rowIcon" />
+            <span>Open Grouped Components</span>
+          </MenuButton>
+          <MenuButton
+            v-else
+            data-testid="edit-button"
+            @click.stop="closeDropdown(), emit('startEditing')"
+          >
             <SvgIcon name="edit" class="rowIcon" />
             <span>Code Edit</span>
           </MenuButton>
