@@ -791,6 +791,7 @@ type File
 
              example_list_md_files =
                  Examples.data_dir.list name_filter="**.{txt,md}" recursive=True
+    @name_filter File_Format.name_filter_widget
     list : Text -> Boolean -> Vector File
     list self name_filter:Text="" recursive:Boolean=False =
         if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory.") else

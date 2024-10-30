@@ -82,7 +82,7 @@ type Auto_Detect
 
     ## PRIVATE
     get_name_patterns -> Vector File_Name_Pattern =
-        [File_Name_Pattern.Value "Any known format" File_Format.all_known_name_patterns]
+        [File_Name_Pattern.Value "All known formats" File_Format.all_known_name_patterns]
 
 ## Interface for all file formats.
 type File_Format
@@ -152,9 +152,8 @@ type File_Format
        Builds a widget intended to be used for `name_filter` of `File.list` and
        its siblings that allows to filter file names by file format.
     name_filter_widget -> Widget =
-        any_file_pattern = File_Name_Pattern.Value "Any file" ["*.*"]
-        known_patterns = [any_file_pattern] + File_Format.all.flat_map .get_name_patterns
-        options = known_patterns.map file_name_pattern->
+        known_patterns = File_Format.all.flat_map .get_name_patterns
+        options = [Option "Any file" '""'] + known_patterns.map file_name_pattern->
             value = (_combine_patterns file_name_pattern.patterns) . pretty
             Option file_name_pattern.display_name value
         Single_Choice display=Display.When_Modified values=options
@@ -165,7 +164,7 @@ private _combine_patterns (patterns : Vector Text) -> Text =
     Runtime.assert (patterns.length > 0)
     Runtime.assert message="The name patterns cannot contain {a,b} patterns to be mergeable." <|
         contains_cases_regex = ".*[{},].*"
-        patterns.exists (p-> p.match contains_cases_regex) . not
+        patterns.all (p-> p.match contains_cases_regex . not)
     patterns.join prefix="{" separator="," suffix="}"
 
 ## A file format for plain text files.
@@ -214,7 +213,7 @@ type Plain_Text_Format
 
     ## PRIVATE
     get_name_patterns -> Vector File_Name_Pattern =
-        [File_Name_Pattern.Value "Plain Text" ["*.txt"], File_Name_Pattern ".log files as Plain Text" ["*.log"]]
+        [File_Name_Pattern.Value "Plain Text" ["*.txt"], File_Name_Pattern.Value ".log files as Plain Text" ["*.log"]]
 
     ## PRIVATE
        Implements the `File.read` for this `File_Format`
