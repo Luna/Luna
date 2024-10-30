@@ -1897,6 +1897,7 @@ lazy val `ydoc-server` = project
     ),
     libraryDependencies ++= Seq(
       "org.graalvm.truffle"        % "truffle-api"                 % graalMavenPackagesVersion % "provided",
+      "org.graalvm.sdk"            % "nativeimage"                 % graalMavenPackagesVersion % "provided",
       "org.graalvm.polyglot"       % "inspect-community"           % graalMavenPackagesVersion % "runtime",
       "org.graalvm.polyglot"       % "js-community"                % graalMavenPackagesVersion % "runtime",
       "org.slf4j"                  % "slf4j-api"                   % slf4jVersion,
@@ -1905,7 +1906,6 @@ lazy val `ydoc-server` = project
       "junit"                      % "junit"                       % junitVersion              % Test,
       "com.github.sbt"             % "junit-interface"             % junitIfVersion            % Test,
       "com.fasterxml.jackson.core" % "jackson-databind"            % jacksonVersion            % Test,
-      "org.graalvm.sdk"            % "nativeimage"                 % graalMavenPackagesVersion % "provided"
     ),
     libraryDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon
@@ -1919,7 +1919,6 @@ lazy val `ydoc-server` = project
     Compile / run / connectInput := true,
     Compile / run / javaOptions := Seq(
       "-ea"
-      //"-agentlib:native-image-agent=config-merge-dir=/home/dbushev/projects/luna/enso/lib/java/ydoc-server/src/main/resources/META-INF/native-image/org/enso/ydoc"
     ),
     // We need to assembly the cmd line options here manually, because we need
     // to add path to this module, and adding that directly to the `modulePath` setting
@@ -1959,13 +1958,7 @@ lazy val `ydoc-server` = project
       .buildNativeImage(
         "ydoc",
         staticOnLinux  = false,
-        mainClass      = Some("org.enso.ydoc.Main"),
-        additionalOptions = Seq(
-          // useful perf & debug switches:
-          // "-g",
-          // "-H:+SourceLevelDebug",
-          // "-H:-DeleteLocalSymbols",
-        )
+        mainClass      = Some("org.enso.ydoc.Main")
       )
       .value,
     buildNativeImage := NativeImage
