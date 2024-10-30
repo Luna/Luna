@@ -43,7 +43,7 @@ type Image_File_Format
     ## PRIVATE
     get_name_patterns -> Vector File_Name_Pattern =
         patterns = supported.map ext-> "*" + ext
-        [File_Name_Pattern.Value "Image" [patterns]]
+        [File_Name_Pattern.Value "Image" patterns]
 
     ## PRIVATE
        Implements the `File.read` for this `File_Format`

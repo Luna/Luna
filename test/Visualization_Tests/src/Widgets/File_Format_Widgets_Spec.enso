@@ -6,6 +6,7 @@ import Standard.Base.Metadata.Display
 
 from Standard.Table import all
 from Standard.Database import all
+from Standard.Image import all
 
 import Standard.Visualization.Widgets
 
@@ -27,6 +28,7 @@ add_specs suite_builder =
             result.should_contain "*.txt"
             result.should_contain "*.xls"
             result.should_contain "*.csv"
+            result.should_contain "*.png"
             result.should_contain "Any file"
             result.should_contain "All known formats"
 
