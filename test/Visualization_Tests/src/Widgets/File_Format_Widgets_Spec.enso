@@ -14,13 +14,19 @@ from Standard.Test import all
 
 add_specs suite_builder =
     suite_builder.group "Widgets for Data.read" group_builder->
-        group_builder.specify "should work and return basic formats" <|
+        group_builder.specify "should provide a list of loaded file formats" <|
             result = Widgets.get_widget_json Data .read ["format"]
             result.should_contain "Auto Detect"
             result.should_contain "Plain Text"
             result.should_contain "Excel Workbook"
             result.should_contain "Excel Sheet"
             result.should_contain "SQLite"
+
+        group_builder.specify "should provide a list of available file name patterns" <|
+            result = Widgets.get_widget_json Data .list ["name_filter"]
+            result.should_contain "*.txt"
+            result.should_contain "*.xls"
+            result.should_contain "*.csv"
 
 main filter=Nothing =
     suite = Test.build suite_builder->
