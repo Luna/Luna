@@ -2041,8 +2041,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     unsetModal()
     const { selectedKeys } = driveStore.getState()
 
-    console.log('doCopy', selectedKeys)
-
     setPasteData({
       type: 'copy',
       data: { backendType: backend.type, category, ids: selectedKeys },
@@ -2068,8 +2066,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     unsetModal()
 
     const { pasteData } = driveStore.getState()
-
-    console.trace('doPaste', pasteData, { newParentKey, newParentId })
 
     if (
       pasteData?.data.backendType === backend.type &&

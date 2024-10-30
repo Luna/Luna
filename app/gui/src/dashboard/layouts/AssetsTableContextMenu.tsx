@@ -15,7 +15,7 @@ import {
   type Category,
   isCloudCategory,
 } from '#/layouts/CategorySwitcher/Category'
-import GlobalContextMenu from '#/layouts/GlobalContextMenu'
+import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -62,6 +62,7 @@ export interface AssetsTableContextMenuProps {
  * are selected.
  */
 export default function AssetsTableContextMenu(props: AssetsTableContextMenuProps) {
+  // eslint-disable-next-line react-compiler/react-compiler
   'use no memo'
   const { hidden = false, backend, category } = props
   const { nodeMapRef, event, rootDirectoryId } = props
@@ -78,7 +79,6 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const driveStore = useDriveStore()
 
   const hasPasteData = useStore(driveStore, ({ pasteData }) => {
-    console.log('hasPasteData', { pasteData, category })
     const effectivePasteData =
       (
         pasteData?.data.backendType === backend.type &&
@@ -145,8 +145,6 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         const [firstKey] = selectedKeys
         const selectedNode =
           selectedKeys.size === 1 && firstKey != null ? nodeMapRef.current.get(firstKey) : null
-
-        console.log('pasteAllMenuEntry', { selectedNode, selectedKeys })
 
         if (selectedNode?.type === backendModule.AssetType.directory) {
           doPaste(selectedNode.key, selectedNode.item.id)
