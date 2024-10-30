@@ -104,11 +104,7 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
             <SvgIcon name="open" class="rowIcon" />
             <span>Open Grouped Components</span>
           </MenuButton>
-          <MenuButton
-            v-else
-            data-testid="edit-button"
-            @click.stop="closeDropdown(), emit('startEditing')"
-          >
+          <MenuButton data-testid="edit-button" @click.stop="closeDropdown(), emit('startEditing')">
             <SvgIcon name="edit" class="rowIcon" />
             <span>Code Edit</span>
           </MenuButton>
