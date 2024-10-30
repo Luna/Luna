@@ -351,9 +351,9 @@ type Enso_File
                 response = case asset.asset_type of
                     Enso_Asset_Type.File ->
                         presigned_url = asset.get_file_description |> get_required_field "url" expected_type=Text
-                        # TODO once #11342 is integrated add cache_policy=..No_Cache because the presigned urls are unlikely to be reused between requests
-                        # But we could implement custom cloud cache that relies on checking asset version
-                        HTTP.fetch presigned_url HTTP_Method.Get
+                        # We are skipping the cache, because pre-signed URLs are unlikely to repeat, so caching them would be pointless.
+                        # Caching of cloud files tracked by https://github.com/enso-org/enso/issues/11439
+                        HTTP.fetch presigned_url HTTP_Method.Get cache_policy=..No_Cache
                     Enso_Asset_Type.Data_Link ->
                         Runtime.assert (open_options.contains Data_Link_Access.No_Follow)
                         Utils.http_request HTTP_Method.Get asset.internal_uri
