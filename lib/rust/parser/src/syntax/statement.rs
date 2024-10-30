@@ -451,6 +451,10 @@ fn parse_expression_statement<'s>(
     Line { newline: first_newline, content: expression }
 }
 
+/// `first_newline`:
+/// - Before the call, must contain the first newline before `expression_or_statement`.
+/// - Upon return, will contain the newline before the returned `Tree` (which will be different from
+///   the passed value if any prefixes were consumed).
 fn to_statement<'s>(
     prefixes: &mut StatementPrefixes<'s>,
     first_newline: &mut token::Newline<'s>,
