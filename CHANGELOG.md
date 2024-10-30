@@ -14,6 +14,7 @@
 - [New dropdown-based component menu][11398].
 - [Size of Table Input Widget is preserved and restored after project
   re-opening][11435]
+- [Added application version to the title bar.][11446]
 - [Table Input Widget has now a limit of 256 cells.][11448]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
@@ -24,6 +25,7 @@
 [11388]: https://github.com/enso-org/enso/pull/11388
 [11398]: https://github.com/enso-org/enso/pull/11398
 [11435]: https://github.com/enso-org/enso/pull/11435
+[11446]: https://github.com/enso-org/enso/pull/11446
 [11448]: https://github.com/enso-org/enso/pull/11448
 
 #### Enso Standard Library
@@ -108,6 +110,8 @@
   range.][11135]
 - [Added `format` parameter to `Decimal.parse`.][11205]
 - [Added `format` parameter to `Float.parse`.][11229]
+- [Implemented a cache for HTTP data requests, as well as a per-file response
+  size limit.][11342]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -123,6 +127,7 @@
 [11135]: https://github.com/enso-org/enso/pull/11135
 [11205]: https://github.com/enso-org/enso/pull/11205
 [11229]: https://github.com/enso-org/enso/pull/11229
+[11342]: https://github.com/enso-org/enso/pull/11342
 
 #### Enso Language & Runtime
 
