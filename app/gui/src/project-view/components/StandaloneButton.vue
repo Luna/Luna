@@ -1,4 +1,3 @@
-f
 <script setup lang="ts">
 import type { URLString } from '@/util/data/urlString'
 import type { Icon } from '@/util/iconName'
