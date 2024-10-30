@@ -6,6 +6,7 @@ import project.Data.Dictionary.Dictionary
 import project.Data.Hashset.Hashset
 import project.Data.Json.Invalid_JSON
 import project.Data.Json.JS_Object
+import project.Data.Numbers.Integer
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Enso_File.Enso_Asset_Type
@@ -33,6 +34,8 @@ from project.Data.Boolean import Boolean, False, True
 from project.Data.Text.Extensions import all
 from project.Enso_Cloud.Data_Link_Helpers import data_link_encoding, data_link_extension
 from project.Enso_Cloud.Public_Utils import get_required_field
+
+polyglot java import java.lang.Thread
 
 ## PRIVATE
 upload_file (local_file : File) (destination : Enso_File) (replace_existing : Boolean) -> Enso_File =
@@ -107,7 +110,7 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
                     presigned_urls.map_with_index i-> part_url->
                         chunk_bytes = input_stream.read_n_bytes chunk_size
                         request_body = Request_Body.Byte_Array chunk_bytes
-                        response = HTTP.post part_url request_body HTTP_Method.Put
+                        response = _send_chunk_with_retries part_url request_body
                         e_tag = response.get_header "ETag" if_missing=(Error.throw (Illegal_State.Error "The ETag header is missing in the multipart upload response."))
                         JS_Object.from_pairs [["partNumber", i + 1], ["eTag", e_tag]]
 
@@ -121,6 +124,14 @@ perform_upload (destination : Enso_File) (allow_existing : Boolean) (~generate_r
                     id = get_required_field "id" response expected_type=Text
                     Asset_Cache.update destination (Existing_Enso_Asset.new id file_name) . if_not_error <|
                         result
+
+private _send_chunk_with_retries uri request_body attempt:Integer=0 =
+    result = HTTP.post uri request_body HTTP_Method.Put
+    exponential_backoff = [100, 200, 400]
+    if result.is_error.not || (attempt >= exponential_backoff.length) then result else
+        sleep_time = exponential_backoff.at attempt
+        Thread.sleep sleep_time
+        @Tail_Call _send_chunk_with_retries uri request_body attempt+1
 
 ## PRIVATE
    Creates a directory at the given path, also creating parent directories if needed.
