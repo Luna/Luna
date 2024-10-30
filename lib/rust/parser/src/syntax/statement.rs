@@ -18,12 +18,14 @@ use crate::syntax::statement::type_def::try_parse_type_def;
 use crate::syntax::token;
 use crate::syntax::tree;
 use crate::syntax::tree::block;
+use crate::syntax::tree::AnnotationLine;
 use crate::syntax::tree::ArgumentDefinition;
 use crate::syntax::tree::DocComment;
 use crate::syntax::tree::DocLine;
 use crate::syntax::tree::FunctionAnnotation;
 use crate::syntax::tree::SyntaxError;
 use crate::syntax::tree::TypeSignature;
+use crate::syntax::tree::TypeSignatureLine;
 use crate::syntax::treebuilding::Spacing;
 use crate::syntax::Item;
 use crate::syntax::Token;
@@ -70,7 +72,7 @@ impl<'s> BodyBlockParser<'s> {
 fn compound_lines<'s>(
     lines: &mut Vec<item::Line<'s>>,
     mut parse_line: impl FnMut(
-        &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        &mut StatementPrefixes<'s>,
         item::Line<'s>,
     ) -> Line<'s, StatementOrPrefix<'s>>,
 ) -> Vec<block::Line<'s>> {
@@ -84,7 +86,7 @@ fn compound_lines<'s>(
 fn compound_lines_with_tail_expression<'s>(
     lines: &mut Vec<item::Line<'s>>,
     parse_line: impl FnMut(
-        &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        &mut StatementPrefixes<'s>,
         item::Line<'s>,
         bool,
     ) -> Line<'s, StatementOrPrefix<'s>>,
@@ -99,36 +101,32 @@ fn compound_lines_with_tail_expression<'s>(
 fn compound_lines_maybe_with_tail_expression<'s>(
     lines: &mut Vec<item::Line<'s>>,
     mut parse_line: impl FnMut(
-        &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        &mut StatementPrefixes<'s>,
         item::Line<'s>,
         bool,
     ) -> Line<'s, StatementOrPrefix<'s>>,
     tail_index: Option<usize>,
 ) -> Vec<block::Line<'s>> {
     let mut block_lines = Vec::new();
-    let mut line_prefixes = Vec::new();
+    let mut line_prefixes = StatementPrefixes::default();
     for (i, line) in lines.drain(..).enumerate() {
         let is_tail = tail_index == Some(i);
         match parse_line(&mut line_prefixes, line, is_tail) {
             Line { newline, content: Some(StatementOrPrefix::Statement(statement)) } => {
-                for Line { newline, content } in line_prefixes.drain(..) {
-                    block_lines.push(block::Line { newline, expression: content.map(Tree::from) })
-                }
+                line_prefixes.drain_unused_into(&mut block_lines);
                 block_lines.push(block::Line { newline, expression: Some(statement) })
             }
             Line { newline, content: Some(StatementOrPrefix::Prefix(prefix)) } =>
-                line_prefixes.push(Line { newline, content: Some(prefix) }),
+                line_prefixes.push(newline, prefix),
             Line { newline, content: None } =>
-                if line_prefixes.is_empty() {
+                if line_prefixes.prefixes.is_empty() {
                     block_lines.push(newline.into());
                 } else {
-                    line_prefixes.push(newline.into());
+                    line_prefixes.push_newline(newline);
                 },
         }
     }
-    for Line { newline, content } in line_prefixes {
-        block_lines.push(block::Line { newline, expression: content.map(Tree::from) })
-    }
+    line_prefixes.drain_unused_into(&mut block_lines);
     block_lines
 }
 
@@ -159,7 +157,7 @@ struct StatementParser<'s> {
 impl<'s> StatementParser<'s> {
     fn parse_statement(
         &mut self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         line: item::Line<'s>,
         precedence: &mut Precedence<'s>,
     ) -> Line<'s, StatementOrPrefix<'s>> {
@@ -172,7 +170,7 @@ impl<'s> StatementParser<'s> {
 
     fn parse_tail_expression(
         &mut self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         line: item::Line<'s>,
         precedence: &mut Precedence<'s>,
     ) -> Line<'s, StatementOrPrefix<'s>> {
@@ -185,7 +183,7 @@ impl<'s> StatementParser<'s> {
 
     fn parse_module_statement(
         &mut self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         line: item::Line<'s>,
         precedence: &mut Precedence<'s>,
     ) -> Line<'s, StatementOrPrefix<'s>> {
@@ -266,8 +264,27 @@ impl<'s> From<Tree<'s>> for StatementOrPrefix<'s> {
     }
 }
 
+enum StatementPrefixLine<'s> {
+    TypeSignature(TypeSignatureLine<'s>),
+    Annotation(AnnotationLine<'s>),
+    Documentation(DocLine<'s>),
+}
+
+impl<'s> StatementPrefixLine<'s> {
+    fn new(prefix: StatementPrefix<'s>, newlines: NonEmptyVec<token::Newline<'s>>) -> Self {
+        match prefix {
+            StatementPrefix::TypeSignature(signature) =>
+                Self::TypeSignature(TypeSignatureLine { signature, newlines }),
+            StatementPrefix::Annotation(annotation) =>
+                Self::Annotation(AnnotationLine { annotation, newlines }),
+            StatementPrefix::Documentation(docs) =>
+                Self::Documentation(DocLine { docs, newlines: newlines.into() }),
+        }
+    }
+}
+
 fn parse_statement<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     mut line: item::Line<'s>,
     precedence: &mut Precedence<'s>,
     args_buffer: &mut Vec<ArgumentDefinition<'s>>,
@@ -278,20 +295,21 @@ fn parse_statement<'s>(
     let private_keywords = scan_private_keywords(&line.items);
     let start = private_keywords;
     let items = &mut line.items;
-    let mut parsed = None;
-    parsed = parsed.or_else(|| {
-        try_parse_annotation(items, start, precedence)
-            .map(StatementPrefix::Annotation)
-            .map(StatementOrPrefix::Prefix)
-    });
-    parsed = parsed.or_else(|| {
-        try_parse_type_def(items, start, precedence, args_buffer).map(StatementOrPrefix::Statement)
-    });
-    parsed = parsed.or_else(|| {
-        try_parse_doc_comment(items)
-            .map(StatementPrefix::Documentation)
-            .map(StatementOrPrefix::Prefix)
-    });
+    let parsed = None
+        .or_else(|| {
+            try_parse_annotation(items, start, precedence)
+                .map(StatementPrefix::Annotation)
+                .map(StatementOrPrefix::Prefix)
+        })
+        .or_else(|| {
+            try_parse_type_def(items, start, precedence, args_buffer)
+                .map(StatementOrPrefix::Statement)
+        })
+        .or_else(|| {
+            try_parse_doc_comment(items)
+                .map(StatementPrefix::Documentation)
+                .map(StatementOrPrefix::Prefix)
+        });
     if let Some(parsed) = parsed {
         debug_assert_eq!(items.len(), start);
         return Line {
@@ -352,50 +370,73 @@ fn parse_statement<'s>(
     }
 }
 
-fn take_trailing_newlines<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
-    trailing_newlines: &mut usize,
-    first_newline: &mut token::Newline<'s>,
-) -> Vec<token::Newline<'s>> {
-    let mut newlines = Vec::with_capacity(1 + *trailing_newlines);
-    newlines.extend((0..*trailing_newlines).map(|_| {
-        let Some(Line { newline, content: None }) = prefixes.pop() else { unreachable!() };
-        mem::replace(first_newline, newline)
-    }));
-    *trailing_newlines = 0;
-    newlines
+#[derive(Default)]
+struct StatementPrefixes<'s> {
+    prefixes: Vec<(token::Newline<'s>, StatementPrefix<'s>, usize)>,
+    newlines: Vec<token::Newline<'s>>,
+}
+
+impl<'s> StatementPrefixes<'s> {
+    fn push(&mut self, newline: token::Newline<'s>, prefix: StatementPrefix<'s>) {
+        let newlines_start = self.newlines.len();
+        self.prefixes.push((newline, prefix, newlines_start))
+    }
+
+    fn push_newline(&mut self, newline: token::Newline<'s>) {
+        self.newlines.push(newline)
+    }
+
+    fn last(&self) -> Option<&StatementPrefix<'s>> {
+        self.prefixes.last().map(|(_, prefix, _)| prefix)
+    }
+
+    /// `first_newline`:
+    /// - Before the call, must contain the first newline after the prefix.
+    /// - Upon return, will contain the newline before the prefix.
+    fn pop(&mut self, first_newline: &mut token::Newline<'s>) -> StatementPrefixLine<'s> {
+        let (newline_before_prefix, prefix, trailing_newlines_start) = self.prefixes.pop().unwrap();
+        let original_first_newline = mem::replace(first_newline, newline_before_prefix);
+        let trailing_newlines = self.newlines.drain(trailing_newlines_start..);
+        let mut newlines = Vec::with_capacity(trailing_newlines.len() + 1);
+        newlines.extend(trailing_newlines);
+        let newlines = NonEmptyVec::from_vec_and_last(newlines, original_first_newline);
+        StatementPrefixLine::new(prefix, newlines)
+    }
+
+    fn drain_unused_into(&mut self, lines: &mut Vec<block::Line<'s>>) {
+        lines.reserve(self.prefixes.len() + self.newlines.len());
+        let mut empty_lines = self.newlines.drain(..).map(block::Line::from);
+        let mut prev_trailing_newlines_start = 0;
+        for (newline_before_prefix, prefix, trailing_newlines_start) in self.prefixes.drain(..) {
+            let trailing_newlines =
+                mem::replace(&mut prev_trailing_newlines_start, trailing_newlines_start)
+                    - prev_trailing_newlines_start;
+            lines.extend((&mut empty_lines).take(trailing_newlines));
+            lines.push(block::Line {
+                newline:    newline_before_prefix,
+                expression: Some(prefix.into()),
+            });
+        }
+        lines.extend(empty_lines);
+    }
 }
 
 fn take_doc_line<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     first_newline: &mut token::Newline<'s>,
 ) -> Option<DocLine<'s>> {
-    let mut trailing_newlines = 0;
-    while let Some(prefix) = prefixes.get(prefixes.len().wrapping_sub(1) - trailing_newlines) {
-        let Some(content) = prefix.content.as_ref() else {
-            trailing_newlines += 1;
-            continue;
+    if let Some(StatementPrefix::Documentation(_)) = prefixes.last() {
+        let StatementPrefixLine::Documentation(doc_line) = prefixes.pop(first_newline) else {
+            unreachable!()
         };
-        if let StatementPrefix::Documentation(_) = content {
-            let mut newlines =
-                take_trailing_newlines(prefixes, &mut trailing_newlines, first_newline);
-            let Some(Line { newline, content: Some(StatementPrefix::Documentation(docs)) }) =
-                prefixes.pop()
-            else {
-                unreachable!()
-            };
-            newlines.push(mem::replace(first_newline, newline));
-            newlines.reverse();
-            return Some(DocLine { docs, newlines });
-        } else {
-            break;
-        }
+        Some(doc_line)
+    } else {
+        None
     }
-    None
 }
 
 fn parse_expression_statement<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     start: usize,
     mut line: item::Line<'s>,
     precedence: &mut Precedence<'s>,
@@ -411,7 +452,7 @@ fn parse_expression_statement<'s>(
 }
 
 fn to_statement<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     first_newline: &mut token::Newline<'s>,
     expression_or_statement: Tree<'s>,
 ) -> Tree<'s> {
@@ -625,7 +666,7 @@ enum VisibilityContext {
 }
 
 fn parse_assignment_like_statement<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     mut line: item::Line<'s>,
     start: usize,
     operator: usize,
@@ -743,7 +784,7 @@ impl<'s> AssignmentBuilder<'s> {
 
     fn build(
         self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         visibility_context: VisibilityContext,
     ) -> Line<'s, Tree<'s>> {
         let Self { newline, pattern, operator, expression, excess_items } = self;

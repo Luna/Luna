@@ -512,7 +512,7 @@ impl<'s> span::Builder<'s> for DocLine<'s> {
     }
 }
 
-/// A documentation comment line.
+/// Contents of a documentation comment.
 #[cfg_attr(feature = "debug", derive(Visitor))]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Reflect, Deserialize)]
 pub struct DocComment<'s> {

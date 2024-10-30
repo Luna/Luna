@@ -1015,6 +1015,12 @@ fn type_signatures() {
     test!("val : Bool\nval = True",
         ,(Function::new("val", sexp![(Ident True)])
           .with_sig(sexp![(Ident Bool)])));
+    test!("val : Bool\n\nval = True",
+        ,(Function::new("val", sexp![(Ident True)])
+          .with_sig(sexp![(Ident Bool)])));
+    test!("val : Bool\n\n\nval = True",
+        ,(Function::new("val", sexp![(Ident True)])
+          .with_sig(sexp![(Ident Bool)])));
     test!("val : Bool\ndifferent_name = True",
         (TypeSignatureDeclaration ((Ident val) ":" (Ident Bool)))
         ,(Function::new("different_name", sexp![(Ident True)])));

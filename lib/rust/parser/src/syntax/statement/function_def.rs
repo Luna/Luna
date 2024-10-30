@@ -8,9 +8,10 @@ use crate::syntax::statement::apply_excess_private_keywords;
 use crate::syntax::statement::apply_private_keywords;
 use crate::syntax::statement::find_top_level_operator;
 use crate::syntax::statement::parse_pattern;
-use crate::syntax::statement::take_trailing_newlines;
 use crate::syntax::statement::Line;
 use crate::syntax::statement::StatementPrefix;
+use crate::syntax::statement::StatementPrefixLine;
+use crate::syntax::statement::StatementPrefixes;
 use crate::syntax::statement::VisibilityContext;
 use crate::syntax::token;
 use crate::syntax::tree;
@@ -72,7 +73,7 @@ impl<'s> FunctionBuilder<'s> {
 
     pub fn build(
         mut self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         operator: token::AssignmentOperator<'s>,
         expression: Option<Tree<'s>>,
         visibility_context: VisibilityContext,
@@ -94,73 +95,37 @@ impl<'s> FunctionBuilder<'s> {
         }
 
         let mut acc = PrefixesAccumulator::default();
-        let mut trailing_newlines = 0;
 
-        while let Some(prefix) = prefixes.get(prefixes.len().wrapping_sub(1) - trailing_newlines) {
-            let Some(content) = prefix.content.as_ref() else {
-                trailing_newlines += 1;
-                continue;
-            };
-            match (&acc, &content) {
+        while let Some(prefix) = prefixes.last() {
+            match (&acc, &prefix) {
                 (
                     PrefixesAccumulator { docs: None, annotations: None, signature: None },
                     StatementPrefix::TypeSignature(signature),
                 ) if qn_equivalent(&self.name, &signature.name) => {
-                    let mut newlines = take_trailing_newlines(
-                        prefixes,
-                        &mut trailing_newlines,
-                        &mut first_newline,
-                    );
-                    let Some(Line {
-                        newline,
-                        content: Some(StatementPrefix::TypeSignature(signature)),
-                    }) = prefixes.pop()
+                    let StatementPrefixLine::TypeSignature(signature_line) =
+                        prefixes.pop(&mut first_newline)
                     else {
                         unreachable!()
                     };
-                    newlines.push(mem::replace(&mut first_newline, newline));
-                    newlines.reverse();
-                    acc.signature = Some(TypeSignatureLine {
-                        signature,
-                        newlines: newlines.try_into().unwrap(),
-                    });
+                    acc.signature = Some(signature_line);
                 }
                 (PrefixesAccumulator { docs: None, .. }, StatementPrefix::Annotation(_)) => {
-                    let mut newlines = take_trailing_newlines(
-                        prefixes,
-                        &mut trailing_newlines,
-                        &mut first_newline,
-                    );
-                    let Some(Line {
-                        newline,
-                        content: Some(StatementPrefix::Annotation(annotation)),
-                    }) = prefixes.pop()
+                    let StatementPrefixLine::Annotation(annotation_line) =
+                        prefixes.pop(&mut first_newline)
                     else {
                         unreachable!()
                     };
-                    newlines.push(mem::replace(&mut first_newline, newline));
-                    newlines.reverse();
                     let mut annotations = acc.annotations.take().unwrap_or_default();
-                    annotations.push(AnnotationLine {
-                        annotation,
-                        newlines: newlines.try_into().unwrap(),
-                    });
+                    annotations.push(annotation_line);
                     acc.annotations = Some(annotations);
                 }
                 (PrefixesAccumulator { docs: None, .. }, StatementPrefix::Documentation(_)) => {
-                    let mut newlines = take_trailing_newlines(
-                        prefixes,
-                        &mut trailing_newlines,
-                        &mut first_newline,
-                    );
-                    let Some(Line { newline, content: Some(StatementPrefix::Documentation(docs)) }) =
-                        prefixes.pop()
+                    let StatementPrefixLine::Documentation(doc_line) =
+                        prefixes.pop(&mut first_newline)
                     else {
                         unreachable!()
                     };
-                    newlines.push(mem::replace(&mut first_newline, newline));
-                    newlines.reverse();
-                    acc.docs = Some(DocLine { docs, newlines });
+                    acc.docs = Some(doc_line);
                 }
                 _ => break,
             }
@@ -234,7 +199,7 @@ pub fn parse_args<'s>(
 }
 
 pub fn parse_constructor_definition<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     mut line: item::Line<'s>,
     private_keywords_start: usize,
     start: usize,
@@ -259,30 +224,21 @@ pub fn parse_constructor_definition<'s>(
     let mut annotations_reversed = vec![];
     let mut doc_line = None;
     while let Some(prefix) = prefixes.last() {
-        let Some(content) = prefix.content.as_ref() else { break };
-        match &content {
+        match &prefix {
             StatementPrefix::Annotation(_) => {
-                let Some(Line {
-                    newline: outer_newline,
-                    content: Some(StatementPrefix::Annotation(annotation)),
-                }) = prefixes.pop()
+                let StatementPrefixLine::Annotation(annotation_line) =
+                    prefixes.pop(&mut first_newline)
                 else {
                     unreachable!()
                 };
-                let newline = mem::replace(&mut first_newline, outer_newline);
-                annotations_reversed
-                    .push(AnnotationLine { annotation, newlines: NonEmptyVec::singleton(newline) });
+                annotations_reversed.push(annotation_line);
             }
             StatementPrefix::Documentation(_) => {
-                let Some(Line {
-                    newline: outer_newline,
-                    content: Some(StatementPrefix::Documentation(docs)),
-                }) = prefixes.pop()
+                let StatementPrefixLine::Documentation(line) = prefixes.pop(&mut first_newline)
                 else {
                     unreachable!()
                 };
-                let newline = mem::replace(&mut first_newline, outer_newline);
-                doc_line = Some(DocLine { docs, newlines: vec![newline] });
+                doc_line = Some(line);
                 break;
             }
             _ => {
