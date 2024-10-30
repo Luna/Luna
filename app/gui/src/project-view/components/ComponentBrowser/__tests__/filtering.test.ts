@@ -12,7 +12,7 @@ import {
   makeStaticMethod,
   SuggestionEntry,
 } from '@/stores/suggestionDatabase/entry'
-import { qnLastSegment } from '@/util/qualifiedName'
+import { qnLastSegment, QualifiedName } from '@/util/qualifiedName'
 import { Opt } from 'ydoc-shared/util/data/opt'
 
 test.each([
@@ -55,6 +55,24 @@ test('An Instance method is shown when self arg matches', () => {
   const filteringWithoutSelfType = new Filtering({ pattern: 'get' })
   expect(filteringWithoutSelfType.filter(entry1)).toBeNull()
   expect(filteringWithoutSelfType.filter(entry2)).toBeNull()
+})
+
+test('Additional self types are taken into account when filtering', () => {
+  const entry1 = makeMethod('Standard.Base.Data.Vector.Vector.get')
+  const entry2 = makeMethod('Standard.Base.Any.Any.to_string')
+  const additionalSelfType = 'Standard.Base.Any.Any' as QualifiedName
+  const filtering = new Filtering({
+    selfArg: { type: 'known', typename: 'Standard.Base.Data.Vector.Vector' },
+  })
+  expect(filtering.filter(entry1, [additionalSelfType])).not.toBeNull()
+  expect(filtering.filter(entry2, [additionalSelfType])).not.toBeNull()
+  expect(filtering.filter(entry2, [])).toBeNull()
+
+  const filteringWithoutSelfType = new Filtering({})
+  expect(filteringWithoutSelfType.filter(entry1, [additionalSelfType])).toBeNull()
+  expect(filteringWithoutSelfType.filter(entry2, [additionalSelfType])).toBeNull()
+  expect(filteringWithoutSelfType.filter(entry1, [])).toBeNull()
+  expect(filteringWithoutSelfType.filter(entry2, [])).toBeNull()
 })
 
 test.each([
