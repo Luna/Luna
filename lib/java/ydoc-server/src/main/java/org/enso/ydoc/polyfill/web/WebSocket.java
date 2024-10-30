@@ -150,12 +150,7 @@ final class WebSocket implements Polyfill, ProxyExecutable {
                       return connection;
                     });
 
-        try {
-          yield WebServer.builder().host(host).port(port).addRouting(routing).build();
-        } catch (Exception ex) {
-          ex.printStackTrace();
-          throw new IllegalStateException(ex);
-        }
+        yield WebServer.builder().host(host).port(port).addRouting(routing).build();
       }
 
       case WEB_SOCKET_SERVER_START -> {

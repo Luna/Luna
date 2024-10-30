@@ -1905,7 +1905,7 @@ lazy val `ydoc-server` = project
       "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion,
       "junit"                      % "junit"                       % junitVersion              % Test,
       "com.github.sbt"             % "junit-interface"             % junitIfVersion            % Test,
-      "com.fasterxml.jackson.core" % "jackson-databind"            % jacksonVersion            % Test,
+      "com.fasterxml.jackson.core" % "jackson-databind"            % jacksonVersion            % Test
     ),
     libraryDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon
@@ -1957,8 +1957,8 @@ lazy val `ydoc-server` = project
     rebuildNativeImage := NativeImage
       .buildNativeImage(
         "ydoc",
-        staticOnLinux  = false,
-        mainClass      = Some("org.enso.ydoc.Main")
+        staticOnLinux = false,
+        mainClass     = Some("org.enso.ydoc.Main")
       )
       .value,
     buildNativeImage := NativeImage
@@ -1970,7 +1970,6 @@ lazy val `ydoc-server` = project
   )
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`logging-service-logback`)
-//.dependsOn(`profiling-utils`)
 
 lazy val `persistance` = (project in file("lib/java/persistance"))
   .enablePlugins(JPMSPlugin)
