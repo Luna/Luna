@@ -22,7 +22,7 @@ import { isAstId, isIdentifier } from '@/util/ast/abstract'
 import { RawAst, visitRecursive } from '@/util/ast/raw'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
-import { ListOfEvents } from '@/util/data/observable'
+import { Events, stringUnionToArray } from '@/util/data/observable'
 import { Rect } from '@/util/data/rect'
 import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
@@ -379,12 +379,12 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       (m) => {
         if (m) {
           const update = () => undoManagerStatus.update(m)
-          const events: ListOfEvents<UndoManager> = [
+          const events = stringUnionToArray<keyof Events<UndoManager>>()(
             'stack-item-added',
             'stack-item-popped',
             'stack-cleared',
             'stack-item-updated',
-          ]
+          )
           events.forEach((event) => m.on(event, update))
         }
       },
