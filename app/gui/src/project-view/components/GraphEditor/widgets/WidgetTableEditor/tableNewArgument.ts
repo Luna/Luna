@@ -464,7 +464,7 @@ export function useTableNewArgument(
   }
 
   function pasteFromClipboard(data: string[][], focusedCell: { rowIndex: number; colId: string }) {
-    if (data.length === 0) return
+    if (data.length === 0) return { rows: 0, columns: 0 }
     const edit = graph.startEdit()
     const focusedColIndex =
       findIndexOpt(columns.value, ({ id }) => id === focusedCell.colId) ?? columns.value.length
@@ -476,6 +476,9 @@ export function useTableNewArgument(
     }
     const pastedRowsEnd = focusedCell.rowIndex + data.length
     const pastedColsEnd = focusedColIndex + data[0]!.length
+    // First we assume we'll paste all data. If not, these vars will be updated.
+    let actuallyPastedRowsEnd = pastedRowsEnd
+    let actuallyPastedColsEnd = pastedColsEnd
 
     // Set data in existing cells.
     for (
@@ -496,12 +499,21 @@ export function useTableNewArgument(
 
     // Extend the table if necessary.
     const newRowCount = Math.max(pastedRowsEnd, rowCount.value)
-    for (let i = rowCount.value; i < newRowCount && mayAddNewRow(i); ++i) {
+    for (let i = rowCount.value; i < newRowCount; ++i) {
+      if (!mayAddNewRow(i)) {
+        actuallyPastedRowsEnd = i
+        break
+      }
+
       addRow(edit, (_colId, index) => newValueGetter(i, index))
     }
     const newColCount = Math.max(pastedColsEnd, columns.value.length)
     let modifiedColumnsAst: Ast.Vector | undefined
-    for (let i = columns.value.length; i < newColCount && mayAddNewColumn(newRowCount, i); ++i) {
+    for (let i = columns.value.length; i < newColCount; ++i) {
+      if (!mayAddNewColumn(newRowCount, i)) {
+        actuallyPastedColsEnd = i
+        break
+      }
       modifiedColumnsAst = addColumn(
         edit,
         `${DEFAULT_COLUMN_PREFIX}${i + 1}`,
@@ -511,7 +523,10 @@ export function useTableNewArgument(
       )
     }
     onUpdate({ edit })
-    return
+    return {
+      rows: actuallyPastedRowsEnd - focusedCell.rowIndex,
+      columns: actuallyPastedColsEnd - focusedColIndex,
+    }
   }
 
   return {
@@ -543,6 +558,8 @@ export function useTableNewArgument(
      * If the pasted data are to be placed outside current table, the table is extended.
      * @param data the clipboard data, as retrieved in `processDataFromClipboard`.
      * @param focusedCell the currently focused cell: will become the left-top cell of pasted data.
+     * @returns number of actually pasted rows and columns; may be smaller than `data` size in case
+     * it would exceed {@link CELLS_LIMIT}.
      */
     pasteFromClipboard,
   }
