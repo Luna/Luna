@@ -1959,7 +1959,6 @@ lazy val `ydoc-server` = project
       .buildNativeImage(
         "ydoc",
         staticOnLinux  = false,
-        includeRuntime = false,
         mainClass      = Some("org.enso.ydoc.Main"),
         additionalOptions = Seq(
           // useful perf & debug switches:

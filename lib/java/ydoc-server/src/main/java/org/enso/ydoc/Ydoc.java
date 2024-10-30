@@ -92,7 +92,7 @@ public final class Ydoc implements AutoCloseable {
       }
 
       if (contextBuilder == null) {
-        contextBuilder = WebEnvironment.createContext().allowIO(IOAccess.ALL).allowAllAccess(true);
+        contextBuilder = WebEnvironment.createContext().allowIO(IOAccess.ALL);
       }
 
       if (hostname == null) {
