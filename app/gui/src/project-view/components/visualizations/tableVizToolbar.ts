@@ -82,7 +82,7 @@ function useSortFilterNodesButton({
   }
 
   function getAstPatternSort() {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('sort')!),
         makeSortPattern(ast.module),
@@ -91,7 +91,7 @@ function useSortFilterNodesButton({
   }
 
   function getAstPatternFilter(columnName: string, items: string[]) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
         makeFilterPattern(ast.module, columnName, items),
@@ -100,7 +100,7 @@ function useSortFilterNodesButton({
   }
 
   function getAstPatternFilterAndSort(columnName: string, items: string[]) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.OprApp.new(
         ast.module,
         Ast.App.positional(

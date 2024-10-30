@@ -266,8 +266,8 @@ export function copyIntoNewModule<T extends Ast>(ast: T): Owned<Mutable<T>> {
   return module.getVersion(ast) as Owned<Mutable<T>>
 }
 
-/** Safely cast an owned mutable value to its base type. */
-export function dropOwned<T extends Ast>(value: Owned<Mutable<T>>): T {
+/** Safely cast a mutable or owned value to its base type. */
+export function dropMutability<T extends Ast>(value: Owned<Mutable<T>>): T {
   return value as unknown as T
 }
 

@@ -16,7 +16,7 @@ export class Pattern<T extends Ast.Ast = Ast.Expression> {
   private readonly placeholder: string
 
   private constructor(template: Ast.Owned<Ast.Mutable<T>>, placeholder: string) {
-    this.template = Ast.dropOwned(template)
+    this.template = Ast.dropMutability(template)
     this.placeholders = findPlaceholders(template, placeholder)
     this.placeholder = placeholder
   }

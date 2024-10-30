@@ -596,24 +596,23 @@ function getAstPatternFilterAndSort(
   minY: number,
   maxY: number,
 ) {
-  return Pattern.new((ast) => {
-    let pattern: Ast.Owned<Ast.MutableOprApp> | Ast.Owned<Ast.MutableApp> = Ast.App.positional(
-      Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
-      makeFilterPattern(ast.module, xColName, minX, maxX),
-    )
-    for (const s of series) {
-      pattern = Ast.OprApp.new(
-        ast.module,
-        pattern,
-        '.',
-        Ast.App.positional(
-          Ast.Ident.new(ast.module, Ast.identifier('filter')!),
-          makeFilterPattern(ast.module, s!, minY, maxY),
+  return Pattern.new<Ast.Expression>((ast) =>
+    series.reduce<Ast.Owned<Ast.MutableExpression>>((pattern, s) =>
+        Ast.OprApp.new(
+            ast.module,
+            pattern,
+            '.',
+            Ast.App.positional(
+                Ast.Ident.new(ast.module, Ast.identifier('filter')!),
+                makeFilterPattern(ast.module, s!, minY, maxY),
+            ),
         ),
-      )
-    }
-    return pattern
-  })
+        Ast.App.positional(
+            Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
+            makeFilterPattern(ast.module, xColName, minX, maxX),
+        )
+    )
+  )
 }
 const createNewFilterNode = () => {
   const seriesLabels = Object.keys(data.value.axis)
@@ -639,7 +638,7 @@ const createNewFilterNode = () => {
 
 function getAstPattern(selector?: number, action?: string) {
   if (action && selector != null) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier(action)!),
         Ast.tryNumberToEnso(selector, ast.module)!,
