@@ -41,6 +41,16 @@
   }, {
     "pattern":"\\QMETA-INF/services/io.helidon.logging.common.spi.LoggingProvider\\E"
   }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.webclient.spi.DnsResolverProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.webclient.spi.HttpClientSpiProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.webclient.spi.ProtocolConfigProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.webclient.spi.SourceHandlerProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/io.helidon.webclient.spi.WebClientServiceProvider\\E"
+  }, {
     "pattern":"\\QMETA-INF/services/io.helidon.webserver.http1.spi.Http1UpgradeProvider\\E"
   }, {
     "pattern":"\\QMETA-INF/services/io.helidon.webserver.spi.ProtocolConfigProvider\\E"
@@ -52,6 +62,8 @@
     "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
   }, {
     "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.net.spi.URLStreamHandlerProvider\\E"
   }, {
     "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
   }, {
