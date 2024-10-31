@@ -82,8 +82,8 @@ add_specs suite_builder =
     suite_builder.group "File Format" group_builder->
         group_builder.specify "should provide a list of all supported file format name patterns" <|
             patterns = File_Format.all_known_name_patterns
-            patterns.should_contain ".txt"
-            patterns.should_contain ".json"
+            patterns.should_contain "*.txt"
+            patterns.should_contain "*.json"
 
 main filter=Nothing =
     suite = Test.build suite_builder->
