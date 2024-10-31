@@ -746,6 +746,9 @@ importers:
         specifier: workspace:*
         version: link:../ydoc-shared
     devDependencies:
+      '@fal-works/esbuild-plugin-global-externals':
+        specifier: ^2.1.2
+        version: 2.1.2
       esbuild:
         specifier: ^0.23.0
         version: 0.23.0
@@ -1836,6 +1839,9 @@ packages:
   '@eslint/plugin-kit@0.2.1':
     resolution: {integrity: sha512-HFZ4Mp26nbWk9d/BpvP0YNL6W4UoZF0VFcTw/aPPA8RpOxeFQgK+ClABGgAUXs9Y/RGX/l1vOmrqz1MQt9MNuw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@fal-works/esbuild-plugin-global-externals@2.1.2':
+    resolution: {integrity: sha512-cEee/Z+I12mZcFJshKcCqC8tuX5hG3s+d+9nZ3LabqKF1vKdF41B92pJVCBggjAGORAeOzyyDDKrZwIkLffeOQ==}
 
   '@fast-check/vitest@0.0.8':
     resolution: {integrity: sha512-cFrcu7nwH+rk1qm1J4YrM1k4MIwvIHG7MrQUMGizqPe58XsvvpZz0X9Xkx1e+xaNg9s1YRVTd241WSR0dK/SpQ==}
@@ -8881,6 +8887,8 @@ snapshots:
   '@eslint/plugin-kit@0.2.1':
     dependencies:
       levn: 0.4.1
+
+  '@fal-works/esbuild-plugin-global-externals@2.1.2': {}
 
   '@fast-check/vitest@0.0.8(vitest@1.6.0(@types/node@20.11.21)(jsdom@24.1.0)(lightningcss@1.25.1))':
     dependencies:
