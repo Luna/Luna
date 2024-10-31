@@ -534,7 +534,7 @@ function recomputeOnce() {
     <div
       ref="contentNode"
       :class="{ content: true, dragged: isDragged, selected: selected, singleSelected: isOnlyOneSelected }"
-      :style="{ padding: CONTENT_PADDING_PX, color: (selected ? 'var(--node-color-primary)' : 'white') }"
+      :style="{ padding: CONTENT_PADDING_PX }"
       v-on="dragPointer.events"
       @click="handleNodeClick"
     >
@@ -547,6 +547,7 @@ function recomputeOnce() {
         :potentialSelfArgumentId="potentialSelfArgumentId"
         :conditionalPorts="props.node.conditionalPorts"
         :extended="isOnlyOneSelected"
+        :singleSelected="isOnlyOneSelected"
         @openFullMenu="openFullMenu"
       />
     </div>
@@ -564,7 +565,7 @@ function recomputeOnce() {
       :type="visibleMessage.type"
     />
     <svg class="bgPaths">
-      <rect class="bgFill" :style="{fillOpacity: (selected ? 0.2 : 1)}" />
+      <rect :class="{bgFill:true, selected:selected}" />
       <GraphNodeOutputPorts
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
@@ -605,6 +606,10 @@ function recomputeOnce() {
   transition: fill 0.2s ease;
 }
 
+.bgFill.selected {
+  fill: color-mix(in oklab, var(--node-color-primary) 30%, white 70%);
+}
+
 .GraphNode {
   position: absolute;
   border-radius: var(--node-border-radius);
@@ -633,6 +638,7 @@ function recomputeOnce() {
   top: 0;
   left: 0;
   border-radius: var(--node-border-radius);
+  color: white;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -640,6 +646,10 @@ function recomputeOnce() {
   z-index: 24;
   transition: outline 0.2s ease;
   outline: 0px solid transparent;
+}
+
+.content.selected {
+  color: color-mix(in oklab, var(--node-color-primary) 80%, black 20%)
 }
 
 .binding {

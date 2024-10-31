@@ -471,7 +471,8 @@ declare module '@/providers/widgetRegistry' {
         <SizeTransition height :duration="100">
           <DropdownWidget
             v-if="dropDownInteraction.isActive() && activity == null"
-            color="var(--node-color-primary)"
+            backgroundColor="color-mix(in oklab, var(--node-color-primary) 30%, white 70%)"
+            color="color-mix(in oklab, var(--node-color-primary) 80%, black 20%)"
             :entries="entries"
             @clickEntry="onClick"
           />
