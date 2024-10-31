@@ -6,7 +6,6 @@ import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 from Standard.Table import Table
 
 import project.Google_Credential.Google_Credential
-from project.Internal.Google_Credential_Internal import all
 
 polyglot java import com.google.analytics.data.v1beta.BetaAnalyticsDataClient
 polyglot java import com.google.analytics.data.v1beta.BetaAnalyticsDataSettings
