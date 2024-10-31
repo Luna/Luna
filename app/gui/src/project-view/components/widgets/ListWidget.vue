@@ -134,7 +134,7 @@ const rootNode = ref<HTMLElement>()
 
 const cssPropsToCopy = ['--node-color-primary', '--node-color-port', '--node-border-radius']
 
-function onClickDelete(event: PointerEvent , index: number) {
+function onClickDelete(event: MouseEvent , index: number) {
   if (
     !(event.target instanceof HTMLElement && event.target.previousElementSibling instanceof HTMLElement)
   )
