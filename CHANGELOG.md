@@ -9,12 +9,29 @@
 - [Copying and pasting in Table Editor Widget now works properly][11332]
 - [Fix invisible selection in Table Input Widget][11358]
 - [Enable cloud file browser in local projects][11383]
+- [Changed the way of adding new column in Table Input Widget][11388]. The
+  "virtual column" is replaced with an explicit (+) button.
+- [New dropdown-based component menu][11398].
+- [Undo/redo buttons in the top bar][11433].
+- [Size of Table Input Widget is preserved and restored after project
+  re-opening][11435]
+- [Added application version to the title bar.][11446]
+- [Added "open grouped components" action to the context menu.][11447]
+- [Added an error message screen displayed when viewing a deleted
+  component.][11452]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
 [11332]: https://github.com/enso-org/enso/pull/11332
 [11358]: https://github.com/enso-org/enso/pull/11358
 [11383]: https://github.com/enso-org/enso/pull/11383
+[11388]: https://github.com/enso-org/enso/pull/11388
+[11398]: https://github.com/enso-org/enso/pull/11398
+[11433]: https://github.com/enso-org/enso/pull/11433
+[11435]: https://github.com/enso-org/enso/pull/11435
+[11446]: https://github.com/enso-org/enso/pull/11446
+[11447]: https://github.com/enso-org/enso/pull/11447
+[11452]: https://github.com/enso-org/enso/pull/11452
 
 #### Enso Standard Library
 
@@ -23,10 +40,12 @@
 - [The user may set description and labels of an Enso Cloud asset
   programmatically.][11255]
 - [DB_Table may be saved as a Data Link.][11371]
+- [Support for dates before 1900 in Excel and signed AWS requests.][11373]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
 [11371]: https://github.com/enso-org/enso/pull/11371
+[11373]: https://github.com/enso-org/enso/pull/11373
 
 #### Enso Language & Runtime
 
@@ -96,6 +115,8 @@
   range.][11135]
 - [Added `format` parameter to `Decimal.parse`.][11205]
 - [Added `format` parameter to `Float.parse`.][11229]
+- [Implemented a cache for HTTP data requests, as well as a per-file response
+  size limit.][11342]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -111,6 +132,7 @@
 [11135]: https://github.com/enso-org/enso/pull/11135
 [11205]: https://github.com/enso-org/enso/pull/11205
 [11229]: https://github.com/enso-org/enso/pull/11229
+[11342]: https://github.com/enso-org/enso/pull/11342
 
 #### Enso Language & Runtime
 

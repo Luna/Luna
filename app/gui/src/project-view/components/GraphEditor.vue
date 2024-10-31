@@ -21,6 +21,7 @@ import { performCollapse, prepareCollapsedInfo } from '@/components/GraphEditor/
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import { useGraphEditorToasts } from '@/components/GraphEditor/toasts'
 import { Uploader, uploadedExpression } from '@/components/GraphEditor/upload'
+import GraphMissingView from '@/components/GraphMissingView.vue'
 import GraphMouse from '@/components/GraphMouse.vue'
 import PlusButton from '@/components/PlusButton.vue'
 import SceneScroller from '@/components/SceneScroller.vue'
@@ -214,6 +215,7 @@ function panToSelected() {
 // == Breadcrumbs ==
 
 const stackNavigator = provideStackNavigator(projectStore, graphStore)
+const graphMissing = computed(() => graphStore.moduleRoot != null && !graphStore.methodAst.ok)
 
 // === Toasts ===
 
@@ -483,6 +485,12 @@ const rightDockVisible = useSelectRef(
   showRightDock,
 )
 
+/** Show help panel if it is not visible. If it is visible, close the right dock. */
+function toggleRightDockHelpPanel() {
+  rightDockVisible.value = !rightDockVisible.value || rightDockDisplayedTab.value !== 'help'
+  rightDockDisplayedTab.value = 'help'
+}
+
 function editWithComponentBrowser(node: NodeId, cursorPos: number) {
   openComponentBrowser(
     { type: 'editNode', node, cursorPos },
@@ -718,24 +726,29 @@ const documentationEditorFullscreen = ref(false)
   >
     <div class="vertical">
       <div ref="viewportNode" class="viewport" @click="handleClick">
-        <GraphNodes
-          @nodeOutputPortDoubleClick="handleNodeOutputPortDoubleClick"
-          @nodeDoubleClick="(id) => stackNavigator.enterNode(id)"
-          @createNodes="createNodesFromSource"
-        />
-        <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
-        <ComponentBrowser
-          v-if="componentBrowserVisible"
-          ref="componentBrowser"
-          :navigator="graphNavigator"
-          :nodePosition="componentBrowserNodePosition"
-          :usage="componentBrowserUsage"
-          :associatedElements="componentBrowserElements"
-          @accepted="commitComponentBrowser"
-          @canceled="hideComponentBrowser"
-          @selectedSuggestionId="displayedDocs = $event"
-          @isAiPrompt="aiMode = $event"
-        />
+        <GraphMissingView v-if="graphMissing" />
+        <template v-else>
+          <GraphNodes
+            @nodeOutputPortDoubleClick="handleNodeOutputPortDoubleClick"
+            @enterNode="(id) => stackNavigator.enterNode(id)"
+            @createNodes="createNodesFromSource"
+            @toggleDocPanel="toggleRightDockHelpPanel"
+          />
+          <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
+          <ComponentBrowser
+            v-if="componentBrowserVisible"
+            ref="componentBrowser"
+            :navigator="graphNavigator"
+            :nodePosition="componentBrowserNodePosition"
+            :usage="componentBrowserUsage"
+            :associatedElements="componentBrowserElements"
+            @accepted="commitComponentBrowser"
+            @canceled="hideComponentBrowser"
+            @selectedSuggestionId="displayedDocs = $event"
+            @isAiPrompt="aiMode = $event"
+          />
+          <PlusButton title="Add Component" @click.stop="addNodeDisconnected()" />
+        </template>
         <TopBar
           v-model:recordMode="projectStore.recordMode"
           v-model:showColorPicker="showColorPicker"
@@ -750,7 +763,6 @@ const documentationEditorFullscreen = ref(false)
           @collapseNodes="collapseNodes"
           @removeNodes="deleteSelected"
         />
-        <PlusButton title="Add Component" @click.stop="addNodeDisconnected()" />
         <SceneScroller
           :navigator="graphNavigator"
           :scrollableArea="Rect.Bounding(...graphStore.visibleNodeAreas)"
@@ -779,11 +791,7 @@ const documentationEditorFullscreen = ref(false)
         />
       </template>
       <template #help>
-        <ComponentDocumentation
-          :displayedSuggestionId="displayedDocs"
-          :aiMode="aiMode"
-          @update:displayedSuggestionId="displayedDocs = $event"
-        />
+        <ComponentDocumentation v-model="displayedDocs" :aiMode="aiMode" />
       </template>
     </DockPanel>
   </div>
