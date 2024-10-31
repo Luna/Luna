@@ -164,16 +164,22 @@ defineExpose({
   }
 }
 
-.NumericInputWidget.slider {
+.singleSelected .NumericInputWidget {
+  background: var(--color-widget-unfocus);
+  &:has(> :focus) {
+    background: var(--color-widget-focus);
+  }
+}
+
+.singleSelected .NumericInputWidget.slider {
   &:focus {
     /* Color will be blended with background defined below. */
-    background-color: var(--color-widget);
+    background-color: var(--color-widget-focus);
   }
   background: linear-gradient(
     to right,
-    var(--color-widget-focus) 0 calc(var(--slider-width) - 1px),
-    var(--color-widget-slight) calc(var(--slider-width) - 1px) var(--slider-width),
-    var(--color-widget) var(--slider-width) 100%
+    var(--color-widget-focus) 0 calc(var(--slider-width)),
+    var(--color-widget-unfocus) var(--slider-width) 100%
   );
 }
 </style>
