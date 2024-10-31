@@ -125,8 +125,6 @@ export const ICON_WIDTH = 16
 
 <style scoped>
 .NodeWidgetTree {
-  color: white;
-
   outline: none;
   min-height: var(--node-port-height);
   display: flex;
