@@ -46,21 +46,22 @@ const rootStyle = computed(() => {
   contain: strict;
   inset: calc(0px - var(--selected-node-border-width));
   width: calc(var(--selected-node-border-width) * 2 + var(--node-size-x));
-  height: calc(var(--selected-node-border-width) * 2 + var(--node-size-y));
-  border-radius: calc(var(--node-border-radius) + var(--selected-node-border-width));
+  height: calc(var(--selected-node-border-width) + var(--node-size-y) / 2);
+  border-radius: 0;
+  border-top-left-radius: calc(var(--node-border-radius) * 2 + var(--selected-node-border-width));
+  border-top-right-radius: calc(var(--node-border-radius) * 2 + var(--selected-node-border-width));
+  border-bottom-left-radius: calc(var(--node-border-radius));
+  border-bottom-right-radius: calc(var(--node-border-radius));
 
   &:before {
     position: absolute;
     content: '';
-    opacity: 0.2;
+    opacity: 0;
     display: block;
     inset: var(--selected-node-border-width);
-    box-shadow: 0 0 0 calc(0px - var(--node-border-radius)) var(--selection-color);
-    border-radius: var(--node-border-radius);
 
     transition:
-      box-shadow 0.2s ease-in-out,
-      opacity 0.2s ease-in-out;
+      box-shadow 0.2s ease-in-out;
   }
 }
 
@@ -68,7 +69,7 @@ const rootStyle = computed(() => {
   box-shadow: 0 0 0 var(--selected-node-border-width) var(--selection-color);
 }
 
-.GraphNodeSelection:not(.selected):hover::before {
+.GraphNodeSelection:hover::before {
   opacity: 0.3;
 }
 </style>
