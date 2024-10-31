@@ -38,8 +38,8 @@ export type IdeMetadata = z.infer<typeof ideMetadata>
 export const ideMetadata = z
   .object({
     node: z.record(z.string().uuid(), nodeMetadata),
-    snapshot: z.string().optional(),
     widget: z.optional(z.record(z.string().uuid(), z.record(z.string(), z.unknown()))),
+    snapshot: z.string().optional(),
   })
   .passthrough()
   .default(() => defaultMetadata().ide)

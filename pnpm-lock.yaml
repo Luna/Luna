@@ -683,9 +683,6 @@ importers:
       isomorphic-ws:
         specifier: ^5.0.0
         version: 5.0.0(ws@8.18.0)
-      js-base64:
-        specifier: ^3.7.7
-        version: 3.7.7
       lib0:
         specifier: ^0.2.85
         version: 0.2.94
@@ -5402,9 +5399,6 @@ packages:
 
   jpeg-js@0.2.0:
     resolution: {integrity: sha512-Ni9PffhJtYtdD7VwxH6V2MnievekGfUefosGCHadog0/jAevRu6HPjYeMHbUemn0IPE8d4wGa8UsOGsX+iKy2g==}
-
-  js-base64@3.7.7:
-    resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
 
   js-beautify@1.15.1:
     resolution: {integrity: sha512-ESjNzSlt/sWE8sciZH8kBF8BPlwXPwhR6pWKAw8bw4Bwj+iZcnKW6ONWUutJ7eObuBZQpiIb8S7OYspWrKt7rA==}
@@ -13581,8 +13575,6 @@ snapshots:
   jpeg-js@0.1.2: {}
 
   jpeg-js@0.2.0: {}
-
-  js-base64@3.7.7: {}
 
   js-beautify@1.15.1:
     dependencies:
