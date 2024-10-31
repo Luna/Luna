@@ -494,7 +494,7 @@ object Graph {
         case None =>
           parent.flatMap(_.resolveUsage(occurrence, parentCounter + 1))
         case Some(target) =>
-          Some(Graph.Link(occurrence.id, parentCounter, target.id))
+          Some(Graph.Link(occurrence.id, parentCounter, target.id()))
       }
     }
 
