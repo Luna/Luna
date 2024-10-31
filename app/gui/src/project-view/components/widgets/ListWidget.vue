@@ -496,7 +496,7 @@ div {
 }
 
 .token {
-  color: rgb(255 255 255 / 0.33);
+  opacity: 0.50;
   user-select: none;
 }
 
@@ -588,12 +588,17 @@ div {
   transition-property: opacity;
   transition-duration: 150ms;
   transition-timing-function: ease-in-out;
-  opacity: 0.5;
+  display: none;
   margin-left: 4px;
   transition: margin 0.2s ease-in-out;
   .items:empty + & {
     margin: 0 2px;
   }
+}
+
+.singleSelected .add-item {
+  display: block;
+  opacity: 0.6;
 }
 
 .add-item:hover {
