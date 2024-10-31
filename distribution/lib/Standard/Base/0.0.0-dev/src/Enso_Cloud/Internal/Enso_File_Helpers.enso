@@ -39,14 +39,7 @@ polyglot java import java.lang.Thread
 
 ## PRIVATE
 upload_file (local_file : File) (destination : Enso_File) (replace_existing : Boolean) -> Enso_File =
-    result = perform_upload destination replace_existing [local_file, destination]
-    result.catch Enso_Cloud_Error error->
-        is_source_file_not_found = case error of
-            Enso_Cloud_Error.Connection_Error cause -> case cause of
-                request_error : Request_Error -> request_error.error_type == 'java.io.FileNotFoundException'
-                _ -> False
-            _ -> False
-        if is_source_file_not_found then Error.throw (File_Error.Not_Found local_file) else result
+    perform_upload destination replace_existing [local_file, destination]
 
 ## PRIVATE
    A helper function that gathers the common logic for checking existence of
