@@ -81,6 +81,8 @@ type Auto_Detect
     get_dropdown_options = [Option "Auto Detect" (Meta.get_qualified_type_name Auto_Detect)]
 
     ## PRIVATE
+       Returns the union of name patterns of all currently loaded formats,
+       since `Auto_Detect` should be able to read any of the loaded formats.
     get_name_patterns -> Vector File_Name_Pattern =
         [File_Name_Pattern.Value "All known formats" File_Format.all_known_name_patterns]
 
