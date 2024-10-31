@@ -463,8 +463,8 @@ declare module '@/providers/widgetRegistry' {
     @pointerout="isHovered = false"
   >
     <NodeWidget :input="innerWidgetInput" />
-    <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
-      <SvgIcon name="arrow_right_head_only" class="arrow widgetOutOfLayout" />
+    <Teleport defer :disabled="!arrowLocation" :to="arrowLocation">
+      <SvgIcon name="arrow_right_head_only" :class="{arrow:true, widgetOutOfLayout:true, shown:isHovered}" />
     </Teleport>
     <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
@@ -512,9 +512,17 @@ svg.arrow {
   left: 50%;
   transform: translateX(-50%) rotate(90deg) scale(0.7);
   transform-origin: center;
-  opacity: 0.5;
+  opacity: 0;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
+}
+
+.singleSelected svg.arrow {
+  opacity: 0.5;
+}
+
+svg.arrow.shown {
+  opacity: 0.5;
 }
 
 .activityElement {
