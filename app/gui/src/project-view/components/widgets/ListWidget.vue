@@ -134,6 +134,16 @@ const rootNode = ref<HTMLElement>()
 
 const cssPropsToCopy = ['--node-color-primary', '--node-color-port', '--node-border-radius']
 
+function onClickDelete(event: PointerEvent , index: number) {
+  if (
+    !(event.target instanceof HTMLElement && event.target.previousElementSibling instanceof HTMLElement)
+  )
+    return
+
+  const modelValue = props.modelValue.filter((_, i) => i !== index)
+  emit('update:modelValue', modelValue)
+}
+
 function onDragStart(event: DragEvent, index: number) {
   if (
     !(event.target instanceof HTMLElement && event.target.nextElementSibling instanceof HTMLElement)
@@ -394,8 +404,9 @@ function addItem() {
                 draggable="true"
                 @dragstart="onDragStart($event, entry.index)"
                 @dragend="onDragEnd"
-              ></div>
+              >‖</div>
               <slot :item="entry.item"></slot>
+              <div class="handle" style="cursor: pointer;" @click.stop="onClickDelete($event, entry.index)">×</div>
             </li>
             <li
               v-show="entry.index != props.modelValue.length - 1"
@@ -514,65 +525,27 @@ div {
 }
 
 .handle {
-  position: absolute;
-  display: block;
-  left: -6px;
+  display: none;
+  background-color: 0 0 0 0;
   height: calc(100% - 12px);
-  width: 2px;
-  box-shadow:
-    2px 0 0 transparent,
-    -2px 0 0 transparent;
-  transition: box-shadow 0.2s ease;
-  pointer-events: none;
+  width: 6px;
   cursor: grab;
 
   &:before {
-    content: '';
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    position: absolute;
-    display: block;
-    left: -8px;
-    right: -16px;
-    top: -3px;
-    bottom: -3px;
+    opacity: 0.6;
     border-radius: var(--node-border-radius) 0 0 var(--node-border-radius);
-    background-color: var(--node-color-primary);
-    z-index: -1;
   }
 }
 
-.item:hover {
-  z-index: 0;
+.singleSelected .handle {
+  display: block;
 }
 
 .item:hover .handle {
-  box-shadow:
-    2px 0 0 rgb(255 255 255 / 0.5),
-    -2px 0 0 rgb(255 255 255 / 0.5);
-
-  &:hover {
-    box-shadow:
-      2px 0 0 rgb(255 255 255 / 0.8),
-      -2px 0 0 rgb(255 255 255 / 0.8);
-  }
-
-  background: var(--node-color-primary);
   pointer-events: all;
 
   &:before {
-    opacity: 0.5;
-  }
-
-  &:after {
-    content: '';
-    position: absolute;
-    display: block;
-    left: -1px;
-    right: -4px;
-    top: -3px;
-    bottom: -3px;
-    z-index: 1;
+    opacity: 1;
   }
 }
 
