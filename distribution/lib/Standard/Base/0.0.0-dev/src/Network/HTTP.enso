@@ -260,6 +260,9 @@ private _resolve_body body:Request_Body hash_function =
             ## ToDo: Support hashing a file.
             hash = if hash_function.is_nothing then "" else Unimplemented.throw "Hashing a file body is not yet supported."
             Resolved_Body.Value (body_publishers.ofFile path) Nothing hash
+        Request_Body.Byte_Array bytes ->
+            hash = if hash_function.is_nothing then "" else hash_function bytes
+            Resolved_Body.Value (body_publishers.ofByteArray bytes) Nothing hash
         Request_Body.Form_Data form_data url_encoded ->
             _resolve_form_body form_data url_encoded hash_function
         Request_Body.Empty ->
@@ -355,20 +358,20 @@ type Request_Error
 
 ## PRIVATE
    Access the HTTP's timeout (for testing purposes).
-get_timeout : HTTP -> Duration
-get_timeout http:HTTP = http.timeout
+_get_timeout : HTTP -> Duration
+_get_timeout http:HTTP = http.timeout
 
 ## PRIVATE
    Access the HTTP's follow_redirects (for testing purposes).
-get_follow_redirects : HTTP -> Boolean
-get_follow_redirects http:HTTP = http.follow_redirects
+_get_follow_redirects : HTTP -> Boolean
+_get_follow_redirects http:HTTP = http.follow_redirects
 
 ## PRIVATE
    Access the HTTP's proxy (for testing purposes).
-get_proxy : HTTP -> Proxy
-get_proxy http:HTTP = http.proxy
+_get_proxy : HTTP -> Proxy
+_get_proxy http:HTTP = http.proxy
 
 ## PRIVATE
     Access the HTTP's version (for testing purposes).
-get_version : HTTP -> HTTP_Version
-get_version http:HTTP = http.version
+_get_version : HTTP -> HTTP_Version
+_get_version http:HTTP = http.version
