@@ -7,6 +7,7 @@ import com.google.analytics.admin.v1beta.ListPropertiesRequest;
 import com.google.analytics.data.v1beta.BetaAnalyticsDataClient;
 import com.google.analytics.data.v1beta.BetaAnalyticsDataSettings;
 import com.google.analytics.data.v1beta.GetMetadataRequest;
+import com.google.analytics.data.v1beta.Metadata;
 import com.google.api.gax.core.CredentialsProvider;
 
 import java.io.IOException;
@@ -14,9 +15,13 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class GoogleAnalyticsReader {
+  private static final Map<String, Metadata> metadataCache = new HashMap<>();
+
   public record AnalyticsAccount(String id, String displayName, boolean deleted, ZonedDateTime created, String regionCode) {}
 
   public record AnalyticsProperty(String id, String displayName, boolean deleted, ZonedDateTime created, String account, String currency, TimeZone timeZone) {}
@@ -144,17 +149,10 @@ public class GoogleAnalyticsReader {
    * @return an array of metrics
    */
   public static AnalyticDimension[] listMetrics(CredentialsProvider credentialsProvider, AnalyticsProperty property) throws IOException {
-    try (var client = createDataClient(credentialsProvider)) {
-      var request = GetMetadataRequest
-          .newBuilder()
-          .setName(property.id() + "/metadata")
-          .build();
-
-      var metadata = client.getMetadata(request);
-      return metadata.getMetricsList().stream()
-          .map(metric -> new AnalyticDimension(metric.getApiName(), metric.getUiName(), metric.getCategory(), metric.getDescription()))
-          .toArray(AnalyticDimension[]::new);
-    }
+    var metadata = getMetadata(credentialsProvider, property.id());
+    return metadata.getMetricsList().stream()
+        .map(metric -> new AnalyticDimension(metric.getApiName(), metric.getUiName(), metric.getCategory(), metric.getDescription()))
+        .toArray(AnalyticDimension[]::new);
   }
 
   /**
@@ -163,16 +161,27 @@ public class GoogleAnalyticsReader {
    * @return an array of dimensions
    */
   public static AnalyticDimension[] listDimensions(CredentialsProvider credentialsProvider, AnalyticsProperty property) throws IOException {
+    var metadata = getMetadata(credentialsProvider, property.id());
+    return metadata.getDimensionsList().stream()
+        .map(dimension -> new AnalyticDimension(dimension.getApiName(), dimension.getUiName(), dimension.getCategory(), dimension.getDescription()))
+        .toArray(AnalyticDimension[]::new);
+  }
+
+  /** Caches metadata requests for Google Analytics properties. */
+  private synchronized static Metadata getMetadata(CredentialsProvider credentialsProvider, String propertyId) throws IOException {
+    if (metadataCache.containsKey(propertyId)) {
+      return metadataCache.get(propertyId);
+    }
+
     try (var client = createDataClient(credentialsProvider)) {
       var request = GetMetadataRequest
           .newBuilder()
-          .setName(property.id() + "/metadata")
+          .setName(propertyId + "/metadata")
           .build();
 
       var metadata = client.getMetadata(request);
-      return metadata.getDimensionsList().stream()
-          .map(dimension -> new AnalyticDimension(dimension.getApiName(), dimension.getUiName(), dimension.getCategory(), dimension.getDescription()))
-          .toArray(AnalyticDimension[]::new);
+      metadataCache.put(propertyId, metadata);
+      return metadata;
     }
   }
 }
