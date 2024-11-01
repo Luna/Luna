@@ -155,4 +155,25 @@ public class ZlibTest extends ExecutorSetup {
 
     Assert.assertEquals(TEXT, result.asString());
   }
+
+  @Test
+  public void zlibInflateCorrupted() throws Exception {
+    var code =
+        """
+        let buffer = Buffer.from('corrupted')
+        let result = ''
+        try {
+          zlib.inflateSync(buffer).toString()
+        } catch (e) {
+          result = e.message
+        }
+        result
+      """;
+
+    context.getBindings("js").putMember("TEXT", TEXT);
+
+    var result = CompletableFuture.supplyAsync(() -> context.eval("js", code), executor).get();
+
+    Assert.assertEquals("Failed to inflate.", result.asString());
+  }
 }
