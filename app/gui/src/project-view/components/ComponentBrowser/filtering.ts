@@ -275,11 +275,11 @@ export class Filtering {
   }
 
   /** TODO: Add docs */
-  filter(entry: SuggestionEntry, additionalSelfTypes?: QualifiedName[]): MatchResult | null {
+  filter(entry: SuggestionEntry, additionalSelfTypes: QualifiedName[]): MatchResult | null {
     if (entry.isPrivate || entry.kind != SuggestionKind.Method || entry.memberOf == null)
       return null
     if (this.selfArg == null && isInternal(entry)) return null
-    if (!this.selfTypeMatches(entry, additionalSelfTypes ?? [])) return null
+    if (!this.selfTypeMatches(entry, additionalSelfTypes)) return null
     if (this.pattern) {
       if (entry.memberOf == null) return null
       const patternMatch = this.pattern.tryMatch(entry.name, entry.aliases, entry.memberOf)
