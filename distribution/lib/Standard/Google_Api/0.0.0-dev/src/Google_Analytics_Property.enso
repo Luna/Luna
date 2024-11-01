@@ -1,0 +1,40 @@
+from Standard.Base import all
+
+polyglot java import org.enso.google.GoogleAnalyticsReader.AnalyticsProperty
+
+## Type describing a Google Analytics property.
+type Google_Analytics_Property
+    private Value java_record
+
+    ## Property ID.
+    id : Text
+    id self = self.java_record.id
+
+    ## Property display name.
+    name : Text
+    name self = self.java_record.displayName
+
+    ## Property creation time.
+    create_time : Date_Time
+    create_time self = self.java_record.created
+
+    ## Parent account
+    account : Text
+    account self = self.java_record.account
+
+    ## Property currency.
+    currency : Text
+    currency self = self.java_record.currency
+
+    ## Property time zone.
+    time_zone : Time_Zone
+    time_zone self = self.java_record.timeZone
+
+    ## PRIVATE
+    to_text : Text
+    to_text self = "Google Analytics Property: " + self.name + " (" + self.id + ")"
+
+    ## PRIVATE
+    to_display_text : Text
+    to_display_text self = self.to_text
+

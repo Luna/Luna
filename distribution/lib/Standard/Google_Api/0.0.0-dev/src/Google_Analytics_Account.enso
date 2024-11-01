@@ -1,0 +1,61 @@
+from Standard.Base import all
+from Standard.Base.Metadata.Widget import Text_Input
+
+polyglot java import org.enso.google.GoogleAnalyticsReader.AnalyticsAccount
+
+## Type describing a Google Analytics account.
+type Google_Analytics_Account
+    private Value java_record
+
+    ## Account ID.
+    id : Text
+    id self = self.java_record.id
+
+    ## Account display name.
+    name : Text
+    name self = self.java_record.displayName
+
+    ## Account creation time.
+    create_time : Date_Time
+    create_time self = self.java_record.created
+
+    ## Account region code.
+    region_code : Text
+    region_code self = self.java_record.regionCode
+
+    ## Has the account been deleted?
+    is_deleted : Boolean
+    is_deleted self = self.java_record.deleted
+
+    ## PRIVATE
+    to_text : Text
+    to_text self = "Google Analytics Account: " + self.name + " (" + self.id + ")"
+
+    ## PRIVATE
+    to_display_text : Text
+    to_display_text self = self.to_text
+
+## Filter for Google Analytics accounts.
+type Google_Analytics_Account_Filter
+   All_Accounts
+
+   ## Filter to a single account
+   @value (Text_Input display=..Always)
+   Account value:Text|Google_Analytics_Account
+
+   ## PRIVATE
+   to_java : Array | Nothing
+   private to_java self = case self of
+       Google_Analytics_Account_Filter.All_Accounts -> Nothing
+       Google_Analytics_Account_Filter.Account acc -> case acc of
+           _ : Google_Analytics_Account -> [acc.java_record].to_array
+           _ : Text ->
+               id = if acc.starts_with "accounts/" then acc else
+                   "accounts/" + acc
+               [AnalyticsAccount.new id "MOCK" False Date_Time.now "XXX"].to_array
+
+## PRIVATE
+Google_Analytics_Account_Filter.from (that:Google_Analytics_Account) = Google_Analytics_Account_Filter.Account that
+
+## PRIVATE
+Google_Analytics_Account_Filter.from (that:Text) = Google_Analytics_Account_Filter.Account that
