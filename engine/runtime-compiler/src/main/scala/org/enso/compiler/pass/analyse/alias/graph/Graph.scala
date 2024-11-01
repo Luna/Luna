@@ -323,12 +323,12 @@ object Graph {
     private[Graph] var _allDefinitions: List[GraphOccurrence.Def] = List()
   ) {
 
-    private[Graph] var _parent: Option[Scope] = None
+    private[Graph] var _parent: Scope = null
 
     def childScopes    = _childScopes
     def occurrences    = _occurrences
     def allDefinitions = _allDefinitions
-    def parent         = _parent
+    def parent         = if (this._parent eq null) None else Some(_parent)
 
     /** Counts the number of scopes from this scope to the root.
       *
@@ -347,8 +347,10 @@ object Graph {
       * @return this scope with parent scope set
       */
     final def withParent(parentScope: Scope): this.type = {
-      org.enso.common.Asserts.assertInJvm(parent.isEmpty)
-      this._parent = Some(parentScope)
+      if (this._parent ne parentScope) {
+        org.enso.common.Asserts.assertInJvm(parent.isEmpty)
+        this._parent = parentScope
+      }
       this
     }
 
@@ -401,7 +403,7 @@ object Graph {
       */
     final def addChild(): Scope = {
       val scope = new Scope()
-      scope._parent = Some(this)
+      scope._parent = this
       _childScopes ::= scope
 
       scope
