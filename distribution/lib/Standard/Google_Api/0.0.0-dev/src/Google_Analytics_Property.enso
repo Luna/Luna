@@ -45,11 +45,13 @@ type Google_Analytics_Property
     to_display_text self = self.to_text
 
     ## PRIVATE
-    default_widget : Widget
-    default_widget cache=Nothing =
-        credentials = (cache.if_not_nothing <| cache.get_credentials) . if_nothing Google_Credential.Default
-        options = Google_Analytics.list_properties credentials=credentials limit=(..First 10) . map p->(Option (p.name + " (" + p.id + ")") p.id)
-        make_single_choice options
+    default_widget : Any -> Any -> Widget
+    default_widget self_arg cache =
+        _ = self_arg
+        Panic.catch Any handler=_->(Widget.Text_Input display=..Always) <|
+            credentials = cache.if_not_nothing <| cache "credentials"
+            options = Google_Analytics.list_properties account=..All_Accounts credentials=(credentials.if_nothing Google_Credential.Default) limit=(..First 10) . map p->(Option (p.name + " (" + p.id + ")") p.id.pretty)
+            make_single_choice options display=..Always
 
 ## PRIVATE
 Google_Analytics_Property.from (that:Text) =

@@ -4,6 +4,7 @@ import com.google.analytics.admin.v1beta.AnalyticsAdminServiceClient;
 import com.google.analytics.admin.v1beta.AnalyticsAdminServiceSettings;
 import com.google.analytics.admin.v1beta.ListAccountsRequest;
 import com.google.analytics.admin.v1beta.ListPropertiesRequest;
+import com.google.analytics.data.v1beta.Metadata;
 import com.google.api.gax.core.CredentialsProvider;
 
 import java.io.IOException;
@@ -14,10 +15,11 @@ import java.util.ArrayList;
 import java.util.TimeZone;
 
 public class GoogleAnalyticsReader {
-  /** Represents a Google Analytics account. */
   public record AnalyticsAccount(String id, String displayName, boolean deleted, ZonedDateTime created, String regionCode) {}
 
   public record AnalyticsProperty(String id, String displayName, boolean deleted, ZonedDateTime created, String account, String currency, TimeZone timeZone) {}
+
+  public record AnalyticDimension(String apiName, String displayName, String category, String description) {}
 
   private static AnalyticsAdminServiceClient createAdminClient(CredentialsProvider credentialsProvider) throws IOException {
     if (credentialsProvider == null) {
@@ -117,5 +119,17 @@ public class GoogleAnalyticsReader {
 
       return output.toArray(new AnalyticsProperty[0]);
     }
+  }
+
+  /**
+   * Lists all dimensions available in Google Analytics.
+   *
+   * @return an array of dimensions
+   */
+  public static AnalyticDimension[] listDimensions() {
+    Metadata metadata = Metadata.getDefaultInstance();
+    return metadata.getDimensionsList().stream()
+        .map(dimension -> new AnalyticDimension(dimension.getApiName(), dimension.getUiName(), dimension.getCategory(), dimension.getDescription()))
+        .toArray(AnalyticDimension[]::new);
   }
 }

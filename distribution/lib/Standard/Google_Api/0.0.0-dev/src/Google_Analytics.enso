@@ -12,6 +12,7 @@ import Standard.Table.Rows_To_Read.Rows_To_Read
 import project.Google_Credential.Google_Credential
 import project.Google_Analytics_Account.Google_Analytics_Account
 import project.Google_Analytics_Account.Google_Analytics_Account_Filter
+import project.Google_Analytics_Dimension.Google_Analytics_Dimension
 import project.Google_Analytics_Property.Google_Analytics_Property
 from project.Internal.Google_Analytics_Internal import all
 
@@ -75,6 +76,13 @@ type Google_Analytics
         array = GoogleAnalyticsReader.listProperties java_credentials filter to_read include_deleted
         vector = array.map a-> Google_Analytics_Property.Value a
         limit.attach_warning_vector vector
+
+    ## ICON data_input
+       Reads the set of dimensions from Google Analytics.
+    list_dimensions : Vector
+    list_dimensions =
+        array = GoogleAnalyticsReader.listDimensions
+        array.map a-> Google_Analytics_Dimension.Value a
 
 ## PRIVATE
 _make_dimensions_vector_selector : Widget

@@ -29,11 +29,11 @@ type Google_Analytics_Account
 
     ## PRIVATE
     to_text : Text
-    to_text self = "Google Analytics Account: " + self.name + " (" + self.id + ")"
+    to_text self = "Google_Analytics_Account " + self.name + " (" + self.id + ")"
 
     ## PRIVATE
     to_display_text : Text
-    to_display_text self = self.to_text
+    to_display_text self = "GA Account {" + self.name + " (" + self.id + ")}"
 
 ## Filter for Google Analytics accounts.
 type Google_Analytics_Account_Filter
