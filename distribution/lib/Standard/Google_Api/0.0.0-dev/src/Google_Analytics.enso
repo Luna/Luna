@@ -27,17 +27,17 @@ type Google_Analytics
        - property_id: The Google Analytics property_id that is being queried
        - start_date: The beginning date of the query. Default is 2020-03-31
        - end_date: The end date being queried. Defaults to today.
-    @property_id (Text_Input display=..Always)
+    @property_id Google_Analytics_Property.default_widget
     @dimensions _make_dimensions_vector_selector
     @metrics _make_metrics_vector_selector
     @credentials Google_Credential.default_widget
     @start_date _make_start_date_widget
     @end_date (Date.default_widget include_today=True)
     read : Text -> (Vector Text) -> (Vector Text) -> Date -> Date -> Google_Credential -> Table
-    read property_id:Text=(Missing_Argument.throw "property_id") dimensions:Vector=['country'] metrics:Vector=['activeUsers'] start_date:Date=(Date.today.previous ..Year) end_date:Date=Date.today credentials:Google_Credential=..Default -> Table =
+    read property_id:Google_Analytics_Property=(Missing_Argument.throw "property_id") dimensions:Vector=['country'] metrics:Vector=['activeUsers'] start_date:Date=(Date.today.previous ..Year) end_date:Date=Date.today credentials:Google_Credential=..Default -> Table =
         case credentials of
             Google_Credential.Sample -> read_sample_data dimensions metrics start_date end_date
-            _ -> read_api_data property_id dimensions metrics start_date end_date credentials
+            _ -> read_api_data property_id.id dimensions metrics start_date end_date credentials
 
     ## ICON data_input
        Reads the set of accounts from Google Analytics Admin API.
@@ -71,11 +71,10 @@ type Google_Analytics
     list_properties account:Google_Analytics_Account_Filter=..All_Accounts credentials:Google_Credential=..Default (limit : Rows_To_Read = ..First_With_Warning 1000) include_deleted:Boolean=False -> Vector =
         java_credentials = credentials.as_java
         to_read = limit.rows_to_read.if_nothing 0
-        filter = account.to_java
+        filter = account.as_java
         array = GoogleAnalyticsReader.listProperties java_credentials filter to_read include_deleted
         vector = array.map a-> Google_Analytics_Property.Value a
         limit.attach_warning_vector vector
-
 
 ## PRIVATE
 _make_dimensions_vector_selector : Widget

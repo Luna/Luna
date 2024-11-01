@@ -20,6 +20,11 @@ public class GoogleAnalyticsReader {
   public record AnalyticsProperty(String id, String displayName, boolean deleted, ZonedDateTime created, String account, String currency, TimeZone timeZone) {}
 
   private static AnalyticsAdminServiceClient createAdminClient(CredentialsProvider credentialsProvider) throws IOException {
+    if (credentialsProvider == null) {
+      // Default Credentials Path
+      return AnalyticsAdminServiceClient.create();
+    }
+
     var settings = AnalyticsAdminServiceSettings.newBuilder()
         .setCredentialsProvider(credentialsProvider)
         .build();
@@ -75,11 +80,11 @@ public class GoogleAnalyticsReader {
    * @return an array of properties
    */
   public static AnalyticsProperty[] listProperties(CredentialsProvider credentialsProvider, AnalyticsAccount[] parents, int limit, boolean includeDeleted) throws IOException {
-    if (parents != null) {
+    if (parents == null) {
       parents = listAccounts(credentialsProvider, 0, false);
     }
 
-    if (parents == null || parents.length == 0) {
+    if (parents.length == 0) {
       return new AnalyticsProperty[0];
     }
 
