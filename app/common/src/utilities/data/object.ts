@@ -22,10 +22,8 @@ type NoInfer<T> = [T][T extends T ? 0 : never]
  */
 export function merge<T extends object>(object: T, update: Partial<T>): T {
   for (const [key, value] of Object.entries(update)) {
-    // eslint-disable-next-line no-restricted-syntax
     if (!Object.is(value, (object as Record<string, unknown>)[key])) {
       // This is FINE, as the matching `return` is below this `return`.
-      // eslint-disable-next-line no-restricted-syntax
       return Object.assign({ ...object }, update)
     }
   }
@@ -63,6 +61,15 @@ export function unsafeMutable<T extends object>(object: T): { -readonly [K in ke
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
  * extra keys.
  */
+export function unsafeKeys<T extends object>(object: T): readonly (keyof T)[] {
+  // @ts-expect-error This is intentionally a wrapper function with a different type.
+  return Object.keys(object)
+}
+
+/**
+ * Return the entries of an object. UNSAFE only when it is possible for an object to have
+ * extra keys.
+ */
 export function unsafeEntries<T extends object>(
   object: T,
 ): readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][] {
@@ -79,7 +86,6 @@ export function unsafeRemoveUndefined<T extends object>(
   object: T,
 ): { [K in keyof T]: Exclude<T[K], undefined> } {
   // This function intentionally performs an mostly safe, but ultimately unsafe cast.
-  // eslint-disable-next-line no-restricted-syntax
   return object as never
 }
 
@@ -133,10 +139,8 @@ export function omit<T, Ks extends readonly (string & keyof T)[] | []>(
   ...keys: Ks
 ): Omit<T, Ks[number]> {
   const keysSet = new Set<string>(keys)
-  // eslint-disable-next-line no-restricted-syntax
   return Object.fromEntries(
     // This is SAFE, as it is a reaonly upcast.
-    // eslint-disable-next-line no-restricted-syntax
     Object.entries(object as Readonly<Record<string, unknown>>).flatMap(kv =>
       !keysSet.has(kv[0]) ? [kv] : [],
     ),

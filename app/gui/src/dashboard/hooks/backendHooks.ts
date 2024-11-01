@@ -49,7 +49,6 @@ const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES
 // ============================
 
 /** Ensure that the given type contains only names of backend methods. */
-// eslint-disable-next-line no-restricted-syntax
 type DefineBackendMethods<T extends keyof Backend> = T
 
 // ======================
@@ -118,10 +117,7 @@ export function backendQueryOptions<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<
-  // eslint-disable-next-line no-restricted-syntax
-  Awaited<ReturnType<Backend[Method]>> | undefined
->
+): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
@@ -152,10 +148,7 @@ export function useBackendQuery<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryResult<
-  // eslint-disable-next-line no-restricted-syntax
-  Awaited<ReturnType<Backend[Method]>> | undefined
->
+): UseQueryResult<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
 export function useBackendQuery<Method extends BackendMethods>(
   backend: Backend | null,
@@ -309,7 +302,7 @@ export function useAssetPassiveListener(
   parentId: DirectoryId | null | undefined,
   category: Category,
 ) {
-  const listDirectoryQuery = useQuery<readonly AnyAsset<AssetType>[] | undefined>({
+  const { data: asset } = useQuery<readonly AnyAsset[] | undefined, Error, AnyAsset | undefined>({
     queryKey: [
       backendType,
       'listDirectory',
@@ -321,37 +314,62 @@ export function useAssetPassiveListener(
       },
     ],
     initialData: undefined,
+    select: (data) => data?.find((child) => child.id === assetId),
   })
-  const asset = listDirectoryQuery.data?.find((child) => child.id === assetId)
   if (asset || !assetId || !parentId) {
     return asset
   }
-  switch (assetId) {
-    case USERS_DIRECTORY_ID: {
+  const shared = {
+    parentId,
+    projectState: null,
+    extension: null,
+    description: '',
+    modifiedAt: toRfc3339(new Date()),
+    permissions: [],
+    labels: [],
+    parentsPath: '',
+    virtualParentsPath: '',
+  }
+  switch (true) {
+    case assetId === USERS_DIRECTORY_ID: {
       return {
+        ...shared,
         id: assetId,
-        parentId,
-        type: AssetType.directory,
-        projectState: null,
         title: 'Users',
-        description: '',
-        modifiedAt: toRfc3339(new Date()),
-        permissions: [],
-        labels: [],
+        type: AssetType.directory,
       } satisfies DirectoryAsset
     }
-    case TEAMS_DIRECTORY_ID: {
+    case assetId === TEAMS_DIRECTORY_ID: {
       return {
+        ...shared,
         id: assetId,
-        parentId,
-        type: AssetType.directory,
-        projectState: null,
         title: 'Teams',
-        description: '',
-        modifiedAt: toRfc3339(new Date()),
-        permissions: [],
-        labels: [],
+        type: AssetType.directory,
       } satisfies DirectoryAsset
+    }
+    case backendModule.isLoadingAssetId(assetId): {
+      return {
+        ...shared,
+        id: assetId,
+        title: '',
+        type: AssetType.specialLoading,
+      } satisfies backendModule.SpecialLoadingAsset
+    }
+    case backendModule.isEmptyAssetId(assetId): {
+      return {
+        ...shared,
+        id: assetId,
+        title: '',
+        type: AssetType.specialEmpty,
+      } satisfies backendModule.SpecialEmptyAsset
+    }
+    case backendModule.isErrorAssetId(assetId): {
+      return {
+        ...shared,
+        id: assetId,
+        title: '',
+        type: AssetType.specialError,
+      } satisfies backendModule.SpecialErrorAsset
     }
     default: {
       return

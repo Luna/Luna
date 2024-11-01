@@ -212,9 +212,9 @@ test('Editing existing nodes', async ({ page }) => {
   const input = locate.componentBrowserInput(page).locator('input')
   await expect(input).toHaveValue('Data.read')
 
-  // Add argument and accept
+  // Add argument and accept - assume the input is already focused.
   await page.keyboard.press('End')
-  await input.pressSequentially(` ${ADDED_PATH}`)
+  await page.keyboard.type(` ${ADDED_PATH}`)
   await expect(input).toHaveValue(`Data.read ${ADDED_PATH}`)
   await page.keyboard.press('Enter')
   await expect(locate.componentBrowser(page)).toBeHidden()
@@ -223,6 +223,7 @@ test('Editing existing nodes', async ({ page }) => {
 
   // Edit again, using "edit" button
   await locate.graphNodeIcon(node).click()
+  await node.getByTestId('more-button').click()
   await node.getByTestId('edit-button').click()
   await expect(locate.componentBrowser(page)).toBeVisible()
   await expect(input).toHaveValue(`Data.read ${ADDED_PATH}`)

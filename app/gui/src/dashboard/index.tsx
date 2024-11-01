@@ -21,7 +21,7 @@ import LoggerProvider, { type Logger } from '#/providers/LoggerProvider'
 
 import LoadingScreen from '#/pages/authentication/LoadingScreen'
 
-import { ReactQueryDevtools } from '#/components/Devtools'
+import { DevtoolsProvider, ReactQueryDevtools } from '#/components/Devtools'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { OfflineNotificationManager } from '#/components/OfflineNotificationManager'
 import { Suspense } from '#/components/Suspense'
@@ -60,10 +60,7 @@ export interface DashboardProps extends app.AppProps {
  * authentication/dashboard UI using React. It also handles routing and other interactions (e.g.,
  * for redirecting the user to/from the login page).
  */
-export // This export declaration must be broken up to satisfy the `require-jsdoc` rule.
-// This is not a React component even though it contains JSX.
-// eslint-disable-next-line no-restricted-syntax
-function run(props: DashboardProps) {
+export function run(props: DashboardProps) {
   const { vibrancy, supportsDeepLinks, queryClient, logger } = props
   if (
     !detect.IS_DEV_MODE &&
@@ -116,21 +113,23 @@ function run(props: DashboardProps) {
     reactDOM.createRoot(root).render(
       <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingScreen />}>
-              <OfflineNotificationManager>
-                <LoggerProvider logger={logger}>
-                  <HttpClientProvider httpClient={httpClient}>
-                    <UIProviders locale="en-US" portalRoot={portalRoot}>
-                      <App {...props} supportsDeepLinks={actuallySupportsDeepLinks} />
-                    </UIProviders>
-                  </HttpClientProvider>
-                </LoggerProvider>
-              </OfflineNotificationManager>
-            </Suspense>
-          </ErrorBoundary>
+          <DevtoolsProvider>
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingScreen />}>
+                <OfflineNotificationManager>
+                  <LoggerProvider logger={logger}>
+                    <HttpClientProvider httpClient={httpClient}>
+                      <UIProviders locale="en-US" portalRoot={portalRoot}>
+                        <App {...props} supportsDeepLinks={actuallySupportsDeepLinks} />
+                      </UIProviders>
+                    </HttpClientProvider>
+                  </LoggerProvider>
+                </OfflineNotificationManager>
+              </Suspense>
+            </ErrorBoundary>
 
-          <ReactQueryDevtools />
+            <ReactQueryDevtools />
+          </DevtoolsProvider>
         </QueryClientProvider>
       </React.StrictMode>,
     )
