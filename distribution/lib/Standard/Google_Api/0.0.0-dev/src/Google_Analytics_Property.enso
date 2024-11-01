@@ -44,6 +44,26 @@ type Google_Analytics_Property
     to_display_text : Text
     to_display_text self = self.to_text
 
+    ## ICON data_input
+       List of all metrics of the property.
+
+       Arguments:
+       - credentials: The Google credentials to use. Default is the default
+         credentials.
+    metrics : Google_Credential -> Vector
+    metrics self credentials:Google_Credential=..Default =
+        Google_Analytics.list_metrics self credentials
+
+    ## ICON data_input
+       List of all dimensions of the property.
+
+       Arguments:
+       - credentials: The Google credentials to use. Default is the default
+         credentials.
+    dimensions : Google_Credential -> Vector
+    dimensions self credentials:Google_Credential=..Default =
+        Google_Analytics.list_dimensions self credentials
+
     ## PRIVATE
     default_widget : Any -> Any -> Widget
     default_widget self_arg cache =

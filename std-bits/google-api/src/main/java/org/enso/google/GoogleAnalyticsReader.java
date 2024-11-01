@@ -4,7 +4,9 @@ import com.google.analytics.admin.v1beta.AnalyticsAdminServiceClient;
 import com.google.analytics.admin.v1beta.AnalyticsAdminServiceSettings;
 import com.google.analytics.admin.v1beta.ListAccountsRequest;
 import com.google.analytics.admin.v1beta.ListPropertiesRequest;
-import com.google.analytics.data.v1beta.Metadata;
+import com.google.analytics.data.v1beta.BetaAnalyticsDataClient;
+import com.google.analytics.data.v1beta.BetaAnalyticsDataSettings;
+import com.google.analytics.data.v1beta.GetMetadataRequest;
 import com.google.api.gax.core.CredentialsProvider;
 
 import java.io.IOException;
@@ -31,6 +33,18 @@ public class GoogleAnalyticsReader {
         .setCredentialsProvider(credentialsProvider)
         .build();
     return AnalyticsAdminServiceClient.create(settings);
+  }
+
+  private static BetaAnalyticsDataClient createDataClient(CredentialsProvider credentialsProvider) throws IOException {
+    if (credentialsProvider == null) {
+      // Default Credentials Path
+      return BetaAnalyticsDataClient.create();
+    }
+
+    var settings = BetaAnalyticsDataSettings.newBuilder()
+        .setCredentialsProvider(credentialsProvider)
+        .build();
+    return BetaAnalyticsDataClient.create(settings);
   }
 
   /** Lists all Google Analytics accounts. */
@@ -122,14 +136,43 @@ public class GoogleAnalyticsReader {
   }
 
   /**
+   * Lists all metrics available in a Google Analytics property.
+   *
+   * @param credentialsProvider the credentials provider
+   *                            (null for default credentials)
+   * @param property the property to list metrics for
+   * @return an array of metrics
+   */
+  public static AnalyticDimension[] listMetrics(CredentialsProvider credentialsProvider, AnalyticsProperty property) throws IOException {
+    try (var client = createDataClient(credentialsProvider)) {
+      var request = GetMetadataRequest
+          .newBuilder()
+          .setName(property.id() + "/metadata")
+          .build();
+
+      var metadata = client.getMetadata(request);
+      return metadata.getMetricsList().stream()
+          .map(metric -> new AnalyticDimension(metric.getApiName(), metric.getUiName(), metric.getCategory(), metric.getDescription()))
+          .toArray(AnalyticDimension[]::new);
+    }
+  }
+
+  /**
    * Lists all dimensions available in Google Analytics.
    *
    * @return an array of dimensions
    */
-  public static AnalyticDimension[] listDimensions() {
-    Metadata metadata = Metadata.getDefaultInstance();
-    return metadata.getDimensionsList().stream()
-        .map(dimension -> new AnalyticDimension(dimension.getApiName(), dimension.getUiName(), dimension.getCategory(), dimension.getDescription()))
-        .toArray(AnalyticDimension[]::new);
+  public static AnalyticDimension[] listDimensions(CredentialsProvider credentialsProvider, AnalyticsProperty property) throws IOException {
+    try (var client = createDataClient(credentialsProvider)) {
+      var request = GetMetadataRequest
+          .newBuilder()
+          .setName(property.id() + "/metadata")
+          .build();
+
+      var metadata = client.getMetadata(request);
+      return metadata.getDimensionsList().stream()
+          .map(dimension -> new AnalyticDimension(dimension.getApiName(), dimension.getUiName(), dimension.getCategory(), dimension.getDescription()))
+          .toArray(AnalyticDimension[]::new);
+    }
   }
 }

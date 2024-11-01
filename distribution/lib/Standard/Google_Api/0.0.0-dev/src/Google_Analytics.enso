@@ -12,7 +12,7 @@ import Standard.Table.Rows_To_Read.Rows_To_Read
 import project.Google_Credential.Google_Credential
 import project.Google_Analytics_Account.Google_Analytics_Account
 import project.Google_Analytics_Account.Google_Analytics_Account_Filter
-import project.Google_Analytics_Dimension.Google_Analytics_Dimension
+import project.Google_Analytics_Field.Google_Analytics_Field
 import project.Google_Analytics_Property.Google_Analytics_Property
 from project.Internal.Google_Analytics_Internal import all
 
@@ -31,10 +31,10 @@ type Google_Analytics
     @property_id Google_Analytics_Property.default_widget
     @dimensions _make_dimensions_vector_selector
     @metrics _make_metrics_vector_selector
-    @credentials Google_Credential.default_widget
     @start_date _make_start_date_widget
     @end_date (Date.default_widget include_today=True)
-    read : Text -> (Vector Text) -> (Vector Text) -> Date -> Date -> Google_Credential -> Table
+    @credentials Google_Credential.default_widget
+    read : Google_Analytics_Property -> (Vector Text) -> (Vector Text) -> Date -> Date -> Google_Credential -> Table
     read property_id:Google_Analytics_Property=(Missing_Argument.throw "property_id") dimensions:Vector=['country'] metrics:Vector=['activeUsers'] start_date:Date=(Date.today.previous ..Year) end_date:Date=Date.today credentials:Google_Credential=..Default -> Table =
         case credentials of
             Google_Credential.Sample -> read_sample_data dimensions metrics start_date end_date
@@ -78,11 +78,34 @@ type Google_Analytics
         limit.attach_warning_vector vector
 
     ## ICON data_input
-       Reads the set of dimensions from Google Analytics.
-    list_dimensions : Vector
-    list_dimensions =
-        array = GoogleAnalyticsReader.listDimensions
-        array.map a-> Google_Analytics_Dimension.Value a
+       Reads the set of metrics from Google Analytics for a property.
+
+       Arguments:
+       - property: The Google Analytics property to read metrics from.
+       - credentials: The Google credentials to use. Default is the default
+         credentials.
+    @property Google_Analytics_Property.default_widget
+    @credentials Google_Credential.default_widget
+    list_metrics : Google_Analytics_Property -> Google_Credential -> Vector
+    list_metrics property:Google_Analytics_Property=(Missing_Argument.throw "property") credentials:Google_Credential=..Default -> Table =
+        java_credentials = credentials.as_java
+        array = GoogleAnalyticsReader.listMetrics java_credentials property.java_record
+        array.map record-> Google_Analytics_Field.Metric record
+
+    ## ICON data_input
+       Reads the set of dimensions from Google Analytics for a property.
+
+       Arguments:
+       - property: The Google Analytics property to read metrics from.
+       - credentials: The Google credentials to use. Default is the default
+         credentials.
+    @property Google_Analytics_Property.default_widget
+    @credentials Google_Credential.default_widget
+    list_dimensions : Google_Analytics_Property -> Google_Credential -> Vector
+    list_dimensions property:Google_Analytics_Property=(Missing_Argument.throw "property") credentials:Google_Credential=..Default -> Table =
+        java_credentials = credentials.as_java
+        array = GoogleAnalyticsReader.listDimensions java_credentials property.java_record
+        array.map record-> Google_Analytics_Field.Dimension record
 
 ## PRIVATE
 _make_dimensions_vector_selector : Widget
