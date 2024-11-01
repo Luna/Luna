@@ -1,15 +1,15 @@
+import { globalExternals } from '@fal-works/esbuild-plugin-global-externals'
 import esbuild from 'esbuild'
 import fs from 'fs/promises'
 import path from 'path'
 import url from 'url'
-import { globalExternals } from "@fal-works/esbuild-plugin-global-externals";
 
 const watchMode = process.argv[2] === 'watch'
 const globals = {
   'node:zlib': {
     varName: 'zlib',
     type: 'cjs',
-  }
+  },
 }
 
 const ctx = await esbuild.context({
