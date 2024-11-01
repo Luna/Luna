@@ -2796,6 +2796,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                 onDragEnd: () => {
                   setIsDraggingFiles(false)
                 },
+                ref: rootRef,
               })}
             >
               {!hidden && hiddenContextMenu}
