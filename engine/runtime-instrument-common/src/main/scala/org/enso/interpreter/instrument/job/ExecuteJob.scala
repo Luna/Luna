@@ -76,8 +76,8 @@ class ExecuteJob(
         )
     } finally {
       ctx.executionService.getLogger.log(
-        Level.SEVERE,
-        "Finished ExecuteJob[{}]",
+        Level.FINEST,
+        "Finished ExecuteJob[{0}]",
         _jobId
       )
     }
