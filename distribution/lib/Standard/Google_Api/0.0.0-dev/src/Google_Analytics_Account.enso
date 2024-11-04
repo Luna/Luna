@@ -1,4 +1,6 @@
 from Standard.Base import all
+from Standard.Base.Metadata import make_single_choice, Widget
+from Standard.Base.Metadata.Choice import Option
 from Standard.Base.Metadata.Widget import Text_Input, Vector_Editor
 
 import Standard.Table.Rows_To_Read.Rows_To_Read
@@ -56,15 +58,25 @@ type Google_Analytics_Account
 
 ## Filter for Google Analytics accounts.
 type Google_Analytics_Account_Filter
-   All_Accounts
+    All_Accounts
 
-   ## Filter to a single account
-   @account (Text_Input display=..Always)
-   Account account:Text|Google_Analytics_Account
+    ## Filter to a single account
+    @account (Text_Input display=..Always)
+    Account account:Text|Google_Analytics_Account
 
-   ## Filter to set of accounts
-   @accounts (Vector_Editor item_editor=Text_Input item_default="''")
-   Accounts accounts:Vector
+    ## Filter to set of accounts
+    @accounts (Vector_Editor item_editor=Text_Input item_default="''")
+    Accounts accounts:Vector
+
+    ## PRIVATE
+    default_widget : Any -> Any -> Widget
+    default_widget self_arg cache =
+        _ = self_arg
+        default = [Option "<All>" "..All_Accounts", Option "<Account>" "..Account", Option "<Multiple Accounts>" "..Accounts"]
+        Panic.catch Any handler=_->(make_single_choice default) <|
+            credentials = cache.if_not_nothing <| cache "credentials"
+            options = Google_Analytics.list_accounts credentials=(credentials.if_nothing Google_Credential.Default) limit=(..First 10) . map p->(Option (p.name + " (" + p.id + ")") "..Account "+p.id.pretty)
+            make_single_choice default+options display=..Always
 
    ## PRIVATE
    as_java : Array | Nothing
