@@ -65,8 +65,8 @@ final class Zlib implements Polyfill, ProxyExecutable {
             Charset charset;
             try {
               charset = Charset.forName(encoding);
-            } catch (IllegalArgumentException ignored) {
-              charset = StandardCharsets.UTF_8;
+            } catch (IllegalArgumentException e) {
+              throw new RuntimeException("Unknown encoding: " + encoding, e);
             }
             yield charset.encode(text);
           }
@@ -94,8 +94,8 @@ final class Zlib implements Polyfill, ProxyExecutable {
             Charset charset;
             try {
               charset = Charset.forName(encoding);
-            } catch (IllegalArgumentException ignored) {
-              charset = StandardCharsets.UTF_8;
+            } catch (IllegalArgumentException e) {
+              throw new RuntimeException("Unknown encoding: " + encoding, e);
             }
             final var buffer = ByteBuffer.wrap(byteSequence.toByteArray());
             yield charset.decode(buffer).toString();

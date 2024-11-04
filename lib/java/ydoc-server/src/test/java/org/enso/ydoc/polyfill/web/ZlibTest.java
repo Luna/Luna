@@ -75,6 +75,26 @@ public class ZlibTest extends ExecutorSetup {
   }
 
   @Test
+  public void bufferFromInvalid() throws Exception {
+    var code =
+        """
+        result = ''
+        try {
+          Buffer.from(TEXT, 'invalid').toString()
+        } catch (e) {
+          result = e.message
+        }
+        result
+      """;
+
+    context.getBindings("js").putMember("TEXT", TEXT);
+
+    var result = CompletableFuture.supplyAsync(() -> context.eval("js", code), executor).get();
+
+    Assert.assertEquals("Unknown encoding: invalid", result.asString());
+  }
+
+  @Test
   public void bufferToUtf8() throws Exception {
     var code = "Buffer.from(TEXT).toString('utf8')";
 
@@ -94,6 +114,26 @@ public class ZlibTest extends ExecutorSetup {
     var result = CompletableFuture.supplyAsync(() -> context.eval("js", code), executor).get();
 
     Assert.assertEquals(TEXT_BASE64, result.asString());
+  }
+
+  @Test
+  public void bufferToInvalid() throws Exception {
+    var code =
+        """
+        result = ''
+        try {
+          Buffer.from(TEXT).toString('invalid')
+        } catch (e) {
+          result = e.message
+        }
+        result
+      """;
+
+    context.getBindings("js").putMember("TEXT", TEXT);
+
+    var result = CompletableFuture.supplyAsync(() -> context.eval("js", code), executor).get();
+
+    Assert.assertEquals("Unknown encoding: invalid", result.asString());
   }
 
   @Test
