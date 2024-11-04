@@ -79,8 +79,7 @@ type Google_Analytics_Account_Filter
             make_single_choice default+options display=..Always
 
    ## PRIVATE
-   as_java : Array | Nothing
-   private as_java self = case self of
+   private as_java self -> Array | Nothing = case self of
        Google_Analytics_Account_Filter.All_Accounts -> Nothing
        Google_Analytics_Account_Filter.Account acc -> case acc of
            _ : Google_Analytics_Account -> [acc.java_record].to_array

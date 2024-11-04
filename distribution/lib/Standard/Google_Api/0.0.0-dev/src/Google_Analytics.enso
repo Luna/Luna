@@ -119,8 +119,7 @@ type Google_Analytics
         array.map record-> Google_Analytics_Field.Dimension record
 
 ## PRIVATE
-_make_metrics_vector_selector : Any -> Any -> Widget
-private _make_metrics_vector_selector self_arg cache =
+private _make_metrics_vector_selector self_arg cache -> Widget =
     _ = self_arg
     items = Panic.catch Any handler=p->[p.payload.to_display_text] <|
         property = cache.if_not_nothing <| cache "property"
@@ -131,8 +130,7 @@ private _make_metrics_vector_selector self_arg cache =
     Vector_Editor item_editor=item_editor item_default=item_editor.values.first.value display=..Always
 
 ## PRIVATE
-_make_dimensions_vector_selector : Any -> Any -> Widget
-private _make_dimensions_vector_selector self_arg cache =
+private _make_dimensions_vector_selector self_arg cache -> Widget  =
     _ = self_arg
     items = Panic.catch Any handler=p->[p.payload.to_display_text] <|
         property = cache.if_not_nothing <| cache "property"
@@ -143,8 +141,7 @@ private _make_dimensions_vector_selector self_arg cache =
     Vector_Editor item_editor=item_editor item_default=item_editor.values.first.value display=..Always
 
 ## PRIVATE
-_make_start_date_widget : Widget
-private _make_start_date_widget =
+private _make_start_date_widget -> Widget =
     options = [Option "<Fixed Date>" "Date.new", Option "<Start of Period>" "Date.today.previous"]
     Widget.Single_Choice values=options display=..When_Modified
 
@@ -152,3 +149,10 @@ private _make_start_date_widget =
 private _read_sample_data dimensions:Vector metrics:Vector start_date:Date end_date:Date -> Table =
     _ = [dimensions, metrics, start_date, end_date]
     Data.read ((Project_Description.new Standard.Google_Api . data) / "Google_Analytics_Sample.csv") (..Delimited value_formatter=Standard.Base.Nothing)
+
+## PRIVATE
+private _handle_google_error ~action =
+    Panic.catch Any action handler=c->
+        payload = c.payload
+
+
