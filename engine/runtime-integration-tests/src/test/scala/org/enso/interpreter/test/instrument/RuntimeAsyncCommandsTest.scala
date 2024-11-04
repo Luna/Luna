@@ -407,7 +407,18 @@ class RuntimeAsyncCommandsTest
       ),
       context.executionComplete(contextId)
     )
-    context.consumeOut should contain("True")
+    // It's possible that ExecutionComplete is from RecomputeContext not from EditFileNotification.
+    // If that's the case, then there might be a race in the output produced by the program.
+    var reallyFinished = false
+    iteration = 0
+    while (!reallyFinished && iteration < 50) {
+      val out = context.consumeOut
+      Thread.sleep(100)
+      reallyFinished = out.contains("True")
+      iteration += 1
+    }
+
+    reallyFinished shouldBe true
   }
 
   it should "interrupt running execution context without sending Panic in expression updates" in {
