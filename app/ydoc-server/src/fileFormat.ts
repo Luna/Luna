@@ -39,6 +39,8 @@ export const ideMetadata = z
   .object({
     node: z.record(z.string().uuid(), nodeMetadata),
     widget: z.optional(z.record(z.string().uuid(), z.record(z.string(), z.unknown()))),
+    // The ydoc diff algorithm places the snapshot at the end of the metadata.
+    // Making it the last field prevents unnecessary edits.
     snapshot: z.string().optional(),
   })
   .passthrough()

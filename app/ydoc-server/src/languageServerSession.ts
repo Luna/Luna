@@ -489,7 +489,8 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
   private static encodeCodeSnapshot(code: string): string | undefined {
     try {
       return zlib.deflateSync(Buffer.from(code, 'utf8')).toString('base64')
-    } catch {
+    } catch (e) {
+      console.warn('Failed to encode code snapshot.', e)
       return
     }
   }
@@ -497,7 +498,8 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
   private static decodeCodeSnapshot(snapshot: string): string | undefined {
     try {
       return zlib.inflateSync(Buffer.from(snapshot, 'base64')).toString('utf8')
-    } catch {
+    } catch (e) {
+      console.warn('Failed to decode code snapshot.', e)
       return
     }
   }
