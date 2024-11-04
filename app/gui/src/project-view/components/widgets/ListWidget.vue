@@ -406,7 +406,7 @@ function addItem() {
                 @dragend="onDragEnd"
               >‖</div>
               <slot :item="entry.item"></slot>
-              <div class="handle" style="cursor: pointer;" @click.stop="onClickDelete($event, entry.index)">×</div>
+              <SvgIcon class="item-button" name="close" @click.stop="onClickDelete($event, entry.index)" />
             </li>
             <li
               v-show="entry.index != props.modelValue.length - 1"
@@ -425,7 +425,7 @@ function addItem() {
           </template>
         </template>
       </TransitionGroup>
-      <SvgIcon class="add-item" name="vector_add" @click.stop="addItem" />
+      <SvgIcon class="item-button" name="vector_add" @click.stop="addItem" />
       <span class="token widgetApplyPadding">]</span>
     </div>
     <div
@@ -557,7 +557,7 @@ div {
   display: none;
 }
 
-.add-item {
+.item-button {
   transition-property: opacity;
   transition-duration: 150ms;
   transition-timing-function: ease-in-out;
@@ -569,12 +569,12 @@ div {
   }
 }
 
-.singleSelected .add-item {
+.singleSelected .item-button {
   display: block;
   opacity: 0.6;
 }
 
-.add-item:hover {
+.item-button:hover {
   opacity: 1;
 }
 
