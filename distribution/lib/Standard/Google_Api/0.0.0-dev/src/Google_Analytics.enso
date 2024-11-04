@@ -24,9 +24,14 @@ type Google_Analytics
        This method calls the google reporting v4 api.
 
        Arguments:
-       - property_id: The Google Analytics property_id that is being queried
-       - start_date: The beginning date of the query. Default is 2020-03-31
+       - property: The Google Analytics property_id that is being queried
+       - dimensions: The dimensions being queried. Default is ['country'].
+       - metrics: The metrics being queried. Default is ['activeUsers'].
+       - start_date: The beginning date of the query. Default is start of the
+         current year.
        - end_date: The end date being queried. Defaults to today.
+       - credentials: The Google credentials to use. Default is the default
+         credentials.
     @property Google_Analytics_Property.default_widget
     @dimensions _make_dimensions_vector_selector
     @metrics _make_metrics_vector_selector
@@ -65,6 +70,8 @@ type Google_Analytics
        Reads the set of properties from Google Analytics Admin API.
 
        Arguments:
+       - account: The Google Analytics account(s) to read properties from or all
+         accounts. Default is all accounts.
        - credentials: The Google credentials to use. Default is the default
          credentials.
        - limit: The maximum number of accounts to read. Default is 1000.

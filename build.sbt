@@ -586,7 +586,7 @@ val bouncyCastle = Seq(
 // === Google =================================================================
 val googleApiClientVersion         = "2.2.0"
 val googleApiServicesSheetsVersion = "v4-rev612-1.25.0"
-val googleAnalyticsAdminVersion     = "0.62.0"
+val googleAnalyticsAdminVersion    = "0.62.0"
 val googleAnalyticsDataVersion     = "0.63.0"
 
 // === Other ==================================================================
@@ -4614,7 +4614,7 @@ lazy val `std-google-api` = project
       result
     }.value
   )
-.dependsOn(`std-table` % "provided")
+  .dependsOn(`std-table` % "provided")
 
 lazy val `std-database` = project
   .in(file("std-bits") / "database")
