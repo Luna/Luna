@@ -39,10 +39,6 @@ public sealed interface GraphOccurrence permits GraphOccurrence.Def, GraphOccurr
       this.symbol = symbol;
     }
 
-    public Def(int id, String symbol, UUID identifier, scala.Option<UUID> externalId) {
-      this(id, symbol, identifier, externalId, false);
-    }
-
     @Override
     public int id() {
       return this.id;
