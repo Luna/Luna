@@ -16,13 +16,12 @@ import project.Google_Analytics_Field.Google_Analytics_Field
 import project.Google_Analytics_Property.Google_Analytics_Property
 
 polyglot java import org.enso.google.GoogleAnalyticsReader
-polyglot java import java.io.IOException
 
 type Google_Analytics
     ## GROUP Standard.Base.Input
        ICON data_input
-       Performs google analytics call
-       This method calls the google reporting v4 api.
+       Performs Google Analytics call
+       This method calls the Google Analytics Reporting v4 API.
 
        Arguments:
        - property: The Google Analytics property_id that is being queried
@@ -145,7 +144,7 @@ private _make_dimensions_vector_selector self_arg cache -> Widget  =
         property = cache.if_not_nothing <| cache "property"
         property.if_not_nothing <|
             credentials = cache.if_not_nothing <| cache "credentials"
-            Google_Analytics.list_dimensions property credentials . map f-> Option (f.apiName + " (" + f.category + ")") f.apiName.pretty
+            Google_Analytics.list_dimensions property credentials . map f-> Option (f.api_name + " (" + f.category + ")") f.api_name.pretty
     item_editor = make_single_choice (items.if_nothing ['country', 'year', 'month', 'date', 'userAgeBracket', 'userGender'])
     Vector_Editor item_editor=item_editor item_default=item_editor.values.first.value display=..Always
 
@@ -161,14 +160,14 @@ private _read_sample_data dimensions:Vector metrics:Vector start_date:Date end_d
 
 ## PRIVATE
 private _handle_google_error ~action =
-    Panic.catch IOException action handler=c->
+    Panic.catch Any action handler=c->
         payload = c.payload
         Error.throw (Google_Analytics_Error.Value payload.getMessage payload)
 
 ## PRIVATE
 type Google_Analytics_Error
     ## PRIVATE
-    private Value message:Text payload:IOException
+    private Value message:Text payload
 
     ## PRIVATE
     to_text : Text

@@ -7,8 +7,8 @@ type Google_Analytics_Field
     private Metric java_record
 
     ## Dimension API Name.
-    apiName : Text
-    apiName self = self.java_record.apiName
+    api_name : Text
+    api_name self = self.java_record.apiName
 
     ## Dimension display name.
     name : Text
@@ -25,11 +25,11 @@ type Google_Analytics_Field
     ## PRIVATE
     to_text : Text
     to_text self = case self of
-        Google_Analytics_Field.Dimension _ -> self.apiName + " (Dimension)"
-        Google_Analytics_Field.Metric _ -> self.apiName + " (Metric)"
+        Google_Analytics_Field.Dimension _ -> self.api_name + " (Dimension)"
+        Google_Analytics_Field.Metric _ -> self.api_name + " (Metric)"
 
     ## PRIVATE
     to_display_text : Text
     to_display_text self = case self of
-        Google_Analytics_Field.Dimension _ -> "GA Dimension { " + self.apiName + " (" + self.category + ")}"
-        Google_Analytics_Field.Metric _ -> "GA Metric { " + self.apiName + " (" + self.category + ")}"
+        Google_Analytics_Field.Dimension _ -> "GA Dimension { " + self.api_name + " (" + self.category + ")}"
+        Google_Analytics_Field.Metric _ -> "GA Metric { " + self.api_name + " (" + self.category + ")}"
