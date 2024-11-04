@@ -75,7 +75,7 @@ type Google_Analytics_Property
 
 ## PRIVATE
 Google_Analytics_Property.from (that:Text) =
-    id = if that.starts)with "properties/" then that else "properties/" + that
+    id = if that.starts_with "properties/" then that else "properties/" + that
     display = id.replace (regex "^properties/") ""
     java_value = AnalyticsProperty.new id display False Date_Time.now "XXX" "XXX" Nothing
     Google_Analytics_Property.Value java_value

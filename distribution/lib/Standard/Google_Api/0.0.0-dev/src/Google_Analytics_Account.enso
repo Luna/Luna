@@ -93,7 +93,7 @@ type Google_Analytics_Account_Filter
 ## PRIVATE
    Creates a Google Analytics account from a text ID.
    Most values are defaulted.
-private _create_analytics_account_from_text accountText -> AnalyticsAccount =
+private _create_analytics_account_from_text account:Text -> AnalyticsAccount =
     id = if account.starts_with "accounts/" then account else "accounts/" + account
     display = id.replace (regex "^accounts/") ""
     AnalyticsAccount.new id display False Date_Time.now Nothing
