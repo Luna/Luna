@@ -5,15 +5,15 @@ from Standard.Base.Metadata import make_single_choice, Widget
 from Standard.Base.Metadata.Choice import Option
 from Standard.Base.Metadata.Widget import Single_Choice, Text_Input, Vector_Editor
 
-from Standard.Table import Table
+from Standard.Table import Data_Formatter, Table
 import Standard.Table.Rows_To_Read.Rows_To_Read
+from Standard.Table.Table import from_java_table
 
 import project.Google_Credential.Google_Credential
 import project.Google_Analytics_Account.Google_Analytics_Account
 import project.Google_Analytics_Account.Google_Analytics_Account_Filter
 import project.Google_Analytics_Field.Google_Analytics_Field
 import project.Google_Analytics_Property.Google_Analytics_Property
-from project.Internal.Google_Analytics_Internal import all
 
 polyglot java import org.enso.google.GoogleAnalyticsReader
 
@@ -36,8 +36,12 @@ type Google_Analytics
     read : Google_Analytics_Property -> (Vector Text) -> (Vector Text) -> Date -> Date -> Google_Credential -> Table
     read property:Google_Analytics_Property=(Missing_Argument.throw "property") dimensions:Vector=['country'] metrics:Vector=['activeUsers'] start_date:Date=(Date.today.previous ..Year) end_date:Date=Date.today credentials:Google_Credential=..Default -> Table =
         case credentials of
-            Google_Credential.Sample -> read_sample_data dimensions metrics start_date end_date
-            _ -> read_api_data property.id dimensions metrics start_date end_date credentials
+            Google_Credential.Sample -> _read_sample_data dimensions metrics start_date end_date
+            _ ->
+                java_credentials = credentials.as_java
+                java_table = GoogleAnalyticsReader.runReport java_credentials property.java_record start_date end_date dimensions metrics
+                formatter = Data_Formatter.Value.with_datetime_formats date_formats=["yyyyMMdd"]
+                from_java_table java_table . parse format=formatter
 
     ## ICON data_input
        Reads the set of accounts from Google Analytics Admin API.
@@ -135,3 +139,8 @@ _make_start_date_widget : Widget
 private _make_start_date_widget =
     options = [Option "<Fixed Date>" "Date.new", Option "<Start of Period>" "Date.today.previous"]
     Widget.Single_Choice values=options display=..When_Modified
+
+## PRIVATE
+private _read_sample_data dimensions:Vector metrics:Vector start_date:Date end_date:Date -> Table =
+    _ = [dimensions, metrics, start_date, end_date]
+    Data.read ((Project_Description.new Standard.Google_Api . data) / "Google_Analytics_Sample.csv") (..Delimited value_formatter=Standard.Base.Nothing)

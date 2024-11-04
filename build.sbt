@@ -4614,6 +4614,7 @@ lazy val `std-google-api` = project
       result
     }.value
   )
+.dependsOn(`std-table` % "provided")
 
 lazy val `std-database` = project
   .in(file("std-bits") / "database")

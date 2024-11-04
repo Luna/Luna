@@ -6,18 +6,31 @@ import com.google.analytics.admin.v1beta.ListAccountsRequest;
 import com.google.analytics.admin.v1beta.ListPropertiesRequest;
 import com.google.analytics.data.v1beta.BetaAnalyticsDataClient;
 import com.google.analytics.data.v1beta.BetaAnalyticsDataSettings;
+import com.google.analytics.data.v1beta.DateRange;
+import com.google.analytics.data.v1beta.Dimension;
 import com.google.analytics.data.v1beta.GetMetadataRequest;
 import com.google.analytics.data.v1beta.Metadata;
+import com.google.analytics.data.v1beta.Metric;
+import com.google.analytics.data.v1beta.RunReportRequest;
 import com.google.api.gax.core.CredentialsProvider;
+import org.enso.table.data.column.builder.Builder;
+import org.enso.table.data.column.builder.StringBuilder;
+import org.enso.table.data.column.storage.type.TextType;
+import org.enso.table.data.table.Column;
+import org.enso.table.data.table.Table;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.stream.IntStream;
 
 public class GoogleAnalyticsReader {
   private static final Map<String, Metadata> metadataCache = new HashMap<>();
@@ -55,13 +68,14 @@ public class GoogleAnalyticsReader {
   /** Lists all Google Analytics accounts. */
   public static AnalyticsAccount[] listAccounts(CredentialsProvider credentialsProvider, int limit, boolean includeDeleted) throws IOException {
     int pageSize = getPageSize(limit);
-    try (var client = createAdminClient(credentialsProvider)) {
-      var request = ListAccountsRequest
-          .newBuilder()
-          .setPageSize(pageSize)
-          .setShowDeleted(includeDeleted)
-          .build();
 
+    var request = ListAccountsRequest
+        .newBuilder()
+        .setPageSize(pageSize)
+        .setShowDeleted(includeDeleted)
+        .build();
+
+    try (var client = createAdminClient(credentialsProvider)) {
       var response = client.listAccounts(request);
       var output = new ArrayList<AnalyticsAccount>(pageSize);
       for (var page : response.iteratePages()) {
@@ -110,6 +124,7 @@ public class GoogleAnalyticsReader {
     }
 
     int pageSize = getPageSize(limit);
+
     var output = new ArrayList<AnalyticsProperty>(pageSize);
     try (var client = createAdminClient(credentialsProvider)) {
       for (var parent : parents) {
@@ -173,15 +188,74 @@ public class GoogleAnalyticsReader {
       return metadataCache.get(propertyId);
     }
 
-    try (var client = createDataClient(credentialsProvider)) {
-      var request = GetMetadataRequest
-          .newBuilder()
-          .setName(propertyId + "/metadata")
-          .build();
+    var request = GetMetadataRequest
+        .newBuilder()
+        .setName(propertyId + "/metadata")
+        .build();
 
+    try (var client = createDataClient(credentialsProvider)) {
       var metadata = client.getMetadata(request);
       metadataCache.put(propertyId, metadata);
       return metadata;
+    }
+  }
+
+  /** Clears the metadata cache. */
+  public static void clearMetadataCache() {
+    metadataCache.clear();
+  }
+
+  /**
+   * Runs a report in Google Analytics.
+   *
+   * @param credentialsProvider the credentials provider
+   * @param property the property to run the report on
+   * @param startDate the start date of the report
+   * @param endDate the end date of the report
+   * @param dimensions the dimensions to include in the report
+   * @param metrics the metrics to include in the report
+   * @return a Table with the report data
+   */
+  public static Table runReport(CredentialsProvider credentialsProvider, AnalyticsProperty property, LocalDate startDate, LocalDate endDate, List<String> dimensions, List<String> metrics) throws IOException {
+    var dateRange = DateRange
+        .newBuilder()
+        .setStartDate(startDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+        .setEndDate(endDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+        .build();
+
+    var request = RunReportRequest
+        .newBuilder()
+        .setProperty(property.id())
+        .addDateRanges(dateRange)
+        .addAllDimensions(dimensions.stream().map(n-> Dimension.newBuilder().setName(n).build()).toList())
+        .addAllMetrics(metrics.stream().map(n-> Metric.newBuilder().setName(n).build()).toList())
+        .build();
+
+    try (var client = createDataClient(credentialsProvider)) {
+      var response = client.runReport(request);
+      int rowCount = response.getRowCount();
+
+      var builders = new Builder[dimensions.size() + metrics.size()];
+      for (int i = 0; i < dimensions.size() + metrics.size(); i++) {
+        builders[i] = new StringBuilder(rowCount, TextType.VARIABLE_LENGTH);
+      }
+
+      // Load the data
+      for (int row = 0; row < rowCount; row++) {
+        for (int col = 0; col < dimensions.size(); col++) {
+          builders[col].append(response.getRows(row).getDimensionValues(col).getValue());
+        }
+
+        for (int col = 0; col < metrics.size(); col++) {
+          builders[dimensions.size() + col].append(response.getRows(row).getMetricValues(col).getValue());
+        }
+      }
+
+      // Convert to Java Table
+      var columns = IntStream.range(0, builders.length)
+          .mapToObj(i -> new Column(i < dimensions.size() ? dimensions.get(i) : metrics.get(i - dimensions.size()), builders[i].seal()))
+          .toArray(Column[]::new);
+      return new Table(columns);
     }
   }
 }
