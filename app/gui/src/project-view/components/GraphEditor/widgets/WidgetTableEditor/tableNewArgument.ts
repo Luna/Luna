@@ -23,6 +23,11 @@ export const ROW_INDEX_HEADER = '#'
 export const DEFAULT_COLUMN_PREFIX = 'Column #'
 const NOTHING_PATH = 'Standard.Base.Nothing.Nothing' as QualifiedName
 const NOTHING_NAME = qnLastSegment(NOTHING_PATH)
+/**
+ * The cells limit of the table; any modification which would exceed this limt should be
+ * disallowed in UI
+ */
+export const CELLS_LIMIT = 256
 
 export type RowData = {
   index: number
@@ -45,7 +50,7 @@ export interface ColumnDef extends ColDef<RowData> {
 
 namespace cellValueConversion {
   /** Convert AST node to a value for Grid (to be returned from valueGetter, for example). */
-  export function astToAgGrid(ast: Ast.Ast) {
+  export function astToAgGrid(ast: Ast.Expression) {
     if (ast instanceof Ast.TextLiteral) return Ok(ast.rawTextContent)
     else if (ast instanceof Ast.Ident && ast.code() === NOTHING_NAME) return Ok(null)
     else if (ast instanceof Ast.PropertyAccess && ast.rhs.code() === NOTHING_NAME) return Ok(null)
@@ -64,7 +69,7 @@ namespace cellValueConversion {
   export function agGridToAst(
     value: unknown,
     module: Ast.MutableModule,
-  ): { ast: Ast.Owned; requireNothingImport: boolean } {
+  ): { ast: Ast.Owned<Ast.MutableExpression>; requireNothingImport: boolean } {
     if (value == null || value === '') {
       return { ast: Ast.Ident.new(module, 'Nothing' as Ast.Identifier), requireNothingImport: true }
     } else if (typeof value === 'number') {
@@ -83,7 +88,7 @@ namespace cellValueConversion {
   }
 }
 
-function retrieveColumnsAst(call: Ast.Ast) {
+function retrieveColumnsAst(call: Ast.Expression): Result<Ast.Vector | undefined> {
   if (!(call instanceof Ast.App)) return Ok(undefined)
   if (call.argument instanceof Ast.Vector) return Ok(call.argument)
   if (call.argument instanceof Ast.Wildcard) return Ok(undefined)
@@ -91,7 +96,7 @@ function retrieveColumnsAst(call: Ast.Ast) {
 }
 
 function readColumn(
-  ast: Ast.Ast,
+  ast: Ast.Expression,
 ): Result<{ id: Ast.AstId; name: Ast.TextLiteral; data: Ast.Vector }> {
   const errormsg = () => `${ast.code} is not a vector of two elements`
   if (!(ast instanceof Ast.Vector)) return Err(errormsg())
@@ -120,7 +125,7 @@ function retrieveColumnsDefinitions(columnsAst: Ast.Vector) {
  *
  * This widget may handle table definitions filled with literals or `Nothing` values.
  */
-export function tableNewCallMayBeHandled(call: Ast.Ast) {
+export function tableNewCallMayBeHandled(call: Ast.Expression) {
   const columnsAst = retrieveColumnsAst(call)
   if (!columnsAst.ok) return false
   if (!columnsAst.value) return true // We can handle lack of the argument
@@ -142,7 +147,7 @@ export function tableNewCallMayBeHandled(call: Ast.Ast) {
  * @param onUpdate callback called when AGGrid was edited by user, resulting in AST change.
  */
 export function useTableNewArgument(
-  input: ToValue<WidgetInput & { value: Ast.Ast }>,
+  input: ToValue<WidgetInput & { value: Ast.Expression }>,
   graph: {
     startEdit(): Ast.MutableModule
     addMissingImports(edit: Ast.MutableModule, newImports: RequiredImport[]): void
@@ -180,10 +185,28 @@ export function useTableNewArgument(
     }
   }
 
+  function mayAddNewRow(
+    rowCount_: number = rowCount.value,
+    colCount: number = columns.value.length,
+  ): boolean {
+    return (rowCount_ + 1) * colCount <= CELLS_LIMIT
+  }
+
+  function mayAddNewColumn(
+    rowCount_: number = rowCount.value,
+    colCount: number = columns.value.length,
+  ): boolean {
+    return rowCount_ * (colCount + 1) <= CELLS_LIMIT
+  }
+
   function addRow(
     edit: Ast.MutableModule,
     valueGetter: (column: Ast.AstId, index: number) => unknown = () => null,
   ) {
+    if (!mayAddNewRow()) {
+      console.error(`Cannot add new row: the ${CELLS_LIMIT} limit of cells would be exceeded.`)
+      return
+    }
     for (const [index, column] of columns.value.entries()) {
       const editedCol = edit.getVersion(column.data)
       editedCol.push(convertWithImport(valueGetter(column.data.id, index), edit))
@@ -204,6 +227,10 @@ export function useTableNewArgument(
     size: number = rowCount.value,
     columns?: Ast.Vector,
   ) {
+    if (!mayAddNewColumn()) {
+      console.error(`Cannot add new column: the ${CELLS_LIMIT} limit of cells would be exceeded.`)
+      return
+    }
     function* cellsGenerator() {
       for (let i = 0; i < size; ++i) {
         yield convertWithImport(valueGetter(i), edit)
@@ -273,6 +300,7 @@ export function useTableNewArgument(
     maxWidth: 40,
     headerComponentParams: {
       type: 'newColumn',
+      enabled: mayAddNewColumn(),
       newColumnRequested: () => {
         const edit = graph.startEdit()
         fixColumns(edit)
@@ -315,7 +343,7 @@ export function useTableNewArgument(
             if (data == null) return undefined
             const ast = toValue(input).value.module.tryGet(data.cells[col.data.id])
             if (ast == null) return null
-            const value = cellValueConversion.astToAgGrid(ast)
+            const value = cellValueConversion.astToAgGrid(ast as Ast.Expression)
             if (!value.ok) {
               console.error(
                 `Cannot read \`${ast.code}\` as value in Table Widget; the Table widget should not be matched here!`,
@@ -382,7 +410,9 @@ export function useTableNewArgument(
         }
       }
     }
-    rows.push({ index: rows.length, cells: {} })
+    if (mayAddNewRow()) {
+      rows.push({ index: rows.length, cells: {} })
+    }
     return rows
   })
 
@@ -434,7 +464,7 @@ export function useTableNewArgument(
   }
 
   function pasteFromClipboard(data: string[][], focusedCell: { rowIndex: number; colId: string }) {
-    if (data.length === 0) return
+    if (data.length === 0) return { rows: 0, columns: 0 }
     const edit = graph.startEdit()
     const focusedColIndex =
       findIndexOpt(columns.value, ({ id }) => id === focusedCell.colId) ?? columns.value.length
@@ -446,6 +476,9 @@ export function useTableNewArgument(
     }
     const pastedRowsEnd = focusedCell.rowIndex + data.length
     const pastedColsEnd = focusedColIndex + data[0]!.length
+    // First we assume we'll paste all data. If not, these vars will be updated.
+    let actuallyPastedRowsEnd = pastedRowsEnd
+    let actuallyPastedColsEnd = pastedColsEnd
 
     // Set data in existing cells.
     for (
@@ -467,11 +500,20 @@ export function useTableNewArgument(
     // Extend the table if necessary.
     const newRowCount = Math.max(pastedRowsEnd, rowCount.value)
     for (let i = rowCount.value; i < newRowCount; ++i) {
+      if (!mayAddNewRow(i)) {
+        actuallyPastedRowsEnd = i
+        break
+      }
+
       addRow(edit, (_colId, index) => newValueGetter(i, index))
     }
     const newColCount = Math.max(pastedColsEnd, columns.value.length)
     let modifiedColumnsAst: Ast.Vector | undefined
     for (let i = columns.value.length; i < newColCount; ++i) {
+      if (!mayAddNewColumn(newRowCount, i)) {
+        actuallyPastedColsEnd = i
+        break
+      }
       modifiedColumnsAst = addColumn(
         edit,
         `${DEFAULT_COLUMN_PREFIX}${i + 1}`,
@@ -481,7 +523,10 @@ export function useTableNewArgument(
       )
     }
     onUpdate({ edit })
-    return
+    return {
+      rows: actuallyPastedRowsEnd - focusedCell.rowIndex,
+      columns: actuallyPastedColsEnd - focusedColIndex,
+    }
   }
 
   return {
@@ -513,6 +558,8 @@ export function useTableNewArgument(
      * If the pasted data are to be placed outside current table, the table is extended.
      * @param data the clipboard data, as retrieved in `processDataFromClipboard`.
      * @param focusedCell the currently focused cell: will become the left-top cell of pasted data.
+     * @returns number of actually pasted rows and columns; may be smaller than `data` size in case
+     * it would exceed {@link CELLS_LIMIT}.
      */
     pasteFromClipboard,
   }
