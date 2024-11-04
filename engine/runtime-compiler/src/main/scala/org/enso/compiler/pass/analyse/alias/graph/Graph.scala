@@ -26,7 +26,7 @@ sealed class Graph(
 
   /** @return the next counter value
     */
-  def nextIdCounter: Int = _nextIdCounter
+  private[graph] def nextIdCounter: Int = _nextIdCounter
 
   /** @return a deep structural copy of `this` */
   final def deepCopy(
