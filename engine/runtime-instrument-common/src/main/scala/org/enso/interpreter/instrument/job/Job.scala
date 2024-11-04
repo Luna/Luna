@@ -33,7 +33,7 @@ abstract class Job[+A](
     *
     * @param ctx contains suppliers of services to perform a request
     */
-  def run(implicit ctx: RuntimeContext): A = {
+  final def run(implicit ctx: RuntimeContext): A = {
     _hasStarted = true
     runImpl(ctx)
   }

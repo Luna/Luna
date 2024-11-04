@@ -1,6 +1,7 @@
 package org.enso.interpreter.instrument.execution
 
 import com.oracle.truffle.api.TruffleLogger
+import org.enso.common.Asserts.assertInJvm
 import org.enso.interpreter.instrument.InterpreterContext
 import org.enso.interpreter.instrument.job.{BackgroundJob, Job, UniqueJob}
 import org.enso.text.Sha3_224VersionCalculator
@@ -92,7 +93,7 @@ final class JobExecutionEngine(
           try {
             val now                        = System.currentTimeMillis()
             val timeSinceRequestedToCancel = now - timeRequestedToCancel
-            assert(timeSinceRequestedToCancel > 0)
+            assertInJvm(timeSinceRequestedToCancel > 0)
             val timeToCancel =
               forceInterruptTimeout - timeSinceRequestedToCancel
             logger.log(
