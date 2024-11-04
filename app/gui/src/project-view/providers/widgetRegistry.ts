@@ -12,26 +12,25 @@ import type { WidgetEditHandlerParent } from './widgetRegistry/editHandler'
 export type WidgetComponent<T extends WidgetInput> = Component<WidgetProps<T>>
 
 export namespace WidgetInput {
-  /** TODO: Add docs */
-  export function FromAst<A extends Ast.Ast | Ast.Token>(ast: A): WidgetInput & { value: A } {
-    return {
-      portId: ast.id,
-      value: ast,
-    }
-  }
-
-  /** TODO: Add docs */
-  export function FromAstWithPort<A extends Ast.Ast | Ast.Token>(
+  /** Returns widget-input data for the given AST expression or token. */
+  export function FromAst<A extends Ast.Expression | Ast.Token>(
     ast: A,
   ): WidgetInput & { value: A } {
     return {
       portId: ast.id,
       value: ast,
+    }
+  }
+
+  /** Returns the input marked to be a port. */
+  export function WithPort<T extends WidgetInput>(input: T): T {
+    return {
+      ...input,
       forcePort: true,
     }
   }
 
-  /** TODO: Add docs */
+  /** A string representation of widget's value - the code in case of AST value. */
   export function valueRepr(input: WidgetInput): string | undefined {
     if (typeof input.value === 'string') return input.value
     else return input.value?.code()
@@ -56,27 +55,27 @@ export namespace WidgetInput {
       isPlaceholder(input) || input.value instanceof nodeType
   }
 
-  /** TODO: Add docs */
-  export function isAst(input: WidgetInput): input is WidgetInput & { value: Ast.Ast } {
-    return input.value instanceof Ast.Ast
+  /** Check if input's value is existing AST node (not placeholder or token). */
+  export function isAst(input: WidgetInput): input is WidgetInput & { value: Ast.Expression } {
+    return input.value instanceof Ast.Ast && input.value.isExpression()
   }
 
-  /** Rule out token inputs. */
+  /** Check if input's value is existing AST node or placeholder. Rule out token inputs. */
   export function isAstOrPlaceholder(
     input: WidgetInput,
-  ): input is WidgetInput & { value: Ast.Ast | string | undefined } {
+  ): input is WidgetInput & { value: Ast.Expression | string | undefined } {
     return isPlaceholder(input) || isAst(input)
   }
 
-  /** TODO: Add docs */
+  /** Check if input's value is an AST token. */
   export function isToken(input: WidgetInput): input is WidgetInput & { value: Ast.Token } {
     return input.value instanceof Ast.Token
   }
 
-  /** TODO: Add docs */
-  export function isFunctionCall(
-    input: WidgetInput,
-  ): input is WidgetInput & { value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp } {
+  /** Check if input's value is an AST which potentially may be a function call. */
+  export function isFunctionCall(input: WidgetInput): input is WidgetInput & {
+    value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp | Ast.AutoscopedIdentifier
+  } {
     return (
       input.value instanceof Ast.App ||
       input.value instanceof Ast.Ident ||
@@ -119,10 +118,10 @@ export interface WidgetInput {
    */
   portId: PortId
   /**
-   * An expected widget value. If Ast.Ast or Ast.Token, the widget represents an existing part of
+   * An expected widget value. If Ast.Expression or Ast.Token, the widget represents an existing part of
    * code. If string, it may be e.g. a default value of an argument.
    */
-  value: Ast.Ast | Ast.Token | string | undefined
+  value: Ast.Expression | Ast.Token | string | undefined
   /** An expected type which widget should set. */
   expectedType?: Typename | undefined
   /** Configuration provided by engine. */
@@ -163,15 +162,18 @@ export interface WidgetProps<T> {
  * port may not represent any existing AST node) with `edit` containing any additional modifications
  * (like inserting necessary imports).
  *
+ * The same way widgets may set their metadata (as this is also technically an AST modification).
+ * Every widget type should set it's name as `metadataKey`.
+ *
  * The handlers interested in a specific port update should apply it using received edit. The edit
  * is committed in {@link NodeWidgetTree}.
  */
 export interface WidgetUpdate {
   edit?: MutableModule | undefined
-  portUpdate?: {
-    value: Ast.Owned | string | undefined
-    origin: PortId
-  }
+  portUpdate?: { origin: PortId } & (
+    | { value: Ast.Owned<Ast.MutableExpression> | string | undefined }
+    | { metadataKey: string; metadata: unknown }
+  )
 }
 
 /**

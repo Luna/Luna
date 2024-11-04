@@ -26,6 +26,10 @@ await readEnvironmentFromFile()
 const entrypoint =
   process.env.E2E === 'true' ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
 
+// NOTE(Frizi): This rename is for the sake of forward compatibility with not yet merged config refactor on bazel branch,
+// and because Vite's HTML env replacements only work with import.meta.env variables, not defines.
+process.env.ENSO_IDE_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
+
 // https://vitejs.dev/config/
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
@@ -45,7 +49,12 @@ export default defineConfig({
     }),
     react({
       include: fileURLToPath(new URL('./src/dashboard/**/*.tsx', import.meta.url)),
-      babel: { plugins: ['@babel/plugin-syntax-import-attributes'] },
+      babel: {
+        plugins: [
+          '@babel/plugin-syntax-import-attributes',
+          ['babel-plugin-react-compiler', { target: '18' }],
+        ],
+      },
     }),
     ...(process.env.NODE_ENV === 'development' ? [await projectManagerShim()] : []),
   ],
@@ -65,6 +74,7 @@ export default defineConfig({
       '#': fileURLToPath(new URL('./src/dashboard', import.meta.url)),
     },
   },
+  envPrefix: 'ENSO_IDE_',
   define: {
     ...getDefines(),
     IS_CLOUD_BUILD: JSON.stringify(IS_CLOUD_BUILD),
