@@ -83,18 +83,20 @@ type Google_Analytics_Account_Filter
        Google_Analytics_Account_Filter.All_Accounts -> Nothing
        Google_Analytics_Account_Filter.Account acc -> case acc of
            _ : Google_Analytics_Account -> [acc.java_record].to_array
-           _ : Text ->
-               id = if acc.starts_with "accounts/" then acc else
-                   "accounts/" + acc
-               [AnalyticsAccount.new id "MOCK" False Date_Time.now "XXX"].to_array
+           _ : Text -> [_create_analytics_account_from_text acc].to_array
        Google_Analytics_Account_Filter.Accounts accounts ->
            vec = accounts.map acc-> case acc of
                _ : Google_Analytics_Account -> acc.java_record
-               _ : Text ->
-                   id = if acc.starts_with "accounts/" then acc else
-                       "accounts/" + acc
-                   AnalyticsAccount.new id "MOCK" False Date_Time.now "XXX"
+               _ : Text -> _create_analytics_account_from_text acc
            vec.to_array
+
+## PRIVATE
+   Creates a Google Analytics account from a text ID.
+   Most values are defaulted.
+private _create_analytics_account_from_text accountText -> AnalyticsAccount =
+    id = if account.starts_with "accounts/" then account else "accounts/" + account
+    display = id.replace (regex "^accounts/") ""
+    AnalyticsAccount.new id display False Date_Time.now Nothing
 
 ## PRIVATE
 Google_Analytics_Account_Filter.from (that:Google_Analytics_Account) = Google_Analytics_Account_Filter.Account that
