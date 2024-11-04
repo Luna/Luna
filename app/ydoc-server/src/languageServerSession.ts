@@ -618,7 +618,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             // the code was externally edited. In this case we try to fix the spans by running
             // the `syncToCode` on the saved code snapshot.
             const { root, spans } = Ast.parseModuleWithSpans(snapshotCode, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedIdMap = deserializeIdMap(idMapJson)
 
             const edit = syncModule.edit()
@@ -627,7 +627,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             syncModule.applyEdit(edit)
           } else {
             const { root, spans } = Ast.parseModuleWithSpans(code, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedSpans = spans
           }
         }
@@ -663,7 +663,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         (nodeMeta.length !== 0 || widgetMeta.length !== 0)
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
-        astRoot.visitRecursiveAst(ast => {
+        astRoot.visitRecursive(ast => {
           if (!externalIdToAst.has(ast.externalId)) externalIdToAst.set(ast.externalId, ast)
         })
         const missing = new Set<string>()
