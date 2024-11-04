@@ -30,8 +30,9 @@ type Google_Analytics
        - start_date: The beginning date of the query. Default is start of the
          current year.
        - end_date: The end date being queried. Defaults to today.
-       - credentials: The Google credentials to use. Default is the default
-         credentials.
+       - credentials: The Google credentials to use. Default is to use the
+         Google Application Default Credentials in the environment variables.
+         See https://cloud.google.com/docs/authentication/application-default-credentials
     @property Google_Analytics_Property.default_widget
     @dimensions _make_dimensions_vector_selector
     @metrics _make_metrics_vector_selector
@@ -52,8 +53,9 @@ type Google_Analytics
        Reads the set of accounts from Google Analytics Admin API.
 
        Arguments:
-       - credentials: The Google credentials to use. Default is the default
-         credentials.
+       - credentials: The Google credentials to use. Default is to use the
+         Google Application Default Credentials in the environment variables.
+         See https://cloud.google.com/docs/authentication/application-default-credentials
        - limit: The maximum number of accounts to read. Default is 1000.
        - include_deleted: Whether to include deleted accounts. Default is false.
     @credentials Google_Credential.default_widget
@@ -72,8 +74,9 @@ type Google_Analytics
        Arguments:
        - account: The Google Analytics account(s) to read properties from or all
          accounts. Default is all accounts.
-       - credentials: The Google credentials to use. Default is the default
-         credentials.
+       - credentials: The Google credentials to use. Default is to use the
+         Google Application Default Credentials in the environment variables.
+         See https://cloud.google.com/docs/authentication/application-default-credentials
        - limit: The maximum number of accounts to read. Default is 1000.
        - include_deleted: Whether to include deleted accounts. Default is false.
     @account Google_Analytics_Account_Filter.default_widget
@@ -93,8 +96,9 @@ type Google_Analytics
 
        Arguments:
        - property: The Google Analytics property to read metrics from.
-       - credentials: The Google credentials to use. Default is the default
-         credentials.
+       - credentials: The Google credentials to use. Default is to use the
+         Google Application Default Credentials in the environment variables.
+         See https://cloud.google.com/docs/authentication/application-default-credentials
     @property Google_Analytics_Property.default_widget
     @credentials Google_Credential.default_widget
     list_metrics : Google_Analytics_Property -> Google_Credential -> Vector
@@ -108,8 +112,9 @@ type Google_Analytics
 
        Arguments:
        - property: The Google Analytics property to read metrics from.
-       - credentials: The Google credentials to use. Default is the default
-         credentials.
+       - credentials: The Google credentials to use. Default is to use the
+         Google Application Default Credentials in the environment variables.
+         See https://cloud.google.com/docs/authentication/application-default-credentials
     @property Google_Analytics_Property.default_widget
     @credentials Google_Credential.default_widget
     list_dimensions : Google_Analytics_Property -> Google_Credential -> Vector
@@ -154,5 +159,4 @@ private _read_sample_data dimensions:Vector metrics:Vector start_date:Date end_d
 private _handle_google_error ~action =
     Panic.catch Any action handler=c->
         payload = c.payload
-
-
+        Error.throw payload
