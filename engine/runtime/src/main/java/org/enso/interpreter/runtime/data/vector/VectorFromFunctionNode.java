@@ -2,22 +2,20 @@ package org.enso.interpreter.runtime.data.vector;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import org.enso.interpreter.dsl.BuiltinMethod;
 import org.enso.interpreter.node.callable.dispatch.InvokeFunctionNode;
-import org.enso.interpreter.node.expression.builtin.error.NoWrap;
-import org.enso.interpreter.node.expression.builtin.error.ProblemBehavior;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
 import org.enso.interpreter.runtime.data.atom.Atom;
+import org.enso.interpreter.runtime.data.atom.AtomConstructor;
 import org.enso.interpreter.runtime.error.DataflowError;
 import org.enso.interpreter.runtime.error.PanicException;
-import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.state.HasContextEnabledNode;
 import org.enso.interpreter.runtime.state.State;
 import org.enso.interpreter.runtime.warning.AppendWarningNode;
@@ -45,75 +43,30 @@ public abstract class VectorFromFunctionNode extends Node {
   abstract Object execute(
       VirtualFrame frame, State state, long length, Function func, Object onProblems);
 
-  @Specialization(guards = "onProblemsAtom == onProblemsAtomCached", limit = "3")
+  @Specialization(
+      guards = "getCtor(onProblemsAtom) == onProblemsAtomCtorCached",
+      limit = "onProblemsCtorsCount()")
   Object doItCached(
       VirtualFrame frame,
       State state,
       long length,
       Function func,
       Atom onProblemsAtom,
-      @Cached("onProblemsAtom") Atom onProblemsAtomCached,
-      @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
-      @Shared @Cached("build()") AppendWarningNode appendWarningNode,
-      @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
-      @Shared @Cached BranchProfile errorEncounteredProfile,
-      @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
-    return doIt(
-        frame,
-        state,
-        length,
-        func,
-        onProblemsAtomCached,
-        warnsLib,
-        invokeFunctionNode,
-        appendWarningNode,
-        errorEncounteredProfile,
-        hasContextEnabledNode);
-  }
-
-  @Specialization(replaces = "doItCached")
-  Object doItUncached(
-      VirtualFrame frame,
-      State state,
-      long length,
-      Function func,
-      Atom onProblemsAtom,
-      @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
-      @Shared @Cached("build()") AppendWarningNode appendWarningNode,
-      @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
-      @Shared @Cached BranchProfile errorEncounteredProfile,
-      @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
-    return doIt(
-        frame,
-        state,
-        length,
-        func,
-        onProblemsAtom,
-        warnsLib,
-        invokeFunctionNode,
-        appendWarningNode,
-        errorEncounteredProfile,
-        hasContextEnabledNode);
-  }
-
-  private Object doIt(
-      VirtualFrame frame,
-      State state,
-      long length,
-      Function func,
-      Atom onProblemsAtom,
-      WarningsLibrary warnsLib,
-      InvokeFunctionNode invokeFunctionNode,
-      AppendWarningNode appendWarningNode,
-      BranchProfile errorEncounteredProfile,
-      HasContextEnabledNode hasContextEnabledNode) {
+      @Cached("getCtor(onProblemsAtom)") AtomConstructor onProblemsAtomCtorCached,
+      @Cached("processOnProblemsArg(onProblemsAtomCtorCached)") OnProblems onProblems,
+      @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
+      @Cached("build()") AppendWarningNode appendWarningNode,
+      @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
+      @Cached BranchProfile errorEncounteredProfile,
+      @Cached HasContextEnabledNode hasContextEnabledNode,
+      @Cached LoopConditionProfile loopConditionProfile) {
     var ctx = EnsoContext.get(this);
-    var onProblems = processOnProblemsArg(onProblemsAtom);
-    var len = Math.toIntExact(length);
+    var len = (int) length;
     var nothing = ctx.getNothing();
     var target = ArrayBuilder.newBuilder(len);
     var errorsEncountered = 0;
-    for (int i = 0; i < len; i++) {
+    loopConditionProfile.profileCounted(len);
+    for (int i = 0; loopConditionProfile.inject(i < len); i++) {
       var value = invokeFunctionNode.execute(func, frame, state, new Long[] {(long) i});
       Object valueToAdd = value;
       if (value instanceof DataflowError err) {
@@ -154,20 +107,42 @@ public abstract class VectorFromFunctionNode extends Node {
     }
   }
 
-  private OnProblems processOnProblemsArg(Atom onProblems) {
+  /**
+   * Unreachable: The {@code doItCached} specialization has the same limit of instantiations as
+   * there are possible onProblems arguments. So this specialization is only reached if {@code
+   * onProblems} argument is an unexpected type.
+   *
+   * @return Just throws Type_Error dataflow error.
+   */
+  @Specialization(replaces = "doItCached")
+  Object unreachable(
+      VirtualFrame frame, State state, long length, Function func, Object onProblems) {
+    var problemBehaviorBuiltin = EnsoContext.get(this).getBuiltins().problemBehavior();
+    throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
+  }
+
+  protected OnProblems processOnProblemsArg(AtomConstructor onProblems) {
     var ctx = EnsoContext.get(this);
     var problemBehaviorBuiltin = ctx.getBuiltins().problemBehavior();
     var noWrapBuiltin = ctx.getBuiltins().noWrap();
-    if (isIgnore(onProblems, problemBehaviorBuiltin)) {
+    if (onProblems == problemBehaviorBuiltin.getIgnore()) {
       return OnProblems.IGNORE;
-    } else if (isReportError(onProblems, problemBehaviorBuiltin)) {
+    } else if (onProblems == problemBehaviorBuiltin.getReportError()) {
       return OnProblems.REPORT_ERROR;
-    } else if (isReportWarning(onProblems, problemBehaviorBuiltin)) {
+    } else if (onProblems == problemBehaviorBuiltin.getReportWarning()) {
       return OnProblems.REPORT_WARNING;
-    } else if (isNoWrap(onProblems, noWrapBuiltin)) {
+    } else if (onProblems == noWrapBuiltin.getUniqueConstructor()) {
       return OnProblems.NO_WRAP;
     }
     throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
+  }
+
+  protected static AtomConstructor getCtor(Atom atom) {
+    return atom.getConstructor();
+  }
+
+  protected static int onProblemsCtorsCount() {
+    return OnProblems.values().length;
   }
 
   @TruffleBoundary
@@ -177,23 +152,8 @@ public abstract class VectorFromFunctionNode extends Node {
     return new PanicException(typeError, this);
   }
 
-  private static boolean isReportWarning(Atom onProblems, ProblemBehavior problemBehaviorBuiltin) {
-    return onProblems.getConstructor() == problemBehaviorBuiltin.getReportWarning();
-  }
-
-  private static boolean isReportError(Atom onProblems, ProblemBehavior problemBehaviorBuiltin) {
-    return onProblems.getConstructor() == problemBehaviorBuiltin.getReportError();
-  }
-
-  private static boolean isIgnore(Atom onProblems, ProblemBehavior problemBehaviorBuiltin) {
-    return onProblems.getConstructor() == problemBehaviorBuiltin.getIgnore();
-  }
-
-  private static boolean isNoWrap(Atom onProblems, NoWrap noWrapBuiltin) {
-    return onProblems.getConstructor() == noWrapBuiltin.getUniqueConstructor();
-  }
-
-  private enum OnProblems {
+  /** All the possible values for the {@code onProblems} argument. */
+  protected enum OnProblems {
     IGNORE,
     REPORT_ERROR,
     REPORT_WARNING,

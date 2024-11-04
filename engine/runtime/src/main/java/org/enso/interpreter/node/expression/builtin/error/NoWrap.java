@@ -2,7 +2,6 @@ package org.enso.interpreter.node.expression.builtin.error;
 
 import java.util.List;
 import org.enso.interpreter.dsl.BuiltinType;
-import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.node.expression.builtin.UniquelyConstructibleBuiltin;
 
 @BuiltinType(name = "Standard.Base.Data.Vector.No_Wrap")
