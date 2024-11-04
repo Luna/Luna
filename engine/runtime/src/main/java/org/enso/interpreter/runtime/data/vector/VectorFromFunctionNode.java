@@ -10,6 +10,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import org.enso.interpreter.dsl.BuiltinMethod;
 import org.enso.interpreter.node.callable.dispatch.InvokeFunctionNode;
+import org.enso.interpreter.node.expression.builtin.error.NoWrap;
 import org.enso.interpreter.node.expression.builtin.error.ProblemBehavior;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
@@ -50,12 +51,11 @@ public abstract class VectorFromFunctionNode extends Node {
       State state,
       long length,
       Function func,
-      Object onProblemsAtom,
-      @Cached("onProblemsAtom") Object onProblemsAtomCached,
+      Atom onProblemsAtom,
+      @Cached("onProblemsAtom") Atom onProblemsAtomCached,
       @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
       @Shared @Cached("build()") AppendWarningNode appendWarningNode,
       @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
-      @Shared @CachedLibrary(limit = "3") TypesLibrary typesLib,
       @Shared @Cached BranchProfile errorEncounteredProfile,
       @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
     return doIt(
@@ -65,7 +65,6 @@ public abstract class VectorFromFunctionNode extends Node {
         func,
         onProblemsAtomCached,
         warnsLib,
-        typesLib,
         invokeFunctionNode,
         appendWarningNode,
         errorEncounteredProfile,
@@ -78,11 +77,10 @@ public abstract class VectorFromFunctionNode extends Node {
       State state,
       long length,
       Function func,
-      Object onProblemsAtom,
+      Atom onProblemsAtom,
       @Shared @Cached("buildWithArity(1)") InvokeFunctionNode invokeFunctionNode,
       @Shared @Cached("build()") AppendWarningNode appendWarningNode,
       @Shared @CachedLibrary(limit = "3") WarningsLibrary warnsLib,
-      @Shared @CachedLibrary(limit = "3") TypesLibrary typesLib,
       @Shared @Cached BranchProfile errorEncounteredProfile,
       @Shared @Cached HasContextEnabledNode hasContextEnabledNode) {
     return doIt(
@@ -92,7 +90,6 @@ public abstract class VectorFromFunctionNode extends Node {
         func,
         onProblemsAtom,
         warnsLib,
-        typesLib,
         invokeFunctionNode,
         appendWarningNode,
         errorEncounteredProfile,
@@ -104,15 +101,14 @@ public abstract class VectorFromFunctionNode extends Node {
       State state,
       long length,
       Function func,
-      Object onProblemsAtom,
+      Atom onProblemsAtom,
       WarningsLibrary warnsLib,
-      TypesLibrary typesLib,
       InvokeFunctionNode invokeFunctionNode,
       AppendWarningNode appendWarningNode,
       BranchProfile errorEncounteredProfile,
       HasContextEnabledNode hasContextEnabledNode) {
     var ctx = EnsoContext.get(this);
-    var onProblems = processOnProblemsArg(onProblemsAtom, typesLib);
+    var onProblems = processOnProblemsArg(onProblemsAtom);
     var len = Math.toIntExact(length);
     var nothing = ctx.getNothing();
     var target = ArrayBuilder.newBuilder(len);
@@ -158,24 +154,17 @@ public abstract class VectorFromFunctionNode extends Node {
     }
   }
 
-  private OnProblems processOnProblemsArg(Object onProblems, TypesLibrary typesLib) {
+  private OnProblems processOnProblemsArg(Atom onProblems) {
     var ctx = EnsoContext.get(this);
     var problemBehaviorBuiltin = ctx.getBuiltins().problemBehavior();
     var noWrapBuiltin = ctx.getBuiltins().noWrap();
-    if (onProblems instanceof Atom onProblemsAtom) {
-      if (isIgnore(onProblemsAtom, problemBehaviorBuiltin)) {
-        return OnProblems.IGNORE;
-      } else if (isReportError(onProblemsAtom, problemBehaviorBuiltin)) {
-        return OnProblems.REPORT_ERROR;
-      } else if (isReportWarning(onProblemsAtom, problemBehaviorBuiltin)) {
-        return OnProblems.REPORT_WARNING;
-      }
-    }
-    if (!typesLib.hasType(onProblems)) {
-      throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
-    }
-    var onProblemsType = typesLib.getType(onProblems);
-    if (onProblemsType == noWrapBuiltin) {
+    if (isIgnore(onProblems, problemBehaviorBuiltin)) {
+      return OnProblems.IGNORE;
+    } else if (isReportError(onProblems, problemBehaviorBuiltin)) {
+      return OnProblems.REPORT_ERROR;
+    } else if (isReportWarning(onProblems, problemBehaviorBuiltin)) {
+      return OnProblems.REPORT_WARNING;
+    } else if (isNoWrap(onProblems, noWrapBuiltin)) {
       return OnProblems.NO_WRAP;
     }
     throw makeTypeError(problemBehaviorBuiltin.getType(), onProblems, "onProblems");
@@ -198,6 +187,10 @@ public abstract class VectorFromFunctionNode extends Node {
 
   private static boolean isIgnore(Atom onProblems, ProblemBehavior problemBehaviorBuiltin) {
     return onProblems.getConstructor() == problemBehaviorBuiltin.getIgnore();
+  }
+
+  private static boolean isNoWrap(Atom onProblems, NoWrap noWrapBuiltin) {
+    return onProblems.getConstructor() == noWrapBuiltin.getUniqueConstructor();
   }
 
   private enum OnProblems {

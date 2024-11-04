@@ -1550,6 +1550,7 @@ type Map_Error
    Indicates that a method should not wrap thrown errors in `Map_Error`.
 @Builtin_Type
 type No_Wrap
+    Value
 
 ## PRIVATE
 Wrapped_Error.from (that : Map_Error) = Wrapped_Error.Value that that.inner_error

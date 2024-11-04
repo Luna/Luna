@@ -120,7 +120,7 @@ public final class Builtins {
   private final Builtin timeOfDay;
   private final Builtin timeZone;
   private final Builtin warning;
-  private final Builtin noWrap;
+  private final NoWrap noWrap;
   private final ProblemBehavior problemBehavior;
   private final AdditionalWarnings additionalWarnings;
 
@@ -174,7 +174,7 @@ public final class Builtins {
     timeOfDay = builtins.get(org.enso.interpreter.node.expression.builtin.date.TimeOfDay.class);
     timeZone = builtins.get(org.enso.interpreter.node.expression.builtin.date.TimeZone.class);
     warning = builtins.get(Warning.class);
-    noWrap = builtins.get(NoWrap.class);
+    noWrap = getBuiltinType(NoWrap.class);
     problemBehavior = getBuiltinType(ProblemBehavior.class);
     additionalWarnings = getBuiltinType(AdditionalWarnings.class);
 
@@ -617,8 +617,8 @@ public final class Builtins {
   }
 
   /** Returns the {@code No_Wrap} atom constructor. */
-  public Type noWrap() {
-    return noWrap.getType();
+  public NoWrap noWrap() {
+    return noWrap;
   }
 
   /** Returns the {@code Additional_Warnings} atom constructor. */
