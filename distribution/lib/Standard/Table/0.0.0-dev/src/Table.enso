@@ -3929,4 +3929,4 @@ from_java_table java_table = Table.Value java_table
 
 ## PRIVATE
 Many_Files_List.from (that : Table) =
-    Read_Many_Helpers.find_files_list_in_table that
+    Read_Many_Helpers.find_files_list_in_table that Return_As_Table.Merged_Table

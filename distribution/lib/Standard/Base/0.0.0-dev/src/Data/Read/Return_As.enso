@@ -53,6 +53,13 @@ type Return_As
         options = _get_known_return_classes.map .get_dropdown_options
         Single_Choice display=display values=options
 
+    ## PRIVATE
+    default_value (paths : Many_Files_List) -> Return_As =
+        ## If the argument is an error, we fall back to a default value that is
+           always available - Vector, to avoid compounding more errors.
+        if paths.is_error then Return_As_Base.Vector else
+            paths.default_return
+
 ## PRIVATE
 type Return_As_Base
     ## Will return a Vector of objects that were loaded.

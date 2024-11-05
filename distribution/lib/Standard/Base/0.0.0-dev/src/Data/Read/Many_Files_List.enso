@@ -7,7 +7,7 @@ import project.Data.Vector.Vector
    used in `Data.read_many`.
 type Many_Files_List
     ## PRIVATE
-    Value original_value paths_to_load:Vector
+    Value original_value paths_to_load:Vector default_return:Return_As
 
     ## PRIVATE
     to_text self -> Text =
@@ -19,4 +19,4 @@ type Many_Files_List
 
 ## PRIVATE
 Many_Files_List.from (that : Vector) =
-    Many_Files_List.Value that that
+    Many_Files_List.Value that that Return_As_Base.Vector
