@@ -140,8 +140,8 @@ const sourceMask = computed<NodeMask | undefined>(() => {
 
 const edgeColor = computed(() =>
   'color' in props.edge ? props.edge.color
-  : targetNode.value ? graph.db.getNodeColorStyle(targetNode.value)
   : sourceNode.value ? graph.db.getNodeColorStyle(sourceNode.value)
+  : targetNode.value ? graph.db.getNodeColorStyle(targetNode.value)
   : undefined,
 )
 
@@ -510,13 +510,7 @@ const backwardEdgeArrowTransform = computed<string | undefined>(() => {
 })
 
 const targetIsSelfArgument = computed(() => {
-  if ('targetIsSelfArgument' in props.edge && props.edge?.targetIsSelfArgument) return true
-  if (!targetExpr.value) return
-  const nodeId = graph.getPortNodeId(targetExpr.value)
-  if (!nodeId) return
-  const primarySubject = graph.db.nodeIdToNode.get(nodeId)?.primarySubject
-  if (!primarySubject) return
-  return targetExpr.value === primarySubject
+  return true
 })
 
 const selfArgumentArrowHeight = 9

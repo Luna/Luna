@@ -250,15 +250,4 @@ export const widgetDefinition = defineWidget(
   }
 }
 
-.WidgetPort.isTarget:not(.isSelfArgument):after {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  width: 4px;
-  height: 5px;
-  transform: translate(-50%, 0);
-  background-color: var(--node-color-port);
-  z-index: -1;
-}
 </style>
