@@ -374,7 +374,6 @@ add_specs suite_builder =
                 EnsoSecretHelper.getCache.getCacheTestParameters.setMaxFileSizeOverrideTestOnly 100
                 download 110 . should_fail_with (Response_Too_Large.Error 100)
 
-
         group_builder.specify "Will not cache a file without a content length, but which is greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
             HTTP.clear_response_cache
             Panic.with_finalizer reset_size_limits <|
