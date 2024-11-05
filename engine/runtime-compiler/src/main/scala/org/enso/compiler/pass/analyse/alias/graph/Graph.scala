@@ -80,34 +80,13 @@ sealed class Graph(
     *
     * @return a unique identifier for this graph
     */
-  private def nextId(): Graph.Id = {
+  private[graph] def nextId(): Graph.Id = {
     val nextId = _nextIdCounter
     if (nextId < 0) {
       throw new IllegalStateException("Cannot emit new IDs. Frozen!")
     }
     _nextIdCounter += 1
     nextId
-  }
-
-  /** Factory method to create new [GraphOccurrence.Def].
-    */
-  final def newDef(
-    symbol: String,
-    identifier: java.util.UUID,
-    externalId: Option[java.util.UUID],
-    suspended: Boolean = false
-  ): GraphOccurrence.Def = {
-    new GraphOccurrence.Def(nextId(), symbol, identifier, externalId, suspended)
-  }
-
-  /** Factory method to create new [GraphOccurrence.Use].
-    */
-  final def newUse(
-    symbol: String,
-    identifier: java.util.UUID,
-    externalId: Option[java.util.UUID]
-  ): GraphOccurrence.Use = {
-    new GraphOccurrence.Use(nextId(), symbol, identifier, externalId)
   }
 
   /** Resolves any links for the given usage of a symbol, assuming the symbol
@@ -324,6 +303,9 @@ sealed class Graph(
   }
 }
 object Graph {
+
+  /** Creates new empty, graph */
+  private[graph] def create(): Graph = new Graph()
 
   /** The type of symbols on the graph. */
   type Symbol = String

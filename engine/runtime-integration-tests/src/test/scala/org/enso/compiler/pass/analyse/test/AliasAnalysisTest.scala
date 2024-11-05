@@ -18,7 +18,11 @@ import org.enso.compiler.pass.PassConfiguration._
 import org.enso.compiler.pass.analyse.AliasAnalysis
 import org.enso.compiler.pass.analyse.alias.graph.Graph.Link
 import org.enso.compiler.pass.analyse.alias.AliasMetadata
-import org.enso.compiler.pass.analyse.alias.graph.{Graph, GraphOccurrence}
+import org.enso.compiler.pass.analyse.alias.graph.{
+  Graph,
+  GraphBuilder,
+  GraphOccurrence
+}
 import org.enso.compiler.pass.{PassConfiguration, PassGroup, PassManager}
 import org.enso.compiler.test.CompilerTest
 
@@ -84,7 +88,7 @@ class AliasAnalysisTest extends CompilerTest {
   // === The Tests ============================================================
 
   "The analysis scope" should {
-    val graph = new Graph()
+    val builder = GraphBuilder.create()
 
     val flatScope = new Graph.Scope()
 
@@ -94,19 +98,19 @@ class AliasAnalysisTest extends CompilerTest {
     val childOfChild        = child1.addChild()
     val childOfChildOfChild = childOfChild.addChild()
 
-    val aDef   = graph.newDef("a", genId, None)
+    val aDef   = builder.newDef("a", genId, None)
     val aDefId = aDef.id
 
-    val bDef   = graph.newDef("b", genId, None)
+    val bDef   = builder.newDef("b", genId, None)
     val bDefId = bDef.id
 
-    val aUse   = graph.newUse("a", genId, None)
+    val aUse   = builder.newUse("a", genId, None)
     val aUseId = aUse.id
 
-    val bUse   = graph.newUse("b", genId, None)
+    val bUse   = builder.newUse("b", genId, None)
     val bUseId = bUse.id
 
-    val cUse   = graph.newUse("c", genId, None)
+    val cUse   = builder.newUse("c", genId, None)
     val cUseId = cUse.id
 
     // Add occurrences to the scopes
@@ -227,23 +231,24 @@ class AliasAnalysisTest extends CompilerTest {
   }
 
   "The Aliasing graph" should {
-    val graph = new Graph()
+    val builder = GraphBuilder.create()
+    val graph   = builder.toGraph()
 
-    val rootScope  = graph.rootScope
+    val rootScope  = builder.toScope()
     val childScope = rootScope.addChild()
 
-    val aDef   = graph.newDef("a", genId, None)
+    val aDef   = builder.newDef("a", genId, None)
     val aDefId = aDef.id
 
-    val bDef = graph.newDef("b", genId, None)
+    val bDef = builder.newDef("b", genId, None)
 
-    val aUse1   = graph.newUse("a", genId, None)
+    val aUse1   = builder.newUse("a", genId, None)
     val aUse1Id = aUse1.id
 
-    val aUse2   = graph.newUse("a", genId, None)
+    val aUse2   = builder.newUse("a", genId, None)
     val aUse2Id = aUse2.id
 
-    val cUse   = graph.newUse("c", genId, None)
+    val cUse   = builder.newUse("c", genId, None)
     val cUseId = cUse.id
 
     rootScope.add(aDef)
@@ -336,29 +341,30 @@ class AliasAnalysisTest extends CompilerTest {
     }
 
     "correctly determine the identifiers of bindings shadowed by a definition" in {
-      val graph = new Graph()
+      val builder = GraphBuilder.create()
+      val graph   = builder.toGraph()
 
-      val rootScope  = graph.rootScope
-      val child1     = rootScope.addChild()
-      val child2     = rootScope.addChild()
+      val rootScope  = builder.toScope()
+      val child1     = builder.addChild()
+      val child2     = builder.addChild()
       val grandChild = child1.addChild()
 
-      val aDefInRoot = graph.newDef("a", genId, None)
+      val aDefInRoot = builder.newDef("a", genId, None)
       rootScope.add(aDefInRoot)
 
-      val aDefInChild1 = graph.newDef("a", genId, None)
+      val aDefInChild1 = builder.newDef("a", genId, None)
       child1.add(aDefInChild1)
 
-      val aDefInChild2 = graph.newDef("a", genId, None)
+      val aDefInChild2 = builder.newDef("a", genId, None)
       child2.add(aDefInChild2)
 
-      val aDefInGrandChild = graph.newDef("a", genId, None)
+      val aDefInGrandChild = builder.newDef("a", genId, None)
       grandChild.add(aDefInGrandChild)
 
-      val bDefInRoot = graph.newDef("b", genId, None)
+      val bDefInRoot = builder.newDef("b", genId, None)
       rootScope.add(bDefInRoot)
 
-      val bDefInChild2 = graph.newDef("b", genId, None)
+      val bDefInChild2 = builder.newDef("b", genId, None)
       child2.add(bDefInChild2)
 
       graph.knownShadowedDefinitions(aDefInGrandChild) shouldEqual Set(
