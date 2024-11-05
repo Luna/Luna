@@ -1717,8 +1717,8 @@ export default function AssetsTable(props: AssetsTableProps) {
           siblingProjectTitles.has(stripProjectExtension(project.asset.title)),
         )
         const fileMap = new Map<AssetId, File>([
-          files.map(({ asset, file }) => [asset.id, file]),
-          projects.map(({ asset, file }) => [asset.id, file]),
+          ...files.map(({ asset, file }) => [asset.id, file] as const),
+          ...projects.map(({ asset, file }) => [asset.id, file] as const),
         ])
         const uploadedFileIds: AssetId[] = []
         const addIdToSelection = (id: AssetId) => {
@@ -1759,10 +1759,7 @@ export default function AssetsTable(props: AssetsTableProps) {
               case assetIsFile(asset): {
                 const title = escapeSpecialCharacters(asset.title)
                 await uploadFileMutation
-                  .mutateAsync(
-                    { fileId, fileName: title, parentDirectoryId: asset.parentId },
-                    file,
-                  )
+                  .mutateAsync({ fileId, fileName: title, parentDirectoryId: asset.parentId }, file)
                   .then(({ id }) => {
                     addIdToSelection(id)
                   })
@@ -1842,7 +1839,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                       event.parentId,
                       ownerPermission,
                     )
-                    fileMap.set(asset.id, file)
+                    fileMap.set(asset.id, file.file)
                     return asset
                   })
 
@@ -1860,7 +1857,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                       user,
                       localBackend?.joinPath(event.parentId, basename) ?? null,
                     )
-                    fileMap.set(asset.id, project)
+                    fileMap.set(asset.id, project.file)
                     return asset
                   })
 
