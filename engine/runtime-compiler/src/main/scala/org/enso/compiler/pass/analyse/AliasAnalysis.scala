@@ -309,7 +309,7 @@ case object AliasAnalysis extends IRPass {
             ).updateMetadata(
               new MetadataPair(
                 this,
-                alias.AliasMetadata.RootScope(builder.toGraph())
+                alias.AliasMetadata.RootScope(graph.toGraph())
               )
             )
           })

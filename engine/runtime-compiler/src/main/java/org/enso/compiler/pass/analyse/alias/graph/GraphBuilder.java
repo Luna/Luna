@@ -71,7 +71,11 @@ public final class GraphBuilder {
    */
   public int findDef(String name) {
     var first = this.scope.occurrences().values().find(occ -> occ.symbol().equals(name));
-    return first.nonEmpty() ? first.get().id() : -1;
+    if (first.nonEmpty() && first.get() instanceof GraphOccurrence.Def def) {
+      return def.id();
+    } else {
+      return -1;
+    }
   }
 
   /** Creates new definition for */
