@@ -134,12 +134,7 @@ const rootNode = ref<HTMLElement>()
 
 const cssPropsToCopy = ['--node-color-primary', '--node-color-port', '--node-border-radius']
 
-function onClickDelete(event: MouseEvent , index: number) {
-  if (
-    !(event.target instanceof HTMLElement && event.target.previousElementSibling instanceof HTMLElement)
-  )
-    return
-
+function onClickDelete(index: number) {
   const modelValue = props.modelValue.filter((_, i) => i !== index)
   emit('update:modelValue', modelValue)
 }
@@ -406,7 +401,7 @@ function addItem() {
                 @dragend="onDragEnd"
               >‖</div>
               <slot :item="entry.item"></slot>
-              <SvgIcon class="item-button" name="close" @click.stop="onClickDelete($event, entry.index)" />
+              <SvgIcon class="item-button" name="close" @click.stop="()=> onClickDelete(entry.index)" />
             </li>
             <li
               v-show="entry.index != props.modelValue.length - 1"
