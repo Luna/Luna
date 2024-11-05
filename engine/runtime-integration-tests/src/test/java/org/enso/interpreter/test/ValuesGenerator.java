@@ -865,6 +865,15 @@ public final class ValuesGenerator {
     return collect;
   }
 
+  public List<Value> noWrap() {
+    var collect = new ArrayList<Value>();
+    if (languages.contains(Language.ENSO)) {
+      var prelude = "import Standard.Base.Data.Vector.No_Wrap";
+      collect.add(v(null, prelude, "No_Wrap.Value").type());
+    }
+    return collect;
+  }
+
   public List<Value> errors() {
     var collect = new ArrayList<Value>();
     if (languages.contains(Language.ENSO)) {
