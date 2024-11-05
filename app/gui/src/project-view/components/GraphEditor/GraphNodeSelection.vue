@@ -46,7 +46,7 @@ const rootStyle = computed(() => {
   contain: strict;
   inset: calc(0px - var(--selected-node-border-width));
   width: calc(var(--selected-node-border-width) * 2 + var(--node-size-x));
-  height: calc(var(--selected-node-border-width) + var(--node-size-y) / 2);
+  height: calc(var(--selected-node-border-width) + var(--node-base-height) / 2);
   border-radius: 0;
   border-top-left-radius: calc(var(--node-border-radius) * 2 + var(--selected-node-border-width));
   border-top-right-radius: calc(var(--node-border-radius) * 2 + var(--selected-node-border-width));
