@@ -28,9 +28,7 @@ const EQUALITY_FUNCTIONS: Record<EqualityFunctionName, (a: unknown, b: unknown) 
   strict: refEquality,
 }
 
-/**
- * Options for the `useStore` hook.
- */
+/** Options for the `useStore` hook. */
 export interface UseStoreOptions<Slice> {
   /**
    * Adds support for React transitions.
@@ -48,7 +46,7 @@ export interface UseStoreOptions<Slice> {
 /**
  * A wrapper that allows to choose between tearing transition and standard Zustand store.
  *
- * # This hook shall not change the `unsafeEnableTransition` option during the component lifecycle.
+ * # `options.unsafeEnableTransition` must not be changed during the component lifecycle.
  */
 export function useStore<State, Slice>(
   store: StoreApi<State>,
@@ -61,7 +59,7 @@ export function useStore<State, Slice>(
 
   const equalityFunction = resolveAreEqual(areEqual)
 
-  return useNonComilableConditionalStore(
+  return useNonCompilableConditionalStore(
     store,
     selector,
     unsafeEnableTransition,
@@ -70,9 +68,7 @@ export function useStore<State, Slice>(
   )
 }
 
-/**
- * A hook that allows to use React transitions with Zustand store.
- */
+/** A hook that allows to use React transitions with Zustand store. */
 export function useTearingTransitionStore<State, Slice>(
   store: StoreApi<State>,
   selector: (state: State) => Slice,
@@ -126,9 +122,7 @@ export function useTearingTransitionStore<State, Slice>(
   return sliceFromReducer
 }
 
-/**
- * Resolves the equality function.
- */
+/** Resolves the equality function. */
 function resolveAreEqual<Slice>(areEqual: AreEqual<Slice> | null | undefined) {
   return (
     areEqual == null ? EQUALITY_FUNCTIONS.object
@@ -143,7 +137,7 @@ function resolveAreEqual<Slice>(areEqual: AreEqual<Slice> | null | undefined) {
  * @internal
  * @throws An error if the `unsafeEnableTransition` option is changed during the component lifecycle.
  */
-function useNonComilableConditionalStore<State, Slice>(
+function useNonCompilableConditionalStore<State, Slice>(
   store: StoreApi<State>,
   selector: (state: State) => Slice,
   unsafeEnableTransition: boolean,
