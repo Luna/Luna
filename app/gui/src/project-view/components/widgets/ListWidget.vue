@@ -425,7 +425,7 @@ function addItem() {
           </template>
         </template>
       </TransitionGroup>
-      <SvgIcon class="item-button" name="vector_add" @click.stop="addItem" />
+      <SvgIcon class="item-button" name="vector_add" @click.stop="addItem"/>
       <span class="token widgetApplyPadding">]</span>
     </div>
     <div
@@ -561,6 +561,7 @@ div {
   transition-property: opacity;
   transition-duration: 150ms;
   transition-timing-function: ease-in-out;
+  cursor: pointer;
   display: none;
   margin-left: 4px;
   transition: margin 0.2s ease-in-out;
