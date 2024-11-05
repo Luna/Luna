@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -19,7 +20,11 @@ import java.util.stream.Collectors;
 import org.enso.compiler.pass.analyse.FramePointer;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.EnsoRootNode;
+import org.enso.interpreter.node.callable.resolver.HostMethodCallNode;
+import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.function.Function;
+import org.enso.interpreter.runtime.data.EnsoDate;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.error.DataflowError;
 
@@ -188,13 +193,54 @@ public class DebugLocalScope implements EnsoObject {
   @ExportMessage
   @TruffleBoundary
   Object readMember(String member, @CachedLibrary("this") InteropLibrary interop)
-      throws UnknownIdentifierException {
+      throws UnknownIdentifierException, UnsupportedMessageException {
     if (!allBindings.containsKey(member)) {
       throw UnknownIdentifierException.create(member);
     }
     FramePointer framePtr = allBindings.get(member);
     var value = getValue(frame, framePtr);
+    if (value != null) {
+      if (isHostObject(value)) {
+        // Determine if the host object can be converted to corresponding Enso value.
+        var interopUncached = InteropLibrary.getUncached();
+        var firstMember = readFirstMember(value);
+        if (firstMember != null) {
+          var builtinsScope = EnsoContext.get(interop).getBuiltins().getScope();
+          var symbol = UnresolvedSymbol.build(firstMember, builtinsScope);
+          var polyglotCallType =
+              HostMethodCallNode.getPolyglotCallType(value, symbol, interopUncached);
+          try {
+            switch (polyglotCallType) {
+              case CONVERT_TO_DATE -> {
+                var localDate = interopUncached.asDate(value);
+                value = new EnsoDate(localDate);
+              }
+            }
+          } catch (UnsupportedMessageException e) {
+            throw e;
+          }
+        }
+      }
+    }
     return value != null ? value : DataflowError.UNINITIALIZED;
+  }
+
+  private String readFirstMember(Object object) {
+    var interop = InteropLibrary.getUncached();
+    try {
+      if (interop.hasMembers(object)) {
+        var members = interop.getMembers(object, true);
+        var firstMember = interop.readArrayElement(members, 0);
+        return interop.asString(firstMember);
+      }
+    } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+      return null;
+    }
+    return null;
+  }
+
+  private boolean isHostObject(Object object) {
+    return EnsoContext.get(null).isJavaPolyglotObject(object);
   }
 
   @ExportMessage
