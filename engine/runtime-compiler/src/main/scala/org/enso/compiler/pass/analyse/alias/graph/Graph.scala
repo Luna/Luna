@@ -404,7 +404,7 @@ object Graph {
       *
       * @return a scope that is a child of `this`
       */
-    final def addChild(): Scope = {
+    private[graph] def addChild(): Scope = {
       val scope = new Scope()
       scope._parent = this
       _childScopes ::= scope
@@ -416,7 +416,7 @@ object Graph {
       *
       * @param occurrence the occurrence to add
       */
-    final def add(occurrence: GraphOccurrence): Unit = {
+    private[graph] def add(occurrence: GraphOccurrence): Unit = {
       if (occurrences.contains(occurrence.id)) {
         throw new CompilerError(
           s"Multiple occurrences found for ID ${occurrence.id}."
@@ -431,7 +431,7 @@ object Graph {
       *
       * @param definition The definition to add.
       */
-    final def addDefinition(definition: GraphOccurrence.Def): Unit = {
+    private[graph] def addDefinition(definition: GraphOccurrence.Def): Unit = {
       _allDefinitions = allDefinitions ++ List(definition)
     }
 
