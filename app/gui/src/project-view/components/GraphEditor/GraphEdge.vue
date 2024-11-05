@@ -79,7 +79,7 @@ const targetPos = computed<Vec2 | undefined>(() => {
   } else if (mouseAnchorPos.value != null) {
     return mouseAnchorPos.value
   } else if ('anchor' in props.edge && props.edge.anchor.type === 'fixed') {
-    return props.edge.anchor.scenePos
+    return props.edge.anchor.scenePos.add(new Vec2(0, -(selfArgumentArrowHeight + selfArgumentArrowYOffset)))
   } else {
     return undefined
   }
