@@ -278,8 +278,13 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
   position: absolute;
   border-radius: var(--radius-default);
   background: var(--color-visualization-bg);
+  opacity: 0.9;
   /** Prevent drawing on top of other UI elements (e.g. dropdown widgets). */
   isolation: isolate;
+}
+
+.selected .GraphVisualization {
+  opacity: 1;
 }
 
 .VisualizationPanel {
