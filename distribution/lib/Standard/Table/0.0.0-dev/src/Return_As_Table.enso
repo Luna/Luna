@@ -1,3 +1,11 @@
+from Standard.Base import all
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
+import Standard.Base.Data.Read.Return_As.Return_As
+import Standard.Base.Errors.Common.Type_Error
+from Standard.Base.Metadata.Choice import Option
+
+import project.Internal.Read_Many_Helpers
+
 type Return_As_Table
     ## Returns a table with a new column `Value` containing the objects loaded
        from each file.
@@ -17,3 +25,20 @@ type Return_As_Table
        format reads it as something else than a table, then it is expanded in
        the same way as `Table.from_objects`.
     Merged_Table
+
+    ## PRIVATE
+    get_dropdown_options : Vector Option
+    get_dropdown_options =
+        [Option "Table of Objects" "..Table_Of_Objects", Option "Merged Table" "..Merged_Table"]
+
+    ## PRIVATE
+    resolve value =
+        Panic.catch Type_Error (value:Return_As_Table) _->Nothing
+
+    ## PRIVATE
+    make_return self (input : Many_Files_List) (objects : Vector Any) =
+        Read_Many_Helpers.make_return self input objects
+
+## PRIVATE
+Return_As.from (that : Return_As_Table) =
+    Return_As.Instance that
