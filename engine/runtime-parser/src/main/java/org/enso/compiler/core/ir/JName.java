@@ -1,5 +1,6 @@
 package org.enso.compiler.core.ir;
 
+import org.enso.compiler.core.ir.JNameGen.JBlankGen;
 import org.enso.compiler.core.ir.module.scope.JDefinition;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
@@ -18,7 +19,11 @@ public interface JName extends JExpression {
       boolean keepDiagnostics,
       boolean keepIdentifiers);
 
-  interface JBlank extends JName {}
+  interface JBlank extends JName {
+    static JBlank create() {
+      return JBlankGen.builder().build();
+    }
+  }
 
   interface JLiteral extends JName {
     @IRChild(required = false)
