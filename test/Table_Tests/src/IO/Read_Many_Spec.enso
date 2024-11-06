@@ -23,37 +23,55 @@ add_specs suite_builder =
         files_vector = [enso_project.data / "empty.txt", (enso_project.data / "sample.tsv") . path]
         sample_table = Lazy_Ref.Value <|
             (enso_project.data / "sample.tsv") . read
-        check_loaded_vector v =
-            v.should_be_a Vector
-            v.length . should_equal 2
-            v.at 0 . should_equal ""
-            v.at 1 . should_equal sample_table.get
+
+        check_common_columns table =
+            table.at "Value" . to_vector . should_equal ["" , Nothing, Nothing]
+            table.at "a" . to_vector     . should_equal [Nothing, 1, 4]
+            table.at "b" . to_vector     . should_equal [Nothing, 2, 5]
+            table.at "c" . to_vector     . should_equal [Nothing, 3, 6]
+
         group_builder.specify "should read files listed in a Column" <|
             column = Column.from_vector "Col" files_vector
-            ## TODO for next PR:
-               test that if `return` is not specified, it will return as a Table when a Column is provided
             r1 = Data.read_many column return=..Vector
-            check_loaded_vector r1
+            r1.should_equal ["" , sample_table.get]
             Problems.assume_no_problems r1
+
+            r2 = Data.read_many column return=..Table_Of_Objects
+            r2.should_be_a Table
+            r2.column_names . should_equal ["Col", "Value"]
+            r2.at "Col" . to_vector . should_equal files_vector
+            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
 
         group_builder.specify "should read files listed in a single column Table" <|
             table1 = Table.new [["Some column", files_vector]]
             r1 = Data.read_many table1 return=..Vector
-            # TODO like above
-            check_loaded_vector r1
+            r1.should_equal ["" , sample_table.get]
+
+            r2 = Data.read_many table1
+            r2.should_be_a Table
+            r2.column_names . should_equal ["Some column", "Value"]
+            r2.at "Some column" . to_vector . should_equal files_vector
+            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
 
         group_builder.specify "should read files listed in a Table with `path` column" <|
-            table2 = Table.new [["X", [1, 2]], ["path", files_vector]]
-            r2 = Data.read_many table2 return=..Vector
-            # TODO like above
-            check_loaded_vector r2
-            Problems.assume_no_problems r2
+            table1 = Table.new [["X", [1, 2]], ["path", files_vector]]
+            r1 = Data.read_many table2 return=..Vector
+            r1.should_equal ["" , sample_table.get]
+            Problems.assume_no_problems r1
+
+            r2 = Data.read_many table2 return=..Table_Of_Objects
+            r2.should_be_a Table
+            r2.column_names . should_equal ["X", "path", "Value"]
+            r2.at "X" . to_vector . should_equal [1, 2]
+            r2.at "path" . to_vector . should_equal files_vector
+            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
 
             # Test that this is really case insensitive
             table3 = Table.new [["X", [1, 2]], ["pAtH", files_vector]]
-            r3 = Data.read_many table3 return=..Vector
-            check_loaded_vector r3
-            Problems.assume_no_problems r3
+            r3 = Data.read_many table3 return=..Table_Of_Objects
+            r3.should_be_a Table
+            r3.column_names . should_equal ["X", "pAtH", "Value"]
+            r3.at "Value" . to_vector . should_equal ["" , sample_table.get]
 
         group_builder.specify "will fail if no `path` column can be found or its ambiguous" <|
             table1 = Table.new [["X", [1, 2]], ["Y", files_vector]]
@@ -84,3 +102,30 @@ add_specs suite_builder =
             Data.read_many table . should_fail_with Invalid_Value_Type
             Data.read_many (table.at "path") . should_fail_with Invalid_Value_Type
             Data.read_many (table.select_columns ["X"]) . should_fail_with Invalid_Value_Type
+
+        group_builder.specify "if input is a Column or Table, the return type will default to a merged table" <|
+            r1 = Data.read_many (Column.from_vector "my column" files_vector)
+            r1.should_be_a Table
+            r1.column_names . should_equal ["my column", "Value", "a", "b", "c"]
+            r1.at "my column" . to_vector . should_equal files_vector
+            check_common_columns r1
+
+            r2 = Data.read_many (Table.new [["X", [100, 200], ["Path", files_vector], ["Y", [300, 400]]])
+            r2.should_be_a Table
+            r2.column_names . should_equal ["X", "Path", "Y", "Value", "a", "b", "c"]
+            # The second row is duplicated because it gets expanded along with the table that was loaded that has 2 rows
+            r2.at "X" . to_vector . should_equal [100, 200, 200]
+            r2.at "Y" . to_vector . should_equal [300, 400, 400]
+            check_common_columns r2
+
+        group_builder.specify "if input is a Vector, the default can be overridden to return a Table" <|
+            r1 = Data.read_many files_vector return=..Table_Of_Objects
+            r1.should_be_a Table
+            r1.column_names . should_equal ["Path", "Value"]
+            r1.at "Path" . to_vector . should_equal files_vector
+            r1.at "Value" . to_vector . should_equal ["" , sample_table.get]
+
+            r2 = Data.read_many files_vector return=..Merged_Table
+            r2.should_be_a Table
+            r2.column_names . should_equal ["Path", "Value", "a", "b", "c"]
+            check_common_columns r2

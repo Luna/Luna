@@ -96,6 +96,7 @@ add_specs suite_builder =
             files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
 
             # Read all files using Auto_Detect - each file is read according to its inferred format.
+            # If the return type is not specified, if the input is a Vector, the return type is also Vector:
             r1 = Data.read_many files
             r1.should_equal [js_object, "Hello World!"]
 
