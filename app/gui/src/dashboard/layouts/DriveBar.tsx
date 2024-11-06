@@ -52,11 +52,8 @@ import type Backend from '#/services/Backend'
 import { ProjectState, type CreatedProject, type Project, type ProjectId } from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
+import { motion, RESIZE_TRANSITION_STYLES } from '#/utilities/motion'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-
-// ================
-// === DriveBar ===
-// ================
 
 /** Props for a {@link DriveBar}. */
 export interface DriveBarProps {
@@ -91,6 +88,7 @@ export default function DriveBar(props: DriveBarProps) {
     false,
   )
 
+  const newAssetsBarId = React.useId()
   const driveStore = useDriveStore()
   const { unsetModal } = useSetModal()
   const { getText } = useText()
@@ -315,7 +313,12 @@ export default function DriveBar(props: DriveBarProps) {
             >
               {getText('newEmptyProject')}
             </Button>
-            <div className="flex h-row items-center gap-4 rounded-full border-0.5 border-primary/20 px-[11px]">
+            <motion.div
+              layout
+              layoutId={newAssetsBarId}
+              transition={RESIZE_TRANSITION_STYLES}
+              className="flex h-row items-center gap-4 rounded-full border-0.5 border-primary/20 px-[11px]"
+            >
               <Button
                 variant="icon"
                 size="medium"
@@ -386,7 +389,7 @@ export default function DriveBar(props: DriveBarProps) {
                   dispatchAssetEvent({ type: AssetEventType.downloadSelected })
                 }}
               />
-            </div>
+            </motion.div>
             {createAssetsVisualTooltip.tooltip}
           </ButtonGroup>
           {pasteDataStatus}
