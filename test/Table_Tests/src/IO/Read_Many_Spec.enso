@@ -129,3 +129,55 @@ add_specs suite_builder =
             r2.should_be_a Table
             r2.column_names . should_equal ["Path", "Value", "a", "b", "c"]
             check_common_columns r2
+
+        group_builder.specify "will merge files that read as non-Table values into a Table using reasonable defaults" <|
+            base_dir = enso_project.data / "transient" / "read_many_test"
+            base_dir.delete_if_exists
+            base_dir.create_directory . should_succeed
+            Panic.with_finalizer base_dir.delete <|
+                # raw JS Object - we want it to expand to a single row - same as if it was in a 1-element array
+                (JS_Object.from_pairs [["a", 1], ["b", 2]]).to_json.write (base_dir / "1_js_object.json")
+
+                # array of JS objects
+                [JS_Object.from_pairs [["a", 30], ["b", 40], ["c", "foobar"]], JS_Object.from_pairs [["a", 50], ["b", 60]]].to_json.write (base_dir / "2_js_array.json")
+
+                # JS array of numbers
+                [100, 200, 300].to_json.write (base_dir / "3_js_numbers.json")
+
+                # a Table
+                (Table.new [["a", [-1, -2]], ["d", [-4, -5]]]).write (base_dir / "4_table.tsv")
+
+                # a plain text value
+                "Hi!".write (base_dir / "5_plain_text.txt")
+
+                # JS null
+                "null".write (base_dir / "6_js_null.json")
+
+                # a JS string
+                '"str"'.write (base_dir / "7_js_string.json")
+
+                files = Data.list base_dir . sort on=.name
+                r = Data.read_many files
+                r.should_be_a Table
+                # We transform the Path to just file name
+                rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
+
+                null = Nothing
+                r.column_names . should_equal ["Path",               "a",  "b",      "c", "Value",  "d"]
+                rows.at . 0    . should_equal ["1_js_object.json",     1,    2,     null,    null, null]
+                rows.at . 1    . should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
+                rows.at . 2    . should_equal ["2_js_array.json",     50,   60,     null,    null, null]
+                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     100, null]
+                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     200, null]
+                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     300, null]
+                rows.at . 3    . should_equal ["4_table.tsv",         -1, null,     null,    null,   -2]
+                rows.at . 3    . should_equal ["4_table.tsv",         -3, null,     null,    null,   -4]
+                rows.at . 3    . should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
+                rows.at . 3    . should_equal ["6_js_null.json",    null, null,     null,    null, null]
+                rows.at . 3    . should_equal ["7_js_string.json",  null, null,     null,   "str", null]
+
+                r.at "a" . value_type     . should_equal Value_Type.Integer
+                r.at "b" . value_type     . should_equal Value_Type.Integer
+                r.at "c" . value_type     . should_equal Value_Type.Char
+                r.at "Value" . value_type . should_equal Value_Type.Mixed
+                r.at "d" . value_type     . should_equal Value_Type.Integer
