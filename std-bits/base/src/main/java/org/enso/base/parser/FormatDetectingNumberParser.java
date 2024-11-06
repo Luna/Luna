@@ -40,15 +40,17 @@ public class FormatDetectingNumberParser {
 
   public record NumberParseFailure(String message) implements NumberParseResult {}
 
+  private final boolean allowSymbol;
   private NegativeSign negativeSign;
   private NumberWithSeparators numberWithSeparators;
 
   public FormatDetectingNumberParser() {
-    this(NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
+    this(true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
   }
 
   public FormatDetectingNumberParser(
-      NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
+      boolean allowSymbol, NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
+    this.allowSymbol = allowSymbol;
     this.negativeSign = negativeSign;
     this.numberWithSeparators = numberWithSeparators;
   }
@@ -148,6 +150,10 @@ public class FormatDetectingNumberParser {
       } else {
         if (!symbol.isEmpty()) {
           return new NumberParseFailure("Multiple Symbol Sections.");
+        }
+
+        if (!allowSymbol) {
+          return new NumberParseFailure("Symbols not allowed.");
         }
 
         // ToDo: Locking symbol position within text parts.
