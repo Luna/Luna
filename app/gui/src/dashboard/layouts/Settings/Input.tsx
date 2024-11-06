@@ -49,7 +49,7 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
   const [isShowingPassword, setIsShowingPassword] = useState(false)
   const cancelled = useRef(false)
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = useEventCallback((event: KeyboardEvent<HTMLInputElement>) => {
     switch (event.key) {
       case 'Escape': {
         cancelled.current = true
@@ -63,7 +63,8 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
         break
       }
     }
-  }
+    focusChildProps.onKeyDown(event)
+  })
 
   const onBlur = useEventCallback((event: React.FocusEvent<HTMLInputElement>) => {
     if (!cancelled.current) {
@@ -92,10 +93,7 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
               focusChildProps,
             )}
             ref={ref}
-            onKeyDown={(event) => {
-              onKeyDown(event)
-              focusChildProps.onKeyDown(event)
-            }}
+            onKeyDown={onKeyDown}
             onBlur={onBlur}
           />
           {type === 'password' && (

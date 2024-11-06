@@ -8,10 +8,6 @@ import ContextMenus from '#/components/ContextMenus'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 
-// ======================
-// === contextMenuRef ===
-// ======================
-
 /**
  * Return a ref that attaches a context menu event listener.
  * Should be used ONLY if the element does not expose an `onContextMenu` prop.
@@ -19,16 +15,15 @@ import { useSyncRef } from '#/hooks/syncRefHooks'
 export function useContextMenuRef(
   key: string,
   label: string,
-  createEntriesRaw: (
-    position: Pick<React.MouseEvent, 'pageX' | 'pageY'>,
-  ) => React.JSX.Element | null,
+  createEntries: (position: Pick<React.MouseEvent, 'pageX' | 'pageY'>) => React.JSX.Element | null,
   options: { enabled?: boolean } = {},
 ) {
   const { setModal } = modalProvider.useSetModal()
-  const createEntries = useEventCallback(createEntriesRaw)
+  const stableCreateEntries = useEventCallback(createEntries)
   const optionsRef = useSyncRef(options)
   const cleanupRef = React.useRef(() => {})
-  const contextMenuRef = React.useMemo(
+
+  return React.useMemo(
     () => (element: HTMLElement | null) => {
       cleanupRef.current()
       if (element == null) {
@@ -38,7 +33,7 @@ export function useContextMenuRef(
           const { enabled = true } = optionsRef.current
           if (enabled) {
             const position = { pageX: event.pageX, pageY: event.pageY }
-            const children = createEntries(position)
+            const children = stableCreateEntries(position)
             if (children != null) {
               event.preventDefault()
               event.stopPropagation()
@@ -66,7 +61,6 @@ export function useContextMenuRef(
         }
       }
     },
-    [createEntries, key, label, optionsRef, setModal],
+    [stableCreateEntries, key, label, optionsRef, setModal],
   )
-  return contextMenuRef
 }
