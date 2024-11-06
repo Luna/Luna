@@ -433,11 +433,9 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
                 ref={searchRef}
                 size={1}
                 placeholder={
-                  isCloud ?
-                    detect.isOnMacOS() ?
-                      getText('remoteBackendSearchPlaceholderMacOs')
-                    : getText('remoteBackendSearchPlaceholder')
-                  : getText('localBackendSearchPlaceholder')
+                  detect.isOnMacOS() ?
+                    getText('searchPlaceholderMacOs')
+                  : getText('searchPlaceholder')
                 }
                 className="focus-child peer text relative z-1 w-full bg-transparent placeholder-primary/40"
                 onChange={(event) => {
