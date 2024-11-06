@@ -26,7 +26,7 @@ sealed class Graph(
 
   /** @return the next counter value
     */
-  def nextIdCounter: Int = _nextIdCounter
+  private[graph] def nextIdCounter: Int = _nextIdCounter
 
   /** @return a deep structural copy of `this` */
   final def deepCopy(
@@ -80,7 +80,7 @@ sealed class Graph(
     *
     * @return a unique identifier for this graph
     */
-  final def nextId(): Graph.Id = {
+  private[graph] def nextId(): Graph.Id = {
     val nextId = _nextIdCounter
     if (nextId < 0) {
       throw new IllegalStateException("Cannot emit new IDs. Frozen!")
@@ -304,6 +304,9 @@ sealed class Graph(
 }
 object Graph {
 
+  /** Creates new empty, graph */
+  private[graph] def create(): Graph = new Graph()
+
   /** The type of symbols on the graph. */
   type Symbol = String
 
@@ -401,7 +404,7 @@ object Graph {
       *
       * @return a scope that is a child of `this`
       */
-    final def addChild(): Scope = {
+    private[graph] def addChild(): Scope = {
       val scope = new Scope()
       scope._parent = this
       _childScopes ::= scope
@@ -413,7 +416,7 @@ object Graph {
       *
       * @param occurrence the occurrence to add
       */
-    final def add(occurrence: GraphOccurrence): Unit = {
+    private[graph] def add(occurrence: GraphOccurrence): Unit = {
       if (occurrences.contains(occurrence.id)) {
         throw new CompilerError(
           s"Multiple occurrences found for ID ${occurrence.id}."
@@ -428,7 +431,7 @@ object Graph {
       *
       * @param definition The definition to add.
       */
-    final def addDefinition(definition: GraphOccurrence.Def): Unit = {
+    private[graph] def addDefinition(definition: GraphOccurrence.Def): Unit = {
       _allDefinitions = allDefinitions ++ List(definition)
     }
 
