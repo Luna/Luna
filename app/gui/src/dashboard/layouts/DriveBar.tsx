@@ -220,6 +220,8 @@ export default function DriveBar(props: DriveBarProps) {
     case 'recent': {
       return (
         <ButtonGroup className="my-0.5 grow-0">
+          {/* At least one sibling React element must exist, otherwise framer-motion breaks. */}
+          <></>
           {pasteDataStatus}
           {searchBar}
           {assetPanelToggle}

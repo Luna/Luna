@@ -13,8 +13,7 @@ import * as suspense from '#/components/Suspense'
 import * as mergeRefs from '#/utilities/mergeRefs'
 
 import { useDimensions } from '#/hooks/dimensionsHooks'
-import type { Spring } from '#/utilities/motion'
-import { motion } from '#/utilities/motion'
+import { motion, RESIZE_TRANSITION_STYLES } from '#/utilities/motion'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
 import * as dialogProvider from './DialogProvider'
@@ -143,15 +142,6 @@ const DIALOG_STYLES = tv({
     rounded: 'xxlarge',
   },
 })
-
-const RESIZE_TRANSITION_STYLES: Spring = {
-  type: 'spring',
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  stiffness: 300,
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  damping: 25,
-  mass: 1,
-}
 
 // ==============
 // === Dialog ===

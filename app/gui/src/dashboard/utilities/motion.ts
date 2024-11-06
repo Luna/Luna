@@ -1,12 +1,4 @@
 /** @file Type-safe `motion` from `framer-motion`. */
-import {
-  motion as originalMotion,
-  type ForwardRefComponent,
-  type HTMLMotionProps,
-  type MotionProps,
-  type SVGMotionProps,
-} from 'framer-motion'
-
 import type {
   ComponentType,
   DetailedHTMLFactory,
@@ -17,6 +9,26 @@ import type {
   RefAttributes,
   SVGProps,
 } from 'react'
+
+import {
+  motion as originalMotion,
+  type ForwardRefComponent,
+  type HTMLMotionProps,
+  type MotionProps,
+  type Spring,
+  type SVGMotionProps,
+} from 'framer-motion'
+
+import { Label } from '#/components/aria'
+
+export const RESIZE_TRANSITION_STYLES: Spring = {
+  type: 'spring',
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  stiffness: 300,
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  damping: 25,
+  mass: 1,
+}
 
 /** The options parameter for {@link motion}. */
 interface CustomMotionComponentConfig {
@@ -73,3 +85,7 @@ export const motion = originalMotion as unknown as (<Props extends object>(
     SVGMotionProps<UnwrapSVGFactoryElement<JSX.IntrinsicElements[K]>>
   >
 }
+
+// This is a JSX component, even though it does not contain function syntax.
+// eslint-disable-next-line no-restricted-syntax
+export const MotionLabel = motion(Label)

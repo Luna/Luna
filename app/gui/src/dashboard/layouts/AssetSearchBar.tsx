@@ -23,12 +23,9 @@ import { useSuggestions } from '#/providers/DriveProvider'
 import * as array from '#/utilities/array'
 import AssetQuery from '#/utilities/AssetQuery'
 import * as eventModule from '#/utilities/event'
+import { MotionLabel, RESIZE_TRANSITION_STYLES } from '#/utilities/motion'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// =============
-// === Types ===
-// =============
 
 /** The reason behind a new query. */
 enum QuerySource {
@@ -51,10 +48,6 @@ export interface Suggestion {
   readonly addToQuery: (query: AssetQuery) => AssetQuery
   readonly deleteFromQuery: (query: AssetQuery) => AssetQuery
 }
-
-// ============
-// === Tags ===
-// ============
 
 /** Props for a {@link Tags}. */
 interface InternalTagsProps {
@@ -282,7 +275,10 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
   return (
     <FocusArea direction="horizontal">
       {(innerProps) => (
-        <aria.Label
+        <MotionLabel
+          layout
+          layoutId="asset-search-bar"
+          transition={RESIZE_TRANSITION_STYLES}
           data-testid="asset-search-bar"
           {...aria.mergeProps<aria.LabelProps & React.RefAttributes<HTMLLabelElement>>()(
             innerProps,
@@ -309,7 +305,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
             className={ariaComponents.DIALOG_BACKGROUND({
               className: tailwindMerge.twMerge(
                 'absolute left-0 top-0 z-1 flex w-full flex-col overflow-hidden rounded-default border-0.5 border-primary/20 -outline-offset-1 outline-primary transition-colors',
-                areSuggestionsVisible ? '' : 'bg-transparent',
+                areSuggestionsVisible ? '' : 'bg-dashboard backdrop-blur-none',
               ),
             })}
           >
@@ -465,7 +461,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
               />
             </aria.SearchField>
           </FocusRing>
-        </aria.Label>
+        </MotionLabel>
       )}
     </FocusArea>
   )
