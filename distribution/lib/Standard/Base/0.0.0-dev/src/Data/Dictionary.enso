@@ -15,7 +15,7 @@ import project.Panic.Panic
 import project.Warning.Warning
 from project.Data.Boolean import Boolean, False, True
 from project.Data.Text.Extensions import all
-from project.Errors.Common import Float_Used_As_Dictionary_Key
+from project.Errors.Common import Floating_Point_Equality
 from project.Metadata.Choice import Option
 from project.Metadata.Widget import Single_Choice, Vector_Editor
 from project.Widget_Helpers import make_all_selector
@@ -172,7 +172,7 @@ type Dictionary key value
         case key of
             _ : Float ->
                 if no_warning then new_dict else
-                    Warning.attach (Float_Used_As_Dictionary_Key.Warning key) new_dict
+                    Warning.attach (Floating_Point_Equality.Used_As_Dictionary_Key key) new_dict
             _ -> new_dict
 
     ## GROUP Selections
