@@ -46,14 +46,14 @@ collect_benches = Bench.build builder->
 
     builder.group ("Enso_Hash_Map_" + n.to_text) options group_builder->
         # Scenario similar to what is done in distinct
-        # 'Sparse' ints have fewer duplicates and cause more inserts to happen.
+        # 'Sparse' ints have fewer duplicates and cause more inserts and fewer updates to happen.
         group_builder.specify "Enso_Sparse_Incremental" <|
             Scenario.Instance (_ -> Dictionary.empty) . run_distinct data.sparse_ints
         group_builder.specify "Java_Sparse_Incremental" <|
             Scenario.Instance (_ -> JavaHashMapWrapper.new) . run_distinct data.sparse_ints
 
         # Scenario similar to what is done in distinct
-        # 'Dense' ints have more duplicates and cause fewer inserts to happen.
+        # 'Dense' ints have more duplicates and cause fewer inserts and more updates to happen.
         group_builder.specify "Enso_Incremental" <|
             Scenario.Instance (_ -> Dictionary.empty) . run_distinct data.dense_ints
         group_builder.specify "Java_Incremental" <|
