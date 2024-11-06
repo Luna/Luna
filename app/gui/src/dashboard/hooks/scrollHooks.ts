@@ -1,6 +1,7 @@
 /** @file Execute a function on scroll. */
 import { useRef, useState, type MutableRefObject, type RefObject } from 'react'
 
+import { useSyncRef } from '#/hooks/syncRefHooks'
 import useOnScroll from '#/hooks/useOnScroll'
 import { unsafeWriteValue } from '#/utilities/write'
 
@@ -25,8 +26,7 @@ export function useStickyTableHeaderOnScroll(
   options: UseStickyTableHeaderOnScrollOptions = {},
 ) {
   const { trackShadowClass = false } = options
-  const trackShadowClassRef = useRef(trackShadowClass)
-  trackShadowClassRef.current = trackShadowClass
+  const trackShadowClassRef = useSyncRef(trackShadowClass)
   const [shadowClassName, setShadowClass] = useState('')
   const onScroll = useOnScroll(() => {
     if (rootRef.current != null && bodyRef.current != null) {
@@ -48,6 +48,6 @@ export function useStickyTableHeaderOnScroll(
         setShadowClass(newShadowClass)
       }
     }
-  }, [bodyRef, rootRef])
+  }, [bodyRef, rootRef, trackShadowClassRef])
   return { onScroll, shadowClassName }
 }

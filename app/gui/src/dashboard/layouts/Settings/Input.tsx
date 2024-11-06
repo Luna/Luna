@@ -16,6 +16,7 @@ import EyeCrossedIcon from '#/assets/eye_crossed.svg'
 import { Group, Input, InputContext, mergeProps, type InputProps } from '#/components/aria'
 import { Button } from '#/components/AriaComponents'
 import FocusRing from '#/components/styled/FocusRing'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useFocusChild } from '#/hooks/focusHooks'
 import { useText } from '#/providers/TextProvider'
 import { forwardRef } from '#/utilities/react'
@@ -64,11 +65,11 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
     }
   }
 
-  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+  const onBlur = useEventCallback((event: React.FocusEvent<HTMLInputElement>) => {
     if (!cancelled.current) {
       onSubmit?.(event)
     }
-  }
+  })
 
   return (
     <div className="text my-auto grow font-bold">
