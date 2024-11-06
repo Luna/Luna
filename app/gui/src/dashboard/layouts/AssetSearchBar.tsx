@@ -305,8 +305,10 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
           <div
             className={ariaComponents.DIALOG_BACKGROUND({
               className: tailwindMerge.twMerge(
-                'absolute left-0 top-0 z-1 flex w-full flex-col overflow-hidden rounded-default border-0.5 border-primary/20 -outline-offset-1 outline-primary transition-colors',
-                areSuggestionsVisible ? '' : 'bg-dashboard backdrop-blur-none',
+                'absolute left-0 top-0 z-1 flex flex-col rounded-default border-0.5 border-primary/20 transition-[outline-offset,border-color,background-color] duration-150 ease-in-out',
+                areSuggestionsVisible ?
+                  'bg-frame outline outline-2 outline-offset-[-2px] outline-black'
+                : 'bg-dashboard outline-2 backdrop-blur-none',
               ),
             })}
           >
@@ -382,7 +384,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
                           }
                         }}
                         className={tailwindMerge.twMerge(
-                          'flex cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
+                          'flex cursor-pointer rounded-default px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
                           selectedIndices.has(index) && 'bg-primary/10',
                           index === selectedIndex && 'bg-selected-frame',
                         )}
