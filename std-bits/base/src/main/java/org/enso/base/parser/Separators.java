@@ -1,22 +1,20 @@
 package org.enso.base.parser;
 
-import java.nio.CharBuffer;
-
 import static org.enso.base.parser.NumberWithSeparators.isDigit;
 
+import java.nio.CharBuffer;
+
 public record Separators(char first, char second, int count, int endIdx, int lastSeparator) {
-  /**
-   * Check if the character is a separator.
-   * */
+  /** Check if the character is a separator. */
   static boolean isSeparator(char c) {
     return c == '.' || c == ',' || c == ' ' || c == '\'';
   }
 
   /**
-   * Strip out the specified separators and replace with just full stop for decimal.
-   * If any character other than a digit, thousands or decimal separator is encountered then return null.
+   * Strip out the specified separators and replace with just full stop for decimal. If any
+   * character other than a digit, thousands or decimal separator is encountered then return null.
    * If multiple decimal separators are encountered then return null.
-   * */
+   */
   static CharSequence strip(CharSequence value, int idx, int endIdx, char thousands, char decimal) {
     boolean foundDecimal = false;
     char[] results = new char[endIdx - idx];
@@ -31,7 +29,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
         foundDecimal = true;
       } else if (isDigit(c)) {
         results[resultIdx++] = c;
-      } else if (c != thousands){
+      } else if (c != thousands) {
         return null;
       }
     }
@@ -39,14 +37,18 @@ public record Separators(char first, char second, int count, int endIdx, int las
   }
 
   private static boolean validChar(char c, char first, char second) {
-    return isDigit(c) || (first == NumberWithSeparators.Constants.NONE ? isSeparator(c) : (second == NumberWithSeparators.Constants.NONE ? c == first || c == ',' || c == '.' : c == second));
+    return isDigit(c)
+        || (first == NumberWithSeparators.Constants.NONE
+            ? isSeparator(c)
+            : (second == NumberWithSeparators.Constants.NONE
+                ? c == first || c == ',' || c == '.'
+                : c == second));
   }
 
   /**
-   * Find the number and separators section.
-   * Validate the spacing of separators.
-   * Return the separators found or null if invalid.
-   * */
+   * Find the number and separators section. Validate the spacing of separators. Return the
+   * separators found or null if invalid.
+   */
   static Separators parse(CharSequence value, int idx, boolean integer) {
     int endIdx = idx;
     char firstSeparator = NumberWithSeparators.Constants.NONE;
@@ -107,7 +109,9 @@ public record Separators(char first, char second, int count, int endIdx, int las
     }
 
     // Special case when firstSeparator is a space and no secondSeparator and ending with a space.
-    if (firstSeparator == ' ' && secondSeparator == NumberWithSeparators.Constants.NONE && value.charAt(endIdx - 1) == ' ') {
+    if (firstSeparator == ' '
+        && secondSeparator == NumberWithSeparators.Constants.NONE
+        && value.charAt(endIdx - 1) == ' ') {
       separatorCount--;
       endIdx--;
       lastSeparator -= 4;

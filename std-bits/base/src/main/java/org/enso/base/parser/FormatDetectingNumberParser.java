@@ -1,16 +1,15 @@
 package org.enso.base.parser;
 
 /**
- * Parse a String into a Number.
- * It supports the following patterns:
- *  - SIGN + NUMBER;
- *  - BRACKETS + SPACE + NUMBER + SPACE + BRACKET_CLOSE;
+ * Parse a String into a Number. It supports the following patterns: - SIGN + NUMBER; - BRACKETS +
+ * SPACE + NUMBER + SPACE + BRACKET_CLOSE;
  */
 public class FormatDetectingNumberParser {
   public interface NumberParseResult {}
 
   public interface NumberParseResultSuccess extends NumberParseResult {
     NumberParseResultSuccess negate();
+
     NumberParseResultSuccess withSymbol(String symbol);
   }
 
@@ -26,7 +25,8 @@ public class FormatDetectingNumberParser {
     }
   }
 
-  public record NumberParseDouble(double number, String symbol) implements NumberParseResultSuccess {
+  public record NumberParseDouble(double number, String symbol)
+      implements NumberParseResultSuccess {
     @Override
     public NumberParseResultSuccess negate() {
       return new NumberParseDouble(-number, symbol);
@@ -47,16 +47,17 @@ public class FormatDetectingNumberParser {
     this(NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
   }
 
-  public FormatDetectingNumberParser(NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
+  public FormatDetectingNumberParser(
+      NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
     this.negativeSign = negativeSign;
     this.numberWithSeparators = numberWithSeparators;
   }
 
-  NegativeSign negativeSign() {
+  public NegativeSign negativeSign() {
     return negativeSign;
   }
 
-  NumberWithSeparators numberWithSeparators() {
+  public NumberWithSeparators numberWithSeparators() {
     return numberWithSeparators;
   }
 
@@ -133,7 +134,11 @@ public class FormatDetectingNumberParser {
         // ToDo: Locking symbol position within text parts.
 
         int endIdx = idx;
-        while (endIdx < length && !NumberWithSeparators.isDigit(c) && !Separators.isSeparator(c) && !NegativeSign.isSign(c) && !Character.isWhitespace(c)) {
+        while (endIdx < length
+            && !NumberWithSeparators.isDigit(c)
+            && !Separators.isSeparator(c)
+            && !NegativeSign.isSign(c)
+            && !Character.isWhitespace(c)) {
           endIdx++;
           if (endIdx < length) {
             c = value.charAt(endIdx);
@@ -189,12 +194,14 @@ public class FormatDetectingNumberParser {
       var previous = numberWithSeparators;
       results[i] = parse(values[i], integer);
 
-      if (numberWithSeparators != previous &&
-          ((previous == NumberWithSeparators.DOT_UNKNOWN && numberWithSeparators != NumberWithSeparators.DOT_COMMA) ||
-              (previous == NumberWithSeparators.COMMA_UNKNOWN && numberWithSeparators != NumberWithSeparators.DOT_COMMA))) {
+      if (numberWithSeparators != previous
+          && ((previous == NumberWithSeparators.DOT_UNKNOWN
+                  && numberWithSeparators != NumberWithSeparators.DOT_COMMA)
+              || (previous == NumberWithSeparators.COMMA_UNKNOWN
+                  && numberWithSeparators != NumberWithSeparators.DOT_COMMA))) {
         // Start scan over, as format was incorrect.
         i = 0;
-      } else{
+      } else {
         i++;
       }
     }

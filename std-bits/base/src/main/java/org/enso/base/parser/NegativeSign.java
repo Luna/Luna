@@ -17,11 +17,12 @@ public enum NegativeSign {
    * @return the next negative sign state, or null if the character is invalid
    */
   public Optional<NegativeSign> checkValid(char c) {
-    var result = switch (this) {
-      case UNKNOWN -> c == '-' || c == '+' ? MINUS : c == '(' ? BRACKET_OPEN : null;
-      case MINUS -> c == '(' ? null : this;
-      case BRACKET_OPEN -> c != '(' ? null : this;
-    };
+    var result =
+        switch (this) {
+          case UNKNOWN -> c == '-' || c == '+' ? MINUS : c == '(' ? BRACKET_OPEN : null;
+          case MINUS -> c == '(' ? null : this;
+          case BRACKET_OPEN -> c != '(' ? null : this;
+        };
     return Optional.ofNullable(result);
   }
 
