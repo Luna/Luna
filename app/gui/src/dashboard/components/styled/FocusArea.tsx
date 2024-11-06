@@ -1,29 +1,25 @@
 /** @file An area that contains focusable children. */
-import * as React from 'react'
+import { type JSX, type RefCallback, useMemo, useRef, useState } from 'react'
 
-import * as detect from 'enso-common/src/detect'
+import { IS_DEV_MODE } from 'enso-common/src/detect'
 
 import AreaFocusProvider from '#/providers/AreaFocusProvider'
-import FocusClassesProvider, * as focusClassProvider from '#/providers/FocusClassProvider'
-import type * as focusDirectionProvider from '#/providers/FocusDirectionProvider'
+import FocusClassesProvider, { useFocusClasses } from '#/providers/FocusClassProvider'
+import type { FocusDirection } from '#/providers/FocusDirectionProvider'
 import FocusDirectionProvider from '#/providers/FocusDirectionProvider'
-import * as navigator2DProvider from '#/providers/Navigator2DProvider'
+import { useNavigator2D } from '#/providers/Navigator2DProvider'
 
-import * as aria from '#/components/aria'
-import * as withFocusScope from '#/components/styled/withFocusScope'
+import { type DOMAttributes, useFocusManager, useFocusWithin } from '#/components/aria'
+import { withFocusScope } from '#/components/styled/withFocusScope'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSingleUnmount } from '#/hooks/lifecycleHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 
-// =================
-// === FocusArea ===
-// =================
-
-/** Props returned by {@link aria.useFocusWithin}. */
+/** Props returned by {@link useFocusWithin}. */
 export interface FocusWithinProps {
-  readonly ref: React.RefCallback<HTMLElement | SVGElement | null>
-  readonly onFocus: NonNullable<aria.DOMAttributes<Element>['onFocus']>
-  readonly onBlur: NonNullable<aria.DOMAttributes<Element>['onBlur']>
+  readonly ref: RefCallback<HTMLElement | SVGElement | null>
+  readonly onFocus: NonNullable<DOMAttributes<Element>['onFocus']>
+  readonly onBlur: NonNullable<DOMAttributes<Element>['onBlur']>
 }
 
 /** Props for a {@link FocusArea} */
@@ -33,21 +29,21 @@ export interface FocusAreaProps {
   /** Should ONLY be passed in exceptional cases. */
   readonly focusDefaultClass?: string
   readonly active?: boolean
-  readonly direction: focusDirectionProvider.FocusDirection
-  readonly children: (props: FocusWithinProps) => React.JSX.Element
+  readonly direction: FocusDirection
+  readonly children: (props: FocusWithinProps) => JSX.Element
 }
 
 /** An area that can be focused within. */
 function FocusArea(props: FocusAreaProps) {
   const { active = true, direction, children } = props
   const { focusChildClass = 'focus-child', focusDefaultClass = 'focus-default' } = props
-  const { focusChildClass: outerFocusChildClass } = focusClassProvider.useFocusClasses()
-  const [areaFocus, setAreaFocus] = React.useState(false)
-  const { focusWithinProps } = aria.useFocusWithin({ onFocusWithinChange: setAreaFocus })
-  const focusManager = aria.useFocusManager()
-  const navigator2D = navigator2DProvider.useNavigator2D()
-  const rootRef = React.useRef<HTMLElement | SVGElement | null>(null)
-  const cleanupRef = React.useRef(() => {})
+  const { focusChildClass: outerFocusChildClass } = useFocusClasses()
+  const [areaFocus, setAreaFocus] = useState(false)
+  const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setAreaFocus })
+  const focusManager = useFocusManager()
+  const navigator2D = useNavigator2D()
+  const rootRef = useRef<HTMLElement | SVGElement | null>(null)
+  const cleanupRef = useRef(() => {})
   const focusChildClassRef = useSyncRef(focusChildClass)
   const focusDefaultClassRef = useSyncRef(focusDefaultClass)
 
@@ -83,7 +79,7 @@ function FocusArea(props: FocusAreaProps) {
       }) ?? focusFirst(),
   )
 
-  const cachedChildren = React.useMemo(
+  const cachedChildren = useMemo(
     () =>
       // This is REQUIRED, otherwise `useFocusWithin` does not work with components from
       // `react-aria-components`.
@@ -105,7 +101,7 @@ function FocusArea(props: FocusAreaProps) {
           } else {
             setCleanupRef(() => {})
           }
-          if (element != null && detect.IS_DEV_MODE) {
+          if (element != null && IS_DEV_MODE) {
             if (active) {
               element.dataset.focusArea = ''
             } else {
@@ -142,4 +138,4 @@ function FocusArea(props: FocusAreaProps) {
 }
 
 /** An area that can be focused within. */
-export default withFocusScope.withFocusScope(FocusArea)
+export default withFocusScope(FocusArea)
