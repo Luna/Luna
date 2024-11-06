@@ -28,6 +28,7 @@ polyglot java import org.enso.table.parsing.DateParser
 polyglot java import org.enso.table.parsing.DateTimeParser
 polyglot java import org.enso.table.parsing.IdentityParser
 polyglot java import org.enso.table.parsing.NumberParser
+polyglot java import org.enso.table.parsing.NoRegexNumberParser
 polyglot java import org.enso.table.parsing.problems.ParseProblemAggregator
 polyglot java import org.enso.table.parsing.TimeOfDayParser
 polyglot java import org.enso.table.parsing.TypeInferringParser
@@ -201,13 +202,18 @@ type Data_Formatter
         thousand_separator = if self.thousand_separator.is_empty then Nothing else self.thousand_separator
         decimal_point = if self.decimal_point == Auto then Nothing else self.decimal_point
         storage_type = Storage.from_value_type_strict target_type
-        NumberParser.createIntegerParser storage_type auto_mode.not (auto_mode.not || self.allow_leading_zeros) self.trim_values decimal_point thousand_separator
+        ## NumberParser.createIntegerParser storage_type auto_mode.not (auto_mode.not || self.allow_leading_zeros) self.trim_values decimal_point thousand_separator
+        ## No leading zeroes check
+        NoRegexNumberParser.createIntegerParser storage_type self.trim_values decimal_point thousand_separator
+
 
     ## PRIVATE
     make_decimal_parser self auto_mode=False =
         decimal_point = if self.decimal_point == Auto then Nothing else self.decimal_point
         thousand_separator = if self.thousand_separator.is_empty then Nothing else self.thousand_separator
-        NumberParser.createDecimalParser auto_mode.not (auto_mode.not || self.allow_leading_zeros) self.trim_values self.allow_exponential_notation decimal_point thousand_separator
+        ## NumberParser.createDecimalParser auto_mode.not (auto_mode.not || self.allow_leading_zeros) self.trim_values self.allow_exponential_notation decimal_point thousand_separator
+        ## No leading zeroes check
+        NoRegexNumberParser.createDecimalParser self.trim_values decimal_point thousand_separator
 
     ## PRIVATE
     make_boolean_parser self = self.wrap_base_parser <|

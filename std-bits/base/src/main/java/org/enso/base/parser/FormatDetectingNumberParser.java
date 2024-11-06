@@ -57,6 +57,13 @@ public class FormatDetectingNumberParser {
     return negativeSign;
   }
 
+  public void setNegativeSign(NegativeSign newNegativeSign) {
+    if (negativeSign != NegativeSign.UNKNOWN) {
+      throw new IllegalStateException("Negative Sign Already Set.");
+    }
+    negativeSign = newNegativeSign;
+  }
+
   public NumberWithSeparators numberWithSeparators() {
     return numberWithSeparators;
   }
