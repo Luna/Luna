@@ -41,16 +41,18 @@ public class FormatDetectingNumberParser {
   public record NumberParseFailure(String message) implements NumberParseResult {}
 
   private final boolean allowSymbol;
+  private final boolean allowLeadingTrailingWhitespace;
   private NegativeSign negativeSign;
   private NumberWithSeparators numberWithSeparators;
 
   public FormatDetectingNumberParser() {
-    this(true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
+    this(true, true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
   }
 
   public FormatDetectingNumberParser(
-      boolean allowSymbol, NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
+      boolean allowSymbol, boolean allowLeadingTrailingWhitespace, NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
     this.allowSymbol = allowSymbol;
+    this.allowLeadingTrailingWhitespace = allowLeadingTrailingWhitespace;
     this.negativeSign = negativeSign;
     this.numberWithSeparators = numberWithSeparators;
   }
@@ -70,8 +72,17 @@ public class FormatDetectingNumberParser {
     return numberWithSeparators;
   }
 
+  /**
+   * Parse a string into a number.
+   *
+   * @param value the string to parse.
+   * @param integer whether to parse a Long or a Double.
+   * @return the parsed number, or a failure if the parse was unsuccessful.
+   */
   public NumberParseResult parse(CharSequence value, boolean integer) {
     // State
+    boolean lastWasWhitespace = false;
+    boolean encounteredContent = false;
     boolean encounteredSign = false;
     boolean isNegative = false;
     NumberParseResultSuccess number = null;
@@ -84,95 +95,110 @@ public class FormatDetectingNumberParser {
       char c = value.charAt(idx);
 
       if (Character.isWhitespace(c)) {
+        if (!allowLeadingTrailingWhitespace && !encounteredContent) {
+          return new NumberParseFailure("Leading Whitespace.");
+        }
+
         idx++;
-      } else if (NumberWithSeparators.isDigit(c) || Separators.isSeparator(c)) {
-        if (number != null) {
-          return new NumberParseFailure("Multiple Number Sections.");
-        }
-
-        var numberPart = numberWithSeparators.parse(value, idx, integer);
-        if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {
-          numberWithSeparators = newFormat.format();
-          numberPart = newFormat.result();
-        }
-        if (numberPart instanceof NumberWithSeparators.NumberParseResultWithIndex newIndex) {
-          idx = newIndex.endIdx();
-          numberPart = newIndex.result();
-        }
-        if (numberPart instanceof NumberParseResultSuccess numberSuccess) {
-          number = numberSuccess;
-        } else {
-          return numberPart;
-        }
-      } else if (NegativeSign.isOpenSign(c)) {
-        if (encounteredSign || number != null) {
-          return new NumberParseFailure("Unexpected sign character.");
-        }
-
-        var signOk = negativeSign.checkValid(c);
-        if (signOk.isEmpty()) {
-          return new NumberParseFailure("Inconsistent negative format.");
-        }
-
-        negativeSign = signOk.get();
-        encounteredSign = true;
-        isNegative = c != '+';
-        idx++;
-      } else if (c == ')') {
-        if (!isNegative || negativeSign != NegativeSign.BRACKET_OPEN || number == null) {
-          return new NumberParseFailure("Unexpected bracket close.");
-        }
-
-        // Should only be whitespace left.
-        idx++;
-        while (idx < length) {
-          if (!Character.isWhitespace(value.charAt(idx))) {
-            return new NumberParseFailure("Unexpected characters after bracket close.");
-          }
-          idx++;
-        }
-
-        // Negate here so can tell finished.
-        number = number.negate();
-        isNegative = false;
-      } else if (!integer && number == null && isSameSequence(value, idx, "infinity", "INFINITY")) {
-        // Identify Infinity
-        number = new NumberParseDouble(Double.POSITIVE_INFINITY, "");
-        idx += 8;
-      } else if (!integer
-          && number == null
-          && !encounteredSign
-          && !isNegative
-          && isSameSequence(value, idx, "nan", "NAN")) {
-        // Identify NaN
-        number = new NumberParseDouble(Double.NaN, "");
-        idx += 3;
+        lastWasWhitespace = true;
       } else {
-        if (!symbol.isEmpty()) {
-          return new NumberParseFailure("Multiple Symbol Sections.");
-        }
+        encounteredContent = true;
+        lastWasWhitespace = false;
 
-        if (!allowSymbol) {
-          return new NumberParseFailure("Symbols not allowed.");
-        }
-
-        // ToDo: Locking symbol position within text parts.
-
-        int endIdx = idx;
-        while (endIdx < length
-            && !NumberWithSeparators.isDigit(c)
-            && !Separators.isSeparator(c)
-            && !NegativeSign.isSign(c)
-            && !Character.isWhitespace(c)) {
-          endIdx++;
-          if (endIdx < length) {
-            c = value.charAt(endIdx);
+        if (NumberWithSeparators.isDigit(c) || Separators.isSeparator(c)) {
+          if (number != null) {
+            return new NumberParseFailure("Multiple Number Sections.");
           }
-        }
 
-        symbol = value.subSequence(idx, endIdx).toString();
-        idx = endIdx;
+          var numberPart = numberWithSeparators.parse(value, idx, integer);
+          if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {
+            numberWithSeparators = newFormat.format();
+            numberPart = newFormat.result();
+          }
+          if (numberPart instanceof NumberWithSeparators.NumberParseResultWithIndex newIndex) {
+            idx = newIndex.endIdx();
+            numberPart = newIndex.result();
+          }
+          if (numberPart instanceof NumberParseResultSuccess numberSuccess) {
+            number = numberSuccess;
+          } else {
+            return numberPart;
+          }
+        } else if (NegativeSign.isOpenSign(c)) {
+          if (encounteredSign || number != null) {
+            return new NumberParseFailure("Unexpected sign character.");
+          }
+
+          var signOk = negativeSign.checkValid(c);
+          if (signOk.isEmpty()) {
+            return new NumberParseFailure("Inconsistent negative format.");
+          }
+
+          negativeSign = signOk.get();
+          encounteredSign = true;
+          isNegative = c != '+';
+          idx++;
+        } else if (c == ')') {
+          if (!isNegative || negativeSign != NegativeSign.BRACKET_OPEN || number == null) {
+            return new NumberParseFailure("Unexpected bracket close.");
+          }
+
+          // Should only be whitespace left.
+          idx++;
+          while (idx < length) {
+            if (!Character.isWhitespace(value.charAt(idx))) {
+              return new NumberParseFailure("Unexpected characters after bracket close.");
+            }
+            idx++;
+            lastWasWhitespace = true;
+          }
+
+          // Negate here so can tell finished.
+          number = number.negate();
+          isNegative = false;
+        } else if (!integer && number == null && isSameSequence(value, idx, "infinity", "INFINITY")) {
+          // Identify Infinity
+          number = new NumberParseDouble(Double.POSITIVE_INFINITY, "");
+          idx += 8;
+        } else if (!integer
+            && number == null
+            && !encounteredSign
+            && !isNegative
+            && isSameSequence(value, idx, "nan", "NAN")) {
+          // Identify NaN
+          number = new NumberParseDouble(Double.NaN, "");
+          idx += 3;
+        } else {
+          if (!symbol.isEmpty()) {
+            return new NumberParseFailure("Multiple Symbol Sections.");
+          }
+
+          if (!allowSymbol) {
+            return new NumberParseFailure("Symbols not allowed.");
+          }
+
+          // ToDo: Locking symbol position within text parts.
+          int endIdx = idx;
+          while (endIdx < length
+              && !NumberWithSeparators.isDigit(c)
+              && !Separators.isSeparator(c)
+              && !NegativeSign.isSign(c)
+              && !Character.isWhitespace(c)) {
+            endIdx++;
+            if (endIdx < length) {
+              c = value.charAt(endIdx);
+            }
+          }
+
+          symbol = value.subSequence(idx, endIdx).toString();
+          idx = endIdx;
+        }
       }
+    }
+
+    // Check for trailing whitespace.
+    if (!allowLeadingTrailingWhitespace && lastWasWhitespace) {
+      return new NumberParseFailure("Trailing Whitespace.");
     }
 
     // Special check for unclosed bracket.

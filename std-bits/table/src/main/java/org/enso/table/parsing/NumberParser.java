@@ -49,7 +49,6 @@ public class NumberParser extends IncrementalDatatypeParser {
 
   private final IntegerType integerTargetType;
   private final boolean isInteger;
-  private final boolean trimValues;
 
   private final FormatDetectingNumberParser parser;
 
@@ -57,16 +56,15 @@ public class NumberParser extends IncrementalDatatypeParser {
       boolean isInteger,
       IntegerType integerTargetType,
       boolean allowSymbol,
-      boolean trimValues,
+      boolean allowLeadingTrailingWhitespace,
       String decimalPoint,
       String thousandSeparator) {
     this.isInteger = isInteger;
     this.integerTargetType = integerTargetType;
-    this.trimValues = trimValues;
 
     var numberWithSeparators = NumberWithSeparators.fromSeparators(thousandSeparator, decimalPoint);
     this.parser =
-        new FormatDetectingNumberParser(allowSymbol, NegativeSign.UNKNOWN, numberWithSeparators);
+        new FormatDetectingNumberParser(allowSymbol, allowLeadingTrailingWhitespace, NegativeSign.UNKNOWN, numberWithSeparators);
   }
 
   @Override
@@ -126,14 +124,6 @@ public class NumberParser extends IncrementalDatatypeParser {
   @Override
   public Object parseSingleValue(String text, ParseProblemAggregator problemAggregator) {
     var trimmed = text.trim();
-
-    // The parser ignores leading white space so have to check it here.
-    if (!trimValues) {
-      if (!text.equals(trimmed)) {
-        problemAggregator.reportInvalidFormat(text);
-        return null;
-      }
-    }
 
     var result = parser.parse(trimmed, isInteger);
 
