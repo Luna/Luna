@@ -89,6 +89,7 @@ export default function DriveBar(props: DriveBarProps) {
   )
 
   const newAssetsBarId = React.useId()
+  const searchBarId = React.useId()
   const driveStore = useDriveStore()
   const { unsetModal } = useSetModal()
   const { getText } = useText()
@@ -175,7 +176,13 @@ export default function DriveBar(props: DriveBarProps) {
   }, [isFetching])
 
   const searchBar = (
-    <AssetSearchBar backend={backend} isCloud={isCloud} query={query} setQuery={setQuery} />
+    <AssetSearchBar
+      backend={backend}
+      isCloud={isCloud}
+      query={query}
+      setQuery={setQuery}
+      layoutId={searchBarId}
+    />
   )
 
   const assetPanelToggle = (

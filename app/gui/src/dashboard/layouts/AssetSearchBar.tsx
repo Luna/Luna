@@ -116,11 +116,12 @@ export interface AssetSearchBarProps {
   readonly isCloud: boolean
   readonly query: AssetQuery
   readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly layoutId: string
 }
 
 /** A search bar containing a text input, and a list of suggestions. */
 export default function AssetSearchBar(props: AssetSearchBarProps) {
-  const { backend, isCloud, query, setQuery } = props
+  const { backend, isCloud, query, setQuery, layoutId } = props
   const { getText } = textProvider.useText()
   const { modalRef } = modalProvider.useModalRef()
   /** A cached query as of the start of tabbing. */
@@ -277,7 +278,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
       {(innerProps) => (
         <MotionLabel
           layout
-          layoutId="asset-search-bar"
+          layoutId={layoutId}
           transition={RESIZE_TRANSITION_STYLES}
           data-testid="asset-search-bar"
           {...aria.mergeProps<aria.LabelProps & React.RefAttributes<HTMLLabelElement>>()(
