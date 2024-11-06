@@ -1,7 +1,9 @@
 package org.enso.runtime.parser.processor;
 
 import java.util.Objects;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 
 final class MapExpressionsMethodGenerator {
   private final ExecutableElement mapExpressionsMethod;
@@ -58,7 +60,7 @@ final class MapExpressionsMethodGenerator {
 
               var newChildName = child.getName() + "Mapped";
               sb.append("  ")
-                  .append(childsMapExprMethodRetType.getSimpleName())
+                  .append(typeName(childsMapExprMethodRetType))
                   .append(" ")
                   .append(newChildName);
               if (child.isNullable()) {
@@ -126,6 +128,13 @@ final class MapExpressionsMethodGenerator {
     sb.append("  return bldr.build();").append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
     return sb.toString();
+  }
+
+  private String typeName(Element element) {
+    if (element instanceof TypeElement typeElement) {
+      return typeElement.getQualifiedName().toString();
+    }
+    return element.getSimpleName().toString();
   }
 
   private record MappedChild(String newChildName, Field child, boolean shouldCast) {}
