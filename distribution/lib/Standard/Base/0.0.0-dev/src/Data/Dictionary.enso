@@ -158,6 +158,10 @@ type Dictionary key value
        - key: The key to insert the value for.
        - value: The value to associate with the `key`.
 
+       ! Error Conditions
+         - If a floating-point value is used as a key, a
+           `Floating_Point_Equality` warning is attached.
+
        > Example
          Insert the value "seven" into the dictionary for the key 7.
 
