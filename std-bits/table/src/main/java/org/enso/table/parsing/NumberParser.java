@@ -123,9 +123,7 @@ public class NumberParser extends IncrementalDatatypeParser {
 
   @Override
   public Object parseSingleValue(String text, ParseProblemAggregator problemAggregator) {
-    var trimmed = text.trim();
-
-    var result = parser.parse(trimmed, isInteger);
+    var result = parser.parse(text, isInteger);
 
     if (result instanceof FormatDetectingNumberParser.NumberParseFailure) {
       problemAggregator.reportInvalidFormat(text);
