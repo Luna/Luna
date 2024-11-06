@@ -1,4 +1,5 @@
 import {
+  CELLS_LIMIT,
   DEFAULT_COLUMN_PREFIX,
   NEW_COLUMN_ID,
   ROW_INDEX_HEADER,
@@ -14,6 +15,7 @@ import { assert } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { GetContextMenuItems, GetMainMenuItems } from 'ag-grid-enterprise'
 import { expect, test, vi } from 'vitest'
+import { assertDefined } from 'ydoc-shared/util/assert'
 
 function suggestionDbWithNothing() {
   const db = new SuggestionDb()
@@ -21,8 +23,18 @@ function suggestionDbWithNothing() {
   return db
 }
 
+function generateTableOfOnes(rows: number, cols: number) {
+  const code = `Table.new [${[...Array(cols).keys()].map((i) => `['Column #${i}', [${Array(rows).fill('1').join(',')}]]`).join(',')}]`
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
+  return ast
+}
+
 const expectedRowIndexColumnDef = { headerName: ROW_INDEX_HEADER }
 const expectedNewColumnDef = { cellStyle: { display: 'none' } }
+
+const CELLS_LIMIT_SQRT = Math.sqrt(CELLS_LIMIT)
+assert(CELLS_LIMIT_SQRT === Math.floor(CELLS_LIMIT_SQRT))
 
 test.each([
   {
@@ -79,7 +91,8 @@ test.each([
     ],
   },
 ])('Read table from $code', ({ code, expectedColumnDefs, expectedRows }) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
   expect(tableNewCallMayBeHandled(ast)).toBeTruthy()
   const input = WidgetInput.FromAst(ast)
   const startEdit = vi.fn()
@@ -113,6 +126,54 @@ test.each([
 })
 
 test.each([
+  {
+    rows: Math.floor(CELLS_LIMIT / 2) + 1,
+    cols: 1,
+    expectNewRowEnabled: true,
+    expectNewColEnabled: false,
+  },
+  {
+    rows: 1,
+    cols: Math.floor(CELLS_LIMIT / 2) + 1,
+    expectNewRowEnabled: false,
+    expectNewColEnabled: true,
+  },
+  {
+    rows: 1,
+    cols: CELLS_LIMIT,
+    expectNewRowEnabled: false,
+    expectNewColEnabled: false,
+  },
+  {
+    rows: CELLS_LIMIT,
+    cols: 1,
+    expectNewRowEnabled: false,
+    expectNewColEnabled: false,
+  },
+  {
+    rows: CELLS_LIMIT_SQRT,
+    cols: CELLS_LIMIT_SQRT,
+    expectNewRowEnabled: false,
+    expectNewColEnabled: false,
+  },
+])(
+  'Allowed actions in table near limit (rows: $rows, cols: $cols)',
+  ({ rows, cols, expectNewRowEnabled, expectNewColEnabled }) => {
+    const input = WidgetInput.FromAst(generateTableOfOnes(rows, cols))
+    const tableNewArgs = useTableNewArgument(
+      input,
+      { startEdit: vi.fn(), addMissingImports: vi.fn() },
+      suggestionDbWithNothing(),
+      vi.fn(),
+    )
+    expect(tableNewArgs.rowData.value.length).toBe(rows + (expectNewRowEnabled ? 1 : 0))
+    const lastColDef = tableNewArgs.columnDefs.value[tableNewArgs.columnDefs.value.length - 1]
+    assert(lastColDef?.headerComponentParams?.type === 'newColumn')
+    expect(lastColDef.headerComponentParams.enabled ?? true).toBe(expectNewColEnabled)
+  },
+)
+
+test.each([
   'Table.new 14',
   'Table.new array1',
   "Table.new ['a', [123]]",
@@ -120,14 +181,16 @@ test.each([
   "Table.new [['a', [123]], ['a'.repeat 170, [123]]]",
   "Table.new [['a', [1, 2, 3, 3 + 1]]]",
 ])('"%s" is not valid input for Table Editor Widget', (code) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
   expect(tableNewCallMayBeHandled(ast)).toBeFalsy()
 })
 
 function tableEditFixture(code: string, expectedCode: string) {
   const ast = Ast.parseBlock(code)
-  const inputAst = [...ast.statements()][0]
-  assert(inputAst != null)
+  const firstStatement = [...ast.statements()][0]
+  assert(firstStatement instanceof Ast.MutableExpressionStatement)
+  const inputAst = firstStatement.expression
   const input = WidgetInput.FromAst(inputAst)
   const startEdit = vi.fn(() => ast.module.edit())
   const onUpdate = vi.fn((update) => {
@@ -517,3 +580,35 @@ test.each([
     else expect(addMissingImports).not.toHaveBeenCalled()
   },
 )
+
+test('Pasted data which would exceed cells limit is truncated', () => {
+  const initialRows = CELLS_LIMIT_SQRT - 2
+  const initialCols = CELLS_LIMIT_SQRT - 1
+  const ast = generateTableOfOnes(initialRows, initialCols)
+  const input = WidgetInput.FromAst(ast)
+  const startEdit = vi.fn(() => ast.module.edit())
+  const onUpdate = vi.fn((update) => {
+    const inputAst = update.edit!.getVersion(ast)
+    // We expect the table to be fully extended, so the number of cells (numbers or Nothings) should be equal to the limit.
+    let cellCount = 0
+    inputAst.visitRecursive((ast: Ast.Ast | Ast.Token) => {
+      if (ast instanceof Ast.Token) return
+      if (ast instanceof Ast.NumericLiteral || ast.code() === 'Nothing') cellCount++
+    })
+    expect(cellCount).toBe(CELLS_LIMIT)
+  })
+  const addMissingImports = vi.fn()
+  const tableNewArgs = useTableNewArgument(
+    input,
+    { startEdit, addMissingImports },
+    suggestionDbWithNothing(),
+    onUpdate,
+  )
+  const focusedCol = tableNewArgs.columnDefs.value[initialCols - 2]
+  assert(focusedCol?.colId != null)
+  tableNewArgs.pasteFromClipboard(Array(4).fill(Array(4).fill('2')), {
+    rowIndex: initialRows - 2,
+    colId: focusedCol.colId,
+  })
+  expect(onUpdate).toHaveBeenCalledOnce()
+})
