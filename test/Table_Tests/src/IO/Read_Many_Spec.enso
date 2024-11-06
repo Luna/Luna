@@ -181,3 +181,36 @@ add_specs suite_builder =
                 r.at "c" . value_type     . should_equal Value_Type.Char
                 r.at "Value" . value_type . should_equal Value_Type.Mixed
                 r.at "d" . value_type     . should_equal Value_Type.Integer
+
+        group_builder.specify "will merge all sheets when loading XLS files" pending="TODO" <|
+            # 1 - tsv
+            # 2 - xls with one sheet
+            # 3 - xls with two sheets
+            Error.throw "TODO"
+
+        group_builder.specify "will rename duplicated columns, keeping columns from the input unchanged" <|
+            tmp_file = enso_project.data / "transient" / "table.csv"
+            (Table.new [["Path", [1]], ["Col", [2]]]).write tmp_file on_existing_file=..Overwrite . should_succeed
+            Panic.with_finalizer tmp_file.delete <|
+                col = Column.from_vector "Col" [tmp_file.path]
+                r = Data.read_many col return=..Merged_Table
+                r.column_names . should_equal ["Col", "Path", "Col 1"]
+                r.at "Col" . to_vector . should_equal [tmp_file.path]
+                r.at "Path" . to_vector . should_equal [1]
+                r.at "Col 1" . to_vector . should_equal [2]
+
+                table = Table.new [["Path", [tmp_file.path]], ["Col", ["X"]], ["Value", ["Y"]]]
+                r2 = Data.read_many table return=..Merged_Table
+                r2.column_names . should_equal ["Path", "Col", "Value", "Path 1", "Col 1"]
+                r2.at "Path" . to_vector . should_equal [tmp_file.path]
+                r2.at "Col" . to_vector . should_equal ["X"]
+                r2.at "Value" . to_vector . should_equal ["Y"]
+                r2.at "Path 1" . to_vector . should_equal [1]
+                r2.at "Col 1" . to_vector . should_equal [2]
+
+                r3 = Data.read_many table return=..Table_Of_Objects
+                r3.column_names . should_equal ["Path", "Col", "Value", "Value 1"]
+                r3.at "Path" . to_vector . should_equal [tmp_file.path]
+                r3.at "Col" . to_vector . should_equal ["X"]
+                r3.at "Value" . to_vector . should_equal ["Y"]
+                r3.at "Value 1" . first . should_be_a Table
