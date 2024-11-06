@@ -19,7 +19,6 @@ import org.enso.compiler.pass.analyse.AliasAnalysis
 import org.enso.compiler.pass.analyse.alias.graph.Graph.Link
 import org.enso.compiler.pass.analyse.alias.AliasMetadata
 import org.enso.compiler.pass.analyse.alias.graph.{
-  Graph,
   GraphBuilder,
   GraphOccurrence
 }
@@ -90,9 +89,9 @@ class AliasAnalysisTest extends CompilerTest {
   "The analysis scope" should {
     val builder = GraphBuilder.create()
 
-    val flatScope = new Graph.Scope()
+    val flatScope = GraphBuilder.create().toScope();
 
-    val complexScope               = new Graph.Scope()
+    val complexScope               = GraphBuilder.create().toScope();
     val complexBuilder             = GraphBuilder.create(null, complexScope)
     val child1                     = complexBuilder.addChild()
     val child2                     = complexBuilder.addChild()
