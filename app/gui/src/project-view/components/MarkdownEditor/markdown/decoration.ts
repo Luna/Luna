@@ -11,7 +11,7 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@codemirror/view'
-import type { SyntaxNodeRef, Tree } from '@lezer/common'
+import type { SyntaxNode, SyntaxNodeRef, Tree } from '@lezer/common'
 import { h, markRaw } from 'vue'
 
 /** Extension applying decorators for Markdown. */
@@ -138,28 +138,41 @@ class TreeViewDecorator implements PluginValue {
 
 // === Links ===
 
+/** Parse a link or image */
+function parseLinkLike(node: SyntaxNode, doc: Text) {
+  const textOpen = node.firstChild // [ or ![
+  if (!textOpen) return
+  const textClose = textOpen.nextSibling // ]
+  if (!textClose) return
+  const urlOpen = textClose.nextSibling // (
+  // The parser accepts partial links such as `[Missing url]`.
+  if (!urlOpen) return
+  const urlNode = urlOpen.nextSibling
+  // If the URL is empty, this will be the closing 'LinkMark'.
+  if (urlNode?.name !== 'URL') return
+  return {
+    textFrom: textOpen.to,
+    textTo: textClose.from,
+    url: doc.sliceString(urlNode.from, urlNode.to),
+  }
+}
+
 function decorateLink(
   nodeRef: SyntaxNodeRef,
   doc: Text,
   emitDecoration: (from: number, to: number, deco: Decoration) => void,
 ) {
   if (nodeRef.name === 'Link') {
-    const node = nodeRef.node
-    const pi0 = node.firstChild // [
-    const pi1 = pi0?.nextSibling // ]
-    const pi2 = pi1?.nextSibling // (
-    const url = pi2?.nextSibling
-    if (!url || !pi0 || !pi1) {
-      // The parser accepts partial links such as `[Missing url]`.
-      return
-    }
-    const href = doc.sliceString(url.from, url.to)
+    const parsed = parseLinkLike(nodeRef.node, doc)
+    if (!parsed) return
+    const { textFrom, textTo, url } = parsed
+    if (textFrom === textTo) return
     emitDecoration(
-      pi0.to,
-      pi1.from,
+      textFrom,
+      textTo,
       Decoration.mark({
         tagName: 'a',
-        attributes: { href },
+        attributes: { href: url },
       }),
     )
   }
@@ -190,12 +203,11 @@ function decorateImageWithRendered(
   vueHost: VueHost,
 ) {
   if (nodeRef.name === 'Image') {
-    const node = nodeRef.node
-    const alt = 'Image' // TODO
-    const urlNode = node.firstChild?.nextSibling?.nextSibling?.nextSibling
-    if (!urlNode) return
-    const src = doc.sliceString(urlNode.from, urlNode.to)
-    const widget = new ImageWidget({ alt, src }, vueHost)
+    const parsed = parseLinkLike(nodeRef.node, doc)
+    if (!parsed) return
+    const { textFrom, textTo, url } = parsed
+    const text = doc.sliceString(textFrom, textTo)
+    const widget = new ImageWidget({ alt: text, src: url }, vueHost)
     emitDecoration(
       nodeRef.to,
       nodeRef.to,

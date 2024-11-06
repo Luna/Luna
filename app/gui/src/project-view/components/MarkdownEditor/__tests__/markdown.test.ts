@@ -48,28 +48,90 @@ function images(source: string) {
         from,
         to,
         src: deco.spec.widget.props.src,
+        alt: deco.spec.widget.props.alt,
       }
     }
   })
 }
 
-test('Link decoration', () => {
-  const text = 'Link text'
-  const href = 'https://www.example.com/index.html'
-  const source: string = `[${text}](${href})`
-  expect(links(source)).toEqual([{ text, href }])
-  expect(images(source)).toEqual([])
+test.each([
+  {
+    markdown: '[Link text](https://www.example.com/index.html)',
+    expectedLinks: [
+      {
+        text: 'Link text',
+        href: 'https://www.example.com/index.html',
+      },
+    ],
+  },
+  {
+    markdown: '[Unclosed url](https://www.example.com/index.html',
+    expectedLinks: [],
+  },
+  {
+    markdown: '[](https://www.example.com/index.html)',
+    expectedLinks: [],
+  },
+  {
+    markdown: '[With empty URL]()',
+    expectedLinks: [],
+  },
+  {
+    markdown: '[With no URL]',
+    expectedLinks: [],
+  },
+  {
+    markdown: '[Unclosed',
+    expectedLinks: [],
+  },
+])('Link decoration: $markdown', ({ markdown, expectedLinks }) => {
+  expect(links(markdown)).toEqual(expectedLinks)
+  expect(images(markdown)).toEqual([])
 })
 
-test('Image decoration', () => {
-  const url = 'https://www.example.com/image.avif'
-  const source: string = `![Image](${url})`
-  expect(links(source)).toEqual([])
-  expect(images(source)).toEqual([
-    {
-      from: source.length,
-      to: source.length,
-      src: url,
+test.each([
+  {
+    markdown: '![Image](https://www.example.com/image.avif)',
+    image: {
+      src: 'https://www.example.com/image.avif',
+      alt: 'Image',
     },
-  ])
+  },
+  {
+    markdown: '![](https://www.example.com/image.avif)',
+    image: {
+      src: 'https://www.example.com/image.avif',
+      alt: '',
+    },
+  },
+  {
+    markdown: '![Image](https://www.example.com/image.avif',
+    image: null,
+  },
+  {
+    markdown: '![Image]()',
+    image: null,
+  },
+  {
+    markdown: '![Image]',
+    image: null,
+  },
+  {
+    markdown: '![Image',
+    image: null,
+  },
+])('Image decoration: $markdown', ({ markdown, image }) => {
+  expect(links(markdown)).toEqual([])
+  expect(images(markdown)).toEqual(
+    image == null ?
+      []
+    : [
+        {
+          from: markdown.length,
+          to: markdown.length,
+          src: image.src,
+          alt: image.alt,
+        },
+      ],
+  )
 })
