@@ -168,6 +168,14 @@ export function applyTextEditsToAst(
   textEdits: SourceRangeEdit[],
   metadataSource: Module,
 ) {
+  ast.module.transact(() => applyTextEditsToAstImpl(ast, textEdits, metadataSource))
+}
+
+function applyTextEditsToAstImpl(
+  ast: MutableAst,
+  textEdits: SourceRangeEdit[],
+  metadataSource: Module,
+) {
   const printed = printWithSpans(ast)
   const code = applyTextEdits(printed.code, textEdits)
   const astModuleRoot = ast.module.root()

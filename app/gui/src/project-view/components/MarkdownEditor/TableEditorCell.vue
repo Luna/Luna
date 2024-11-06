@@ -1,62 +1,41 @@
 <script setup lang="ts">
 import EditorRoot from '@/components/codemirror/EditorRoot.vue'
-import { yCollab } from '@/components/codemirror/yCollab'
 import { highlightStyle } from '@/components/MarkdownEditor/highlight'
-import {
-  provideDocumentationImageUrlTransformer,
-  type UrlTransformer,
-} from '@/components/MarkdownEditor/imageUrlTransformer'
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
-import VueComponentHost from '@/components/VueComponentHost.vue'
-import { assert } from '@/util/assert'
+import VueComponentHost, { VueHost } from '@/components/VueComponentHost.vue'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
 import { type ComponentInstance, onMounted, ref, toRef, useCssModule, watch } from 'vue'
-import { Awareness } from 'y-protocols/awareness.js'
-import * as Y from 'yjs'
 
 const editorRoot = ref<ComponentInstance<typeof EditorRoot>>()
 
 const props = defineProps<{
-  yText: Y.Text
-  transformImageUrl?: UrlTransformer | undefined
-  toolbarContainer: HTMLElement | undefined
+  source: string
 }>()
 
 const vueHost = ref<ComponentInstance<typeof VueComponentHost>>()
-const editing = ref(false)
 
-provideDocumentationImageUrlTransformer(toRef(props, 'transformImageUrl'))
-
-const awareness = new Awareness(new Y.Doc())
 const editorView = new EditorView()
 const constantExtensions = [minimalSetup, highlightStyle(useCssModule()), EditorView.lineWrapping]
-watch([vueHost, toRef(props, 'yText')], ([vueHost, yText]) => {
+
+watch([vueHost, toRef(props, 'source')], ([vueHost, source]) => {
   if (!vueHost) return
-  assert(yText.doc !== null)
-  const yTextWithDoc: Y.Text & { doc: Y.Doc } = yText as any
   editorView.setState(
     EditorState.create({
-      doc: yText.toString(),
-      extensions: [
-        ...constantExtensions,
-        ensoMarkdown({ vueHost }),
-        yCollab(yTextWithDoc, awareness),
-      ],
+      doc: source,
+      extensions: [...constantExtensions, ensoMarkdown({ vueHost })],
     }),
   )
 })
 
 onMounted(() => {
-  // Enable rendering the line containing the current cursor in `editing` mode if focus enters the element *inside* the
-  // scroll area--if we attached the handler to the editor root, clicking the scrollbar would cause editing mode to be
-  // activated.
-  editorView.dom
-    .getElementsByClassName('cm-content')[0]!
-    .addEventListener('focusin', () => (editing.value = true))
+  const content = editorView.dom.getElementsByClassName('cm-content')[0]!
+  content.addEventListener('focusin', () => (editing.value = true))
   editorRoot.value?.rootElement?.prepend(editorView.dom)
 })
+
+const editing = ref(false)
 </script>
 
 <template>
@@ -79,7 +58,7 @@ onMounted(() => {
   overscroll-behavior: none;
 }
 
-.EditorRoot :deep(.cm-editor) {
+:deep(.cm-editor) {
   position: relative;
   width: 100%;
   height: 100%;
@@ -88,29 +67,16 @@ onMounted(() => {
   font-size: 12px;
   outline: none;
 }
+
+:deep(.cm-line) {
+  padding-right: 6px;
+}
 </style>
 
 <!--suppress CssUnusedSymbol -->
 <style module>
 /* === Syntax styles === */
 
-.heading1 {
-  font-weight: 700;
-  font-size: 20px;
-  line-height: 1.75;
-}
-.heading2 {
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.75;
-}
-.heading3,
-.heading4,
-.heading5,
-.heading6 {
-  font-size: 14px;
-  line-height: 2;
-}
 .processingInstruction {
   opacity: 20%;
 }
@@ -153,11 +119,6 @@ onMounted(() => {
     &:hover {
       text-decoration: underline;
     }
-  }
-  &:has(.list.processingInstruction) {
-    display: list-item;
-    list-style-type: disc;
-    list-style-position: inside;
   }
 }
 </style>
