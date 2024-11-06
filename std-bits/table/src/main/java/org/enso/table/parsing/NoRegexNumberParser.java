@@ -30,32 +30,20 @@ public class NoRegexNumberParser extends IncrementalDatatypeParser {
       String decimalPoint,
       String thousandSeparator) {
     return new NoRegexNumberParser(
-        true,
-        integerTargetType,
-        trimValues,
-        decimalPoint,
-        thousandSeparator);
+        true, integerTargetType, trimValues, decimalPoint, thousandSeparator);
   }
 
   /**
    * Creates a new decimal instance of this parser.
    *
    * @param trimValues whether to trim the input values
-   * @param decimalPoint the decimal point set for the current format (if null
-   *                     then will be inferred)
-   * @param thousandSeparator the thousand separator to use (if null then will
-   *                          be inferred)
+   * @param decimalPoint the decimal point set for the current format (if null then will be
+   *     inferred)
+   * @param thousandSeparator the thousand separator to use (if null then will be inferred)
    */
   public static NoRegexNumberParser createDecimalParser(
-      boolean trimValues,
-      String decimalPoint,
-      String thousandSeparator) {
-    return new NoRegexNumberParser(
-        false,
-        null,
-        trimValues,
-        decimalPoint,
-        thousandSeparator);
+      boolean trimValues, String decimalPoint, String thousandSeparator) {
+    return new NoRegexNumberParser(false, null, trimValues, decimalPoint, thousandSeparator);
   }
 
   private final IntegerType integerTargetType;
@@ -86,22 +74,28 @@ public class NoRegexNumberParser extends IncrementalDatatypeParser {
   }
 
   @Override
-  public Storage<?> parseColumn(Storage<String> sourceStorage, CommonParseProblemAggregator problemAggregator) {
-    Builder builder = makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
+  public Storage<?> parseColumn(
+      Storage<String> sourceStorage, CommonParseProblemAggregator problemAggregator) {
+    Builder builder =
+        makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
 
     var context = Context.getCurrent();
     for (int i = 0; i < sourceStorage.size(); i++) {
       var text = sourceStorage.getItemBoxed(i);
 
       // Check if in unknown state
-      var isInMixedState = !isInteger && (parser.numberWithSeparators()  == NumberWithSeparators.DOT_UNKNOWN || parser.numberWithSeparators() == NumberWithSeparators.COMMA_UNKNOWN);
+      var isInMixedState =
+          !isInteger
+              && (parser.numberWithSeparators() == NumberWithSeparators.DOT_UNKNOWN
+                  || parser.numberWithSeparators() == NumberWithSeparators.COMMA_UNKNOWN);
 
       // Try and parse the value
       var result = text == null ? null : parseSingleValue(text, problemAggregator);
 
       // Do we need to rescan?
       if (!isInMixedState && parser.numberWithSeparators() != NumberWithSeparators.DOT_COMMA) {
-        builder = makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
+        builder =
+            makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
         for (int j = 0; j < i; j++) {
           var subText = sourceStorage.getItemBoxed(j);
           var subResult = subText == null ? null : parseSingleValue(subText, problemAggregator);
@@ -135,46 +129,6 @@ public class NoRegexNumberParser extends IncrementalDatatypeParser {
       if (!text.equals(trimmed)) {
         problemAggregator.reportInvalidFormat(text);
         return null;
-      }
-    }
-
-    // Deal with NaN and Infinity
-    if (!isInteger) {
-      switch (trimmed) {
-        case "NaN" -> {
-          return Double.NaN;
-        }
-        case "Infinity" -> {
-          return Double.POSITIVE_INFINITY;
-        }
-        case "-Infinity" -> {
-          // Check the validity of the negative sign
-          if (parser.negativeSign() == NegativeSign.BRACKET_OPEN) {
-            problemAggregator.reportInvalidFormat(text);
-            return null;
-          }
-
-          // Record the negative sign
-          if (parser.negativeSign() == NegativeSign.UNKNOWN) {
-            parser.setNegativeSign(NegativeSign.MINUS);
-          }
-
-          return Double.NEGATIVE_INFINITY;
-        }
-        case "(Infinity)" -> {
-          // Check the validity of the negative sign
-          if (parser.negativeSign() == NegativeSign.MINUS) {
-            problemAggregator.reportInvalidFormat(text);
-            return null;
-          }
-
-          // Record the negative sign
-          if (parser.negativeSign() == NegativeSign.UNKNOWN) {
-            parser.setNegativeSign(NegativeSign.BRACKET_OPEN);
-          }
-
-          return Double.NEGATIVE_INFINITY;
-        }
       }
     }
 

@@ -133,6 +133,18 @@ public class FormatDetectingNumberParser {
         // Negate here so can tell finished.
         number = number.negate();
         isNegative = false;
+      } else if (!integer && number == null && isSameSequence(value, idx, "infinity", "INFINITY")) {
+        // Identify Infinity
+        number = new NumberParseDouble(Double.POSITIVE_INFINITY, "");
+        idx += 8;
+      } else if (!integer
+          && number == null
+          && !encounteredSign
+          && !isNegative
+          && isSameSequence(value, idx, "nan", "NAN")) {
+        // Identify NaN
+        number = new NumberParseDouble(Double.NaN, "");
+        idx += 3;
       } else {
         if (!symbol.isEmpty()) {
           return new NumberParseFailure("Multiple Symbol Sections.");
@@ -214,5 +226,22 @@ public class FormatDetectingNumberParser {
     }
 
     return results;
+  }
+
+  private static boolean isSameSequence(
+      CharSequence sequence, int index, CharSequence toMatchLower, CharSequence toMatchUpper) {
+    assert toMatchLower.length() == toMatchUpper.length();
+    if (index + toMatchLower.length() > sequence.length()) {
+      return false;
+    }
+
+    for (int i = 0; i < toMatchLower.length(); i++) {
+      char c = sequence.charAt(index + i);
+      if (c != toMatchLower.charAt(i) && c != toMatchUpper.charAt(i)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
