@@ -16,6 +16,7 @@ import scala.Option;
 /** Stores metadata for the various passes. */
 public final class MetadataStorage {
   private Map<ProcessingPass, ProcessingPass.Metadata> metadata;
+  public static final MetadataStorage EMPTY = new MetadataStorage();
 
   public MetadataStorage() {
     this(Collections.emptyMap());

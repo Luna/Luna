@@ -9,7 +9,7 @@ import org.enso.compiler.core.ir.module.scope.imports
 import org.enso.compiler.data.BindingsMap
 import org.enso.compiler.core.CompilerError
 import org.enso.compiler.data.BindingsMap.ResolvedName
-import org.enso.compiler.pass.IRPass
+import org.enso.compiler.pass.{IRPass, IRProcessingPass}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -39,8 +39,8 @@ case object AmbiguousImportsAnalysis extends IRPass {
 
   override type Config = IRPass.Configuration.Default
 
-  override lazy val precursorPasses: Seq[IRPass] =
-    Seq(BindingAnalysis, ImportSymbolAnalysis)
+  override lazy val precursorPasses: Seq[IRProcessingPass] =
+    Seq(BindingAnalysis, ImportSymbolAnalysis.INSTANCE)
 
   override lazy val invalidatedPasses: Seq[IRPass] =
     Seq()

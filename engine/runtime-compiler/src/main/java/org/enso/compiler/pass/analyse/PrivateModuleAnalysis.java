@@ -37,7 +37,7 @@ public final class PrivateModuleAnalysis implements IRPass {
   @Override
   public Seq<IRProcessingPass> precursorPasses() {
     List<IRProcessingPass> passes =
-        List.of(BindingAnalysis$.MODULE$, ImportSymbolAnalysis$.MODULE$);
+        List.of(BindingAnalysis$.MODULE$, ImportSymbolAnalysis.INSTANCE);
     return CollectionConverters.asScala(passes).toList();
   }
 

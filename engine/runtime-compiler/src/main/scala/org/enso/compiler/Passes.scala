@@ -44,7 +44,7 @@ class Passes(config: CompilerConfig) {
       SectionsToBinOp.INSTANCE,
       OperatorToFunction,
       LambdaShorthandToLambda,
-      ImportSymbolAnalysis,
+      ImportSymbolAnalysis.INSTANCE,
       AmbiguousImportsAnalysis
     ) ++ (if (config.privateCheckEnabled) {
             List(
