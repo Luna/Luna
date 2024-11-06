@@ -55,11 +55,11 @@ add_specs suite_builder =
 
         group_builder.specify "should read files listed in a Table with `path` column" <|
             table1 = Table.new [["X", [1, 2]], ["path", files_vector]]
-            r1 = Data.read_many table2 return=..Vector
+            r1 = Data.read_many table1 return=..Vector
             r1.should_equal ["" , sample_table.get]
             Problems.assume_no_problems r1
 
-            r2 = Data.read_many table2 return=..Table_Of_Objects
+            r2 = Data.read_many table1 return=..Table_Of_Objects
             r2.should_be_a Table
             r2.column_names . should_equal ["X", "path", "Value"]
             r2.at "X" . to_vector . should_equal [1, 2]
@@ -110,7 +110,7 @@ add_specs suite_builder =
             r1.at "my column" . to_vector . should_equal files_vector
             check_common_columns r1
 
-            r2 = Data.read_many (Table.new [["X", [100, 200], ["Path", files_vector], ["Y", [300, 400]]])
+            r2 = Data.read_many (Table.new [["X", [100, 200]], ["Path", files_vector], ["Y", [300, 400]]])
             r2.should_be_a Table
             r2.column_names . should_equal ["X", "Path", "Y", "Value", "a", "b", "c"]
             # The second row is duplicated because it gets expanded along with the table that was loaded that has 2 rows
@@ -164,17 +164,17 @@ add_specs suite_builder =
 
                 null = Nothing
                 r.column_names . should_equal ["Path",               "a",  "b",      "c", "Value",  "d"]
-                rows.at . 0    . should_equal ["1_js_object.json",     1,    2,     null,    null, null]
-                rows.at . 1    . should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
-                rows.at . 2    . should_equal ["2_js_array.json",     50,   60,     null,    null, null]
-                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     100, null]
-                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     200, null]
-                rows.at . 3    . should_equal ["3_js_numbers.json", null, null,     null,     300, null]
-                rows.at . 3    . should_equal ["4_table.tsv",         -1, null,     null,    null,   -2]
-                rows.at . 3    . should_equal ["4_table.tsv",         -3, null,     null,    null,   -4]
-                rows.at . 3    . should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
-                rows.at . 3    . should_equal ["6_js_null.json",    null, null,     null,    null, null]
-                rows.at . 3    . should_equal ["7_js_string.json",  null, null,     null,   "str", null]
+                rows.at 0 .      should_equal ["1_js_object.json",     1,    2,     null,    null, null]
+                rows.at 1 .      should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
+                rows.at 2 .      should_equal ["2_js_array.json",     50,   60,     null,    null, null]
+                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     100, null]
+                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     200, null]
+                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     300, null]
+                rows.at 3 .      should_equal ["4_table.tsv",         -1, null,     null,    null,   -2]
+                rows.at 3 .      should_equal ["4_table.tsv",         -3, null,     null,    null,   -4]
+                rows.at 3 .      should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
+                rows.at 3 .      should_equal ["6_js_null.json",    null, null,     null,    null, null]
+                rows.at 3 .      should_equal ["7_js_string.json",  null, null,     null,   "str", null]
 
                 r.at "a" . value_type     . should_equal Value_Type.Integer
                 r.at "b" . value_type     . should_equal Value_Type.Integer

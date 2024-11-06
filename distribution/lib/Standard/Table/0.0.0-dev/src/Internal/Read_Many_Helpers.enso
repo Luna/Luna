@@ -18,7 +18,7 @@ find_files_list_in_table (that : Table) -> Many_Files_List =
             if path_columns.column_count > 1 then Error.throw (Illegal_Argument.Error "Multiple 'paths' column candidates found: "+path_columns.column_names.to_display_text+".") else
                 path_columns.at 0
     ensure_column_type_valid_to_be_files_list found_column <|
-        Many_Files_List.Value that found_column.to_vector
+        Many_Files_List.Value that found_column.to_vector Return_As_Table.Merged_Table
 
 ensure_column_type_valid_to_be_files_list (column : Column) ~action =
     is_expected_type = case column.value_type of
