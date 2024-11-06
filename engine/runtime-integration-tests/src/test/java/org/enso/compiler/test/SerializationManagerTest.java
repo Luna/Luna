@@ -15,7 +15,7 @@ import org.enso.editions.LibraryName;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.util.TruffleFileSystem;
 import org.enso.interpreter.test.InterpreterContext;
-import org.enso.interpreter.util.ScalaConversions;
+import org.enso.common.ScalaConversions;
 import org.enso.pkg.Package;
 import org.enso.pkg.PackageManager;
 import org.enso.polyglot.Suggestion;

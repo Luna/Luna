@@ -1,4 +1,5 @@
 module org.enso.engine.common {
+  requires scala.library;
   requires org.graalvm.polyglot;
   requires org.enso.logging.utils;
   requires org.enso.logging.config;

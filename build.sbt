@@ -2118,6 +2118,7 @@ lazy val `engine-common` = project
   .enablePlugins(JPMSPlugin)
   .settings(
     frgaalJavaCompilerSetting,
+    scalaModuleDependencySetting,
     Test / fork := true,
     commands += WithDebugCommand.withDebug,
     Test / envVars ++= distributionEnvironmentOverrides,
