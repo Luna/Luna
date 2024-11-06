@@ -11,6 +11,7 @@ import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 
 import * as aria from '#/components/aria'
 import * as withFocusScope from '#/components/styled/withFocusScope'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSingleUnmount } from '#/hooks/lifecycleHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 
@@ -54,35 +55,55 @@ function FocusArea(props: FocusAreaProps) {
     cleanupRef.current()
   })
 
+  // The following group of functions are for suppressing `react-compiler` lints.
+  const cleanup = useEventCallback(() => {
+    cleanupRef.current()
+  })
+  const setRootRef = useEventCallback((value: HTMLElement | SVGElement | null) => {
+    rootRef.current = value
+  })
+  const setCleanupRef = useEventCallback((value: () => void) => {
+    cleanupRef.current = value
+  })
+
+  const focusFirst = useEventCallback(() =>
+    focusManager?.focusFirst({
+      accept: (other) => other.classList.contains(focusChildClassRef.current),
+    }),
+  )
+  const focusLast = useEventCallback(() =>
+    focusManager?.focusLast({
+      accept: (other) => other.classList.contains(focusChildClassRef.current),
+    }),
+  )
+  const focusCurrent = useEventCallback(
+    () =>
+      focusManager?.focusFirst({
+        accept: (other) => other.classList.contains(focusDefaultClassRef.current),
+      }) ?? focusFirst(),
+  )
+
   const cachedChildren = React.useMemo(
     () =>
       // This is REQUIRED, otherwise `useFocusWithin` does not work with components from
       // `react-aria-components`.
-      // eslint-disable-next-line no-restricted-syntax, react-compiler/react-compiler
+      // eslint-disable-next-line no-restricted-syntax
       children({
         ref: (element) => {
-          rootRef.current = element
-          cleanupRef.current()
+          setRootRef(element)
+          cleanup()
           if (active && element != null && focusManager != null) {
-            const focusFirst = focusManager.focusFirst.bind(null, {
-              accept: (other) => other.classList.contains(focusChildClassRef.current),
-            })
-            const focusLast = focusManager.focusLast.bind(null, {
-              accept: (other) => other.classList.contains(focusChildClassRef.current),
-            })
-            const focusCurrent = () =>
-              focusManager.focusFirst({
-                accept: (other) => other.classList.contains(focusDefaultClassRef.current),
-              }) ?? focusFirst()
-            cleanupRef.current = navigator2D.register(element, {
-              focusPrimaryChild: focusCurrent,
-              focusWhenPressed:
-                direction === 'horizontal' ?
-                  { right: focusFirst, left: focusLast }
-                : { down: focusFirst, up: focusLast },
-            })
+            setCleanupRef(
+              navigator2D.register(element, {
+                focusPrimaryChild: focusCurrent,
+                focusWhenPressed:
+                  direction === 'horizontal' ?
+                    { right: focusFirst, left: focusLast }
+                  : { down: focusFirst, up: focusLast },
+              }),
+            )
           } else {
-            cleanupRef.current = () => {}
+            setCleanupRef(() => {})
           }
           if (element != null && detect.IS_DEV_MODE) {
             if (active) {
@@ -97,12 +118,16 @@ function FocusArea(props: FocusAreaProps) {
     [
       children,
       focusWithinProps,
+      setRootRef,
+      cleanup,
       active,
       focusManager,
+      setCleanupRef,
       navigator2D,
+      focusCurrent,
       direction,
-      focusChildClassRef,
-      focusDefaultClassRef,
+      focusFirst,
+      focusLast,
     ],
   )
 
