@@ -1,12 +1,27 @@
 package org.enso.compiler.core.ir;
 
+import java.util.function.Function;
 import org.enso.compiler.core.IR;
+import org.enso.compiler.core.ir.JExpressionGen.IfThenElseGen;
 import org.enso.runtime.parser.dsl.IRChild;
+import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.dsl.IRNode;
+import scala.Option;
 import scala.collection.immutable.List;
 
 @IRNode
 public interface JExpression extends IR {
+
+  @Override
+  JExpression mapExpressions(Function<Expression, Expression> fn);
+
+  @Override
+  JExpression duplicate(
+      boolean keepLocations,
+      boolean keepMetadata,
+      boolean keepDiagnostics,
+      boolean keepIdentifiers);
+
   interface JBlock extends JExpression {
     @IRChild
     List<JExpression> expressions();
