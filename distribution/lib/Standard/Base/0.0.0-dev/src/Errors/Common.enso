@@ -596,7 +596,7 @@ type Floating_Point_Equality
     to_display_text self = case self of
         Floating_Point_Equality.Error location ->
             "Relying on equality of floating-point numbers is not recommended (within "+location+")."
-        Floating_Point_Equality.Used_As_Dictionary_Key value -> 
+        Floating_Point_Equality.Used_As_Dictionary_Key value ->
             "Float used as dictionary key: "+value.to_text
 
     ## PRIVATE
@@ -604,5 +604,5 @@ type Floating_Point_Equality
     to_text self = case self of
         Floating_Point_Equality.Error location ->
             "(Error  (location = "+location+"))"
-        Floating_Point_Equality.Used_As_Dictionary_Key value -> 
+        Floating_Point_Equality.Used_As_Dictionary_Key value ->
             "(Used_As_Dictionary_Key (value = "+value.to_text+"))"
