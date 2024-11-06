@@ -64,7 +64,6 @@ import project.Match_Columns as Match_Columns_Helpers
 import project.Match_Columns.Match_Columns
 import project.Position.Position
 import project.Prefix_Name.Prefix_Name
-import project.Return_As_Table.Return_As_Table
 import project.Row.Row
 import project.Rows_To_Read.Rows_To_Read
 import project.Set_Mode.Set_Mode
@@ -3930,4 +3929,4 @@ from_java_table java_table = Table.Value java_table
 
 ## PRIVATE
 Many_Files_List.from (that : Table) =
-    Read_Many_Helpers.find_files_list_in_table that Return_As_Table.Merged_Table
+    Read_Many_Helpers.find_files_list_in_table that

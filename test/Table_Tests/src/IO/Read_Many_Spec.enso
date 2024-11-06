@@ -29,34 +29,39 @@ add_specs suite_builder =
             table.at "a" . to_vector     . should_equal [Nothing, 1, 4]
             table.at "b" . to_vector     . should_equal [Nothing, 2, 5]
             table.at "c" . to_vector     . should_equal [Nothing, 3, 6]
+        check_returned_vector vec =
+            vec.should_be_a Vector
+            vec.length . should_equal 2
+            vec.first . should_equal ""
+            vec.second . should_equal sample_table.get
 
         group_builder.specify "should read files listed in a Column" <|
             column = Column.from_vector "Col" files_vector
             r1 = Data.read_many column return=..Vector
-            r1.should_equal ["" , sample_table.get]
+            check_returned_vector r1
             Problems.assume_no_problems r1
 
             r2 = Data.read_many column return=..Table_Of_Objects
             r2.should_be_a Table
             r2.column_names . should_equal ["Col", "Value"]
             r2.at "Col" . to_vector . should_equal files_vector
-            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
+            check_returned_vector (r2.at "Value" . to_vector)
 
         group_builder.specify "should read files listed in a single column Table" <|
             table1 = Table.new [["Some column", files_vector]]
             r1 = Data.read_many table1 return=..Vector
-            r1.should_equal ["" , sample_table.get]
+            check_returned_vector r1
 
-            r2 = Data.read_many table1
+            r2 = Data.read_many table1 return=..Table_Of_Objects
             r2.should_be_a Table
             r2.column_names . should_equal ["Some column", "Value"]
             r2.at "Some column" . to_vector . should_equal files_vector
-            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
+            check_returned_vector (r2.at "Value" . to_vector)
 
         group_builder.specify "should read files listed in a Table with `path` column" <|
             table1 = Table.new [["X", [1, 2]], ["path", files_vector]]
             r1 = Data.read_many table1 return=..Vector
-            r1.should_equal ["" , sample_table.get]
+            check_returned_vector r1
             Problems.assume_no_problems r1
 
             r2 = Data.read_many table1 return=..Table_Of_Objects
@@ -64,14 +69,14 @@ add_specs suite_builder =
             r2.column_names . should_equal ["X", "path", "Value"]
             r2.at "X" . to_vector . should_equal [1, 2]
             r2.at "path" . to_vector . should_equal files_vector
-            r2.at "Value" . to_vector . should_equal ["" , sample_table.get]
+            check_returned_vector (r2.at "Value" . to_vector)
 
             # Test that this is really case insensitive
             table3 = Table.new [["X", [1, 2]], ["pAtH", files_vector]]
             r3 = Data.read_many table3 return=..Table_Of_Objects
             r3.should_be_a Table
             r3.column_names . should_equal ["X", "pAtH", "Value"]
-            r3.at "Value" . to_vector . should_equal ["" , sample_table.get]
+            check_returned_vector (r3.at "Value" . to_vector)
 
         group_builder.specify "will fail if no `path` column can be found or its ambiguous" <|
             table1 = Table.new [["X", [1, 2]], ["Y", files_vector]]
@@ -107,7 +112,7 @@ add_specs suite_builder =
             r1 = Data.read_many (Column.from_vector "my column" files_vector)
             r1.should_be_a Table
             r1.column_names . should_equal ["my column", "Value", "a", "b", "c"]
-            r1.at "my column" . to_vector . should_equal files_vector
+            r1.at "my column" . to_vector . should_equal [files_vector.first, files_vector.second, files_vector.second]
             check_common_columns r1
 
             r2 = Data.read_many (Table.new [["X", [100, 200]], ["Path", files_vector], ["Y", [300, 400]]])
@@ -123,7 +128,7 @@ add_specs suite_builder =
             r1.should_be_a Table
             r1.column_names . should_equal ["Path", "Value"]
             r1.at "Path" . to_vector . should_equal files_vector
-            r1.at "Value" . to_vector . should_equal ["" , sample_table.get]
+            check_returned_vector (r1.at "Value" . to_vector)
 
             r2 = Data.read_many files_vector return=..Merged_Table
             r2.should_be_a Table
@@ -157,8 +162,10 @@ add_specs suite_builder =
                 '"str"'.write (base_dir / "7_js_string.json")
 
                 files = Data.list base_dir . sort on=.name
-                r = Data.read_many files
+                IO.println (Meta.type_of files.first)
+                r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
+                r.column_info.print
                 # We transform the Path to just file name
                 rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
 
