@@ -1,10 +1,10 @@
 package org.enso.interpreter.instrument.job;
 
 import java.util.UUID;
+import org.enso.common.ScalaConversions;
 import org.enso.interpreter.instrument.OneshotExpression;
 import org.enso.interpreter.instrument.execution.Executable;
 import org.enso.interpreter.instrument.execution.RuntimeContext;
-import org.enso.common.ScalaConversions;
 
 /** The job that schedules the execution of the expression. */
 public class ExecuteExpressionJob extends Job<Executable> implements UniqueJob<Executable> {
