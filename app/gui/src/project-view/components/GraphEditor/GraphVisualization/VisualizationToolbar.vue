@@ -8,7 +8,7 @@ import type { ToolbarItem } from '@/components/visualizations/toolbar'
 import {
   isActionButton,
   isSelectionMenu,
-  isSelectionTextMenu,
+  isTextSelectionMenu,
   isToggleButton,
 } from '@/components/visualizations/toolbar'
 import VisualizationSelector from '@/components/VisualizationSelector.vue'
@@ -91,8 +91,8 @@ useEvent(window, 'pointerup', (e) => interaction.handlePointerEvent(e, 'pointeru
               alwaysShowArrow
             />
             <SelectionDropdownText
-              v-else-if="isSelectionTextMenu(item)"
-              v-model="item.selected.value"
+              v-else-if="isTextSelectionMenu(item)"
+              v-model="item.selectedTextOption.value"
               :options="item.options"
               :title="item.title"
               :heading="item.heading"

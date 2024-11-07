@@ -889,7 +889,8 @@ config.setToolbar([
     onClick: createNewFilterNode,
   },
   {
-    selected: yAxisSelected,
+    type: 'textSelectionMenu',
+    selectedTextOption: yAxisSelected,
     title: 'Choose Y Axis Label',
     heading: 'Y Axis Label: ',
     options: {
