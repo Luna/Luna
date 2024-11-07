@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import org.enso.distribution.DistributionManager;
 import org.enso.distribution.Environment;
+import org.enso.runtimeversionmanager.components.GraalVMVersion;
+import org.enso.runtimeversionmanager.components.GraalVersionManager;
+import org.enso.version.BuildVersion;
 
 /** Utility class that tries to find installed JDK on the system. */
 final class JavaFinder {
@@ -35,20 +38,24 @@ final class JavaFinder {
     return null;
   }
 
+  /**
+   * Tries to find {@code java} executable in the distribution runtime with the same version that
+   * was used for building.
+   *
+   * @return null if not found.
+   */
   private static Path findJavaExecutableInDistributionRuntimes() {
     var env = new Environment() {};
-    var dm = new DistributionManager(env);
-    var paths = dm.paths();
-    var files = paths.runtimes().toFile().listFiles();
-    if (files != null) {
-      for (var d : files) {
-        var java = new File(new File(d, "bin"), "java").getAbsoluteFile();
-        if (java.exists()) {
-          return java.toPath();
-        }
-      }
+    var distributionManager = new DistributionManager(env);
+    var graalVersionManager = new GraalVersionManager(distributionManager, env);
+    var graalVersionUsedForBuild =
+        new GraalVMVersion(BuildVersion.graalVersion(), BuildVersion.javaVersion());
+    var runtime = graalVersionManager.findGraalRuntime(graalVersionUsedForBuild);
+    if (runtime != null) {
+      return runtime.javaExecutable();
+    } else {
+      return null;
     }
-    return null;
   }
 
   private static boolean isJavaOnPath() {

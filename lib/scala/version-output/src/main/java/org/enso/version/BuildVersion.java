@@ -23,6 +23,10 @@ public class BuildVersion {
     return GeneratedVersion.graalVersion();
   }
 
+  public static String javaVersion() {
+    throw new UnsupportedOperationException("unimplemented");
+  }
+
   public static String currentEdition() {
     return GeneratedVersion.currentEdition();
   }
