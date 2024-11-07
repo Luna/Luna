@@ -372,8 +372,8 @@ object Graph {
 
     private[Graph] var _parent: Scope = null
 
-    def childScopes = _childScopes
-    def occurrences = _occurrences
+    def childScopes    = _childScopes
+    def occurrences    = _occurrences
     def allDefinitions = _allDefinitions
     def allDefinitionsWithFlattened: List[GraphOccurrence.Def] = {
       _allDefinitions ++ _childScopes
