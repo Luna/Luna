@@ -299,7 +299,7 @@ add_filter_specs suite_builder setup =
             t2.at "ix" . to_vector . should_equal [2, 4]
             t2.at "X" . to_vector . should_equal [1, 4]
 
-        group_builder.specify "by an Is_In check" <|
+        if setup.is_operation_supported "IS_IN" then group_builder.specify "by an Is_In check" <|
             t = table_builder [["ix", [1, 2, 3, Nothing, 5, 6]], ["X", ["a", "b", "ccc", "X", "f", "2"]]]
             t1 = table_builder [["txt", ["X", "a", "c", Nothing]], ["int", [Nothing, 2, 5, 4]], ["bool", [True, Nothing, Nothing, True]]]
 
@@ -336,7 +336,7 @@ add_filter_specs suite_builder setup =
             t3.filter "B" (Filter_Condition.Is_In [False]) . at "B" . to_vector . should_equal [False, False, False]
             t3.filter "C" (Filter_Condition.Is_In [False, False]) . at "C" . to_vector . should_equal [False]
 
-        group_builder.specify "does not allow Column_Ref in Is_In because that would be confusing" <|
+        if setup.is_operation_supported "IS_IN" then group_builder.specify "does not allow Column_Ref in Is_In because that would be confusing" <|
             ## Is In and Not In check if a value is contained anywhere in a provided collection (e.g. column),
                NOT on a row-by-row basis like all other operations. Column_Ref is used with row-by-row ops,
                so this would only cause confusion. Very rarely someone wants to filter a column by Is_In
@@ -466,9 +466,11 @@ add_filter_specs suite_builder setup =
             fcs = [Filter_Condition.Equal Nothing, Filter_Condition.Not_Equal Nothing]
                 + [Filter_Condition.Less Nothing, Filter_Condition.Equal_Or_Less Nothing]
                 + [Filter_Condition.Equal_Or_Greater Nothing, Filter_Condition.Greater Nothing]
+            fcs_with_is_in = if setup.is_operation_supported "IS_IN" . not then fcs else
+                fcs
                 + [Filter_Condition.Between Nothing Nothing , Filter_Condition.Is_In [Nothing]]
                 + [Filter_Condition.Is_In [1, Nothing, 2]]
-            fcs.map fc->
+            fcs_with_is_in.map fc->
                 Test.with_clue fc.to_text <|
                     Problems.expect_warning Nothing_Value_In_Filter_Condition (t.filter "x" fc . at "x")
 
