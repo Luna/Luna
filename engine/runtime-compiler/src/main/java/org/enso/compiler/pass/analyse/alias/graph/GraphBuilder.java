@@ -7,10 +7,12 @@ package org.enso.compiler.pass.analyse.alias.graph;
 public final class GraphBuilder {
   private final Graph graph;
   private final Graph.Scope scope;
+  private final boolean flattenToParent;
 
-  private GraphBuilder(Graph graph, Graph.Scope scope) {
+  private GraphBuilder(Graph graph, Graph.Scope scope, boolean flattenToParent) {
     this.graph = graph;
     this.scope = scope;
+    this.flattenToParent = flattenToParent;
   }
 
   /**
@@ -31,16 +33,27 @@ public final class GraphBuilder {
    * @return builder operating on the graph {@code g} starting at scope {@code s}
    */
   public static GraphBuilder create(Graph g, Graph.Scope s) {
-    return new GraphBuilder(g, s);
+    return new GraphBuilder(g, s, false);
+  }
+
+  /**
+   * Creates a child scope and returns a builder for it. Same as calling {@link #addChild(boolean)}
+   * with {@code false} argument.
+   *
+   * @return new builder for newly created scope, but the same graph
+   */
+  public GraphBuilder addChild() {
+    return addChild(false);
   }
 
   /**
    * Creates a child scope and returns a builder for it.
    *
+   * @param flattenToParent flatten definitions into parent
    * @return new builder for newly created scope, but the same graph
    */
-  public GraphBuilder addChild() {
-    return new GraphBuilder(graph, scope.addChild());
+  public GraphBuilder addChild(boolean flattenToParent) {
+    return new GraphBuilder(graph, scope.addChild(flattenToParent), flattenToParent);
   }
 
   /**

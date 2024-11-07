@@ -89,9 +89,9 @@ class AliasAnalysisTest extends CompilerTest {
   "The analysis scope" should {
     val builder = GraphBuilder.create()
 
-    val flatScope = GraphBuilder.create().toScope();
+    val flatScope = GraphBuilder.create().toScope()
 
-    val complexScope               = GraphBuilder.create().toScope();
+    val complexScope               = GraphBuilder.create().toScope()
     val complexBuilder             = GraphBuilder.create(null, complexScope)
     val child1                     = complexBuilder.addChild()
     val child2                     = complexBuilder.addChild()
@@ -230,6 +230,76 @@ class AliasAnalysisTest extends CompilerTest {
       child1.toScope().scopesToRoot shouldEqual 1
       child2.toScope().scopesToRoot shouldEqual 1
       complexScope.scopesToRoot shouldEqual 0
+    }
+  }
+  "if_then_doubled example" should {
+    val root = GraphBuilder.create()
+
+    val ifCond1 = root.addChild()
+    val ifTrue1 = root.addChild(true)
+
+    val ifCond2 = root.addChild()
+    val ifTrue2 = root.addChild(true)
+
+    val aDef = root.newDef("a", genId, None)
+    root.add(aDef)
+    root.addDefinition(aDef)
+
+    val aUse1 = ifCond1.newUse("a", genId, None)
+    ifCond1.add(aUse1)
+    val aUse2 = ifCond2.newUse("a", genId, None)
+    ifCond2.add(aUse2)
+
+    val xDef1 = ifTrue1.newDef("x", genId, None)
+    ifTrue1.add(xDef1)
+    ifTrue1.addDefinition(xDef1)
+    val xUse1 = ifTrue1.newUse("x", genId, None)
+    ifTrue1.add(xUse1)
+
+    val xDef2 = ifTrue1.newDef("x", genId, None)
+    ifTrue2.add(xDef2)
+    ifTrue2.addDefinition(xDef2)
+    val xUse2 = ifTrue2.newUse("x", genId, None)
+    ifTrue2.add(xUse2)
+
+    val rootScope = root.toScope()
+    val rootGraph = root.toGraph()
+
+    "have four subscopes" in {
+      rootScope.scopeCount shouldEqual 5
+    }
+
+    "frame needs two slots for x" in {
+      val all = rootScope.allDefinitionsWithFlattened
+      all shouldEqual List(aDef, xDef1, xDef2)
+    }
+
+    "are uses different" in {
+      xUse1.id should not equal xUse2.id
+    }
+
+    "frame pointer for definition of a" in {
+      val fp = rootGraph.resolveFramePointer(aDef)
+      fp.get.parentLevel shouldEqual 0
+      fp.get.frameSlotIdx shouldEqual 0
+    }
+
+    "xUse1 uses xDef1" in {
+      val link = rootGraph.resolveLocalUsage(xUse1)
+      link.get.target shouldEqual xDef1.id
+
+      val fp = rootGraph.resolveFramePointer(xUse1)
+      fp.get.parentLevel.shouldEqual(0)
+      fp.get.frameSlotIdx.shouldEqual(1)
+    }
+
+    "xUse2 uses xDef2" in {
+      val link = rootGraph.resolveLocalUsage(xUse2)
+      link.get.target shouldEqual xDef2.id
+
+      val fp = rootGraph.resolveFramePointer(xUse2)
+      fp.get.parentLevel.shouldEqual(0)
+      fp.get.frameSlotIdx.shouldEqual(2)
     }
   }
 

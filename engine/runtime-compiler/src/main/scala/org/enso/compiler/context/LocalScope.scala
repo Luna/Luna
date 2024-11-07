@@ -58,7 +58,7 @@ class LocalScope(
     log: BiFunction[String, Array[Object], Void]
   ): java.util.List[String] = {
     def symbols(): java.util.List[String] = {
-      val r = scope.allDefinitions.map(_.symbol)
+      val r = scope.allDefinitionsWithFlattened.map(_.symbol)
       r.asJava
     }
     val meta = if (symbolsProvider == null) null else symbolsProvider()
@@ -141,7 +141,7 @@ class LocalScope(
     *         internal slots, that are prepended to every frame.
     */
   private def gatherLocalFrameSlotIdxs(): Map[AliasGraph.Id, Int] = {
-    scope.allDefinitions.zipWithIndex.map { case (definition, i) =>
+    scope.allDefinitionsWithFlattened.zipWithIndex.map { case (definition, i) =>
       definition.id -> (i + LocalScope.internalSlotsSize)
     }.toMap
   }

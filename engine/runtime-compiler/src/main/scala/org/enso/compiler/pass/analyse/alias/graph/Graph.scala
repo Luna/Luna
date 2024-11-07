@@ -4,6 +4,7 @@ package alias.graph
 
 import org.enso.compiler.core.CompilerError
 import org.enso.compiler.debug.Debug
+import org.enso.compiler.pass.analyse.FramePointer
 import org.enso.compiler.pass.analyse.alias.graph.Graph.Scope
 
 import scala.collection.immutable.HashMap
@@ -13,7 +14,7 @@ import scala.annotation.unused
 
 /** A graph containing aliasing information for a given root scope in Enso. */
 sealed class Graph(
-  val rootScope: Graph.Scope         = new Graph.Scope(),
+  val rootScope: Graph.Scope         = new Graph.Scope(false),
   private var _nextIdCounter: Int    = 0,
   private var links: Set[Graph.Link] = Set()
 ) {
@@ -103,6 +104,48 @@ sealed class Graph(
       links += link
       link
     })
+  }
+  final def resolveFramePointer(
+    occurrence: GraphOccurrence.Def
+  ): Option[FramePointer] = {
+    var useScope = scopeFor(occurrence.id)
+    while (useScope.nonEmpty) {
+      if (!useScope.get.flattenToParent) {
+        return useScope
+          .map(_.allDefinitionsWithFlattened.indexOf(occurrence))
+          .filter(_ >= 0)
+          .map(new FramePointer(0, _))
+      }
+      useScope = useScope.get.parent
+    }
+    None
+  }
+
+  final def resolveFramePointer(
+    occurrence: GraphOccurrence.Use
+  ): Option[FramePointer] = {
+    val link = resolveLocalUsage(occurrence)
+    if (link.isEmpty) {
+      return None
+    }
+    var parentsUp = 0
+    val useScope  = scopeFor(occurrence.id)
+    if (useScope.nonEmpty) {
+      var currentScope = useScope.get
+      while (currentScope != null) {
+        if (!currentScope.flattenToParent) {
+          val at = currentScope.allDefinitionsWithFlattened.indexWhere(
+            _.id == link.get.target
+          )
+          if (at >= 0) {
+            return Some(new FramePointer(parentsUp, at))
+          }
+          parentsUp += 1
+        }
+        currentScope = currentScope.parent.orNull
+      }
+    }
+    None
   }
 
   private def addSourceTargetLink(link: Graph.Link): Unit = {
@@ -320,7 +363,8 @@ object Graph {
     * @param allDefinitions all definitions in this scope, including synthetic ones.
     *                       Note that there may not be a link for all these definitions.
     */
-  sealed class Scope(
+  sealed class Scope private[Graph] (
+    private[analyse] val flattenToParent: Boolean,
     private[Graph] var _childScopes: List[Scope]                  = List(),
     private[Graph] var _occurrences: Map[Id, GraphOccurrence]     = HashMap(),
     private[Graph] var _allDefinitions: List[GraphOccurrence.Def] = List()
@@ -328,10 +372,15 @@ object Graph {
 
     private[Graph] var _parent: Scope = null
 
-    def childScopes    = _childScopes
-    def occurrences    = _occurrences
+    def childScopes = _childScopes
+    def occurrences = _occurrences
     def allDefinitions = _allDefinitions
-    def parent         = if (this._parent eq null) None else Some(_parent)
+    def allDefinitionsWithFlattened: List[GraphOccurrence.Def] = {
+      _allDefinitions ++ _childScopes
+        .filter(_.flattenToParent)
+        .flatMap(_.allDefinitionsWithFlattened)
+    }
+    def parent = if (this._parent eq null) None else Some(_parent)
 
     /** Counts the number of scopes from this scope to the root.
       *
@@ -340,7 +389,8 @@ object Graph {
       * @return the number of scopes from this scope to the root
       */
     private[analyse] def scopesToRoot: Int = {
-      parent.flatMap(scope => Some(scope.scopesToRoot + 1)).getOrElse(0)
+      val plusMine = if (flattenToParent) 0 else 1
+      parent.flatMap(scope => Some(scope.scopesToRoot + plusMine)).getOrElse(0)
     }
 
     /** Sets the parent of the scope.
@@ -375,9 +425,10 @@ object Graph {
           )
           val newScope =
             new Scope(
+              flattenToParent,
               childScopeCopies.toList,
-              occurrences,
-              allDefinitions
+              _occurrences,
+              _allDefinitions
             )
           mapping.put(this, newScope)
           newScope
@@ -406,14 +457,13 @@ object Graph {
 
     /** Creates and returns a scope that is a child of this one.
       *
-      * @param is this scope "just virtual" and will be flatten to parent at the end?
+      * @param flattenToParent is this scope "just virtual" and will be flatten to parent at the end?
       * @return a scope that is a child of `this`
       */
-    private[graph] def addChild(): Scope = {
-      val scope = new Scope()
+    private[graph] def addChild(flattenToParent: Boolean): Scope = {
+      val scope = new Scope(flattenToParent)
       scope._parent = this
-      _childScopes ::= scope
-
+      _childScopes  = _childScopes.appended(scope)
       scope
     }
 
@@ -656,7 +706,7 @@ object Graph {
     }
 
     private def removeScopeFromParent(scope: Scope): Unit = {
-      _childScopes = childScopes.filter(_ != scope)
+      _childScopes = _childScopes.filter(_ != scope)
     }
 
     /** Disassociates this Scope from its parent.
@@ -676,7 +726,7 @@ object Graph {
     * @param scopeCount the number of scopes that the link traverses
     * @param target the target ID of the link in the graph
     */
-  sealed private[analyse] case class Link(
+  sealed private[analyse] case class Link private[Graph] (
     source: Id,
     scopeCount: Int,
     target: Id
