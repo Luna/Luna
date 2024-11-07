@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { UrlTransformer } from '@/components/MarkdownEditor/imageUrlTransformer'
-import { defineAsyncComponent } from 'vue'
+import { ComponentInstance, computed, defineAsyncComponent, ref } from 'vue'
 import * as Y from 'yjs'
 
 const props = defineProps<{
@@ -9,13 +9,22 @@ const props = defineProps<{
   toolbarContainer: HTMLElement | undefined
 }>()
 
+const inner = ref<ComponentInstance<typeof LazyMarkdownEditor>>()
+
 const LazyMarkdownEditor = defineAsyncComponent(
   () => import('@/components/MarkdownEditor/MarkdownEditorImpl.vue'),
 )
+
+defineExpose({
+  loaded: computed(() => inner.value != null),
+  putText: (text: string) => {
+    inner.value?.putText(text)
+  },
+})
 </script>
 
 <template>
   <Suspense>
-    <LazyMarkdownEditor v-bind="props" />
+    <LazyMarkdownEditor ref="inner" v-bind="props" />
   </Suspense>
 </template>

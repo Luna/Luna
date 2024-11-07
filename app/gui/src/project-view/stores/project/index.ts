@@ -391,6 +391,14 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
       return Ok(new Blob([contents]))
     }
 
+    async function writeFileBinary(path: Path, content: Blob): Promise<Result> {
+      const result = await dataConnection.writeFile(path, await content.arrayBuffer())
+      if (result instanceof DataError) {
+        return Err(result.message() ?? 'Failed to write file.')
+      }
+      return Ok()
+    }
+
     return proxyRefs({
       setObservedFileName(name: string) {
         observedFileName.value = name
@@ -415,6 +423,7 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
       lsRpcConnection: markRaw(lsRpcConnection),
       dataConnection: markRaw(dataConnection),
       readFileBinary,
+      writeFileBinary,
       useVisualizationData,
       isRecordingEnabled,
       stopCapturingUndo,

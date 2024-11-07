@@ -48,6 +48,15 @@ onMounted(() => {
 })
 
 const editing = ref(false)
+
+defineExpose({
+  putText: (text: string) => {
+    const range = editorView.state.selection.ranges[0]!
+    editorView.dispatch({
+      changes: { from: range.from, to: range.to, insert: text },
+    })
+  },
+})
 </script>
 
 <template>
