@@ -371,11 +371,11 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
             "IS_NULL" -> _generate_null_check_sql_builder null_checks
             _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if kind == "IS_NULL" then [] else null_checks
-        typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
+        converted_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
             if generate_as_bool then _convert_value_to_boolean_expression expr_result else
                 SQL_Builder.code "CASE " ++ _convert_boolean_to_value_expression expr_result ++ " END"
 
-        pair typed_expr null_checks_result
+        pair converted_expr null_checks_result
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
 
 private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
