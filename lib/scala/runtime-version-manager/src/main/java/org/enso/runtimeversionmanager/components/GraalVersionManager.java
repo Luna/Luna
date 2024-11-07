@@ -1,6 +1,8 @@
 package org.enso.runtimeversionmanager.components;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import org.enso.distribution.DistributionManager;
 import org.enso.distribution.Environment;
@@ -16,6 +18,30 @@ public class GraalVersionManager {
   public GraalVersionManager(DistributionManager distributionManager, Environment environment) {
     this.distributionManager = distributionManager;
     this.environment = environment;
+  }
+
+  /**
+   * Get all locally installed runtimes.
+   *
+   * @return Possibly empty list. Not null.
+   */
+  public List<GraalRuntime> getAllRuntimes() {
+    var foundRuntimes = new ArrayList<GraalRuntime>();
+    for (var runtimeSearchPath :
+        CollectionConverters.asJava(distributionManager.paths().runtimeSearchPaths())) {
+      assert runtimeSearchPath.toFile().isDirectory();
+      var subdirs = runtimeSearchPath.toFile().listFiles();
+      assert subdirs != null;
+      for (var subdir : subdirs) {
+        var parsedVersion = parseGraalRuntimeVersionString(subdir.getName());
+        if (parsedVersion != null) {
+          var foundRuntime = new GraalRuntime(parsedVersion, subdir.toPath());
+          foundRuntime.ensureValid();
+          foundRuntimes.add(foundRuntime);
+        }
+      }
+    }
+    return foundRuntimes;
   }
 
   /**
@@ -80,16 +106,6 @@ public class GraalVersionManager {
     return runtime;
   }
 
-  private GraalVMVersion parseGraalRuntimeVersionString(String name) {
-    var pattern = Pattern.compile("graalvm-ce-java(.+)-(.+)");
-    var matcher = pattern.matcher(name);
-    if (matcher.matches()) {
-      return new GraalVMVersion(matcher.group(1), matcher.group(2));
-    }
-    logger.warn("Unrecognized runtime name `{}`", name);
-    return null;
-  }
-
   private Path findGraalRuntimeOnSearchPath(GraalVMVersion version) {
     var name = graalRuntimeNameForVersion(version);
     for (var runtimeSearchPath :
@@ -99,6 +115,16 @@ public class GraalVersionManager {
         return path;
       }
     }
+    return null;
+  }
+
+  private GraalVMVersion parseGraalRuntimeVersionString(String name) {
+    var pattern = Pattern.compile("graalvm-ce-java(.+)-(.+)");
+    var matcher = pattern.matcher(name);
+    if (matcher.matches()) {
+      return new GraalVMVersion(matcher.group(2), matcher.group(1));
+    }
+    logger.warn("Unrecognized runtime name `{}`", name);
     return null;
   }
 

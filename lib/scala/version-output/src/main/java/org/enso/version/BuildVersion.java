@@ -19,10 +19,19 @@ public class BuildVersion {
     return GeneratedVersion.scalacVersion();
   }
 
+  /**
+   * Version of GraalVM, more specifically, version of the GraalVM and Truffle libraries used to
+   * build the engine.
+   */
   public static String graalVersion() {
     return GeneratedVersion.graalVersion();
   }
 
+  /**
+   * Version of Java (JDK) used to build the engine.
+   *
+   * @return
+   */
   public static String javaVersion() {
     return GeneratedVersion.javaVersion();
   }
