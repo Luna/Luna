@@ -27,5 +27,5 @@ type Dialect_Flag
        Specifies if the backend supports the `Infinity` value for floating point columns.
     Supports_Infinity
     ## PRIVATE
-       Specifies if [Column] = "Text" is case sensitive by default.
+       Specifies text comparisons are case sensitive by default.
     Case_Sensitive_Text_Comparison

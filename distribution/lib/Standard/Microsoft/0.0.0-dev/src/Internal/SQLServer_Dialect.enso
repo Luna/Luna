@@ -339,7 +339,7 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
         wrapped_name = base_gen.generate_expression dialect expr
         typed_result = case generate_as_bool of 
             False -> wrapped_name
-            True -> wrapped_name ++ " = 1"
+            True -> _convert_value_to_boolean_expression wrapped_name
         pair typed_result [wrapped_name]
     SQL_Expression.Constant value -> 
         wrapped = case value of
@@ -373,8 +373,8 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
                     _ -> result
         null_checks_result = if kind == "IS_NULL" then [] else null_checks
         typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
-            if generate_as_bool then expr_result ++ " = 1" else
-                SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
+            if generate_as_bool then _convert_value_to_boolean_expression expr_result else
+                SQL_Builder.code "CASE " ++ _convert_boolean_to_value_expression expr_result ++ " END"
 
         pair typed_expr null_checks_result
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
@@ -389,44 +389,22 @@ private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descripto
                 SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
             case generating_a_boolean_column of
                 False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
-                True -> SQL_Builder.code "CASE " ++ null_check ++ "WHEN " ++ base_expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
+                True -> SQL_Builder.code "CASE " ++ null_check ++ _convert_boolean_to_value_expression base_expr ++ " END"
         _ -> 
             _generate_expression dialect base_gen expr generate_as_bool=False . first
 
-private _op_requires_bool op = _op_requires_returns_bool op . first
+private _convert_value_to_boolean_expression expr =
+    expr ++ " = 1"
 
-private _op_returns_boolean op = _op_requires_returns_bool op . second
+private _convert_boolean_to_value_expression expr =
+    SQL_Builder.code "WHEN " ++ expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT)"
 
-private _op_requires_returns_bool op = case op of
-    "NOT"                   -> pair True  True
-    "BETWEEN"               -> pair False True
-    ">="                    -> pair False True
-    ">"                     -> pair False True
-    "<="                    -> pair False True
-    "<"                     -> pair False True
-    "!="                    -> pair False True
-    "=="                    -> pair False True
-    "IN"                    -> pair False True
-    "IS_NULL"               -> pair False True
-    "LIKE"                  -> pair False True
-    "STARTS_WITH"           -> pair False True
-    "ENDS_WITH"             -> pair False True
-    "CONTAINS"              -> pair False True
-    "EQUALS_IGNORE_CASE"    -> pair False True
-    "IS_EMPTY"              -> pair False True
-    "-"                     -> pair False False
-    "*"                     -> pair False False
-    "+"                     -> pair False False
-    "/"                     -> pair False False
-    "ADD_NUMBER"            -> pair False False
-    "MAKE_CASE_SENSITIVE"   -> pair False False
-    "FOLD_CASE"             -> pair False False
-    "FILL_NULL"             -> pair False False
-    "COALESCE"              -> pair False False
-
-## PRIVATE
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
+
+private _op_requires_bool op = ["NOT"].contains op
+
+private _op_returns_boolean op = ["NOT", "BETWEEN", ">=", ">", "<=", "<", "!=", "==", "IN", "IS_NULL", "LIKE", "STARTS_WITH", "ENDS_WITH", "CONTAINS", "EQUALS_IGNORE_CASE", "IS_EMPTY"].contains op
 
 ## PRIVATE
 make_dialect_operations =
