@@ -47,7 +47,7 @@ final class JavaFinder {
 
   /**
    * Tries to find {@code java} executable in the distribution runtime with the same version that
-   * was used for building.
+   * was used for building, or a newer one.
    *
    * @return null if not found.
    */
