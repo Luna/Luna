@@ -369,12 +369,7 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
                 check sql for all the columns that have been used up to this point and that 
                 becomes the expression.
             "IS_NULL" -> _generate_null_check_sql_builder null_checks
-            _ -> 
-                result = op parsed_args
-                # If the function expects more arguments, we pass the metadata as the last argument.
-                case result of
-                    _ : Function -> result metadata
-                    _ -> result
+            _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if kind == "IS_NULL" then [] else null_checks
         typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
             if generate_as_bool then _convert_value_to_boolean_expression expr_result else

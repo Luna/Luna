@@ -81,11 +81,7 @@ type SQL_Generator
         SQL_Expression.Operation kind arguments metadata ->
             op = dialect.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
             parsed_args = arguments.map (self.generate_expression dialect)
-            result = op parsed_args
-            # If the function expects more arguments, we pass the metadata as the last argument.
-            case result of
-                _ : Function -> result metadata
-                _ -> result
+            self.apply_op_generator_with_metadata op parsed_args metadata
         SQL_Expression.Let _ binder bindee body ->
             wrapped_binder = dialect.wrap_identifier binder
             bindee_exp = SQL_Builder.code "SELECT " ++ (self.generate_expression dialect bindee).paren ++ " AS " ++ "x"
@@ -105,6 +101,14 @@ type SQL_Generator
                     self.generate_expression dialect standalone_expression
         query : Query -> self.generate_sub_query dialect query
         descriptor : Order_Descriptor -> self.generate_order dialect descriptor
+
+    ## PRIVATE
+    apply_op_generator_with_metadata self op arguments metadata =
+        result = op arguments
+        # If the function expects more arguments, we pass the metadata as the last argument.
+        case result of
+            _ : Function -> result metadata
+            _ -> result
 
     ## PRIVATE
 
