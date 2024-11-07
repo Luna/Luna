@@ -356,10 +356,9 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
         pair wrapped_literal []
     SQL_Expression.Operation op_kind arguments metadata ->
         op = dialect.dialect_operations.operations_dict.get op_kind (Error.throw <| Unsupported_Database_Operation.Error op_kind)
-        expected_kind = if _op_requires_bool op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        expected_kind = _op_expected_kind op_kind
         parsed_args_and_null_checks = arguments.map (c -> _generate_expression dialect base_gen c expected_kind)
         parsed_args = parsed_args_and_null_checks.map .first
-
         null_checks = parsed_args_and_null_checks.map .second  . flatten
 
         expr_result = case op_kind of
@@ -369,7 +368,7 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
             "IS_NULL" -> _generate_is_null_expr null_checks
             _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if op_kind == "IS_NULL" then [] else null_checks
-        has_kind = if _op_returns_boolean op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        has_kind = _op_return_kind op_kind
         converted_expr = _align_type expr_result has_kind expression_kind
         final_expr = if top_level_select then _generate_null_check_sql_builder null_checks_result converted_expr else 
             converted_expr
@@ -401,9 +400,12 @@ private _generate_null_check_sql_builder null_checks:Vector expr -> SQL_Builder 
 private _generate_is_null_expr null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
 
-private _op_requires_bool op = ["NOT"].contains op
+private _op_expected_kind op -> ExpressionKind =
+    if ["NOT"].contains op then ExpressionKind.Boolean_Condition else ExpressionKind.Value
 
-private _op_returns_boolean op = ["NOT", "BETWEEN", ">=", ">", "<=", "<", "!=", "==", "IN", "IS_NULL", "LIKE", "STARTS_WITH", "ENDS_WITH", "CONTAINS", "EQUALS_IGNORE_CASE", "IS_EMPTY"].contains op
+private _op_return_kind op -> ExpressionKind = 
+    if ["NOT", "BETWEEN", ">=", ">", "<=", "<", "!=", "==", "IN", "IS_NULL", "LIKE", "STARTS_WITH", "ENDS_WITH", "CONTAINS", "EQUALS_IGNORE_CASE", "IS_EMPTY"].contains op then ExpressionKind.Boolean_Condition else
+        ExpressionKind.Value
 
 ## PRIVATE
 make_dialect_operations =
