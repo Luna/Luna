@@ -346,8 +346,12 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
             Nothing -> SQL_Builder.code "NULL"
             _ -> SQL_Builder.interpolation value
         pair wrapped [wrapped]
-    SQL_Expression.Literal value -> 
-        wrapped = SQL_Builder.code value
+    SQL_Expression.Literal value ->
+        modified_value = case value of
+            "TRUE" -> "CAST(1 AS BIT)"
+            "FALSE" -> "CAST(0 AS BIT)"
+            _ -> value
+        wrapped = SQL_Builder.code modified_value
         pair wrapped [wrapped]
     SQL_Expression.Text_Literal _ ->
         wrapped_literal = base_gen.generate_expression dialect expr
