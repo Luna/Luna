@@ -8,6 +8,7 @@ from Standard.Database import all
 from Standard.Test import all
 
 from project.Util import all
+from project.Common_Table_Operations.Util import within_table
 
 main filter=Nothing =
     suite = Test.build suite_builder->
@@ -137,9 +138,9 @@ add_specs suite_builder =
 
         group_builder.specify "will merge files that read as non-Table values into a Table using reasonable defaults" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
-            base_dir.delete_if_exists
+            base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
-            Panic.with_finalizer base_dir.delete <|
+            Panic.with_finalizer (base_dir.delete recursive=True) <|
                 # raw JS Object - we want it to expand to a single row - same as if it was in a 1-element array
                 (JS_Object.from_pairs [["a", 1], ["b", 2]]).to_json.write (base_dir / "1_js_object.json")
 
@@ -165,29 +166,30 @@ add_specs suite_builder =
                 IO.println (Meta.type_of files.first)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
-                r.column_info.print
-                # We transform the Path to just file name
-                rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
 
-                null = Nothing
-                r.column_names . should_equal ["Path",               "a",  "b",      "c", "Value",  "d"]
-                rows.at 0 .      should_equal ["1_js_object.json",     1,    2,     null,    null, null]
-                rows.at 1 .      should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
-                rows.at 2 .      should_equal ["2_js_array.json",     50,   60,     null,    null, null]
-                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     100, null]
-                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     200, null]
-                rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     300, null]
-                rows.at 3 .      should_equal ["4_table.tsv",         -1, null,     null,    null,   -2]
-                rows.at 3 .      should_equal ["4_table.tsv",         -3, null,     null,    null,   -4]
-                rows.at 3 .      should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
-                rows.at 3 .      should_equal ["6_js_null.json",    null, null,     null,    null, null]
-                rows.at 3 .      should_equal ["7_js_string.json",  null, null,     null,   "str", null]
+                within_table r <|
+                    # We transform the Path to just file name
+                    rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
 
-                r.at "a" . value_type     . should_equal Value_Type.Integer
-                r.at "b" . value_type     . should_equal Value_Type.Integer
-                r.at "c" . value_type     . should_equal Value_Type.Char
-                r.at "Value" . value_type . should_equal Value_Type.Mixed
-                r.at "d" . value_type     . should_equal Value_Type.Integer
+                    null = Nothing
+                    r.column_names . should_equal ["Path",               "a",  "b",      "c", "Value",  "d"]
+                    rows.at 0 .      should_equal ["1_js_object.json",     1,    2,     null,    null, null]
+                    rows.at 1 .      should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
+                    rows.at 2 .      should_equal ["2_js_array.json",     50,   60,     null,    null, null]
+                    rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     100, null]
+                    rows.at 4 .      should_equal ["3_js_numbers.json", null, null,     null,     200, null]
+                    rows.at 5 .      should_equal ["3_js_numbers.json", null, null,     null,     300, null]
+                    rows.at 6 .      should_equal ["4_table.tsv",         -1, null,     null,    null,   -4]
+                    rows.at 7 .      should_equal ["4_table.tsv",         -2, null,     null,    null,   -5]
+                    rows.at 8 .      should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
+                    rows.at 9 .      should_equal ["6_js_null.json",    null, null,     null,    null, null]
+                    rows.at 10 .     should_equal ["7_js_string.json",  null, null,     null,   "str", null]
+
+                    r.at "a" . value_type     . should_equal Value_Type.Integer
+                    r.at "b" . value_type     . should_equal Value_Type.Integer
+                    r.at "c" . value_type     . should_equal Value_Type.Char
+                    r.at "Value" . value_type . should_equal Value_Type.Mixed
+                    r.at "d" . value_type     . should_equal Value_Type.Integer
 
         group_builder.specify "will merge all sheets when loading XLS files" pending="TODO" <|
             # 1 - tsv

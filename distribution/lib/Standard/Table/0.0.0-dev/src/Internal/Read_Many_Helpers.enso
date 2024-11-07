@@ -58,5 +58,5 @@ _merge_input_and_objects (input : Many_Files_List) (objects : Vector Any) -> Pai
 
 _expand_objects (table : Table) (objects_column_name:Text) -> Table =
     table
-        . expand_to_rows objects_column_name at_least_one_row=True
+        . expand_to_rows objects_column_name at_least_one_row=True sequences_only=True
         . expand_column objects_column_name prefix=..None
