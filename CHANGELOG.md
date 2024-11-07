@@ -22,6 +22,8 @@
 - [Table Input Widget has now a limit of 256 cells.][11448]
 - [Added an error message screen displayed when viewing a deleted
   component.][11452]
+- [New documentation editor provides improved Markdown editing experience, and
+  paves the way for new documentation features.][11469]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -37,6 +39,7 @@
 [11447]: https://github.com/enso-org/enso/pull/11447
 [11448]: https://github.com/enso-org/enso/pull/11448
 [11452]: https://github.com/enso-org/enso/pull/11452
+[11469]: https://github.com/enso-org/enso/pull/11469
 
 #### Enso Standard Library
 
@@ -122,6 +125,7 @@
 - [Added `format` parameter to `Float.parse`.][11229]
 - [Implemented a cache for HTTP data requests, as well as a per-file response
   size limit.][11342]
+- [Overhauled Google Analytics APIs.][11484]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -138,6 +142,7 @@
 [11205]: https://github.com/enso-org/enso/pull/11205
 [11229]: https://github.com/enso-org/enso/pull/11229
 [11342]: https://github.com/enso-org/enso/pull/11342
+[11484]: https://github.com/enso-org/enso/pull/11484
 
 #### Enso Language & Runtime
 
