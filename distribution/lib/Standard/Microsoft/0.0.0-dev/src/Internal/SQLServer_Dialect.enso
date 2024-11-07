@@ -398,31 +398,31 @@ private _op_requires_bool op = _op_requires_returns_bool op . first
 private _op_returns_boolean op = _op_requires_returns_bool op . second
 
 private _op_requires_returns_bool op = case op of
-    "FILL_NULL" -> pair False False
-    "COALESCE" -> pair False False
-    "BETWEEN" -> pair False True
-    ">=" -> pair False True
-    ">" -> pair False True
-    "<=" -> pair False True
-    "<" -> pair False True
-    "!=" -> pair False True
-    "==" -> pair False True
-    "IN" -> pair False True
-    "NOT" -> pair True True
-    "-" -> pair False False
-    "IS_NULL" -> pair False True
-    "*" -> pair False False
-    "+" -> pair False False
-    "/" -> pair False False
-    "ADD_NUMBER" -> pair False False
-    "LIKE" -> pair False True
-    "STARTS_WITH" -> pair False True
-    "ENDS_WITH" -> pair False True
-    "MAKE_CASE_SENSITIVE" -> pair False False
-    "FOLD_CASE" -> pair False False
-    "CONTAINS" -> pair False True
-    "EQUALS_IGNORE_CASE" -> pair False True
-    "IS_EMPTY" -> pair False True
+    "NOT"                   -> pair True  True
+    "BETWEEN"               -> pair False True
+    ">="                    -> pair False True
+    ">"                     -> pair False True
+    "<="                    -> pair False True
+    "<"                     -> pair False True
+    "!="                    -> pair False True
+    "=="                    -> pair False True
+    "IN"                    -> pair False True
+    "IS_NULL"               -> pair False True
+    "LIKE"                  -> pair False True
+    "STARTS_WITH"           -> pair False True
+    "ENDS_WITH"             -> pair False True
+    "CONTAINS"              -> pair False True
+    "EQUALS_IGNORE_CASE"    -> pair False True
+    "IS_EMPTY"              -> pair False True
+    "-"                     -> pair False False
+    "*"                     -> pair False False
+    "+"                     -> pair False False
+    "/"                     -> pair False False
+    "ADD_NUMBER"            -> pair False False
+    "MAKE_CASE_SENSITIVE"   -> pair False False
+    "FOLD_CASE"             -> pair False False
+    "FILL_NULL"             -> pair False False
+    "COALESCE"              -> pair False False
 
 ## PRIVATE
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
