@@ -368,13 +368,10 @@ type SQLServer_Dialect
                         _ : Function -> result metadata
                         _ -> result
             null_checks_result = if kind == "IS_NULL" then [] else null_checks
-            typed_expr = case _op_returns_boolean kind of 
-                False -> case generate_as_bool of 
-                    False -> expr_result
-                    True -> expr_result ++ " = 1"
-                True -> case generate_as_bool of 
-                    False -> SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
-                    True -> expr_result
+            typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
+                if generate_as_bool then expr_result ++ " = 1" else
+                    SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
+
             pair typed_expr null_checks_result
         query : Query -> pair (base_gen.generate_sub_query self query) []
 
