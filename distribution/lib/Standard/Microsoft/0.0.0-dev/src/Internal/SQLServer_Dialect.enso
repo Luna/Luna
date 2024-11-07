@@ -400,7 +400,7 @@ private _generate_is_null_expr null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
 
 private _op_expected_kind op -> Expression_Kind =
-    if ["NOT"].contains op then Expression_Kind.Boolean_Condition else ExpExpression_KindressionKind.Value
+    if ["NOT"].contains op then Expression_Kind.Boolean_Condition else Expression_Kind.Value
 
 private _op_return_kind op -> Expression_Kind = 
     return_bool_ops = ["NOT", "BETWEEN", ">=", ">", "<=", "<", "!=", "==", "IN", "IS_NULL", "LIKE", "STARTS_WITH", "ENDS_WITH", "CONTAINS", "EQUALS_IGNORE_CASE", "IS_EMPTY"]
