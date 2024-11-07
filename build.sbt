@@ -1611,8 +1611,8 @@ lazy val `version-output` = (project in file("lib/scala/version-output"))
           defaultDevEnsoVersion = defaultDevEnsoVersion,
           ensoVersion           = ensoVersion,
           scalacVersion         = scalacVersion,
-          graalVersion          = graalVersion,
-          javaVersion           = javaVersion,
+          graalVersion          = graalMavenPackagesVersion,
+          javaVersion           = graalVersion,
           currentEdition        = currentEdition
         )
     }.taskValue
