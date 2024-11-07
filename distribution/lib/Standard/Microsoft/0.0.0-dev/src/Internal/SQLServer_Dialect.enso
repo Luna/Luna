@@ -318,7 +318,7 @@ type SQLServer_Dialect
 
     ## PRIVATE
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
-        if for_select then _generate_column self base_gen expr else
+        if for_select then _generate_expression self base_gen expr ExpressionKind.Value top_level_select=True . first else
             _generate_expression self base_gen expr ExpressionKind.Boolean_Condition . first
 
 ## Returns a pair of a SQL_Builder for the given expression and a vector of columns
@@ -334,7 +334,7 @@ type SQLServer_Dialect
    The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
    as the second element of the pair.
    The first element of the pair is the SQL_Builder for the expression.
-private _generate_expression dialect base_gen expr expression_kind:ExpressionKind = case expr of
+private _generate_expression dialect base_gen expr expression_kind:ExpressionKind top_level_select:Boolean=False = case expr of
     SQL_Expression.Column _ _ ->
         wrapped_name = base_gen.generate_expression dialect expr
         typed_result = _align_type wrapped_name ExpressionKind.Value expression_kind
@@ -371,8 +371,10 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
         null_checks_result = if op_kind == "IS_NULL" then [] else null_checks
         has_kind = if _op_returns_boolean op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
         converted_expr = _align_type expr_result has_kind expression_kind
+        final_expr = if top_level_select then _generate_null_check_sql_builder null_checks_result converted_expr else 
+            converted_expr
 
-        pair converted_expr null_checks_result
+        pair final_expr null_checks_result
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
 
 ## PRIVATE
@@ -385,14 +387,6 @@ private _align_type expr (has_kind : ExpressionKind) (expected_kind : Expression
         case expected_kind of
             ExpressionKind.Boolean_Condition -> _convert_value_to_boolean_expression expr
             ExpressionKind.Value -> _convert_boolean_to_value_expression expr
-
-private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
-    case expr of
-        SQL_Expression.Operation op_kind _ _ ->
-            expr_null_checks_pair = _generate_expression dialect base_gen expr ExpressionKind.Value
-            _generate_null_check_sql_builder expr_null_checks_pair.second expr_null_checks_pair.first
-        _ -> 
-            _generate_expression dialect base_gen expr ExpressionKind.Value . first
 
 private _convert_value_to_boolean_expression expr =
     expr ++ " = 1"
