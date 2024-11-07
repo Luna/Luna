@@ -4335,8 +4335,8 @@ lazy val `runtime-version-manager` = project
     libraryDependencies ++= Seq(
       "com.typesafe.scala-logging" %% "scala-logging"    % scalaLoggingVersion,
       "org.apache.commons"          % "commons-compress" % commonsCompressVersion,
-      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test,
-      akkaHttp
+      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test
+    ),
     )
   )
   .dependsOn(pkg)
