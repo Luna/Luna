@@ -248,11 +248,9 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
 
       watch(
         [configuration, visId],
-        ([config, id], [_, oldId]) => {
-          if (oldId != null && id !== oldId) {
-            executionContext.setVisualization(oldId, null)
-          }
+        ([config, id], _, onCleanup) => {
           executionContext.setVisualization(id, config)
+          onCleanup(() => executionContext.setVisualization(id, null))
         },
         // Make sure to flush this watch in 'post', otherwise it might cause operations on stale
         // ASTs just before the widget tree renders and cleans up the associated widget instances.
