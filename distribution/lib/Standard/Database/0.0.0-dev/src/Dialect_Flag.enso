@@ -24,10 +24,6 @@ type Dialect_Flag
        same column.
     Supports_Case_Sensitive_Columns
     ## PRIVATE
-       Specifies if the backend is able to distinguish between a decimal NaN value and a unkwown 
-       value (Enso's Nothing, or SQL's NULL). If `False`, NaN is treated as a NULL.
-    Is_Nan_And_Nothing_Distinct
-    ## PRIVATE
        Specifies if the backend supports the `Infinity` value for floating point columns.
     Supports_Infinity
     ## PRIVATE

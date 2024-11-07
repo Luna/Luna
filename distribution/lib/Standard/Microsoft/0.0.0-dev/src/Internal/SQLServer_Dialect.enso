@@ -252,7 +252,6 @@ type SQLServer_Dialect
             Dialect_Flag.Supports_Separate_NaN -> False
             Dialect_Flag.Supports_Nested_With_Clause -> True
             Dialect_Flag.Supports_Case_Sensitive_Columns -> False
-            Dialect_Flag.Is_Nan_And_Nothing_Distinct -> False
             Dialect_Flag.Supports_Infinity -> False
             Dialect_Flag.Case_Sensitive_Text_Comparison -> False
 

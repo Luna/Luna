@@ -1129,7 +1129,7 @@ type DB_Table
        Create a constant column from a value.
     make_constant_column : Any -> DB_Column ! Illegal_Argument
     make_constant_column self value =
-        Feature.Column_Operations.if_supported_else_throw self.connection.dialect "make_constant_column" <|
+        Feature.Filter.if_supported_else_throw self.connection.dialect "make_constant_column" <|
             if Table_Helpers.is_column value then Error.throw (Illegal_Argument.Error "A constant value may only be created from a scalar, not a DB_Column") else
                 type_mapping = self.connection.dialect.get_type_mapping
                 argument_value_type = Value_Type_Helpers.find_argument_type value
