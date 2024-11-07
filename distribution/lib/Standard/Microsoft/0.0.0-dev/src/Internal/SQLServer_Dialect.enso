@@ -219,7 +219,7 @@ type SQLServer_Dialect
     ## PRIVATE
     prepare_fetch_types_query : SQL_Expression -> Context -> SQL_Statement
     prepare_fetch_types_query self expression context =
-        Base_Generator.default_fetch_types_query self expression context where_filter_always_false_literal="1=0"
+        Base_Generator.default_fetch_types_query self expression context
 
     ## PRIVATE
     check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation
@@ -319,7 +319,7 @@ type SQLServer_Dialect
     ## PRIVATE
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
         if for_select then _generate_column self base_gen expr else
-            _generate_expression self base_gen expr generate_as_bool=True . first
+            _generate_expression self base_gen expr ExpressionKind.Boolean_Condition . first
 
 ## Returns a pair of a SQL_Builder for the given expression and a vector of columns
    that have been used in the expression and need to be checked for nulls.
@@ -334,12 +334,10 @@ type SQLServer_Dialect
    The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
    as the second element of the pair.
    The first element of the pair is the SQL_Builder for the expression.
-private _generate_expression dialect base_gen expr generate_as_bool = case expr of
+private _generate_expression dialect base_gen expr expression_kind:ExpressionKind = case expr of
     SQL_Expression.Column _ _ ->
         wrapped_name = base_gen.generate_expression dialect expr
-        typed_result = case generate_as_bool of 
-            False -> wrapped_name
-            True -> _convert_value_to_boolean_expression wrapped_name
+        typed_result = _align_type wrapped_name ExpressionKind.Value expression_kind
         pair typed_result [wrapped_name]
     SQL_Expression.Constant value -> 
         wrapped = case value of
@@ -348,32 +346,31 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
         pair wrapped [wrapped]
     SQL_Expression.Literal value ->
         modified_value = case value of
-            "TRUE" -> "CAST(1 AS BIT)"
-            "FALSE" -> "CAST(0 AS BIT)"
+            "TRUE" -> "1"
+            "FALSE" -> "0"
             _ -> value
-        wrapped = SQL_Builder.code modified_value
+        wrapped = _align_type (SQL_Builder.code modified_value) ExpressionKind.Value expression_kind
         pair wrapped [wrapped]
     SQL_Expression.Text_Literal _ ->
         wrapped_literal = base_gen.generate_expression dialect expr
         pair wrapped_literal []
-    SQL_Expression.Operation kind arguments metadata ->
-        op = dialect.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
-        requires_bool = _op_requires_bool kind
-        parsed_args_and_null_checks = arguments.map (c -> _generate_expression dialect base_gen c requires_bool)
+    SQL_Expression.Operation op_kind arguments metadata ->
+        op = dialect.dialect_operations.operations_dict.get op_kind (Error.throw <| Unsupported_Database_Operation.Error op_kind)
+        expected_kind = if _op_requires_bool op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        parsed_args_and_null_checks = arguments.map (c -> _generate_expression dialect base_gen c expected_kind)
         parsed_args = parsed_args_and_null_checks.map .first
 
         null_checks = parsed_args_and_null_checks.map .second  . flatten
 
-        expr_result = case kind of
+        expr_result = case op_kind of
             ## In the case that we actually want to check for null then we need to generate the null
                 check sql for all the columns that have been used up to this point and that 
                 becomes the expression.
             "IS_NULL" -> _generate_null_check_sql_builder null_checks
             _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
-        null_checks_result = if kind == "IS_NULL" then [] else null_checks
-        has_kind = if _op_returns_boolean kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
-        expected_kind = if generate_as_bool then ExpressionKind.Boolean_Condition else ExpressionKind.Value
-        converted_expr = _align_type expr_result has_kind expected_kind
+        null_checks_result = if op_kind == "IS_NULL" then [] else null_checks
+        has_kind = if _op_returns_boolean op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        converted_expr = _align_type expr_result has_kind expression_kind
 
         pair converted_expr null_checks_result
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
@@ -391,17 +388,18 @@ private _align_type expr (has_kind : ExpressionKind) (expected_kind : Expression
 
 private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
     case expr of
-        SQL_Expression.Operation kind _ _ ->
-            generating_a_boolean_column = _op_returns_boolean kind
-            expr_null_checks_pair = _generate_expression dialect base_gen expr generate_as_bool=generating_a_boolean_column
+        SQL_Expression.Operation op_kind _ _ ->
+            generating_a_boolean_column = _op_returns_boolean op_kind
+            expected_kind = if _op_requires_bool op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+            expr_null_checks_pair = _generate_expression dialect base_gen expr ExpressionKind.Value
             base_expr = expr_null_checks_pair.first
-            null_check = if expr_null_checks_pair.second.length == 0 then "WHEN 1=0 THEN NULL " else
-                SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
-            case generating_a_boolean_column of
-                False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
-                True -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ _convert_boolean_to_value_expression base_expr ++ " END"
+            needs_null_check = (expr_null_checks_pair.second.length > 0)
+            null_check = _generate_null_check_sql_builder expr_null_checks_pair.second
+
+            if needs_null_check then SQL_Builder.code "IIF(" ++ null_check ++ ", NULL, " ++ base_expr ++ ")" else
+                base_expr
         _ -> 
-            _generate_expression dialect base_gen expr generate_as_bool=False . first
+            _generate_expression dialect base_gen expr ExpressionKind.Value . first
 
 private _convert_value_to_boolean_expression expr =
     expr ++ " = 1"
