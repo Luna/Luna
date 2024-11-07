@@ -2173,4 +2173,4 @@ Cleansable_Text.from (that:DB_Column) = Cleansable_Text.Value (pattern->replace_
 ## PRIVATE
 Many_Files_List.from (that : DB_Column) =
     _ = that
-    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database columns. Please first materialize the column into memory by using the `.read` operation.")
+    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database columns. Materialize the column into memory using `.read` first.")

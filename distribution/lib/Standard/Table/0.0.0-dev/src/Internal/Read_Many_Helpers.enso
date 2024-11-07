@@ -10,7 +10,7 @@ _find_files_list_in_table (that : Table) -> Many_Files_List =
     if that.column_count == 1 then Many_Files_List.Value that (that . at 0 . to_vector) else
         path_columns = that.select_columns "path" case_sensitivity=..Insensitive on_problems=..Report_Error
         not_found = path_columns.is_error || (path_columns.column_count == 0)
-        if not_found then Error.throw (Illegal_Argument.Error "To use a Table as a list of files to read, it either must consist of just a single column or contain a column called 'paths' (case insensitive).") else
+        if not_found then Error.throw (Illegal_Argument.Error "To use a Table as file list, it must be a single column or contain a `path` column (case insensitive).") else
             if path_columns.column_count > 1 then Error.throw (Illegal_Argument.Error "Multiple 'paths' column candidates found: "+path_columns.column_names.to_display_text+".") else
                 path_column_name = path_columns.at 0 . name
                 Many_Files_List.Value that (that.at path_column_name . to_vector)

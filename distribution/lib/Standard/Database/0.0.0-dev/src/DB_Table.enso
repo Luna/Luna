@@ -3126,4 +3126,4 @@ make_literal_table connection column_vectors column_names alias =
 ## PRIVATE
 Many_Files_List.from (that : DB_Table) =
     _ = that
-    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database tables. Please first materialize the table into memory by using the `.read` operation.")
+    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database tables. Materialize the table into memory using `.read` first.")
