@@ -409,13 +409,44 @@ _op_returns_boolean op = case op of
     "IS_FINITE" -> True
     "NOT" -> True
     "COALESCE" -> False
-    _ -> True
+    ">=" -> True
+    ">" -> True
+    "<=" -> True
+    "<" -> True
+    "!=" -> True
+    "==" -> True
+    "IN" -> True
+    "IS_INF" -> True
+    "IS_FINITE" -> True
+    "NOT" -> True
+    "-" -> False
+    "IS_NULL" -> True
+    "*" -> False
+    "+" -> False
+    "/" -> False
+    "ADD_NUMBER" -> False
 
 ## PRIVATE
 _op_requires_bool op = case op of
     "FILL_NULL" -> False
     "COALESCE" -> False
-    _ -> True
+    "BETWEEN" -> False
+    ">=" -> False
+    ">" -> False
+    "<=" -> False
+    "<" -> False
+    "!=" -> False
+    "==" -> False
+    "IN" -> False
+    "IS_INF" -> False
+    "IS_FINITE" -> False
+    "NOT" -> True
+    "-" -> False
+    "IS_NULL" -> False
+    "*" -> False
+    "+" -> False
+    "/" -> False
+    "ADD_NUMBER" -> False
 
 ## PRIVATE
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
@@ -618,6 +649,7 @@ make_order_descriptor internal_column sort_direction text_ordering =
                             Order_Descriptor.Value folded_expression sort_direction nulls_order=nulls collation=Nothing
 
 ## PRIVATE
+   TODO REMOVE AS UNSUPPORTED
 is_inf = Base_Generator.lift_unary_op "IS_INF" arg->
     (arg ++ " in (1E308, -1E308)").paren
 
