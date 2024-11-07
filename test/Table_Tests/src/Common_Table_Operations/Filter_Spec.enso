@@ -59,8 +59,13 @@ add_filter_specs suite_builder setup =
             t.filter "X" (..Equal to=100) . at "X" . to_vector . should_equal [100]
             t.filter "X" (Filter_Condition.Equal to=123) . at "X" . to_vector . should_equal []
 
-            t.filter "X" (Filter_Condition.Is_Finite) . at "ix" . to_vector . should_equal [1, 2, 4, 5]
-            t.filter "X" (Filter_Condition.Is_Infinite) . at "ix" . to_vector . should_equal []
+            case setup.flagged ..Supports_Infinity of
+                True ->
+                    t.filter "X" (Filter_Condition.Is_Finite) . at "ix" . to_vector . should_equal [1, 2, 4, 5]
+                    t.filter "X" (Filter_Condition.Is_Infinite) . at "ix" . to_vector . should_equal []
+                False ->
+                    t.filter "X" (Filter_Condition.Is_Finite) . should_fail_with Unsupported_Database_Operation
+                    t.filter "X" (Filter_Condition.Is_Infinite) . should_fail_with Unsupported_Database_Operation
             case setup.flagged ..Supports_Separate_NaN of
                 True ->
                     t.filter "X" (Filter_Condition.Is_Nan) . at "ix" . to_vector . should_equal []
