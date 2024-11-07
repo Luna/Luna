@@ -466,14 +466,17 @@ add_filter_specs suite_builder setup =
             err2 = t2.filter "Y" (Filter_Condition.Not_Equal 5) on_problems=..Report_Error
             err2.should_fail_with Floating_Point_Equality
 
-        group_builder.specify "should attach a warning when Nothing is used as a value in a comparison or `is_in` `Filter_Condition`" <|
+        group_builder.specify "should attach a warning when Nothing is used as a value in a comparison `Filter_Condition`" <|
             t = table_builder [["x", [1, 2, 3]]]
-            fcs = [Filter_Condition.Equal Nothing, Filter_Condition.Not_Equal Nothing]
-                + [Filter_Condition.Less Nothing, Filter_Condition.Equal_Or_Less Nothing]
-                + [Filter_Condition.Equal_Or_Greater Nothing, Filter_Condition.Greater Nothing]
-            fcs_with_is_in = if setup.is_operation_supported "IS_IN" . not then fcs else
-                fcs + [Filter_Condition.Between Nothing Nothing , Filter_Condition.Is_In [Nothing] , Filter_Condition.Is_In [1, Nothing, 2]]
-            fcs_with_is_in.map fc->
+            fcs = [Filter_Condition.Equal Nothing, Filter_Condition.Not_Equal Nothing, Filter_Condition.Less Nothing, Filter_Condition.Equal_Or_Less Nothing, Filter_Condition.Equal_Or_Greater Nothing, Filter_Condition.Greater Nothing]
+            fcs.map fc->
+                Test.with_clue fc.to_text <|
+                    Problems.expect_warning Nothing_Value_In_Filter_Condition (t.filter "x" fc . at "x")
+
+        if setup.is_operation_supported "IS_IN" then group_builder.specify "should attach a warning when Nothing is used as a value in a `is_in` `Filter_Condition`" <|
+            t = table_builder [["x", [1, 2, 3]]]
+            fcs = [Filter_Condition.Between Nothing Nothing , Filter_Condition.Is_In [Nothing] , Filter_Condition.Is_In [1, Nothing, 2]]
+            fcs.map fc->
                 Test.with_clue fc.to_text <|
                     Problems.expect_warning Nothing_Value_In_Filter_Condition (t.filter "x" fc . at "x")
 
