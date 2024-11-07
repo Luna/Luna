@@ -253,6 +253,8 @@ type Snowflake_Dialect
             Dialect_Flag.Supports_Separate_NaN -> True
             Dialect_Flag.Supports_Nested_With_Clause -> True
             Dialect_Flag.Supports_Case_Sensitive_Columns -> True
+            Dialect_Flag.Supports_Infinity -> True
+            Dialect_Flag.Case_Sensitive_Text_Comparison -> True
 
     ## PRIVATE
        The default table types to use when listing tables.
