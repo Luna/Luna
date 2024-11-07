@@ -2,6 +2,7 @@ from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 from Standard.Table import all
+from Standard.Table.Errors import Invalid_Value_Type
 from Standard.Database import all
 
 from Standard.Test import all
@@ -76,3 +77,10 @@ add_specs suite_builder =
             col = table.at "path"
             r2 = Data.read_many col return=..Vector
             r2.should_fail_with Illegal_Argument
+
+        group_builder.specify "fails if a column of invalid type is provided" <|
+            table = Table.new [["path", [1, 2]], ["X", [33, 44]]]
+
+            Data.read_many table . should_fail_with Invalid_Value_Type
+            Data.read_many (table.at "path") . should_fail_with Invalid_Value_Type
+            Data.read_many (table.select_columns ["X"]) . should_fail_with Invalid_Value_Type

@@ -23,6 +23,7 @@ import project.Internal.Column_Ops
 import project.Internal.Date_Time_Helpers
 import project.Internal.Java_Problems
 import project.Internal.Parse_Values_Helper
+import project.Internal.Read_Many_Helpers
 import project.Internal.Storage
 import project.Internal.Value_Type_Helpers
 import project.Internal.Widget_Helpers
@@ -2931,4 +2932,5 @@ apply_unary_map column:Column new_name:Text function expected_result_type:Value_
 
 ## PRIVATE
 Many_Files_List.from (that : Column) =
-    Many_Files_List.Value that that.to_vector
+    Read_Many_Helpers.ensure_column_type_valid_to_be_files_list that <|
+        Many_Files_List.Value that that.to_vector
