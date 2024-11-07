@@ -394,62 +394,36 @@ type SQLServer_Dialect
         if for_select then self._generate_column base_gen expr else
             self._generate_expression base_gen expr generate_as_bool=True . first
 
-## PRIVATE
-_op_returns_boolean op = case op of
-    "FILL_NULL" -> False
-    "BETWEEN" -> True
-    "NOT" -> True
-    "COALESCE" -> False
-    ">=" -> True
-    ">" -> True
-    "<=" -> True
-    "<" -> True
-    "!=" -> True
-    "==" -> True
-    "IN" -> True
-    "NOT" -> True
-    "-" -> False
-    "IS_NULL" -> True
-    "*" -> False
-    "+" -> False
-    "/" -> False
-    "ADD_NUMBER" -> False
-    "LIKE" -> True
-    "STARTS_WITH" -> True
-    "ENDS_WITH" -> True
-    "MAKE_CASE_SENSITIVE" -> False
-    "FOLD_CASE" -> False
-    "CONTAINS" -> True
-    "EQUALS_IGNORE_CASE" -> True
-    "IS_EMPTY" -> True
+private _op_requires_bool op = _op_requires_returns_bool op . first
 
-## PRIVATE
-_op_requires_bool op = case op of
-    "FILL_NULL" -> False
-    "COALESCE" -> False
-    "BETWEEN" -> False
-    ">=" -> False
-    ">" -> False
-    "<=" -> False
-    "<" -> False
-    "!=" -> False
-    "==" -> False
-    "IN" -> False
-    "NOT" -> True
-    "-" -> False
-    "IS_NULL" -> False
-    "*" -> False
-    "+" -> False
-    "/" -> False
-    "ADD_NUMBER" -> False
-    "LIKE" -> False
-    "STARTS_WITH" -> False
-    "ENDS_WITH" -> False
-    "MAKE_CASE_SENSITIVE" -> False
-    "FOLD_CASE" -> False
-    "CONTAINS" -> False
-    "EQUALS_IGNORE_CASE" -> False
-    "IS_EMPTY" -> False
+private _op_returns_boolean op = _op_requires_returns_bool op . second
+
+private _op_requires_returns_bool op = case op of
+    "FILL_NULL" -> pair False False
+    "COALESCE" -> pair False False
+    "BETWEEN" -> pair False True
+    ">=" -> pair False True
+    ">" -> pair False True
+    "<=" -> pair False True
+    "<" -> pair False True
+    "!=" -> pair False True
+    "==" -> pair False True
+    "IN" -> pair False True
+    "NOT" -> pair True True
+    "-" -> pair False False
+    "IS_NULL" -> pair False True
+    "*" -> pair False False
+    "+" -> pair False False
+    "/" -> pair False False
+    "ADD_NUMBER" -> pair False False
+    "LIKE" -> pair False True
+    "STARTS_WITH" -> pair False True
+    "ENDS_WITH" -> pair False True
+    "MAKE_CASE_SENSITIVE" -> pair False False
+    "FOLD_CASE" -> pair False False
+    "CONTAINS" -> pair False True
+    "EQUALS_IGNORE_CASE" -> pair False True
+    "IS_EMPTY" -> pair False True
 
 ## PRIVATE
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
