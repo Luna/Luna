@@ -317,82 +317,81 @@ type SQLServer_Dialect
             jdbc.ensure_query_has_no_holes raw_sql
 
     ## PRIVATE
-       Returns a pair of a SQL_Builder for the given expression and a vector of columns
-       that have been used in the expression and need to be checked for nulls.
-       SQL Server needs special handling commpared to ther databases as it does not have a
-       boolean data type.
-       This means that you can write
-         SELECT * FROM MyTable WHERE [Column1] > [Column2]
-       but you cannot write
-         SELECT [Column1] > [Column2] FROM MyTable
-       to write the second query you need to write
-         SELECT CASE WHEN [Column1] IS NULL OR [Column2] IS NULL WHEN [Column1] > [Column2] THEN 1 ELSE 0 END FROM MyTable
-       The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
-       as the second element of the pair.
-       The first element of the pair is the SQL_Builder for the expression.
-    _generate_expression self base_gen expr generate_as_bool = case expr of
-        SQL_Expression.Column _ _ ->
-            wrapped_name = base_gen.generate_expression self expr
-            typed_result = case generate_as_bool of 
-                False -> wrapped_name
-                True -> wrapped_name ++ " = 1"
-            pair typed_result [wrapped_name]
-        SQL_Expression.Constant value -> 
-            wrapped = case value of
-                Nothing -> SQL_Builder.code "NULL"
-                _ -> SQL_Builder.interpolation value
-            pair wrapped [wrapped]
-        SQL_Expression.Literal value -> 
-            wrapped = SQL_Builder.code value
-            pair wrapped [wrapped]
-        SQL_Expression.Text_Literal _ ->
-            wrapped_literal = base_gen.generate_expression self expr
-            pair wrapped_literal []
-        SQL_Expression.Operation kind arguments metadata ->
-            op = self.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
-            requires_bool = _op_requires_bool kind
-            parsed_args_and_null_checks = arguments.map (c -> self._generate_expression base_gen c requires_bool)
-            parsed_args = parsed_args_and_null_checks.map .first
-
-            null_checks = parsed_args_and_null_checks.map .second  . flatten
-
-            expr_result = case kind of
-                ## In the case that we actually want to check for null then we need to generate the null
-                   check sql for all the columns that have been used up to this point and that 
-                   becomes the expression.
-                "IS_NULL" -> _generate_null_check_sql_builder null_checks
-                _ -> 
-                    result = op parsed_args
-                    # If the function expects more arguments, we pass the metadata as the last argument.
-                    case result of
-                        _ : Function -> result metadata
-                        _ -> result
-            null_checks_result = if kind == "IS_NULL" then [] else null_checks
-            typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
-                if generate_as_bool then expr_result ++ " = 1" else
-                    SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
-
-            pair typed_expr null_checks_result
-        query : Query -> pair (base_gen.generate_sub_query self query) []
-
-    ## PRIVATE
-    _generate_column self base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
-        case expr of
-            SQL_Expression.Operation kind _ _ ->
-                generating_a_boolean_column = _op_returns_boolean kind
-                expr_null_checks_pair = self._generate_expression base_gen expr generate_as_bool=generating_a_boolean_column
-                base_expr = expr_null_checks_pair.first
-                null_check = if expr_null_checks_pair.second.length == 0 then "" else
-                    SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
-                case generating_a_boolean_column of
-                    False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
-                    True -> SQL_Builder.code "CASE " ++ null_check ++ "WHEN " ++ base_expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
-            _ -> 
-                self._generate_expression base_gen expr generate_as_bool=False . first
-
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
-        if for_select then self._generate_column base_gen expr else
-            self._generate_expression base_gen expr generate_as_bool=True . first
+        if for_select then _generate_column self base_gen expr else
+            _generate_expression self base_gen expr generate_as_bool=True . first
+
+## Returns a pair of a SQL_Builder for the given expression and a vector of columns
+   that have been used in the expression and need to be checked for nulls.
+   SQL Server needs special handling commpared to ther databases as it does not have a
+   boolean data type.
+   This means that you can write
+       SELECT * FROM MyTable WHERE [Column1] > [Column2]
+   but you cannot write
+       SELECT [Column1] > [Column2] FROM MyTable
+   to write the second query you need to write
+       SELECT CASE WHEN [Column1] IS NULL OR [Column2] IS NULL WHEN [Column1] > [Column2] THEN 1 ELSE 0 END FROM MyTable
+   The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
+   as the second element of the pair.
+   The first element of the pair is the SQL_Builder for the expression.
+private _generate_expression dialect base_gen expr generate_as_bool = case expr of
+    SQL_Expression.Column _ _ ->
+        wrapped_name = base_gen.generate_expression dialect expr
+        typed_result = case generate_as_bool of 
+            False -> wrapped_name
+            True -> wrapped_name ++ " = 1"
+        pair typed_result [wrapped_name]
+    SQL_Expression.Constant value -> 
+        wrapped = case value of
+            Nothing -> SQL_Builder.code "NULL"
+            _ -> SQL_Builder.interpolation value
+        pair wrapped [wrapped]
+    SQL_Expression.Literal value -> 
+        wrapped = SQL_Builder.code value
+        pair wrapped [wrapped]
+    SQL_Expression.Text_Literal _ ->
+        wrapped_literal = base_gen.generate_expression dialect expr
+        pair wrapped_literal []
+    SQL_Expression.Operation kind arguments metadata ->
+        op = dialect.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
+        requires_bool = _op_requires_bool kind
+        parsed_args_and_null_checks = arguments.map (c -> _generate_expression dialect base_gen c requires_bool)
+        parsed_args = parsed_args_and_null_checks.map .first
+
+        null_checks = parsed_args_and_null_checks.map .second  . flatten
+
+        expr_result = case kind of
+            ## In the case that we actually want to check for null then we need to generate the null
+                check sql for all the columns that have been used up to this point and that 
+                becomes the expression.
+            "IS_NULL" -> _generate_null_check_sql_builder null_checks
+            _ -> 
+                result = op parsed_args
+                # If the function expects more arguments, we pass the metadata as the last argument.
+                case result of
+                    _ : Function -> result metadata
+                    _ -> result
+        null_checks_result = if kind == "IS_NULL" then [] else null_checks
+        typed_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
+            if generate_as_bool then expr_result ++ " = 1" else
+                SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
+
+        pair typed_expr null_checks_result
+    query : Query -> pair (base_gen.generate_sub_query dialect query) []
+
+private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
+    case expr of
+        SQL_Expression.Operation kind _ _ ->
+            generating_a_boolean_column = _op_returns_boolean kind
+            expr_null_checks_pair = _generate_expression dialect base_gen expr generate_as_bool=generating_a_boolean_column
+            base_expr = expr_null_checks_pair.first
+            null_check = if expr_null_checks_pair.second.length == 0 then "" else
+                SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
+            case generating_a_boolean_column of
+                False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
+                True -> SQL_Builder.code "CASE " ++ null_check ++ "WHEN " ++ base_expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
+        _ -> 
+            _generate_expression dialect base_gen expr generate_as_bool=False . first
 
 private _op_requires_bool op = _op_requires_returns_bool op . first
 
