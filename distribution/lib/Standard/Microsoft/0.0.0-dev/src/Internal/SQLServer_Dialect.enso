@@ -334,7 +334,10 @@ type SQLServer_Dialect
     generate_expression self base_gen expr generate_as_bool = case expr of
         SQL_Expression.Column _ _ ->
             wrapped_name = base_gen.generate_expression self expr
-            pair wrapped_name [wrapped_name]
+            result = case generate_as_bool of 
+                False -> wrapped_name
+                True -> wrapped_name ++ " = 1"
+            pair result [wrapped_name]
         SQL_Expression.Constant value -> 
             wrapped = case value of
                 Nothing -> SQL_Builder.code "NULL"
