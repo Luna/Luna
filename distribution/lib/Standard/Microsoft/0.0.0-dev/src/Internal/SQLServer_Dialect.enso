@@ -371,12 +371,23 @@ private _generate_expression dialect base_gen expr generate_as_bool = case expr 
             "IS_NULL" -> _generate_null_check_sql_builder null_checks
             _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if kind == "IS_NULL" then [] else null_checks
-        converted_expr = if _op_returns_boolean kind == generate_as_bool then expr_result else
-            if generate_as_bool then _convert_value_to_boolean_expression expr_result else
-                SQL_Builder.code "CASE " ++ _convert_boolean_to_value_expression expr_result ++ " END"
+        has_kind = if _op_returns_boolean kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        expected_kind = if generate_as_bool then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+        converted_expr = _align_type expr_result has_kind expected_kind
 
         pair converted_expr null_checks_result
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
+
+## PRIVATE
+type ExpressionKind
+    Boolean_Condition
+    Value
+
+private _align_type expr (has_kind : ExpressionKind) (expected_kind : ExpressionKind) =
+    if has_kind == expected_kind then expr else
+        case expected_kind of
+            ExpressionKind.Boolean_Condition -> _convert_value_to_boolean_expression expr
+            ExpressionKind.Value -> _convert_boolean_to_value_expression expr
 
 private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
     case expr of
@@ -384,11 +395,11 @@ private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descripto
             generating_a_boolean_column = _op_returns_boolean kind
             expr_null_checks_pair = _generate_expression dialect base_gen expr generate_as_bool=generating_a_boolean_column
             base_expr = expr_null_checks_pair.first
-            null_check = if expr_null_checks_pair.second.length == 0 then "" else
+            null_check = if expr_null_checks_pair.second.length == 0 then "WHEN 1=0 THEN NULL " else
                 SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
             case generating_a_boolean_column of
                 False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
-                True -> SQL_Builder.code "CASE " ++ null_check ++ _convert_boolean_to_value_expression base_expr ++ " END"
+                True -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ _convert_boolean_to_value_expression base_expr ++ " END"
         _ -> 
             _generate_expression dialect base_gen expr generate_as_bool=False . first
 
@@ -396,7 +407,7 @@ private _convert_value_to_boolean_expression expr =
     expr ++ " = 1"
 
 private _convert_boolean_to_value_expression expr =
-    SQL_Builder.code "WHEN " ++ expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT)"
+    SQL_Builder.code "IIF(" ++ expr ++ ", CAST(1 AS BIT), CAST(0 AS BIT))"
 
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
