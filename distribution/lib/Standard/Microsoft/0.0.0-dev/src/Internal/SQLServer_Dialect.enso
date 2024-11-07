@@ -318,8 +318,8 @@ type SQLServer_Dialect
 
     ## PRIVATE
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
-        if for_select then _generate_expression self base_gen expr ExpressionKind.Value materialize_null_check=True . first else
-            _generate_expression self base_gen expr ExpressionKind.Boolean_Condition . first
+        if for_select then _generate_expression self base_gen expr Expression_Kind.Value materialize_null_check=True . first else
+            _generate_expression self base_gen expr Expression_Kind.Boolean_Condition . first
 
 ## Returns a pair of a SQL_Builder for the given expression and a vector of columns
    that have been used in the expression and need to be checked for nulls.
@@ -334,10 +334,10 @@ type SQLServer_Dialect
    The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
    as the second element of the pair.
    The first element of the pair is the SQL_Builder for the expression.
-private _generate_expression dialect base_gen expr expression_kind:ExpressionKind materialize_null_check:Boolean=False = case expr of
+private _generate_expression dialect base_gen expr expression_kind:Expression_Kind materialize_null_check:Boolean=False = case expr of
     SQL_Expression.Column _ _ ->
         wrapped_name = base_gen.generate_expression dialect expr
-        typed_result = _align_type wrapped_name ExpressionKind.Value expression_kind
+        typed_result = _align_type wrapped_name Expression_Kind.Value expression_kind
         pair typed_result [wrapped_name]
     SQL_Expression.Constant value -> 
         wrapped = case value of
@@ -349,7 +349,7 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
             "TRUE" -> "1"
             "FALSE" -> "0"
             _ -> value
-        wrapped = _align_type (SQL_Builder.code modified_value) ExpressionKind.Value expression_kind
+        wrapped = _align_type (SQL_Builder.code modified_value) Expression_Kind.Value expression_kind
         pair wrapped [wrapped]
     SQL_Expression.Text_Literal _ ->
         wrapped_literal = base_gen.generate_expression dialect expr
@@ -376,15 +376,15 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
     query : Query -> pair (base_gen.generate_sub_query dialect query) []
 
 ## PRIVATE
-type ExpressionKind
+type Expression_Kind
     Boolean_Condition
     Value
 
-private _align_type expr (has_kind : ExpressionKind) (expected_kind : ExpressionKind) =
+private _align_type expr (has_kind : Expression_Kind) (expected_kind : Expression_Kind) =
     if has_kind == expected_kind then expr else
         case expected_kind of
-            ExpressionKind.Boolean_Condition -> _convert_value_to_boolean_expression expr
-            ExpressionKind.Value -> _convert_boolean_to_value_expression expr
+            Expression_Kind.Boolean_Condition -> _convert_value_to_boolean_expression expr
+            Expression_Kind.Value -> _convert_boolean_to_value_expression expr
 
 private _convert_value_to_boolean_expression expr =
     expr ++ " = 1"
@@ -399,12 +399,12 @@ private _generate_null_check_sql_builder null_checks:Vector expr -> SQL_Builder 
 private _generate_is_null_expr null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
 
-private _op_expected_kind op -> ExpressionKind =
-    if ["NOT"].contains op then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+private _op_expected_kind op -> Expression_Kind =
+    if ["NOT"].contains op then Expression_Kind.Boolean_Condition else ExpExpression_KindressionKind.Value
 
-private _op_return_kind op -> ExpressionKind = 
+private _op_return_kind op -> Expression_Kind = 
     return_bool_ops = ["NOT", "BETWEEN", ">=", ">", "<=", "<", "!=", "==", "IN", "IS_NULL", "LIKE", "STARTS_WITH", "ENDS_WITH", "CONTAINS", "EQUALS_IGNORE_CASE", "IS_EMPTY"]
-    if return_bool_ops.contains op then ExpressionKind.Boolean_Condition else ExpressionKind.Value
+    if return_bool_ops.contains op then Expression_Kind.Boolean_Condition else Expression_Kind.Value
 
 ## PRIVATE
 make_dialect_operations =
