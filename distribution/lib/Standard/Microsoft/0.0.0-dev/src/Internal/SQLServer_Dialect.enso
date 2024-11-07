@@ -234,6 +234,7 @@ type SQLServer_Dialect
         case feature of
             Feature.Select_Columns -> True
             Feature.Sort -> True
+            Feature.Filter -> True
             _ -> False
 
     ## PRIVATE
@@ -247,6 +248,7 @@ type SQLServer_Dialect
             Dialect_Flag.Supports_Separate_NaN -> False
             Dialect_Flag.Supports_Nested_With_Clause -> True
             Dialect_Flag.Supports_Case_Sensitive_Columns -> False
+            Dialect_Flag.Is_Nan_And_Nothing_Distinct -> False
 
     ## PRIVATE
        The default table types to use when listing tables.
@@ -323,7 +325,7 @@ type SQLServer_Dialect
        The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
        as the second element of the pair.
        The first element of the pair is the SQL_Builder for the expression.
-    generate_expression self base_gen expr = case expr of
+    generate_expression self base_gen expr generate_as_bool = case expr of
         SQL_Expression.Column _ _ ->
             wrapped_name = base_gen.generate_expression self expr
             pair wrapped_name [wrapped_name]
@@ -340,8 +342,10 @@ type SQLServer_Dialect
             pair wrapped_literal []
         SQL_Expression.Operation kind arguments metadata ->
             op = self.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
-            parsed_args_and_null_checks = arguments.map (c -> self.generate_expression base_gen c)
+            requires_bool = _op_requires_bool kind
+            parsed_args_and_null_checks = arguments.map (c -> self.generate_expression base_gen c requires_bool)
             parsed_args = parsed_args_and_null_checks.map .first
+
             null_checks = parsed_args_and_null_checks.map .second  . flatten
 
             expr_result = case kind of
@@ -356,22 +360,45 @@ type SQLServer_Dialect
                         _ : Function -> result metadata
                         _ -> result
             null_checks_result = if kind == "IS_NULL" then [] else null_checks
+            y = (_op_returns_boolean kind && generate_as_bool . not)
+            x = case y of 
+                False -> expr_result
+                True -> 
+                    SQL_Builder.code "CASE WHEN " ++ expr_result ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
 
-            
-            pair expr_result null_checks_result
+            pair x null_checks_result
         query : Query -> pair (base_gen.generate_sub_query self query) []
 
     ## PRIVATE
-    generate_column_for_select self base_gen expr:(SQL_Expression | Order_Descriptor | Query) name:Text -> SQL_Builder =
-        expr_null_checks_pair = self.generate_expression base_gen expr
+    generate_column self base_gen expr:(SQL_Expression | Order_Descriptor | Query) name:Text for_select:Boolean -> SQL_Builder =
+        get_as_bool = case expr of
+            SQL_Expression.Operation kind _ _ -> _op_returns_boolean kind
+            _ -> False
+        
+        expr_null_checks_pair = self.generate_expression base_gen expr get_as_bool
         base_expr = expr_null_checks_pair.first
         built_expr = case expr of
-            SQL_Expression.Operation _ _ _ ->
-                null_check = if expr_null_checks_pair.second.length == 0 then "" else
-                    SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
-                SQL_Builder.code "CASE " ++ null_check ++ "WHEN " ++ base_expr ++ " THEN 1 ELSE 0 END"
+            SQL_Expression.Operation kind _ _ ->
+                    null_check = if expr_null_checks_pair.second.length == 0 then "" else
+                        SQL_Builder.code "WHEN " ++ _generate_null_check_sql_builder expr_null_checks_pair.second ++ " THEN NULL "
+                    case get_as_bool of
+                        False -> SQL_Builder.code "CASE " ++ null_check ++ " ELSE " ++ base_expr ++ " END"
+                        True -> SQL_Builder.code "CASE " ++ null_check ++ "WHEN " ++ base_expr ++ " THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END"
             _ -> base_expr
         built_expr ++ Base_Generator.alias self name
+
+## PRIVATE
+_op_returns_boolean op = case op of
+    "FILL_NULL" -> False
+    "BETWEEN" -> True
+    "IS_INF" -> True
+    "IS_FINITE" -> True
+    _ -> True
+
+## PRIVATE
+_op_requires_bool op = case op of
+    "FILL_NULL" -> False
+    _ -> True
 
 ## PRIVATE
 private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
@@ -382,7 +409,7 @@ make_dialect_operations =
     cases = [["LOWER", Base_Generator.make_function "LOWER"], ["UPPER", Base_Generator.make_function "UPPER"]]
     text = [starts_with, contains, ends_with, agg_shortest, agg_longest, make_case_sensitive, ["REPLACE", replace], left, right]+concat_ops+cases+trim_ops
     counts = [agg_count_is_null, agg_count_empty, agg_count_not_empty, ["COUNT_DISTINCT", agg_count_distinct], ["COUNT_DISTINCT_INCLUDE_NULL", agg_count_distinct_include_null]]
-    arith_extensions = [is_nan, is_inf, is_finite, floating_point_div, mod_op, decimal_div, decimal_mod, ["ROW_MIN", Base_Generator.make_function "LEAST"], ["ROW_MAX", Base_Generator.make_function "GREATEST"]]
+    arith_extensions = [is_inf, is_finite, floating_point_div, mod_op, decimal_div, decimal_mod, ["ROW_MIN", Base_Generator.make_function "LEAST"], ["ROW_MAX", Base_Generator.make_function "GREATEST"]]
     bool = [bool_or, bool_not]
     eq = lift_binary_op "==" make_equals
     compare = [eq]
@@ -561,16 +588,12 @@ make_order_descriptor internal_column sort_direction text_ordering =
                             Order_Descriptor.Value folded_expression sort_direction nulls_order=nulls collation=Nothing
 
 ## PRIVATE
-is_nan = Base_Generator.lift_unary_op "IS_NAN" arg->
-    (arg ++ " in (double precision 'NaN')").paren
-
-## PRIVATE
 is_inf = Base_Generator.lift_unary_op "IS_INF" arg->
-    (arg ++ " in (double precision 'Infinity', double precision '-Infinity')").paren
+    (arg ++ " in (1E308, -1E308)").paren
 
 ## PRIVATE
 is_finite = Base_Generator.lift_unary_op "IS_FINITE" arg->
-    (arg ++ " not in (double precision 'Infinity', double precision '-Infinity', double precision 'NaN')").paren
+    (arg ++ " not in (1E308, -1E308)").paren
 
 ## PRIVATE
 bool_or = Base_Generator.lift_unary_op "BOOL_OR" arg->
