@@ -318,7 +318,7 @@ type SQLServer_Dialect
 
     ## PRIVATE
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
-        if for_select then _generate_expression self base_gen expr ExpressionKind.Value top_level_select=True . first else
+        if for_select then _generate_expression self base_gen expr ExpressionKind.Value materialize_null_check=True . first else
             _generate_expression self base_gen expr ExpressionKind.Boolean_Condition . first
 
 ## Returns a pair of a SQL_Builder for the given expression and a vector of columns
@@ -334,7 +334,7 @@ type SQLServer_Dialect
    The below function collects all of the fields which are needed to be checked for nulls returning them in a vector
    as the second element of the pair.
    The first element of the pair is the SQL_Builder for the expression.
-private _generate_expression dialect base_gen expr expression_kind:ExpressionKind top_level_select:Boolean=False = case expr of
+private _generate_expression dialect base_gen expr expression_kind:ExpressionKind materialize_null_check:Boolean=False = case expr of
     SQL_Expression.Column _ _ ->
         wrapped_name = base_gen.generate_expression dialect expr
         typed_result = _align_type wrapped_name ExpressionKind.Value expression_kind
@@ -361,16 +361,15 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
         parsed_args = parsed_args_and_null_checks.map .first
         null_checks = parsed_args_and_null_checks.map .second  . flatten
 
-        expr_result = case op_kind of
-            ## In the case that we actually want to check for null then we need to generate the null
-                check sql for all the columns that have been used up to this point and that 
-                becomes the expression.
-            "IS_NULL" -> _generate_is_null_expr null_checks
-            _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
+        ## In the case that we actually want to check for null then we need to generate the null
+            check sql for all the columns that have been used up to this point and that 
+            becomes the expression.
+        expr_result = if op_kind == "IS_NULL" then _generate_is_null_expr null_checks else
+            base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if op_kind == "IS_NULL" then [] else null_checks
         has_kind = _op_return_kind op_kind
         converted_expr = _align_type expr_result has_kind expression_kind
-        final_expr = if top_level_select then _generate_null_check_sql_builder null_checks_result converted_expr else 
+        final_expr = if materialize_null_check then _generate_null_check_sql_builder null_checks_result converted_expr else 
             converted_expr
 
         pair final_expr null_checks_result
