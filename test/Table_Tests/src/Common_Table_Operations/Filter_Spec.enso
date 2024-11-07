@@ -472,9 +472,7 @@ add_filter_specs suite_builder setup =
                 + [Filter_Condition.Less Nothing, Filter_Condition.Equal_Or_Less Nothing]
                 + [Filter_Condition.Equal_Or_Greater Nothing, Filter_Condition.Greater Nothing]
             fcs_with_is_in = if setup.is_operation_supported "IS_IN" . not then fcs else
-                fcs
-                + [Filter_Condition.Between Nothing Nothing , Filter_Condition.Is_In [Nothing]]
-                + [Filter_Condition.Is_In [1, Nothing, 2]]
+                fcs + [Filter_Condition.Between Nothing Nothing , Filter_Condition.Is_In [Nothing] , Filter_Condition.Is_In [1, Nothing, 2]]
             fcs_with_is_in.map fc->
                 Test.with_clue fc.to_text <|
                     Problems.expect_warning Nothing_Value_In_Filter_Condition (t.filter "x" fc . at "x")
