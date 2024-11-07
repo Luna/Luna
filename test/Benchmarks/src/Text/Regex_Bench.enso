@@ -1,4 +1,5 @@
 from Standard.Base import all
+from Standard.Base.Runtime import assert
 
 import Standard.Base.Data.Text.Regex.Internal.Replacer.Replacer
 
@@ -6,15 +7,31 @@ from Standard.Test import Bench, Faker
 
 
 type Data
-    Value ~two_nums ~just_two_nums ~four_nums ~a_regex ~regexes ~replacers ~one_num_regex ~two_nums_regex
+    Value
+        ~two_nums
+        ~just_two_nums
+        ~four_nums
+        ~a_regex
+        ~regexes
+        ~replacers
+        ~one_num_regex
+        ~two_nums_regex
 
     create =
         faker = Faker.new
         a_regex = Regex.compile "(\d)ab(\d)"
-        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_four_nums faker) a_regex (build_regexes faker) (build_replacers faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
+        Data.Value
+            <| (build_two_nums faker)
+            <| (build_just_two_nums faker)
+            <| (build_four_nums faker)
+            <| a_regex
+            <| (build_regexes faker)
+            <| (build_replacers faker)
+            <| (Regex.compile "(\d+)")
+            <| (Regex.compile "(\d+)[a-z]+(\d+)")
 
-list_count = 1000000
-regex_count = 10000
+list_count = 1000
+regex_count = 1000
 
 # "ab12cdefg634hi"
 build_two_nums faker = 0.up_to list_count . map _->
@@ -37,7 +54,7 @@ build_regexes faker = 0.up_to regex_count . map _->
 build_replacers faker = 0.up_to regex_count . map _->
     "$0" + (faker.alpha 2) + "$1" + (faker.alpha 2) + "$2"
 
-options = Bench.options . set_warmup (Bench.phase_conf 3 5) . set_measure (Bench.phase_conf 3 5)
+options = Bench.options . set_warmup (Bench.phase_conf 2 3) . set_measure (Bench.phase_conf 2 3)
 
 
 collect_benches = Bench.build builder->
@@ -45,40 +62,44 @@ collect_benches = Bench.build builder->
 
     builder.group "Regex" options group_builder->
         group_builder.specify "match" <|
-            data.two_nums . map  data.two_nums_regex.match
+            result = data.two_nums . map data.two_nums_regex.match
+            assert ((result.at 0 . groups . length) == 3)
 
         group_builder.specify "match_all" <|
-            data.four_nums . map  data.two_nums_regex.match_all
+            result = data.four_nums . map data.two_nums_regex.match_all
+            assert ((result.at 0 . map .groups . map .length) == [3, 3])
 
         group_builder.specify "matches" <|
-            data.just_two_nums . map  data.two_nums_regex.matches
+            result = data.just_two_nums . map data.two_nums_regex.matches
+            assert ((result.at 0) == True)
 
         group_builder.specify "find" <|
-            data.two_nums . map  data.two_nums_regex.find
+            result = data.two_nums . map data.two_nums_regex.find
+            assert (result.at 0 . is_a Text)
 
         group_builder.specify "find_all" <|
-            data.four_nums . map  data.two_nums_regex.find_all
+            result = data.four_nums . map data.two_nums_regex.find_all
+            assert ((result.at 0 . at 0) . is_a Text)
 
         group_builder.specify "split" <|
-            data.two_nums . map  data.two_nums_regex.split
+            result = data.two_nums . map data.two_nums_regex.split
+            assert ((result.at 0 . map .length) == [2, 2])
 
         group_builder.specify "tokenize" <|
-            data.two_nums . map  data.two_nums_regex.tokenize
+            result = data.two_nums . map data.two_nums_regex.tokenize
+            assert (result.at 0 . at 0 . is_a Text)
 
         group_builder.specify "replace" <|
-            data.two_nums . map  (x-> data.two_nums_regex.replace x "NUM")
+            result = data.two_nums . map (x-> data.two_nums_regex.replace x "NUM")
+            assert ((result . at 0 . take 5 . drop 2) == "NUM")
 
-        group_builder.specify "regex_compile_same" <|
-            Regex.compile "(\d)ab(\d)"
+        group_builder.specify "regex_compile" <|
+            result = data.regexes.map Regex.compile
+            assert (result . at 0 . is_a Regex)
 
-        group_builder.specify "regex_compile_different" <|
-            data.regexes.map Regex.compile
-
-        group_builder.specify "replacer_compile_same" <|
-            Replacer.new "$0 ab $1 cd $2" data.a_regex
-
-        group_builder.specify "replacer_compile_different" <|
-            data.replacers.map (r-> Replacer.new r data.a_regex)
+        group_builder.specify "replacer_compile" <|
+            result = data.replacers.map (r-> Replacer.new r data.a_regex)
+            assert (result . at 0 . is_a Replacer)
 
 
 main = collect_benches . run_main
