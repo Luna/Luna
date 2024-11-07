@@ -178,11 +178,12 @@ type SQL_Generator
         - ctx: A description of the SELECT clause.
     generate_select_query_sql : Dialect -> Vector (Pair Text SQL_Expression) -> Context -> SQL_Builder
     generate_select_query_sql self dialect columns ctx =
-        gen_exprs exprs = exprs.map (expr-> dialect.generate_expression self expr True . first)
+        gen_exprs exprs = exprs.map (expr-> dialect.generate_expression self expr for_select=False)
+        gen_column pair = (dialect.generate_expression self expr=pair.second for_select=True) ++ alias dialect pair.first
 
         generated_columns = case columns of
             Nothing -> SQL_Builder.code "*"
-            _ -> SQL_Builder.join ", " (columns.map (c-> dialect.generate_column self expr=c.second name=c.first for_select=True))
+            _ -> SQL_Builder.join ", " (columns.map gen_column)
 
         from_part = self.generate_from_part dialect ctx.from_spec
         where_part = (SQL_Builder.join " AND " (gen_exprs ctx.where_filters)) . prefix_if_present " WHERE "
