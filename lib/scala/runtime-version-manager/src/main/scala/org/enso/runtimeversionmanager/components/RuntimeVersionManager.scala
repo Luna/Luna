@@ -30,7 +30,6 @@ import scala.util.{Failure, Success, Try, Using}
   * @param userInterface a [[RuntimeVersionManagementUserInterface]] instance
   *                      that specifies how to handle user interactions
   *                      (displaying progress and handling corner cases)
-  * @param distributionManager the [[DistributionManager]] to use
   * @param engineReleaseProvider the provider of engine releases
   * @param runtimeReleaseProvider the provider of runtime releases
   */
@@ -38,6 +37,7 @@ class RuntimeVersionManager(
   environment: Environment,
   userInterface: RuntimeVersionManagementUserInterface,
   distributionManager: DistributionManager,
+  graalVersionManager: GraalVersionManager,
   temporaryDirectoryManager: TemporaryDirectoryManager,
   resourceManager: ResourceManager,
   engineReleaseProvider: ReleaseProvider[EngineRelease],
@@ -50,54 +50,16 @@ class RuntimeVersionManager(
     *
     * Returns None if the runtime is missing.
     */
-  def findGraalRuntime(engine: Engine): Option[GraalRuntime] =
-    findGraalRuntime(engine.manifest.runtimeVersion)
+  def findGraalRuntime(engine: Engine): Option[GraalRuntime] = {
+    Option(graalVersionManager.findGraalRuntime(engine))
+  }
 
   /** Finds an installed GraalVM runtime with the given `version`.
     *
     * Returns None if that version is not installed.
     */
   def findGraalRuntime(version: GraalVMVersion): Option[GraalRuntime] = {
-    val explicitPathOpt = this.environment.getEnvPath("ENSO_JVM_PATH")
-    val graalRuntimeOpt = explicitPathOpt
-      .map(path => {
-        val runtime = GraalRuntime(version, path)
-        runtime.ensureValid()
-        runtime
-      })
-      .orElse {
-        val pathOpt = findGraalRuntimeOnSearchPath(version)
-        pathOpt.map { path =>
-          // TODO [RW] for now an exception is thrown if the installation is
-          //  corrupted, in #1052 offer to repair the broken installation
-          loadGraalRuntime(path).recoverWith { case e: Exception =>
-            Failure(
-              UnrecognizedComponentError(
-                s"The runtime $version is already installed, but cannot be " +
-                s"loaded due to $e. Until the launcher gets an auto-repair " +
-                s"feature, please try reinstalling the runtime by " +
-                s"uninstalling all engines that use it and installing them " +
-                s"again, or manually removing `$path`",
-                e
-              )
-            )
-          }.get
-        }
-      }
-    graalRuntimeOpt match {
-      case Some(graalRuntime) =>
-        logger.debug("Found GraalVM runtime [{}]", graalRuntime)
-      case None =>
-        logger.debug("GraalVM runtime [{}] not found", version)
-    }
-    graalRuntimeOpt
-  }
-
-  private def findGraalRuntimeOnSearchPath(
-    version: GraalVMVersion
-  ): Option[Path] = {
-    val name = graalRuntimeNameForVersion(version)
-    firstExisting(distributionManager.paths.runtimeSearchPaths.map(_ / name))
+    Option(graalVersionManager.findGraalRuntime(version));
   }
 
   /** Executes the provided action with a requested engine version.
@@ -628,42 +590,13 @@ class RuntimeVersionManager(
   private def engineNameForVersion(version: SemVer): String =
     version.toString
 
-  /** Returns name of the directory containing the runtime of that version.
-    */
-  private def graalRuntimeNameForVersion(version: GraalVMVersion): String = {
-    s"graalvm-ce-java${version.javaVersion}-${version.graalVersion}"
-  }
-
   /** Loads the GraalVM runtime definition.
     */
   private def loadGraalRuntime(path: Path): Try[GraalRuntime] = {
-    logger.debug("Loading Graal runtime [{}]", path)
-    val name = path.getFileName.toString
-    for {
-      version <- parseGraalRuntimeVersionString(name)
-        .toRight(
-          UnrecognizedComponentError(s"Invalid runtime component name `$name`.")
-        )
-        .toTry
-      runtime = GraalRuntime(version, path)
-      _ <- runtime.ensureValid()
-    } yield runtime
-  }
-
-  /** Gets the runtime version from its name.
-    */
-  private def parseGraalRuntimeVersionString(
-    name: String
-  ): Option[GraalVMVersion] = {
-    val regex = """graalvm-ce-java(.+)-(.+)""".r
-    name match {
-      case regex(javaVersionString, graalVersionString) =>
-        Some(GraalVMVersion(graalVersionString, javaVersionString))
-      case _ =>
-        logger.warn(
-          s"Unrecognized runtime name `$name`"
-        )
-        None
+    try {
+      Success(graalVersionManager.loadGraalRuntime(path))
+    } catch {
+      case e: UnrecognizedComponentError => Failure(e)
     }
   }
 

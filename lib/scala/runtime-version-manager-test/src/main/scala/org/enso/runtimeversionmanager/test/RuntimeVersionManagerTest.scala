@@ -9,6 +9,7 @@ import org.enso.distribution.{
 }
 import org.enso.pkg.{Config, PackageManager}
 import org.enso.runtimeversionmanager.components.{
+  GraalVersionManager,
   InstallerKind,
   RuntimeVersionManagementUserInterface,
   RuntimeVersionManager
@@ -50,6 +51,7 @@ class RuntimeVersionManagerTest
   ): (DistributionManager, RuntimeVersionManager, Environment) = {
     val env                 = fakeInstalledEnvironment(environmentOverrides)
     val distributionManager = new PortableDistributionManager(env)
+    val graalVersionManager = new GraalVersionManager(distributionManager, env)
 
     val resourceManager = TestLocalResourceManager.create()
     val temporaryDirectoryManager =
@@ -59,6 +61,7 @@ class RuntimeVersionManagerTest
       env,
       userInterface,
       distributionManager,
+      graalVersionManager,
       temporaryDirectoryManager,
       resourceManager,
       engineProvider,
