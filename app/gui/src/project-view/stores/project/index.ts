@@ -4,6 +4,7 @@ import { Awareness } from '@/stores/awareness'
 import { ComputedValueRegistry } from '@/stores/project/computedValueRegistry'
 import {
   ExecutionContext,
+  visualizationConfigPreprocessorEqual,
   type NodeVisualizationConfiguration,
 } from '@/stores/project/executionContext'
 import { VisualizationDataRegistry } from '@/stores/project/visualizationDataRegistry'
@@ -238,25 +239,29 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
 
     function useVisualizationData(configuration: WatchSource<Opt<NodeVisualizationConfiguration>>) {
       const newId = () => random.uuidv4() as Uuid
-      const id = ref(newId())
+      const visId = ref(newId())
+      // Regenerate the visualization ID when the preprocessor changes.
+      watch(configuration, (a, b) => {
+        if (a != null && b != null && !visualizationConfigPreprocessorEqual(a, b))
+          visId.value = newId()
+      })
 
       watch(
-        [configuration, id],
-        ([config, id], _, onCleanup) => {
+        [configuration, visId],
+        ([config, id], [_, oldId]) => {
+          if (oldId != null && id !== oldId) {
+            executionContext.setVisualization(oldId, null)
+          }
           executionContext.setVisualization(id, config)
-          onCleanup(() => executionContext.setVisualization(id, null))
         },
         // Make sure to flush this watch in 'post', otherwise it might cause operations on stale
         // ASTs just before the widget tree renders and cleans up the associated widget instances.
         { immediate: true, flush: 'post' },
       )
 
-      return {
-        data: computed(() =>
-          parseVisualizationData(visualizationDataRegistry.getRawData(id.value)),
-        ),
-        reconnect: () => (id.value = newId()),
-      }
+      return computed(() =>
+        parseVisualizationData(visualizationDataRegistry.getRawData(visId.value)),
+      )
     }
 
     const dataflowErrors = new ReactiveMapping(computedValueRegistry.db, (id, info) => {
@@ -273,7 +278,7 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
           }
         : null,
       )
-      const { data } = useVisualizationData(config)
+      const data = useVisualizationData(config)
       return computed<{ kind: 'Dataflow'; message: string } | undefined>(() => {
         const visResult = data.value
         if (!visResult) return

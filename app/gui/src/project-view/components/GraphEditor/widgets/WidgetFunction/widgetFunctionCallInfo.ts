@@ -35,9 +35,7 @@ export function useWidgetFunctionCallInfo(
     getExpressionInfo(id: AstId): ExpressionInfo | undefined
   },
   project: {
-    useVisualizationData(config: Ref<Opt<NodeVisualizationConfiguration>>): {
-      data: Ref<Result<any> | null>
-    }
+    useVisualizationData(config: Ref<Opt<NodeVisualizationConfiguration>>): Ref<Result<any> | null>
   },
 ) {
   const methodCallInfo = computed(() => getMethodCallInfoRecursively(toValue(input).value, graphDb))
@@ -146,7 +144,7 @@ export function useWidgetFunctionCallInfo(
   const visualizationData = project.useVisualizationData(visualizationConfig)
 
   const widgetConfiguration = computed(() => {
-    const data = visualizationData.data.value
+    const data = visualizationData.value
     if (data?.ok) {
       const parseResult = argsWidgetConfigurationSchema.safeParse(data.value)
       if (parseResult.success) {
