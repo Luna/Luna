@@ -379,7 +379,7 @@ type SQLServer_Dialect
         query : Query -> pair (base_gen.generate_sub_query self query) []
 
     ## PRIVATE
-    generate_column self base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
+    _generate_column self base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
         get_as_bool = case expr of
             SQL_Expression.Operation kind _ _ -> _op_returns_boolean kind
             _ -> False
@@ -397,8 +397,8 @@ type SQLServer_Dialect
         built_expr
 
     generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
-        if for_select then self.generate_column base_gen expr else
-            self._generate_expression base_gen expr True . first
+        if for_select then self._generate_column base_gen expr else
+            self._generate_expression base_gen expr generate_as_bool=True . first
 
 ## PRIVATE
 _op_returns_boolean op = case op of

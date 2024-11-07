@@ -329,8 +329,9 @@ type SQLite_Dialect
         False
 
     ## PRIVATE
-    generate_column_for_select self base_gen expr:(SQL_Expression | Order_Descriptor | Query) name:Text -> SQL_Builder =
-        base_gen.default_generate_column self expr name
+    generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
+        _ = for_select
+        base_gen.generate_expression self expr
 
     ## PRIVATE
     ensure_query_has_no_holes : JDBC_Connection -> Text -> Nothing ! Illegal_Argument
