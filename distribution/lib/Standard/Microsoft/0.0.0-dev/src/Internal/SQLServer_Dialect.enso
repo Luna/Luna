@@ -366,7 +366,7 @@ private _generate_expression dialect base_gen expr expression_kind:ExpressionKin
             ## In the case that we actually want to check for null then we need to generate the null
                 check sql for all the columns that have been used up to this point and that 
                 becomes the expression.
-            "IS_NULL" -> _generate_null_check_sql_builder null_checks
+            "IS_NULL" -> _generate_is_null_expr null_checks
             _ -> base_gen.apply_op_generator_with_metadata op parsed_args metadata
         null_checks_result = if op_kind == "IS_NULL" then [] else null_checks
         has_kind = if _op_returns_boolean op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
@@ -389,15 +389,8 @@ private _align_type expr (has_kind : ExpressionKind) (expected_kind : Expression
 private _generate_column dialect base_gen expr:(SQL_Expression | Order_Descriptor | Query) -> SQL_Builder =
     case expr of
         SQL_Expression.Operation op_kind _ _ ->
-            generating_a_boolean_column = _op_returns_boolean op_kind
-            expected_kind = if _op_requires_bool op_kind then ExpressionKind.Boolean_Condition else ExpressionKind.Value
             expr_null_checks_pair = _generate_expression dialect base_gen expr ExpressionKind.Value
-            base_expr = expr_null_checks_pair.first
-            needs_null_check = (expr_null_checks_pair.second.length > 0)
-            null_check = _generate_null_check_sql_builder expr_null_checks_pair.second
-
-            if needs_null_check then SQL_Builder.code "IIF(" ++ null_check ++ ", NULL, " ++ base_expr ++ ")" else
-                base_expr
+            _generate_null_check_sql_builder expr_null_checks_pair.second expr_null_checks_pair.first
         _ -> 
             _generate_expression dialect base_gen expr ExpressionKind.Value . first
 
@@ -407,7 +400,11 @@ private _convert_value_to_boolean_expression expr =
 private _convert_boolean_to_value_expression expr =
     SQL_Builder.code "IIF(" ++ expr ++ ", CAST(1 AS BIT), CAST(0 AS BIT))"
 
-private _generate_null_check_sql_builder null_checks:Vector -> SQL_Builder =
+private _generate_null_check_sql_builder null_checks:Vector expr -> SQL_Builder =
+    if null_checks.length == 0 then expr else
+        SQL_Builder.code "IIF(" ++ _generate_is_null_expr null_checks ++ ", NULL, " ++ expr ++ ")"
+
+private _generate_is_null_expr null_checks:Vector -> SQL_Builder =
     (null_checks.map it->(it.paren ++ " IS NULL ")) . reduce acc-> i-> acc ++ "OR " ++ i
 
 private _op_requires_bool op = ["NOT"].contains op
