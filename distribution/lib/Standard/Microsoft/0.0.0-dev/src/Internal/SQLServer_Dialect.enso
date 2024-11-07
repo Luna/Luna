@@ -400,8 +400,6 @@ type SQLServer_Dialect
 _op_returns_boolean op = case op of
     "FILL_NULL" -> False
     "BETWEEN" -> True
-    "IS_INF" -> True
-    "IS_FINITE" -> True
     "NOT" -> True
     "COALESCE" -> False
     ">=" -> True
@@ -411,8 +409,6 @@ _op_returns_boolean op = case op of
     "!=" -> True
     "==" -> True
     "IN" -> True
-    "IS_INF" -> True
-    "IS_FINITE" -> True
     "NOT" -> True
     "-" -> False
     "IS_NULL" -> True
@@ -441,8 +437,6 @@ _op_requires_bool op = case op of
     "!=" -> False
     "==" -> False
     "IN" -> False
-    "IS_INF" -> False
-    "IS_FINITE" -> False
     "NOT" -> True
     "-" -> False
     "IS_NULL" -> False
