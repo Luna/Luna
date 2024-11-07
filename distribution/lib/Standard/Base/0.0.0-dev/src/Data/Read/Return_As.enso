@@ -16,7 +16,6 @@ from project.Metadata.Widget import Single_Choice
 
 polyglot java import org.enso.base.read.ReadManyReturnSPI
 
-## PRIVATE
 private _get_known_return_classes -> Vector =
     Vector.from_polyglot_array (ReadManyReturnSPI.get_types False)
 
