@@ -17,7 +17,7 @@ import { DASHBOARD_PATH, LOGIN_PATH } from '#/appUtils'
 import { useIsFirstRender } from '#/hooks/mountHooks'
 
 import { useAuth, UserSessionType, useUserSession } from '#/providers/AuthProvider'
-import { useRemoteBackendStrict } from '#/providers/BackendProvider'
+import { useRemoteBackend } from '#/providers/BackendProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
@@ -142,7 +142,7 @@ const BASE_STEPS: Step[] = [
     /** Setup step for setting organization name. */
     component: function SetOrganizationNameStep({ goToNextStep, goToPreviousStep, session }) {
       const { getText } = textProvider.useText()
-      const remoteBackend = useRemoteBackendStrict()
+      const remoteBackend = useRemoteBackend()
       const userId = session && 'user' in session ? session.user.userId : null
 
       const { data: defaultOrgName } = useSuspenseQuery({
@@ -168,7 +168,6 @@ const BASE_STEPS: Step[] = [
           className="max-w-96"
           onSubmit={({ organizationName }) => {
             if (organizationName !== defaultOrgName) {
-              // eslint-disable-next-line no-restricted-syntax
               return updateOrganizationMutation.mutateAsync([{ name: organizationName }])
             }
           }}
@@ -248,7 +247,7 @@ const BASE_STEPS: Step[] = [
     /** Setup step for creating the first user group. */
     component: function CreateUserGroupStep({ goToNextStep, goToPreviousStep }) {
       const { getText } = textProvider.useText()
-      const remoteBackend = useRemoteBackendStrict()
+      const remoteBackend = useRemoteBackend()
 
       const defaultUserGroupMaxLength = 64
 
@@ -402,7 +401,6 @@ export function Setup() {
   }
 
   if (session?.type !== UserSessionType.full && session?.type !== UserSessionType.partial) {
-    // eslint-disable-next-line no-restricted-syntax
     return <Navigate to={LOGIN_PATH} />
   }
 

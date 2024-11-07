@@ -6,12 +6,12 @@ import * as newtype from '../utilities/data/newtype'
 import * as permissions from '../utilities/permissions'
 import * as uniqueString from '../utilities/uniqueString'
 
+/** The size, in bytes, of the chunks which the backend accepts. */
+export const S3_CHUNK_SIZE_BYTES = 10_000_000
+
 // ================
 // === Newtypes ===
 // ================
-
-// These are constructor functions that construct values of the type they are named after.
-/* eslint-disable @typescript-eslint/no-redeclare */
 
 /** Unique identifier for an organization. */
 export type OrganizationId = newtype.Newtype<string, 'OrganizationId'>
@@ -116,8 +116,6 @@ export type UserPermissionIdentifier = UserGroupId | UserId
 /** An filesystem path. Only present on the local backend. */
 export type Path = newtype.Newtype<string, 'Path'>
 export const Path = newtype.newtypeConstructor<Path>()
-
-/* eslint-enable @typescript-eslint/no-redeclare */
 
 /** Whether a given {@link string} is an {@link UserId}. */
 export function isUserId(id: string): id is UserId {
@@ -296,9 +294,7 @@ export interface UpdatedProject extends BaseProject {
 
 /** A user/organization's project containing and/or currently executing code. */
 export interface ProjectRaw extends ListedProjectRaw {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   readonly ide_version: VersionNumber | null
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   readonly engine_version: VersionNumber | null
 }
 
@@ -421,9 +417,6 @@ export interface Version {
   readonly number: VersionNumber
   readonly ami: Ami | null
   readonly created: dateTime.Rfc3339DateTime
-  // This does not follow our naming convention because it's defined this way in the backend,
-  // so we need to match it.
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   readonly version_type: VersionType
 }
 
@@ -446,8 +439,6 @@ export enum Plan {
 
 export const PLANS = Object.values(Plan)
 
-// This is a function, even though it does not look like one.
-// eslint-disable-next-line no-restricted-syntax
 export const isPlan = array.includesPredicate(PLANS)
 
 /** Metadata uniquely describing a payment checkout session. */
@@ -668,7 +659,6 @@ export interface LChColor {
 
 /** A pre-selected list of colors to be used in color pickers. */
 export const COLORS = [
-  /* eslint-disable @typescript-eslint/no-magic-numbers */
   // Red
   { lightness: 50, chroma: 66, hue: 7 },
   // Orange
@@ -689,7 +679,6 @@ export const COLORS = [
   { lightness: 50, chroma: 22, hue: 252 },
   // Dark blue
   { lightness: 22, chroma: 13, hue: 252 },
-  /* eslint-enable @typescript-eslint/no-magic-numbers */
 ] as const satisfies LChColor[]
 
 /** Converts a {@link LChColor} to a CSS color string. */
@@ -755,9 +744,6 @@ export interface IdType {
  * in a directory listing.
  */
 export const ASSET_TYPE_ORDER: Readonly<Record<AssetType, number>> = {
-  // This is a sequence of numbers, not magic numbers. `1000` is an arbitrary number
-  // that are higher than the number of possible asset types.
-  /* eslint-disable @typescript-eslint/no-magic-numbers */
   [AssetType.directory]: 0,
   [AssetType.project]: 1,
   [AssetType.file]: 2,
@@ -766,7 +752,6 @@ export const ASSET_TYPE_ORDER: Readonly<Record<AssetType, number>> = {
   [AssetType.specialLoading]: 1000,
   [AssetType.specialEmpty]: 1000,
   [AssetType.specialError]: 1000,
-  /* eslint-enable @typescript-eslint/no-magic-numbers */
 }
 
 // =============
@@ -777,8 +762,9 @@ export const ASSET_TYPE_ORDER: Readonly<Record<AssetType, number>> = {
  * Metadata uniquely identifying a directory entry.
  * These can be Projects, Files, Secrets, or other directories.
  */
-export interface BaseAsset {
-  readonly id: AssetId
+export interface Asset<Type extends AssetType = AssetType> {
+  readonly type: Type
+  readonly id: IdType[Type]
   readonly title: string
   readonly modifiedAt: dateTime.Rfc3339DateTime
   /**
@@ -789,16 +775,10 @@ export interface BaseAsset {
   readonly permissions: readonly AssetPermission[] | null
   readonly labels: readonly LabelName[] | null
   readonly description: string | null
-}
-
-/**
- * Metadata uniquely identifying a directory entry.
- * These can be Projects, Files, Secrets, or other directories.
- */
-export interface Asset<Type extends AssetType = AssetType> extends BaseAsset {
-  readonly type: Type
-  readonly id: IdType[Type]
   readonly projectState: Type extends AssetType.project ? ProjectStateType : null
+  readonly extension: Type extends AssetType.file ? string : null
+  readonly parentsPath: string
+  readonly virtualParentsPath: string
 }
 
 /** A convenience alias for {@link Asset}<{@link AssetType.directory}>. */
@@ -838,9 +818,17 @@ export function createRootDirectoryAsset(directoryId: DirectoryId): DirectoryAss
     parentId: DirectoryId(''),
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Extract the file extension from a file name. */
+function fileExtension(fileNameOrPath: string) {
+  return fileNameOrPath.match(/[.]([^.]+?)$/)?.[1] ?? ''
 }
 
 /** Creates a {@link FileAsset} using the given values. */
@@ -857,8 +845,11 @@ export function createPlaceholderFileAsset(
     permissions: assetPermissions,
     modifiedAt: dateTime.toRfc3339(new Date()),
     projectState: null,
+    extension: fileExtension(title),
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
 }
 
@@ -883,8 +874,11 @@ export function createPlaceholderProjectAsset(
       ...(organization != null ? { openedBy: organization.email } : {}),
       ...(path != null ? { path } : {}),
     },
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
 }
 
@@ -896,14 +890,22 @@ export function createSpecialLoadingAsset(directoryId: DirectoryId): SpecialLoad
   return {
     type: AssetType.specialLoading,
     title: '',
-    id: LoadingAssetId(uniqueString.uniqueString()),
+    id: LoadingAssetId(`${AssetType.specialLoading}-${uniqueString.uniqueString()}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link LoadingAssetId}. */
+export function isLoadingAssetId(id: string): id is LoadingAssetId {
+  return id.startsWith(`${AssetType.specialLoading}-`)
 }
 
 /**
@@ -914,14 +916,22 @@ export function createSpecialEmptyAsset(directoryId: DirectoryId): SpecialEmptyA
   return {
     type: AssetType.specialEmpty,
     title: '',
-    id: EmptyAssetId(uniqueString.uniqueString()),
+    id: EmptyAssetId(`${AssetType.specialEmpty}-${uniqueString.uniqueString()}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link EmptyAssetId}. */
+export function isEmptyAssetId(id: string): id is EmptyAssetId {
+  return id.startsWith(`${AssetType.specialEmpty}-`)
 }
 
 /**
@@ -932,14 +942,22 @@ export function createSpecialErrorAsset(directoryId: DirectoryId): SpecialErrorA
   return {
     type: AssetType.specialError,
     title: '',
-    id: ErrorAssetId(uniqueString.uniqueString()),
+    id: ErrorAssetId(`${AssetType.specialError}-${uniqueString.uniqueString()}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link ErrorAssetId}. */
+export function isErrorAssetId(id: string): id is ErrorAssetId {
+  return id.startsWith(`${AssetType.specialError}-`)
 }
 
 /** Any object with a `type` field matching the given `AssetType`. */
@@ -1008,13 +1026,9 @@ export function createPlaceholderAssetId<Type extends AssetType>(
       break
     }
   }
-  // This is SAFE, just too dynamic for TypeScript to correctly typecheck.
-  // eslint-disable-next-line no-restricted-syntax
   return result as IdType[Type]
 }
 
-// These are functions, and so their names should be camelCase.
-/* eslint-disable no-restricted-syntax */
 /** A type guard that returns whether an {@link Asset} is a {@link ProjectAsset}. */
 export const assetIsProject = assetIsType(AssetType.project)
 /** A type guard that returns whether an {@link Asset} is a {@link DirectoryAsset}. */
@@ -1025,7 +1039,6 @@ export const assetIsDatalink = assetIsType(AssetType.datalink)
 export const assetIsSecret = assetIsType(AssetType.secret)
 /** A type guard that returns whether an {@link Asset} is a {@link FileAsset}. */
 export const assetIsFile = assetIsType(AssetType.file)
-/* eslint-enable no-restricted-syntax */
 
 /** Metadata describing a specific version of an asset. */
 export interface S3ObjectVersion {
@@ -1236,6 +1249,50 @@ export interface UploadFileRequestParams {
   readonly parentDirectoryId: DirectoryId | null
 }
 
+/** HTTP request body for the "upload file start" endpoint. */
+export interface UploadFileStartRequestBody {
+  readonly size: number
+  readonly fileName: string
+}
+
+/** Metadata required to uploading a large file. */
+export interface UploadLargeFileMetadata {
+  readonly presignedUrls: readonly HttpsUrl[]
+  readonly uploadId: string
+  readonly sourcePath: S3FilePath
+}
+
+/** Metadata for each multipart upload. */
+export interface S3MultipartPart {
+  readonly eTag: string
+  readonly partNumber: number
+}
+
+/** HTTP request body for the "upload file end" endpoint. */
+export interface UploadFileEndRequestBody {
+  readonly parentDirectoryId: DirectoryId | null
+  readonly parts: readonly S3MultipartPart[]
+  readonly sourcePath: S3FilePath
+  readonly uploadId: string
+  readonly assetId: AssetId | null
+  readonly fileName: string
+}
+
+/** A large file that has finished uploading. */
+export interface UploadedLargeFile {
+  readonly id: FileId
+  readonly project: null
+}
+
+/** A large project that has finished uploading. */
+export interface UploadedLargeProject {
+  readonly id: ProjectId
+  readonly project: Project
+}
+
+/** A large asset (file or project) that has finished uploading. */
+export type UploadedLargeAsset = UploadedLargeFile | UploadedLargeProject
+
 /** URL query string parameters for the "upload profile picture" endpoint. */
 export interface UploadPictureRequestParams {
   readonly fileName: string | null
@@ -1354,12 +1411,38 @@ export function stripProjectExtension(name: string) {
 }
 
 /**
+ * Escape special characters in a project name to prevent them from being interpreted as path or regex
+ */
+export function escapeSpecialCharacters(name: string): string {
+  return name.replace(/[*+?^${}()|[\]\\]/g, ':')
+}
+
+/**
  * Return both the name and extension of the project file name (if any).
  * Otherwise, returns the entire name as the basename.
  */
 export function extractProjectExtension(name: string) {
   const [, basename, extension] = name.match(/^(.*)[.](tar[.]gz|zip|enso-project)$/) ?? []
   return { basename: basename ?? name, extension: extension ?? '' }
+}
+
+/** Check whether a pending rename is valid. */
+export function isNewTitleValid(
+  item: AnyAsset,
+  newTitle: string,
+  siblings?: readonly AnyAsset[] | null,
+) {
+  siblings ??= []
+  return (
+    newTitle !== '' &&
+    newTitle !== item.title &&
+    siblings.every(sibling => {
+      const isSelf = sibling.id === item.id
+      const hasSameType = sibling.type === item.type
+      const hasSameTitle = sibling.title === newTitle
+      return !(!isSelf && hasSameType && hasSameTitle)
+    })
+  )
 }
 
 /** Network error class. */
@@ -1520,8 +1603,15 @@ export default abstract class Backend {
   abstract checkResources(projectId: ProjectId, title: string): Promise<ResourceUsage>
   /** Return a list of files accessible by the current user. */
   abstract listFiles(): Promise<readonly FileLocator[]>
-  /** Upload a file. */
-  abstract uploadFile(params: UploadFileRequestParams, file: Blob): Promise<FileInfo>
+  /** Begin uploading a large file. */
+  abstract uploadFileStart(
+    body: UploadFileRequestParams,
+    file: File,
+  ): Promise<UploadLargeFileMetadata>
+  /** Upload a chunk of a large file. */
+  abstract uploadFileChunk(url: HttpsUrl, file: Blob, index: number): Promise<S3MultipartPart>
+  /** Finish uploading a large file. */
+  abstract uploadFileEnd(body: UploadFileEndRequestBody): Promise<UploadedLargeAsset>
   /** Change the name of a file. */
   abstract updateFile(fileId: FileId, body: UpdateFileRequestBody, title: string): Promise<void>
   /** Return file details. */

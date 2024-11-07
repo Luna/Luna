@@ -20,6 +20,12 @@
   --color-invert-opacity: 100%;
   --color-invert: rgb(var(--color-invert-rgb) / var(--color-invert-opacity));
 
+  --color-dashboard-background-rgb: 239 234 228;
+  --color-dashboard-background-opacity: 100%;
+  --color-dashboard-background: rgb(
+    var(--color-dashboard-background-rgb) / var(--color-dashboard-background-opacity)
+  );
+
   --top-bar-height: 3rem;
   --row-height: 2rem;
   --table-row-height: 2.3125rem;
@@ -444,7 +450,9 @@
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
   tab-size: 4;
-  font-family: 'Enso Prose', 'Enso', 'M PLUS 1', 'Roboto Light', sans-serif;
+  --font-family: 'Enso Prose', 'Enso', 'M PLUS 1', 'Roboto Light', sans-serif;
+  font-family: var(--font-family);
+  --toastify-font-family: var(--font-family);
   font-feature-settings: normal;
 
   @apply font-medium;

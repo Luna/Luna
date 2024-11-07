@@ -8,7 +8,7 @@ import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
-import { useBackend, useLocalBackend, useRemoteBackendStrict } from '#/providers/BackendProvider'
+import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import {
   FilterBy,
   type AssetId,
@@ -109,14 +109,48 @@ export const CATEGORY_TO_FILTER_BY: Readonly<Record<Category['type'], FilterBy |
   'local-directory': FilterBy.active,
 }
 
+/**
+ * The type of the cached value for a category.
+ * We use const enums because they compile to numeric values and they are faster than strings.
+ */
+const enum CategoryCacheType {
+  cloud = 0,
+  local = 1,
+}
+
+const CATEGORY_CACHE = new Map<Category['type'], CategoryCacheType>()
+
 /** Whether the category is only accessible from the cloud. */
 export function isCloudCategory(category: Category): category is AnyCloudCategory {
-  return ANY_CLOUD_CATEGORY_SCHEMA.safeParse(category).success
+  const cached = CATEGORY_CACHE.get(category.type)
+
+  if (cached != null) {
+    return cached === CategoryCacheType.cloud
+  }
+
+  const result = ANY_CLOUD_CATEGORY_SCHEMA.safeParse(category)
+  CATEGORY_CACHE.set(
+    category.type,
+    result.success ? CategoryCacheType.cloud : CategoryCacheType.local,
+  )
+
+  return result.success
 }
 
 /** Whether the category is only accessible locally. */
 export function isLocalCategory(category: Category): category is AnyLocalCategory {
-  return ANY_LOCAL_CATEGORY_SCHEMA.safeParse(category).success
+  const cached = CATEGORY_CACHE.get(category.type)
+
+  if (cached != null) {
+    return cached === CategoryCacheType.local
+  }
+
+  const result = ANY_LOCAL_CATEGORY_SCHEMA.safeParse(category)
+  CATEGORY_CACHE.set(
+    category.type,
+    result.success ? CategoryCacheType.local : CategoryCacheType.cloud,
+  )
+  return result.success
 }
 
 /** Whether the given categories are equal. */
@@ -155,7 +189,7 @@ export function canTransferBetweenCategories(from: Category, to: Category) {
 
 /** A function to transfer a list of assets between categories. */
 export function useTransferBetweenCategories(currentCategory: Category) {
-  const remoteBackend = useRemoteBackendStrict()
+  const remoteBackend = useRemoteBackend()
   const localBackend = useLocalBackend()
   const backend = useBackend(currentCategory)
   const { user } = useFullUserSession()

@@ -737,9 +737,10 @@ add_postgres_specs suite_builder create_connection_fn db_name =
         (agg_in_memory_table.take (..First 0)).select_into_database_table default_connection.get (Name_Generator.random_name "Agg_Empty") primary_key=Nothing temporary=True
 
     is_feature_supported_fn feature:Feature = default_connection.get.dialect.is_feature_supported feature
+    is_operation_supported_fn operation:Text = default_connection.get.dialect.is_operation_supported operation
     flagged_fn = default_connection.get.dialect.flagged
 
-    setup = Common_Table_Operations.Main.Test_Setup.Config prefix agg_table_fn empty_agg_table_fn table_builder materialize is_database=True test_selection=common_selection aggregate_test_selection=aggregate_selection create_connection_func=create_connection_fn light_table_builder=light_table_builder is_feature_supported=is_feature_supported_fn flagged=flagged_fn
+    setup = Common_Table_Operations.Main.Test_Setup.Config prefix agg_table_fn empty_agg_table_fn table_builder materialize is_database=True test_selection=common_selection aggregate_test_selection=aggregate_selection create_connection_func=create_connection_fn light_table_builder=light_table_builder is_feature_supported=is_feature_supported_fn flagged=flagged_fn is_operation_supported=is_operation_supported_fn
 
     Common_Spec.add_specs suite_builder prefix create_connection_fn default_connection setup
     postgres_specific_spec suite_builder create_connection_fn db_name setup
@@ -1002,7 +1003,9 @@ add_data_link_specs suite_builder =
     connection_details = get_configured_connection_details
     pending = if connection_details.is_nothing then "PostgreSQL test database is not configured. See README.md for instructions."
     data_link_file = Temporary_Data_Link_File.make connection_details
-    suite_builder.group "[PostgreSQL] DataLink" pending=pending group_builder->
+    ## We have common tests in Save_Connection_Data_Link, but these tests check some specific examples,
+       e.g. data link formats that are also checked in Dashboard tests, to ensure consistency.
+    suite_builder.group "[PostgreSQL] Data Link" pending=pending group_builder->
         ## datalink support
         group_builder.specify "should be able to open a datalink setting up a connection to the database" <|
             data_link_connection = Data.read data_link_file.get
@@ -1020,6 +1023,7 @@ add_data_link_specs suite_builder =
             connection = Database.connect connection_details
             Panic.with_finalizer connection.close <|
                 # We create the table that will then be accessed through the datalink, and ensure it's cleaned up afterwards.
+                connection.drop_table if_exists=True "DatalinkedTable"
                 example_table = Panic.rethrow <|
                     (Table.new [["X", [22]], ["Y", ["o"]]]).select_into_database_table connection "DatalinkedTable" temporary=False
                 Panic.with_finalizer (connection.drop_table example_table.name) <|
@@ -1030,6 +1034,21 @@ add_data_link_specs suite_builder =
                     data_link_table.column_names . should_equal ["X", "Y"]
                     data_link_table.at "X" . to_vector . should_equal [22]
                     data_link_table.at "Y" . to_vector . should_equal ["o"]
+
+        ## datalink support
+        group_builder.specify "should be able to open a datalink to a DB query" <|
+            table_data_link_file = transform_file (enso_project.data / "datalinks" / "postgres-simple-query.datalink") connection_details
+            data_link_table = Data.read table_data_link_file
+            data_link_table.should_be_a DB_Table
+            data_link_table.column_names . should_equal ["two"]
+            data_link_table.at "two" . to_vector . should_equal [2]
+
+            table_data_link_file_2 = transform_file (enso_project.data / "datalinks" / "postgres-serialized-query.datalink") connection_details
+            data_link_table_2 = Data.read table_data_link_file_2
+            data_link_table_2.should_be_a DB_Table
+            data_link_table_2.column_names . should_equal ["int", "text"]
+            data_link_table_2.at "int" . to_vector . should_equal [1456]
+            data_link_table_2.at "text" . to_vector . should_equal ["my text"]
 
         ## datalink support
         group_builder.specify "will reject any format overrides or stream operations on the data link" <|

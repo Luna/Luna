@@ -2,7 +2,7 @@ import { usePlacement } from '@/components/ComponentBrowser/placement'
 import { createContextStore } from '@/providers'
 import type { PortId } from '@/providers/portInfo'
 import type { WidgetUpdate } from '@/providers/widgetRegistry'
-import { GraphDb, nodeIdFromOuterExpr, type NodeId } from '@/stores/graph/graphDatabase'
+import { GraphDb, nodeIdFromOuterAst, type NodeId } from '@/stores/graph/graphDatabase'
 import {
   addImports,
   detectImportConflicts,
@@ -22,14 +22,15 @@ import { isAstId, isIdentifier } from '@/util/ast/abstract'
 import { RawAst, visitRecursive } from '@/util/ast/raw'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
+import { stringUnionToArray, type Events } from '@/util/data/observable'
 import { Rect } from '@/util/data/rect'
-import { Err, Ok, mapOk, unwrap, type Result } from '@/util/data/result'
+import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
-import { normalizeQualifiedName, tryQualifiedName } from '@/util/qualifiedName'
+import { normalizeQualifiedName, qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { map, set } from 'lib0'
-import { iteratorFilter } from 'lib0/iterator'
 import {
   computed,
   markRaw,
@@ -58,6 +59,7 @@ import type {
   VisualizationMetadata,
 } from 'ydoc-shared/yjsModel'
 import { defaultLocalOrigin, sourceRangeKey, visMetadataEquals } from 'ydoc-shared/yjsModel'
+import { UndoManager } from 'yjs'
 
 const FALLBACK_BINDING_PREFIX = 'node'
 
@@ -96,7 +98,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     const vizRects = reactive(new Map<NodeId, Rect>())
     // The currently visible nodes' areas (including visualization).
     const visibleNodeAreas = computed(() => {
-      const existing = iteratorFilter(nodeRects.entries(), ([id]) => db.isNodeId(id))
+      const existing = iter.filter(nodeRects.entries(), ([id]) => db.isNodeId(id))
       return Array.from(existing, ([id, rect]) => vizRects.get(id) ?? rect)
     })
     function visibleArea(nodeId: NodeId): Rect | undefined {
@@ -144,7 +146,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       },
     )
 
-    const methodAst = computed<Result<Ast.Function>>(() =>
+    const methodAst = computed<Result<Ast.FunctionDef>>(() =>
       syncModule.value ? getExecutedMethodAst(syncModule.value) : Err('AST not yet initialized'),
     )
 
@@ -186,7 +188,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       db.updateBindings(method, rawFunc, moduleSource.text, getSpan)
     })
 
-    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.Function> {
+    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
       const executionStackTop = proj.executionContext.getStackTop()
       switch (executionStackTop.type) {
         case 'ExplicitCall': {
@@ -202,7 +204,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       }
     }
 
-    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.Function> {
+    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.FunctionDef> {
       const topLevel = (edit ?? syncModule.value)?.root()
       if (!topLevel) return Err('Module unavailable')
       assert(topLevel instanceof Ast.BodyBlock)
@@ -221,7 +223,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         return Err('Method pointer is not a module method')
       const method = Ast.findModuleMethod(topLevel, ptr.name)
       if (!method) return Err(`No method with name ${ptr.name} in ${modulePath.value}`)
-      return Ok(method)
+      return Ok(method.statement)
     }
 
     /**
@@ -328,8 +330,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
             updatePortValue(edit, usage, undefined)
           }
-          const outerExpr = edit.getVersion(node.outerExpr)
-          if (outerExpr) Ast.deleteFromParentBlock(outerExpr)
+          const outerAst = edit.getVersion(node.outerAst)
+          if (outerAst.isStatement()) Ast.deleteFromParentBlock(outerAst)
           nodeRects.delete(id)
           nodeHoverAnimations.delete(id)
           deletedNodes.add(id)
@@ -364,6 +366,29 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       })
     }
 
+    const undoManagerStatus = reactive({
+      canUndo: false,
+      canRedo: false,
+      update(m: UndoManager) {
+        this.canUndo = m.canUndo()
+        this.canRedo = m.canRedo()
+      },
+    })
+    watch(
+      () => proj.module?.undoManager,
+      (m) => {
+        if (m) {
+          const update = () => undoManagerStatus.update(m)
+          const events = stringUnionToArray<keyof Events<UndoManager>>()(
+            'stack-item-added',
+            'stack-item-popped',
+            'stack-cleared',
+            'stack-item-updated',
+          )
+          events.forEach((event) => m.on(event, update))
+        }
+      },
+    )
     const undoManager = {
       undo() {
         proj.module?.undoManager.undo()
@@ -374,6 +399,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       undoStackBoundary() {
         proj.module?.undoManager.stopCapturing()
       },
+      canUndo: computed(() => undoManagerStatus.canUndo),
+      canRedo: computed(() => undoManagerStatus.canRedo),
     }
 
     function setNodePosition(nodeId: NodeId, position: Vec2) {
@@ -549,7 +576,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     function updatePortValue(
       edit: MutableModule,
       id: PortId,
-      value: Ast.Owned | undefined,
+      value: Ast.Owned<Ast.MutableExpression> | undefined,
     ): boolean {
       const update = getPortPrimaryInstance(id)?.onUpdate
       if (!update) return false
@@ -665,7 +692,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       const body = func.bodyExpressions()
       const result: NodeId[] = []
       for (const expr of body) {
-        const nodeId = nodeIdFromOuterExpr(expr)
+        const nodeId = nodeIdFromOuterAst(expr)
         if (nodeId && ids.has(nodeId)) result.push(nodeId)
       }
       return result
@@ -683,14 +710,14 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       sourceNodeId: NodeId,
       targetNodeId: NodeId,
     ) {
-      const sourceExpr = db.nodeIdToNode.get(sourceNodeId)?.outerExpr.id
-      const targetExpr = db.nodeIdToNode.get(targetNodeId)?.outerExpr.id
+      const sourceExpr = db.nodeIdToNode.get(sourceNodeId)?.outerAst.id
+      const targetExpr = db.nodeIdToNode.get(targetNodeId)?.outerAst.id
       const body = edit.getVersion(unwrap(getExecutedMethodAst(edit))).bodyAsBlock()
       assert(sourceExpr != null)
       assert(targetExpr != null)
       const lines = body.lines
-      const sourceIdx = lines.findIndex((line) => line.expression?.node.id === sourceExpr)
-      const targetIdx = lines.findIndex((line) => line.expression?.node.id === targetExpr)
+      const sourceIdx = lines.findIndex((line) => line.statement?.node.id === sourceExpr)
+      const targetIdx = lines.findIndex((line) => line.statement?.node.id === targetExpr)
       assert(sourceIdx != null)
       assert(targetIdx != null)
 
@@ -700,7 +727,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         const deps = reachable([targetNodeId], (node) => db.nodeDependents.lookup(node))
 
         const dependantLines = new Set(
-          Array.from(deps, (id) => db.nodeIdToNode.get(id)?.outerExpr.id),
+          Array.from(deps, (id) => db.nodeIdToNode.get(id)?.outerAst.id),
         )
         // Include the new target itself in the set of lines that must be placed after source node.
         dependantLines.add(targetExpr)
@@ -717,7 +744,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
           // Split those lines into two buckets, whether or not they depend on the target.
           const [linesAfter, linesBefore] = partition(linesToSort, (line) =>
-            dependantLines.has(line.expression?.node.id),
+            dependantLines.has(line.statement?.node.id),
           )
 
           // Recombine all lines after splitting, keeping existing dependants below the target.
@@ -732,6 +759,22 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
     function isConnectedTarget(portId: PortId): boolean {
       return isAstId(portId) && db.connections.reverseLookup(portId).size > 0
+    }
+
+    function nodeCanBeEntered(id: NodeId): boolean {
+      if (!proj.modulePath?.ok) return false
+
+      const expressionInfo = db.getExpressionInfo(id)
+      if (expressionInfo?.methodCall == null) return false
+
+      const definedOnType = tryQualifiedName(expressionInfo.methodCall.methodPointer.definedOnType)
+      const openModuleName = qnLastSegment(proj.modulePath.value)
+      if (definedOnType.ok && qnLastSegment(definedOnType.value) !== openModuleName) {
+        // Cannot enter node that is not defined on current module.
+        // TODO: Support entering nodes in other modules within the same project.
+        return false
+      }
+      return true
     }
 
     const modulePath: Ref<LsPath | undefined> = computedAsync(
@@ -789,6 +832,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       addMissingImports,
       addMissingImportsDisregardConflicts,
       isConnectedTarget,
+      nodeCanBeEntered,
       currentMethodPointer() {
         const currentMethod = proj.executionContext.getStackTop()
         if (currentMethod.type === 'ExplicitCall') return currentMethod.methodPointer

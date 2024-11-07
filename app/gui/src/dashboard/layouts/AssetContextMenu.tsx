@@ -19,7 +19,7 @@ import AssetListEventType from '#/events/AssetListEventType'
 
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import GlobalContextMenu from '#/layouts/GlobalContextMenu'
+import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -35,7 +35,7 @@ import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useUploadFileWithToastMutation } from '#/hooks/backendHooks'
 import {
   usePasteData,
   useSetAssetPanelProps,
@@ -71,7 +71,7 @@ export interface AssetContextMenuProps {
 export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { innerProps, rootDirectoryId, event, eventTarget, hidden = false, triggerRef } = props
   const { doCopy, doCut, doPaste, doDelete } = props
-  const { item, setItem, state, setRowState } = innerProps
+  const { asset, path: pathRaw, state, setRowState } = innerProps
   const { backend, category, nodeMap } = state
 
   const { user } = authProvider.useFullUserSession()
@@ -87,23 +87,20 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
   const openProjectMutation = projectHooks.useOpenProjectMutation()
-  const asset = item.item
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
   const isCloud = categoryModule.isCloudCategory(category)
-  const pathRaw =
+  const pathComputed =
     category.type === 'recent' || category.type === 'trash' ? null
-    : isCloud ? `${item.path}${item.type === backendModule.AssetType.datalink ? '.datalink' : ''}`
+    : isCloud ? `${pathRaw}${asset.type === backendModule.AssetType.datalink ? '.datalink' : ''}`
     : asset.type === backendModule.AssetType.project ?
       mapNonNullish(localBackend?.getProjectPath(asset.id) ?? null, normalizePath)
     : normalizePath(localBackendModule.extractTypeAndId(asset.id).id)
   const path =
-    pathRaw == null ? null
-    : isCloud ? encodeURI(pathRaw)
-    : pathRaw
+    pathComputed == null ? null
+    : isCloud ? encodeURI(pathComputed)
+    : pathComputed
   const copyMutation = copyHooks.useCopy({ copyText: path ?? '' })
-  const uploadFileMutation = reactQuery.useMutation(
-    backendMutationOptions(remoteBackend, 'uploadFile'),
-  )
+  const uploadFileToCloudMutation = useUploadFileWithToastMutation(remoteBackend)
 
   const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
@@ -140,7 +137,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
           return true
         } else {
           // Assume user path; check permissions
-          const permission = permissions.tryFindSelfPermission(user, item.item.permissions)
+          const permission = permissions.tryFindSelfPermission(user, asset.permissions)
           return (
             permission != null &&
             permissions.canPermissionModifyDirectoryContents(permission.permission)
@@ -149,8 +146,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       })
 
   const { data } = reactQuery.useQuery(
-    item.item.type === backendModule.AssetType.project ?
-      projectHooks.createGetProjectDetailsQuery.createPassiveListener(item.item.id)
+    asset.type === backendModule.AssetType.project ?
+      projectHooks.createGetProjectDetailsQuery.createPassiveListener(asset.id)
     : { queryKey: ['__IGNORED__'] },
   )
 
@@ -175,11 +172,9 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       hidden={hidden}
       action="paste"
       doAction={() => {
-        const [directoryKey, directoryId] =
-          item.type === backendModule.AssetType.directory ?
-            [item.key, item.item.id]
-          : [item.directoryKey, item.directoryId]
-        doPaste(directoryKey, directoryId)
+        const directoryId =
+          asset.type === backendModule.AssetType.directory ? asset.id : asset.parentId
+        doPaste(directoryId, directoryId)
       }}
     />
   )
@@ -226,8 +221,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               doAction={() => {
                 dispatchAssetListEvent({
                   type: AssetListEventType.newProject,
-                  parentId: item.directoryId,
-                  parentKey: item.directoryKey,
+                  parentId: asset.parentId,
+                  parentKey: asset.parentId,
                   templateId: null,
                   datalinkId: asset.id,
                   preferredName: asset.title,
@@ -246,7 +241,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   openProject({
                     id: asset.id,
                     title: asset.title,
-                    parentId: item.directoryId,
+                    parentId: asset.parentId,
                     type: state.backend.type,
                   })
                 }}
@@ -260,7 +255,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                 openProjectMutation.mutate({
                   id: asset.id,
                   title: asset.title,
-                  parentId: item.directoryId,
+                  parentId: asset.parentId,
                   type: state.backend.type,
                   inBackground: true,
                 })
@@ -287,7 +282,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   closeProject({
                     id: asset.id,
                     title: asset.title,
-                    parentId: item.directoryId,
+                    parentId: asset.parentId,
                     type: state.backend.type,
                   })
                 }}
@@ -298,25 +293,27 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               hidden={hidden}
               action="uploadToCloud"
               doAction={async () => {
-                if (remoteBackend == null) {
-                  toastAndLog('offlineUploadFilesError')
-                } else {
-                  try {
-                    const projectResponse = await fetch(
-                      `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
-                    )
-                    await uploadFileMutation.mutateAsync([
-                      {
-                        fileName: `${asset.title}.enso-project`,
-                        fileId: null,
-                        parentDirectoryId: null,
-                      },
-                      await projectResponse.blob(),
-                    ])
-                    toast.toast.success(getText('uploadProjectToCloudSuccess'))
-                  } catch (error) {
-                    toastAndLog('uploadProjectToCloudError', error)
-                  }
+                try {
+                  const projectResponse = await fetch(
+                    `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
+                  )
+                  // This DOES NOT update the cloud assets list when it
+                  // completes, as the current backend is not the remote
+                  // (cloud) backend. The user may change to the cloud backend
+                  // while this request is in progress, however this is
+                  // uncommon enough that it is not worth the added complexity.
+                  const fileName = `${asset.title}.enso-project`
+                  await uploadFileToCloudMutation.mutateAsync(
+                    {
+                      fileName,
+                      fileId: null,
+                      parentDirectoryId: null,
+                    },
+                    new File([await projectResponse.blob()], fileName),
+                  )
+                  toast.toast.success(getText('uploadProjectToCloudSuccess'))
+                } catch (error) {
+                  toastAndLog('uploadProjectToCloudError', error)
                 }
               }}
             />
@@ -337,21 +334,28 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             )}
           {(asset.type === backendModule.AssetType.secret ||
             asset.type === backendModule.AssetType.datalink) &&
-            canEditThisAsset &&
-            remoteBackend != null && (
+            canEditThisAsset && (
               <ContextMenuEntry
                 hidden={hidden}
                 action="edit"
                 doAction={() => {
                   setIsAssetPanelTemporarilyVisible(true)
-                  const assetPanelProps = { backend, item, setItem }
+                  const assetPanelProps = { backend, item: asset }
                   switch (asset.type) {
                     case backendModule.AssetType.secret: {
-                      setAssetPanelProps({ ...assetPanelProps, spotlightOn: 'secret' })
+                      setAssetPanelProps({
+                        ...assetPanelProps,
+                        path: pathRaw,
+                        spotlightOn: 'secret',
+                      })
                       break
                     }
                     case backendModule.AssetType.datalink: {
-                      setAssetPanelProps({ ...assetPanelProps, spotlightOn: 'datalink' })
+                      setAssetPanelProps({
+                        ...assetPanelProps,
+                        path: pathRaw,
+                        spotlightOn: 'datalink',
+                      })
                       break
                     }
                   }
@@ -365,7 +369,12 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               label={getText('editDescriptionShortcut')}
               doAction={() => {
                 setIsAssetPanelTemporarilyVisible(true)
-                setAssetPanelProps({ backend, item, spotlightOn: 'description' })
+                setAssetPanelProps({
+                  backend,
+                  item: asset,
+                  path: pathRaw,
+                  spotlightOn: 'description',
+                })
               }}
             />
           )}
@@ -462,8 +471,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               doAction={() => {
                 dispatchAssetListEvent({
                   type: AssetListEventType.copy,
-                  newParentId: item.directoryId,
-                  newParentKey: item.directoryKey,
+                  newParentId: asset.parentId,
+                  newParentKey: asset.parentId,
                   items: [asset],
                 })
               }}
@@ -499,11 +508,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             hidden={hidden}
             backend={backend}
             rootDirectoryId={rootDirectoryId}
-            directoryKey={
-              // This is SAFE, as both branches are guaranteed to be `DirectoryId`s
-              // eslint-disable-next-line no-restricted-syntax
-              item.key as backendModule.DirectoryId
-            }
+            directoryKey={asset.id}
             directoryId={asset.id}
             doPaste={doPaste}
           />

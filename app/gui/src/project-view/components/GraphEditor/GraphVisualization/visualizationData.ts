@@ -1,25 +1,25 @@
 import LoadingErrorVisualization from '@/components/visualizations/LoadingErrorVisualization.vue'
 import LoadingVisualization from '@/components/visualizations/LoadingVisualization.vue'
-import { ToolbarItem } from '@/components/visualizations/toolbar'
+import type { ToolbarItem } from '@/components/visualizations/toolbar'
 import { useProjectStore } from '@/stores/project'
 import type { NodeVisualizationConfiguration } from '@/stores/project/executionContext'
 import {
   DEFAULT_VISUALIZATION_CONFIGURATION,
   DEFAULT_VISUALIZATION_IDENTIFIER,
   useVisualizationStore,
-  VisualizationDataSource,
+  type VisualizationDataSource,
 } from '@/stores/visualization'
 import type { Visualization } from '@/stores/visualization/runtimeTypes'
 import { Ast } from '@/util/ast'
 import { toError } from '@/util/data/error'
-import { ToValue } from '@/util/reactivity'
+import type { ToValue } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
 import {
   computed,
   onErrorCaptured,
   ref,
   shallowRef,
-  ShallowRef,
+  type ShallowRef,
   toValue,
   watch,
   watchEffect,
@@ -126,7 +126,10 @@ export function useVisualizationData({
         const preprocessor = visPreprocessor.value
         const args = preprocessor.positionalArgumentsExpressions
         const tempModule = Ast.MutableModule.Transient()
-        const preprocessorModule = Ast.parse(preprocessor.visualizationModule, tempModule)
+        const preprocessorModule = Ast.parseExpression(
+          preprocessor.visualizationModule,
+          tempModule,
+        )!
         // TODO[ao]: it work with builtin visualization, but does not work in general case.
         // Tracked in https://github.com/orgs/enso-org/discussions/6832#discussioncomment-7754474.
         if (!isIdentifier(preprocessor.expression)) {
@@ -140,9 +143,9 @@ export function useVisualizationData({
         )
         const preprocessorInvocation = Ast.App.PositionalSequence(preprocessorQn, [
           Ast.Wildcard.new(tempModule),
-          ...args.map((arg) => Ast.Group.new(tempModule, Ast.parse(arg, tempModule))),
+          ...args.map((arg) => Ast.Group.new(tempModule, Ast.parseExpression(arg, tempModule)!)),
         ])
-        const rhs = Ast.parse(dataSourceValue.expression, tempModule)
+        const rhs = Ast.parseExpression(dataSourceValue.expression, tempModule)!
         const expression = Ast.OprApp.new(tempModule, preprocessorInvocation, '<|', rhs)
         return projectStore.executeExpression(dataSourceValue.contextId, expression.code())
       } catch (e) {

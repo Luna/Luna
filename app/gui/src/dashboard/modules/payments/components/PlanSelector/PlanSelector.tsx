@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DIALOG_BACKGROUND } from '#/components/AriaComponents'
 import { usePaywall } from '#/hooks/billing'
 import { useAuth } from '#/providers/AuthProvider'
-import { useRemoteBackendStrict } from '#/providers/BackendProvider'
+import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { Plan, PLANS } from '#/services/Backend'
 import type { VariantProps } from '#/utilities/tailwindVariants'
@@ -71,7 +71,7 @@ export function PlanSelector(props: PlanSelectorProps) {
   } = props
 
   const { getText } = useText()
-  const backend = useRemoteBackendStrict()
+  const backend = useRemoteBackend()
   const { refetchSession } = useAuth()
   const { getPaywallLevel } = usePaywall({ plan: userPlan })
 
@@ -130,7 +130,6 @@ export function PlanSelector(props: PlanSelectorProps) {
 
                       const startEpochMs = Number(new Date())
 
-                      // eslint-disable-next-line no-constant-condition
                       while (true) {
                         const { data: session } = await refetchSession()
                         if (session && 'user' in session && session.user.plan === newPlan) {
@@ -143,7 +142,6 @@ export function PlanSelector(props: PlanSelectorProps) {
                         } else {
                           const timePassedMs = Number(new Date()) - startEpochMs
                           if (timePassedMs > USER_REFETCH_TIMEOUT_MS) {
-                            // eslint-disable-next-line no-restricted-syntax
                             throw new Error(
                               'Timed out waiting for subscription, please contact support to continue.',
                             )

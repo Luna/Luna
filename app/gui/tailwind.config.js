@@ -1,12 +1,13 @@
 /** @file Configuration for Tailwind. */
+import { fileURLToPath } from 'node:url'
 import animate from 'tailwindcss-animate'
 import reactAriaComponents from 'tailwindcss-react-aria-components'
 import plugin from 'tailwindcss/plugin.js'
 
-// The names come from a third-party API and cannot be changed.
-/* eslint-disable no-restricted-syntax, @typescript-eslint/naming-convention, @typescript-eslint/no-magic-numbers */
+const HERE_PATH = fileURLToPath(new URL('.', import.meta.url))
+
 export default /** @satisfies {import('tailwindcss').Config} */ ({
-  content: ['./src/**/*.tsx', './src/**/*.ts'],
+  content: [`${HERE_PATH}/src/**/*.tsx`, `${HERE_PATH}/src/**/*.ts`],
   theme: {
     extend: {
       cursor: {
@@ -19,6 +20,9 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         // This should be named "regular".
         primary: 'rgb(var(--color-primary-rgb) / var(--color-primary-opacity))',
         invert: 'rgb(var(--color-invert-rgb) / var(--color-invert-opacity))',
+        background: 'rgb(var(--color-background-rgb) / var(--color-background-opacity))',
+        dashboard:
+          'rgb(var(--color-dashboard-background-rgb) / var(--color-dashboard-background-opacity))',
         accent: 'rgb(var(--color-accent-rgb) / 100%)',
         danger: 'rgb(var(--color-danger-rgb) / 100%)',
         'accent-dark': '#3e9152',

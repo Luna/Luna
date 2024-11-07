@@ -185,7 +185,10 @@ export const Text = forwardRef(function Text(props: TextProps, ref: React.Ref<HT
     <textProvider.TextProvider value={{ isInsideTextComponent: true }}>
       <ElementType
         // @ts-expect-error This is caused by the type-safe `elementType` type.
-        ref={mergeRefs.mergeRefs(ref, textElementRef)}
+        ref={(el) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          mergeRefs.mergeRefs(ref, textElementRef)(el)
+        }}
         className={textClasses}
         {...aria.mergeProps<React.HTMLAttributes<HTMLElement>>()(
           ariaProps,
@@ -202,7 +205,6 @@ export const Text = forwardRef(function Text(props: TextProps, ref: React.Ref<HT
       {tooltip}
     </textProvider.TextProvider>
   )
-  // eslint-disable-next-line no-restricted-syntax
 }) as unknown as React.FC<React.RefAttributes<HTMLSpanElement> & TextProps> & {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   Heading: typeof Heading

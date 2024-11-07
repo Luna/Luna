@@ -1,8 +1,15 @@
 package org.enso.table.excel;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.ZoneId;
-import org.apache.poi.ss.usermodel.*;
+import java.time.ZonedDateTime;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.ExcelNumberFormat;
+import org.apache.poi.ss.usermodel.FormulaError;
+import org.apache.poi.ss.usermodel.Row;
 import org.graalvm.polyglot.Context;
 
 /** Wrapper class to handle Excel rows. */
@@ -12,11 +19,13 @@ public class ExcelRow {
   private final Row row;
   private final int firstColumn;
   private final int lastColumn;
+  private final boolean use1904Format;
 
-  public ExcelRow(Row row) {
+  public ExcelRow(Row row, boolean use1904Format) {
     this.row = row;
     this.firstColumn = row.getFirstCellNum() + 1;
     this.lastColumn = row.getLastCellNum();
+    this.use1904Format = use1904Format;
   }
 
   public int getFirstColumn() {
@@ -37,20 +46,37 @@ public class ExcelRow {
     switch (cellType) {
       case NUMERIC:
         double dblValue = cell.getNumericCellValue();
-        if (DateUtil.isCellDateFormatted(cell) && DateUtil.isValidExcelDate(dblValue)) {
-          var dateTime = DateUtil.getLocalDateTime(dblValue);
-          if (dateTime.isBefore(LocalDateTime.of(1900, 1, 2, 0, 0))) {
-            // Excel stores times as if they are on the 1st January 1900.
-            // Due to the 1900 leap year bug might be 31st December 1899.
-            return dateTime.toLocalTime();
+        var nf = ExcelNumberFormat.from(cell, null);
+        if (nf != null && DateUtil.isADateFormat(nf.getIdx(), nf.getFormat())) {
+          var temporal =
+              use1904Format
+                  ? ExcelUtils.fromExcelDateTime1904(dblValue)
+                  : ExcelUtils.fromExcelDateTime(dblValue);
+
+          if (temporal == null) {
+            return null;
           }
-          if (dateTime.getHour() == 0 && dateTime.getMinute() == 0 && dateTime.getSecond() == 0) {
-            var dateFormat = cell.getCellStyle().getDataFormatString();
-            if (!dateFormat.contains("h") && !dateFormat.contains("H")) {
-              return dateTime.toLocalDate();
+
+          return switch (temporal) {
+            case LocalDate date -> {
+              var dateFormat = cell.getCellStyle().getDataFormatString();
+              yield (dateFormat.contains("h") || dateFormat.contains("H"))
+                  ? date.atStartOfDay(ZoneId.systemDefault())
+                  : date;
             }
-          }
-          return dateTime.atZone(ZoneId.systemDefault());
+            case ZonedDateTime zdt -> {
+              if (!use1904Format || zdt.getYear() != 1904 || zdt.getDayOfYear() != 1) {
+                yield temporal;
+              }
+              var dateFormat = cell.getCellStyle().getDataFormatString();
+              yield (dateFormat.contains("y")
+                      || dateFormat.contains("M")
+                      || dateFormat.contains("d"))
+                  ? zdt
+                  : zdt.toLocalTime();
+            }
+            default -> temporal;
+          };
         } else {
           if (dblValue == (long) dblValue) {
             return (long) dblValue;

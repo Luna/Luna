@@ -12,8 +12,10 @@ import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 import { toRfc3339 } from '#/utilities/dateTime'
 import { download } from '#/utilities/download'
 import { tryGetMessage } from '#/utilities/error'
-import { getFileName, getFolderPath } from '#/utilities/fileInfo'
+import { fileExtension, getFileName, getFolderPath } from '#/utilities/fileInfo'
 import { getDirectoryAndName, joinPath } from '#/utilities/path'
+import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+import invariant from 'tiny-invariant'
 
 // =============================
 // === ipWithSocketToAddress ===
@@ -100,6 +102,8 @@ export function extractTypeAndId<Id extends backend.AssetId>(id: Id): AssetTypeA
  */
 export default class LocalBackend extends Backend {
   readonly type = backend.BackendType.local
+  /** All files that have been uploaded to the Project Manager. */
+  uploadedFiles: Map<string, backend.UploadedLargeAsset> = new Map()
   private readonly projectManager: ProjectManager
 
   /** Create a {@link LocalBackend}. */
@@ -164,8 +168,11 @@ export default class LocalBackend extends Backend {
                 title: getFileName(entry.path),
                 permissions: [],
                 projectState: null,
+                extension: null,
                 labels: [],
                 description: null,
+                parentsPath: '',
+                virtualParentsPath: '',
               } satisfies backend.DirectoryAsset
             }
             case projectManager.FileSystemEntryType.ProjectEntry: {
@@ -182,8 +189,11 @@ export default class LocalBackend extends Backend {
                     backend.ProjectState.closed,
                   volumeId: '',
                 },
+                extension: null,
                 labels: [],
                 description: null,
+                parentsPath: '',
+                virtualParentsPath: '',
               } satisfies backend.ProjectAsset
             }
             case projectManager.FileSystemEntryType.FileEntry: {
@@ -195,8 +205,11 @@ export default class LocalBackend extends Backend {
                 parentId,
                 permissions: [],
                 projectState: null,
+                extension: fileExtension(entry.path),
                 labels: [],
                 description: null,
+                parentsPath: '',
+                virtualParentsPath: '',
               } satisfies backend.FileAsset
             }
           }
@@ -210,7 +223,6 @@ export default class LocalBackend extends Backend {
           await this.projectManager.createDirectory(this.projectManager.rootDirectory)
           result = []
         } else {
-          // eslint-disable-next-line no-restricted-syntax
           throw new Error('Directory does not exist.')
         }
       }
@@ -647,26 +659,72 @@ export default class LocalBackend extends Backend {
     }
   }
 
-  /** Upload a file. */
-  override async uploadFile(
-    params: backend.UploadFileRequestParams,
-    file: Blob,
-  ): Promise<backend.FileInfo> {
+  /**
+   * Begin uploading a large file.
+   */
+  override async uploadFileStart(
+    body: backend.UploadFileRequestParams,
+    file: File,
+  ): Promise<backend.UploadLargeFileMetadata> {
     const parentPath =
-      params.parentDirectoryId == null ?
+      body.parentDirectoryId == null ?
         this.projectManager.rootDirectory
-      : extractTypeAndId(params.parentDirectoryId).id
-    const path = joinPath(parentPath, params.fileName)
-    const searchParams = new URLSearchParams([
-      ['file_name', params.fileName],
-      ...(params.parentDirectoryId == null ? [] : [['directory', parentPath]]),
-    ]).toString()
-    await fetch(`${APP_BASE_URL}/api/upload-file?${searchParams}`, {
-      method: 'POST',
-      body: file,
-    })
-    // `project` MUST BE `null` as uploading projects uses a separate endpoint.
-    return { path, id: newFileId(path), project: null }
+      : extractTypeAndId(body.parentDirectoryId).id
+    const filePath = joinPath(parentPath, body.fileName)
+    const uploadId = uniqueString()
+    if (backend.fileIsNotProject(file)) {
+      const searchParams = new URLSearchParams([
+        ['file_name', body.fileName],
+        ...(body.parentDirectoryId == null ? [] : [['directory', parentPath]]),
+      ]).toString()
+      const path = `${APP_BASE_URL}/api/upload-file?${searchParams}`
+      await fetch(path, { method: 'POST', body: file })
+      this.uploadedFiles.set(uploadId, { id: newFileId(filePath), project: null })
+    } else {
+      const title = backend.stripProjectExtension(body.fileName)
+      let id: string
+      if (
+        'backendApi' in window &&
+        // This non-standard property is defined in Electron.
+        'path' in file &&
+        typeof file.path === 'string'
+      ) {
+        const projectInfo = await window.backendApi.importProjectFromPath(
+          file.path,
+          parentPath,
+          title,
+        )
+        id = projectInfo.id
+      } else {
+        const searchParams = new URLSearchParams({
+          directory: parentPath,
+          name: title,
+        }).toString()
+        const path = `${APP_BASE_URL}/api/upload-project?${searchParams}`
+        const response = await fetch(path, { method: 'POST', body: file })
+        id = await response.text()
+      }
+      const projectId = newProjectId(projectManager.UUID(id))
+      const project = await this.getProjectDetails(projectId, body.parentDirectoryId, body.fileName)
+      this.uploadedFiles.set(uploadId, { id: projectId, project })
+    }
+    return { presignedUrls: [], uploadId, sourcePath: backend.S3FilePath('') }
+  }
+
+  /** Upload a chunk of a large file. */
+  override uploadFileChunk(): Promise<backend.S3MultipartPart> {
+    // Do nothing, the entire file has already been uploaded in `uploadFileStart`.
+    return Promise.resolve({ eTag: '', partNumber: 0 })
+  }
+
+  /** Finish uploading a large file. */
+  override uploadFileEnd(
+    body: backend.UploadFileEndRequestBody,
+  ): Promise<backend.UploadedLargeAsset> {
+    // Do nothing, the entire file has already been uploaded in `uploadFileStart`.
+    const file = this.uploadedFiles.get(body.uploadId)
+    invariant(file, 'Uploaded file not found')
+    return Promise.resolve(file)
   }
 
   /** Change the name of a file. */

@@ -66,7 +66,6 @@ export interface AlertProps
 }
 
 /** Alert component. */
-// eslint-disable-next-line no-restricted-syntax
 export const Alert = forwardRef(function Alert(
   props: AlertProps,
   ref: ForwardedRef<HTMLDivElement>,
@@ -80,13 +79,13 @@ export const Alert = forwardRef(function Alert(
     fullWidth,
     icon,
     variants = ALERT_STYLES,
+    tabIndex: rawTabIndex,
+    role: rawRole,
     ...containerProps
   } = props
 
-  if (variant === 'error') {
-    containerProps.tabIndex = -1
-    containerProps.role = 'alert'
-  }
+  const tabIndex = variant === 'error' ? -1 : rawTabIndex
+  const role = variant === 'error' ? 'alert' : rawRole
 
   const classes = variants({
     variant,
@@ -96,11 +95,16 @@ export const Alert = forwardRef(function Alert(
   })
 
   return (
-    <div className={classes.base({ className })} ref={ref} {...containerProps}>
+    <div
+      className={classes.base({ className })}
+      ref={ref}
+      tabIndex={tabIndex}
+      role={role}
+      {...containerProps}
+    >
       {icon != null &&
         (() => {
           if (typeof icon === 'string') {
-            // eslint-disable-next-line no-restricted-syntax
             return (
               <div className={classes.iconContainer()}>
                 <SvgMask src={icon} />
@@ -109,6 +113,7 @@ export const Alert = forwardRef(function Alert(
           }
           return <div className={classes.iconContainer()}>{icon}</div>
         })()}
+
       <div className={classes.children()}>{children}</div>
     </div>
   )

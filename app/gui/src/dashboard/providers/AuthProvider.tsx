@@ -149,7 +149,6 @@ function createUsersMeQuery(
     queryKey: [remoteBackend.type, 'usersMe', session?.clientId] as const,
     queryFn: async () => {
       if (session == null) {
-        // eslint-disable-next-line no-restricted-syntax
         return Promise.resolve(null)
       }
       try {
@@ -165,7 +164,6 @@ function createUsersMeQuery(
           await performLogout()
           return null
         } else {
-          // eslint-disable-next-line no-restricted-syntax
           throw error
         }
       }
@@ -186,7 +184,7 @@ export interface AuthProviderProps {
 export default function AuthProvider(props: AuthProviderProps) {
   const { authService, onAuthenticated } = props
   const { children } = props
-  const remoteBackend = backendProvider.useRemoteBackendStrict()
+  const remoteBackend = backendProvider.useRemoteBackend()
   const { cognito } = authService
   const { session, sessionQueryKey } = sessionProvider.useSession()
   const { localStorage } = localStorageProvider.useLocalStorage()
@@ -333,7 +331,6 @@ export default function AuthProvider(props: AuthProviderProps) {
       const challenge = user.challengeName ?? 'NO_CHALLENGE'
 
       if (['SMS_MFA', 'SOFTWARE_TOKEN_MFA'].includes(challenge)) {
-        // eslint-disable-next-line no-restricted-syntax
         return { challenge, user } as const
       }
 
