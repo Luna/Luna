@@ -431,7 +431,7 @@ make_dialect_operations =
     stddev_samp = ["STDDEV_SAMP", Base_Generator.make_function "stddev_samp"]
     stats = [agg_median, agg_mode, agg_percentile, stddev_pop, stddev_samp]
     date_ops = [make_extract_as_int "year", make_extract_as_int "quarter", make_extract_as_int "month", make_extract_as_int "week", make_extract_as_int "day", make_extract_as_int "hour", make_extract_as_int "minute", make_extract_fractional_as_int "second", make_extract_fractional_as_int "millisecond" modulus=1000, make_extract_fractional_as_int "microsecond" modulus=1000, ["date_add", make_date_add], ["date_diff", make_date_diff], ["date_trunc_to_day", make_date_trunc_to_day]]
-    special_overrides = [is_null]
+    special_overrides = [is_null, is_empty]
     other = [["RUNTIME_ERROR", make_runtime_error_op]]
     my_mappings = text + counts + stats + first_last_aggregators + arith_extensions + bool + compare + date_ops + special_overrides + other
     base = Base_Generator.base_dialect_operations . extend_with my_mappings
@@ -553,6 +553,13 @@ agg_count_distinct_include_null args = case args.length == 1 of
         all_nulls_case = SQL_Builder.code "CASE WHEN COUNT(CASE WHEN " ++ arg ++ "IS NULL THEN 1 END) > 0 THEN 1 ELSE 0 END"
         count ++ " + " ++ all_nulls_case
     False -> Error.throw (Illegal_Argument.Error "COUNT_DISTINCT supports only single arguments in SQLServer.")
+
+## PRIVATE
+is_empty = Base_Generator.lift_unary_op "IS_EMPTY" arg->
+    is_null = (arg ++ " IS NULL").paren
+    is_empty = (SQL_Builder.code 'DATALENGTH(' ++ arg ++ ') = 0').paren
+    (is_null ++ " OR " ++ is_empty).paren
+
 
 ## PRIVATE
 starts_with = Base_Generator.lift_binary_op "STARTS_WITH" str-> sub->
