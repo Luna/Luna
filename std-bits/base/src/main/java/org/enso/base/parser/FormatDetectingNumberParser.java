@@ -41,17 +41,23 @@ public class FormatDetectingNumberParser {
   public record NumberParseFailure(String message) implements NumberParseResult {}
 
   private final boolean allowSymbol;
+  private final boolean allowLeadingZeroes;
   private final boolean allowLeadingTrailingWhitespace;
   private NegativeSign negativeSign;
   private NumberWithSeparators numberWithSeparators;
 
   public FormatDetectingNumberParser() {
-    this(true, true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
+    this(true, true, true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
   }
 
   public FormatDetectingNumberParser(
-      boolean allowSymbol, boolean allowLeadingTrailingWhitespace, NegativeSign negativeSign, NumberWithSeparators numberWithSeparators) {
+      boolean allowSymbol,
+      boolean allowLeadingZeroes,
+      boolean allowLeadingTrailingWhitespace,
+      NegativeSign negativeSign,
+      NumberWithSeparators numberWithSeparators) {
     this.allowSymbol = allowSymbol;
+    this.allowLeadingZeroes = allowLeadingZeroes;
     this.allowLeadingTrailingWhitespace = allowLeadingTrailingWhitespace;
     this.negativeSign = negativeSign;
     this.numberWithSeparators = numberWithSeparators;
@@ -111,14 +117,28 @@ public class FormatDetectingNumberParser {
           }
 
           var numberPart = numberWithSeparators.parse(value, idx, integer);
+
+          // If the format changed, catch new format and unwrap result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {
             numberWithSeparators = newFormat.format();
             numberPart = newFormat.result();
           }
+
+          // Result should either be a new index or a failure.
+          // If it is a new index, update the index and unwrap the result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithIndex newIndex) {
+            // Check for leading zeroes (0 or 0. is acceptable).
+            if (!allowLeadingZeroes
+                && c == '0'
+                && newIndex.endIdx() > idx + 1
+                && value.charAt(idx + 1) != '.') {
+              return new NumberParseFailure("Leading Zero.");
+            }
+
             idx = newIndex.endIdx();
             numberPart = newIndex.result();
           }
+
           if (numberPart instanceof NumberParseResultSuccess numberSuccess) {
             number = numberSuccess;
           } else {
@@ -156,7 +176,9 @@ public class FormatDetectingNumberParser {
           // Negate here so can tell finished.
           number = number.negate();
           isNegative = false;
-        } else if (!integer && number == null && isSameSequence(value, idx, "infinity", "INFINITY")) {
+        } else if (!integer
+            && number == null
+            && isSameSequence(value, idx, "infinity", "INFINITY")) {
           // Identify Infinity
           number = new NumberParseDouble(Double.POSITIVE_INFINITY, "");
           idx += 8;

@@ -27,11 +27,18 @@ public class NumberParser extends IncrementalDatatypeParser {
   public static NumberParser createIntegerParser(
       IntegerType integerTargetType,
       boolean allowSymbol,
+      boolean allowLeadingZeroes,
       boolean trimValues,
       String decimalPoint,
       String thousandSeparator) {
     return new NumberParser(
-        true, integerTargetType, allowSymbol, trimValues, decimalPoint, thousandSeparator);
+        true,
+        integerTargetType,
+        allowSymbol,
+        allowLeadingZeroes,
+        trimValues,
+        decimalPoint,
+        thousandSeparator);
   }
 
   /**
@@ -43,8 +50,13 @@ public class NumberParser extends IncrementalDatatypeParser {
    * @param thousandSeparator the thousand separator to use (if null then will be inferred)
    */
   public static NumberParser createDecimalParser(
-      boolean allowSymbol, boolean trimValues, String decimalPoint, String thousandSeparator) {
-    return new NumberParser(false, null, allowSymbol, trimValues, decimalPoint, thousandSeparator);
+      boolean allowSymbol,
+      boolean allowLeadingZeroes,
+      boolean trimValues,
+      String decimalPoint,
+      String thousandSeparator) {
+    return new NumberParser(
+        false, null, allowSymbol, allowLeadingZeroes, trimValues, decimalPoint, thousandSeparator);
   }
 
   private final IntegerType integerTargetType;
@@ -56,6 +68,7 @@ public class NumberParser extends IncrementalDatatypeParser {
       boolean isInteger,
       IntegerType integerTargetType,
       boolean allowSymbol,
+      boolean allowLeadingZeroes,
       boolean allowLeadingTrailingWhitespace,
       String decimalPoint,
       String thousandSeparator) {
@@ -64,7 +77,12 @@ public class NumberParser extends IncrementalDatatypeParser {
 
     var numberWithSeparators = NumberWithSeparators.fromSeparators(thousandSeparator, decimalPoint);
     this.parser =
-        new FormatDetectingNumberParser(allowSymbol, allowLeadingTrailingWhitespace, NegativeSign.UNKNOWN, numberWithSeparators);
+        new FormatDetectingNumberParser(
+            allowSymbol,
+            allowLeadingZeroes,
+            allowLeadingTrailingWhitespace,
+            NegativeSign.UNKNOWN,
+            numberWithSeparators);
   }
 
   @Override

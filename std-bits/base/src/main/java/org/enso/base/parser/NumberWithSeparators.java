@@ -108,8 +108,6 @@ public enum NumberWithSeparators {
       return new NumberParseFailure("Invalid separators.");
     }
 
-    // ToDo: Validate leading zeros.
-
     if (thousands != Constants.UNKNOWN && (integer || decimal != Constants.UNKNOWN)) {
       // If we have a fixed format then we can parse the number.
       return integer
