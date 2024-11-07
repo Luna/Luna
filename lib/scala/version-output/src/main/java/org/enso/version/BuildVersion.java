@@ -24,7 +24,7 @@ public class BuildVersion {
   }
 
   public static String javaVersion() {
-    throw new UnsupportedOperationException("unimplemented");
+    return GeneratedVersion.javaVersion();
   }
 
   public static String currentEdition() {
