@@ -778,12 +778,20 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                 enso_build::release::draft_a_new_release(&ctx, &commit).await?;
             }
             Action::DeployRuntime(args) => {
-                enso_build::release::deploy_to_ecr(&ctx, args.ecr_repository).await?;
+                enso_build::release::deploy_runtime_to_ecr(&ctx, args.ecr_repository).await?;
                 enso_build::repo::cloud::build_image_workflow_dispatch_input(
                     &ctx.octocrab,
                     &ctx.triple.versions.version,
                 )
                 .await?;
+            }
+            Action::DeployYdocPolyglot(args) => {
+                enso_build::release::deploy_ydoc_polyglot_to_ecr(&ctx, args.ecr_repository).await?;
+                // TODO: dispatch cloud workflow
+            }
+            Action::DeployYdocNodejs(args) => {
+                enso_build::release::deploy_ydoc_nodejs_to_ecr(&ctx, args.ecr_repository).await?;
+                // TODO: dispatch cloud workflow
             }
             Action::Publish => {
                 enso_build::release::publish_release(&ctx).await?;
