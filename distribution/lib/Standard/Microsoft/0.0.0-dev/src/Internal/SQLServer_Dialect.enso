@@ -161,10 +161,14 @@ type SQLServer_Dialect
                         sql_type = type_mapping.value_type_to_sql type_hint Problem_Behavior.Ignore
                         sql_type.typeid                            
                 stmt.setNull i java_type
+            _ : Float     -> 
+                if value.is_nan || value.is_infinite then stmt.setNull i Java_Types.REAL else
+                    stmt.setDouble i value
             _ : Time_Of_Day -> JDBCUtils.setLocalTimeViaTimeStamp stmt i value
             # Fallback to default logic for everything else
             _ -> fill_hole_default stmt i type_hint value
         Statement_Setter.Value custom_fill_hole
+
     ## PRIVATE
     make_cast : Internal_Column -> SQL_Type -> (SQL_Expression -> SQL_Type_Reference) -> Internal_Column
     make_cast self column target_type infer_result_type_from_database_callback =
@@ -249,6 +253,7 @@ type SQLServer_Dialect
             Dialect_Flag.Supports_Nested_With_Clause -> True
             Dialect_Flag.Supports_Case_Sensitive_Columns -> False
             Dialect_Flag.Is_Nan_And_Nothing_Distinct -> False
+            Dialect_Flag.Case_Sensitive_Text_Comparison -> False
 
     ## PRIVATE
        The default table types to use when listing tables.
@@ -550,20 +555,26 @@ agg_count_distinct_include_null args = case args.length == 1 of
     False -> Error.throw (Illegal_Argument.Error "COUNT_DISTINCT supports only single arguments in SQLServer.")
 
 ## PRIVATE
-starts_with = Base_Generator.lift_binary_sql_function "STARTS_WITH" "STARTSWITH"
+starts_with = Base_Generator.lift_binary_op "STARTS_WITH" str-> sub->
+    res = str ++ " LIKE (" ++ sub ++ "+'%')"
+    res.paren
 
 ## PRIVATE
-ends_with = Base_Generator.lift_binary_sql_function "ENDS_WITH" "ENDSWITH"
+ends_with = Base_Generator.lift_binary_op "ENDS_WITH" str-> sub->
+    res = str ++ " LIKE ('%'+" ++ sub ++ ")"
+    res.paren
 
 ## PRIVATE
-contains = Base_Generator.lift_binary_sql_function "CONTAINS" "CONTAINS"
+contains = Base_Generator.lift_binary_op "CONTAINS" str-> sub->
+    res = SQL_Builder.code "CHARINDEX(" ++ sub ++ ", " ++ str ++ ") > 0"
+    res.paren
 
 ## PRIVATE
 make_contains_expr expr substring = contains [expr, substring]
 
 ## PRIVATE
 make_case_sensitive = Base_Generator.lift_unary_op "MAKE_CASE_SENSITIVE" arg->
-    SQL_Builder.code "((" ++ arg ++ ') COLLATE "ucs_basic")'
+    SQL_Builder.code "((" ++ arg ++ ') COLLATE Latin1_General_BIN2)'
 
 ## PRIVATE
 left = Base_Generator.lift_binary_op "LEFT" str-> n->

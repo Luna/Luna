@@ -27,3 +27,9 @@ type Dialect_Flag
        Specifies if the backend is able to distinguish between a decimal NaN value and a unkwown 
        value (Enso's Nothing, or SQL's NULL). If `False`, NaN is treated as a NULL.
     Is_Nan_And_Nothing_Distinct
+    ## PRIVATE
+       Specifies if the backend supports the `Infinity` value for floating point columns.
+    Supports_Infinity
+    ## PRIVATE
+       Specifies if [Column] = "Text" is case sensitive by default.
+    Case_Sensitive_Text_Comparison
