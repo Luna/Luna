@@ -1,7 +1,7 @@
 <script lang="ts">
 import icons from '@/assets/icons.svg'
 import AgGridTableView, { commonContextMenuActions } from '@/components/shared/AgGridTableView.vue'
-import { SortModel, useTableVizToolbar } from '@/components/visualizations/tableVizToolbar'
+import { useTableVizToolbar, type SortModel } from '@/components/visualizations/tableVizToolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
@@ -450,7 +450,7 @@ function toRowField(name: string, valueType?: ValueType | null | undefined) {
 
 function getAstPattern(selector?: string | number, action?: string) {
   if (action && selector != null) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier(action)!),
         typeof selector === 'number' ?
