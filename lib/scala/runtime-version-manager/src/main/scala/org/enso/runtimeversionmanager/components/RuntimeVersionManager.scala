@@ -3,7 +3,6 @@ package org.enso.runtimeversionmanager.components
 import java.nio.file.{Files, Path, StandardOpenOption}
 import com.typesafe.scalalogging.Logger
 import org.enso.semver.SemVer
-import org.enso.cli.OS
 import org.enso.distribution.{
   DistributionManager,
   Environment,
@@ -13,7 +12,6 @@ import org.enso.distribution.{
 import org.enso.distribution.locking.{LockType, ResourceManager}
 import org.enso.runtimeversionmanager.CurrentVersion
 import org.enso.distribution.FileSystem.PathSyntax
-import org.enso.logger.masking.MaskedPath
 import org.enso.downloader.archive.Archive
 import org.enso.runtimeversionmanager.locking.Resources
 import org.enso.runtimeversionmanager.releases.ReleaseProvider
@@ -35,8 +33,6 @@ import scala.util.{Failure, Success, Try, Using}
   * @param distributionManager the [[DistributionManager]] to use
   * @param engineReleaseProvider the provider of engine releases
   * @param runtimeReleaseProvider the provider of runtime releases
-  * @param componentConfig the runtime component configuration
-  * @param componentUpdaterFactory the runtime component updater factory
   */
 class RuntimeVersionManager(
   environment: Environment,
@@ -46,12 +42,9 @@ class RuntimeVersionManager(
   resourceManager: ResourceManager,
   engineReleaseProvider: ReleaseProvider[EngineRelease],
   runtimeReleaseProvider: GraalVMRuntimeReleaseProvider,
-  componentConfig: RuntimeComponentConfiguration,
-  componentUpdaterFactory: RuntimeComponentUpdaterFactory,
   implicit private val installerKind: InstallerKind
 ) {
   private val logger = Logger[RuntimeVersionManager]
-  private val os     = OS.operatingSystem
 
   /** Tries to find a GraalVM runtime for the provided engine.
     *
@@ -654,35 +647,7 @@ class RuntimeVersionManager(
         .toTry
       runtime = GraalRuntime(version, path)
       _ <- runtime.ensureValid()
-      _ <- installRequiredRuntimeComponents(runtime).recover {
-        case NonFatal(error) =>
-          val msg = translateError(error)
-          logger.warn(
-            "Failed to install required components on the existing [{}]. " +
-            "Some language features may be unavailable. {}",
-            runtime,
-            msg
-          )
-      }
     } yield runtime
-  }
-
-  /** Provide human-readable error messages for OS-specific failures
-    * @param cause exception thrown when executing the process
-    * @return human-readable error message
-    */
-  private def translateError(cause: Throwable): String = {
-    val msg = cause.getMessage
-    OS.operatingSystem match {
-      case OS.Linux => msg
-      case OS.MacOS => msg
-      case OS.Windows =>
-        if (msg.contains("-1073741515")) {
-          "Required Microsoft Visual C++ installation is missing"
-        } else {
-          msg
-        }
-    }
   }
 
   /** Gets the runtime version from its name.
@@ -800,26 +765,16 @@ class RuntimeVersionManager(
 
       try {
         logger.debug("Loading temporary runtime [{}]", runtimeTemporaryPath)
-        val temporaryRuntime =
-          loadGraalRuntime(runtimeTemporaryPath).recoverWith { error =>
-            Failure(
-              InstallationError(
-                "Cannot load the installed runtime. The package may have " +
-                "been corrupted. Reverting installation",
-                error
-              )
+
+        loadGraalRuntime(runtimeTemporaryPath).recoverWith { error =>
+          Failure(
+            InstallationError(
+              "Cannot load the installed runtime. The package may have " +
+              "been corrupted. Reverting installation",
+              error
             )
-          }.get
-        logger.debug("Installing GraalVM components to [{}]", temporaryRuntime)
-        installRequiredRuntimeComponents(temporaryRuntime).recoverWith {
-          error =>
-            Failure(
-              InstallationError(
-                "fatal: Cannot install the required runtime components",
-                error
-              )
-            )
-        }.get
+          )
+        }
 
         val runtimePath =
           distributionManager.paths.runtimes / runtimeDirectoryName
@@ -848,32 +803,6 @@ class RuntimeVersionManager(
           throw e
       }
     }
-
-  /** Install components required for the specified runtime on the specified OS.
-    *
-    * @param runtime the GraalVM runtime
-    */
-  private def installRequiredRuntimeComponents(
-    runtime: GraalRuntime
-  ): Try[Unit] = {
-    logger.debug("Installing GraalVM components [{}, {}]", runtime, os)
-    val cu = componentUpdaterFactory.build(runtime)
-    val requiredComponents =
-      componentConfig.getRequiredComponents(runtime.version, os)
-
-    if (requiredComponents.isEmpty) Success(())
-    else {
-      for {
-        installedComponents <- cu.list()
-        _ = logger.debug(
-          "Available GraalVM components: [{}]",
-          installedComponents
-        )
-        missingComponents = requiredComponents.diff(installedComponents)
-        _ <- cu.install(missingComponents)
-      } yield ()
-    }
-  }
 
   private def engineDirectoryNameForVersion(version: SemVer): Path =
     Path.of(version.toString())
@@ -931,33 +860,6 @@ class RuntimeVersionManager(
     FileSystem.removeDirectory(temporaryPath)
   }
 
-  /** Logs on trace level all installed engines and runtimes.
-    *
-    * NOTE: Useful for debugging but should not be added to production code since it may
-    *       cause unnecessary installations for different engine versions.
-    */
-  def logAvailableComponentsForDebugging(): Unit = logger.whenTraceEnabled {
-    logger.trace("Discovering available components...")
-    val engines = for (engine <- listInstalledEngines()) yield {
-      val runtime = findGraalRuntime(engine)
-      val runtimeName = runtime
-        .map(_.toString)
-        .getOrElse("no runtime found")
-      val broken = if (engine.isMarkedBroken) " (broken)" else ""
-      s" - Enso ${engine.version}$broken [runtime: $runtimeName] " +
-      s"[location: ${MaskedPath(engine.path).applyMasking()}]"
-    }
-
-    val runtimes =
-      for (runtime <- listInstalledGraalRuntimes())
-        yield s" - $runtime [location: " +
-        s"${MaskedPath(runtime.path).applyMasking()}]"
-
-    logger.trace(
-      s"Installed engines (${engines.length}):\n${engines.mkString("\n")}\n\n" +
-      s"Installed runtimes (${runtimes.length}):\n${runtimes.mkString("\n")}"
-    )
-  }
 }
 
 /* Note [RuntimeVersionManager Concurrency Model]
