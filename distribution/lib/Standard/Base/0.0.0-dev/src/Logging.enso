@@ -15,7 +15,7 @@ Any.log_message self ~message:Text level:Log_Level=Log_Level.Info =
     logger = LoggerFactory.getLogger type_name
     case level of
         Log_Level.Finest -> logger.trace message
-        Log_Level.Fine -> logger.trace message
+        Log_Level.Fine -> logger.debug message
         Log_Level.Info -> logger.info message
         Log_Level.Warning -> logger.warn message
         Log_Level.Severe -> logger.error message
