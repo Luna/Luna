@@ -81,14 +81,16 @@ public record Separators(char first, char second, int count, int endIdx, int las
           // Encountered a second separator -  must be 4 away from last separator.
           if (endIdx != lastSeparator + 4) {
             if (firstSeparator == ' ' && c == ' ') {
-              // Special case when encountered
+              // Special case when the thousands separator is a space and there
+              // is white space after the number (e.g. before a symbil).
+              // Such as 1 234 567 USD.
               break;
             }
             return null;
           }
 
           if (firstSeparator != c) {
-            if (!integer && secondSeparator == '\0') {
+            if (!integer && secondSeparator == NumberWithSeparators.Constants.NONE) {
               secondSeparator = c;
             } else if (secondSeparator != c) {
               return null;

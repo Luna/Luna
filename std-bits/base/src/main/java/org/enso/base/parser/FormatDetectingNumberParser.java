@@ -1,7 +1,7 @@
 package org.enso.base.parser;
 
 /**
- * w * Parse a String into a Number. It supports the following patterns:
+ * Parse a String into a Number. It supports the following patterns:
  *
  * <ul>
  *   <li>SIGN + NUMBER
