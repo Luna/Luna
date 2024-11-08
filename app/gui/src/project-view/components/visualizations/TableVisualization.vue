@@ -379,7 +379,7 @@ function toField(name: string, index: number, valueType?: ValueType | null | und
     tooltipComponentParams: {
       numberOfNothing: dataQuality.number_of_nothing[index],
       numberOfWhitespace: dataQuality.number_of_whitespace[index],
-      total: props.data.all_rows_count, 
+      total: typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.all_rows_count: 0, 
       hideDataQuality
     },
   }
