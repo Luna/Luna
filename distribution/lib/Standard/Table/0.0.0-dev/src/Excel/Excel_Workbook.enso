@@ -21,6 +21,7 @@ import project.Internal.Excel_Section.Excel_Section
 import project.Internal.Java_Problems
 import project.Internal.Problem_Builder.Problem_Builder
 import project.Match_Columns.Match_Columns
+import project.Return_As_Table.Return_As_Table
 import project.Rows_To_Read.Rows_To_Read
 import project.Table.Table
 from project.Errors import Empty_Sheet
@@ -352,15 +353,16 @@ type Excel_Workbook
        - on_problems: how to handle problems during reading. Defaults to
          `Report_Warning`.
     @sheet_names build_sheet_selector
-    read_many : Vector Text -> Headers -> Return_As -> Problem_Behavior -> Table
-    read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return:Return_As=..Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
+    read_many : Vector Text -> Headers -> Return_As_Table -> Problem_Behavior -> Table
+    read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return:Return_As_Table=..Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
         if sheet_names.is_empty then Error.throw (Illegal_Argument.Error "No sheets selected.") else
             tables = sheet_names.map on_problems=on_problems address-> self.read address headers on_problems=on_problems
             case return of
-                Return_As.Table_Of_Tables -> Table.new [["Sheet Name", sheet_names], ["Table", tables]]
-                Return_As.Merged_Table columns_to_keep match ->
+                Return_As_Table.Table_Of_Objects -> Table.new [["Sheet Name", sheet_names], ["Table", tables]]
+                Return_As_Table.Merged_Table columns_to_keep match ->
                     first_tbl = tables.find t-> t != Nothing
                     if first_tbl == Nothing then Error.throw (Illegal_Argument.Error "No valid sheets found.") else
+                        # TODO common
                         unique = first_tbl.column_naming_helper.create_unique_name_strategy
                         tables.each tbl-> if tbl != Nothing then unique.mark_used tbl.column_names
                         new_column_name = unique.make_unique "Sheet Name"
