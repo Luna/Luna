@@ -15,11 +15,11 @@ public record Separators(char first, char second, int count, int endIdx, int las
    * character other than a digit, thousands or decimal separator is encountered then return null.
    * If multiple decimal separators are encountered then return null.
    */
-  static CharSequence strip(CharSequence value, int idx, int endIdx, char thousands, char decimal) {
+  static CharSequence strip(CharSequence value, int startIdx, int endIdx, char thousands, char decimal) {
     boolean foundDecimal = false;
-    char[] results = new char[endIdx - idx];
+    char[] results = new char[endIdx - startIdx];
     int resultIdx = 0;
-    for (int i = idx; i < endIdx; i++) {
+    for (int i = startIdx; i < endIdx; i++) {
       char c = value.charAt(i);
       if (c == decimal) {
         if (foundDecimal) {
