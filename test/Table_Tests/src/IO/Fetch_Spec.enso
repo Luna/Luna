@@ -255,8 +255,10 @@ add_specs suite_builder =
             file_deleter = target_file.delete_if_exists
             with_config 100 (TotalCacheLimit.Bytes.new 120) _-> _->
                 Panic.with_finalizer file_deleter <|
-                    Data.download base_url_with_slash+"test_download?length=200" target_file
+                    url = base_url_with_slash+"test_download?length=200"
+                    Data.download url target_file
                     target_file.read.length . should_equal 200
+                    Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
 
         group_builder.specify "Should not cache for methods other than GET" pending=pending_has_url <| Test.with_retries <|
             with_default_cache <|
