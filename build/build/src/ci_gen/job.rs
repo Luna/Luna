@@ -452,23 +452,44 @@ pub struct DeployRuntime;
 
 impl JobArchetype for DeployRuntime {
     fn job(&self, target: Target) -> Job {
-        RunStepsBuilder::new("release deploy-runtime")
-            .customize(|step| {
-                vec![step
-                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
-                    .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::runtime::NAME)
-                    .with_secret_exposed_as(
-                        secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
-                        "AWS_ACCESS_KEY_ID",
-                    )
-                    .with_secret_exposed_as(
-                        secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
-                        "AWS_SECRET_ACCESS_KEY",
-                    )
-                    .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::runtime::REGION)]
-            })
-            .build_job("Upload Runtime to ECR", target)
+        ecr_deploy_steps_builder("release deploy-runtime").build_job("Upload Runtime to ECR", target)
     }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DeployYdocPolyglot;
+
+impl JobArchetype for DeployYdocPolyglot {
+    fn job(&self, target: Target) -> Job {
+        ecr_deploy_steps_builder("release deploy-ydoc-polyglot").build_job("Upload polyglot Ydoc to ECR", target)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DeployYdocNodejs;
+
+impl JobArchetype for DeployYdocNodejs {
+    fn job(&self, target: Target) -> Job {
+        ecr_deploy_steps_builder("release deploy-ydoc-nodejs").build_job("Upload Node.js Ydoc to ECR", target)
+    }
+}
+
+fn ecr_deploy_steps_builder(run_command: impl Into<String>) -> RunStepsBuilder {
+    RunStepsBuilder::new(run_command)
+    .customize(|step| {
+        vec![step
+            .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
+            .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::runtime::NAME)
+            .with_secret_exposed_as(
+                secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
+                "AWS_ACCESS_KEY_ID",
+            )
+            .with_secret_exposed_as(
+                secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
+                "AWS_SECRET_ACCESS_KEY",
+            )
+            .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::runtime::REGION)]
+    })
 }
 
 pub fn expose_os_specific_signing_secret(os: OS, step: Step) -> Step {

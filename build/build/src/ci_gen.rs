@@ -523,6 +523,12 @@ fn add_release_steps(workflow: &mut Workflow) -> Result {
             let upload_runtime_job_id =
                 workflow.add_dependent(target, job::DeployRuntime, runtime_requirements);
             packaging_job_ids.push(upload_runtime_job_id);
+            let upload_ydoc_polyglot_job_id =
+                workflow.add_dependent(target, job::DeployYdocPolyglot, runtime_requirements);
+            packaging_job_ids.push(upload_ydoc_polyglot_job_id);
+            let upload_ydoc_nodejs_job_id =
+                workflow.add_dependent(target, job::DeployYdocNodejs, runtime_requirements);
+            packaging_job_ids.push(upload_ydoc_nodejs_job_id);
         }
     }
 
