@@ -11,6 +11,64 @@ import { ErrorCode, RemoteRpcError } from 'ydoc-shared/languageServer'
 import type { Path, StackItem, Uuid } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, withContext, type Result } from 'ydoc-shared/util/data/result'
 
+/** Check if directory exists and try to create one if missing. */
+export async function ensureDirExists(rpc: LanguageServer, path: Path) {
+  const exists = await dirExists(rpc, path)
+  if (!exists.ok) return exists
+  if (exists.value) return Ok()
+
+  const name = path.segments.at(-1)
+  if (name == null) return Err('Cannot create context root')
+
+  return await withContext(
+    () => 'When creating directory for uploaded file',
+    async () => {
+      return await rpc.createFile({
+        type: 'Directory',
+        name,
+        path: { rootId: path.rootId, segments: path.segments.slice(0, -1) },
+      })
+    },
+  )
+}
+
+async function dirExists(rpc: LanguageServer, path: Path): Promise<Result<boolean>> {
+  const info = await rpc.fileInfo(path)
+  if (info.ok) return Ok(info.value.attributes.kind.type == 'Directory')
+  else if (
+    info.error.payload.cause instanceof RemoteRpcError &&
+    (info.error.payload.cause.code === ErrorCode.FILE_NOT_FOUND ||
+      info.error.payload.cause.code === ErrorCode.CONTENT_ROOT_NOT_FOUND)
+  ) {
+    return Ok(false)
+  } else {
+    return info
+  }
+}
+
+/**
+ * Return a name for a file which does not collide with existing files in `path`.
+ *
+ * First choice is `suggestedName`, and then try to apply a numeric suffix to stem.
+ */
+export async function pickUniqueName(
+  rpc: LanguageServer,
+  path: Path,
+  suggestedName: string,
+): Promise<Result<string>> {
+  const files = await rpc.listFiles(path)
+  if (!files.ok) return files
+  const existingNames = new Set(files.value.paths.map((path) => path.name))
+  const { stem, extension = '' } = splitFilename(suggestedName)
+  let candidate = suggestedName
+  let num = 1
+  while (existingNames.has(candidate)) {
+    candidate = `${stem}_${num}.${extension}`
+    num += 1
+  }
+  return Ok(candidate)
+}
+
 // === Constants ===
 
 const DATA_DIR_NAME = 'data'
@@ -100,9 +158,10 @@ export class Uploader {
     ) {
       return Ok({ source: 'FileSystemRoot', name: this.file.path })
     }
-    const dataDirExists = await this.ensureDataDirExists()
+    const dataDirPath = { rootId: this.projectRootId, segments: [DATA_DIR_NAME] }
+    const dataDirExists = await ensureDirExists(this.rpc, dataDirPath)
     if (!dataDirExists.ok) return dataDirExists
-    const name = await this.pickUniqueName(this.file.name)
+    const name = await pickUniqueName(this.rpc, dataDirPath, this.file.name)
     if (!name.ok) return name
     this.awareness.addOrUpdateUpload(name.value, {
       sizePercentage: 0,
@@ -153,54 +212,6 @@ export class Uploader {
     } else {
       return Ok()
     }
-  }
-
-  private dataDirPath(): Path {
-    return { rootId: this.projectRootId, segments: [DATA_DIR_NAME] }
-  }
-
-  private async ensureDataDirExists() {
-    const exists = await this.dataDirExists()
-    if (!exists.ok) return exists
-    if (exists.value) return Ok()
-    return await withContext(
-      () => 'When creating directory for uploaded file',
-      async () => {
-        return await this.rpc.createFile({
-          type: 'Directory',
-          name: DATA_DIR_NAME,
-          path: { rootId: this.projectRootId, segments: [] },
-        })
-      },
-    )
-  }
-
-  private async dataDirExists(): Promise<Result<boolean>> {
-    const info = await this.rpc.fileInfo(this.dataDirPath())
-    if (info.ok) return Ok(info.value.attributes.kind.type == 'Directory')
-    else if (
-      info.error.payload.cause instanceof RemoteRpcError &&
-      (info.error.payload.cause.code === ErrorCode.FILE_NOT_FOUND ||
-        info.error.payload.cause.code === ErrorCode.CONTENT_ROOT_NOT_FOUND)
-    ) {
-      return Ok(false)
-    } else {
-      return info
-    }
-  }
-
-  private async pickUniqueName(suggestedName: string): Promise<Result<string>> {
-    const files = await this.rpc.listFiles(this.dataDirPath())
-    if (!files.ok) return files
-    const existingNames = new Set(files.value.paths.map((path) => path.name))
-    const { stem, extension = '' } = splitFilename(suggestedName)
-    let candidate = suggestedName
-    let num = 1
-    while (existingNames.has(candidate)) {
-      candidate = `${stem}_${num}.${extension}`
-      num += 1
-    }
-    return Ok(candidate)
   }
 }
 

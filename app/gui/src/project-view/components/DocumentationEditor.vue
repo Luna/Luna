@@ -12,6 +12,7 @@ import { ComponentInstance, ref, toRef, toValue, watch } from 'vue'
 import type { Path } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, mapOk, withContext, type Result } from 'ydoc-shared/util/data/result'
 import * as Y from 'yjs'
+import { pickUniqueName } from './GraphEditor/upload'
 
 const { yText } = defineProps<{
   yText: Y.Text
@@ -36,7 +37,7 @@ function useDocumentationImages(
   modulePath: ToValue<Path | undefined>,
   readFileBinary: (path: Path) => Promise<Result<Blob>>,
 ) {
-  async function urlToPath(url: string): Promise<Result<Path> | undefined> {
+  function urlToPath(url: string): Result<Path> | undefined {
     const modulePathValue = toValue(modulePath)
     if (!modulePathValue) {
       return Err('Current module path is unknown.')
@@ -81,32 +82,40 @@ function useDocumentationImages(
     },
   )
 
-  function uploadImage(name: string, blob: Promise<Blob>) {
+  async function uploadImage(name: string, blobPromise: Promise<Blob>) {
+    const rootId = await projectStore.projectRootId
+    if (!rootId) {
+      uploadErrorToast.show('Cannot upload image: unknown project file tree root.')
+      return
+    }
     if (!markdownEditor.value || !markdownEditor.value.loaded) {
       console.error('Tried to upload image while mardown editor is still not loaded')
       return
     }
-    // TODO: check for name conflicts.
-    markdownEditor.value.putText(`![Image](/images/${name})`)
-    projectStore.projectRootId.then((rootId) => {
-      if (!rootId) {
-        uploadErrorToast.show('Cannot upload image: unknown project file tree root.')
-        return
-      }
-      const path: Path = {
+    const filename = await pickUniqueName(
+      projectStore.lsRpcConnection,
+      {
         rootId,
-        segments: ['images', name],
-      }
-      const id = pathUniqueId(path)
-      uploadedImages.set(id, blob)
-      blob
-        .then(async (blob) => {
-          const result = await projectStore.writeFileBinary(path, blob)
-          if (!result.ok) uploadErrorToast.reportError(result.error, 'Failed to upload image')
-        })
-        .catch((err) => uploadErrorToast.show(`Failed to upload image: ${err}`))
-        .finally(() => uploadedImages.delete(id))
-    })
+        segments: ['images'],
+      },
+      name,
+    )
+    if (!filename.ok) {
+      uploadErrorToast.reportError(filename.error)
+      return
+    }
+    markdownEditor.value.putText(`![Image](/images/${filename.value})`)
+    const path: Path = { rootId, segments: ['images', filename.value] }
+    const id = pathUniqueId(path)
+    uploadedImages.set(id, blobPromise)
+    try {
+      const blob = await blobPromise
+      const uploadResult = await projectStore.writeFileBinary(path, blob)
+      if (!uploadResult.ok)
+        uploadErrorToast.reportError(uploadResult.error, 'Failed to upload image')
+    } finally {
+      uploadedImages.delete(id)
+    }
   }
 
   return { transformImageUrl, uploadImage }
@@ -120,15 +129,35 @@ watch(
   (fullscreenOrAnimating) => emit('update:fullscreen', fullscreenOrAnimating),
 )
 
+const supportedImageTypes: Record<string, { extension: string }> = {
+  // List taken from https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types
+  'image/apng': { extension: 'apng' },
+  'image/avif': { extension: 'avif' },
+  'image/gif': { extension: 'gif' },
+  'image/jpeg': { extension: 'jpg' },
+  'image/png': { extension: 'png' },
+  'image/svg+xml': { extension: 'svg' },
+  'image/webp': { extension: 'webp' },
+  // Question: do we want to have BMP and ICO here?
+}
+
 const handler = documentationEditorBindings.handler({
   pasteImage: () => {
     window.navigator.clipboard.read().then(async (items) => {
+      if (markdownEditor.value == null) return
       for (const item of items) {
-        const imageType = item.types.find((type) => type.startsWith('image/'))
+        const textType = item.types.find((type) => type === 'text/plain')
+        if (textType) {
+          const blob = await item.getType(textType)
+          markdownEditor.value.putText(await blob.text())
+          break
+        }
+        const imageType = item.types.find((type) => type in supportedImageTypes)
         if (imageType) {
-          // TODO: better extensions
-          const ext = imageType.slice('image/'.length)
-          uploadImage(`image.${ext}`, item.getType(imageType))
+          const ext = supportedImageTypes[imageType]?.extension ?? ''
+          uploadImage(`image.${ext}`, item.getType(imageType)).catch((err) =>
+            uploadErrorToast.show(`Failed to upload image: ${err}`),
+          )
           break
         }
       }

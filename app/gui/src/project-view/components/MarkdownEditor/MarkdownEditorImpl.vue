@@ -54,6 +54,7 @@ defineExpose({
     const range = editorView.state.selection.ranges[0]!
     editorView.dispatch({
       changes: { from: range.from, to: range.to, insert: text },
+      selection: { anchor: range.from + text.length },
     })
   },
 })
