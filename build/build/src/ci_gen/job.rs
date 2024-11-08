@@ -462,6 +462,7 @@ pub struct DeployYdocPolyglot;
 impl JobArchetype for DeployYdocPolyglot {
     fn job(&self, target: Target) -> Job {
         ecr_deploy_steps_builder("release deploy-ydoc-polyglot")
+            .cleaning(RELEASE_CLEANING_POLICY)
             .build_job("Upload polyglot Ydoc to ECR", target)
     }
 }
@@ -472,6 +473,7 @@ pub struct DeployYdocNodejs;
 impl JobArchetype for DeployYdocNodejs {
     fn job(&self, target: Target) -> Job {
         ecr_deploy_steps_builder("release deploy-ydoc-nodejs")
+            .cleaning(RELEASE_CLEANING_POLICY)
             .build_job("Upload Node.js Ydoc to ECR", target)
     }
 }
