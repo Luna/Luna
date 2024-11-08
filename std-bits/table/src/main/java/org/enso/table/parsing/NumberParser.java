@@ -31,8 +31,8 @@ public class NumberParser extends IncrementalDatatypeParser {
       boolean trimValues,
       String decimalPoint,
       String thousandSeparator) {
+    assert integerTargetType != null;
     return new NumberParser(
-        true,
         integerTargetType,
         allowSymbol,
         allowLeadingZeroes,
@@ -56,23 +56,20 @@ public class NumberParser extends IncrementalDatatypeParser {
       String decimalPoint,
       String thousandSeparator) {
     return new NumberParser(
-        false, null, allowSymbol, allowLeadingZeroes, trimValues, decimalPoint, thousandSeparator);
+        null, allowSymbol, allowLeadingZeroes, trimValues, decimalPoint, thousandSeparator);
   }
 
   private final IntegerType integerTargetType;
-  private final boolean isInteger;
 
   private final FormatDetectingNumberParser parser;
 
   private NumberParser(
-      boolean isInteger,
       IntegerType integerTargetType,
       boolean allowSymbol,
       boolean allowLeadingZeroes,
       boolean allowLeadingTrailingWhitespace,
       String decimalPoint,
       String thousandSeparator) {
-    this.isInteger = isInteger;
     this.integerTargetType = integerTargetType;
 
     var numberWithSeparators = NumberWithSeparators.fromSeparators(thousandSeparator, decimalPoint);
@@ -85,9 +82,13 @@ public class NumberParser extends IncrementalDatatypeParser {
             numberWithSeparators);
   }
 
+  private boolean isInteger() {
+    return integerTargetType != null;
+  }
+
   @Override
   protected Builder makeBuilderWithCapacity(int capacity, ProblemAggregator problemAggregator) {
-    return isInteger
+    return isInteger()
         ? NumericBuilder.createLongBuilder(capacity, integerTargetType, problemAggregator)
         : NumericBuilder.createDoubleBuilder(capacity, problemAggregator);
   }
@@ -104,7 +105,7 @@ public class NumberParser extends IncrementalDatatypeParser {
 
       // Check if in unknown state
       var isInMixedState =
-          !isInteger
+          !isInteger()
               && (parser.numberWithSeparators() == NumberWithSeparators.DOT_UNKNOWN
                   || parser.numberWithSeparators() == NumberWithSeparators.COMMA_UNKNOWN);
 
@@ -141,7 +142,7 @@ public class NumberParser extends IncrementalDatatypeParser {
 
   @Override
   public Object parseSingleValue(String text, ParseProblemAggregator problemAggregator) {
-    var result = parser.parse(text, isInteger);
+    var result = parser.parse(text, isInteger());
 
     if (result instanceof FormatDetectingNumberParser.NumberParseFailure) {
       problemAggregator.reportInvalidFormat(text);
