@@ -10,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
 
+/**
+ * Utility class that finds installed managed runtimes (Graal JDK) from {@link DistributionManager}.
+ */
 public class GraalVersionManager {
   private final DistributionManager distributionManager;
   private final Environment environment;
@@ -79,7 +82,7 @@ public class GraalVersionManager {
             "The runtime "
                 + version
                 + "is already installed, but cannot be "
-                + "loaded du to "
+                + "loaded due to "
                 + e.getMessage()
                 + "."
                 + "Until the launcher gets an auto-repair "
