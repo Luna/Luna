@@ -153,7 +153,7 @@ add_specs suite_builder =
         with_mocks ~action =
             now_getter = NowGetter.new
             disk_space_getter = DiskSpaceGetter.new
-            lru_cache = LRUCache.new
+            lru_cache = LRUCache.new LRUCacheSettings.getDefault now_getter disk_space_getter
             with_lru_cache lru_cache (action now_getter disk_space_getter)
 
         # Craetes a new cache each time, then resets it at the end
@@ -301,42 +301,42 @@ add_specs suite_builder =
 
         ## Fetching the trigger uri causes stale entries to be removed, since the
            uri is always different and so the caching and cleanup logic is run.
-        ##
-            fake_now = Date_Time.now
-            trigger_uri_serial = Ref.new 0
-            make_trigger_uri =
-                serial = trigger_uri_serial.get
-                trigger_uri_serial.modify (_ + 1)
-                base_url_with_slash+'test_download?max-age=10000&length=50&abc='+serial.to_text
-            set_time_and_get_count advance_secs =
-                EnsoSecretHelper.getCache.getCacheTestParameters.setNowOverrideTestOnly (fake_now + (Duration.new seconds=advance_secs))
-                trigger_uri = make_trigger_uri
-                Data.fetch trigger_uri
-                get_num_response_cache_entries
-            fake_time_resetter =
-                EnsoSecretHelper.getCache.getCacheTestParameters.clearNowOverrideTestOnly
+        fake_now = Date_Time.now
+        trigger_uri_serial = Ref.new 0
+        make_trigger_uri =
+            serial = trigger_uri_serial.get
+            trigger_uri_serial.modify (_ + 1)
+            base_url_with_slash+'test_download?max-age=10000&length=50&abc='+serial.to_text
+        set_time_and_get_count now_mock advance_secs =
+            now_mock.lala (fake_now + (Duration.new seconds=advance_secs))
+            now_mock.mocked (fake_now + (Duration.new seconds=advance_secs))
+            trigger_uri = make_trigger_uri
+            Data.fetch trigger_uri
+            get_num_response_cache_entries
+        fake_time_resetter =
+            EnsoSecretHelper.getCache.getCacheTestParameters.clearNowOverrideTestOnly
 
-            group_builder.specify "The cache should expire stale entries" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
+        group_builder.specify "The cache should expire stale entries" pending=pending_has_url <| Test.with_retries <|
+            with_mocks now-> _->
 
-                set_time_and_get_count 0  # Initialize fake now.
+                set_time_and_get_count now 0  # Initialize fake now.
 
                 Data.fetch base_url_with_slash+'test_download?max-age=100&length=50'
                 Data.fetch base_url_with_slash+'test_download?max-age=200&length=50'
                 Data.fetch base_url_with_slash+'test_download?max-age=200&length=51'
                 Data.fetch base_url_with_slash+'test_download?max-age=300&length=50'
 
-                Panic.with_finalizer fake_time_resetter <|
-                    ## The count will increase by 1 each time, but decrease by the
-                    number of entries removed
-                    set_time_and_get_count 0 . should_equal 6
-                    set_time_and_get_count 90 . should_equal 7
-                    set_time_and_get_count 110 . should_equal 7
-                    set_time_and_get_count 190 . should_equal 8
-                    set_time_and_get_count 202 . should_equal 7
-                    set_time_and_get_count 292 . should_equal 8
-                    set_time_and_get_count 301 . should_equal 8
+                ## The count will increase by 1 each time, but decrease by the
+                   number of entries removed
+                set_time_and_get_count now 0 . should_equal 6
+                set_time_and_get_count now 90 . should_equal 7
+                set_time_and_get_count now 110 . should_equal 7
+                set_time_and_get_count now 190 . should_equal 8
+                set_time_and_get_count now 202 . should_equal 7
+                set_time_and_get_count now 292 . should_equal 8
+                set_time_and_get_count now 301 . should_equal 8
 
+        ##
             group_builder.specify "The cache should use the Age response header" pending=pending_has_url <| Test.with_retries <|
                 HTTP.clear_response_cache
 
