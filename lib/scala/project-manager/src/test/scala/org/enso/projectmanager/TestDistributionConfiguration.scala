@@ -7,7 +7,7 @@ import org.enso.editions.updater.EditionManager
 import java.nio.file.Path
 import org.enso.projectmanager.versionmanagement.DistributionConfiguration
 import org.enso.runtimeversionmanager.components.{
-  GraalVMComponentConfiguration,
+  GraalVersionManager,
   InstallerKind,
   RuntimeVersionManagementUserInterface,
   RuntimeVersionManager
@@ -59,6 +59,9 @@ class TestDistributionConfiguration(
 
   lazy val distributionManager = new DistributionManager(environment)
 
+  lazy val graalVersionManager =
+    new GraalVersionManager(distributionManager, environment)
+
   lazy val lockManager = new TestLocalLockManager
 
   lazy val resourceManager = new ResourceManager(lockManager)
@@ -75,6 +78,7 @@ class TestDistributionConfiguration(
     userInterface             = userInterface,
     distributionManager       = distributionManager,
     temporaryDirectoryManager = temporaryDirectoryManager,
+    graalVersionManager       = graalVersionManager,
     resourceManager           = resourceManager,
     engineReleaseProvider     = engineReleaseProvider,
     runtimeReleaseProvider    = runtimeReleaseProvider,
