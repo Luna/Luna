@@ -63,21 +63,26 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
 
     @Override
     public Module transformModule(Module moduleIr) {
+      var newImports = new ArrayList<Import>();
       for (var imp : CollectionConverters.asJava(moduleIr.imports())) {
-        var encounteredErrors = analyseSymbolsFromImport((Import.Module) imp);
-        if (encounteredErrors != null) {
-          return moduleIr.copy(
-              encounteredErrors,
-              moduleIr.exports(),
-              moduleIr.bindings(),
-              moduleIr.isPrivate(),
-              moduleIr.location(),
-              moduleIr.passData(),
-              moduleIr.diagnostics(),
-              moduleIr.id());
+        if (imp instanceof Import.Module modImp) {
+          var encounteredErrors = analyseSymbolsFromImport(modImp);
+          if (encounteredErrors != null) {
+            newImports.addAll(encounteredErrors);
+            continue;
+          }
         }
+        newImports.add(imp);
       }
-      return moduleIr;
+      return moduleIr.copy(
+          CollectionConverters.asScala(newImports).toList(),
+          moduleIr.exports(),
+          moduleIr.bindings(),
+          moduleIr.isPrivate(),
+          moduleIr.location(),
+          moduleIr.passData(),
+          moduleIr.diagnostics(),
+          moduleIr.id());
     }
 
     @Override
@@ -86,7 +91,7 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
     }
 
     /** Returns list of encountered errors, or null. */
-    private scala.collection.immutable.List<Import> analyseSymbolsFromImport(Import.Module imp) {
+    private List<Import> analyseSymbolsFromImport(Import.Module imp) {
       if (imp.onlyNames().isDefined()) {
         var resolvedImport =
             bindingsMap.resolvedImports().find(resImp -> resImp.importDef() == imp);
@@ -99,9 +104,11 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
             importedTargets.flatMap(
                 importedTarget -> onlyNames.filterNot(nm -> isSymbolResolved(importedTarget, nm)));
         if (unresolvedSymbols.nonEmpty()) {
-          return unresolvedSymbols.map(
-              unresolvedSym ->
-                  createErrorForUnresolvedSymbol(imp, importedTargets.head(), unresolvedSym));
+          scala.collection.immutable.List<Import> errs =
+              unresolvedSymbols.map(
+                  unresolvedSym ->
+                      createErrorForUnresolvedSymbol(imp, importedTargets.head(), unresolvedSym));
+          return CollectionConverters.asJava(errs);
         }
       }
 
@@ -145,7 +152,7 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
           }
         }
         if (!encounteredErrors.isEmpty()) {
-          return CollectionConverters.asScala(encounteredErrors).toList();
+          return encounteredErrors;
         }
       }
       return null;
