@@ -295,7 +295,7 @@ pub async fn deploy_runtime_to_ecr(context: &BuildContext, repository: String) -
 pub async fn deploy_ydoc_polyglot_to_ecr(context: &BuildContext, repository: String) -> Result {
     let client = crate::aws::ecr::client_from_env().await;
     let repository_uri = crate::aws::ecr::get_repository_uri(&client, &repository).await?;
-    let tag = format!("{}/{}:{}", repository_uri, "ydoc-polyglot", context.triple.versions.version);
+    let tag = format!("{}:{}-{}", repository_uri, "ydoc-polyglot", context.triple.versions.version);
     // We don't care about the image ID, we will refer to it by the tag.
     let _image_id = generate_ydoc_polyglot_image(context, &tag).await?;
     let credentials = crate::aws::ecr::get_credentials(&client).await?;
@@ -309,7 +309,7 @@ pub async fn deploy_ydoc_polyglot_to_ecr(context: &BuildContext, repository: Str
 pub async fn deploy_ydoc_nodejs_to_ecr(context: &BuildContext, repository: String) -> Result {
     let client = crate::aws::ecr::client_from_env().await;
     let repository_uri = crate::aws::ecr::get_repository_uri(&client, &repository).await?;
-    let tag = format!("{}/{}:{}", repository_uri, "ydoc-nodejs", context.triple.versions.version);
+    let tag = format!("{}:{}-{}", repository_uri, "ydoc-nodejs", context.triple.versions.version);
     // We don't care about the image ID, we will refer to it by the tag.
     let _image_id = generate_ydoc_nodejs_image(context, &tag).await?;
     let credentials = crate::aws::ecr::get_credentials(&client).await?;
