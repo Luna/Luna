@@ -43,7 +43,7 @@ function useDocumentationImages(
     }
     const appliedUrl = new URL(url, `file:///${modulePathValue.segments.join('/')}`)
     if (appliedUrl.protocol === 'file:') {
-      const segments = appliedUrl.pathname.split('/')
+      const segments = appliedUrl.pathname.split('/').slice(1)
       return Ok({ rootId: modulePathValue.rootId, segments })
     } else {
       // Not a relative URL, custom fetching not needed.
@@ -128,7 +128,7 @@ const handler = documentationEditorBindings.handler({
         if (imageType) {
           // TODO: better extensions
           const ext = imageType.slice('image/'.length)
-          uploadImage(`image${ext}`, item.getType(imageType))
+          uploadImage(`image.${ext}`, item.getType(imageType))
           break
         }
       }
@@ -143,13 +143,12 @@ const handler = documentationEditorBindings.handler({
       <div ref="toolbarElement" class="toolbar">
         <FullscreenButton v-model="fullscreen" />
       </div>
-      <div class="scrollArea">
+      <div class="scrollArea" @keydown="handler">
         <MarkdownEditor
           ref="markdownEditor"
           :yText="yText"
           :transformImageUrl="transformImageUrl"
           :toolbarContainer="toolbarElement"
-          @keydown="handler"
         />
       </div>
     </div>
