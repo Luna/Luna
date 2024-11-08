@@ -35,19 +35,13 @@ public class LRUCacheSettings {
     this.totalCacheLimit = totalCacheLimit;
   }
 
-  public LRUCacheSettings(String maxFileSizeSpec, String totalCacheLimitSpec) {
-    this(parseMaxFileSize(maxFileSizeSpec), parseTotalCacheLimit(totalCacheLimitSpec));
-  }
-
   /** Uses defaults if the vars are not set. */
   public static LRUCacheSettings getDefault() {
     String maxFileSizeSpec = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
     String totalCacheLimitSpec = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
-    if (maxFileSizeSpec != null && totalCacheLimitSpec != null) {
-      return new LRUCacheSettings(maxFileSizeSpec, totalCacheLimitSpec);
-    } else {
-      return new LRUCacheSettings(DEFAULT_MAX_FILE_SIZE, new TotalCacheLimit.Percentage(DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE));
-    }
+    var maxFileSize = maxFileSizeSpec != null ? parseMaxFileSize(maxFileSizeSpec) : DEFAULT_MAX_FILE_SIZE;
+    var totalCacheLimit = totalCacheLimitSpec != null ? parseTotalCacheLimit(totalCacheLimitSpec) : new TotalCacheLimit.Percentage(DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE);
+    return new LRUCacheSettings(maxFileSize, totalCacheLimit);
   }
 
   public long getMaxFileSize() {
