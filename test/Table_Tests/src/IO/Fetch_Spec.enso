@@ -150,6 +150,13 @@ add_specs suite_builder =
             with_lru_cache lru_cache (action now_getter disk_space_getter)
 
         # Craetes a new cache each time, then resets it at the end
+        with_mocks ~action =
+            now_getter = NowGetter.new
+            disk_space_getter = DiskSpaceGetter.new
+            lru_cache = LRUCache.new
+            with_lru_cache lru_cache (action now_getter disk_space_getter)
+
+        # Craetes a new cache each time, then resets it at the end
         with_default_cache ~action =
             lru_cache = LRUCache.new
             with_lru_cache lru_cache action
@@ -252,30 +259,28 @@ add_specs suite_builder =
                     target_file.read.length . should_equal 200
             with_config 100 (TotalCacheLimit.Bytes.new 120) d
 
-        ##
-            group_builder.specify "Should not cache for methods other than GET" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
-
+        group_builder.specify "Should not cache for methods other than GET" pending=pending_has_url <| Test.with_retries <|
+            with_default_cache <|
                 expect_counts [0, 0] <|
                     Data.post url_post (Request_Body.Text "hello world")
 
-            group_builder.specify "HTTP request with a non-GET method should reject a cache_policy=Use_Cache argument" pending=pending_has_url <| Test.with_retries <|
-                request = Request.new HTTP_Method.Post url_post [] Request_Body.Empty
-                HTTP.new.request request cache_policy=Cache_Policy.Use_Cache . should_fail_with Illegal_Argument
+        group_builder.specify "HTTP request with a non-GET method should reject a cache_policy=Use_Cache argument" pending=pending_has_url <| Test.with_retries <|
+            request = Request.new HTTP_Method.Post url_post [] Request_Body.Empty
+            HTTP.new.request request cache_policy=Cache_Policy.Use_Cache . should_fail_with Illegal_Argument
 
-            group_builder.specify "HTTP request with a non-GET method should not reject a cache_policy=No_Cache argument" pending=pending_has_url <| Test.with_retries <|
-                request = Request.new HTTP_Method.Post url_post [] Request_Body.Empty
-                HTTP.new.request request cache_policy=Cache_Policy.No_Cache . should_succeed
+        group_builder.specify "HTTP request with a non-GET method should not reject a cache_policy=No_Cache argument" pending=pending_has_url <| Test.with_retries <|
+            request = Request.new HTTP_Method.Post url_post [] Request_Body.Empty
+            HTTP.new.request request cache_policy=Cache_Policy.No_Cache . should_succeed
 
-            group_builder.specify "Should be able to clear caches" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
+        group_builder.specify "Should be able to clear caches" pending=pending_has_url <| Test.with_retries <|
+            with_default_cache <|
                 Data.fetch url0
                 get_num_response_cache_entries . should_equal 1
-                HTTP.clear_response_cache
+            with_default_cache <|
                 get_num_response_cache_entries . should_equal 0
 
-            group_builder.specify "Cache key should depend on the headers" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
+        group_builder.specify "Cache key should depend on the headers" pending=pending_has_url <| Test.with_retries <|
+            with_default_cache <|
                 expect_counts [0, 2] <|
                     Data.fetch url0 headers=headers0
                     Data.fetch url0 headers=headers1
@@ -284,8 +289,8 @@ add_specs suite_builder =
                     Data.fetch url0 headers=headers0
                     Data.fetch url0 headers=headers1
 
-            group_builder.specify "Cache key should not depend on header order" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
+        group_builder.specify "Cache key should not depend on header order" pending=pending_has_url <| Test.with_retries <|
+            with_default_cache <|
                 header0 = Header.new "Abc" "eef"
                 header1 = Header.new "Abc" "def"
                 header2 = Header.new "Ghi" "jkl"
@@ -295,8 +300,9 @@ add_specs suite_builder =
                 get_num_response_cache_entries . should_equal 1
                 responses.distinct.length . should_equal 1
 
-            ## Fetching the trigger uri causes stale entries to be removed, since the
-            uri is always different and so the caching and cleanup logic is run.
+        ## Fetching the trigger uri causes stale entries to be removed, since the
+           uri is always different and so the caching and cleanup logic is run.
+        ##
             fake_now = Date_Time.now
             trigger_uri_serial = Ref.new 0
             make_trigger_uri =
