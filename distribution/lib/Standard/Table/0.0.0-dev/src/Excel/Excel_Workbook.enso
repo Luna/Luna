@@ -313,6 +313,11 @@ type Excel_Workbook
         "Excel_Workbook"+associated_regular_file
 
     ## PRIVATE
+       Returns a short human-readable text representation of the workbook.
+    to_display_text : Text
+    to_display_text self = self.to_text
+
+    ## PRIVATE
        Provides a JS object representation for use in visualizations.
     to_js_object : JS_Object
     to_js_object self =
