@@ -401,6 +401,7 @@ class LanguageServerController(
     }
 
   private def stop(): Unit = {
+    logger.trace("Stopping Language Server controller")
     context.parent ! ServerShutDown(project.id)
     context.system.eventStream.publish(ProjectClosed(project.id))
     if (context.children.isEmpty) {

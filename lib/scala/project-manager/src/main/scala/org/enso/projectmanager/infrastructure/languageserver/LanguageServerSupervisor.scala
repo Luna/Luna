@@ -76,18 +76,19 @@ class LanguageServerSupervisor(
 
     case ServerUnresponsive =>
       cancellable.cancel()
-      logger.info("Server is unresponsive. Restarting [{}].", connectionInfo)
+      logger.info("Server is unresponsive. Restarting [{}]", connectionInfo)
       serverProcessManager ! Restart
       context.become(restarting)
 
     case GracefulStop =>
+      logger.info("Language Server shutdown was requested [{}]", connectionInfo)
       cancellable.cancel()
       stop()
   }
 
   private def restarting: Receive = {
     case ServerBootFailed(_) =>
-      logger.error("Cannot restart language server.")
+      logger.error("Failed to restart Language Server")
       context.parent ! ServerDied
       context.stop(self)
 
@@ -95,10 +96,10 @@ class LanguageServerSupervisor(
       if (newProcessManager != serverProcessManager) {
         logger.error(
           "The process manager actor has changed. This should never happen. " +
-          "Supervisor may no longer work correctly."
+          "Supervisor may no longer work correctly"
         )
       }
-      logger.info("Language server restarted [{}].", connectionInfo)
+      logger.info("Language server restarted [{}]", connectionInfo)
       val cancellable =
         scheduler.scheduleAtFixedRate(
           supervisionConfig.initialDelay,
@@ -109,6 +110,7 @@ class LanguageServerSupervisor(
       context.become(supervising(cancellable))
 
     case GracefulStop =>
+      logger.trace("Language Server Supervisor stopped during restart")
       stop()
   }
 
