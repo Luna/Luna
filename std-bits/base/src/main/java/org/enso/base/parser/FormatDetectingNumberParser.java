@@ -1,8 +1,15 @@
 package org.enso.base.parser;
 
 /**
- * Parse a String into a Number. It supports the following patterns: - SIGN + NUMBER; - BRACKETS +
- * SPACE + NUMBER + SPACE + BRACKET_CLOSE;
+w * Parse a String into a Number. It supports the following patterns:
+ * <ul>
+ *   <li>SIGN + NUMBER</li>
+ *   <li>SYMBOL + SIGN + NUMBER</li>
+ *   <li>SIGN + NUMBER + SYMBOL</li>
+ *   <li>SIGN + BRACKETS + NUMBER + BRACKET_CLOSE</li>
+ *   <li>BRACKETS + SYMBOL + NUMBER + BRACKET_CLOSE</li>
+ *   <li>BRACKETS + NUMBER + SYMBOL + BRACKET_CLOSE</li>
+ * </ul>
  */
 public class FormatDetectingNumberParser {
   public interface NumberParseResult {}

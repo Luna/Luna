@@ -7,8 +7,16 @@ import org.enso.base.parser.FormatDetectingNumberParser.NumberParseLong;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseResult;
 
 /**
- * Number parsing with separators. Two special cases: - Encounter a single . or , with 3 trailing
- * numbers. - Could be either DOT_COMMA or COMMA_DOT. Hence, DOT_UNKNOWN and COMMA_UNKNOWN.
+ * Number parsing with separators.
+ * Specifies the universe of number formats that can be parsed.
+ *
+ * Two special cases, where we default to English format over European:
+ * <ul>
+ *   <li>Encounter a single . or , with 3 trailing numbers.</li>
+ *   <li>Could be either DOT_COMMA or COMMA_DOT.</li>
+ *   <li>If a single . then uses DOT_UNKNOWN.</li>
+ *   <li>If a single , then uses COMMA_UNKNOWN.</li>
+ * </ul>
  */
 public enum NumberWithSeparators {
   UNKNOWN(Constants.UNKNOWN, Constants.UNKNOWN),
