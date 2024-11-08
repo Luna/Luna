@@ -29,16 +29,19 @@ public class GraalVersionManager {
     var foundRuntimes = new ArrayList<GraalRuntime>();
     for (var runtimeSearchPath :
         CollectionConverters.asJava(distributionManager.paths().runtimeSearchPaths())) {
-      assert runtimeSearchPath.toFile().isDirectory();
-      var subdirs = runtimeSearchPath.toFile().listFiles();
-      assert subdirs != null;
-      for (var subdir : subdirs) {
-        var parsedVersion = parseGraalRuntimeVersionString(subdir.getName());
-        if (parsedVersion != null) {
-          var foundRuntime = new GraalRuntime(parsedVersion, subdir.toPath());
-          foundRuntime.ensureValid();
-          foundRuntimes.add(foundRuntime);
+      if (runtimeSearchPath.toFile().isDirectory()) {
+        var subdirs = runtimeSearchPath.toFile().listFiles();
+        assert subdirs != null;
+        for (var subdir : subdirs) {
+          var parsedVersion = parseGraalRuntimeVersionString(subdir.getName());
+          if (parsedVersion != null) {
+            var foundRuntime = new GraalRuntime(parsedVersion, subdir.toPath());
+            foundRuntime.ensureValid();
+            foundRuntimes.add(foundRuntime);
+          }
         }
+      } else {
+        logger.warn("Runtime search path `{}` is not a directory", runtimeSearchPath);
       }
     }
     return foundRuntimes;
