@@ -191,12 +191,6 @@ add_specs suite_builder =
                     r.at "Value" . value_type . should_equal Value_Type.Mixed
                     r.at "d" . value_type     . should_equal Value_Type.Integer
 
-        group_builder.specify "will merge all sheets when loading XLS files" pending="TODO" <|
-            # 1 - tsv
-            # 2 - xls with one sheet
-            # 3 - xls with two sheets
-            Error.throw "TODO"
-
         group_builder.specify "will rename duplicated columns, keeping columns from the input unchanged" <|
             tmp_file = enso_project.data / "transient" / "table.csv"
             (Table.new [["Path", [1]], ["Col", [2]]]).write tmp_file on_existing_file=..Overwrite . should_succeed

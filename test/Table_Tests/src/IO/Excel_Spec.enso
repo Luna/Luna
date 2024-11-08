@@ -972,6 +972,15 @@ add_specs suite_builder =
             table_4 = xlsx_sheet.read (..Sheet "Sheet1" row_limit=6)
             table_4.row_count . should_equal 6
 
+        group_builder.specify "should let you `read_many` Excel sheets and other tabular files into a Table" <|
+            # Create 3 files:
+            # 1 - tsv, 2 columns A B
+            # 2 - xls with one sheet, 2 columns
+            # 3 - xls with two sheets, 3 columns and 3 columns
+            # read_many all three - once in ..Table_Of_Objects mode and once in ..Merged_Table mode
+            Error.throw "TODO"
+
+
     suite_builder.group "Problems" group_builder->
         group_builder.specify "should report a user-friendly error message when format is missing a required argument" <|
             r = xlsx_sheet.read (..Range)
