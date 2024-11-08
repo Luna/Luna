@@ -126,35 +126,15 @@ public class EnsoHTTPResponseCache {
     return maxAge;
   }
 
-  public void clear() {
-    lruCache.clear();
-  }
-
-  public int getNumEntries() {
-    return lruCache.getNumEntries();
-  }
-
-  public List<Long> getFileSizesTestOnly() {
-    return lruCache.getFileSizesTestOnly();
-  }
-
-  /** Return a set of parameters that can be used to modify settings for testing purposes. */
-  public LRUCache.CacheTestParameters getCacheTestParameters() {
-    return lruCache.getCacheTestParameters();
+  /** Public for testing. */
+  public LRUCache getLRUCache() {
+    return lruCache;
   }
 
   /** Public for testing. */
   public void setLRUCache(LRUCache lruCache) {
     this.lruCache.clear();
     this.lruCache = lruCache;
-  }
-
-  public void resetToDefaultLRUCache() {
-    setLRUCache(new LRUCache<>());
-  }
-
-  public LRUCache getLRUCache() {
-    return lruCache;
   }
 
   public interface RequestMaker {
