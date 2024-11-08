@@ -117,6 +117,46 @@ public abstract class HostMethodCallNode extends Node {
     }
   }
 
+  /**
+   * Given a polyglot (foreign) object, this enum represents a target Enso type that the object
+   * should be converted to before further dispatch.
+   *
+   * <p>For example, a {@code java.lang.String}, or any other polyglot object that {@link
+   * InteropLibrary#isString(Object) is a string}, should be converted to the {@link
+   * org.enso.interpreter.runtime.data.text.Text} builtin Enso type.
+   */
+  public enum PolyglotConversionType {
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.text.Text}. */
+    CONVERT_TO_TEXT,
+    /**
+     * The object should be converted to {@link org.enso.interpreter.runtime.number.EnsoBigInteger}.
+     */
+    CONVERT_TO_BIG_INT,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.vector.Array}. */
+    CONVERT_TO_ARRAY,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoDate}. */
+    CONVERT_TO_DATE,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoDateTime}. */
+    CONVERT_TO_ZONED_DATE_TIME,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoDateTime}. */
+    CONVERT_TO_DATE_TIME,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoDuration}. */
+    CONVERT_TO_DURATION,
+    /**
+     * The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoTimeOfDay}.
+     */
+    CONVERT_TO_TIME_OF_DAY,
+    /** The object should be converted to {@link org.enso.interpreter.runtime.data.EnsoTimeZone}. */
+    CONVERT_TO_TIME_ZONE,
+    /**
+     * The object should be converted to {@link org.enso.interpreter.runtime.data.hash.EnsoHashMap}.
+     */
+    CONVERT_TO_HASH_MAP,
+
+    /** No need to convert the polyglot object, just pass it as is. */
+    NO_CONVERSION
+  }
+
   private static final String NEW_NAME = "new";
 
   static final int LIB_LIMIT = 3;
@@ -150,37 +190,46 @@ public abstract class HostMethodCallNode extends Node {
       UnresolvedSymbol symbol,
       InteropLibrary library,
       MethodResolverNode methodResolverNode) {
-    if (library.isDate(self)) {
-      if (library.isTime(self)) {
-        if (library.isTimeZone(self)) {
-          return PolyglotCallType.CONVERT_TO_ZONED_DATE_TIME;
-        } else {
-          return PolyglotCallType.CONVERT_TO_DATE_TIME;
-        }
-      } else {
+    var conversionType = getPolyglotConversionType(self, library);
+    switch (conversionType) {
+      case CONVERT_TO_TEXT -> {
+        return PolyglotCallType.CONVERT_TO_TEXT;
+      }
+      case CONVERT_TO_BIG_INT -> {
+        return PolyglotCallType.CONVERT_TO_BIG_INT;
+      }
+      case CONVERT_TO_DATE -> {
         return PolyglotCallType.CONVERT_TO_DATE;
       }
-    } else if (library.isTime(self)) {
-      return PolyglotCallType.CONVERT_TO_TIME_OF_DAY;
-    } else if (library.isDuration(self)) {
-      return PolyglotCallType.CONVERT_TO_DURATION;
-    } else if (library.isTimeZone(self)) {
-      return PolyglotCallType.CONVERT_TO_TIME_ZONE;
-    } else if (library.fitsInBigInteger(self)) {
-      return PolyglotCallType.CONVERT_TO_BIG_INT;
-    } else if (library.isString(self)) {
-      return PolyglotCallType.CONVERT_TO_TEXT;
-    } else if (library.hasArrayElements(self)) {
-      if (methodResolverNode != null) {
-        var ctx = EnsoContext.get(library);
-        var arrayType = ctx.getBuiltins().array();
-        var fn = methodResolverNode.execute(arrayType, symbol);
-        if (fn != null) {
-          return PolyglotCallType.CONVERT_TO_ARRAY;
+      case CONVERT_TO_ZONED_DATE_TIME -> {
+        return PolyglotCallType.CONVERT_TO_ZONED_DATE_TIME;
+      }
+      case CONVERT_TO_DATE_TIME -> {
+        return PolyglotCallType.CONVERT_TO_DATE_TIME;
+      }
+      case CONVERT_TO_DURATION -> {
+        return PolyglotCallType.CONVERT_TO_DURATION;
+      }
+      case CONVERT_TO_TIME_OF_DAY -> {
+        return PolyglotCallType.CONVERT_TO_TIME_OF_DAY;
+      }
+      case CONVERT_TO_TIME_ZONE -> {
+        return PolyglotCallType.CONVERT_TO_TIME_ZONE;
+      }
+      case CONVERT_TO_HASH_MAP -> {
+        return PolyglotCallType.CONVERT_TO_HASH_MAP;
+      }
+      case CONVERT_TO_ARRAY -> {
+        if (methodResolverNode != null) {
+          var ctx = EnsoContext.get(library);
+          var arrayType = ctx.getBuiltins().array();
+          var fn = methodResolverNode.execute(arrayType, symbol);
+          if (fn != null) {
+            return PolyglotCallType.CONVERT_TO_ARRAY;
+          }
         }
       }
-    } else if (library.hasHashEntries(self)) {
-      return PolyglotCallType.CONVERT_TO_HASH_MAP;
+      default -> {}
     }
 
     try {
@@ -196,6 +245,45 @@ public abstract class HostMethodCallNode extends Node {
       // no call, get or instantiate is possible
     }
     return PolyglotCallType.NOT_SUPPORTED;
+  }
+
+  /**
+   * Returns a target Enso builtin type that the {@code polyglotObj} should be converted to before
+   * further dispatch.
+   *
+   * <p>For example, {@code java.lang.String} should be converted to {@link
+   * org.enso.interpreter.runtime.data.text.Text}.
+   *
+   * @param polyglotObj Polyglot (foreign) object to check for conversion.
+   */
+  public static PolyglotConversionType getPolyglotConversionType(
+      Object polyglotObj, InteropLibrary interop) {
+    if (interop.isDate(polyglotObj)) {
+      if (interop.isTime(polyglotObj)) {
+        if (interop.isTimeZone(polyglotObj)) {
+          return PolyglotConversionType.CONVERT_TO_ZONED_DATE_TIME;
+        } else {
+          return PolyglotConversionType.CONVERT_TO_DATE_TIME;
+        }
+      } else {
+        return PolyglotConversionType.CONVERT_TO_DATE;
+      }
+    } else if (interop.isTime(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_TIME_OF_DAY;
+    } else if (interop.isDuration(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_DURATION;
+    } else if (interop.isTimeZone(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_TIME_ZONE;
+    } else if (interop.fitsInBigInteger(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_BIG_INT;
+    } else if (interop.isString(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_TEXT;
+    } else if (interop.hasArrayElements(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_ARRAY;
+    } else if (interop.hasHashEntries(polyglotObj)) {
+      return PolyglotConversionType.CONVERT_TO_HASH_MAP;
+    }
+    return PolyglotConversionType.NO_CONVERSION;
   }
 
   /**
