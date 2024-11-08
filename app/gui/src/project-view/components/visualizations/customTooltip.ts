@@ -6,7 +6,6 @@ export class CustomTooltip implements ITooltipComp {
     init(params: ITooltipParams & { numberOfNothing: number, numberOfWhitespace: number, total: number, hideDataQuality: boolean }) {
         this.eGui = document.createElement('div');
 
-        // Tooltip styling
         Object.assign(this.eGui.style, {
             backgroundColor: '#f5f5f5',
             border: '1px solid #c0c0c0',
@@ -17,7 +16,6 @@ export class CustomTooltip implements ITooltipComp {
             color: '#333'
         });
 
-        // Helper functions
         const getPercentage = (value: number) => ((value / params.total) * 100).toFixed(2);
         const getVisibility = (value: number) => (value > 0 ? 'visible' : 'hidden');
         const createIndicator = (value: number) => {
@@ -25,10 +23,9 @@ export class CustomTooltip implements ITooltipComp {
             return `<div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>`;
         };
 
-        // Data Quality HTML content
         const nothingPercent = getPercentage(params.numberOfNothing);
         const whitespacePercent = getPercentage(params.numberOfWhitespace);
-        const dataQualityHtml = `
+        const dataQualityTemplate = `
             <div style="visibility: ${getVisibility(params.numberOfNothing)};">
                 Nulls/Nothing: ${nothingPercent}% ${createIndicator(+nothingPercent)}
             </div>
@@ -37,12 +34,11 @@ export class CustomTooltip implements ITooltipComp {
             </div>
         `;
 
-        // Render Tooltip HTML
         this.eGui.innerHTML = `
             <div><b>Column value type:</b> ${params.value}</div>
             <div style="display: ${params.hideDataQuality ? 'none' : 'block'};"">
                 <b>Data Quality Indicators</b>
-                ${dataQualityHtml}
+                ${dataQualityTemplate}
             </div>
         `;
     }
