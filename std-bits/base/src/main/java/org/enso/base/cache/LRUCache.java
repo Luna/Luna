@@ -20,8 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.enso.base.CurrentEnsoProject;
-import org.enso.base.Environment_Utils;
 import org.enso.base.Stream_Utils;
 
 /**
@@ -46,53 +44,32 @@ public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
   /**
-   * Default value for the largest file size allowed.
-   * Should be overridden with the ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS environment variable.
-   */
-  private static final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
-
-  /**
-   * Default value for the percentage of free disk space to use as a limit on the total cache size.
-   * Should be overridden with the ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT environment variable.
-   */
-  private static final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
-
-  /**
    * An upper limit on the total cache size. If the cache size limit specified
    * by the other parameters goes over this value, then this value is used.
    */
   private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND = 100L * 1024 * 1024 * 1024;
 
-  /**
-   * Maximum size allowed for a single file. If a file larger than this is
-   * requested through this cache, a ResponseTooLargeException is thrown.
-   */
-  private final long maxFileSize;
-
-  /**
-   * Limits the total size of all files in the cache.
-   *
-   * This value can depend on free disk space, so it is not resolved to a
-   * maximum byte count at initialization time, but recalculated during each
-   * file cleanup.
-   */
-  private final TotalCacheLimit.Limit totalCacheLimit;
-
   /** Used to override cache parameters for testing. */
-  private final CacheTestParameters cacheTestParameters = new CacheTestParameters();
-
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
-  private static final File rootPath = new File(CurrentEnsoProject.get().getRootPath());
+  /** Defines the per-file and total cache size limits. */
+  private final LRUCacheSettings settings;
+
+  /** Used to get the current time; mockable. */
+  private final NowGetter nowGetter;
+
+  /** Used to get the current free disk space; mockable. */
+  private final DiskSpaceGetter diskSpaceGetter;
 
   public LRUCache() {
-    this(calcMaxFileSize(), calcTotalCacheLimit());
+    this(LRUCache.getDefault(), new NowGetter(), new DiskSpaceGetter());
   }
 
-  public LRUCache(long maxFileSize, TotalCacheLimit.Limit totalCacheLimit) {
-    this.maxFileSize = maxFileSize;
-    this.totalCacheLimit = totalCacheLimit;
+  public LRUCache(LRUCacheSettings settings, NowGetter nowGetter, DiskSpaceGetter diskSpaceGetter) {
+    this.settings = settings;
+    this.nowGetter = nowGetter;
+    this.diskSpaceGetter = diskSpaceGetter;
   }
 
   public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
@@ -119,7 +96,7 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
-    long maxFileSize = getMaxFileSize();
+    long maxFileSize = settings.getMaxFileSize();
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
       if (size > maxFileSize) {
@@ -133,7 +110,7 @@ public class LRUCache<M> {
       File responseData = downloadResponseData(cacheKey, item);
       M metadata = item.metadata();
       long size = responseData.length();
-      ZonedDateTime expiry = getNow().plus(Duration.ofSeconds(item.ttl().get()));
+      ZonedDateTime expiry = nowGetter.get().plus(Duration.ofSeconds(item.ttl().get()));
 
       // Create a cache entry.
       var cacheEntry = new CacheEntry<>(responseData, metadata, size, expiry);
@@ -174,7 +151,7 @@ public class LRUCache<M> {
     boolean successful = false;
     try {
       // Limit the download to getMaxFileSize().
-      long maxFileSize = getMaxFileSize();
+      long maxFileSize = settings.getMaxFileSize();
       boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxFileSize );
 
       if (sizeOK) {
@@ -195,12 +172,12 @@ public class LRUCache<M> {
 
   /** Mark the entry with the current time, to maintain LRU data. */
   private void markCacheEntryUsed(String cacheKey) {
-    lastUsed.put(cacheKey, getNow());
+    lastUsed.put(cacheKey, nowGetter.get());
   }
 
   /** Remove all cache entries (and their files) that have passed their TTL. */
   private void removeStaleEntries() {
-    var now = getNow();
+    var now = nowGetter.get();
     removeCacheEntriesByPredicate(e -> e.expiry().isBefore(now));
   }
 
@@ -281,37 +258,19 @@ public class LRUCache<M> {
     return cache.values().stream().collect(Collectors.summingLong(e -> e.size()));
   }
 
-  // Public for testing.
-  public long getMaxFileSize() {
-    return cacheTestParameters.getMaxFileSizeOverrideTestOnly().orElse(maxFileSize);
-  }
-
-  public TotalCacheLimit.Limit getTotalCacheLimit() {
-    return totalCacheLimit;
-  }
-
-  // Public for testing.
-  public long getMaxTotalCacheSize() {
-    return cacheTestParameters.getMaxTotalCacheSizeOverrideTestOnly().orElse(calculateTotalCacheSize());
-  }
-
   /**
    * Calculate the max total cache size, using the current limit but also
    * constraining the result to the upper bound.
    */
-  private long calculateTotalCacheSize() {
-    var totalCacheSize = switch (totalCacheLimit) {
+  public long getMaxTotalCacheSize() {
+    var totalCacheSize = switch (settings.getTotalCacheLimit()) {
       case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
       case TotalCacheLimit.Percentage percentage -> {
-        long usableSpace = getUsableDiskSpace();
+        long usableSpace = diskSpaceGetter.get();
         yield (long) (percentage.percentage() * usableSpace);
       }
     };
     return Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
-  }
-
-  private long getUsableDiskSpace() {
-    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootPath.getUsableSpace());
   }
 
   public int getNumEntries() {
@@ -321,15 +280,6 @@ public class LRUCache<M> {
   public List<Long> getFileSizesTestOnly() {
     return new ArrayList<>(
         cache.values().stream().map(CacheEntry::size).collect(Collectors.toList()));
-  }
-
-  private ZonedDateTime getNow() {
-    return cacheTestParameters.getNowOverrideTestOnly().orElse(ZonedDateTime.now());
-  }
-
-  /** Return a set of parameters that can be used to modify settings for testing purposes. */
-  public CacheTestParameters getCacheTestParameters() {
-    return cacheTestParameters;
   }
 
   private record CacheEntry<M>(File responseData, M metadata, long size, ZonedDateTime expiry) {}
@@ -366,107 +316,4 @@ public class LRUCache<M> {
 
   private final Comparator<Map.Entry<String, CacheEntry<M>>> cacheEntryLRUComparator =
       Comparator.comparing(me -> lastUsed.get(me.getKey()));
-
-  /**
-   * A set of parameters that can be used to modify cache settings for testing purposes.
-   *
-   * Since these are callable from Enso, size limits cannot be set to a value
-   * larger than the real limit.
-   */
-  public class CacheTestParameters {
-    /** This value is used for the current time when testing TTL expiration logic. */
-    private Optional<ZonedDateTime> nowOverrideTestOnly = Optional.empty();
-
-    private Optional<Long> maxFileSizeOverrideTestOnly = Optional.empty();
-
-    private Optional<Long> maxTotalCacheSizeOverrideTestOnly = Optional.empty();
-
-    private Optional<Long> usableDiskSpaceOverrideTestOnly = Optional.empty();
-
-    public Optional<ZonedDateTime> getNowOverrideTestOnly() {
-      return nowOverrideTestOnly;
-    }
-
-    public void setNowOverrideTestOnly(ZonedDateTime nowOverride) {
-      nowOverrideTestOnly = Optional.of(nowOverride);
-    }
-
-    public void clearNowOverrideTestOnly() {
-      nowOverrideTestOnly = Optional.empty();
-    }
-
-    public Optional<Long> getMaxFileSizeOverrideTestOnly() {
-      return maxFileSizeOverrideTestOnly;
-    }
-
-    public void setMaxFileSizeOverrideTestOnly(long maxFileSizeOverrideTestOnly_) {
-      if (maxFileSizeOverrideTestOnly_ > maxFileSize) {
-        throw new IllegalArgumentException(
-            "Cannot set the (test-only) maximum file size to more than the allowed limit of "
-                + maxFileSize);
-      }
-      maxFileSizeOverrideTestOnly = Optional.of(maxFileSizeOverrideTestOnly_);
-    }
-
-    public void clearMaxFileSizeOverrideTestOnly() {
-      maxFileSizeOverrideTestOnly = Optional.empty();
-    }
-
-    public Optional<Long> getMaxTotalCacheSizeOverrideTestOnly() {
-      return maxTotalCacheSizeOverrideTestOnly;
-    }
-
-    public void setMaxTotalCacheSizeOverrideTestOnly(long maxTotalCacheSizeOverrideTestOnly_) {
-      long maxTotalCacheSize = getMaxTotalCacheSize();
-      if (maxTotalCacheSizeOverrideTestOnly_ > maxTotalCacheSize) {
-        throw new IllegalArgumentException(
-            "Cannot set the (test-only) total cache size to more than the allowed limit of "
-                + maxTotalCacheSize);
-      }
-      maxTotalCacheSizeOverrideTestOnly = Optional.of(maxTotalCacheSizeOverrideTestOnly_);
-    }
-
-    public void clearMaxTotalCacheSizeOverrideTestOnly() {
-      maxTotalCacheSizeOverrideTestOnly = Optional.empty();
-    }
-
-    public Optional<Long> getUsableDiskSpaceOverrideTestOnly() {
-      return usableDiskSpaceOverrideTestOnly;
-    }
-
-    public void setUsableDiskSpaceOverrideTestOnly(long usableDiskSpaceOverrideTestOnly_) {
-      long usableDiskSpace = rootPath.getUsableSpace();
-      if (usableDiskSpaceOverrideTestOnly_ > usableDiskSpace) {
-        throw new IllegalArgumentException(
-            "Cannot set the (test-only) usable disk space to more than the allowed limit of "
-                + usableDiskSpace);
-      }
-      usableDiskSpaceOverrideTestOnly = Optional.of(usableDiskSpaceOverrideTestOnly_);
-    }
-
-    public void clearUsableDiskSpaceOverrideTestOnly() {
-      usableDiskSpaceOverrideTestOnly = Optional.empty();
-    }
-  }
-
-  /** Uses the environment variable if set, otherwise uses a default. */
-  private static long calcMaxFileSize() {
-    String maxFileSizeMegsVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
-    if (maxFileSizeMegsVar != null) {
-      double maxFileSizeMegs = Double.parseDouble(maxFileSizeMegsVar);
-      return (long) (maxFileSizeMegs * 1024 * 1024);
-    } else {
-      return DEFAULT_MAX_FILE_SIZE;
-    }
-  }
-
-  /** Uses the environment variable if set, otherwise uses a default percentage. */
-  private static TotalCacheLimit.Limit calcTotalCacheLimit() {
-    String limitVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
-    if (limitVar != null) {
-      return TotalCacheLimit.parse(limitVar);
-    } else {
-      return new TotalCacheLimit.Percentage(DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE);
-    }
-  }
 }
