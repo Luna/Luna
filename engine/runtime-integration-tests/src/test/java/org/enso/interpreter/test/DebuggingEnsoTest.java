@@ -310,7 +310,7 @@ public class DebuggingEnsoTest {
                   assertThat(
                       "javaDate's properties is either null or empty",
                       javaDate.getProperties(),
-                      isOneOf(nullValue(), hasSize(0)));
+                      anyOf(hasSize(0), nullValue()));
                 }
               }
               event.getSession().suspendNextExecution();
