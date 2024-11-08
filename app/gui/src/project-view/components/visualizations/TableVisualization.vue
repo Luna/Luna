@@ -14,6 +14,8 @@ import type {
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
+import {CustomTooltip} from "./customTooltip";
+import { Icon } from '@/util/iconName'
 
 export const name = 'Table'
 export const icon = 'table'
@@ -125,9 +127,7 @@ const defaultColDef: Ref<ColDef> = ref({
   filter: true,
   resizable: true,
   minWidth: 25,
-  cellRenderer: (params: ICellRendererParams) => {
-    return params.node.rowPinned === 'top' ? customCellRenderer(params) : cellRenderer(params)
-  },
+  cellRenderer: cellRenderer,
   cellClass: cellClass,
   contextMenuItems: [commonContextMenuActions.copy, 'copyWithHeaders', 'separator', 'export'],
 } satisfies ColDef)
@@ -149,47 +149,6 @@ const selectableRowLimits = computed(() => {
     defaults.push(rowLimit.value)
   }
   return defaults
-})
-
-const pinnedTopRowData = computed(() => {
-  if (typeof props.data === 'object' && 'data_quality_pairs' in props.data) {
-    const data_ = props.data
-    const headers = data_.header
-    const numberOfNothing = data_.data_quality_pairs!.number_of_nothing
-    const numberOfWhitespace = data_.data_quality_pairs!.number_of_whitespace
-    const total = data_.all_rows_count as number
-    if (headers?.length) {
-      const pairs: Record<string, string> = headers.reduce(
-        (obj: any, key: string, index: number) => {
-          obj[key] = {
-            numberOfNothing: numberOfNothing[index],
-            numberOfWhitespace: numberOfWhitespace[index],
-            total,
-          }
-          return obj
-        },
-        {},
-      )
-      return [{ [INDEX_FIELD_NAME]: 'Data Quality', ...pairs }]
-    }
-    return [
-      {
-        [INDEX_FIELD_NAME]: 'Data Quality',
-        Value: {
-          numberOfNothing: numberOfNothing[0] ?? null,
-          numberOfWhitespace: numberOfWhitespace[0] ?? null,
-          total,
-        },
-      },
-    ]
-  }
-  return []
-})
-
-const pinnedRowHeight = computed(() => {
-  const valueTypes =
-    typeof props.data === 'object' && 'value_type' in props.data ? props.data.value_type : []
-  return valueTypes.some((t) => t.constructor === 'Char' || t.constructor === 'Mixed') ? 2 : 1
 })
 
 const newNodeSelectorValues = computed(() => {
@@ -334,39 +293,6 @@ function cellClass(params: CellClassParams) {
   return null
 }
 
-const createVisual = (value: number) => {
-  let color
-  if (value < 33) {
-    color = 'green'
-  } else if (value < 66) {
-    color = 'orange'
-  } else {
-    color = 'red'
-  }
-  return `
-    <div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>
-  `
-}
-
-const customCellRenderer = (params: ICellRendererParams) => {
-  if (params.node.rowPinned === 'top') {
-    const nothingPerecent = (params.value.numberOfNothing / params.value.total) * 100
-    const wsPerecent = (params.value.numberOfWhitespace / params.value.total) * 100
-    const nothingVisibility = params.value.numberOfNothing === null ? 'hidden' : 'visible'
-    const whitespaceVisibility = params.value.numberOfWhitespace === null ? 'hidden' : 'visible'
-
-    return `<div>
-    <div style="visibility:${nothingVisibility};">
-      Nulls/Nothing: ${nothingPerecent.toFixed(2)}% ${createVisual(nothingPerecent)}
-    </div>
-    <div style="visibility:${whitespaceVisibility};">
-      Trailing/Leading Whitespace: ${wsPerecent.toFixed(2)}% ${createVisual(wsPerecent)}
-    </div>
-    </div>`
-  }
-  return null
-}
-
 function cellRenderer(params: ICellRendererParams) {
   // Convert's the value into a display string.
   if (params.value === null) return '<span style="color:grey; font-style: italic;">Nothing</span>'
@@ -391,7 +317,7 @@ function addRowIndex(data: object[]): object[] {
   return data.map((row, i) => ({ [INDEX_FIELD_NAME]: i, ...row }))
 }
 
-function toField(name: string, valueType?: ValueType | null | undefined): ColDef {
+function toField(name: string, index: number, valueType?: ValueType | null | undefined): ColDef {
   const valType = valueType ? valueType.constructor : null
   const displayValue = valueType ? valueType.display_text : null
   let icon
@@ -418,7 +344,15 @@ function toField(name: string, valueType?: ValueType | null | undefined): ColDef
     case 'Mixed':
       icon = 'mixed'
   }
-  const svgTemplate = `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+
+  const dataQuality = props.data.data_quality_pairs;
+  const nothingIsZeroOrNull = !dataQuality.number_of_nothing[index];
+  const whitespaceIsZeroOrNull = !dataQuality.number_of_whitespace[index];
+
+  const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull;
+
+  const getSvgTemplate = (icon: Icon) => `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+  const svgTemplateWarning = hideDataQuality ? "" : getSvgTemplate('warning')
   const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
   const sort = `
       <span ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
@@ -429,21 +363,31 @@ function toField(name: string, valueType?: ValueType | null | undefined): ColDef
     `
   const template =
     icon ?
-      `<span style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'> ${name} </span>  ${menu} ${sort} ${svgTemplate}</span>`
-    : `<span ref="eLabel" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'>${name} ${menu} ${sort}</span>`
+      `<span style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'> ${name} </span>  ${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
+    : `<span ref="eLabel" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'>${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
+
+
+
   return {
     field: name,
     headerComponentParams: {
       template,
       setAriaSort: () => {},
     },
+    tooltipComponent: CustomTooltip,
     headerTooltip: displayValue ? displayValue : '',
+    tooltipComponentParams: {
+      numberOfNothing: dataQuality.number_of_nothing[index],
+      numberOfWhitespace: dataQuality.number_of_whitespace[index],
+      total: props.data.all_rows_count, 
+      hideDataQuality
+    },
   }
 }
 
-function toRowField(name: string, valueType?: ValueType | null | undefined) {
+function toRowField(name: string, index: number, valueType?: ValueType | null | undefined) {
   return {
-    ...toField(name, valueType),
+    ...toField(name, index, valueType),
     cellDataType: false,
   }
 }
@@ -537,7 +481,7 @@ watchEffect(() => {
   } else if (data_.type === 'Matrix') {
     columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
     for (let i = 0; i < data_.column_count; i++) {
-      columnDefs.value.push(toField(i.toString()))
+      columnDefs.value.push(toField(i.toString(), i))
     }
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
@@ -546,10 +490,10 @@ watchEffect(() => {
     const keys = new Set<string>()
     for (const val of data_.json) {
       if (val != null) {
-        Object.keys(val).forEach((k) => {
+        Object.keys(val).forEach((k, i) => {
           if (!keys.has(k)) {
             keys.add(k)
-            columnDefs.value.push(toField(k))
+            columnDefs.value.push(toField(k, i))
           }
         })
       }
@@ -562,7 +506,7 @@ watchEffect(() => {
   } else if (Array.isArray(data_.json)) {
     columnDefs.value = [
       toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action),
-      toField('Value'),
+      toField('Value', 1),
     ]
     rowData.value = data_.json.map((row, i) => ({ [INDEX_FIELD_NAME]: i, Value: toRender(row) }))
     isTruncated.value = data_.all_rows_count ? data_.all_rows_count !== data_.json.length : false
@@ -583,9 +527,9 @@ watchEffect(() => {
           return toLinkField(v, data_.get_child_node_action, data_.link_value_type)
         }
         if (config.nodeType === ROW_NODE_TYPE) {
-          return toRowField(v, valueType)
+          return toRowField(v, i, valueType)
         }
-        return toField(v, valueType)
+        return toField(v, i, valueType)
       }) ?? []
 
     columnDefs.value =
@@ -726,8 +670,6 @@ config.setToolbar(
         :rowData="rowData"
         :defaultColDef="defaultColDef"
         :textFormatOption="textFormatterSelected"
-        :pinnedTopRowData="pinnedTopRowData"
-        :pinnedRowHeightMultiplier="pinnedRowHeight"
         @sortOrFilterUpdated="(e) => checkSortAndFilter(e)"
       />
     </Suspense>
