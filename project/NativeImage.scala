@@ -192,12 +192,7 @@ object NativeImage {
           Seq(s"--initialize-at-run-time=$classes")
         }
 
-      val runtimeCp = (LocalProject("runtime") / Runtime / fullClasspath).value
-      val runnerCp =
-        (LocalProject("engine-runner") / Runtime / fullClasspath).value
-      val ourCp      = (Runtime / fullClasspath).value
-      val cpToSearch = (ourCp ++ runtimeCp ++ runnerCp).distinct
-
+      val ourCp  = (Runtime / fullClasspath).value
       val auxCp  = additionalCp.value
       val fullCp = ourCp.map(_.data.getAbsolutePath) ++ auxCp
       val cpStr  = fullCp.mkString(File.pathSeparator)
