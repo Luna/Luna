@@ -21,14 +21,14 @@ type Data
         faker = Faker.new
         a_regex = Regex.compile "(\d)ab(\d)"
         Data.Value
-            <| (build_two_nums faker)
-            <| (build_just_two_nums faker)
-            <| (build_four_nums faker)
+            <| build_two_nums faker
+            <| build_just_two_nums faker
+            <| build_four_nums faker
             <| a_regex
-            <| (build_regexes faker)
-            <| (build_replacers faker)
-            <| (Regex.compile "(\d+)")
-            <| (Regex.compile "(\d+)[a-z]+(\d+)")
+            <| build_regexes faker
+            <| build_replacers faker
+            <| Regex.compile "(\d+)"
+            <| Regex.compile "(\d+)[a-z]+(\d+)"
 
 list_count = 1000
 regex_count = 1000
