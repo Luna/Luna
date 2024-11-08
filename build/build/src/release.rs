@@ -1,5 +1,6 @@
 //! Support code for managing Enso releases.
 
+use crate::engine;
 use crate::prelude::*;
 
 use crate::changelog::Changelog;
@@ -16,6 +17,7 @@ use crate::version::Versions;
 use ide_ci::github;
 use ide_ci::io::web::handle_error_response;
 use ide_ci::programs::Docker;
+use ide_ci::programs::Pnpm;
 use ide_ci::programs::SevenZip;
 use octocrab::models::repos::Release;
 use octocrab::params::repos::Reference;
@@ -293,6 +295,11 @@ pub async fn deploy_runtime_to_ecr(context: &BuildContext, repository: String) -
 ///
 /// Builds the polyglot Ydoc image and pushes it to our ECR.
 pub async fn deploy_ydoc_polyglot_to_ecr(context: &BuildContext, repository: String) -> Result {
+    let sbt = engine::sbt::Context {
+        repo_root: context.repo_root.path.clone(),
+        system_properties: default()
+    };
+    sbt.call_arg("ydoc-server/buildNativeImage").await?;
     let client = crate::aws::ecr::client_from_env().await;
     let repository_uri = crate::aws::ecr::get_repository_uri(&client, &repository).await?;
     let tag_name = repository_uri.replace("/runtime", "/ydoc-polyglot");
@@ -308,6 +315,8 @@ pub async fn deploy_ydoc_polyglot_to_ecr(context: &BuildContext, repository: Str
 ///
 /// Builds the Node.js Ydoc image and pushes it to our ECR.
 pub async fn deploy_ydoc_nodejs_to_ecr(context: &BuildContext, repository: String) -> Result {
+    Pnpm.cmd()?.install().run_ok().await?;
+    Pnpm.cmd()?.run("-r").arg("compile").run_ok().await?;
     let client = crate::aws::ecr::client_from_env().await;
     let repository_uri = crate::aws::ecr::get_repository_uri(&client, &repository).await?;
     let tag_name = repository_uri.replace("/runtime", "/ydoc-nodejs");
