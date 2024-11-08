@@ -21,23 +21,27 @@ import org.enso.base.parser.FormatDetectingNumberParser.NumberParseResult;
 public enum NumberWithSeparators {
   UNKNOWN(Constants.UNKNOWN, Constants.UNKNOWN),
 
-  // Special case where we have encountered a . with 3 trailing digits. ##0.123 ####.123
+  // Special case where we have encountered a . with 3 trailing digits. Such as
+  // ##0.123 ###.123
   DOT_UNKNOWN(Constants.UNKNOWN, '.'),
-  // Special case where we have encountered a single . within 3 digits from start and without 3
-  // digits from end.
+  // Special case where we have encountered a single . within 3 digits from
+  // start and without 3 digits from end. Such as ##3.1# or ##3.1415...
   UNKNOWN_DOT(Constants.UNKNOWN, '.'),
-  // Special case where we have encountered a , with 3 trailing digits.
+  // Special case where we have encountered a , with 3 trailing digits. Such as
+  // ##0,123 ###,123
   COMMA_UNKNOWN(',', Constants.UNKNOWN),
-  // Special case where we have encountered a single . within 3 digits from start and without 3
-  // digits from end.
+  // Special case where we have encountered a single . within 3 digits from
+  // start and without 3 digits from end. Such as ##3,1# or ##3,1415...
   UNKNOWN_COMMA(Constants.UNKNOWN, '.'),
 
   NO_UNKNOWN(Constants.NONE, Constants.UNKNOWN),
   NO_DOT(Constants.NONE, '.'),
   NO_COMMA(Constants.NONE, ','),
 
+  // English format (e.g. 1,234.56)
   DOT_COMMA('.', ','),
 
+  // European format (e.g. 1.234,56)
   COMMA_DOT(',', '.'),
 
   SPACE_UNKNOWN(' ', Constants.UNKNOWN),
