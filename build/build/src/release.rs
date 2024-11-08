@@ -1,10 +1,10 @@
 //! Support code for managing Enso releases.
 
-use crate::engine;
 use crate::prelude::*;
 
 use crate::changelog::Changelog;
 use crate::context::BuildContext;
+use crate::engine;
 use crate::env::ENSO_ADMIN_TOKEN;
 use crate::paths::generated;
 use crate::paths::TargetTriple;
@@ -296,8 +296,8 @@ pub async fn deploy_runtime_to_ecr(context: &BuildContext, repository: String) -
 /// Builds the polyglot Ydoc image and pushes it to our ECR.
 pub async fn deploy_ydoc_polyglot_to_ecr(context: &BuildContext, repository: String) -> Result {
     let sbt = engine::sbt::Context {
-        repo_root: context.repo_root.path.clone(),
-        system_properties: default()
+        repo_root:         context.repo_root.path.clone(),
+        system_properties: default(),
     };
     sbt.call_arg("ydoc-server/buildNativeImage").await?;
     let client = crate::aws::ecr::client_from_env().await;

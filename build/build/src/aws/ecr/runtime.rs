@@ -82,7 +82,8 @@ mod tests {
         let engine_package = generated::EnginePackage::new_root(
             root.join("built-distribution/enso-engine-0.0.0-dev-linux-amd64/enso-0.0.0-dev"),
         );
-        let dockerfile = generated::RepoRootToolsCiDockerEngine::new_root(root.join("tools/ci/docker/engine"));
+        let dockerfile =
+            generated::RepoRootToolsCiDockerEngine::new_root(root.join("tools/ci/docker/engine"));
         let id = build_runtime_image(&dockerfile, &engine_package, tag.to_string()).await?;
         info!("Built image: {}", id);
         Ok(())
@@ -100,9 +101,14 @@ mod tests {
         let root = deduce_repository_path()?;
         let root = root.absolutize()?;
         info!("Repository root: {}", root.display());
-        let dockerfile = generated::RepoRootToolsCiDockerYdocServerPolyglot::new_root(root.join("tools/ci/docker/ydoc-server-polyglot"));
-        let ydoc_native_image = generated::RepoRootLibJavaYdocServerTargetNativeImage::new_root(root.join("lib/java/ydoc-server/target/native-image"));
-        let id = build_ydoc_polyglot_image(&dockerfile, &ydoc_native_image, tag.to_string()).await?;
+        let dockerfile = generated::RepoRootToolsCiDockerYdocServerPolyglot::new_root(
+            root.join("tools/ci/docker/ydoc-server-polyglot"),
+        );
+        let ydoc_native_image = generated::RepoRootLibJavaYdocServerTargetNativeImage::new_root(
+            root.join("lib/java/ydoc-server/target/native-image"),
+        );
+        let id =
+            build_ydoc_polyglot_image(&dockerfile, &ydoc_native_image, tag.to_string()).await?;
         info!("Built image: {}", id);
         Ok(())
     }
@@ -119,11 +125,14 @@ mod tests {
         let root = deduce_repository_path()?;
         let root = root.absolutize()?;
         info!("Repository root: {}", root.display());
-        let docker_context = generated::RepoRootToolsCiDockerYdocServerNodejs::new_root(root.join("tools/ci/docker/ydoc-server-nodejs"));
-        let app_ydoc_server_nodejs = generated::RepoRootAppYdocServerNodejs::new_root(root.join("app/ydoc-server-nodejs"));
-        let id = build_ydoc_nodejs_image(&docker_context, &app_ydoc_server_nodejs, tag.to_string()).await?;
+        let docker_context = generated::RepoRootToolsCiDockerYdocServerNodejs::new_root(
+            root.join("tools/ci/docker/ydoc-server-nodejs"),
+        );
+        let app_ydoc_server_nodejs =
+            generated::RepoRootAppYdocServerNodejs::new_root(root.join("app/ydoc-server-nodejs"));
+        let id = build_ydoc_nodejs_image(&docker_context, &app_ydoc_server_nodejs, tag.to_string())
+            .await?;
         info!("Built image: {}", id);
         Ok(())
     }
-
 }

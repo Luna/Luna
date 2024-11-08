@@ -1,5 +1,3 @@
-use core::panic;
-
 use crate::prelude::*;
 
 use crate::ci_gen::not_default_branch;
@@ -15,6 +13,7 @@ use crate::engine::env;
 use crate::ide::web::env::VITE_ENSO_AG_GRID_LICENSE_KEY;
 use crate::ide::web::env::VITE_ENSO_MAPBOX_API_TOKEN;
 
+use core::panic;
 use ide_ci::actions::workflow::definition::cancel_workflow_action;
 use ide_ci::actions::workflow::definition::shell;
 use ide_ci::actions::workflow::definition::Access;
@@ -452,7 +451,8 @@ pub struct DeployRuntime;
 
 impl JobArchetype for DeployRuntime {
     fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-runtime").build_job("Upload Runtime to ECR", target)
+        ecr_deploy_steps_builder("release deploy-runtime")
+            .build_job("Upload Runtime to ECR", target)
     }
 }
 
@@ -461,7 +461,8 @@ pub struct DeployYdocPolyglot;
 
 impl JobArchetype for DeployYdocPolyglot {
     fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-ydoc-polyglot").build_job("Upload polyglot Ydoc to ECR", target)
+        ecr_deploy_steps_builder("release deploy-ydoc-polyglot")
+            .build_job("Upload polyglot Ydoc to ECR", target)
     }
 }
 
@@ -470,20 +471,17 @@ pub struct DeployYdocNodejs;
 
 impl JobArchetype for DeployYdocNodejs {
     fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-ydoc-nodejs").build_job("Upload Node.js Ydoc to ECR", target)
+        ecr_deploy_steps_builder("release deploy-ydoc-nodejs")
+            .build_job("Upload Node.js Ydoc to ECR", target)
     }
 }
 
 fn ecr_deploy_steps_builder(run_command: impl Into<String>) -> RunStepsBuilder {
-    RunStepsBuilder::new(run_command)
-    .customize(|step| {
+    RunStepsBuilder::new(run_command).customize(|step| {
         vec![step
             .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
             .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::runtime::NAME)
-            .with_secret_exposed_as(
-                secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
-                "AWS_ACCESS_KEY_ID",
-            )
+            .with_secret_exposed_as(secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID, "AWS_ACCESS_KEY_ID")
             .with_secret_exposed_as(
                 secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
                 "AWS_SECRET_ACCESS_KEY",
