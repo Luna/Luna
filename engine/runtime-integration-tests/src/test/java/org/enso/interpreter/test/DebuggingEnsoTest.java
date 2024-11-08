@@ -23,6 +23,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -278,12 +279,23 @@ public class DebuggingEnsoTest {
     Value fooFunc =
         createEnsoMethod(
             """
-        from Standard.Base import Date
+        from Standard.Base import Date, Date_Time, Dictionary
+        polyglot java import java.lang.String
+        polyglot java import java.util.List as JList
+        polyglot java import java.util.Map as JMap
 
         foo _ =
             d_enso = Date.new 2024 12 15
             d_java = Date.parse "2024-12-15"
-            tmp = 42
+            dt_enso = Date_Time.now
+            dt_java = Date_Time.parse "2020-05-06 04:30:20" "yyyy-MM-dd HH:mm:ss"
+            str_enso = "Hello_World"
+            str_java = String.new "Hello_World"
+            list_enso = [1, 2, 3]
+            list_java = JList.of 1 2 3
+            dict_enso = Dictionary.from_vector [["A", 1], ["B", 2]]
+            dict_java = JMap.of "A" 1 "B" 2
+            end = 42
         """,
             "foo");
 
@@ -291,26 +303,28 @@ public class DebuggingEnsoTest {
         debugger.startSession(
             (SuspendedEvent event) -> {
               switch (event.getSourceSection().getCharacters().toString().strip()) {
-                case "tmp = 42" -> {
+                case "end = 42" -> {
                   DebugScope scope = event.getTopStackFrame().getScope();
+
                   DebugValue ensoDate = scope.getDeclaredValue("d_enso");
-                  assertThat(ensoDate.isReadable(), is(true));
-                  assertThat(ensoDate.isInternal(), is(false));
-                  assertThat(ensoDate.isDate(), is(true));
-
                   DebugValue javaDate = scope.getDeclaredValue("d_java");
-                  assertThat(javaDate.isReadable(), is(true));
-                  assertThat(javaDate.isInternal(), is(false));
-                  assertThat(javaDate.isDate(), is(true));
+                  assertSameProperties(ensoDate.getProperties(), javaDate.getProperties());
 
-                  assertThat(
-                      "ensoDate has no members (properties)",
-                      ensoDate.getProperties(),
-                      is(nullValue()));
-                  assertThat(
-                      "javaDate's properties is either null or empty",
-                      javaDate.getProperties(),
-                      anyOf(hasSize(0), nullValue()));
+                  DebugValue ensoDateTime = scope.getDeclaredValue("dt_enso");
+                  DebugValue javaDateTime = scope.getDeclaredValue("dt_java");
+                  assertSameProperties(ensoDateTime.getProperties(), javaDateTime.getProperties());
+
+                  DebugValue ensoString = scope.getDeclaredValue("str_enso");
+                  DebugValue javaString = scope.getDeclaredValue("str_java");
+                  assertSameProperties(ensoString.getProperties(), javaString.getProperties());
+
+                  DebugValue ensoList = scope.getDeclaredValue("list_enso");
+                  DebugValue javaList = scope.getDeclaredValue("list_java");
+                  assertSameProperties(ensoList.getProperties(), javaList.getProperties());
+
+                  DebugValue ensoDict = scope.getDeclaredValue("dict_enso");
+                  DebugValue javaDict = scope.getDeclaredValue("dict_java");
+                  assertSameProperties(ensoDict.getProperties(), javaDict.getProperties());
                 }
               }
               event.getSession().suspendNextExecution();
@@ -318,6 +332,21 @@ public class DebuggingEnsoTest {
       session.suspendNextExecution();
       fooFunc.execute(0);
     }
+  }
+
+  /** Asserts that the given values have same property names. */
+  private void assertSameProperties(
+      Collection<DebugValue> expectedProps, Collection<DebugValue> actualProps) {
+    if (expectedProps == null) {
+      assertThat(actualProps, is(nullValue()));
+      return;
+    }
+    assertThat(actualProps.size(), is(expectedProps.size()));
+    var expectedPropNames =
+        expectedProps.stream().map(DebugValue::getName).collect(Collectors.toUnmodifiableSet());
+    var actualPropNames =
+        actualProps.stream().map(DebugValue::getName).collect(Collectors.toUnmodifiableSet());
+    assertThat(actualPropNames, is(expectedPropNames));
   }
 
   @Test
