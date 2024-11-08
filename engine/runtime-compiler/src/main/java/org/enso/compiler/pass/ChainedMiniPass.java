@@ -1,8 +1,8 @@
 package org.enso.compiler.pass;
 
-import java.util.Objects;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.Expression;
+import org.enso.compiler.core.ir.Module;
 
 /** Utility class for chaining mini passes together. */
 final class ChainedMiniPass extends MiniIRPass {
@@ -40,12 +40,19 @@ final class ChainedMiniPass extends MiniIRPass {
   }
 
   @Override
+  public Module transformModule(Module moduleIr) {
+    var first = firstPass.transformModule(moduleIr);
+    var second = secondPass.transformModule(first);
+    return second;
+  }
+
+  @Override
   public boolean checkPostCondition(IR ir) {
     return firstPass.checkPostCondition(ir) && secondPass.checkPostCondition(ir);
   }
 
   @Override
   public String toString() {
-    return Objects.toString(firstPass) + ":" + Objects.toString(secondPass);
+    return "{" + firstPass + " + " + secondPass + "}";
   }
 }
