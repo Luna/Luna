@@ -1,6 +1,7 @@
 package org.enso.base.parser;
 
-import java.util.Arrays;
+import java.util.Optional;
+
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseDouble;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseFailure;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseLong;
@@ -9,7 +10,6 @@ import org.enso.base.parser.FormatDetectingNumberParser.NumberParseResult;
 /**
  * Number parsing with separators.
  * Specifies the universe of number formats that can be parsed.
- *
  * Two special cases, where we default to English format over European:
  * <ul>
  *   <li>Encounter a single . or , with 3 trailing numbers.</li>
@@ -32,16 +32,16 @@ public enum NumberWithSeparators {
   COMMA_UNKNOWN(',', Constants.UNKNOWN),
   // Special case where we have encountered a single . within 3 digits from
   // start and without 3 digits from end. Such as ##3,1# or ##3,1415...
-  UNKNOWN_COMMA(Constants.UNKNOWN, '.'),
+  UNKNOWN_COMMA(Constants.UNKNOWN, ','),
 
   NO_UNKNOWN(Constants.NONE, Constants.UNKNOWN),
   NO_DOT(Constants.NONE, '.'),
   NO_COMMA(Constants.NONE, ','),
 
-  // English format (e.g. 1,234.56)
+  // European format (e.g. 1.234,56)
   DOT_COMMA('.', ','),
 
-  // European format (e.g. 1.234,56)
+  // English format (e.g. 1,234.56)
   COMMA_DOT(',', '.'),
 
   SPACE_UNKNOWN(' ', Constants.UNKNOWN),
@@ -70,23 +70,56 @@ public enum NumberWithSeparators {
             ? Constants.UNKNOWN
             : (decimal.isEmpty() ? Constants.NONE : decimal.charAt(0));
 
-    // For these special cases if we know the decimal separator should fix it.
-    if (thousands == Constants.UNKNOWN) {
-      if (decimals == '.') {
-        return UNKNOWN_DOT;
-      } else if (decimals == ',') {
-        return UNKNOWN_COMMA;
-      }
-    }
+    Optional<NumberWithSeparators> matched = switch (thousands) {
+      case Constants.NONE -> matchForNone(decimals);
+      case Constants.UNKNOWN -> matchForUnknown(decimals);
+      case ',' -> Optional.of(COMMA_DOT);
+      case '.' -> Optional.of(DOT_COMMA);
+      case ' ' -> matchForSpace(decimals);
+      case '\'' -> matchForSwiss(decimals);
+      default -> Optional.empty();
+    };
 
-    var matched =
-        Arrays.stream(values())
-            .filter(v -> v.thousands == thousands && v.decimal == decimals)
-            .findAny();
     if (matched.isEmpty()) {
       throw new IllegalArgumentException("Invalid separators.");
     }
     return matched.get();
+  }
+
+  private static Optional<NumberWithSeparators> matchForNone(char decimal) {
+    return switch (decimal) {
+      case Constants.UNKNOWN -> Optional.of(NO_UNKNOWN);
+      case '.' -> Optional.of(NO_DOT);
+      case ',' -> Optional.of(NO_COMMA);
+      default -> Optional.empty();
+    };
+  }
+
+  private static Optional<NumberWithSeparators> matchForUnknown(char decimal) {
+    return switch (decimal) {
+      case Constants.UNKNOWN -> Optional.of(UNKNOWN);
+      case '.' -> Optional.of(UNKNOWN_DOT);
+      case ',' -> Optional.of(UNKNOWN_COMMA);
+      default -> Optional.empty();
+    };
+  }
+
+  private static Optional<NumberWithSeparators> matchForSpace(char decimal) {
+    return switch (decimal) {
+      case Constants.UNKNOWN -> Optional.of(SPACE_UNKNOWN);
+      case '.' -> Optional.of(SPACE_DOT);
+      case ',' -> Optional.of(SPACE_COMMA);
+      default -> Optional.empty();
+    };
+  }
+
+  private static Optional<NumberWithSeparators> matchForSwiss(char decimal) {
+    return switch (decimal) {
+      case Constants.UNKNOWN -> Optional.of(SWISS_UNKNOWN);
+      case '.' -> Optional.of(SWISS_DOT);
+      case ',' -> Optional.of(SWISS_COMMA);
+      default -> Optional.empty();
+    };
   }
 
   static class Constants {
