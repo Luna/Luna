@@ -114,6 +114,12 @@ add_specs suite_builder =
             r4.should_equal (Table.from_rows ["Column 1"] [["A,B"], ["1,x"], ["3,y"]])
 
     suite_builder.group "Response caching" pending=pending_has_url group_builder->
+        with_temp_file file ~action =
+            deleter = file.delete_if_exists
+            Panic.with_finalizer deleter <|
+                deleter
+                action
+
         get_lru_cache =
             EnsoSecretHelper.getCache.getLRUCache
 
@@ -241,24 +247,17 @@ add_specs suite_builder =
 
         group_builder.specify "Should not cache Data.download" pending=pending_has_url <| Test.with_retries <|
             target_file = enso_project.data / "transient" / "my_download0.txt"
-
-            with_default_cache <|
-                target_file.delete_if_exists
-
+            with_temp_file target_file <| with_default_cache <|
                 Data.download url0 target_file
                 get_num_response_cache_entries . should_equal 0
 
-                target_file.delete_if_exists
-
         group_builder.specify "Data.download is not affected by caching limits" pending=pending_has_url <| Test.with_retries <|
             target_file = enso_project.data / "transient" / "my_download0.txt"
-            file_deleter = target_file.delete_if_exists
-            with_config 100 (TotalCacheLimit.Bytes.new 120) _-> _->
-                Panic.with_finalizer file_deleter <|
-                    url = base_url_with_slash+"test_download?length=200"
-                    Data.download url target_file
-                    target_file.read.length . should_equal 200
-                    Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
+            with_temp_file target_file <| with_config 100 (TotalCacheLimit.Bytes.new 120) _-> _->
+                url = base_url_with_slash+"test_download?length=200"
+                Data.download url target_file
+                target_file.read.length . should_equal 200
+                Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
 
         group_builder.specify "Should not cache for methods other than GET" pending=pending_has_url <| Test.with_retries <|
             with_default_cache <|
@@ -354,39 +353,39 @@ add_specs suite_builder =
                 set_time_and_get_count now 88 . should_equal 8
                 set_time_and_get_count now 93 . should_equal 8
 
-        download size =
+        fetch_n size =
             Data.fetch base_url_with_slash+'test_download?length='+size.to_text
 
         group_builder.specify "Will remove old cache files to keep the total cache size under the total cache size limit" pending=pending_has_url <| Test.with_retries <|
             with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
-                download 30
-                download 50
-                download 10
+                fetch_n 30
+                fetch_n 50
+                fetch_n 10
                 get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
-                download 20
+                fetch_n 20
                 get_cache_file_sizes . should_equal_ignoring_order [10, 20, 50]
-                download 40
+                fetch_n 40
                 get_cache_file_sizes . should_equal_ignoring_order [10, 20, 40]
-                download 35
+                fetch_n 35
                 get_cache_file_sizes . should_equal_ignoring_order [20, 35, 40]
 
         group_builder.specify "Will remove old cache files based on how recently they were used" pending=pending_has_url <| Test.with_retries <|
             with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
-                download 30
-                download 50
-                download 10
+                fetch_n 30
+                fetch_n 50
+                fetch_n 10
                 get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
                 # Use 30 again so it's considered more recently used.
-                download 30
+                fetch_n 30
                 get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
-                download 20
+                fetch_n 20
                 get_cache_file_sizes . should_equal_ignoring_order [10, 20, 30]
-                download 45
+                fetch_n 45
                 get_cache_file_sizes . should_equal_ignoring_order [20, 30, 45]
 
         group_builder.specify "Will not cache a file with a content length greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
             with_config 100 (TotalCacheLimit.Bytes.new 1000) _-> _->
-                download 110 . should_fail_with (Response_Too_Large.Error 100)
+                fetch_n 110 . should_fail_with (Response_Too_Large.Error 100)
 
         group_builder.specify "Will not cache a file without a content length, but which is greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
             with_config 100 (TotalCacheLimit.Bytes.new 1000) _-> _->
