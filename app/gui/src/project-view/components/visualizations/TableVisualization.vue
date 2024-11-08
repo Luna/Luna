@@ -345,13 +345,13 @@ function toField(name: string, index: number, valueType?: ValueType | null | und
       icon = 'mixed'
   }
 
-  const dataQuality = props.data.data_quality_pairs;
-  const nothingIsZeroOrNull = !dataQuality.number_of_nothing[index];
-  const whitespaceIsZeroOrNull = !dataQuality.number_of_whitespace[index];
+  const dataQuality = typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.data_quality_pairs : { number_of_nothing: [], number_of_whitespace: [] };;
+  const nothingIsZeroOrNull = !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]);
+  const whitespaceIsZeroOrNull = !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index]);
 
   const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull;
 
-  const getSvgTemplate = (icon: Icon) => `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+  const getSvgTemplate = (icon: string) => `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
   const svgTemplateWarning = hideDataQuality ? "" : getSvgTemplate('warning')
   const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
   const sort = `
@@ -512,7 +512,7 @@ watchEffect(() => {
     isTruncated.value = data_.all_rows_count ? data_.all_rows_count !== data_.json.length : false
   } else if (data_.json !== undefined) {
     columnDefs.value =
-      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value')]
+      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value', 1)]
     rowData.value =
       data_.links ?
         data_.links.map((link) => ({
