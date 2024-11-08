@@ -127,7 +127,9 @@ const defaultColDef: Ref<ColDef> = ref({
   filter: true,
   resizable: true,
   minWidth: 25,
-  cellRenderer: cellRenderer,
+  cellRenderer: (params: ICellRendererParams) => {
+    return params.node.rowPinned === 'top' ? customCellRenderer(params) : cellRenderer(params)
+  },
   cellClass: cellClass,
   contextMenuItems: [commonContextMenuActions.copy, 'copyWithHeaders', 'separator', 'export'],
 } satisfies ColDef)
@@ -149,6 +151,47 @@ const selectableRowLimits = computed(() => {
     defaults.push(rowLimit.value)
   }
   return defaults
+})
+
+const pinnedTopRowData = computed(() => {
+  if (typeof props.data === 'object' && 'data_quality_pairs' in props.data) {
+    const data_ = props.data
+    const headers = data_.header
+    const numberOfNothing = data_.data_quality_pairs!.number_of_nothing
+    const numberOfWhitespace = data_.data_quality_pairs!.number_of_whitespace
+    const total = data_.all_rows_count as number
+    if (headers?.length) {
+      const pairs: Record<string, string> = headers.reduce(
+        (obj: any, key: string, index: number) => {
+          obj[key] = {
+            numberOfNothing: numberOfNothing[index],
+            numberOfWhitespace: numberOfWhitespace[index],
+            total,
+          }
+          return obj
+        },
+        {},
+      )
+      return [{ [INDEX_FIELD_NAME]: 'Data Quality', ...pairs }]
+    }
+    return [
+      {
+        [INDEX_FIELD_NAME]: 'Data Quality',
+        Value: {
+          numberOfNothing: numberOfNothing[0] ?? null,
+          numberOfWhitespace: numberOfWhitespace[0] ?? null,
+          total,
+        },
+      },
+    ]
+  }
+  return []
+})
+
+const pinnedRowHeight = computed(() => {
+  const valueTypes =
+    typeof props.data === 'object' && 'value_type' in props.data ? props.data.value_type : []
+  return valueTypes.some((t) => t.constructor === 'Char' || t.constructor === 'Mixed') ? 2 : 1
 })
 
 const newNodeSelectorValues = computed(() => {
@@ -289,6 +332,39 @@ function cellClass(params: CellClassParams) {
     const valueType = params.value?.type
     if (valueType === 'BigInt' || valueType === 'Float' || valueType === 'Decimal')
       return 'ag-right-aligned-cell'
+  }
+  return null
+}
+
+const createVisual = (value: number) => {
+  let color
+  if (value < 33) {
+    color = 'green'
+  } else if (value < 66) {
+    color = 'orange'
+  } else {
+    color = 'red'
+  }
+  return `
+    <div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>
+  `
+}
+
+const customCellRenderer = (params: ICellRendererParams) => {
+  if (params.node.rowPinned === 'top') {
+    const nothingPerecent = (params.value.numberOfNothing / params.value.total) * 100
+    const wsPerecent = (params.value.numberOfWhitespace / params.value.total) * 100
+    const nothingVisibility = params.value.numberOfNothing === null ? 'hidden' : 'visible'
+    const whitespaceVisibility = params.value.numberOfWhitespace === null ? 'hidden' : 'visible'
+
+    return `<div>
+    <div style="visibility:${nothingVisibility};">
+      Nulls/Nothing: ${nothingPerecent.toFixed(2)}% ${createVisual(nothingPerecent)}
+    </div>
+    <div style="visibility:${whitespaceVisibility};">
+      Trailing/Leading Whitespace: ${wsPerecent.toFixed(2)}% ${createVisual(wsPerecent)}
+    </div>
+    </div>`
   }
   return null
 }
@@ -670,6 +746,8 @@ config.setToolbar(
         :rowData="rowData"
         :defaultColDef="defaultColDef"
         :textFormatOption="textFormatterSelected"
+        :pinnedTopRowData="pinnedTopRowData"
+        :pinnedRowHeightMultiplier="pinnedRowHeight"
         @sortOrFilterUpdated="(e) => checkSortAndFilter(e)"
       />
     </Suspense>
