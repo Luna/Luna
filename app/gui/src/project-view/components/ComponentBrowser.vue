@@ -63,7 +63,7 @@ const emit = defineEmits<{
     firstAppliedReturnType: Typename | undefined,
   ]
   canceled: []
-  selectedSuggestionId: [id: SuggestionId | null]
+  selectedSuggestionId: [id: SuggestionId | undefined]
   isAiPrompt: [boolean]
 }>()
 
@@ -280,7 +280,7 @@ const isVisualizationVisible = ref(true)
 
 // === Documentation Panel ===
 
-watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id ?? null))
+watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id))
 watch(
   () => input.mode,
   (mode) => emit('isAiPrompt', mode.mode === 'aiPrompt'),

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { nodeEditBindings } from '@/bindings'
 import CircularMenu from '@/components/CircularMenu.vue'
+import ComponentWidgetTree, {
+  GRAB_HANDLE_X_MARGIN_L,
+  GRAB_HANDLE_X_MARGIN_R,
+  ICON_WIDTH,
+} from '@/components/GraphEditor/ComponentWidgetTree.vue'
 import GraphNodeComment from '@/components/GraphEditor/GraphNodeComment.vue'
 import GraphNodeMessage, {
   colorForMessageType,
@@ -11,11 +16,6 @@ import GraphNodeOutputPorts from '@/components/GraphEditor/GraphNodeOutputPorts.
 import GraphNodeSelection from '@/components/GraphEditor/GraphNodeSelection.vue'
 import GraphVisualization from '@/components/GraphEditor/GraphVisualization.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
-import NodeWidgetTree, {
-  GRAB_HANDLE_X_MARGIN_L,
-  GRAB_HANDLE_X_MARGIN_R,
-  ICON_WIDTH,
-} from '@/components/GraphEditor/NodeWidgetTree.vue'
 import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
@@ -320,53 +320,13 @@ const nodeEditHandler = nodeEditBindings.handler({
       e.target.blur()
     }
   },
-  edit(e) {
-    const pos = 'clientX' in e ? new Vec2(e.clientX, e.clientY) : undefined
-    startEditingNode(pos)
+  edit() {
+    startEditingNode()
   },
 })
 
-function startEditingNode(position?: Vec2 | undefined) {
-  let sourceOffset = props.node.rootExpr.code().length
-  if (position != null) {
-    let domNode, domOffset
-    if ((document as any).caretPositionFromPoint) {
-      const caret = document.caretPositionFromPoint(position.x, position.y)
-      domNode = caret?.offsetNode
-      domOffset = caret?.offset
-    } else if (document.caretRangeFromPoint) {
-      const caret = document.caretRangeFromPoint(position.x, position.y)
-      domNode = caret?.startContainer
-      domOffset = caret?.startOffset
-    } else {
-      console.error(
-        'Neither `caretPositionFromPoint` nor `caretRangeFromPoint` are supported by this browser',
-      )
-    }
-    if (domNode != null && domOffset != null) {
-      sourceOffset = getRelatedSpanOffset(domNode, domOffset)
-    }
-  }
-  emit('update:edited', sourceOffset)
-}
-
-function getRelatedSpanOffset(domNode: globalThis.Node, domOffset: number): number {
-  if (domNode instanceof HTMLElement && domOffset == 1) {
-    const offsetData = domNode.dataset.spanStart
-    const offset = (offsetData != null && parseInt(offsetData)) || 0
-    const length = domNode.textContent?.length ?? 0
-    return offset + length
-  } else if (domNode instanceof Text) {
-    const siblingEl = domNode.previousElementSibling
-    if (siblingEl instanceof HTMLElement) {
-      const offsetData = siblingEl.dataset.spanStart
-      if (offsetData != null)
-        return parseInt(offsetData) + domOffset + (siblingEl.textContent?.length ?? 0)
-    }
-    const offsetData = domNode.parentElement?.dataset.spanStart
-    if (offsetData != null) return parseInt(offsetData) + domOffset
-  }
-  return domOffset
+function startEditingNode() {
+  emit('update:edited', props.node.rootExpr.code().length)
 }
 
 const handleNodeClick = useDoubleClick(
@@ -519,12 +479,11 @@ watchEffect(() => {
       v-on="dragPointer.events"
       @click="handleNodeClick"
     >
-      <NodeWidgetTree
+      <ComponentWidgetTree
         :ast="props.node.innerExpr"
         :nodeId="nodeId"
-        :nodeElement="rootNode"
+        :rootElement="rootNode"
         :nodeType="props.node.type"
-        :nodeSize="nodeSize"
         :potentialSelfArgumentId="potentialSelfArgumentId"
         :conditionalPorts="props.node.conditionalPorts"
         :extended="isOnlyOneSelected"

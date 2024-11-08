@@ -52,7 +52,7 @@ const activity = shallowRef<VNode>()
 const MAX_DROPDOWN_OVERSIZE_PX = 150
 
 const floatReference = computed(
-  () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
+  () => enclosingTopLevelArgument(widgetRoot.value, tree.rootElement) ?? widgetRoot.value,
 )
 
 function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidth: boolean) {
@@ -84,7 +84,7 @@ function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidt
           },
         })),
         // Try to keep the dropdown within node's bounds.
-        shift(() => (tree.nodeElement ? { boundary: tree.nodeElement } : {})),
+        shift(() => (tree.rootElement ? { boundary: tree.rootElement } : {})),
         shift(), // Always keep within screen bounds, overriding node bounds.
       ]
     }),
@@ -466,7 +466,7 @@ declare module '@/providers/widgetRegistry' {
     <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
       <SvgIcon name="arrow_right_head_only" class="arrow widgetOutOfLayout" />
     </Teleport>
-    <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
+    <Teleport v-if="tree.rootElement" :to="tree.rootElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
         <SizeTransition height :duration="100">
           <DropdownWidget

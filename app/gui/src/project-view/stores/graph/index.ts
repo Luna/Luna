@@ -88,7 +88,7 @@ export class PortViewInstance {
 }
 
 export type GraphStore = ReturnType<typeof useGraphStore>
-export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createContextStore(
+export const [provideGraphStore, useGraphStore] = createContextStore(
   'graph',
   (proj: ProjectStore, suggestionDb: SuggestionDbStore) => {
     proj.setObservedFileName('Main.enso')

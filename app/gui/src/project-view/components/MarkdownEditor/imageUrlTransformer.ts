@@ -6,16 +6,13 @@ import { mapOk, Ok, type Result } from 'ydoc-shared/util/data/result'
 export type TransformUrlResult = Result<{ url: string; dispose?: () => void }>
 export type UrlTransformer = (url: string) => Promise<TransformUrlResult>
 
-export {
-  injectFn as injectDocumentationImageUrlTransformer,
-  provideFn as provideDocumentationImageUrlTransformer,
-}
-const { provideFn, injectFn } = createContextStore(
-  'Documentation image URL transformer',
-  (transformUrl: ToValue<UrlTransformer | undefined>) => ({
-    transformUrl: (url: string) => toValue(transformUrl)?.(url),
-  }),
-)
+export const [provideDocumentationImageUrlTransformer, injectDocumentationImageUrlTransformer] =
+  createContextStore(
+    'Documentation image URL transformer',
+    (transformUrl: ToValue<UrlTransformer | undefined>) => ({
+      transformUrl: (url: string) => toValue(transformUrl)?.(url),
+    }),
+  )
 
 type ResourceId = string
 type Url = string

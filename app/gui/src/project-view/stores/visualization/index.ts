@@ -78,7 +78,7 @@ const builtinVisualizationsByName = Object.fromEntries(
   builtinVisualizations.map((viz) => [viz.name, viz]),
 )
 
-export const { provideFn: provideVisualizationStore, injectFn: useVisualizationStore } =
+export const [provideVisualizationStore, useVisualizationStore] =
   createContextStore('visualization', (proj: ProjectStore) => {
     const cache = reactive(new Map<VisualizationId, Promise<VisualizationModule>>())
     /**

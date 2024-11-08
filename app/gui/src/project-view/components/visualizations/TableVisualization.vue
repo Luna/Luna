@@ -755,8 +755,8 @@ config.setToolbar(
   overflow: hidden;
 }
 
-.TableVisualization > .ag-theme-alpine > :deep(.ag-root-wrapper.ag-layout-normal) {
-  border-radius: 0 0 var(--radius-default) var(--radius-default);
+.TableVisualization:deep(.ag-root-wrapper) {
+  --ag-wrapper-border-radius: 0 0 var(--radius-default) var(--radius-default) !important;
 }
 
 /* Tag selectors are inefficient to compute, and should be replaced with a class selector

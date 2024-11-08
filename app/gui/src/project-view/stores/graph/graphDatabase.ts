@@ -283,7 +283,7 @@ export class GraphDb {
   }
 
   /** TODO: Add docs */
-  isNodeId(externalId: ExternalId): boolean {
+  isNodeId(externalId: ExternalId): externalId is NodeId {
     return this.nodeIdToNode.has(asNodeId(externalId))
   }
 
