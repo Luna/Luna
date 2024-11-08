@@ -432,6 +432,7 @@ impl Processor {
                     build_native_runner: true,
                     // Espresso+NI needs to be checked only on a single platform.
                     build_espresso_runner: TARGET_OS == OS::Linux,
+                    build_native_ydoc: TARGET_OS == OS::Linux,
                     execute_benchmarks: {
                         // Run benchmarks only on Linux.
                         let mut ret = BTreeSet::new();
