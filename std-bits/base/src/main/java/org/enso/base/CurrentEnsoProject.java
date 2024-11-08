@@ -22,14 +22,17 @@ public final class CurrentEnsoProject {
     if (!isCached) {
       Value ensoProject =
           EnsoMeta.callStaticModuleMethod("Standard.Base.Meta.Enso_Project", "enso_project");
-      if (ensoProject.hasMember("name") && ensoProject.hasMember("namespace") && ensoProject.hasMember("root_path")) {
+      if (ensoProject.hasMember("name")
+          && ensoProject.hasMember("namespace")
+          && ensoProject.hasMember("root_path")) {
         Value namespace = ensoProject.invokeMember("namespace");
         Value name = ensoProject.invokeMember("name");
         Value rootPath = ensoProject.invokeMember("root_path");
         if (namespace == null || name == null || rootPath == null) {
           cached = null;
         } else {
-          cached = new CurrentEnsoProject(name.asString(), namespace.asString(), rootPath.asString());
+          cached =
+              new CurrentEnsoProject(name.asString(), namespace.asString(), rootPath.asString());
         }
       } else {
         cached = null;

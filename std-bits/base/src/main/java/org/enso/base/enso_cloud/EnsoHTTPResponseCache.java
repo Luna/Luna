@@ -3,10 +3,8 @@ package org.enso.base.enso_cloud;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpHeaders;
-import java.util.List;
 import java.util.Optional;
 import org.enso.base.cache.LRUCache;
-import org.enso.base.cache.TotalCacheLimit;
 import org.enso.base.cache.ResponseTooLargeException;
 
 /**
@@ -23,8 +21,7 @@ import org.enso.base.cache.ResponseTooLargeException;
  */
 public class EnsoHTTPResponseCache {
   // Public for testing.
-  public EnsoHTTPResponseCache() {
-  }
+  public EnsoHTTPResponseCache() {}
 
   // 1 year.
   private final int DEFAULT_TTL_SECONDS = 31536000;

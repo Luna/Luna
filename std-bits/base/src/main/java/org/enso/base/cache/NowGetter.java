@@ -4,12 +4,12 @@ import java.time.ZonedDateTime;
 
 public class NowGetter extends Mockable<ZonedDateTime> {
   public NowGetter() {
-      super(() -> ZonedDateTime.now());
+    super(() -> ZonedDateTime.now());
   }
 
   /**
-   * This is necessary because a direct call to the superclass does not convert
-   * Value to ZonedDateTime.
+   * This is necessary because a direct call to the superclass does not convert Value to
+   * ZonedDateTime.
    */
   @Override
   public void mocked(ZonedDateTime dt) {

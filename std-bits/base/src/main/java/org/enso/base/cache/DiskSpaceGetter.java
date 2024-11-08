@@ -5,7 +5,7 @@ import org.enso.base.CurrentEnsoProject;
 
 public class DiskSpaceGetter extends Mockable<Long> {
   public DiskSpaceGetter() {
-      super(() -> getRootPath().getUsableSpace());
+    super(() -> getRootPath().getUsableSpace());
   }
 
   private static File getRootPath() {

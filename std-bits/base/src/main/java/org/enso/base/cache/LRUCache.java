@@ -19,7 +19,6 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
 import org.enso.base.Stream_Utils;
 
 /**
@@ -29,14 +28,12 @@ import org.enso.base.Stream_Utils;
  * deleting entries to make space for new ones. All cache files are set to be deleted automatically
  * on JVM exit.
  *
- * Limits should be set with environment variables:
- *   ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS -- single file size, in megs
- *   ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT -- total cache size, in megs or percentage of free disk space
+ * <p>Limits should be set with environment variables: ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS --
+ * single file size, in megs ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT -- total cache size, in megs
+ * or percentage of free disk space
  *
- *   Examples:
- *     ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS=20
- *     ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200
- *     ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
+ * <p>Examples: ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS=20
+ * ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200 ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
  *
  * @param <M> Additional metadata to associate with the data.
  */
@@ -44,13 +41,14 @@ public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
   /**
-   * An upper limit on the total cache size. If the cache size limit specified
-   * by the other parameters goes over this value, then this value is used.
+   * An upper limit on the total cache size. If the cache size limit specified by the other
+   * parameters goes over this value, then this value is used.
    */
   private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND = 100L * 1024 * 1024 * 1024;
 
   /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
+
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
   /** Defines the per-file and total cache size limits. */
@@ -152,13 +150,13 @@ public class LRUCache<M> {
     try {
       // Limit the download to getMaxFileSize().
       long maxFileSize = settings.getMaxFileSize();
-      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxFileSize );
+      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxFileSize);
 
       if (sizeOK) {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(maxFileSize );
+        throw new ResponseTooLargeException(maxFileSize);
       }
     } finally {
       outputStream.close();
@@ -259,17 +257,18 @@ public class LRUCache<M> {
   }
 
   /**
-   * Calculate the max total cache size, using the current limit but also
-   * constraining the result to the upper bound.
+   * Calculate the max total cache size, using the current limit but also constraining the result to
+   * the upper bound.
    */
   public long getMaxTotalCacheSize() {
-    var totalCacheSize = switch (settings.getTotalCacheLimit()) {
-      case TotalCacheLimit.Bytes bytes -> bytes.bytes();
-      case TotalCacheLimit.Percentage percentage -> {
-        long usableSpace = diskSpaceGetter.get();
-        yield (long) (percentage.percentage() * usableSpace);
-      }
-    };
+    var totalCacheSize =
+        switch (settings.getTotalCacheLimit()) {
+          case TotalCacheLimit.Bytes bytes -> bytes.bytes();
+          case TotalCacheLimit.Percentage percentage -> {
+            long usableSpace = diskSpaceGetter.get();
+            yield (long) (percentage.percentage() * usableSpace);
+          }
+        };
     return Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
   }
 
