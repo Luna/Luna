@@ -1,21 +1,20 @@
 package org.enso.base.parser;
 
 import java.util.Optional;
-
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseDouble;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseFailure;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseLong;
 import org.enso.base.parser.FormatDetectingNumberParser.NumberParseResult;
 
 /**
- * Number parsing with separators.
- * Specifies the universe of number formats that can be parsed.
- * Two special cases, where we default to English format over European:
+ * Number parsing with separators. Specifies the universe of number formats that can be parsed. Two
+ * special cases, where we default to English format over European:
+ *
  * <ul>
- *   <li>Encounter a single . or , with 3 trailing numbers.</li>
- *   <li>Could be either DOT_COMMA or COMMA_DOT.</li>
- *   <li>If a single . then uses DOT_UNKNOWN.</li>
- *   <li>If a single , then uses COMMA_UNKNOWN.</li>
+ *   <li>Encounter a single . or , with 3 trailing numbers.
+ *   <li>Could be either DOT_COMMA or COMMA_DOT.
+ *   <li>If a single . then uses DOT_UNKNOWN.
+ *   <li>If a single , then uses COMMA_UNKNOWN.
  * </ul>
  */
 public enum NumberWithSeparators {
@@ -70,15 +69,16 @@ public enum NumberWithSeparators {
             ? Constants.UNKNOWN
             : (decimal.isEmpty() ? Constants.NONE : decimal.charAt(0));
 
-    Optional<NumberWithSeparators> matched = switch (thousands) {
-      case Constants.NONE -> matchForNone(decimals);
-      case Constants.UNKNOWN -> matchForUnknown(decimals);
-      case ',' -> Optional.of(COMMA_DOT);
-      case '.' -> Optional.of(DOT_COMMA);
-      case ' ' -> matchForSpace(decimals);
-      case '\'' -> matchForSwiss(decimals);
-      default -> Optional.empty();
-    };
+    Optional<NumberWithSeparators> matched =
+        switch (thousands) {
+          case Constants.NONE -> matchForNone(decimals);
+          case Constants.UNKNOWN -> matchForUnknown(decimals);
+          case ',' -> Optional.of(COMMA_DOT);
+          case '.' -> Optional.of(DOT_COMMA);
+          case ' ' -> matchForSpace(decimals);
+          case '\'' -> matchForSwiss(decimals);
+          default -> Optional.empty();
+        };
 
     if (matched.isEmpty()) {
       throw new IllegalArgumentException("Invalid separators.");

@@ -14,8 +14,7 @@ public enum NegativeSign {
    * Checks if the given character is a valid negative sign.
    *
    * @param c the character to check
-   * @return the new state of the negative sign or Optional.empty if the
-   * character is invalid.
+   * @return the new state of the negative sign or Optional.empty if the character is invalid.
    */
   public Optional<NegativeSign> checkValid(char c) {
     var result =

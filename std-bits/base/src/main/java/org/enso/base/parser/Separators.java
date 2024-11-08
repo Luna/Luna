@@ -15,7 +15,8 @@ public record Separators(char first, char second, int count, int endIdx, int las
    * character other than a digit, thousands or decimal separator is encountered then return null.
    * If multiple decimal separators are encountered then return null.
    */
-  static CharSequence strip(CharSequence value, int startIdx, int endIdx, char thousands, char decimal) {
+  static CharSequence strip(
+      CharSequence value, int startIdx, int endIdx, char thousands, char decimal) {
     boolean foundDecimal = false;
     char[] results = new char[endIdx - startIdx];
     int resultIdx = 0;
