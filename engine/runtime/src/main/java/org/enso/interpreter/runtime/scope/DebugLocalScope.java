@@ -273,20 +273,6 @@ public class DebugLocalScope implements EnsoObject {
     return value != null ? value : DataflowError.UNINITIALIZED;
   }
 
-  private String readFirstMember(Object object) {
-    var interop = InteropLibrary.getUncached();
-    try {
-      if (interop.hasMembers(object)) {
-        var members = interop.getMembers(object, true);
-        var firstMember = interop.readArrayElement(members, 0);
-        return interop.asString(firstMember);
-      }
-    } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-      return null;
-    }
-    return null;
-  }
-
   private boolean isHostObject(Object object) {
     return EnsoContext.get(null).isJavaPolyglotObject(object);
   }
