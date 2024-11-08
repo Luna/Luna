@@ -15,9 +15,8 @@ final class ChainedMiniPass extends MiniIRPass {
   }
 
   static MiniIRPass chain(MiniIRPass firstPass, MiniIRPass secondPass) {
-    if (firstPass == null) {
-      return secondPass;
-    }
+    assert firstPass != null;
+    assert secondPass != null;
     return new ChainedMiniPass(firstPass, secondPass);
   }
 

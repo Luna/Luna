@@ -105,9 +105,13 @@ class PassManager(
           factory.createForModuleCompilation(newContext)
         )
         val combinedPass = miniPasses.fold(null)(MiniIRPass.combine)
-        logger.trace("  flushing pending mini pass: {}", combinedPass)
         pendingMiniPasses = List()
-        MiniIRPass.compile(classOf[Module], in, combinedPass)
+        if (combinedPass != null) {
+          logger.trace("  flushing pending mini pass: {}", combinedPass)
+          MiniIRPass.compile(classOf[Module], in, combinedPass)
+        } else {
+          in
+        }
       } else {
         in
       }
