@@ -115,7 +115,8 @@ add_specs suite_builder =
 
     suite_builder.group "Response caching" pending=pending_has_url group_builder->
         with_temp_file file ~action =
-            deleter = file.delete_if_exists
+            deleter =
+                file.delete_if_exists
             Panic.with_finalizer deleter <|
                 deleter
                 action
