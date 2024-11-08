@@ -6,13 +6,13 @@ import { fetcherUrlTransformer } from '@/components/MarkdownEditor/imageUrlTrans
 import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
+import { ProjectFiles, useProjectFiles } from '@/stores/projectFiles'
 import type { ToValue } from '@/util/reactivity'
 import { useToast } from '@/util/toast'
 import { ComponentInstance, ref, toRef, toValue, watch } from 'vue'
 import type { Path } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, mapOk, withContext, type Result } from 'ydoc-shared/util/data/result'
 import * as Y from 'yjs'
-import { pickUniqueName } from './GraphEditor/upload'
 
 const { yText } = defineProps<{
   yText: Y.Text
@@ -28,14 +28,16 @@ const graphStore = useGraphStore()
 const projectStore = useProjectStore()
 const { transformImageUrl, uploadImage } = useDocumentationImages(
   toRef(graphStore, 'modulePath'),
-  // TODO: is this needed?
-  projectStore.readFileBinary,
+  useProjectFiles(projectStore),
 )
 const uploadErrorToast = useToast.error()
 
 function useDocumentationImages(
   modulePath: ToValue<Path | undefined>,
-  readFileBinary: (path: Path) => Promise<Result<Blob>>,
+  projectFiles: Pick<
+    ProjectFiles,
+    'projectRootId' | 'readFileBinary' | 'writeFileBinary' | 'pickUniqueName'
+  >,
 ) {
   function urlToPath(url: string): Result<Path> | undefined {
     const modulePathValue = toValue(modulePath)
@@ -76,14 +78,14 @@ function useDocumentationImages(
         () => `Loading documentation image (${pathDebugRepr(path)})`,
         () => {
           const uploaded = uploadedImages.get(pathUniqueId(path))
-          return uploaded?.then((blob) => Ok(blob)) ?? readFileBinary(path)
+          return uploaded?.then((blob) => Ok(blob)) ?? projectFiles.readFileBinary(path)
         },
       )
     },
   )
 
   async function uploadImage(name: string, blobPromise: Promise<Blob>) {
-    const rootId = await projectStore.projectRootId
+    const rootId = await projectFiles.projectRootId
     if (!rootId) {
       uploadErrorToast.show('Cannot upload image: unknown project file tree root.')
       return
@@ -92,8 +94,7 @@ function useDocumentationImages(
       console.error('Tried to upload image while mardown editor is still not loaded')
       return
     }
-    const filename = await pickUniqueName(
-      projectStore.lsRpcConnection,
+    const filename = await projectFiles.pickUniqueName(
       {
         rootId,
         segments: ['images'],
@@ -110,7 +111,7 @@ function useDocumentationImages(
     uploadedImages.set(id, blobPromise)
     try {
       const blob = await blobPromise
-      const uploadResult = await projectStore.writeFileBinary(path, blob)
+      const uploadResult = await projectFiles.writeFileBinary(path, blob)
       if (!uploadResult.ok)
         uploadErrorToast.reportError(uploadResult.error, 'Failed to upload image')
     } finally {

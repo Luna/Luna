@@ -30,13 +30,9 @@ import {
   type WatchSource,
   type WritableComputedRef,
 } from 'vue'
-import {
-  Error as DataError,
-  OutboundPayload,
-  VisualizationUpdate,
-} from 'ydoc-shared/binaryProtocol'
+import { OutboundPayload, VisualizationUpdate } from 'ydoc-shared/binaryProtocol'
 import { LanguageServer } from 'ydoc-shared/languageServer'
-import type { Diagnostic, ExpressionId, MethodPointer, Path } from 'ydoc-shared/languageServerTypes'
+import type { Diagnostic, ExpressionId, MethodPointer } from 'ydoc-shared/languageServerTypes'
 import { type AbortScope } from 'ydoc-shared/util/net'
 import {
   DistributedProject,
@@ -129,7 +125,9 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
     const clientId = random.uuidv4() as Uuid
     const lsUrls = resolveLsUrl(config.value)
     const lsRpcConnection = createLsRpcConnection(clientId, lsUrls.rpcUrl, abort)
-    const contentRoots = lsRpcConnection.contentRoots
+    const projectRootId = lsRpcConnection.contentRoots.then(
+      (roots) => roots.find((root) => root.type === 'Project')?.id,
+    )
 
     const dataConnection = initializeDataConnection(clientId, lsUrls.dataUrl, abort)
     const rpcUrl = new URL(lsUrls.rpcUrl)
@@ -375,30 +373,6 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
       }
     })
 
-    const projectRootId = contentRoots.then(
-      (roots) => roots.find((root) => root.type === 'Project')?.id,
-    )
-
-    async function readFileBinary(path: Path): Promise<Result<Blob>> {
-      const result = await dataConnection.readFile(path)
-      if (result instanceof DataError) {
-        return Err(result.message() ?? 'Failed to read file.')
-      }
-      const contents = result.contentsArray()
-      if (contents == null) {
-        return Err('No file contents received.')
-      }
-      return Ok(new Blob([contents]))
-    }
-
-    async function writeFileBinary(path: Path, content: Blob): Promise<Result> {
-      const result = await dataConnection.writeFile(path, await content.arrayBuffer())
-      if (result instanceof DataError) {
-        return Err(result.message() ?? 'Failed to write file.')
-      }
-      return Ok()
-    }
-
     return proxyRefs({
       setObservedFileName(name: string) {
         observedFileName.value = name
@@ -422,8 +396,6 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
       computedValueRegistry: markRaw(computedValueRegistry),
       lsRpcConnection: markRaw(lsRpcConnection),
       dataConnection: markRaw(dataConnection),
-      readFileBinary,
-      writeFileBinary,
       useVisualizationData,
       isRecordingEnabled,
       stopCapturingUndo,
