@@ -277,7 +277,8 @@ public class LRUCache<M> {
     return cache.size();
   }
 
-  public List<Long> getFileSizesTestOnly() {
+  /** Public for testing. */
+  public List<Long> getFileSizes() {
     return new ArrayList<>(
         cache.values().stream().map(CacheEntry::size).collect(Collectors.toList()));
   }

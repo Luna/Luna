@@ -139,7 +139,7 @@ add_specs suite_builder =
 
         get_cache_file_sizes : Vector Integer
         get_cache_file_sizes -> Vector Integer =
-            Vector.from_polyglot_array EnsoSecretHelper.getCache.getLRUCache.getFileSizesTestOnly . sort Sort_Direction.Ascending
+            Vector.from_polyglot_array EnsoSecretHelper.getCache.getLRUCache.getFileSizes . sort Sort_Direction.Ascending
 
         # Craetes a new cache each time, then resets it at the end
         with_lru_cache lru_cache ~action =
