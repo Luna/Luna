@@ -308,17 +308,13 @@ add_specs suite_builder =
             trigger_uri_serial.modify (_ + 1)
             base_url_with_slash+'test_download?max-age=10000&length=50&abc='+serial.to_text
         set_time_and_get_count now_mock advance_secs =
-            now_mock.lala (fake_now + (Duration.new seconds=advance_secs))
             now_mock.mocked (fake_now + (Duration.new seconds=advance_secs))
             trigger_uri = make_trigger_uri
             Data.fetch trigger_uri
             get_num_response_cache_entries
-        fake_time_resetter =
-            EnsoSecretHelper.getCache.getCacheTestParameters.clearNowOverrideTestOnly
 
         group_builder.specify "The cache should expire stale entries" pending=pending_has_url <| Test.with_retries <|
             with_mocks now-> _->
-
                 set_time_and_get_count now 0  # Initialize fake now.
 
                 Data.fetch base_url_with_slash+'test_download?max-age=100&length=50'
@@ -336,11 +332,9 @@ add_specs suite_builder =
                 set_time_and_get_count now 292 . should_equal 8
                 set_time_and_get_count now 301 . should_equal 8
 
-        ##
-            group_builder.specify "The cache should use the Age response header" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
-
-                set_time_and_get_count 0  # Initialize fake now.
+        group_builder.specify "The cache should use the Age response header" pending=pending_has_url <| Test.with_retries <|
+            with_mocks now-> _->
+                set_time_and_get_count now 0  # Initialize fake now.
 
                 Data.fetch base_url_with_slash+'test_download?max-age=100&age=50&length=50' # ttl 50
                 Data.fetch base_url_with_slash+'test_download?max-age=100&age=30&length=50' # ttl 70
@@ -348,70 +342,57 @@ add_specs suite_builder =
                 Data.fetch base_url_with_slash+'test_download?max-age=70&&length=50'        # ttl 70
                 Data.fetch base_url_with_slash+'test_download?max-age=160&age=70&length=50' # ttl 90
 
-                Panic.with_finalizer fake_time_resetter <|
-                    ## The count will increase by 1 each time, but decrease by the
-                    number of entries removed
-                    set_time_and_get_count 0 . should_equal 7
-                    set_time_and_get_count 40 . should_equal 8
-                    set_time_and_get_count 51 . should_equal 8
-                    set_time_and_get_count 68 . should_equal 9
-                    set_time_and_get_count 72 . should_equal 7
-                    set_time_and_get_count 88 . should_equal 8
-                    set_time_and_get_count 93 . should_equal 8
+                ## The count will increase by 1 each time, but decrease by the
+                   number of entries removed
+                set_time_and_get_count now 0 . should_equal 7
+                set_time_and_get_count now 40 . should_equal 8
+                set_time_and_get_count now 51 . should_equal 8
+                set_time_and_get_count now 68 . should_equal 9
+                set_time_and_get_count now 72 . should_equal 7
+                set_time_and_get_count now 88 . should_equal 8
+                set_time_and_get_count now 93 . should_equal 8
 
-            download size =
-                Data.fetch base_url_with_slash+'test_download?length='+size.to_text
+        download size =
+            Data.fetch base_url_with_slash+'test_download?length='+size.to_text
 
-            group_builder.specify "Will remove old cache files to keep the total cache size under the total cache size limit" pending=pending_has_url <| Test.with_retries <|
-                Panic.with_finalizer reset_size_limits <|
-                    reset_size_limits
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxTotalCacheSizeOverrideTestOnly 100
+        group_builder.specify "Will remove old cache files to keep the total cache size under the total cache size limit" pending=pending_has_url <| Test.with_retries <|
+            with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
+                download 30
+                download 50
+                download 10
+                get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
+                download 20
+                get_cache_file_sizes . should_equal_ignoring_order [10, 20, 50]
+                download 40
+                get_cache_file_sizes . should_equal_ignoring_order [10, 20, 40]
+                download 35
+                get_cache_file_sizes . should_equal_ignoring_order [20, 35, 40]
 
-                    download 30
-                    download 50
-                    download 10
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
-                    download 20
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 20, 50]
-                    download 40
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 20, 40]
-                    download 35
-                    get_cache_file_sizes . should_equal_ignoring_order [20, 35, 40]
+        group_builder.specify "Will remove old cache files based on how recently they were used" pending=pending_has_url <| Test.with_retries <|
+            with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
+                download 30
+                download 50
+                download 10
+                get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
+                # Use 30 again so it's considered more recently used.
+                download 30
+                get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
+                download 20
+                get_cache_file_sizes . should_equal_ignoring_order [10, 20, 30]
+                download 45
+                get_cache_file_sizes . should_equal_ignoring_order [20, 30, 45]
 
-            group_builder.specify "Will remove old cache files based on how recently they were used" pending=pending_has_url <| Test.with_retries <|
-                Panic.with_finalizer reset_size_limits <|
-                    reset_size_limits
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxTotalCacheSizeOverrideTestOnly 100
+        group_builder.specify "Will not cache a file with a content length greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
+            with_config 100 (TotalCacheLimit.Bytes.new 1000) _-> _->
+                download 110 . should_fail_with (Response_Too_Large.Error 100)
 
-                    download 30
-                    download 50
-                    download 10
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
-                    # Use 30 again so it's considered more recently used.
-                    download 30
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 30, 50]
-                    download 20
-                    get_cache_file_sizes . should_equal_ignoring_order [10, 20, 30]
-                    download 45
-                    get_cache_file_sizes . should_equal_ignoring_order [20, 30, 45]
+        group_builder.specify "Will not cache a file without a content length, but which is greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
+            with_config 100 (TotalCacheLimit.Bytes.new 1000) _-> _->
+                url = base_url_with_slash+'test_download?omit-content-length=1&length=110'
+                Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
 
-            group_builder.specify "Will not cache a file with a content length greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
-                Panic.with_finalizer reset_size_limits <|
-                    reset_size_limits
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxFileSizeOverrideTestOnly 100
-                    download 110 . should_fail_with (Response_Too_Large.Error 100)
-
-            group_builder.specify "Will not cache a file without a content length, but which is greater than the single file limit" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
-                Panic.with_finalizer reset_size_limits <|
-                    reset_size_limits
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxFileSizeOverrideTestOnly 100
-                    url = base_url_with_slash+'test_download?omit-content-length=1&length=110'
-                    Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
-
-            group_builder.specify "Should not cache if the request fails" pending=pending_has_url <| Test.with_retries <|
-                HTTP.clear_response_cache
-
+        group_builder.specify "Should not cache if the request fails" pending=pending_has_url <| Test.with_retries <|
+            with_default_cache <|
                 HTTP.fetch url0
                 get_num_response_cache_entries . should_equal 1
                 HTTP.fetch base_url_with_slash+'crash'
@@ -419,95 +400,80 @@ add_specs suite_builder =
                 HTTP.fetch base_url_with_slash+'nonexistent_endpoint'
                 get_num_response_cache_entries . should_equal 1
 
-            cloud_setup = Cloud_Tests_Setup.prepare
+        cloud_setup = Cloud_Tests_Setup.prepare
 
-            group_builder.specify "Should work with secrets in the URI" pending=pending_has_url <| Test.with_retries <|
-                cloud_setup.with_prepared_environment <|
-                    secret1 = Enso_Secret.create "http-cache-secret-1-"+Random.uuid "My Value"
-                    secret2 = Enso_Secret.create "http-cache-secret-2-"+Random.uuid "Some Value"
-                    cleanup =
-                        secret1.delete
-                        secret2.delete
-                    Panic.with_finalizer cleanup <|
-                        # Requests differ only in secrets in URI.
-                        url1 = URI.from 'https://httpbin.org/bytes/50'
-                            . add_query_argument "arg1" secret1
-                            . add_query_argument "arg2" "plain value"
-                        uri2 = URI.from 'https://httpbin.org/bytes/50'
-                            . add_query_argument "arg1" secret2
-                            . add_query_argument "arg2" "plain value"
+        group_builder.specify "Should work with secrets in the URI" pending=pending_has_url <| Test.with_retries <|
+            cloud_setup.with_prepared_environment <|
+                secret1 = Enso_Secret.create "http-cache-secret-1-"+Random.uuid "My Value"
+                secret2 = Enso_Secret.create "http-cache-secret-2-"+Random.uuid "Some Value"
+                cleanup =
+                    secret1.delete
+                    secret2.delete
+                with_default_cache <| Panic.with_finalizer cleanup <|
+                    # Requests differ only in secrets in URI.
+                    url1 = URI.from 'https://httpbin.org/bytes/50'
+                        . add_query_argument "arg1" secret1
+                        . add_query_argument "arg2" "plain value"
+                    uri2 = URI.from 'https://httpbin.org/bytes/50'
+                        . add_query_argument "arg1" secret2
+                        . add_query_argument "arg2" "plain value"
 
-                        HTTP.clear_response_cache
-                        HTTP.fetch url1
-                        get_num_response_cache_entries . should_equal 1
-                        HTTP.fetch uri2
-                        get_num_response_cache_entries . should_equal 2
+                    HTTP.fetch url1
+                    get_num_response_cache_entries . should_equal 1
+                    HTTP.fetch uri2
+                    get_num_response_cache_entries . should_equal 2
 
-            group_builder.specify "Should work with secrets in the headers" pending=pending_has_url <| Test.with_retries <|
-                cloud_setup.with_prepared_environment <|
-                    secret1 = Enso_Secret.create "http-cache-secret-1-"+Random.uuid "My Value"
-                    secret2 = Enso_Secret.create "http-cache-secret-2-"+Random.uuid "Some Value"
-                    cleanup =
-                        secret1.delete
-                        secret2.delete
-                    Panic.with_finalizer cleanup <|
-                        # Requests differ only in secrets in headers.
-                        uri = URI.from 'https://httpbin.org/bytes/50'
-                        headers1 = [Header.new "A-Header" secret1]
-                        headers2 = [Header.new "A-Header" secret2]
+        group_builder.specify "Should work with secrets in the headers" pending=pending_has_url <| Test.with_retries <|
+            cloud_setup.with_prepared_environment <|
+                secret1 = Enso_Secret.create "http-cache-secret-1-"+Random.uuid "My Value"
+                secret2 = Enso_Secret.create "http-cache-secret-2-"+Random.uuid "Some Value"
+                cleanup =
+                    secret1.delete
+                    secret2.delete
+                with_default_cache <| Panic.with_finalizer cleanup <|
+                    # Requests differ only in secrets in headers.
+                    uri = URI.from 'https://httpbin.org/bytes/50'
+                    headers1 = [Header.new "A-Header" secret1]
+                    headers2 = [Header.new "A-Header" secret2]
 
-                        HTTP.clear_response_cache
-                        HTTP.fetch headers=headers1 uri
-                        get_num_response_cache_entries . should_equal 1
-                        HTTP.fetch headers=headers2 uri
-                        get_num_response_cache_entries . should_equal 2
+                    HTTP.fetch headers=headers1 uri
+                    get_num_response_cache_entries . should_equal 1
+                    HTTP.fetch headers=headers2 uri
+                    get_num_response_cache_entries . should_equal 2
 
-            group_builder.specify "Should not be able to set the cache limits higher than the real limits" <|
-                Test.expect_panic IllegalArgumentException <|
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxFileSizeOverrideTestOnly (2 * 1024 * 1024 * 1024 + 1) . should_fail_with Illegal_Argument
-                Test.expect_panic IllegalArgumentException <|
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setMaxTotalCacheSizeOverrideTestOnly (20 * 1024 * 1024 * 1024 + 1) . should_fail_with Illegal_Argument
-                Test.expect_panic IllegalArgumentException <|
-                    usable_disk_space = Java_File.new enso_project.root_path . getUsableSpace
-                    EnsoSecretHelper.getCache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly usable_disk_space+1 . should_fail_with Illegal_Argument
+        group_builder.specify "Cache limits should have defaults" <|
+            lru_cache = LRUCache.new
+            lru_cache.getSettings.getMaxFileSize . should_equal (2 * 1024 * 1024 * 1024)
+            lru_cache.getSettings.getTotalCacheLimit.percentage . should_equal 0.2
 
-            group_builder.specify "Cache limits should have defaults" <|
-                lru_cache = EnsoSecretHelper.getCache.getLRUCache
-                lru_cache.getMaxFileSize . should_equal (2 * 1024 * 1024 * 1024)
-                lru_cache.getTotalCacheLimit.percentage . should_equal 0.2
-
-            group_builder.specify "Should be able to set the max file size via environment variable" <|
-                Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
-                    lru_cache = LRUCache.new
-                    lru_cache.getMaxFileSize . should_equal (8 * 1024 * 1024)
-
-            group_builder.specify "Should be able to set the max total cache size in bytes via environment variable" <|
+        group_builder.specify "Should be able to set the max file size and total cache size (in bytes) via environment variable" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
                 Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "30" <|
-                    lru_cache = LRUCache.new
-                    lru_cache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024)
+                    with_default_cache <|
+                        EnsoSecretHelper.getCache.getLRUCache.getSettings.getMaxFileSize . should_equal (8 * 1024 * 1024)
+                        EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024)
 
-            group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable, and track changes to available disk space." <|
+        group_builder.specify "Should be able to set the max file size and total cache size (as a percentage) via environment variable, and track changes to available disk space" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
                 Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "10%" <|
-                    Panic.with_finalizer reset_disk_space <|
-                        lru_cache = LRUCache.new
-                        lru_cache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly 300
-                        lru_cache.getMaxTotalCacheSize . should_equal 30
-                        lru_cache.getTotalCacheLimit.percentage . should_equal 0.1
-                        lru_cache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly 400
-                        lru_cache.getMaxTotalCacheSize . should_equal 40
-                        lru_cache.getTotalCacheLimit.percentage . should_equal 0.1
+                    with_mocks _-> disk_space->
+                        EnsoSecretHelper.getCache.getLRUCache.getSettings.getMaxFileSize . should_equal (8 * 1024 * 1024)
+                        disk_space.mocked 300
+                        EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024)
+                        disk_space.mocked 400
+                        EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal (40 * 1024 * 1024)
 
-            group_builder.specify "Total cache size should not go over the hard-coded maximum" <|
-                Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" (1024 * 1024).to_text <|
-                    lru_cache = LRUCache.new
-                    lru_cache.getMaxTotalCacheSize . should_equal (100 * 1024 * 1024 * 1024)
+        group_builder.specify "Total cache size should not go over the hard-coded maximum" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" (1024 * 1024).to_text <|
+                lru_cache = LRUCache.new
+                lru_cache.getMaxTotalCacheSize . should_equal (100 * 1024 * 1024 * 1024)
 
-            group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|
-                Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
-                    Test.expect_panic NumberFormatException LRUCache.new
+        group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
+                Test.expect_panic NumberFormatException LRUCache.new
 
-            group_builder.specify "Throws exception if the max total cache percentage is outside 0..100%" <|
-                Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "-10%" <|
-                    Test.expect_panic IllegalArgumentException LRUCache.new
-                Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "103%" <|
-                    Test.expect_panic IllegalArgumentException LRUCache.new
+        group_builder.specify "Throws exception if the max total cache percentage is outside 0..100%" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "-10%" <|
+                Test.expect_panic IllegalArgumentException LRUCache.new
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "103%" <|
+                Test.expect_panic IllegalArgumentException LRUCache.new

@@ -282,6 +282,11 @@ public class LRUCache<M> {
         cache.values().stream().map(CacheEntry::size).collect(Collectors.toList()));
   }
 
+  /** Public for testing. */
+  public LRUCacheSettings getSettings() {
+    return settings;
+  }
+
   private record CacheEntry<M>(File responseData, M metadata, long size, ZonedDateTime expiry) {}
 
   /**
