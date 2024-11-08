@@ -138,7 +138,7 @@ read path=(Missing_Argument.throw "path") format=Auto_Detect (on_problems : Prob
 
          files = Data.list name_filter="*.csv"
          example_csv_dir_to_table = Data.read_many files
-@paths (Vector_Editor item_editor=Text_Input item_default='""')
+@paths (Vector_Editor item_editor=Text_Input item_default='""' display=..Always)
 @format File_Format.default_widget
 @return Return_As.default_widget
 read_many : Many_Files_List -> File_Format -> Return_As -> Problem_Behavior -> Any ! File_Error

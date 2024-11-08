@@ -1,3 +1,5 @@
+private
+
 from Standard.Base import all
 import Standard.Base.Data.Vector.Builder
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
@@ -97,9 +99,8 @@ expand_to_rows table column:(Text | Integer) at_least_one_row=False sequences_on
         builder size = make_inferred_builder size java_problem_aggregator
         Fan_Out.fan_out_to_rows table column row_expander column_names at_least_one_row column_builder=builder
 
-## PRIVATE
-create_table_from_objects : Convertible_To_Rows -> (Vector Text | Nothing) -> Table
-create_table_from_objects (value : Convertible_To_Rows) (fields : Vector | Nothing) = if fields.is_nothing.not && fields.is_empty then Error.throw (Illegal_Argument.Error "The fields parameter cannot be empty.") else
+create_table_from_objects (base_value : Convertible_To_Rows) (fields : Vector | Nothing) (sequences_only : Boolean) -> Table = if fields.is_nothing.not && fields.is_empty then Error.throw (Illegal_Argument.Error "The fields parameter cannot be empty.") else
+    value = base_value.align_sequence_only sequences_only
     len = value.length
 
     Java_Problems.with_problem_aggregator Problem_Behavior.Report_Warning java_problem_aggregator->

@@ -4,7 +4,9 @@ import Standard.Base.Data.Read.Return_As.Return_As
 import Standard.Base.Errors.Common.Type_Error
 from Standard.Base.Metadata.Choice import Option
 
+import project.Columns_To_Keep.Columns_To_Keep
 import project.Internal.Read_Many_Helpers
+import project.Match_Columns.Match_Columns
 
 type Return_As_Table
     ## Returns a table with a new column `Value` containing the objects loaded
@@ -24,7 +26,8 @@ type Return_As_Table
        Each file is loaded according to the provided/detected format. If the
        format reads it as something else than a table, then it is expanded in
        the same way as `Table.from_objects`.
-    Merged_Table
+    @columns_to_keep Columns_To_Keep.default_widget
+    Merged_Table (columns_to_keep : Columns_To_Keep = Columns_To_Keep.In_Any) (match : Match_Columns = Match_Columns.By_Name)
 
     ## PRIVATE
     get_dropdown_options : Vector Option

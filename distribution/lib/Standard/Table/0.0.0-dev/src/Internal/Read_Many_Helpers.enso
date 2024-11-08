@@ -37,7 +37,8 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
     case return_shape of
         Return_As_Table.Table_Of_Objects ->
             base_table
-        Return_As_Table.Merged_Table ->
+        Return_As_Table.Merged_Table _ _ ->
+            # TODO
             _expand_objects base_table objects_column_name
 
 _merge_input_and_objects (input : Many_Files_List) (objects : Vector Any) -> Pair Table Text =
