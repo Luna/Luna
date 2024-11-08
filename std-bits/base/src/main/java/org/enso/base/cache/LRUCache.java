@@ -63,7 +63,7 @@ public class LRUCache<M> {
   private final DiskSpaceGetter diskSpaceGetter;
 
   public LRUCache() {
-    this(LRUCache.getDefault(), new NowGetter(), new DiskSpaceGetter());
+    this(LRUCacheSettings.getDefault(), new NowGetter(), new DiskSpaceGetter());
   }
 
   public LRUCache(LRUCacheSettings settings, NowGetter nowGetter, DiskSpaceGetter diskSpaceGetter) {
@@ -264,7 +264,7 @@ public class LRUCache<M> {
    */
   public long getMaxTotalCacheSize() {
     var totalCacheSize = switch (settings.getTotalCacheLimit()) {
-      case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
+      case TotalCacheLimit.Bytes bytes -> bytes.bytes();
       case TotalCacheLimit.Percentage percentage -> {
         long usableSpace = diskSpaceGetter.get();
         yield (long) (percentage.percentage() * usableSpace);

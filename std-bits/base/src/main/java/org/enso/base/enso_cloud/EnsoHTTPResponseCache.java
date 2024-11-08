@@ -24,13 +24,12 @@ import org.enso.base.cache.ResponseTooLargeException;
 public class EnsoHTTPResponseCache {
   // Public for testing.
   public EnsoHTTPResponseCache() {
-    resetToDefaultLRUCache();
   }
 
   // 1 year.
   private final int DEFAULT_TTL_SECONDS = 31536000;
 
-  private final LRUCache<Metadata> lruCache;
+  private LRUCache<Metadata> lruCache = new LRUCache<>();
 
   public EnsoHttpResponse makeRequest(RequestMaker requestMaker)
       throws IOException, InterruptedException, ResponseTooLargeException {
@@ -132,7 +131,7 @@ public class EnsoHTTPResponseCache {
   }
 
   /** Public for testing. */
-  public void setLRUCache(LRUCache lruCache) {
+  public void setLRUCache(LRUCache<Metadata> lruCache) {
     this.lruCache.clear();
     this.lruCache = lruCache;
   }

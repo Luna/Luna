@@ -4,6 +4,6 @@ import java.time.ZonedDateTime;
 
 public class NowGetter extends Mockable<ZonedDateTime> {
     public NowGetter() {
-        this(() -> ZonedDateTime.now());
+        super(() -> ZonedDateTime.now());
     }
 }

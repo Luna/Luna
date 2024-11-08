@@ -3,12 +3,12 @@ package org.enso.base.cache;
 import java.io.File;
 import org.enso.base.CurrentEnsoProject;
 
-public class DiskSpaceGetter extends Mockable<long> {
+public class DiskSpaceGetter extends Mockable<Long> {
   public DiskSpaceGetter() {
-      this(() -> getRootPath().getUsableSpace());
+      super(() -> getRootPath().getUsableSpace());
   }
 
   private static File getRootPath() {
-    File(CurrentEnsoProject.get().getRootPath());
+    return new File(CurrentEnsoProject.get().getRootPath());
   }
 }

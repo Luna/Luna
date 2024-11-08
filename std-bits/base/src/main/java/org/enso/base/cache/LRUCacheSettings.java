@@ -46,7 +46,7 @@ public class LRUCacheSettings {
     if (maxFileSizeSpec != null && totalCacheLimitSpec != null) {
       return new LRUCacheSettings(maxFileSizeSpec, totalCacheLimitSpec);
     } else {
-      return new LRUCacheSettings(DEFAULT_MAX_FILE_SIZE, DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE);
+      return new LRUCacheSettings(DEFAULT_MAX_FILE_SIZE, new TotalCacheLimit.Percentage(DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE));
     }
   }
 
@@ -54,7 +54,7 @@ public class LRUCacheSettings {
     return maxFileSize;
   }
 
-  public TotalCacheSize.Limit getTotalCacheLimit() {
+  public TotalCacheLimit.Limit getTotalCacheLimit() {
     return totalCacheLimit;
   }
 
@@ -65,7 +65,7 @@ public class LRUCacheSettings {
   }
 
   /** Uses the environment variable if set, otherwise uses a default percentage. */
-  private static TotalCacheLimit.Limit parseTotalCacheLimit() {
+  private static TotalCacheLimit.Limit parseTotalCacheLimit(String totalCacheLimitSpec) {
     return TotalCacheLimit.parse(totalCacheLimitSpec );
   }
 }

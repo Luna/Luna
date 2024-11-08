@@ -8,7 +8,7 @@ import java.text.ParsePosition;
  * count or as a percentage of available disk space.
  */
 public class TotalCacheLimit {
-    /** Parse the limit specification string into either a Megs or Percentage value. */
+    /** Parse the limit specification string into either a Bytes or Percentage value. */
     public static Limit parse(String limitString) throws NumberFormatException {
         Number percentageNumber = tryPercentage(limitString);
         if (percentageNumber != null) {
@@ -18,13 +18,15 @@ public class TotalCacheLimit {
             }
             return new Percentage(percentage);
         }
-        return new Megs(Double.parseDouble(limitString));
+        double megs = Double.parseDouble(limitString);
+        long bytes = (long) (megs * 1024 * 1024);
+        return new Bytes(bytes);
     }
 
-    public sealed interface Limit permits Megs, Percentage {}
+    public sealed interface Limit permits Bytes, Percentage {}
 
-    // Specify the limit in megs.
-    public record Megs(double megs) implements Limit {}
+    // Specify the limit in bytes.
+    public record Bytes(long bytes) implements Limit {}
 
     // Specify the limit as a percentage of total free, usable disk space.
     public record Percentage(double percentage) implements Limit {}
