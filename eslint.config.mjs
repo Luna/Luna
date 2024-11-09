@@ -525,6 +525,12 @@ export default [
     },
   },
   {
+    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
+  },
+  {
     files: ['**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
     ignores: ['**/build.mjs'],
     rules: {

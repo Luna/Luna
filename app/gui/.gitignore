@@ -28,3 +28,5 @@ playwright-report/
 
 src/project-view/util/iconList.json
 src/project-view/util/iconName.ts
+
+*storybook.log
