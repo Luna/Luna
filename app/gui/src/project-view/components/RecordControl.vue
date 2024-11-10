@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import SvgButton from '@/components/SvgButton.vue'
+import { useNodeExecution } from '@/composables/nodeExecution'
 import { useProjectStore } from '@/stores/project'
 import ControlButtons from './ControlButtons.vue'
 
-const project = useProjectStore()
+const nodeExecution = useNodeExecution(useProjectStore())
 </script>
 
 <template>
@@ -14,7 +15,7 @@ const project = useProjectStore()
         class="iconButton"
         name="refresh"
         draggable="false"
-        @click.stop="project.executionContext.recompute()"
+        @click.stop="nodeExecution.recomputeAll()"
       />
     </template>
     <template #right>
@@ -23,7 +24,7 @@ const project = useProjectStore()
         class="iconButton"
         name="workflow_play"
         draggable="false"
-        @click.stop="project.executionContext.recompute('all', 'Live')"
+        @click.stop="nodeExecution.recomputeAll('Live')"
       />
     </template>
   </ControlButtons>
