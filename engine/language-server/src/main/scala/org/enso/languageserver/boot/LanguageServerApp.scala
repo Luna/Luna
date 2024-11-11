@@ -41,8 +41,8 @@ object LanguageServerApp {
         lock.wait()
       }
     } else {
-      StdIn.readLine()
-      stop(server, "stopped by the user")(config.computeExecutionContext)
+      val line = StdIn.readLine()
+      stop(server, "stopped by the user: " + line)(config.computeExecutionContext)
     }
   }
 
