@@ -456,7 +456,7 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
           return new EnsoTimeOfDay(time);
         }
         case NOT_SUPPORTED -> {
-          return value;
+          return null;
         }
       }
     } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
