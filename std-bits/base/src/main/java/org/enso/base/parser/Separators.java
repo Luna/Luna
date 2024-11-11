@@ -4,12 +4,16 @@ import static org.enso.base.parser.NumberWithSeparators.isDigit;
 
 import java.nio.CharBuffer;
 
-public record Separators(char first, char second, int count, int endIdx, int lastSeparator) {
-  /** Check if the character is a separator. */
-  static boolean isSeparator(char c) {
-    return c == '.' || c == ',' || c == ' ' || c == '\'';
-  }
-
+/**
+ * Record to hold information about the separators found in a number.
+ *
+ * @param first - the first encountered separator or Constants.NONE if none found.
+ * @param second - the second distinct separator or Constants.NONE if none found.
+ * @param count - the number of separators found.
+ * @param endIdx - the index of the last character in the number.
+ * @param lastSeparatorIdx - the index of the last separator found.
+ */
+public record Separators(char first, char second, int count, int endIdx, int lastSeparatorIdx) {
   /**
    * Strip out the specified separators and replace with just full stop for decimal. If any
    * character other than a digit, thousands or decimal separator is encountered then return null.
@@ -37,13 +41,42 @@ public record Separators(char first, char second, int count, int endIdx, int las
     return CharBuffer.wrap(results, 0, resultIdx);
   }
 
-  private static boolean validChar(char c, char first, char second) {
-    return isDigit(c)
-        || (first == NumberWithSeparators.Constants.NONE
-            ? isSeparator(c)
-            : (second == NumberWithSeparators.Constants.NONE
-                ? c == first || c == ',' || c == '.'
-                : c == second));
+  /** Check if the character is a separator. */
+  static boolean isSeparator(char c) {
+    return c == '.' || c == ',' || c == ' ' || c == '\'';
+  }
+
+  /** Check if the character is a decimal separator. */
+  private static boolean isDecimalSeparator(char c) {
+    return c == '.' || c == ',';
+  }
+
+  /** Check if the character is part of the current number. */
+  private static boolean validChar(boolean allowScientific, char c, char first, char second) {
+    if (isDigit(c)) {
+      return true;
+    }
+
+    // If scientific notation is allowed then check for 'e' or 'E'.
+    // Can then be followed by a +/- sign.
+    if (allowScientific && (c == 'e' || c == 'E')) {
+      return true;
+    }
+
+    // We haven't encountered a separator yet, so valid if it is a separator.
+    if (first == NumberWithSeparators.Constants.NONE) {
+      return isSeparator(c);
+    }
+
+    // We have encountered the first separator, so valid if it is the same as
+    // the first or a decimal separator.
+    if (second == NumberWithSeparators.Constants.NONE) {
+      return c == first || isDecimalSeparator(c);
+    }
+
+    // We have encountered the second separator, so invalid to encounter another
+    // separator.
+    return false;
   }
 
   /**
@@ -61,60 +94,60 @@ public record Separators(char first, char second, int count, int endIdx, int las
 
     // Scan the text, find and validate spacing of separators.
     // Space and ' are both valid thousands separators, but can't be second separator.
-    // ToDo: Cope with scientific notation.
-    char c = value.charAt(idx);
-    while (endIdx < value.length() && validChar(c, firstSeparator, secondSeparator)) {
-      if (!isDigit(c)) {
-        if (lastSeparator == -1) {
-          if (endIdx == idx) {
-            // If first digit is a separator then only valid if a decimal separator.
-            firstWasSeparator = true;
-            if (!integer && (c != '.' && c != ',')) {
-              return null;
-            }
-          }
+    // TODO: Cope with scientific notation.
+    for (endIdx = idx; endIdx < value.length(); endIdx++) {
+      char c = value.charAt(endIdx);
+      if (!validChar(false, c, firstSeparator, secondSeparator)) {
+        break;
+      }
 
-          firstSeparator = c;
-          separatorCount = 1;
-          lastSeparator = endIdx;
-        } else {
-          // Encountered a second separator -  must be 4 away from last separator.
-          if (endIdx != lastSeparator + 4) {
-            if (firstSeparator == ' ' && c == ' ') {
-              // Special case when the thousands separator is a space and there
-              // is white space after the number (e.g. before a symbil).
-              // Such as 1 234 567 USD.
-              break;
-            }
+      // Cope with digits or scientific notation.
+      if (isDigit(c) || c == 'e' || c == 'E' || c == '+' || c == '-') {
+        continue;
+      }
+
+      // If first digit is a separator then only valid if a decimal separator.
+      if (endIdx == idx) {
+        if (!integer && isDecimalSeparator(c)) {
+          return null;
+        }
+        firstWasSeparator = true;
+      }
+
+      if (firstSeparator == NumberWithSeparators.Constants.NONE) {
+        // Found the first separator.
+        firstSeparator = c;
+      } else {
+        // Encountered another separator -  must be 4 away from last separator.
+        if (endIdx != lastSeparator + 4) {
+          // Special case if last was a space as could be separating symbol.
+          if (c == ' ') {
+            break;
+          }
+          return null;
+        }
+
+        // Must have been a decimal separator.
+        if (firstWasSeparator) {
+          return null;
+        }
+
+        // Encountered a second separator, only valid if !integer.
+        if (firstSeparator != c) {
+          if (!integer) {
+            secondSeparator = c;
+          } else {
             return null;
           }
-
-          if (firstSeparator != c) {
-            if (!integer && secondSeparator == NumberWithSeparators.Constants.NONE) {
-              secondSeparator = c;
-            } else if (secondSeparator != c) {
-              return null;
-            }
-          } else if (firstWasSeparator) {
-            // Must have been a decimal separator.
-            return null;
-          }
-
-          lastSeparator = endIdx;
-          separatorCount++;
         }
       }
 
-      endIdx++;
-      if (endIdx < value.length()) {
-        c = value.charAt(endIdx);
-      }
+      lastSeparator = endIdx;
+      separatorCount++;
     }
 
     // Special case when firstSeparator is a space and no secondSeparator and ending with a space.
-    if (firstSeparator == ' '
-        && secondSeparator == NumberWithSeparators.Constants.NONE
-        && value.charAt(endIdx - 1) == ' ') {
+    if (firstSeparator == ' ' && value.charAt(endIdx - 1) == ' ') {
       separatorCount--;
       endIdx--;
       lastSeparator -= 4;
@@ -123,7 +156,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
       }
     }
 
-    // If in integer mode then must be a thousands separator, validate final spacing.
+    // If in integer mode then must be a thousand separator, validate final spacing.
     if (integer && separatorCount > 0 && lastSeparator != endIdx - 4) {
       return null;
     }

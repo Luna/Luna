@@ -170,7 +170,7 @@ public enum NumberWithSeparators {
             separators.first(),
             separators.second(),
             separators.count(),
-            separators.lastSeparator());
+            separators.lastSeparatorIdx());
   }
 
   /** Internal record for returning when a new format is matched. */
