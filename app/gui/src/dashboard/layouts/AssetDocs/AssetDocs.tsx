@@ -1,12 +1,12 @@
 /** @file Documentation display for an asset. */
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import type { AnyAsset, Asset } from '#/services/Backend'
 import { AssetType } from '#/services/Backend'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import * as ast from 'ydoc-shared/ast'
 import { splitFileContents } from 'ydoc-shared/ensoFile'
 import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionContent'
@@ -47,7 +47,7 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
       const module = ast.parseModule(withoutMeta.code)
 
       for (const statement of module.statements()) {
-        if (statement instanceof ast.MutableFunction && statement.name.code() === 'main') {
+        if (statement instanceof ast.MutableFunctionDef && statement.name.code() === 'main') {
           return statement.documentationText() ?? ''
         }
       }
@@ -56,11 +56,12 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
     },
   })
 
-  const resolveProjectAssetPath = useEventCallback((relativePath: string) =>
-    backend.resolveProjectAssetPath(item.id, relativePath),
+  const resolveProjectAssetPath = useCallback(
+    (relativePath: string) => backend.resolveProjectAssetPath(item.id, relativePath),
+    [backend, item.id],
   )
 
-  if (docs === '') {
+  if (!docs) {
     return <Result status="info" title={getText('assetDocs.noDocs')} centered />
   }
 
