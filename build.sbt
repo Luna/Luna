@@ -2930,7 +2930,9 @@ lazy val `runtime-integration-tests` =
             (`text-buffer` / javaModuleName).value,
             (`semver` / javaModuleName).value,
             "truffle.tck.tests",
-            "org.openide.util.lookup.RELEASE180"
+            "org.openide.util.lookup.RELEASE180",
+            "ch.qos.logback.classic",
+            "org.enso.logging.service.logback"
           ),
           testInstrumentsModName -> Seq(runtimeModName)
         )
