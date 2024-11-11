@@ -1,5 +1,7 @@
 package org.enso.interpreter;
 
+import static org.enso.interpreter.node.callable.resolver.HostMethodCallNode.PolyglotConversionType.CONVERT_TO_TEXT;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.ContextThreadLocal;
 import com.oracle.truffle.api.Option;
@@ -9,11 +11,15 @@ import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import org.enso.common.LanguageInfo;
@@ -31,13 +37,27 @@ import org.enso.distribution.locking.ThreadSafeFileLockManager;
 import org.enso.interpreter.node.EnsoRootNode;
 import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.node.ProgramRootNode;
+import org.enso.interpreter.node.callable.resolver.HostMethodCallNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.IrToTruffle;
+import org.enso.interpreter.runtime.data.EnsoDate;
+import org.enso.interpreter.runtime.data.EnsoDateTime;
+import org.enso.interpreter.runtime.data.EnsoDuration;
+import org.enso.interpreter.runtime.data.EnsoTimeOfDay;
+import org.enso.interpreter.runtime.data.EnsoTimeZone;
 import org.enso.interpreter.runtime.data.atom.AtomNewInstanceNode;
+import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
+import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
+import org.enso.interpreter.runtime.data.hash.HashMapToVectorNode;
+import org.enso.interpreter.runtime.data.text.Text;
+import org.enso.interpreter.runtime.data.vector.ArrayLikeAtNode;
+import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
+import org.enso.interpreter.runtime.data.vector.ArrayLikeLengthNode;
 import org.enso.interpreter.runtime.instrument.NotificationHandler;
 import org.enso.interpreter.runtime.instrument.NotificationHandler.Forwarder;
 import org.enso.interpreter.runtime.instrument.NotificationHandler.TextMode$;
 import org.enso.interpreter.runtime.instrument.Timer;
+import org.enso.interpreter.runtime.number.EnsoBigInteger;
 import org.enso.interpreter.runtime.state.ExecutionEnvironment;
 import org.enso.interpreter.runtime.tag.AvoidIdInstrumentationTag;
 import org.enso.interpreter.runtime.tag.IdentifiedTag;
@@ -51,6 +71,8 @@ import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
 import org.graalvm.options.OptionType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The root of the Enso implementation.
@@ -90,6 +112,8 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
 
   private final ContextThreadLocal<ExecutionEnvironment[]> executionEnvironment =
       locals.createContextThreadLocal((ctx, thread) -> new ExecutionEnvironment[1]);
+
+  private static final Logger logger = LoggerFactory.getLogger(EnsoLanguage.class);
 
   public static EnsoLanguage get(Node node) {
     return REFERENCE.get(node);
@@ -365,13 +389,67 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
     return context.getTopScope();
   }
 
-  /** Conversions of primitive values */
+  /** Conversion of foreign/polyglot values to their Enso builtin counterparts. */
   @Override
-  protected Object getLanguageView(EnsoContext context, Object value) {
+  public Object getLanguageView(EnsoContext context, Object value) {
     if (value instanceof Boolean b) {
       var bool = context.getBuiltins().bool();
       var cons = b ? bool.getTrue() : bool.getFalse();
       return AtomNewInstanceNode.getUncached().newInstance(cons);
+    }
+    var interop = InteropLibrary.getUncached();
+    var conversionType = HostMethodCallNode.getPolyglotConversionType(value, interop);
+    try {
+      switch (conversionType) {
+        case CONVERT_TO_DATE -> {
+          var localDate = interop.asDate(value);
+          return new EnsoDate(localDate);
+        }
+        case CONVERT_TO_ARRAY -> {
+          return ArrayLikeHelpers.asVectorFromArray(value);
+        }
+        case CONVERT_TO_BIG_INT -> {
+          return new EnsoBigInteger(interop.asBigInteger(value));
+        }
+        case CONVERT_TO_DATE_TIME, CONVERT_TO_ZONED_DATE_TIME -> {
+          var date = interop.asDate(value);
+          var time = interop.asTime(value);
+          var zonedDt = date.atTime(time).atZone(ZoneId.systemDefault());
+          return new EnsoDateTime(zonedDt);
+        }
+        case CONVERT_TO_DURATION -> {
+          return new EnsoDuration(interop.asDuration(value));
+        }
+        case CONVERT_TO_HASH_MAP -> {
+          var ensoHash = EnsoHashMap.empty();
+          var insertNode = HashMapInsertNode.getUncached();
+          var vec = HashMapToVectorNode.getUncached().execute(value);
+          var arrayAtNode = ArrayLikeAtNode.getUncached();
+          var size = ArrayLikeLengthNode.getUncached().executeLength(vec);
+          for (long i = 0; i < size; i++) {
+            var pair = arrayAtNode.executeAt(vec, i);
+            var key = arrayAtNode.executeAt(pair, 0);
+            var val = arrayAtNode.executeAt(pair, 1);
+            ensoHash = insertNode.execute(null, ensoHash, key, val);
+          }
+          return ensoHash;
+        }
+        case CONVERT_TO_TEXT -> {
+          return Text.create(interop.asString(value));
+        }
+        case CONVERT_TO_TIME_ZONE -> {
+          return new EnsoTimeZone(interop.asTimeZone(value));
+        }
+        case CONVERT_TO_TIME_OF_DAY -> {
+          var time = interop.asTime(value);
+          return new EnsoTimeOfDay(time);
+        }
+        case NO_CONVERSION -> {
+          return value;
+        }
+      }
+    } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+      logger.warn("Unexpected exception", e);
     }
     return null;
   }

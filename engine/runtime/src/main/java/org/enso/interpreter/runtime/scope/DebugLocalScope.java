@@ -4,14 +4,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.source.SourceSection;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,24 +19,10 @@ import java.util.stream.Collectors;
 import org.enso.compiler.pass.analyse.FramePointer;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.EnsoRootNode;
-import org.enso.interpreter.node.callable.resolver.HostMethodCallNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.data.EnsoDate;
-import org.enso.interpreter.runtime.data.EnsoDateTime;
-import org.enso.interpreter.runtime.data.EnsoDuration;
 import org.enso.interpreter.runtime.data.EnsoObject;
-import org.enso.interpreter.runtime.data.EnsoTimeOfDay;
-import org.enso.interpreter.runtime.data.EnsoTimeZone;
-import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
-import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
-import org.enso.interpreter.runtime.data.hash.HashMapToVectorNode;
-import org.enso.interpreter.runtime.data.text.Text;
-import org.enso.interpreter.runtime.data.vector.ArrayLikeAtNode;
-import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
-import org.enso.interpreter.runtime.data.vector.ArrayLikeLengthNode;
 import org.enso.interpreter.runtime.error.DataflowError;
-import org.enso.interpreter.runtime.number.EnsoBigInteger;
 
 /**
  * This class serves as a basic support for debugging with Chrome inspector. Currently, only
@@ -211,70 +195,12 @@ public class DebugLocalScope implements EnsoObject {
     }
     FramePointer framePtr = allBindings.get(member);
     var value = getValue(frame, framePtr);
-    if (value != null && isHostObject(value)) {
-      // Determine if the host object can be converted to corresponding Enso value.
-      var interopUncached = InteropLibrary.getUncached();
-      var conversionType = HostMethodCallNode.getPolyglotConversionType(value, interopUncached);
-      try {
-        switch (conversionType) {
-          case CONVERT_TO_DATE -> {
-            var localDate = interopUncached.asDate(value);
-            return new EnsoDate(localDate);
-          }
-          case CONVERT_TO_ARRAY -> {
-            return ArrayLikeHelpers.asVectorFromArray(value);
-          }
-          case CONVERT_TO_BIG_INT -> {
-            return new EnsoBigInteger(interopUncached.asBigInteger(value));
-          }
-          case CONVERT_TO_DATE_TIME, CONVERT_TO_ZONED_DATE_TIME -> {
-            var date = interopUncached.asDate(value);
-            var time = interopUncached.asTime(value);
-            var zonedDt = date.atTime(time).atZone(ZoneId.systemDefault());
-            return new EnsoDateTime(zonedDt);
-          }
-          case CONVERT_TO_DURATION -> {
-            return new EnsoDuration(interopUncached.asDuration(value));
-          }
-          case CONVERT_TO_HASH_MAP -> {
-            var ensoHash = EnsoHashMap.empty();
-            var insertNode = HashMapInsertNode.getUncached();
-            var vec = HashMapToVectorNode.getUncached().execute(value);
-            var arrayAtNode = ArrayLikeAtNode.getUncached();
-            var size = ArrayLikeLengthNode.getUncached().executeLength(vec);
-            for (long i = 0; i < size; i++) {
-              var pair = arrayAtNode.executeAt(vec, i);
-              var key = arrayAtNode.executeAt(pair, 0);
-              var val = arrayAtNode.executeAt(pair, 1);
-              ensoHash = insertNode.execute(null, ensoHash, key, val);
-            }
-            return ensoHash;
-          }
-          case CONVERT_TO_TEXT -> {
-            return Text.create(interopUncached.asString(value));
-          }
-          case CONVERT_TO_TIME_ZONE -> {
-            return new EnsoTimeZone(interopUncached.asTimeZone(value));
-          }
-          case CONVERT_TO_TIME_OF_DAY -> {
-            var time = interopUncached.asTime(value);
-            return new EnsoTimeOfDay(time);
-          }
-          case NO_CONVERSION -> {
-            return value;
-          }
-        }
-      } catch (UnsupportedMessageException e) {
-        throw e;
-      } catch (InvalidArrayIndexException e) {
-        throw UnsupportedMessageException.create(e);
-      }
+    if (value != null) {
+      var ensoLang = EnsoLanguage.get(interop);
+      var ensoCtx = EnsoContext.get(interop);
+      value = ensoLang.getLanguageView(ensoCtx, value);
     }
     return value != null ? value : DataflowError.UNINITIALIZED;
-  }
-
-  private boolean isHostObject(Object object) {
-    return EnsoContext.get(null).isJavaPolyglotObject(object);
   }
 
   @ExportMessage
