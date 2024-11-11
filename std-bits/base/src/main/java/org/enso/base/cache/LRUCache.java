@@ -226,7 +226,7 @@ public class LRUCache<M> {
     // Upper limit to cache size.
     long maxTotalCacheSize = getMaxTotalCacheSize(currentCacheSize);
     // Size including new file.
-    long totalSize = currentCacheSize  + newFileSize;
+    long totalSize = currentCacheSize + newFileSize;
 
     if (totalSize <= maxTotalCacheSize) {
       return;
