@@ -165,13 +165,14 @@ public enum NumberWithSeparators {
       // If we have a fixed format then we can parse the number.
       return integer
           ? parseFixedInteger(value, idx, separators.endIdx(), separators.first())
-          : parseFixed(value, idx, separators.endIdx(), separators.first(), separators.second());
+          : parseFixedDecimal(
+              value, idx, separators.endIdx(), separators.first(), separators.second());
     }
 
     return integer
         ? parseUnknownInteger(
             value, idx, separators.endIdx(), separators.first(), separators.count())
-        : parseUnknown(
+        : parseUnknownDecimal(
             value,
             idx,
             separators.endIdx(),
@@ -185,7 +186,7 @@ public enum NumberWithSeparators {
   record NumberParseResultWithFormat(NumberWithSeparators format, NumberParseResult result)
       implements NumberParseResult {}
 
-  /** Internal record for returning when a new format is matched. */
+  /** Internal record for returning the end index of the matched number. */
   record NumberParseResultWithIndex(int endIdx, NumberParseResult result)
       implements NumberParseResult {}
 
@@ -282,17 +283,22 @@ public enum NumberWithSeparators {
   }
 
   /** Given a known double format, parse the sequence. */
-  private NumberParseResult parseFixed(
+  private NumberParseResult parseFixedDecimal(
       CharSequence value, int idx, int endIdx, char firstSeparator, char secondSeparator) {
+    // Deal with the special cases first.
     if (this == DOT_UNKNOWN || this == UNKNOWN_DOT) {
+      // Haven't encountered a thousand separator, but know the decimal separator.
+      // If DOT_UNKNOWN then could be European or English, but treat as English.
       assert firstSeparator == '.' && secondSeparator == Constants.NONE;
-      return NO_DOT.parseFixed(value, idx, endIdx, Constants.NONE, '.');
+      return NO_DOT.parseFixedDecimal(value, idx, endIdx, Constants.NONE, '.');
     } else if (this == COMMA_UNKNOWN) {
+      // Have only encountered a Comma(s), so treat as English format (COMMA_DOT).
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return COMMA_DOT.parseFixed(value, idx, endIdx, ',', '.');
+      return COMMA_DOT.parseFixedDecimal(value, idx, endIdx, ',', '.');
     } else if (this == UNKNOWN_COMMA) {
+      // Have encountered a comma and know is a decimal separator.
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return NO_COMMA.parseFixed(value, idx, endIdx, Constants.NONE, ',');
+      return NO_COMMA.parseFixedDecimal(value, idx, endIdx, Constants.NONE, ',');
     }
 
     assert thousands != Constants.UNKNOWN && decimal != Constants.UNKNOWN;
@@ -328,14 +334,14 @@ public enum NumberWithSeparators {
   }
 
   /** Given a unknown format, parse the sequence. */
-  private NumberParseResult parseUnknown(
+  private NumberParseResult parseUnknownDecimal(
       CharSequence value,
       int idx,
       int endIdx,
       char firstSeparator,
       char secondSeparator,
       int separatorCount,
-      int lastSeparator) {
+      int lastSeparatorIdx) {
     assert thousands == Constants.UNKNOWN || decimal == Constants.UNKNOWN;
 
     // Cases of no separators or repeated single separator - must be integer.
@@ -377,9 +383,9 @@ public enum NumberWithSeparators {
       // if 3 digits following then could either, hence DOT_UNKNOWN.
       // Otherwise, must be decimal point, hence UNKNOWN_DOT.
       format =
-          lastSeparator - idx > 3
+          lastSeparatorIdx - idx > 3
               ? NO_DOT
-              : (lastSeparator != endIdx - 4 ? UNKNOWN_DOT : DOT_UNKNOWN);
+              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_DOT : DOT_UNKNOWN);
     } else if (firstSeparator == ',') {
       // if separatorCount > 1, must be a thousand separator, hence COMMA_DOT (covered above).
       // if index of separator > 3, must be a decimal point without a thousand separator, hence
@@ -387,15 +393,15 @@ public enum NumberWithSeparators {
       // if 3 digits following then could either, hence COMMA_UNKNOWN.
       // Otherwise, must be decimal point, hence UNKNOWN_COMMA.
       format =
-          lastSeparator - idx > 3
+          lastSeparatorIdx - idx > 3
               ? NO_COMMA
-              : (lastSeparator != endIdx - 4 ? UNKNOWN_COMMA : COMMA_UNKNOWN);
+              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_COMMA : COMMA_UNKNOWN);
     }
     if (format == null) {
       return new NumberParseFailure("No matching number format.");
     }
 
-    var result = format.parseFixed(value, idx, endIdx, firstSeparator, secondSeparator);
+    var result = format.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
     return (result instanceof NumberParseFailure)
         ? result
         : new NumberParseResultWithFormat(format, result);

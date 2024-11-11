@@ -98,7 +98,7 @@ public class FormatDetectingNumberParser {
     boolean lastWasWhitespace = false;
     boolean encounteredContent = false;
     boolean encounteredSign = false;
-    boolean isNegative = false;
+    boolean needsNegating = false;
     NumberParseResultSuccess number = null;
     String symbol = "";
 
@@ -110,7 +110,7 @@ public class FormatDetectingNumberParser {
 
       if (Character.isWhitespace(c)) {
         if (!allowLeadingTrailingWhitespace && !encounteredContent) {
-          return new NumberParseFailure("Leading Whitespace.");
+          return new NumberParseFailure("Unexpected leading Whitespace.");
         }
 
         idx++;
@@ -164,10 +164,10 @@ public class FormatDetectingNumberParser {
 
           negativeSign = signOk.get();
           encounteredSign = true;
-          isNegative = c != '+';
+          needsNegating = c != '+';
           idx++;
         } else if (c == ')') {
-          if (!isNegative || negativeSign != NegativeSign.BRACKET_OPEN || number == null) {
+          if (!needsNegating || negativeSign != NegativeSign.BRACKET_OPEN || number == null) {
             return new NumberParseFailure("Unexpected bracket close.");
           }
 
@@ -183,7 +183,7 @@ public class FormatDetectingNumberParser {
 
           // Negate here so can tell finished.
           number = number.negate();
-          isNegative = false;
+          needsNegating = false;
         } else if (!integer
             && number == null
             && isSameSequence(value, idx, "infinity", "INFINITY")) {
@@ -193,7 +193,7 @@ public class FormatDetectingNumberParser {
         } else if (!integer
             && number == null
             && !encounteredSign
-            && !isNegative
+            && !needsNegating
             && isSameSequence(value, idx, "nan", "NAN")) {
           // Identify NaN
           number = new NumberParseDouble(Double.NaN, "");
@@ -232,7 +232,7 @@ public class FormatDetectingNumberParser {
     }
 
     // Special check for unclosed bracket.
-    if (negativeSign == NegativeSign.BRACKET_OPEN && isNegative) {
+    if (negativeSign == NegativeSign.BRACKET_OPEN && needsNegating) {
       return new NumberParseFailure("Unclosed bracket.");
     }
 
@@ -247,7 +247,7 @@ public class FormatDetectingNumberParser {
     }
 
     // Return Result
-    number = isNegative ? number.negate() : number;
+    number = needsNegating ? number.negate() : number;
     return symbol.isEmpty() ? number : number.withSymbol(symbol);
   }
 
