@@ -136,7 +136,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
 
       // If first digit is a separator then only valid if a decimal separator.
       if (endIdx == idx) {
-        if (integer ||!isDecimalSeparator(c)) {
+        if (integer || !isDecimalSeparator(c)) {
           return null;
         }
         firstWasSeparator = true;

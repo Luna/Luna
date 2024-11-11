@@ -111,7 +111,8 @@ public class NumberParser extends IncrementalDatatypeParser {
 
       // Do we need to rescan?
       if (mightBeEuropean && parser.numberWithSeparators() != NumberWithSeparators.DOT_COMMA) {
-        builder = makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
+        builder =
+            makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
         for (int j = 0; j < i; j++) {
           var subText = sourceStorage.getItemBoxed(j);
           var subResult = subText == null ? null : parseSingleValue(subText, problemAggregator);
