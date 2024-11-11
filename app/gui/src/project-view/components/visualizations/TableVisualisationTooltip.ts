@@ -33,14 +33,12 @@ export class TableVisualisationTooltip implements ITooltipComp {
       return `<div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>`
     }
 
-    const nothingPercent = getPercentage(params.numberOfNothing)
-    const whitespacePercent = getPercentage(params.numberOfWhitespace)
     const dataQualityTemplate = `
             <div style="visibility: ${getVisibility(params.numberOfNothing)};">
-                Nulls/Nothing: ${nothingPercent}% ${createIndicator(+nothingPercent)}
+                Nulls/Nothing: ${getPercentage(params.numberOfNothing)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
             </div>
             <div style="visibility: ${getVisibility(params.numberOfWhitespace)};">
-                Trailing/Leading Whitespace: ${whitespacePercent}% ${createIndicator(+whitespacePercent)}
+                Trailing/Leading Whitespace: ${getPercentage(params.numberOfWhitespace)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
             </div>
         `
 
