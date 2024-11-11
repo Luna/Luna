@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import java.util.List;
 import org.enso.common.MethodNames;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -52,11 +53,11 @@ public class StdLibLogsTest {
 
   @Test
   public void reportLogsInStdLib() {
-    var result = mod.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "test");
+    mod.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "test");
     var context = (LoggerContext) LoggerFactory.getILoggerFactory();
     var logger = context.getLogger(Logger.ROOT_LOGGER_NAME);
     var appender = (MemoryAppender) logger.getAppender("memory");
-    var events = appender.getEvents().stream().map(e -> e.getMessage()).toList();
+    var events = appender.getEvents().stream().map(ILoggingEvent::getMessage).toList();
 
     assertTrue(
         events.containsAll(
