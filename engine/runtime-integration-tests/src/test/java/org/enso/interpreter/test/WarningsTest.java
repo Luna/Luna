@@ -2,6 +2,8 @@ package org.enso.interpreter.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -88,6 +90,15 @@ public class WarningsTest {
       return;
     }
     fail("One shall not be created WithWarnings without any warnings " + without);
+  }
+
+  @Test
+  public void withWarningHasMetaObject() {
+    var warning42 = wrap.execute("warn:1", 42);
+    assertThat(
+        "Value (" + warning42 + ") wrapped in warning must have a meta object",
+        warning42.getMetaObject(),
+        is(notNullValue()));
   }
 
   @Test
