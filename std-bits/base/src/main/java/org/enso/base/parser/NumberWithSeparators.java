@@ -377,7 +377,7 @@ public enum NumberWithSeparators {
       // if 3 digits following then could either, hence DOT_UNKNOWN.
       // Otherwise, must be decimal point, hence UNKNOWN_DOT.
       format =
-          lastSeparator > 3 ? NO_DOT : (lastSeparator != endIdx - 4 ? UNKNOWN_DOT : DOT_UNKNOWN);
+          lastSeparator - idx > 3 ? NO_DOT : (lastSeparator != endIdx - 4 ? UNKNOWN_DOT : DOT_UNKNOWN);
     } else if (firstSeparator == ',') {
       // if separatorCount > 1, must be a thousand separator, hence COMMA_DOT (covered above).
       // if index of separator > 3, must be a decimal point without a thousand separator, hence
@@ -385,7 +385,7 @@ public enum NumberWithSeparators {
       // if 3 digits following then could either, hence COMMA_UNKNOWN.
       // Otherwise, must be decimal point, hence UNKNOWN_COMMA.
       format =
-          lastSeparator > 3
+          lastSeparator - idx > 3
               ? NO_COMMA
               : (lastSeparator != endIdx - 4 ? UNKNOWN_COMMA : COMMA_UNKNOWN);
     }
