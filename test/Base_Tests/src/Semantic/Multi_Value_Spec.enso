@@ -1,0 +1,16 @@
+from Standard.Base import all
+from Standard.Test import all
+import Standard.Base.Errors.Common.Type_Error
+
+import project.Data.Complex.Complex
+
+add_specs suite_builder =
+    suite_builder.group "Complex Multi Value" group_builder->
+        group_builder.specify "Cannot convert to flow if it has imaginary part" <|
+            c = Complex.new 1 5
+            Test.expect_panic Type_Error (c:Float)
+
+main filter=Nothing =
+    suite = Test.build suite_builder->
+        add_specs suite_builder
+    suite.run_with_filter filter
