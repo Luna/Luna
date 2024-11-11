@@ -284,16 +284,43 @@ public class DebuggingEnsoTest {
         polyglot java import java.util.List as JList
         polyglot java import java.util.Map as JMap
 
+        foreign js js_date = '''
+            return new Date();
+
+        foreign js js_str = '''
+            return "Hello_World";
+
+        foreign js js_list = '''
+            return [1, 2, 3];
+
+        foreign js js_map = '''
+            let m = new Map();
+            m.set('A', 1);
+            m.set('B', 2);
+            return m;
+
+        foreign python py_list = '''
+            return [1, 2, 3]
+
+        foreign python py_dict = '''
+            return {'A': 1, 'B': 2}
+
         foo _ =
             d_enso = Date.new 2024 12 15
+            d_js = js_date
             d_java = Date.parse "2024-12-15"
             dt_enso = Date_Time.now
             dt_java = Date_Time.parse "2020-05-06 04:30:20" "yyyy-MM-dd HH:mm:ss"
             str_enso = "Hello_World"
+            str_js = js_str
             str_java = String.new "Hello_World"
             list_enso = [1, 2, 3]
+            list_js = js_list
+            list_py = py_list
             list_java = JList.of 1 2 3
             dict_enso = Dictionary.from_vector [["A", 1], ["B", 2]]
+            dict_js = js_map
+            dict_py = py_dict
             dict_java = JMap.of "A" 1 "B" 2
             end = 42
         """,
@@ -308,7 +335,9 @@ public class DebuggingEnsoTest {
 
                   DebugValue ensoDate = scope.getDeclaredValue("d_enso");
                   DebugValue javaDate = scope.getDeclaredValue("d_java");
+                  DebugValue jsDate = scope.getDeclaredValue("d_js");
                   assertSameProperties(ensoDate.getProperties(), javaDate.getProperties());
+                  assertSameProperties(ensoDate.getProperties(), jsDate.getProperties());
 
                   DebugValue ensoDateTime = scope.getDeclaredValue("dt_enso");
                   DebugValue javaDateTime = scope.getDeclaredValue("dt_java");
@@ -316,15 +345,25 @@ public class DebuggingEnsoTest {
 
                   DebugValue ensoString = scope.getDeclaredValue("str_enso");
                   DebugValue javaString = scope.getDeclaredValue("str_java");
+                  DebugValue jsString = scope.getDeclaredValue("str_js");
                   assertSameProperties(ensoString.getProperties(), javaString.getProperties());
+                  assertSameProperties(ensoString.getProperties(), jsString.getProperties());
 
                   DebugValue ensoList = scope.getDeclaredValue("list_enso");
                   DebugValue javaList = scope.getDeclaredValue("list_java");
+                  DebugValue jsList = scope.getDeclaredValue("list_js");
+                  DebugValue pyList = scope.getDeclaredValue("list_py");
                   assertSameProperties(ensoList.getProperties(), javaList.getProperties());
+                  assertSameProperties(ensoList.getProperties(), jsList.getProperties());
+                  assertSameProperties(ensoList.getProperties(), pyList.getProperties());
 
                   DebugValue ensoDict = scope.getDeclaredValue("dict_enso");
                   DebugValue javaDict = scope.getDeclaredValue("dict_java");
+                  DebugValue jsDict = scope.getDeclaredValue("dict_js");
+                  DebugValue pyDict = scope.getDeclaredValue("dict_py");
                   assertSameProperties(ensoDict.getProperties(), javaDict.getProperties());
+                  assertSameProperties(ensoDict.getProperties(), jsDict.getProperties());
+                  assertSameProperties(ensoDict.getProperties(), pyDict.getProperties());
                 }
               }
               event.getSession().suspendNextExecution();
@@ -338,7 +377,7 @@ public class DebuggingEnsoTest {
   private void assertSameProperties(
       Collection<DebugValue> expectedProps, Collection<DebugValue> actualProps) {
     if (expectedProps == null) {
-      assertThat(actualProps, is(nullValue()));
+      assertThat(actualProps, anyOf(empty(), nullValue()));
       return;
     }
     assertThat(actualProps.size(), is(expectedProps.size()));
