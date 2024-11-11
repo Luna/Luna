@@ -8,8 +8,8 @@ public class NowGetter extends Mockable<ZonedDateTime> {
   }
 
   /**
-   * This is necessary because a direct call to the superclass does not convert
-   * a polyglot Value to ZonedDateTime.
+   * This is necessary because a direct call to the superclass does not convert a polyglot Value to
+   * ZonedDateTime.
    */
   @Override
   public void mocked(ZonedDateTime dt) {
