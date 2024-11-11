@@ -416,7 +416,11 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
           return ArrayLikeHelpers.asVectorFromArray(value);
         }
         case CONVERT_TO_BIG_INT -> {
-          return new EnsoBigInteger(interop.asBigInteger(value));
+          if (interop.fitsInLong(value)) {
+            return new LanguageViewWrapper(interop.asLong(value));
+          } else {
+            return new EnsoBigInteger(interop.asBigInteger(value));
+          }
         }
         case CONVERT_TO_DATE_TIME, CONVERT_TO_ZONED_DATE_TIME -> {
           var date = interop.asDate(value);
