@@ -11,9 +11,10 @@ export interface MarkdownViewerProps {
   /** Markdown markup to parse and display. */
   readonly text: string
   readonly imgUrlResolver: (relativePath: string) => Promise<string>
+  readonly renderer?: RendererObject
 }
 
-const renderer: RendererObject = {
+const defaultRenderer: RendererObject = {
   /** The renderer for headings. */
   heading({ depth, tokens }) {
     return `<h${depth} class="${TEXT_STYLE({ variant: 'h1', className: 'my-2' })}">${this.parser.parseInline(tokens)}</h${depth}>`
@@ -55,9 +56,12 @@ const renderer: RendererObject = {
  * Parses markdown passed in as a `text` prop into HTML and displays it.
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
-  const { text, imgUrlResolver } = props
+  const { text, imgUrlResolver, renderer = defaultRenderer } = props
 
-  const markedInstance = useMemo(() => marked.use({ renderer, async: true }), [])
+  const markedInstance = useMemo(
+    () => marked.use({ renderer: Object.assign({}, defaultRenderer, renderer), async: true }),
+    [renderer],
+  )
 
   const { data: markdownToHtml } = useSuspenseQuery({
     queryKey: ['markdownToHtml', { text }],

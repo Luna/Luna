@@ -1,2 +1,6 @@
-/** @file Barrel exports for {@link MarkdownViewer}. */
-export { MarkdownViewer } from './MarkdownViewer'
+/**
+ * @file
+ *
+ * Barrel export for MarkdownViewer
+ */
+export { MarkdownViewer, type MarkdownViewerProps } from './MarkdownViewer'
