@@ -1,7 +1,5 @@
 package org.enso.interpreter;
 
-import static org.enso.interpreter.node.callable.resolver.HostMethodCallNode.PolyglotConversionType.CONVERT_TO_TEXT;
-
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.ContextThreadLocal;
 import com.oracle.truffle.api.Option;
@@ -38,8 +36,10 @@ import org.enso.interpreter.node.EnsoRootNode;
 import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.node.ProgramRootNode;
 import org.enso.interpreter.node.callable.resolver.HostMethodCallNode;
+import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.IrToTruffle;
+import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.data.EnsoDate;
 import org.enso.interpreter.runtime.data.EnsoDateTime;
 import org.enso.interpreter.runtime.data.EnsoDuration;
@@ -398,9 +398,16 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
       return AtomNewInstanceNode.getUncached().newInstance(cons);
     }
     var interop = InteropLibrary.getUncached();
-    var conversionType = HostMethodCallNode.getPolyglotConversionType(value, interop);
+    // We want to know if the `value` can be converted to some Enso builtin type.
+    // In order to do that, we are trying to infer PolyglotCallType of `value.to` method.
+    var anyModuleScope = context.getBuiltins().any().getDefinitionScope();
+    var unresolvedSymbol = UnresolvedSymbol.build("to", anyModuleScope);
+    var methodResolverNode = MethodResolverNode.getUncached();
+    var callType =
+        HostMethodCallNode.getPolyglotCallType(
+            value, unresolvedSymbol, interop, methodResolverNode);
     try {
-      switch (conversionType) {
+      switch (callType) {
         case CONVERT_TO_DATE -> {
           var localDate = interop.asDate(value);
           return new EnsoDate(localDate);
@@ -444,7 +451,7 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
           var time = interop.asTime(value);
           return new EnsoTimeOfDay(time);
         }
-        case NO_CONVERSION -> {
+        case NOT_SUPPORTED -> {
           return value;
         }
       }
