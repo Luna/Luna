@@ -221,8 +221,13 @@ public class LRUCache<M> {
   private void makeRoomFor(long newFileSize) {
     removeStaleEntries();
 
-    long totalSize = getTotalCacheSize() + newFileSize;
-    long maxTotalCacheSize = getMaxTotalCacheSize();
+    // Size of files on disk.
+    long currentCacheSize = getTotalCacheSize();
+    // Upper limit to cache size.
+    long maxTotalCacheSize = getMaxTotalCacheSize(currentCacheSize);
+    // Size including new file.
+    long totalSize = currentCacheSize  + newFileSize;
+
     if (totalSize <= maxTotalCacheSize) {
       return;
     }
@@ -260,16 +265,21 @@ public class LRUCache<M> {
    * Calculate the max total cache size, using the current limit but also constraining the result to
    * the upper bound.
    */
-  public long getMaxTotalCacheSize() {
+  public long getMaxTotalCacheSize(long currentlyUsed) {
     var totalCacheSize =
         switch (settings.getTotalCacheLimit()) {
           case TotalCacheLimit.Bytes bytes -> bytes.bytes();
           case TotalCacheLimit.Percentage percentage -> {
-            long usableSpace = diskSpaceGetter.get();
+            long usableSpace = diskSpaceGetter.get() + currentlyUsed;
             yield (long) (percentage.percentage() * usableSpace);
           }
         };
     return Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
+  }
+
+  /** For testing. */
+  public long getMaxTotalCacheSize() {
+    return getMaxTotalCacheSize(getTotalCacheSize());
   }
 
   public int getNumEntries() {

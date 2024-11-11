@@ -370,6 +370,22 @@ add_specs suite_builder =
                 fetch_n 35
                 get_cache_file_sizes . should_equal_ignoring_order [20, 35, 40]
 
+        group_builder.specify "Includes the existing cache files in the total cache size calculation, for a percentage total cache limit" pending=pending_has_url <| Test.with_retries <|
+            with_config 1000 (TotalCacheLimit.Percentage.new 0.5) _-> disk_space->
+                disk_space.mocked 100
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 30
+                disk_space.mocked 70
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 20
+                disk_space.mocked 50
+                get_num_response_cache_entries . should_equal 2
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 10
+                disk_space.mocked 70
+                get_num_response_cache_entries . should_equal 2
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+
         group_builder.specify "Will remove old cache files based on how recently they were used" pending=pending_has_url <| Test.with_retries <|
             with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
                 fetch_n 30
