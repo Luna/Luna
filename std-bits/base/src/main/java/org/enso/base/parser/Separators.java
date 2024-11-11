@@ -52,15 +52,25 @@ public record Separators(char first, char second, int count, int endIdx, int las
   }
 
   /** Check if the character is part of the current number. */
-  private static boolean validChar(boolean allowScientific, char c, char first, char second) {
+  private static boolean validChar(ExponentState exponentState, char c, char first, char second) {
     if (isDigit(c)) {
       return true;
     }
 
     // If scientific notation is allowed then check for 'e' or 'E'.
     // Can then be followed by a +/- sign.
-    if (allowScientific && (c == 'e' || c == 'E')) {
+    if (exponentState == ExponentState.START && (c == 'e' || c == 'E')) {
       return true;
+    }
+
+    // Sign can only be encountered after an E/e in scientific notation.
+    if (exponentState == ExponentState.E_SIGN && (c == '+' || c == '-')) {
+      return true;
+    }
+
+    // Separators not valid in scientific notation if not in start.
+    if (exponentState != ExponentState.START && exponentState != ExponentState.NOT_ALLOWED) {
+      return false;
     }
 
     // We haven't encountered a separator yet, so valid if it is a separator.
@@ -82,8 +92,14 @@ public record Separators(char first, char second, int count, int endIdx, int las
   /**
    * Find the number and separators section. Validate the spacing of separators. Return the
    * separators found or null if invalid.
+   *
+   * @param value the value to parse.
+   * @param idx the index to start parsing from.
+   * @param integer if the number is an integer.
+   * @param allowExponentialNotation is exponential notation allowed.
    */
-  static Separators parse(CharSequence value, int idx, boolean integer) {
+  static Separators parse(
+      CharSequence value, int idx, boolean integer, boolean allowExponentialNotation) {
     int endIdx = idx;
     char firstSeparator = NumberWithSeparators.Constants.NONE;
     char secondSeparator = NumberWithSeparators.Constants.NONE;
@@ -92,23 +108,35 @@ public record Separators(char first, char second, int count, int endIdx, int las
     int lastSeparator = -1;
     int separatorCount = 0;
 
+    // Set initial state for exponential notation.
+    ExponentState exponentState =
+        !integer && allowExponentialNotation ? ExponentState.START : ExponentState.NOT_ALLOWED;
+
     // Scan the text, find and validate spacing of separators.
     // Space and ' are both valid thousands separators, but can't be second separator.
-    // TODO: Cope with scientific notation.
     for (endIdx = idx; endIdx < value.length(); endIdx++) {
       char c = value.charAt(endIdx);
-      if (!validChar(false, c, firstSeparator, secondSeparator)) {
+      if (!validChar(exponentState, c, firstSeparator, secondSeparator)) {
         break;
       }
 
       // Cope with digits or scientific notation.
       if (isDigit(c) || c == 'e' || c == 'E' || c == '+' || c == '-') {
+        // Update Exponent State.
+        if (c == 'e' || c == 'E') {
+          exponentState = ExponentState.E_SIGN;
+        } else if (c == '+' || c == '-') {
+          exponentState = ExponentState.SIGN;
+        } else if (exponentState == ExponentState.SIGN || exponentState == ExponentState.E_SIGN) {
+          exponentState = ExponentState.EXPONENT;
+        }
+
         continue;
       }
 
       // If first digit is a separator then only valid if a decimal separator.
       if (endIdx == idx) {
-        if (!integer && isDecimalSeparator(c)) {
+        if (integer ||!isDecimalSeparator(c)) {
           return null;
         }
         firstWasSeparator = true;
@@ -162,5 +190,18 @@ public record Separators(char first, char second, int count, int endIdx, int las
     }
 
     return new Separators(firstSeparator, secondSeparator, separatorCount, endIdx, lastSeparator);
+  }
+
+  private enum ExponentState {
+    /** Scientific notation not allowed. */
+    NOT_ALLOWED,
+    /** Have not encountered an E/e yet. */
+    START,
+    /** Have encountered an E/e. */
+    E_SIGN,
+    /** Have encountered an E/e and a sign. */
+    SIGN,
+    /** Have encountered an E/e, a sign and a digit. */
+    EXPONENT
   }
 }

@@ -124,7 +124,7 @@ public class FormatDetectingNumberParser {
             return new NumberParseFailure("Multiple Number Sections.");
           }
 
-          var numberPart = numberWithSeparators.parse(value, idx, integer);
+          var numberPart = numberWithSeparators.parse(value, idx, integer, false);
 
           // If the format changed, catch new format and unwrap result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {

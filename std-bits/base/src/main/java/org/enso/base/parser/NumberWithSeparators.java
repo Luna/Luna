@@ -147,8 +147,16 @@ public enum NumberWithSeparators {
     return decimal;
   }
 
-  NumberParseResult parse(CharSequence value, int idx, boolean integer) {
-    var separators = Separators.parse(value, idx, integer);
+  /**
+   * While currently the format is treated as English, could be incorrect and actually is European.
+   */
+  public boolean mightBeEuropean() {
+    return this == COMMA_UNKNOWN || this == DOT_UNKNOWN;
+  }
+
+  NumberParseResult parse(
+      CharSequence value, int idx, boolean integer, boolean allowExponentialNotation) {
+    var separators = Separators.parse(value, idx, integer, allowExponentialNotation);
     if (separators == null) {
       return new NumberParseFailure("Invalid separators.");
     }

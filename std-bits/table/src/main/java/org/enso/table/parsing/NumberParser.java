@@ -104,18 +104,14 @@ public class NumberParser extends IncrementalDatatypeParser {
       var text = sourceStorage.getItemBoxed(i);
 
       // Check if in unknown state
-      var isInMixedState =
-          !isInteger()
-              && (parser.numberWithSeparators() == NumberWithSeparators.DOT_UNKNOWN
-                  || parser.numberWithSeparators() == NumberWithSeparators.COMMA_UNKNOWN);
+      var mightBeEuropean = !isInteger() && parser.numberWithSeparators().mightBeEuropean();
 
       // Try and parse the value
       var result = text == null ? null : parseSingleValue(text, problemAggregator);
 
       // Do we need to rescan?
-      if (!isInMixedState && parser.numberWithSeparators() != NumberWithSeparators.DOT_COMMA) {
-        builder =
-            makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
+      if (mightBeEuropean && parser.numberWithSeparators() != NumberWithSeparators.DOT_COMMA) {
+        builder = makeBuilderWithCapacity(sourceStorage.size(), problemAggregator.createSimpleChild());
         for (int j = 0; j < i; j++) {
           var subText = sourceStorage.getItemBoxed(j);
           var subResult = subText == null ? null : parseSingleValue(subText, problemAggregator);
