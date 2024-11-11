@@ -14,7 +14,7 @@ import type {
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
-import { TableVisualisationTooltip } from "./TableVisualisationTooltip";
+import { TableVisualisationTooltip } from './TableVisualisationTooltip'
 
 export const name = 'Table'
 export const icon = 'table'
@@ -420,14 +420,20 @@ function toField(name: string, index?: number, valueType?: ValueType | null | un
       icon = 'mixed'
   }
 
-  const dataQuality = typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.data_quality_pairs : { number_of_nothing: [], number_of_whitespace: [] };;
-  const nothingIsZeroOrNull = index ? !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]): false;
-  const whitespaceIsZeroOrNull = index ? !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index]) : false;
+  const dataQuality =
+    typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
+      props.data.data_quality_pairs
+    : { number_of_nothing: [], number_of_whitespace: [] }
+  const nothingIsZeroOrNull =
+    index ? !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]) : false
+  const whitespaceIsZeroOrNull =
+    index ? !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index]) : false
 
-  const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull;
+  const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull
 
-  const getSvgTemplate = (icon: string) => `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
-  const svgTemplateWarning = hideDataQuality ? "" : getSvgTemplate('warning')
+  const getSvgTemplate = (icon: string) =>
+    `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+  const svgTemplateWarning = hideDataQuality ? '' : getSvgTemplate('warning')
   const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
   const sort = `
       <span ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
@@ -441,8 +447,6 @@ function toField(name: string, index?: number, valueType?: ValueType | null | un
       `<span style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'> ${name} </span>  ${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
     : `<span ref="eLabel" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'>${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
 
-
-
   return {
     field: name,
     headerComponentParams: {
@@ -454,8 +458,11 @@ function toField(name: string, index?: number, valueType?: ValueType | null | un
     tooltipComponentParams: {
       numberOfNothing: index ? dataQuality.number_of_nothing[index] : null,
       numberOfWhitespace: index ? dataQuality.number_of_whitespace[index] : null,
-      total: typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.all_rows_count: 0, 
-      hideDataQuality
+      total:
+        typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
+          props.data.all_rows_count
+        : 0,
+      hideDataQuality,
     },
   }
 }
