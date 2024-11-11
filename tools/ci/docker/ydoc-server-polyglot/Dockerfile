@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM jeanblanchard/alpine-glibc
 
 USER root
 
@@ -8,16 +8,15 @@ ARG YDOC_SERVER_HOSTNAME=localhost
 ARG YDOC_SERVER_LANGUAGE_SERVER_URL
 ARG YDOC_SERVER_DEBUG=false
 
-RUN useradd -u 2000 -c 'Enso Developer' -U -m ensodev
+RUN addgroup -S ensodev
+RUN adduser -S -u 2000 -g 'Enso Developer' -G ensodev ensodev
 
-RUN mkdir /opt/ydoc-server-polyglot
-RUN mkdir /opt/ydoc-server-polyglot/bin
-
-COPY --from=native-image ydoc /opt/ydoc-server-polyglot/bin/
+RUN mkdir -p /opt/ydoc-server-polyglot/bin
 
 RUN chown -hR ensodev:ensodev /opt/ydoc-server-polyglot
 RUN chmod -R u=rX,g=rX /opt/ydoc-server-polyglot
-RUN chmod +x /opt/ydoc-server-polyglot/bin/ydoc
+
+COPY --from=native-image --chown=ensodev:ensodev --chmod=555 ydoc /opt/ydoc-server-polyglot/bin/
 
 USER ensodev:ensodev
 
