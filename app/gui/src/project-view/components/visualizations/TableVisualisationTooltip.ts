@@ -1,7 +1,7 @@
 import { ITooltipComp, ITooltipParams } from '@ag-grid-community/core';
 
-export class CustomTooltip implements ITooltipComp {
-    eGui: HTMLElement;
+export class TableVisualisationTooltip implements ITooltipComp {
+    eGui!: HTMLElement;
 
     init(params: ITooltipParams & { numberOfNothing: number, numberOfWhitespace: number, total: number, hideDataQuality: boolean }) {
         this.eGui = document.createElement('div');

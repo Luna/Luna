@@ -14,8 +14,7 @@ import type {
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
-import {CustomTooltip} from "./customTooltip";
-import { Icon } from '@/util/iconName'
+import { TableVisualisationTooltip } from "./TableVisualisationTooltip";
 
 export const name = 'Table'
 export const icon = 'table'
@@ -393,7 +392,7 @@ function addRowIndex(data: object[]): object[] {
   return data.map((row, i) => ({ [INDEX_FIELD_NAME]: i, ...row }))
 }
 
-function toField(name: string, index: number, valueType?: ValueType | null | undefined): ColDef {
+function toField(name: string, index?: number, valueType?: ValueType | null | undefined): ColDef {
   const valType = valueType ? valueType.constructor : null
   const displayValue = valueType ? valueType.display_text : null
   let icon
@@ -422,8 +421,8 @@ function toField(name: string, index: number, valueType?: ValueType | null | und
   }
 
   const dataQuality = typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.data_quality_pairs : { number_of_nothing: [], number_of_whitespace: [] };;
-  const nothingIsZeroOrNull = !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]);
-  const whitespaceIsZeroOrNull = !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index]);
+  const nothingIsZeroOrNull = index ? !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]): false;
+  const whitespaceIsZeroOrNull = index ? !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index]) : false;
 
   const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull;
 
@@ -450,11 +449,11 @@ function toField(name: string, index: number, valueType?: ValueType | null | und
       template,
       setAriaSort: () => {},
     },
-    tooltipComponent: CustomTooltip,
+    tooltipComponent: TableVisualisationTooltip,
     headerTooltip: displayValue ? displayValue : '',
     tooltipComponentParams: {
-      numberOfNothing: dataQuality.number_of_nothing[index],
-      numberOfWhitespace: dataQuality.number_of_whitespace[index],
+      numberOfNothing: index ? dataQuality.number_of_nothing[index] : null,
+      numberOfWhitespace: index ? dataQuality.number_of_whitespace[index] : null,
       total: typeof props.data === 'object' && 'data_quality_pairs' in props.data ? props.data.all_rows_count: 0, 
       hideDataQuality
     },
@@ -557,7 +556,7 @@ watchEffect(() => {
   } else if (data_.type === 'Matrix') {
     columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
     for (let i = 0; i < data_.column_count; i++) {
-      columnDefs.value.push(toField(i.toString(), i))
+      columnDefs.value.push(toField(i.toString()))
     }
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
@@ -569,7 +568,7 @@ watchEffect(() => {
         Object.keys(val).forEach((k, i) => {
           if (!keys.has(k)) {
             keys.add(k)
-            columnDefs.value.push(toField(k, i))
+            columnDefs.value.push(toField(k))
           }
         })
       }
@@ -582,13 +581,13 @@ watchEffect(() => {
   } else if (Array.isArray(data_.json)) {
     columnDefs.value = [
       toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action),
-      toField('Value', 1),
+      toField('Value'),
     ]
     rowData.value = data_.json.map((row, i) => ({ [INDEX_FIELD_NAME]: i, Value: toRender(row) }))
     isTruncated.value = data_.all_rows_count ? data_.all_rows_count !== data_.json.length : false
   } else if (data_.json !== undefined) {
     columnDefs.value =
-      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value', 1)]
+      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value')]
     rowData.value =
       data_.links ?
         data_.links.map((link) => ({
