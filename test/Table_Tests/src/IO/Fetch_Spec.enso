@@ -370,22 +370,6 @@ add_specs suite_builder =
                 fetch_n 35
                 get_cache_file_sizes . should_equal_ignoring_order [20, 35, 40]
 
-        group_builder.specify "Includes the existing cache files in the total cache size calculation, for a percentage total cache limit" pending=pending_has_url <| Test.with_retries <|
-            with_config 1000 (TotalCacheLimit.Percentage.new 0.5) _-> disk_space->
-                disk_space.mocked 100
-                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
-                fetch_n 30
-                disk_space.mocked 70
-                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
-                fetch_n 20
-                disk_space.mocked 50
-                get_num_response_cache_entries . should_equal 2
-                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
-                fetch_n 10
-                disk_space.mocked 70
-                get_num_response_cache_entries . should_equal 2
-                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
-
         group_builder.specify "Will remove old cache files based on how recently they were used" pending=pending_has_url <| Test.with_retries <|
             with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
                 fetch_n 30
@@ -481,6 +465,22 @@ add_specs suite_builder =
                         disk_space.mocked 400
                         EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 40
 
+        group_builder.specify "Includes the existing cache files in the total cache size calculation, for a percentage total cache limit" pending=pending_has_url <| Test.with_retries <|
+            with_config 1000 (TotalCacheLimit.Percentage.new 0.5) _-> disk_space->
+                disk_space.mocked 100
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 30
+                disk_space.mocked 70
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 20
+                disk_space.mocked 50
+                get_num_response_cache_entries . should_equal 2
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+                fetch_n 10
+                disk_space.mocked 70
+                get_num_response_cache_entries . should_equal 2
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
+
         group_builder.specify "Total cache size should not go over the hard-coded maximum" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" (1024 * 1024).to_text <|
                 lru_cache = LRUCache.new
@@ -490,8 +490,8 @@ add_specs suite_builder =
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
                 Test.expect_panic NumberFormatException LRUCache.new
 
-        group_builder.specify "Throws exception if the max total cache percentage is outside 0..100%" <|
+        group_builder.specify "Throws exception if the max total cache percentage is outside 0..90%" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "-10%" <|
                 Test.expect_panic IllegalArgumentException LRUCache.new
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "103%" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "91%" <|
                 Test.expect_panic IllegalArgumentException LRUCache.new
