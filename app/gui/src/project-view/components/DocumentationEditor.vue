@@ -7,6 +7,7 @@ import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { ProjectFiles, useProjectFiles } from '@/stores/projectFiles'
+import { Vec2 } from '@/util/data/vec2'
 import type { ToValue } from '@/util/reactivity'
 import { useToast } from '@/util/toast'
 import { ComponentInstance, ref, toRef, toValue, watch } from 'vue'
@@ -32,6 +33,8 @@ const { transformImageUrl, uploadImage } = useDocumentationImages(
 )
 const uploadErrorToast = useToast.error()
 
+type UploadedImagePosition = { type: 'selection' } | { type: 'coords'; coords: Vec2 }
+
 function useDocumentationImages(
   modulePath: ToValue<Path | undefined>,
   projectFiles: Pick<
@@ -46,7 +49,7 @@ function useDocumentationImages(
     }
     const appliedUrl = new URL(url, `file:///${modulePathValue.segments.join('/')}`)
     if (appliedUrl.protocol === 'file:') {
-      const segments = appliedUrl.pathname.split('/').slice(1)
+      const segments = decodeURI(appliedUrl.pathname).split('/').slice(1)
       return Ok({ rootId: modulePathValue.rootId, segments })
     } else {
       // Not a relative URL, custom fetching not needed.
@@ -84,7 +87,11 @@ function useDocumentationImages(
     },
   )
 
-  async function uploadImage(name: string, blobPromise: Promise<Blob>) {
+  async function uploadImage(
+    name: string,
+    blobPromise: Promise<Blob>,
+    position: UploadedImagePosition = { type: 'selection' },
+  ) {
     const rootId = await projectFiles.projectRootId
     if (!rootId) {
       uploadErrorToast.show('Cannot upload image: unknown project file tree root.')
@@ -105,7 +112,14 @@ function useDocumentationImages(
       uploadErrorToast.reportError(filename.error)
       return
     }
-    markdownEditor.value.putText(`![Image](/images/${filename.value})`)
+    const insertedLink = `\n![Image](/images/${encodeURI(filename.value)})\n`
+    switch (position.type) {
+      case 'selection':
+        markdownEditor.value.putText(insertedLink)
+        break
+      case 'coords':
+        markdownEditor.value.putTextAtCoord(insertedLink, position.coords)
+    }
     const path: Path = { rootId, segments: ['images', filename.value] }
     const id = pathUniqueId(path)
     uploadedImages.set(id, blobPromise)
@@ -142,6 +156,20 @@ const supportedImageTypes: Record<string, { extension: string }> = {
   // Question: do we want to have BMP and ICO here?
 }
 
+async function handleFileDrop(event: DragEvent) {
+  console.log('HANDLE FILE DROP')
+  if (!event.dataTransfer?.items) return
+  for (const item of event.dataTransfer.items) {
+    if (item.kind !== 'file' || !(item.type in supportedImageTypes)) return
+    const file = item.getAsFile()
+    if (!file) return
+    const clientPos = new Vec2(event.clientX, event.clientY)
+    event.stopPropagation()
+    event.preventDefault()
+    await uploadImage(file.name, Promise.resolve(file), { type: 'coords', coords: clientPos })
+  }
+}
+
 const handler = documentationEditorBindings.handler({
   pasteImage: () => {
     window.navigator.clipboard.read().then(async (items) => {
@@ -173,7 +201,12 @@ const handler = documentationEditorBindings.handler({
       <div ref="toolbarElement" class="toolbar">
         <FullscreenButton v-model="fullscreen" />
       </div>
-      <div class="scrollArea" @keydown="handler">
+      <div
+        class="scrollArea"
+        @keydown="handler"
+        @dragover.prevent
+        @drop.prevent="handleFileDrop($event)"
+      >
         <MarkdownEditor
           ref="markdownEditor"
           :yText="yText"

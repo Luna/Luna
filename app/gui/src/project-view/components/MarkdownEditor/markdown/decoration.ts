@@ -150,10 +150,13 @@ function parseLinkLike(node: SyntaxNode, doc: Text) {
   const urlNode = urlOpen.nextSibling
   // If the URL is empty, this will be the closing 'LinkMark'.
   if (urlNode?.name !== 'URL') return
+  const url = doc.sliceString(urlNode.from, urlNode.to)
+  // See https://spec.commonmark.org/0.31.2/#link-destination
+  const withTriangleBrackets = url.startsWith('<') && url.endsWith('>')
   return {
     textFrom: textOpen.to,
     textTo: textClose.from,
-    url: doc.sliceString(urlNode.from, urlNode.to),
+    url: withTriangleBrackets ? url.slice(1, -1) : url,
   }
 }
 

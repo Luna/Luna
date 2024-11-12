@@ -7,7 +7,7 @@ import type { Hash } from '@noble/hashes/utils'
 import { markRaw, toRaw } from 'vue'
 import { escapeTextLiteral } from 'ydoc-shared/ast/text'
 import type { LanguageServer } from 'ydoc-shared/languageServer'
-import type { Path, StackItem } from 'ydoc-shared/languageServerTypes'
+import type { Path, StackItem, Uuid } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, type Result } from 'ydoc-shared/util/data/result'
 
 // === Constants ===
@@ -51,6 +51,7 @@ export class Uploader {
 
   private constructor(
     projectStore: {
+      projectRootId: Promise<Uuid | undefined>
       lsRpcConnection: LanguageServer
       dataConnection: DataServer
       awareness: Awareness
@@ -71,6 +72,7 @@ export class Uploader {
   /** Constructor */
   static Create(
     projectStore: {
+      projectRootId: Promise<Uuid | undefined>
       lsRpcConnection: LanguageServer
       dataConnection: DataServer
       awareness: Awareness

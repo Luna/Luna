@@ -7,6 +7,7 @@ import {
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
 import VueComponentHost from '@/components/VueComponentHost.vue'
+import { Vec2 } from '@/util/data/vec2'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
@@ -55,6 +56,13 @@ defineExpose({
     editorView.dispatch({
       changes: { from: range.from, to: range.to, insert: text },
       selection: { anchor: range.from + text.length },
+    })
+  },
+  putTextAtCoords: (text: string, coords: Vec2) => {
+    const pos = editorView.posAtCoords(coords, false)
+    editorView.dispatch({
+      changes: { from: pos, to: pos, insert: text },
+      selection: { anchor: pos + text.length },
     })
   },
 })
