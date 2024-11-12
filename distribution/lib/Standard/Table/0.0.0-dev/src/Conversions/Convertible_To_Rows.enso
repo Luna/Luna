@@ -31,7 +31,9 @@ type Convertible_To_Rows
     to_vector self = 0.up_to self.length . map self.getter
 
     ## PRIVATE
-       Aligns this conversion with the `sequence_only` requirement.
+       Aligns this conversion depending on if we want to only expand sequences
+       or all kinds of objects.
+
        If `sequence_only` is `False` or the conversion reports `is_sequence=True`, no changes are made.
        However, `sequence_only` is `True` and the conversion reports `is_sequence=False`,
        the conversion is replaced with a single row - same as the `Any` fallback.

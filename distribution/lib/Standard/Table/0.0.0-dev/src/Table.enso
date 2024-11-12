@@ -2039,7 +2039,8 @@ type Table
        - `Column`
 
        Some aggregates, like dictionaries (`Dictionary`, `JS_Object`) will
-       expand into two columns - one for key and one for the value.
+       (depending on `sequences_only` setting) expand into two columns - one for
+       key and one for the value.
 
        If a value is not an aggregate, or has no defined way of being expanded,
        it is left as a single row containing that value unchanged.

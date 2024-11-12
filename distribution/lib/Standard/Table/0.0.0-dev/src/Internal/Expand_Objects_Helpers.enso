@@ -99,8 +99,9 @@ expand_to_rows table column:(Text | Integer) at_least_one_row=False sequences_on
         builder size = make_inferred_builder size java_problem_aggregator
         Fan_Out.fan_out_to_rows table column row_expander column_names at_least_one_row column_builder=builder
 
-create_table_from_objects (base_value : Convertible_To_Rows) (fields : Vector | Nothing) (sequences_only : Boolean) -> Table = if fields.is_nothing.not && fields.is_empty then Error.throw (Illegal_Argument.Error "The fields parameter cannot be empty.") else
-    value = base_value.align_sequence_only sequences_only
+create_table_from_objects (base_value : Convertible_To_Rows) (fields : Vector | Nothing) (treat_dictionary_as_sequence : Boolean = False) -> Table = if fields.is_nothing.not && fields.is_empty then Error.throw (Illegal_Argument.Error "The fields parameter cannot be empty.") else
+    expand_sequences_only = treat_dictionary_as_sequence.not
+    value = base_value.align_sequence_only expand_sequences_only
     len = value.length
 
     Java_Problems.with_problem_aggregator Problem_Behavior.Report_Warning java_problem_aggregator->

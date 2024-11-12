@@ -83,6 +83,11 @@ XML_Element.to_table self =
      Otherwise, treated as a single row.
    - fields: a Vector of Text representing the names of fields to look up.
      If `Nothing` then all fields found are added.
+   - treat_dictionary_as_sequence: If set to `True`, then a dictionary (and
+     similar non-sequence collections) is treated as a sequence of key-value
+     pairs, expanding to two columns: Key and Value, and multiple rows.
+     If set to `False` (the default), then a dictionary is treated as a single
+     row with columns determined by its keys.
 
    > Example
      Converts a set of objects into a table using the provided headers.
@@ -95,9 +100,9 @@ XML_Element.to_table self =
              headers = Examples.simple_table_json_headers
              Table.from_objects json headers
 @fields (Widget.Vector_Editor item_editor=Widget.Text_Input item_default='""')
-Table.from_objects : Any -> Vector | Nothing -> Table
-Table.from_objects value (fields : Vector | Nothing = Nothing) =
-    Expand_Objects_Helpers.create_table_from_objects value fields
+Table.from_objects : Any -> Vector | Nothing -> Boolean -> Table
+Table.from_objects value (fields : Vector | Nothing = Nothing) treat_dictionary_as_sequence:Boolean=False =
+    Expand_Objects_Helpers.create_table_from_objects value fields treat_dictionary_as_sequence
 
 ## GROUP Standard.Base.Conversions
    ICON convert
