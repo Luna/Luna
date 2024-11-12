@@ -2677,7 +2677,7 @@ type Table
         java_conditions = join_resolution.conditions
         new_java_table = Java_Problems.with_problem_aggregator on_problems java_aggregator->
             self.java_table.join right.java_table java_conditions join_kind.to_java (columns_to_keep.at 0) (columns_to_keep.at 1) right_columns_to_drop right_prefix java_aggregator
-        Table.Value new_java_table
+        Table.Value new_from_java_table
 
     ## ALIAS append, cartesian join
        GROUP Standard.Base.Calculations
