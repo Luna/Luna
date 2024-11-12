@@ -57,7 +57,8 @@ public final class Warning extends EnsoObject {
       description = "Attaches the given warning to the value.",
       autoRegister = false)
   @Builtin.Specialize
-  public static EnsoObject attach(
+  @SuppressWarnings("generic-enso-builtin-type")
+  public static Object attach(
       EnsoContext ctx,
       Object value,
       Object warning,

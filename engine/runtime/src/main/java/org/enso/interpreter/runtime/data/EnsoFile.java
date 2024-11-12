@@ -734,6 +734,7 @@ public final class EnsoFile extends EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
+  @SuppressWarnings("generic-enso-builtin-type")
   public static Object fromString(EnsoContext context, String path)
       throws IllegalArgumentException {
     try {
@@ -766,6 +767,7 @@ public final class EnsoFile extends EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
+  @SuppressWarnings("generic-enso-builtin-type")
   public static Object userHome(EnsoContext context) {
     return fromString(context, System.getProperty("user.home"));
   }
