@@ -113,6 +113,10 @@ public class FormatDetectingNumberParser {
           return new NumberParseFailure("Unexpected leading Whitespace.");
         }
 
+        if (idx > 0 && (value.charAt(idx - 1) == '-' || value.charAt(idx - 1) == '+')) {
+          return new NumberParseFailure("Unexpected whitespace after sign.");
+        }
+
         idx++;
         lastWasWhitespace = true;
       } else {
