@@ -38,8 +38,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
         foundDecimal = true;
       } else if (isDigit(c)) {
         results[resultIdx++] = c;
-      }
-      if (c == thousands) {
+      } else if (c == thousands) {
         // Cannot have thousands post decimal separator.
         if (foundDecimal) {
           return null;
