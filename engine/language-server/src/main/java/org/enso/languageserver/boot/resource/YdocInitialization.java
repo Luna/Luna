@@ -2,8 +2,7 @@ package org.enso.languageserver.boot.resource;
 
 import java.util.concurrent.Executor;
 import org.enso.languageserver.boot.ComponentSupervisor;
-import org.enso.languageserver.boot.config.ApplicationConfig;
-//import org.enso.ydoc.Ydoc;
+// import org.enso.ydoc.Ydoc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
