@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import SvgButton from '@/components/SvgButton.vue'
-import { useNodeExecution } from '@/composables/nodeExecution'
-import { useProjectStore } from '@/stores/project'
+import { useNodeExecution } from '@/stores/project/nodeExecution'
 import ControlButtons from './ControlButtons.vue'
 
-const nodeExecution = useNodeExecution(useProjectStore())
+const nodeExecution = useNodeExecution()
 </script>
 
 <template>

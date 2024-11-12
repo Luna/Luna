@@ -20,7 +20,6 @@ import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'
-import { useNodeExecution } from '@/composables/nodeExecution'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
 import { injectNodeColors } from '@/providers/graphNodeColors'
 import { injectGraphSelection } from '@/providers/graphSelection'
@@ -28,6 +27,7 @@ import { injectKeyboard } from '@/providers/keyboard'
 import { useGraphStore, type Node } from '@/stores/graph'
 import { asNodeId } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
+import { useNodeExecution } from '@/stores/project/nodeExecution'
 import { suggestionDocumentationUrl } from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
 import type { AstId } from '@/util/ast/abstract'
@@ -80,7 +80,7 @@ const nodeSelection = injectGraphSelection(true)
 const projectStore = useProjectStore()
 const graph = useGraphStore()
 const navigator = injectGraphNavigator(true)
-const nodeExecution = useNodeExecution(projectStore)
+const nodeExecution = useNodeExecution()
 
 const nodeId = computed(() => asNodeId(props.node.rootExpr.externalId))
 const potentialSelfArgumentId = computed(() => props.node.primarySubject)

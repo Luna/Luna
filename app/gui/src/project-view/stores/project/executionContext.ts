@@ -253,7 +253,7 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
     this.sync()
   }
 
-  /** TODO: Add docs */
+  /** See {@link LanguageServer.recomputeExecutionContext}. */
   recompute(
     invalidatedIds?: 'all' | ExternalId[],
     executionEnvironment?: ExecutionEnvironment,
