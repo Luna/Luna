@@ -56,6 +56,11 @@ public record Separators(char first, char second, int count, int endIdx, int las
         return null;
       }
     }
+
+    if (!foundDecimal && lastThousand != -1 && endIdx != lastThousand + 4) {
+      return null;
+    }
+
     return CharBuffer.wrap(results, 0, resultIdx);
   }
 
