@@ -1,24 +1,10 @@
-/** @file An API definition for the chat WebSocket server. */
+/**
+ * @file An API definition for the chat WebSocket server.
+ * Types copied from the enso-bot server implementation:
+ * https://github.com/enso-org/enso-bot/blob/aa903b6e639a31930ee4fff55c5639e4471fa48d/chat.ts
+ */
 
 import type * as newtype from '#/utilities/newtype'
-
-// ==================
-// === Re-exports ===
-// ==================
-
-/** All possible emojis that can be used as a reaction on a chat message. */
-export type ReactionSymbol = '❤️' | '🎉' | '👀' | '👍' | '👎' | '😀' | '🙁'
-
-// =======================
-// === AWS Cognito API ===
-// =======================
-
-/** A user of the application. */
-// export interface User {
-//   id: string
-//   name: string
-//   email: EmailAddress
-// }
 
 // =====================
 // === Message Types ===
@@ -106,6 +92,9 @@ export interface ChatInternalAuthenticateAnonymouslyMessageData
 // ======================================
 // === Messages from server to client ===
 // ======================================
+
+/** All possible emojis that can be used as a reaction on a chat message. */
+export type ReactionSymbol = '❤️' | '🎉' | '👀' | '👍' | '👎' | '😀' | '🙁'
 
 /** Basic metadata for a single thread. */
 export interface ThreadData {
