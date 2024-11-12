@@ -501,12 +501,14 @@ add_specs suite_builder =
                 disk_space.mocked 100
                 EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 90
 
-        group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|
+        group_builder.specify "Falls back to the default if an environment variable is incorrectly formatted" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB" "abcd" <|
+                LRUCache.new . getSettings . getMaxFileSize . should_equal (2 * 1024  * 1024  * 1024)
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
-                Test.expect_panic NumberFormatException LRUCache.new
+                LRUCache.new . getSettings . getTotalCacheLimit . should_equal (TotalCacheLimit.Percentage.new 0.2)
 
-        group_builder.specify "Throws exception if the max total cache percentage is outside 0..100%" <|
+        group_builder.specify "Falls back to the default if the max total cache percentage is outside 0..100%" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "-10%" <|
-                Test.expect_panic IllegalArgumentException LRUCache.new
+                LRUCache.new . getSettings . getTotalCacheLimit . should_equal (TotalCacheLimit.Percentage.new 0.2)
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "101%" <|
-                Test.expect_panic IllegalArgumentException LRUCache.new
+                LRUCache.new . getSettings . getTotalCacheLimit . should_equal (TotalCacheLimit.Percentage.new 0.2)

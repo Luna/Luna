@@ -9,7 +9,7 @@ import java.text.ParsePosition;
  */
 public class TotalCacheLimit {
   /** Parse the limit specification string into either a Bytes or Percentage value. */
-  public static Limit parse(String limitString) throws NumberFormatException {
+  public static Limit parse(String limitString) throws IllegalArgumentException, NumberFormatException {
     Number percentageNumber = tryPercentage(limitString);
     if (percentageNumber != null) {
       double percentage = percentageNumber.doubleValue();
