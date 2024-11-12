@@ -426,7 +426,8 @@ public enum NumberWithSeparators {
       return new NumberParseFailure("No matching number format.");
     }
 
-    if ((thousands != Constants.UNKNOWN && format.thousands != thousands) || (decimal != Constants.UNKNOWN && format.decimal != decimal)) {
+    if ((thousands != Constants.UNKNOWN && format.thousands != thousands)
+        || (decimal != Constants.UNKNOWN && format.decimal != decimal)) {
       return new NumberParseFailure("Invalid format matched.");
     }
 

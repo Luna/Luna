@@ -21,6 +21,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
    */
   static CharSequence strip(
       CharSequence value, int startIdx, int endIdx, char thousands, char decimal) {
+    int lastThousand = -1;
     boolean foundDecimal = false;
     char[] results = new char[endIdx - startIdx];
     int resultIdx = 0;
@@ -30,11 +31,29 @@ public record Separators(char first, char second, int count, int endIdx, int las
         if (foundDecimal) {
           return null;
         }
+        if (lastThousand != -1 && i != lastThousand + 4) {
+          return null;
+        }
         results[resultIdx++] = '.';
         foundDecimal = true;
       } else if (isDigit(c)) {
         results[resultIdx++] = c;
-      } else if (c != thousands) {
+      }
+      if (c == thousands) {
+        // Cannot have thousands post decimal separator.
+        if (foundDecimal) {
+          return null;
+        }
+
+        // Must be 4 away from last thousand separator.
+        if (lastThousand != -1) {
+          if (i != lastThousand + 4) {
+            return null;
+          }
+        }
+
+        lastThousand = i;
+      } else {
         return null;
       }
     }
