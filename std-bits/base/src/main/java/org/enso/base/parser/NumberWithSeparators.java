@@ -77,8 +77,16 @@ public enum NumberWithSeparators {
         switch (thousands) {
           case Constants.NONE -> matchForNone(decimals);
           case Constants.UNKNOWN -> matchForUnknown(decimals);
-          case ',' -> Optional.of(COMMA_DOT);
-          case '.' -> Optional.of(DOT_COMMA);
+          case ',' ->
+              switch (decimals) {
+                case Constants.UNKNOWN, Constants.NONE, '.' -> Optional.of(COMMA_DOT);
+                default -> Optional.empty();
+              };
+          case '.' ->
+            switch (decimals) {
+              case Constants.UNKNOWN, Constants.NONE, ',' -> Optional.of(DOT_COMMA);
+              default -> Optional.empty();
+            };
           case ' ' -> matchForSpace(decimals);
           case '\'' -> matchForSwiss(decimals);
           case '_' -> matchForUnderscore(decimals);
