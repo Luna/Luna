@@ -53,7 +53,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "io", name = "File", stdlibName = "Standard.Base.System.File.File")
-public final class EnsoFile implements EnsoObject {
+public final class EnsoFile extends EnsoObject {
   private final TruffleFile truffleFile;
 
   public EnsoFile(TruffleFile truffleFile) {
@@ -79,7 +79,7 @@ public final class EnsoFile implements EnsoObject {
   }
 
   @ExportLibrary(InteropLibrary.class)
-  static final class EnsoOutputStream implements EnsoObject {
+  static final class EnsoOutputStream extends EnsoObject {
     private static final String[] MEMBERS = new String[] {"write", "flush", "close"};
     private final OutputStream os;
 
@@ -200,7 +200,7 @@ public final class EnsoFile implements EnsoObject {
   }
 
   @ExportLibrary(InteropLibrary.class)
-  static final class EnsoInputStream implements EnsoObject {
+  static final class EnsoInputStream extends EnsoObject {
     private static final String[] MEMBERS =
         new String[] {
           "read", "readAllBytes", "readNBytes", "skipNBytes", "markSupported", "available", "close"

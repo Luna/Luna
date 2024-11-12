@@ -4,7 +4,15 @@ import com.oracle.truffle.api.nodes.Node;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
 
-record BranchResult(boolean isMatched, Object result) implements EnsoObject {
+final class BranchResult extends EnsoObject {
+  private final boolean isMatched;
+  private final Object result;
+
+  BranchResult(boolean isMatched, Object result) {
+    this.isMatched = isMatched;
+    this.result = result;
+  }
+
   static BranchResult failure(Node node) {
     return new BranchResult(false, EnsoContext.get(node).getBuiltins().nothing());
   }

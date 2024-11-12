@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 /** A runtime representation of a function object in Enso. */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class Function implements EnsoObject {
+public final class Function extends EnsoObject {
   private final RootCallTarget callTarget;
   private final MaterializedFrame scope;
   private final FunctionSchema schema;
@@ -428,7 +428,8 @@ public final class Function implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean sideEffects) {
+  @Override
+  public String toDisplayString(boolean sideEffects) {
     return toString();
   }
 

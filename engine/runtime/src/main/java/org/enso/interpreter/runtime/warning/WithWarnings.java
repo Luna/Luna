@@ -54,7 +54,7 @@ import org.enso.interpreter.runtime.state.State;
 @ExportLibrary(WarningsLibrary.class)
 @ExportLibrary(ReflectionLibrary.class)
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
-public final class WithWarnings implements EnsoObject {
+public final class WithWarnings extends EnsoObject {
   final Object value;
 
   /**

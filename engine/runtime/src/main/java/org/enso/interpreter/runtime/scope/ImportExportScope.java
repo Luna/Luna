@@ -11,7 +11,7 @@ import org.enso.interpreter.runtime.data.Type;
  * A proxy scope delegating to the underlying module's scope. Additionally, `ImportExportScope` may
  * limit the number of types that are imported/exported.
  */
-public class ImportExportScope implements EnsoObject {
+public class ImportExportScope extends EnsoObject {
 
   private final Module module;
   private final List<String> typesOnlyNames;

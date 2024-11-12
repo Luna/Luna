@@ -15,7 +15,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "resource", stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource")
-public final class ManagedResource implements EnsoObject {
+public final class ManagedResource extends EnsoObject {
   private final Object resource;
   private final PhantomReference<ManagedResource> phantomReference;
 

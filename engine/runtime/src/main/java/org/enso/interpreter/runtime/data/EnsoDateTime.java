@@ -25,7 +25,7 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
     pkg = "date",
     name = "DateTime",
     stdlibName = "Standard.Base.Data.Time.Date_Time.Date_Time")
-public final class EnsoDateTime implements EnsoObject {
+public final class EnsoDateTime extends EnsoObject {
   private final ZonedDateTime dateTime;
 
   public EnsoDateTime(ZonedDateTime dateTime) {

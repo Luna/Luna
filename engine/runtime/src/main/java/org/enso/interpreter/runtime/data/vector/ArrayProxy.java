@@ -28,7 +28,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @ImportStatic(BranchProfile.class)
-final class ArrayProxy implements EnsoObject {
+final class ArrayProxy extends EnsoObject {
   private final long length;
   private final Object at;
 
@@ -76,7 +76,8 @@ final class ArrayProxy implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean b) {
+  @Override
+  public String toDisplayString(boolean b) {
     return toString();
   }
 

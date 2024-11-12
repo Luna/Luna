@@ -23,7 +23,7 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(WarningsLibrary.class)
-final class ArraySlice implements EnsoObject {
+final class ArraySlice extends EnsoObject {
   private final Object storage;
   private final long start;
   private final long end;

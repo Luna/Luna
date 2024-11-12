@@ -20,7 +20,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 @Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
 @ExportLibrary(TypesLibrary.class)
-public final class Warning implements EnsoObject {
+public final class Warning extends EnsoObject {
   private final Object value;
   private final Object origin;
   private final long sequenceId;

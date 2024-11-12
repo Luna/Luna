@@ -25,7 +25,7 @@ import org.enso.polyglot.common_utils.Core_Text_Utils;
 /** The main runtime type for Enso's Text. */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class Text implements EnsoObject {
+public final class Text extends EnsoObject {
   private static final Lock LOCK = new ReentrantLock();
   private static final Text EMPTY = new Text("");
   private volatile Object contents;

@@ -14,7 +14,7 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.instrument.Timer;
 import org.enso.polyglot.debugger.IdExecutionService;
 
-final class Instrumentor implements EnsoObject, IdExecutionService.Callbacks {
+final class Instrumentor extends EnsoObject implements IdExecutionService.Callbacks {
 
   private final IdExecutionService service;
   private final RootCallTarget target;

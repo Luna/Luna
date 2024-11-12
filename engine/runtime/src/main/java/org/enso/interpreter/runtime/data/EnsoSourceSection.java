@@ -15,7 +15,7 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
  * changes.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class EnsoSourceSection implements EnsoObject {
+public final class EnsoSourceSection extends EnsoObject {
   private static final String[] MEMBERS = {
     "getStartLine", //
     "getEndLine", //

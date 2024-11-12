@@ -13,7 +13,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "mutable", stdlibName = "Standard.Base.Runtime.Ref.Ref")
-public final class Ref implements EnsoObject {
+public final class Ref extends EnsoObject {
   private volatile Object value;
 
   /**

@@ -15,7 +15,7 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
  * (array), and for Enso {@code Map.to_vector} method. May be empty.
  */
 @ExportLibrary(InteropLibrary.class)
-final class HashEntriesVector implements EnsoObject {
+final class HashEntriesVector extends EnsoObject {
   private final EnsoObject[] entryPairs;
 
   private HashEntriesVector(Object[] keys, Object[] values) {
@@ -74,7 +74,7 @@ final class HashEntriesVector implements EnsoObject {
   }
 
   @ExportLibrary(InteropLibrary.class)
-  static final class EntryPair implements EnsoObject {
+  static final class EntryPair extends EnsoObject {
     private final Object key;
     private final Object value;
 
@@ -126,7 +126,8 @@ final class HashEntriesVector implements EnsoObject {
 
     @TruffleBoundary
     @ExportMessage
-    Object toDisplayString(boolean sideEffectsAllowed) {
+    @Override
+    public Object toDisplayString(boolean sideEffectsAllowed) {
       return "(" + key + ", " + value + ")";
     }
   }

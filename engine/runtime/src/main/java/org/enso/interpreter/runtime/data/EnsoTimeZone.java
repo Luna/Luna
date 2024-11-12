@@ -23,7 +23,7 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
     pkg = "date",
     name = "TimeZone",
     stdlibName = "Standard.Base.Data.Time.Time_Zone.Time_Zone")
-public final class EnsoTimeZone implements EnsoObject {
+public final class EnsoTimeZone extends EnsoObject {
   private final ZoneId zone;
 
   public EnsoTimeZone(ZoneId zone) {
@@ -84,7 +84,8 @@ public final class EnsoTimeZone implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean ignoreSideEffects) {
+  @Override
+  public String toDisplayString(boolean ignoreSideEffects) {
     return zone.toString();
   }
 

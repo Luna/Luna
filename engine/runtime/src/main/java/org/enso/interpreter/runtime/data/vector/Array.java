@@ -32,7 +32,7 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(WarningsLibrary.class)
 @Builtin(pkg = "mutable", stdlibName = "Standard.Base.Data.Array.Array")
-final class Array implements EnsoObject {
+final class Array extends EnsoObject {
   private final Object[] items;
 
   /** If true, some elements contain warning, and thus, this Array contains warning. */
@@ -152,7 +152,8 @@ final class Array implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean b) {
+  @Override
+  public String toDisplayString(boolean b) {
     return toString();
   }
 

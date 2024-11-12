@@ -14,7 +14,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-final class ArrayOverBuffer implements EnsoObject {
+final class ArrayOverBuffer extends EnsoObject {
   private final ByteBuffer buffer;
 
   private ArrayOverBuffer(ByteBuffer buffer) {
@@ -61,7 +61,8 @@ final class ArrayOverBuffer implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     final InteropLibrary iop = InteropLibrary.getUncached();
     return DisplayArrayUtils.toDisplayString(this, allowSideEffects, iop);
   }

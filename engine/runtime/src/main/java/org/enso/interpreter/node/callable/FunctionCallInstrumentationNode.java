@@ -56,7 +56,7 @@ public class FunctionCallInstrumentationNode extends Node implements Instrumenta
 
   /** A simple value class for function call information. */
   @ExportLibrary(InteropLibrary.class)
-  public static final class FunctionCall implements EnsoObject {
+  public static final class FunctionCall extends EnsoObject {
     private final Function function;
     private final State state;
     private final @CompilerDirectives.CompilationFinal(dimensions = 1) Object[] arguments;

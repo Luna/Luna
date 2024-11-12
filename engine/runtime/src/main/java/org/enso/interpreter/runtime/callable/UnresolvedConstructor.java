@@ -48,7 +48,7 @@ import org.enso.interpreter.runtime.state.State;
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class UnresolvedConstructor implements EnsoObject {
+public final class UnresolvedConstructor extends EnsoObject {
   private static final CallArgumentInfo[] NONE = new CallArgumentInfo[0];
   private final String name;
   private final Node where;
@@ -81,7 +81,8 @@ public final class UnresolvedConstructor implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     return toString();
   }
 
