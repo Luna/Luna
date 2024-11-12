@@ -345,9 +345,9 @@ function getValueTypeIcon(valueType: string) {
  *
  * @param {number} [options.index] - The index of column the corresponds to the data in the `dataQuality` arrays
  * (`number_of_nothing` and `number_of_whitespace`). This identifies the correct indicators for each column
- * to be displayed in the toolip.
+ * to be displayed in the toolip. If absent the data quality metrics will not be shown.
  * @param {ValueType | null | undefined} [options.valueType] - The data type of the column, displayed as an icon
- * and in text within the tooltip
+ * and in text within the tooltip. If absent the value type icon and text will not be shown.
  */
 function toField(
   name: string,
