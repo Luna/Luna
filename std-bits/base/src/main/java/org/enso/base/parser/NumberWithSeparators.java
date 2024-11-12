@@ -49,7 +49,11 @@ public enum NumberWithSeparators {
 
   SWISS_UNKNOWN('\'', Constants.UNKNOWN),
   SWISS_DOT('\'', '.'),
-  SWISS_COMMA('\'', ',');
+  SWISS_COMMA('\'', ','),
+
+  UNDERSCORE_UNKNOWN('_', Constants.UNKNOWN),
+  UNDERSCORE_DOT('_', '.'),
+  UNDERSCORE_COMMA('_', ',');
 
   public static NumberWithSeparators fromSeparators(String thousand, String decimal) {
     if (thousand != null && thousand.length() > 1) {
@@ -77,6 +81,7 @@ public enum NumberWithSeparators {
           case '.' -> Optional.of(DOT_COMMA);
           case ' ' -> matchForSpace(decimals);
           case '\'' -> matchForSwiss(decimals);
+          case '_' -> matchForUnderscore(decimals);
           default -> Optional.empty();
         };
 
@@ -118,6 +123,15 @@ public enum NumberWithSeparators {
       case Constants.UNKNOWN -> Optional.of(SWISS_UNKNOWN);
       case '.' -> Optional.of(SWISS_DOT);
       case ',' -> Optional.of(SWISS_COMMA);
+      default -> Optional.empty();
+    };
+  }
+
+  private static Optional<NumberWithSeparators> matchForUnderscore(char decimal) {
+    return switch (decimal) {
+      case Constants.UNKNOWN -> Optional.of(UNDERSCORE_UNKNOWN);
+      case '.' -> Optional.of(UNDERSCORE_DOT);
+      case ',' -> Optional.of(UNDERSCORE_COMMA);
       default -> Optional.empty();
     };
   }

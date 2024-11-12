@@ -43,7 +43,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
 
   /** Check if the character is a separator. */
   static boolean isSeparator(char c) {
-    return c == '.' || c == ',' || c == ' ' || c == '\'';
+    return c == '.' || c == ',' || c == ' ' || c == '\'' || c == '_';
   }
 
   /** Check if the character is a decimal separator. */
