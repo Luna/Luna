@@ -14,6 +14,7 @@ import * as mergeRefs from '#/utilities/mergeRefs'
 
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
+import { Close } from './Close'
 import * as dialogProvider from './DialogProvider'
 import * as dialogStackProvider from './DialogStackProvider'
 import type * as types from './types'
@@ -331,3 +332,5 @@ const TYPE_TO_DIALOG_TYPE: Record<
   modal: 'dialog',
   fullscreen: 'dialog-fullscreen',
 }
+
+Dialog.Close = Close
