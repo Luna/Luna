@@ -4,8 +4,8 @@ import java.io.File;
 import org.enso.base.CurrentEnsoProject;
 
 public class DiskSpaceGetter extends Mockable<Long> {
-  public DiskSpaceGetter() {
-    super(() -> getRootPath().getUsableSpace());
+  public Long computeValue() {
+    return getRootPath().getUsableSpace();
   }
 
   private static File getRootPath() {

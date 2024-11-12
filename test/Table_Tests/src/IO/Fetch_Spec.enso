@@ -459,14 +459,14 @@ add_specs suite_builder =
             lru_cache.getSettings.getTotalCacheLimit.percentage . should_equal 0.2
 
         group_builder.specify "Should be able to set the max file size and total cache size (in MB) via environment variable" <|
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB" "8" <|
                 Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "30" <|
                     with_default_cache <|
                         EnsoSecretHelper.getCache.getLRUCache.getSettings.getMaxFileSize . should_equal (8 * 1024 * 1024)
                         EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024)
 
         group_builder.specify "Should be able to set the max file size and total cache size (as a percentage) via environment variable, and track changes to available disk space" <|
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB" "8" <|
                 Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "10%" <|
                     with_mocks _-> disk_space->
                         EnsoSecretHelper.getCache.getLRUCache.getSettings.getMaxFileSize . should_equal (8 * 1024 * 1024)

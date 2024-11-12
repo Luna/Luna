@@ -28,15 +28,25 @@ import org.enso.base.Stream_Utils;
  * deleting entries to make space for new ones. All cache files are set to be deleted automatically
  * on JVM exit.
  *
- * <p>Limits should be set with environment variables: ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS --
- * single file size, in megs ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT -- total cache size, in megs
- * or percentage of free disk space
+ * <p>Limits should be set with environment variables:
  *
- * <p>Examples: ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS=20
- * ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200 ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
+ * <p>
  *
- * Regardless of other settings, the total cache size is capped at a percentage
- * of the free disk space (MAX_PERCENTAGE).
+ * <pre>
+ * - ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB: single file size, in MB
+ * - ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT: total cache size, in MB or
+ *   percentage of free disk space
+ * </pre>
+ *
+ * <p>Examples:
+ *
+ * <pre>
+ *   ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB=20
+ *   ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200 ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
+ * </pre>
+ *
+ * <p>Regardless of other settings, the total cache size is capped at a percentage of the free disk
+ * space (MAX_PERCENTAGE).
  *
  * @param <M> Additional metadata to associate with the data.
  */
