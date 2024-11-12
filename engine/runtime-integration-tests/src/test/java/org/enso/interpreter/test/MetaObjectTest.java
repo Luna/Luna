@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.enso.common.MethodNames;
+import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.type.ConstantsGen;
 import org.enso.interpreter.test.ValuesGenerator.Language;
@@ -269,6 +271,20 @@ main = Nothing
             default -> false;
           };
       assertTrue("Unexpected simple name for number: " + v + " is " + simpleName, ok);
+    }
+  }
+
+  @Test
+  public void allEnsoValuesHaveLanguage() throws Exception {
+    var gen = ValuesGenerator.create(ctx, Language.ENSO);
+    var interop = InteropLibrary.getUncached();
+    for (var value : gen.allValues()) {
+      var unwrappedValue = ContextUtils.unwrapValue(ctx, value);
+      assertThat(
+          "Value " + unwrappedValue + " should have associated language",
+          interop.hasLanguage(unwrappedValue),
+          is(true));
+      assertEquals(interop.getLanguage(unwrappedValue), EnsoLanguage.class);
     }
   }
 
