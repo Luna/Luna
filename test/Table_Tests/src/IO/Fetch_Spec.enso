@@ -393,6 +393,16 @@ add_specs suite_builder =
                 url = base_url_with_slash+'test_download?omit-content-length=1&length=110'
                 Data.fetch url . should_fail_with (Response_Too_Large.Error 100)
 
+        group_builder.specify "Will make room for the largest possible file, if the server does not provide a content-length" pending=pending_has_url <| Test.with_retries <|
+            with_config 50 (TotalCacheLimit.Bytes.new 100) _-> _->
+                fetch_n 20
+                fetch_n 40
+                fetch_n 10
+                fetch_n 15
+                url = base_url_with_slash+'test_download?omit-content-length=1&length=2'
+                Data.fetch url . should_succeed
+                get_cache_file_sizes . should_equal_ignoring_order [10, 15, 2]
+
         group_builder.specify "Should not cache if the request fails" pending=pending_has_url <| Test.with_retries <|
             with_default_cache <|
                 HTTP.fetch url0
@@ -448,7 +458,7 @@ add_specs suite_builder =
             lru_cache.getSettings.getMaxFileSize . should_equal (2 * 1024 * 1024 * 1024)
             lru_cache.getSettings.getTotalCacheLimit.percentage . should_equal 0.2
 
-        group_builder.specify "Should be able to set the max file size and total cache size (in bytes) via environment variable" <|
+        group_builder.specify "Should be able to set the max file size and total cache size (in MB) via environment variable" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" "8" <|
                 Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "30" <|
                     with_default_cache <|
@@ -481,17 +491,22 @@ add_specs suite_builder =
                 get_num_response_cache_entries . should_equal 2
                 EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 50
 
-        group_builder.specify "Total cache size should not go over the hard-coded maximum" <|
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" (1024 * 1024).to_text <|
-                lru_cache = LRUCache.new
-                lru_cache.getMaxTotalCacheSize . should_equal (100 * 1024 * 1024 * 1024)
+        group_builder.specify "Total cache size, specified in MB, should not go over the percentage hard limit" <|
+            with_config 1000 (TotalCacheLimit.Bytes.new 200) _-> disk_space->
+                disk_space.mocked 100
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 90
+
+        group_builder.specify "Total cache size, specified as a percentage, should not go over the percentage hard limit" <|
+            with_config 1000 (TotalCacheLimit.Percentage.new 0.95) _-> disk_space->
+                disk_space.mocked 100
+                EnsoSecretHelper.getCache.getLRUCache.getMaxTotalCacheSize . should_equal 90
 
         group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
                 Test.expect_panic NumberFormatException LRUCache.new
 
-        group_builder.specify "Throws exception if the max total cache percentage is outside 0..90%" <|
+        group_builder.specify "Throws exception if the max total cache percentage is outside 0..100%" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "-10%" <|
                 Test.expect_panic IllegalArgumentException LRUCache.new
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "91%" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "101%" <|
                 Test.expect_panic IllegalArgumentException LRUCache.new

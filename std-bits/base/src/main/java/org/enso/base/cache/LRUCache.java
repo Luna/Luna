@@ -35,6 +35,9 @@ import org.enso.base.Stream_Utils;
  * <p>Examples: ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS=20
  * ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200 ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
  *
+ * Regardless of other settings, the total cache size is capped at a percentage
+ * of the free disk space (MAX_PERCENTAGE).
+ *
  * @param <M> Additional metadata to associate with the data.
  */
 public class LRUCache<M> {
@@ -44,7 +47,7 @@ public class LRUCache<M> {
    * An upper limit on the total cache size. If the cache size limit specified by the other
    * parameters goes over this value, then this value is used.
    */
-  private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND = 100L * 1024 * 1024 * 1024;
+  private static final double MAX_PERCENTAGE = 0.9;
 
   /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
@@ -94,6 +97,8 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
+    // If we have a content-length, clear up enough space for that not. If not,
+    // then clear up enough space for the largest allowed file size.
     long maxFileSize = settings.getMaxFileSize();
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
@@ -101,6 +106,8 @@ public class LRUCache<M> {
         throw new ResponseTooLargeException(maxFileSize);
       }
       makeRoomFor(size);
+    } else {
+      makeRoomFor(maxFileSize);
     }
 
     try {
@@ -114,10 +121,6 @@ public class LRUCache<M> {
       var cacheEntry = new CacheEntry<>(responseData, metadata, size, expiry);
       cache.put(cacheKey, cacheEntry);
       markCacheEntryUsed(cacheKey);
-
-      // Clear out old entries to satisfy the total cache size limit. This might
-      // be necessary here if we didn't receive a correct content size value.
-      removeFilesToSatisfyLimit();
 
       return getResultForCacheEntry(cacheKey);
     } catch (IOException e) {
@@ -252,11 +255,6 @@ public class LRUCache<M> {
     return sortedEntries;
   }
 
-  /** Remove least-recently used entries until the total cache size is under the limit. */
-  private void removeFilesToSatisfyLimit() {
-    makeRoomFor(0L);
-  }
-
   private long getTotalCacheSize() {
     return cache.values().stream().collect(Collectors.summingLong(e -> e.size()));
   }
@@ -266,15 +264,17 @@ public class LRUCache<M> {
    * the upper bound.
    */
   public long getMaxTotalCacheSize(long currentlyUsed) {
+    long freeSpace = diskSpaceGetter.get() + currentlyUsed;
+
     var totalCacheSize =
         switch (settings.getTotalCacheLimit()) {
           case TotalCacheLimit.Bytes bytes -> bytes.bytes();
           case TotalCacheLimit.Percentage percentage -> {
-            long usableSpace = diskSpaceGetter.get() + currentlyUsed;
-            yield (long) (percentage.percentage() * usableSpace);
+            yield (long) (percentage.percentage() * freeSpace);
           }
         };
-    return Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
+    long upperBound = (long) (freeSpace * MAX_PERCENTAGE);
+    return Long.min(upperBound, totalCacheSize);
   }
 
   /** For testing. */
