@@ -17,7 +17,7 @@ import { Button, ButtonGroup, Dialog, Text } from '#/components/AriaComponents'
 import { Stepper } from '#/components/Stepper'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { download } from '#/utilities/download'
-import { getDownloadUrl, getLatestRelease, LATEST_RELEASE_PAGE_URL } from '#/utilities/github'
+import { getDownloadUrl, getLatestRelease } from '#/utilities/github'
 import { startTransition, useState } from 'react'
 
 const CURRENT_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
@@ -52,11 +52,15 @@ export default function VersionChecker() {
   const queryClient = useQueryClient()
   const metadataQuery = useQuery({
     queryKey: ['latestRelease'],
-    queryFn: () => getLatestRelease(),
+    queryFn: async () => {
+      const latestRelease = await getLatestRelease()
+      return { ...latestRelease, isPostponed: false }
+    },
     select: (data) => ({
       tagName: data.tag_name,
       publishedAt: data.published_at,
       htmlUrl: data.html_url,
+      isPostponed: data.isPostponed,
     }),
     enabled: enableVersionChecker,
     meta: { persist: false },
@@ -73,14 +77,8 @@ export default function VersionChecker() {
 
   const remindLater = useEventCallback(() => {
     setIsOpen(false)
-    // We need to suppress the dialog from showing again for next 24 hours.
-    queryClient.setQueryData(['latestRelease'], {
-      /* eslint-disable @typescript-eslint/naming-convention, camelcase */
-      tag_name: CURRENT_VERSION,
-      published_at: new Date().toISOString(),
-      html_url: LATEST_RELEASE_PAGE_URL,
-      /* eslint-enable @typescript-eslint/naming-convention, camelcase */
-    })
+    // User asked to be reminded later, so we suppress the dialog from showing again for next 24 hours.
+    queryClient.setQueryData(['latestRelease'], { isPostponed: true })
   })
 
   const onDownload = useEventCallback(async () => {
@@ -95,6 +93,10 @@ export default function VersionChecker() {
   })
 
   if (!metadataQuery.isSuccess) {
+    return null
+  }
+
+  if (metadataQuery.data.isPostponed) {
     return null
   }
 
