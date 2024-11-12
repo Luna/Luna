@@ -252,6 +252,7 @@ public class FormatDetectingNumberParser {
 
     // Return Result
     number = needsNegating ? number.negate() : number;
+
     return symbol.isEmpty() ? number : number.withSymbol(symbol);
   }
 

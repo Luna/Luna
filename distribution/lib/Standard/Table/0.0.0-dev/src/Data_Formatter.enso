@@ -251,8 +251,13 @@ type Data_Formatter
     get_specific_type_parsers self =
         ## Have to do date parsing first to allow for pure numeric formats.
         date_parsers = [self.make_date_time_parser, self.make_date_parser, self.make_time_of_day_parser]
+        us_parsers = if self.decimal_point != Auto || self.thousand_separator != "" then [] else
+            ## In default mode, add the English pattern to ensure they dominate.
+            english = self.with_number_formatting decimal_point='.' thousand_separator=','
+            system = self.with_number_formatting decimal_point='.' thousand_separator='\0'
+            [english.make_integer_parser auto_mode=True, system.make_integer_parser auto_mode=True, english.make_decimal_parser auto_mode=True, system.make_decimal_parser auto_mode=True]
         remaining_parsers = [self.make_integer_parser auto_mode=True, self.make_decimal_parser auto_mode=True, self.make_boolean_parser]
-        parsers = date_parsers + remaining_parsers
+        parsers = date_parsers + us_parsers + remaining_parsers
         ## Unfortunately, the [] literal allows to create a vector containing
            dataflow errors. That is not handled well later by Polyglot. So we
            ensure all errors surface here.

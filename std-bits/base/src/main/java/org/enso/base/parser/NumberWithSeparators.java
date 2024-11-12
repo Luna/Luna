@@ -268,6 +268,11 @@ public enum NumberWithSeparators {
       CharSequence value, int idx, int endIdx, char separator, int separatorCount) {
     assert thousands == Constants.UNKNOWN;
 
+    if (separator == decimal) {
+      // Encountered a decimal point, so can't be an integer.
+      return new NumberParseFailure("Encountered Decimal Point - Can't Be Integer.");
+    }
+
     if (separator == Constants.NONE) {
       // Didn't encounter any separators so use simpler logic.
       return parseUnknownIntegerNone(value, idx, endIdx);
@@ -358,6 +363,12 @@ public enum NumberWithSeparators {
       int lastSeparatorIdx) {
     assert thousands == Constants.UNKNOWN || decimal == Constants.UNKNOWN;
 
+    // Special case when single separator equal to decimal point.
+    if (separatorCount == 1 && firstSeparator == decimal) {
+      var fixed = decimal == '.' ? NO_DOT : NO_COMMA;
+      return fixed.parseFixedDecimal(value, idx, endIdx, Constants.NONE, decimal);
+    }
+
     // Cases of no separators or repeated single separator - must be integer.
     if (firstSeparator == Constants.NONE
         || (secondSeparator == Constants.NONE
@@ -413,6 +424,10 @@ public enum NumberWithSeparators {
     }
     if (format == null) {
       return new NumberParseFailure("No matching number format.");
+    }
+
+    if ((thousands != Constants.UNKNOWN && format.thousands != thousands) || (decimal != Constants.UNKNOWN && format.decimal != decimal)) {
+      return new NumberParseFailure("Invalid format matched.");
     }
 
     var result = format.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
