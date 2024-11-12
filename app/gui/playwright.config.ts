@@ -10,7 +10,12 @@ import { defineConfig } from '@playwright/test'
 import net from 'net'
 
 const DEBUG = process.env.DEBUG_E2E === 'true'
-const TIMEOUT_MS = DEBUG ? 100_000_000 : 60_000
+const isCI = process.env.CI === 'true'
+const isProd = process.env.PROD === 'true'
+const TIMEOUT_MS =
+  DEBUG ? 100_000_000
+  : isCI ? 60_000
+  : 10_000
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
@@ -120,11 +125,9 @@ export default defineConfig({
   ],
   webServer: [
     {
-      env: {
-        E2E: 'true',
-      },
+      env: { E2E: 'true' },
       command:
-        process.env.CI || process.env.PROD ?
+        isCI || isProd ?
           `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
         : `corepack pnpm exec vite dev --port ${ports.projectView}`,
       // Build from scratch apparently can take a while on CI machines.
@@ -135,7 +138,7 @@ export default defineConfig({
     },
     {
       command:
-        process.env.CI || process.env.PROD ?
+        isCI || process.env.PROD ?
           `corepack pnpm exec vite -c vite.test.config.ts build && vite -c vite.test.config.ts preview --port ${ports.dashboard} --strictPort`
         : `corepack pnpm exec vite -c vite.test.config.ts --port ${ports.dashboard}`,
       timeout: 240 * 1000,

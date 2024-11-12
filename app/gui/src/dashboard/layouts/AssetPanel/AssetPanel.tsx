@@ -107,6 +107,7 @@ export function AssetPanel(props: AssetPanelProps) {
     <AnimatePresence initial={!isVisible} mode="sync">
       {isVisible && (
         <motion.div
+          data-testid="asset-panel"
           initial="initial"
           animate="animate"
           exit="exit"

@@ -62,6 +62,20 @@ export type MockApi = Awaited<ReturnType<typeof mockApiInternal>>
 
 export const mockApi: (params: MockParams) => Promise<MockApi> = mockApiInternal
 
+export const EULA_JSON = {
+  path: '/eula.md',
+  size: 9472,
+  modified: '2024-05-21T10:47:27.000Z',
+  hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
+}
+
+export const PRIVACY_JSON = {
+  path: '/privacy.md',
+  size: 1234,
+  modified: '2024-05-21T10:47:27.000Z',
+  hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
+}
+
 /** Add route handlers for the mock API to a page. */
 async function mockApiInternal({ page, setupAPI }: MockParams) {
   const defaultEmail = 'email@example.com' as backend.EmailAddress
@@ -391,19 +405,10 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     await page.route('https://www.googletagmanager.com/gtag/js*', (route) =>
       route.fulfill({ contentType: 'text/javascript', body: 'export {};' }),
     )
+
     if (process.env.MOCK_ALL_URLS === 'true') {
-      await page.route('https://fonts.googleapis.com/css2*', async (route) => {
-        await route.fulfill({ contentType: 'text/css', body: '' })
-      })
       await page.route('https://ensoanalytics.com/eula.json', async (route) => {
-        await route.fulfill({
-          json: {
-            path: '/eula.md',
-            size: 9472,
-            modified: '2024-06-26T10:44:04.939Z',
-            hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
-          },
-        })
+        await route.fulfill({ json: EULA_JSON })
       })
       await page.route(
         'https://api.github.com/repos/enso-org/enso/releases/latest',
@@ -417,6 +422,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
           headers: { location: 'https://objects.githubusercontent.com/foo/bar' },
         })
       })
+
       await page.route('https://objects.githubusercontent.com/**', async (route) => {
         await route.fulfill({
           status: 200,

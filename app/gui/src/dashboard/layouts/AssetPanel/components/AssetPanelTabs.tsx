@@ -56,7 +56,13 @@ export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabPro
   })
 
   return (
-    <Tab ref={tabRef} id={id} aria-label={label} className="aspect-square w-full cursor-pointer">
+    <Tab
+      ref={tabRef}
+      id={id}
+      aria-label={label}
+      className="aspect-square w-full cursor-pointer"
+      data-testid={`asset-panel-tab-${id}`}
+    >
       {({ isSelected }) => (
         <>
           <AnimatedBackground.Item
