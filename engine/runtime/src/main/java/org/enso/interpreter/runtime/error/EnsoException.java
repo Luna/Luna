@@ -14,7 +14,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
  */
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "delegate")
 @ExportLibrary(value = TypesLibrary.class, delegateTo = "delegate")
-class EnsoException extends AbstractTruffleException {
+public class EnsoException extends AbstractTruffleException {
   final Object delegate;
 
   private EnsoException(Object delegate, Node location) {
@@ -22,13 +22,18 @@ class EnsoException extends AbstractTruffleException {
     this.delegate = delegate;
   }
 
-  static EnsoException fromEnsoObject(EnsoObject ensoObject, Node location) {
+  public static EnsoException fromEnsoObject(EnsoObject ensoObject, Node location) {
     Objects.requireNonNull(ensoObject);
     return new EnsoException(ensoObject, location);
   }
 
-  static EnsoException fromPanicSentinel(PanicSentinel panicSentinel, Node location) {
+  public static EnsoException fromPanicSentinel(PanicSentinel panicSentinel, Node location) {
     Objects.requireNonNull(panicSentinel);
     return new EnsoException(panicSentinel, location);
+  }
+
+  public static EnsoException fromDataflowError(DataflowError err) {
+    Objects.requireNonNull(err);
+    return new EnsoException(err, err.getLocation());
   }
 }

@@ -43,6 +43,7 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeAtNode;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeLengthNode;
 import org.enso.interpreter.runtime.error.DataflowError;
+import org.enso.interpreter.runtime.error.EnsoException;
 import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
@@ -734,7 +735,7 @@ public final class EnsoFile extends EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
-  public static EnsoObject fromString(EnsoContext context, String path)
+  public static Object fromString(EnsoContext context, String path)
       throws IllegalArgumentException {
     try {
       TruffleFile file = context.getPublicTruffleFile(path);
@@ -745,7 +746,7 @@ public final class EnsoFile extends EnsoObject {
               .getBuiltins()
               .error()
               .makeUnsupportedArgumentsError(new Object[] {Text.create(path)}, ex.getMessage());
-      return DataflowError.withDefaultTrace(err, null);
+      return EnsoException.fromDataflowError(DataflowError.withDefaultTrace(err, null));
     }
   }
 
@@ -766,7 +767,7 @@ public final class EnsoFile extends EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
-  public static EnsoObject userHome(EnsoContext context) {
+  public static Object userHome(EnsoContext context) {
     return fromString(context, System.getProperty("user.home"));
   }
 
