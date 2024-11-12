@@ -43,7 +43,6 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeAtNode;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeLengthNode;
 import org.enso.interpreter.runtime.error.DataflowError;
-import org.enso.interpreter.runtime.error.EnsoException;
 import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
@@ -746,7 +745,7 @@ public final class EnsoFile extends EnsoObject {
               .getBuiltins()
               .error()
               .makeUnsupportedArgumentsError(new Object[] {Text.create(path)}, ex.getMessage());
-      return EnsoException.fromDataflowError(DataflowError.withDefaultTrace(err, null));
+      return DataflowError.withDefaultTrace(err, null);
     }
   }
 
