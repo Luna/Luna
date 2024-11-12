@@ -126,7 +126,7 @@ const defaultColDef: Ref<ColDef> = ref({
   filter: true,
   resizable: true,
   minWidth: 25,
-  cellRenderer: (params: ICellRendererParams) => cellRenderer(params),
+  cellRenderer: cellRenderer,
   cellClass: cellClass,
   contextMenuItems: [commonContextMenuActions.copy, 'copyWithHeaders', 'separator', 'export'],
 } satisfies ColDef)
@@ -316,50 +316,68 @@ function addRowIndex(data: object[]): object[] {
   return data.map((row, i) => ({ [INDEX_FIELD_NAME]: i, ...row }))
 }
 
-function toField(name: string, index?: number, valueType?: ValueType | null | undefined): ColDef {
-  const valType = valueType ? valueType.constructor : null
-  const displayValue = valueType ? valueType.display_text : null
-  let icon
-  switch (valType) {
+function getValueTypeIcon(valueType: string) {
+  switch (valueType) {
     case 'Char':
-      icon = 'text3'
-      break
+      return 'text3'
     case 'Boolean':
-      icon = 'check'
-      break
+      return 'check'
     case 'Integer':
     case 'Float':
     case 'Decimal':
     case 'Byte':
-      icon = 'math'
-      break
+      return 'math'
     case 'Date':
     case 'Date_Time':
-      icon = 'calendar'
-      break
+      return 'calendar'
     case 'Time':
-      icon = 'time'
-      break
+      return 'time'
     case 'Mixed':
-      icon = 'mixed'
+      return 'mixed'
   }
+}
+
+/**
+ * Generates the column definition for the table vizulization, including displaying the data value type and
+ * data quality indicators.
+ *
+ * @param {string} name - The name which will be displayed in the table header and used to idenfiy the column.
+ *
+ * @param {number} [options.index] - The index of column the corresponds to the data in the `dataQuality` arrays
+ * (`number_of_nothing` and `number_of_whitespace`). This identifies the correct indicators for each column
+ * to be displayed in the toolip.
+ * @param {ValueType | null | undefined} [options.valueType] - The data type of the column, displayed as an icon
+ * and in text within the tooltip
+ */
+function toField(
+  name: string,
+  options: { index?: number; valueType?: ValueType | null | undefined } = {},
+): ColDef {
+  const { index, valueType } = options
+
+  const displayValue = valueType ? valueType.display_text : null
+  const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
 
   const dataQuality =
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs
     : { number_of_nothing: [], number_of_whitespace: [] }
-  const nothingIsZeroOrNull =
-    index != null ? !(dataQuality.number_of_nothing && dataQuality.number_of_nothing[index]) : true
-  const whitespaceIsZeroOrNull =
-    index != null ?
-      !(dataQuality.number_of_whitespace && dataQuality.number_of_whitespace[index])
-    : true
 
-  const hideDataQuality = nothingIsZeroOrNull && whitespaceIsZeroOrNull
+  const nothingIsNonZero =
+    index != null && dataQuality?.number_of_nothing ?
+      (dataQuality.number_of_nothing[index] ?? 0) > 0
+    : false
+
+  const whitespaceIsNonZero =
+    index != null && dataQuality?.number_of_nothing ?
+      (dataQuality.number_of_whitespace[index] ?? 0) > 0
+    : false
+
+  const showDataQuality = nothingIsNonZero || whitespaceIsNonZero
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
-  const svgTemplateWarning = hideDataQuality ? '' : getSvgTemplate('warning')
+  const svgTemplateWarning = showDataQuality ? getSvgTemplate('warning') : ''
   const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
   const sort = `
       <span ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
@@ -368,10 +386,12 @@ function toField(name: string, index?: number, valueType?: ValueType | null | un
       <span ref="eSortDesc" class="ag-header-icon ag-sort-descending-icon" aria-hidden="true"></span>
       <span ref="eSortNone" class="ag-header-icon ag-sort-none-icon" aria-hidden="true"></span>
     `
+
+  const styles = 'display:flex; flex-direction:row; justify-content:space-between; width:inherit;'
   const template =
     icon ?
-      `<span style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'> ${name} </span>  ${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
-    : `<span ref="eLabel" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'>${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
+      `<span style='${styles}'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='${styles}'> ${name} </span>${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
+    : `<span style='${styles}' ref="eLabel">${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
 
   return {
     field: name,
@@ -384,18 +404,15 @@ function toField(name: string, index?: number, valueType?: ValueType | null | un
     tooltipComponentParams: {
       numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
       numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
-      total:
-        typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
-          props.data.all_rows_count
-        : 0,
-      hideDataQuality,
+      total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
+      showDataQuality,
     },
   }
 }
 
 function toRowField(name: string, index: number, valueType?: ValueType | null | undefined) {
   return {
-    ...toField(name, index, valueType),
+    ...toField(name, { index, valueType }),
     cellDataType: false,
   }
 }
@@ -537,7 +554,7 @@ watchEffect(() => {
         if (config.nodeType === ROW_NODE_TYPE) {
           return toRowField(v, i, valueType)
         }
-        return toField(v, i, valueType)
+        return toField(v, { index: i, valueType })
       }) ?? []
 
     columnDefs.value =
@@ -724,5 +741,12 @@ config.setToolbar(
 .button-wrappers {
   display: flex;
   flex-direction: row;
+}
+
+.ag-header-cell .myclass {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: inherit;
 }
 </style>
