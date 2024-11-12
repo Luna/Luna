@@ -1,8 +1,10 @@
 package org.enso.interpreter.runtime.error;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
 import com.oracle.truffle.api.interop.ExceptionType;
@@ -13,6 +15,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
+import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.BaseNode.TailStatus;
 import org.enso.interpreter.node.callable.IndirectInvokeMethodNode;
 import org.enso.interpreter.node.callable.InvokeCallableNode.ArgumentsExecutionMode;
@@ -144,13 +147,25 @@ public final class PanicException extends AbstractTruffleException {
   }
 
   @ExportMessage
+  Object toDisplayString(
+      boolean allowSideEffects, @Shared @Cached IndirectInvokeMethodNode invokeMethodNode) {
+    try {
+      return toDisplayText(payload, invokeMethodNode);
+    } catch (UnsupportedMessageException e) {
+      logger().error("Cannot convert payload " + payload + " to string", e);
+      return null;
+    }
+  }
+
+  @ExportMessage
   Object getExceptionMessage(
-      @Cached IndirectInvokeMethodNode payloads,
-      @Cached(value = "toDisplayText(this.getPayload(), payloads)", allowUncached = true)
+      @Shared @Cached IndirectInvokeMethodNode invokeMethodNode,
+      @Cached(value = "toDisplayText(this.getPayload(), invokeMethodNode)", allowUncached = true)
           UnresolvedSymbol toDisplayText,
       @CachedLibrary(limit = "3") InteropLibrary strings,
       @Cached TypeToDisplayTextNode typeToDisplayTextNode) {
-    return handleExceptionMessage(payload, payloads, toDisplayText, strings, typeToDisplayTextNode);
+    return handleExceptionMessage(
+        payload, invokeMethodNode, toDisplayText, strings, typeToDisplayTextNode);
   }
 
   static Object handleExceptionMessage(
@@ -228,6 +243,16 @@ public final class PanicException extends AbstractTruffleException {
       throw UnsupportedMessageException.create();
     }
     return getLocation().getEncapsulatingSourceSection();
+  }
+
+  @ExportMessage
+  boolean hasLanguage() {
+    return true;
+  }
+
+  @ExportMessage
+  Class<? extends TruffleLanguage<?>> getLanguage() {
+    return EnsoLanguage.class;
   }
 
   private static Logger logger() {
