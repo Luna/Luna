@@ -3,32 +3,34 @@
 import { defaultEquality } from '@/util/equals'
 import { debouncedWatch } from '@vueuse/core'
 import { nop } from 'lib0/function'
-import {
-  callWithErrorHandling,
-  computed,
+import type {
   ComputedRef,
   // (it is used in docs)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   DebuggerOptions,
   DeepReadonly,
-  effect,
-  effectScope,
-  isRef,
   MaybeRefOrGetter,
-  queuePostFlushCb,
-  reactive,
-  ReactiveEffect,
   ReactiveEffectOptions,
   ReactiveEffectRunner,
   Ref,
+  WatchSource,
+  WatchStopHandle,
+  WritableComputedRef,
+} from 'vue'
+import {
+  callWithErrorHandling,
+  computed,
+  effect,
+  effectScope,
+  isRef,
+  queuePostFlushCb,
+  reactive,
+  ReactiveEffect,
   shallowReactive,
   shallowRef,
   toRaw,
   toValue,
   watch,
-  WatchSource,
-  WatchStopHandle,
-  WritableComputedRef,
 } from 'vue'
 
 /** Cast watch source to an observable ref. */

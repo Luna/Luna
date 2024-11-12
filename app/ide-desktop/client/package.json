@@ -45,12 +45,12 @@
     "enso-common": "workspace:*",
     "enso-gui": "workspace:*",
     "enso-runner": "workspace:*",
-    "esbuild": "^0.19.3",
+    "esbuild": "^0.23.0",
     "esbuild-plugin-wasm": "^1.1.0",
     "fast-glob": "^3.2.12",
     "portfinder": "^1.0.32",
     "tsx": "^4.7.1",
-    "vite": "^5.3.5",
+    "vite": "^5.4.10",
     "playwright": "^1.45.0"
   },
   "//": [

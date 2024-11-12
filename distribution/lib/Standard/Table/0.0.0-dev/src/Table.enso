@@ -1,6 +1,7 @@
 from Standard.Base import all
 import Standard.Base.Data.Array_Proxy.Array_Proxy
 import Standard.Base.Data.Filter_Condition as Filter_Condition_Module
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
 import Standard.Base.Data.Time.Errors.Date_Time_Format_Parse_Error
 import Standard.Base.Data.Vector.No_Wrap
 import Standard.Base.Errors.Common.Additional_Warnings
@@ -47,6 +48,7 @@ import project.Internal.Lookup_Helpers
 import project.Internal.Lookup_Helpers.Lookup_Column
 import project.Internal.Parse_Values_Helper
 import project.Internal.Problem_Builder.Problem_Builder
+import project.Internal.Read_Many_Helpers
 import project.Internal.Replace_Helpers
 import project.Internal.Split_Tokenize
 import project.Internal.Table_Helpers
@@ -140,7 +142,7 @@ type Table
     new columns =
         invalid_input_shape =
             Error.throw (Illegal_Argument.Error "Each column must be represented by a pair whose first element is the column name and the second element is a vector of elements that will constitute that column, or an existing column.")
-        cols = columns.map on_problems=No_Wrap c->
+        cols = columns.map on_problems=No_Wrap.Value c->
             case c of
                 v : Vector ->
                     if v.length != 2 then invalid_input_shape else
@@ -1512,7 +1514,7 @@ type Table
                 False ->
                     Dictionary.from_vector <| selected_columns.map c-> [c.name, True]
 
-            new_columns = self.columns.map on_problems=No_Wrap column-> if selected_column_names.contains_key column.name . not then column else
+            new_columns = self.columns.map on_problems=No_Wrap.Value column-> if selected_column_names.contains_key column.name . not then column else
                 Value_Type.expect_text column <|
                     storage = column.java_column.getStorage
                     new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
@@ -2732,10 +2734,10 @@ type Table
     merge self lookup_table:Table key_columns:(Vector (Integer | Text | Regex) | Text | Integer | Regex) add_new_columns:Boolean=False allow_unmatched_rows:Boolean=True on_problems:Problem_Behavior=..Report_Warning =
         lookup_columns = Lookup_Helpers.prepare_columns_for_lookup self lookup_table key_columns add_new_columns allow_unmatched_rows on_problems
 
-        java_descriptions = lookup_columns.map make_java_lookup_column_description on_problems=No_Wrap
+        java_descriptions = lookup_columns.map make_java_lookup_column_description on_problems=No_Wrap.Value
 
         keys = lookup_columns.filter .is_key
-        java_keys = keys.map on_problems=No_Wrap key_column->
+        java_keys = keys.map on_problems=No_Wrap.Value key_column->
             Java_Join_Equals.new key_column.base_column.java_column key_column.lookup_column.java_column
 
         handle_java_errors ~action =
@@ -3205,7 +3207,7 @@ type Table
         normalize_group_by input = case input of
             Aggregate_Column.Group_By c _ -> c
             _ : Aggregate_Column -> Error.throw (Illegal_Argument.Error "Only Aggregate_Column.Group_By can be used for cross_tab group_by clause.")
-            _ : Vector -> input.map on_problems=No_Wrap normalize_group_by
+            _ : Vector -> input.map on_problems=No_Wrap.Value normalize_group_by
             _ -> input
 
         ## validate the name and group_by columns
@@ -3217,7 +3219,7 @@ type Table
         grouping = columns_helper.select_columns_helper (normalize_group_by group_by) Case_Sensitivity.Default True problem_builder
 
         ## Validate the values
-        resolved_values = Vector.unify_vector_or_element values . map on_problems=No_Wrap (Aggregate_Column_Helper.resolve_aggregate self problem_builder)
+        resolved_values = Vector.unify_vector_or_element values . map on_problems=No_Wrap.Value (Aggregate_Column_Helper.resolve_aggregate self problem_builder)
         is_group_by c = case c of
             Aggregate_Column.Group_By _ _ -> True
             _ -> False
@@ -3881,3 +3883,7 @@ make_fill_nothing_default_widget table cache=Nothing =
 ## PRIVATE
    Helper method for internal use to make a Table from a Java Table.
 from_java_table java_table = Table.Value java_table
+
+## PRIVATE
+Many_Files_List.from (that : Table) =
+    Read_Many_Helpers.find_files_list_in_table that
