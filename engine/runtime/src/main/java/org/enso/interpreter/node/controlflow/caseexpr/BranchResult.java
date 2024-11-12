@@ -13,6 +13,14 @@ final class BranchResult extends EnsoObject {
     this.result = result;
   }
 
+  public boolean isMatched() {
+    return isMatched;
+  }
+
+  public Object result() {
+    return result;
+  }
+
   static BranchResult failure(Node node) {
     return new BranchResult(false, EnsoContext.get(node).getBuiltins().nothing());
   }
