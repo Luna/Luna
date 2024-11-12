@@ -8,7 +8,7 @@ export class TableVisualisationTooltip implements ITooltipComp {
       numberOfNothing: number
       numberOfWhitespace: number
       total: number
-      hideDataQuality: boolean
+      showDataQuality: boolean
     },
   ) {
     this.eGui = document.createElement('div')
@@ -24,7 +24,7 @@ export class TableVisualisationTooltip implements ITooltipComp {
     })
 
     const getPercentage = (value: number) => ((value / params.total) * 100).toFixed(2)
-    const getVisibility = (value: number) => (value > 0 ? 'visible' : 'hidden')
+    const getDisplay = (value: number) => (value > 0 ? 'block' : 'none')
     const createIndicator = (value: number) => {
       const color =
         value < 33 ? 'green'
@@ -34,17 +34,17 @@ export class TableVisualisationTooltip implements ITooltipComp {
     }
 
     const dataQualityTemplate = `
-            <div style="visibility: ${getVisibility(params.numberOfNothing)};">
+            <div style="display: ${getDisplay(params.numberOfNothing)};">
                 Nulls/Nothing: ${getPercentage(params.numberOfNothing)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
             </div>
-            <div style="visibility: ${getVisibility(params.numberOfWhitespace)};">
+            <div style="display: ${getDisplay(params.numberOfWhitespace)};">
                 Trailing/Leading Whitespace: ${getPercentage(params.numberOfWhitespace)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
             </div>
         `
 
     this.eGui.innerHTML = `
             <div><b>Column value type:</b> ${params.value}</div>
-            <div style="display: ${params.hideDataQuality ? 'none' : 'block'};"">
+            <div style="display: ${params.showDataQuality ? 'block' : 'none'};"">
                 <b>Data Quality Indicators</b>
                 ${dataQualityTemplate}
             </div>
