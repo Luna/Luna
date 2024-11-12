@@ -78,7 +78,7 @@ export default function VersionChecker() {
   const remindLater = useEventCallback(() => {
     setIsOpen(false)
     // User asked to be reminded later, so we suppress the dialog from showing again for next 24 hours.
-    queryClient.setQueryData(['latestRelease'], { isPostponed: true })
+    queryClient.setQueryData(['latestRelease'], { ...metadataQuery.data, isPostponed: true })
   })
 
   const onDownload = useEventCallback(async () => {
@@ -103,7 +103,7 @@ export default function VersionChecker() {
   const latestVersion = metadataQuery.data.tagName
   const htmlUrl = metadataQuery.data.htmlUrl
   const publishedAt = new Date(metadataQuery.data.publishedAt).toLocaleString(locale, {
-    dateStyle: 'medium',
+    dateStyle: 'long',
   })
 
   if (latestVersion !== CURRENT_VERSION && !isOpen && !isLastStep) {
@@ -115,6 +115,7 @@ export default function VersionChecker() {
   return (
     <Dialog
       title={getText('versionOutdatedTitle')}
+      size="large"
       modalProps={{ isOpen }}
       isDismissable={isLastStep}
       hideCloseButton={!isLastStep}
@@ -142,25 +143,27 @@ export default function VersionChecker() {
               <Text className="text-center text-sm" balance>
                 {getText('versionOutdatedPrompt')}
               </Text>
-              <div className="mb-6 flex flex-col items-center">
-                <Text variant="h1" className="mt-4">
-                  {getText('latestVersion', latestVersion, publishedAt)}
-                </Text>
+              <div className="mb-4 mt-3 flex flex-col items-center">
+                <Text.Group>
+                  <Text variant="h1">{getText('latestVersion', latestVersion, publishedAt)}</Text>
 
-                <Button
-                  variant="link"
-                  href={htmlUrl}
-                  target="_blank"
-                  icon={NewTabIcon}
-                  iconPosition="end"
-                >
-                  {getText('changeLog')}
-                </Button>
+                  <Button
+                    variant="link"
+                    href={htmlUrl}
+                    target="_blank"
+                    icon={NewTabIcon}
+                    iconPosition="end"
+                  >
+                    {getText('changeLog')}
+                  </Button>
 
-                <Text>
-                  {getText('yourVersion')}{' '}
-                  <Text>{CURRENT_VERSION ?? getText('unknownPlaceholder')}</Text>
-                </Text>
+                  <Text variant="body-sm">
+                    {getText('yourVersion')}{' '}
+                    <Text weight="bold" variant="body">
+                      {CURRENT_VERSION ?? getText('unknownPlaceholder')}
+                    </Text>
+                  </Text>
+                </Text.Group>
               </div>
 
               <ButtonGroup className="justify-center">
