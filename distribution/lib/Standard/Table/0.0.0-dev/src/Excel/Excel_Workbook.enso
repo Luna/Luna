@@ -354,10 +354,11 @@ type Excel_Workbook
          `Report_Warning`.
     @sheet_names build_sheet_selector
     read_many : Vector Text -> Headers -> Return_As_Table -> Problem_Behavior -> Table
-    read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return:Return_As_Table=..Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
+    read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return=..Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
+        resolved_return = _resolve_return_as_compatibility return
         if sheet_names.is_empty then Error.throw (Illegal_Argument.Error "No sheets selected.") else
             tables = sheet_names.map on_problems=on_problems address-> self.read address headers on_problems=on_problems
-            case return of
+            case resolved_return of
                 Return_As_Table.Table_Of_Objects -> Table.new [["Sheet Name", sheet_names], ["Table", tables]]
                 Return_As_Table.Merged_Table columns_to_keep match ->
                     first_tbl = tables.find t-> t != Nothing
@@ -382,13 +383,35 @@ build_sheet_selector workbook:Excel_Workbook display:Display=Display.Always -> W
     names = workbook.sheet_names.map n-> Option n n.pretty
     Multiple_Choice display=display values=names
 
-## How to merge sheets into a single table.
+## PRIVATE
+   DEPRECATED
+
+   How to merge sheets into a single table.
+   This type is deprecated and has been superseded by `Return_As_Table`.
+   It is kept only for compatibility reasons.
 type Return_As
-    ## Each sheet is returned as a row.
+    ## DEPRECATED
+       Each sheet is returned as a row.
     Table_Of_Tables
 
     ## All sheets are merged into a single table. A union operation is performed.
     Merged_Table (columns_to_keep : Columns_To_Keep = Columns_To_Keep.In_Any) (match : Match_Columns = Match_Columns.By_Name)
+
+## A helper method that ensures that we can take the new `Return_As_Table` type
+   as well as the deprecated `Return_As` type, together with autoscoping.
+   With autoscoping, the `Merged_Table` constructor is ambiguous, so plain
+   autoscoping would not work and we do some workarounds to make it work.
+   In case of the ambiguity, the new-style `Return_As_Table.Merged_Table`
+   variant is preferred.
+private _resolve_return_as_compatibility return =
+    Panic.catch Type_Error (return:Return_As_Table) (_->Nothing) . if_nothing <|
+        old_style = Panic.catch Type_Error (return:Return_As) (_->Nothing)
+        if old_style.is_nothing then Error.throw (Illegal_Argument.Error "Valid values for `return` are: `..Table_Of_Objects` (or compatibility `..Table_Of_Tables) or `..Merged_Table`. Instead, got `"+return.to_display_text+"`.") else
+            case old_style of
+                Return_As.Table_Of_Tables ->
+                    Return_As_Table.Table_Of_Objects
+                Return_As.Merged_Table columns_to_keep match ->
+                    Return_As_Table.Merged_Table columns_to_keep match
 
 ## PRIVATE
    Creates a query widget for the `read` method.

@@ -119,6 +119,15 @@ spec_fmt suite_builder header file read_method sheet_count=5 =
             problems = [Empty_Sheet.Error, Duplicate_Output_Column_Names.Error ["Price"]]
             Problems.test_problem_handling action problems tester ignore_warning_cardinality=True
 
+        group_builder.specify "should still support the old options for compatibility" <|
+            wb = read_method file
+            table1 = wb.read_many return=..Table_Of_Tables
+            table1.row_count . should_equal 5
+            table1.column_names . should_equal ["Sheet Name", "Table"]
+
+            table2 = wb.read_many return=..Old_Return_As.Merged_Table
+            table2.row_count . should_equal 25
+
         group_builder.specify "should let you read some sheets from xlsx" <|
             wb = read_method file
             single_table = wb.read_many ["Simple", "Dates"]
