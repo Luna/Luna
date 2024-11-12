@@ -3,6 +3,7 @@ package org.enso.base.cache;
 import java.time.ZonedDateTime;
 
 public class NowGetter extends Mockable<ZonedDateTime> {
+  @Override
   public ZonedDateTime computeValue() {
     return ZonedDateTime.now();
   }

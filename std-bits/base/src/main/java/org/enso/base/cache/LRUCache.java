@@ -107,7 +107,7 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
-    // If we have a content-length, clear up enough space for that not. If not,
+    // If we have a content-length, clear up enough space for that. If not,
     // then clear up enough space for the largest allowed file size.
     long maxFileSize = settings.getMaxFileSize();
     if (item.sizeMaybe.isPresent()) {
