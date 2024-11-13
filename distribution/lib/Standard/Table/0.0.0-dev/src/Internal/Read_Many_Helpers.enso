@@ -55,6 +55,7 @@ _input_as_table (input : Many_Files_List) -> Table =
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
 _merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) -> Table =
+    # TODO what to do about 0 row tables?
 
 
 _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
