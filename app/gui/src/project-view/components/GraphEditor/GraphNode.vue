@@ -408,6 +408,10 @@ watchEffect(() => {
   }
 })
 
+const dataSource = computed(
+  () => ({ type: 'node', nodeId: props.node.rootExpr.externalId }) as const,
+)
+
 // === Recompute node expression ===
 
 // The node is considered to be recomputing for at least this time.
@@ -508,7 +512,7 @@ function recomputeOnce() {
       :nodePosition="nodePosition"
       :isCircularMenuVisible="menuVisible"
       :currentType="props.node.vis?.identifier"
-      :dataSource="{ type: 'node', nodeId: props.node.rootExpr.externalId }"
+      :dataSource="dataSource"
       :typename="expressionInfo?.typename"
       :width="visualizationWidth"
       :height="visualizationHeight"
