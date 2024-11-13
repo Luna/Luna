@@ -278,18 +278,15 @@ export default function DriveBar(props: DriveBarProps) {
               loading={isCreatingProject}
               loaderPosition="icon"
               onPress={() => {
-                console.log('creating project', { createdProjectId })
                 setIsCreatingProject(true)
                 doCreateProject(
                   null,
                   null,
                   ({ projectId }, parentId) => {
-                    console.log('created project', projectId)
                     setCreatedProjectId({ projectId, parentId })
                     setIsCreatingProject(false)
                   },
                   () => {
-                    console.log('failed to create project')
                     setIsCreatingProject(false)
                   },
                 )

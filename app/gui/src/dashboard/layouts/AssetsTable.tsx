@@ -17,7 +17,6 @@ import {
 } from 'react'
 
 import {
-  queryOptions,
   useMutation,
   useQueries,
   useQuery,
@@ -73,7 +72,6 @@ import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
 import {
   canTransferBetweenCategories,
-  CATEGORY_TO_FILTER_BY,
   isLocalCategory,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
