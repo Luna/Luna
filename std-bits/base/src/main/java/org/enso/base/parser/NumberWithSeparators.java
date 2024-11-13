@@ -187,26 +187,26 @@ public enum NumberWithSeparators {
       return integer
           ? parseFixedInteger(value, idx, separators.endIdx(), separators.first())
           : parseFixedDecimal(
-              value,
-              idx,
-              separators.endIdx(),
-              separators.first(),
-              separators.second(),
-              separators.exponential());
+          value,
+          idx,
+          separators.endIdx(),
+          separators.first(),
+          separators.second(),
+          separators.exponential());
     }
 
     return integer
         ? parseUnknownInteger(
-            value, idx, separators.endIdx(), separators.first(), separators.count())
+        value, idx, separators.endIdx(), separators.first(), separators.count())
         : parseUnknownDecimal(
-            value,
-            idx,
-            separators.endIdx(),
-            separators.first(),
-            separators.second(),
-            separators.count(),
-            separators.lastSeparatorIdx(),
-            separators.exponential());
+        value,
+        idx,
+        separators.endIdx(),
+        separators.first(),
+        separators.second(),
+        separators.count(),
+        separators.lastSeparatorIdx(),
+        separators.exponential());
   }
 
   /** Internal record for returning when a new format is matched. */
@@ -215,7 +215,16 @@ public enum NumberWithSeparators {
 
   /** Internal record for returning the end index of the matched number. */
   record NumberParseResultWithIndex(int endIdx, NumberParseResult result)
-      implements NumberParseResult {}
+      implements NumberParseResult {
+
+    boolean exceedsThousand() {
+      return switch (result) {
+        case NumberParseLong lngValue -> lngValue.number() >= 1000;
+        case NumberParseDouble dblValue -> dblValue.number() >= 1000;
+        default -> false;
+      };
+    }
+  }
 
   /** Given a known integer format, parse the sequence. */
   private NumberParseResult parseFixedInteger(
@@ -345,10 +354,10 @@ public enum NumberWithSeparators {
     // Validate Separators.
     if (firstSeparator != Constants.NONE) {
       if ((secondSeparator == Constants.NONE
-              && firstSeparator != thousands
-              && firstSeparator != decimal)
+          && firstSeparator != thousands
+          && firstSeparator != decimal)
           || (secondSeparator != Constants.NONE
-              && (firstSeparator != thousands || secondSeparator != decimal))) {
+          && (firstSeparator != thousands || secondSeparator != decimal))) {
         return new NumberParseFailure("Invalid separator.");
       }
     }
@@ -387,19 +396,32 @@ public enum NumberWithSeparators {
     // Special case when single separator equal to decimal point.
     if (separatorCount == 1 && firstSeparator == decimal) {
       var fixed = decimal == '.' ? NO_DOT : NO_COMMA;
-      return fixed.parseFixedDecimal(value, idx, endIdx, Constants.NONE, decimal, exponential);
+      var result = fixed.parseFixedDecimal(value, idx, endIdx, Constants.NONE, decimal, exponential);
+      if (result instanceof NumberParseResultWithIndex resultWithIndex && resultWithIndex.exceedsThousand()) {
+        return new NumberParseResultWithFormat(fixed, result);
+      } else {
+        return result;
+      }
     }
 
     // Cases of no separators or repeated single separator - must be integer.
     if (!exponential
         && (firstSeparator == Constants.NONE
-            || (secondSeparator == Constants.NONE
-                && (separatorCount > 1 || firstSeparator == ' ' || firstSeparator == '\'')))) {
+        || (secondSeparator == Constants.NONE
+        && (separatorCount > 1 || firstSeparator == ' ' || firstSeparator == '\'')))) {
+      if (mightBeEuropean() && firstSeparator == '.') {
+        // We know we are wrong.
+        var result = DOT_COMMA.parseFixedInteger(value, idx, endIdx, '.');
+        return (result instanceof NumberParseFailure)
+            ? result
+            : new NumberParseResultWithFormat(DOT_COMMA, result);
+      }
+
       var result =
           thousands == Constants.UNKNOWN
               ? parseUnknownInteger(value, idx, endIdx, firstSeparator, separatorCount)
               : parseFixedInteger(
-                  value, idx, endIdx, separatorCount == 0 ? thousands : firstSeparator);
+              value, idx, endIdx, separatorCount == 0 ? thousands : firstSeparator);
 
       // Special case if COMMA_UNKNOWN and count > 1 then is COMMA_DOT.
       boolean resolveCommaUnknown = this == COMMA_UNKNOWN && separatorCount > 1;
@@ -439,8 +461,8 @@ public enum NumberWithSeparators {
           lastSeparatorIdx - idx > 3
               ? NO_DOT
               : (lastSeparatorIdx != endIdx - 4
-                  ? UNKNOWN_DOT
-                  : (decimal == ',' ? DOT_COMMA : DOT_UNKNOWN));
+              ? UNKNOWN_DOT
+              : (decimal == ',' ? DOT_COMMA : DOT_UNKNOWN));
     } else if (firstSeparator == ',') {
       // if separatorCount > 1, must be a thousand separator, hence COMMA_DOT (covered above).
       // if index of separator > 3, must be a decimal point without a thousand separator, hence
@@ -451,14 +473,21 @@ public enum NumberWithSeparators {
           lastSeparatorIdx - idx > 3
               ? NO_COMMA
               : (lastSeparatorIdx != endIdx - 4
-                  ? UNKNOWN_COMMA
-                  : (decimal == '.' ? COMMA_DOT : COMMA_UNKNOWN));
+              ? UNKNOWN_COMMA
+              : (decimal == '.' ? COMMA_DOT : COMMA_UNKNOWN));
     }
     if (format == null) {
       return new NumberParseFailure("No matching number format.");
     }
 
-    if ((thousands != Constants.UNKNOWN && format.thousands != thousands)
+    // Validate that the new format matches.
+    if (this.mightBeEuropean()) {
+      if (this == DOT_UNKNOWN && format.decimal != '.' && format.thousands != '.') {
+        return new NumberParseFailure("Invalid format matched.");
+      } else if (this == COMMA_UNKNOWN && format.decimal != ',' && format.thousands != ',') {
+        return new NumberParseFailure("Invalid format matched.");
+      }
+    } else if ((thousands != Constants.UNKNOWN && format.thousands != thousands)
         || (decimal != Constants.UNKNOWN && format.decimal != decimal)) {
       return new NumberParseFailure("Invalid format matched.");
     }

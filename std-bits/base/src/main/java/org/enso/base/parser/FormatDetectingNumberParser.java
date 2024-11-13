@@ -276,6 +276,8 @@ public class FormatDetectingNumberParser {
     var result = parse(value, false);
     if (result instanceof NumberParseDouble numberSuccess) {
       return numberSuccess.number();
+    } else if (result instanceof NumberParseLong longNumber) {
+      return (double) longNumber.number();
     }
     return null;
   }
