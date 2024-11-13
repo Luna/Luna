@@ -37,22 +37,22 @@ type Match_Columns
 match_columns tables matching_mode columns_to_keep problem_builder =
     assert tables.not_empty
     case matching_mode of
-        Match_Columns.By_Name -> match_columns_by_name tables columns_to_keep problem_builder
-        Match_Columns.By_Position -> match_columns_by_position tables columns_to_keep problem_builder
+        Match_Columns.By_Name -> _match_columns_by_name tables columns_to_keep problem_builder
+        Match_Columns.By_Position -> _match_columns_by_position tables columns_to_keep problem_builder
 
 ## PRIVATE
-match_columns_by_name tables columns_to_keep problem_builder = case columns_to_keep of
+private _match_columns_by_name tables columns_to_keep problem_builder = case columns_to_keep of
     Columns_To_Keep.In_List list -> if list.is_empty then Error.throw (Illegal_Argument.Error "The list of columns to keep cannot be empty.") else
         output_column_names = list.distinct
-        column_counts = find_column_counts tables
+        column_counts = _find_column_counts tables
         all_tables_count = tables.length
         unmatched_column_names = output_column_names.filter name->
             column_counts.get name 0 < all_tables_count
         if unmatched_column_names.not_empty then
             problem_builder.report_other_warning (Unmatched_Columns.Error unmatched_column_names)
-        build_column_set_by_name tables output_column_names
+        _build_column_set_by_name tables output_column_names
     Columns_To_Keep.In_All ->
-        column_counts = find_column_counts tables
+        column_counts = _find_column_counts tables
         # This will only include columns that were present in all tables.
         all_tables_count = tables.length
         common_column_names = tables.first.column_names.filter name->
@@ -64,14 +64,14 @@ match_columns_by_name tables columns_to_keep problem_builder = case columns_to_k
                 . distinct
             if dropped_column_names.not_empty then
                 problem_builder.report_other_warning (Unmatched_Columns.Error dropped_column_names)
-            build_column_set_by_name tables common_column_names
+            _build_column_set_by_name tables common_column_names
     _ ->
-        output_column_names = distinct_columns_in_appearance_order tables
+        output_column_names = _distinct_columns_in_appearance_order tables
         report_missing = case columns_to_keep of
             Columns_To_Keep.In_Any -> False
             Columns_To_Keep.In_Any_Warn_On_Missing -> True
         if report_missing then
-            column_counts = find_column_counts tables
+            column_counts = _find_column_counts tables
             all_tables_count = tables.length
             ## We iterate over output column names to get deterministic
               order of unmatched columns.
@@ -79,21 +79,19 @@ match_columns_by_name tables columns_to_keep problem_builder = case columns_to_k
                 column_counts.get name 0 < all_tables_count
             if unmatched_column_names.not_empty then
                 problem_builder.report_other_warning (Unmatched_Columns.Error unmatched_column_names)
-        build_column_set_by_name tables output_column_names
+        _build_column_set_by_name tables output_column_names
 
-## PRIVATE
-   Common logic for computing the final result of by-name matching.
+## Common logic for computing the final result of by-name matching.
    Once the set of output column names is determined, we compute the
    `Column_Set` by finding the corresponding column indices in each table (if found).
-build_column_set_by_name tables output_column_names =
+private _build_column_set_by_name tables output_column_names =
     output_column_names.map name->
         column_indices = tables.map table->
             # TODO this gets O(N^2), we should optimize
             table.column_names.index_of name
         Column_Set.Value name column_indices
 
-## PRIVATE
-match_columns_by_position tables columns_to_keep problem_builder = case columns_to_keep of
+private _match_columns_by_position tables columns_to_keep problem_builder = case columns_to_keep of
     Columns_To_Keep.In_List _ ->
         Error.throw (Illegal_Argument.Error "The In_List option for `columns_to_keep` cannot be used together with `By_Position` matching.")
     _ ->
@@ -129,19 +127,17 @@ match_columns_by_position tables columns_to_keep problem_builder = case columns_
             Column_Set.Value name column_ids
         column_sets
 
+## PRIVATE
 type Column_Set
-    ## PRIVATE
-    Value (name : Text) (column_indices : Vector Integer)
+    private Value (name : Text) (column_indices : Vector Integer)
 
-    ## PRIVATE
-    resolve_columns self (all_tables : Vector) = self.column_indices.zip all_tables i-> parent_table->
+    private resolve_columns self (all_tables : Vector) = self.column_indices.zip all_tables i-> parent_table->
         case i of
             Nothing -> Nothing
             _ : Integer -> parent_table.at i
 
-## PRIVATE
-   Returns a map indicating in how many tables did a column with a given name appear.
-find_column_counts tables =
+## Returns a map indicating in how many tables did a column with a given name appear.
+private _find_column_counts tables =
     tables.fold Dictionary.empty current->table->
         table.columns.fold current counts-> column->
             name=column.name
@@ -151,7 +147,7 @@ find_column_counts tables =
 ## PRIVATE
    Returns a list of distinct column names, in the order of first appearance,
    starting from the first table.
-distinct_columns_in_appearance_order tables =
+private _distinct_columns_in_appearance_order tables =
     Vector.build names_builder->
         tables.fold Dictionary.empty current-> table->
             table.columns.fold current seen_names-> column->
