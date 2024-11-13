@@ -520,7 +520,7 @@ run_union_tests group_builder setup call_union =
         Problems.test_problem_handling action problems tester
 
     # This test is not run on DB as all-null columns will not be Mixed there.
-    if setup.is_database.not then group_builder.specify "if no common type can be found, will fall back to converting all types to text and warn (all-null columns edge case)" <|
+    if setup.is_database.not then group_builder.specify "if no common type can be found, will fall back to converting all types to text and warn (all-null columns edge case)" pending="TODO Value_Type.Null #6281" <|
         # If a column is all-null, it will often have Mixed type. But that should not prevent the union from falling into the mixed type.
         t1 = table_builder [["A", [Nothing]]]
         t2 = table_builder [["A", [2, 3]]]

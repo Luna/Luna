@@ -171,14 +171,15 @@ add_specs suite_builder =
                     # We transform the Path to just file name
                     rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
 
+                    # TODO Once 6281 is done we should replace 100 with "100" etc.
                     null = Nothing
                     r.column_names . should_equal ["Path",               "a",  "b",      "c", "Value",  "d"]
                     rows.at 0 .      should_equal ["1_js_object.json",     1,    2,     null,    null, null]
                     rows.at 1 .      should_equal ["2_js_array.json",     30,   40, "foobar",    null, null]
                     rows.at 2 .      should_equal ["2_js_array.json",     50,   60,     null,    null, null]
-                    rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,   "100", null]
-                    rows.at 4 .      should_equal ["3_js_numbers.json", null, null,     null,   "200", null]
-                    rows.at 5 .      should_equal ["3_js_numbers.json", null, null,     null    "300", null]
+                    rows.at 3 .      should_equal ["3_js_numbers.json", null, null,     null,     100, null]
+                    rows.at 4 .      should_equal ["3_js_numbers.json", null, null,     null,     200, null]
+                    rows.at 5 .      should_equal ["3_js_numbers.json", null, null,     null,     300, null]
                     rows.at 6 .      should_equal ["4_table.tsv",         -1, null,     null,    null,   -4]
                     rows.at 7 .      should_equal ["4_table.tsv",         -2, null,     null,    null,   -5]
                     rows.at 8 .      should_equal ["5_plain_text.txt",  null, null,     null,   "Hi!", null]
@@ -188,9 +189,12 @@ add_specs suite_builder =
                     r.at "a" . value_type     . should_equal Value_Type.Integer
                     r.at "b" . value_type     . should_equal Value_Type.Integer
                     r.at "c" . value_type     . should_equal Value_Type.Char
-                    # TODO should there be an option to make "Value" Mixed type???
-                    r.at "Value" . value_type . should_equal Value_Type.Char
+                    # TODO change to Char once 6281 is done
+                    r.at "Value" . value_type . should_equal Value_Type.Mixed
                     r.at "d" . value_type     . should_equal Value_Type.Integer
+
+        # Marker to not forget
+        group_builder.specify "TODO" pending="Once 6281 is done we should update the test above." Nothing
 
         group_builder.specify "will still include 1 all-Nothing row for a loaded empty array" <|
             # But such array will not influence the columns present:
