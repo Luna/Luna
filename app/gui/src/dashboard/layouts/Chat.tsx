@@ -3,7 +3,7 @@ import * as React from 'react'
 
 import * as reactDom from 'react-dom'
 
-import * as chat from 'enso-chat/chat'
+import * as chat from '#/services/Chat'
 
 import CloseLargeIcon from '#/assets/close_large.svg'
 import DefaultUserIcon from '#/assets/default_user.svg'
