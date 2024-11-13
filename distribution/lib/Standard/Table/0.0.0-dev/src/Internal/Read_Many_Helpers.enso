@@ -41,7 +41,12 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
             _add_objects_column base_table objects
         Return_As_Table.Merged_Table columns_to_keep match_columns ->
             tables = objects.map _interpret_object_as_table
-            _merge_input_and_tables base_table tables columns_to_keep match_columns
+            case tables.length == 0 of
+                True ->
+                    Runtime.assert (base_table.row_count == 0) "No objects to merge should mean that there were no input files" 
+                    base_table
+                False ->
+                    _merge_input_and_tables base_table tables columns_to_keep match_columns
 
 _input_as_table (input : Many_Files_List) -> Table =
     case input.original_value of

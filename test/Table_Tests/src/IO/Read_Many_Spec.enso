@@ -264,10 +264,21 @@ add_specs suite_builder =
         group_builder.specify "has sane behaviour if no files were provided" <|
             col = Column.from_vector "C" []
             Data.read_many col return=..Vector . should_equal []
+
             t = Data.read_many col
             t.should_be_a Table
             t.row_count . should_equal 0
             t.column_names . should_equal ["C"]
+
+            t2 = Data.read_many [] return=..Merged_Table
+            t2.should_be_a Table
+            t2.row_count . should_equal 0
+            t2.column_names . should_equal ["Path"]
+
+            t3 = Data.read_many [] return=..Table_Of_Objects
+            t3.should_be_a Table
+            t3.row_count . should_equal 0
+            t3.column_names . should_equal ["Path", "Value"]
 
         group_builder.specify "will rename duplicated columns, keeping columns from the input unchanged" <|
             tmp_file = enso_project.data / "transient" / "table.csv"
