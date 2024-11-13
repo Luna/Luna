@@ -61,7 +61,13 @@ public class NumberParser extends IncrementalDatatypeParser {
       String decimalPoint,
       String thousandSeparator) {
     return new NumberParser(
-        null, allowSymbol, allowLeadingZeroes, trimValues, allowExponentialNotation, decimalPoint, thousandSeparator);
+        null,
+        allowSymbol,
+        allowLeadingZeroes,
+        trimValues,
+        allowExponentialNotation,
+        decimalPoint,
+        thousandSeparator);
   }
 
   private final IntegerType integerTargetType;

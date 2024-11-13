@@ -21,7 +21,8 @@ public class FormatDetectingNumberParser {
     NumberParseResultSuccess withSymbol(String symbol);
   }
 
-  public record NumberParseLong(long number, String symbol, boolean negated) implements NumberParseResultSuccess {
+  public record NumberParseLong(long number, String symbol, boolean negated)
+      implements NumberParseResultSuccess {
     @Override
     public NumberParseResultSuccess negate() {
       return new NumberParseLong(-number, symbol, true);
@@ -130,7 +131,8 @@ public class FormatDetectingNumberParser {
             return new NumberParseFailure("Multiple Number Sections.");
           }
 
-          var numberPart = numberWithSeparators.parse(value, idx, integer, allowExponentialNotation);
+          var numberPart =
+              numberWithSeparators.parse(value, idx, integer, allowExponentialNotation);
 
           // If the format changed, catch new format and unwrap result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {
@@ -251,7 +253,10 @@ public class FormatDetectingNumberParser {
     number = needsNegating ? number.negate() : number;
 
     // Handle Special Case of Negated 0 If Not An Integer
-    if (!integer && number instanceof NumberParseLong longNumber && longNumber.number() == 0 && longNumber.negated()) {
+    if (!integer
+        && number instanceof NumberParseLong longNumber
+        && longNumber.number() == 0
+        && longNumber.negated()) {
       // Catch -0 double.
       number = new NumberParseDouble(-0.0, longNumber.symbol());
     }
