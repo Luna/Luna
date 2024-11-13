@@ -21,15 +21,15 @@ public class FormatDetectingNumberParser {
     NumberParseResultSuccess withSymbol(String symbol);
   }
 
-  public record NumberParseLong(long number, String symbol) implements NumberParseResultSuccess {
+  public record NumberParseLong(long number, String symbol, boolean negated) implements NumberParseResultSuccess {
     @Override
     public NumberParseResultSuccess negate() {
-      return new NumberParseLong(-number, symbol);
+      return new NumberParseLong(-number, symbol, true);
     }
 
     @Override
     public NumberParseResultSuccess withSymbol(String symbol) {
-      return new NumberParseLong(number, symbol);
+      return new NumberParseLong(number, symbol, negated);
     }
   }
 
@@ -139,11 +139,11 @@ public class FormatDetectingNumberParser {
           // Result should either be a new index or a failure.
           // If it is a new index, update the index and unwrap the result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithIndex newIndex) {
-            // Check for leading zeroes (0 or 0. is acceptable).
+            // Check for leading zeroes (0 or 0<decimal> is acceptable).
             if (!allowLeadingZeroes
                 && c == '0'
                 && newIndex.endIdx() > idx + 1
-                && value.charAt(idx + 1) != '.') {
+                && value.charAt(idx + 1) != numberWithSeparators.getDecimal()) {
               return new NumberParseFailure("Leading Zero.");
             }
 
@@ -245,13 +245,14 @@ public class FormatDetectingNumberParser {
       return new NumberParseFailure("No Number Found.");
     }
 
-    // Special Case When Have a Long and want a Double
-    if (!integer && number instanceof NumberParseLong numberLong) {
-      number = new NumberParseDouble(numberLong.number(), numberLong.symbol());
-    }
-
     // Return Result
     number = needsNegating ? number.negate() : number;
+
+    // Handle Special Case of Negated 0 If Not An Integer
+    if (!integer && number instanceof NumberParseLong longNumber && longNumber.number() == 0 && longNumber.negated()) {
+      // Catch -0 double.
+      number = new NumberParseDouble(-0.0, longNumber.symbol());
+    }
 
     return symbol.isEmpty() ? number : number.withSymbol(symbol);
   }

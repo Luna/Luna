@@ -179,6 +179,7 @@ public enum NumberWithSeparators {
   NumberParseResult parse(
       CharSequence value, int idx, boolean integer, boolean allowExponentialNotation) {
     var separators = Separators.parse(value, idx, integer, allowExponentialNotation);
+    // TODO: Add more detail on separator failure.
     if (separators == null) {
       return new NumberParseFailure("Invalid separators.");
     }
@@ -217,12 +218,6 @@ public enum NumberWithSeparators {
       CharSequence value, int idx, int endIdx, char firstSeparator) {
     assert thousands != Constants.UNKNOWN;
 
-    // Validate Separator.
-    if (firstSeparator != thousands) {
-      return new NumberParseFailure(
-          "Invalid separator (expected " + thousands + ", actual " + firstSeparator + ".");
-    }
-
     // Strip out the separators.
     int origEndIdx = endIdx;
     if (thousands != Constants.NONE) {
@@ -236,7 +231,7 @@ public enum NumberWithSeparators {
 
     try {
       long number = Long.parseLong(value, idx, endIdx, 10);
-      return new NumberParseResultWithIndex(origEndIdx, new NumberParseLong(number, ""));
+      return new NumberParseResultWithIndex(origEndIdx, new NumberParseLong(number, "", false));
     } catch (NumberFormatException e) {
       return new NumberParseFailure("Invalid number.");
     }
@@ -249,7 +244,7 @@ public enum NumberWithSeparators {
     // We haven't encountered any separators. So parse the number as a long.
     try {
       long number = Long.parseLong(value, idx, endIdx, 10);
-      var result = new NumberParseResultWithIndex(endIdx, new NumberParseLong(number, ""));
+      var result = new NumberParseResultWithIndex(endIdx, new NumberParseLong(number, "", false));
 
       // If greater than or equal 1000, then we know no thousand separators.
       if (number >= 1000) {
@@ -317,18 +312,23 @@ public enum NumberWithSeparators {
       // Haven't encountered a thousand separator, but know the decimal separator.
       // If DOT_UNKNOWN then could be European or English, but treat as English.
       assert firstSeparator == '.' && secondSeparator == Constants.NONE;
-      return NO_DOT.parseFixedDecimal(value, idx, endIdx, Constants.NONE, '.');
+      return NO_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
     } else if (this == COMMA_UNKNOWN) {
       // Have only encountered a Comma(s), so treat as English format (COMMA_DOT).
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return COMMA_DOT.parseFixedDecimal(value, idx, endIdx, ',', '.');
+      return COMMA_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
     } else if (this == UNKNOWN_COMMA) {
       // Have encountered a comma and know is a decimal separator.
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return NO_COMMA.parseFixedDecimal(value, idx, endIdx, Constants.NONE, ',');
+      return NO_COMMA.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
     }
 
     assert thousands != Constants.UNKNOWN && decimal != Constants.UNKNOWN;
+
+    // If no decimal separator, then must be an integer.
+    if (firstSeparator != decimal && secondSeparator != decimal) {
+      return parseFixedInteger(value, idx, endIdx, firstSeparator);
+    }
 
     // Validate Separators.
     if (firstSeparator != Constants.NONE) {

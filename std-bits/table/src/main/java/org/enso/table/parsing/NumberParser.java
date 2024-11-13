@@ -141,6 +141,7 @@ public class NumberParser extends IncrementalDatatypeParser {
   public Object parseSingleValue(String text, ParseProblemAggregator problemAggregator) {
     var result = parser.parse(text, isInteger());
 
+    // TODO: Capture the message into the problem aggregator.
     if (result instanceof FormatDetectingNumberParser.NumberParseFailure) {
       problemAggregator.reportInvalidFormat(text);
       return null;

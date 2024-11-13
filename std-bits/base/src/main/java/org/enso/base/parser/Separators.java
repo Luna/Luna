@@ -169,6 +169,7 @@ public record Separators(char first, char second, int count, int endIdx, int las
         // Found the first separator.
         firstSeparator = c;
       } else {
+        // TODO: This check is probably now redundant as strip does it as well.
         // Encountered another separator -  must be 4 away from last separator.
         if (endIdx != lastSeparator + 4) {
           // Special case if last was a space as could be separating symbol.
