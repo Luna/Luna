@@ -41,12 +41,7 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
             _add_objects_column base_table objects
         Return_As_Table.Merged_Table columns_to_keep match_columns ->
             tables = objects.map _interpret_object_as_table
-            case tables.length == 0 of
-                True ->
-                    Runtime.assert (base_table.row_count == 0) "No objects to merge should mean that there were no input files" 
-                    base_table
-                False ->
-                    _merge_input_and_tables base_table tables columns_to_keep match_columns
+            _merge_input_and_tables base_table tables columns_to_keep match_columns
 
 _input_as_table (input : Many_Files_List) -> Table =
     case input.original_value of
@@ -60,16 +55,18 @@ _input_as_table (input : Many_Files_List) -> Table =
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
 _merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) columns_to_keep match_columns -> Table =
-    adapted_tables = tables_for_rows.map table->
-        if (table.is_a Table . not) || (table.row_count > 0) then table else
-            _make_table_with_one_null_row table
-    counts = adapted_tables.map table-> case table of
-        Nothing -> 1
-        _ : Table -> table.row_count
-    unified_tables = Table.from_union adapted_tables columns_to_keep match_columns
-    multiplicated_inputs = _duplicate_rows input_table counts
-    Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
-    multiplicated_inputs.zip unified_tables right_prefix=""
+    no_rows = tables_for_rows.is_empty || tables_for_rows.all .is_nothing
+    if no_rows then input_table else
+        adapted_tables = tables_for_rows.map table->
+            if (table.is_a Table . not) || (table.row_count > 0) then table else
+                _make_table_with_one_null_row table
+        counts = adapted_tables.map table-> case table of
+            Nothing -> 1
+            _ : Table -> table.row_count
+        unified_tables = Table.from_union adapted_tables columns_to_keep match_columns
+        multiplicated_inputs = _duplicate_rows input_table counts
+        Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
+        multiplicated_inputs.zip unified_tables right_prefix=""
 
 _make_table_with_one_null_row (empty_table : Table) -> Table =
     Runtime.assert (empty_table.row_count == 0) "The table must be empty."

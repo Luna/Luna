@@ -3772,6 +3772,8 @@ type Table
     from_union (tables : Vector) (columns_to_keep : Columns_To_Keep = ..In_Any_Warn_On_Missing) (match_columns : Match_Columns = ..By_Name) (on_problems : Problem_Behavior = ..Report_Warning) =
         all_tables = (tables.map t-> Table.from t)
         if all_tables.is_empty then Error.throw (Illegal_Argument.Error "`Table.from_union` needs at least 1 input table.") else
+            # TODO move this to `raw_union` that can accept nothing - the public API should not accept Nothing, but some internal functions may
+            # then Nothing will map to a single row but no new columns
             ## We keep separate problem builders, because if we are reporting `No_Output_Columns`,
                we only want to add a cause coming from unification; matching reports problems that would not fit this error.
             problem_builder = Problem_Builder.new
