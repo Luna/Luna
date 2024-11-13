@@ -536,6 +536,20 @@ run_union_tests group_builder setup call_union =
         t.at "A" . to_vector . should_equal [Nothing, '2', '3', Nothing, 'a', 'b']
         t.at "A" . value_type . is_text . should_be_true
 
+    if setup.is_database.not then group_builder.specify "all-Nothing column should not influence result type, unless it had a type explicitly given to it" pending="TODO Value_Type.Null #6281" <|
+        t1 = table_builder [["A", [Nothing]]]
+        t2 = table_builder [["A", [2, 3]]]
+
+        t3 = call_union [t1, t2]
+        expect_column_names ["A"] t3
+        t3.at "A" . to_vector . should_equal [Nothing, 2, 3]
+        setup.expect_integer_type <| t3.at "A"
+
+        t4 = call_union [(t1.cast "A" Value_Type.Char), t2]
+        expect_column_names ["A"] t4
+        t4.at "A" . to_vector . should_equal [Nothing, '2', '3']
+        t4.at "A" . value_type . should_equal Value_Type.Char
+
     group_builder.specify "will use the _output_ column name in the warnings when matching by position (so input names may differ)" <|
         t1 = table_builder [["A", [1]]]
         t2 = table_builder [["B", ["a"]]]
