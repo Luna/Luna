@@ -1008,7 +1008,7 @@ add_specs suite_builder =
                 r2.column_names . should_equal ["Path", "Sheet Name", "A", "B", "C"]
 
                 # We transform the Path to just file name for easier testing
-                rows = (r.set (r.at "Path" . map .name) "Path").rows.map .to_vector
+                rows = (r2.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
                 rows.at 0 . should_equal ["1.tsv",      Nothing,   1,       3, Nothing]
                 rows.at 1 . should_equal ["1.tsv",      Nothing,   2,       4, Nothing]
                 rows.at 2 . should_equal ["2.xlsx", "EnsoSheet",  10,      30, Nothing]
