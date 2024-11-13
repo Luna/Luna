@@ -37,6 +37,7 @@ public class NumberParser extends IncrementalDatatypeParser {
         allowSymbol,
         allowLeadingZeroes,
         trimValues,
+        false,
         decimalPoint,
         thousandSeparator);
   }
@@ -44,7 +45,10 @@ public class NumberParser extends IncrementalDatatypeParser {
   /**
    * Creates a new decimal instance of this parser.
    *
+   * @param allowSymbol whether to allow symbols in the input
+   * @param allowLeadingZeroes whether to allow leading zeroes in the input
    * @param trimValues whether to trim the input values
+   * @param allowExponentialNotation whether to allow exponential notation in the input
    * @param decimalPoint the decimal point set for the current format (if null then will be
    *     inferred)
    * @param thousandSeparator the thousand separator to use (if null then will be inferred)
@@ -53,10 +57,11 @@ public class NumberParser extends IncrementalDatatypeParser {
       boolean allowSymbol,
       boolean allowLeadingZeroes,
       boolean trimValues,
+      boolean allowExponentialNotation,
       String decimalPoint,
       String thousandSeparator) {
     return new NumberParser(
-        null, allowSymbol, allowLeadingZeroes, trimValues, decimalPoint, thousandSeparator);
+        null, allowSymbol, allowLeadingZeroes, trimValues, allowExponentialNotation, decimalPoint, thousandSeparator);
   }
 
   private final IntegerType integerTargetType;
@@ -68,6 +73,7 @@ public class NumberParser extends IncrementalDatatypeParser {
       boolean allowSymbol,
       boolean allowLeadingZeroes,
       boolean allowLeadingTrailingWhitespace,
+      boolean allowExponentialNotation,
       String decimalPoint,
       String thousandSeparator) {
     this.integerTargetType = integerTargetType;
@@ -78,6 +84,7 @@ public class NumberParser extends IncrementalDatatypeParser {
             allowSymbol,
             allowLeadingZeroes,
             allowLeadingTrailingWhitespace,
+            allowExponentialNotation,
             NegativeSign.UNKNOWN,
             numberWithSeparators);
   }

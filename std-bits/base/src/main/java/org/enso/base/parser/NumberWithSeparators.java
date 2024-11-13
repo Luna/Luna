@@ -418,7 +418,7 @@ public enum NumberWithSeparators {
       format =
           lastSeparatorIdx - idx > 3
               ? NO_DOT
-              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_DOT : DOT_UNKNOWN);
+              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_DOT : (decimal == ',' ? DOT_COMMA : DOT_UNKNOWN));
     } else if (firstSeparator == ',') {
       // if separatorCount > 1, must be a thousand separator, hence COMMA_DOT (covered above).
       // if index of separator > 3, must be a decimal point without a thousand separator, hence
@@ -428,7 +428,7 @@ public enum NumberWithSeparators {
       format =
           lastSeparatorIdx - idx > 3
               ? NO_COMMA
-              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_COMMA : COMMA_UNKNOWN);
+              : (lastSeparatorIdx != endIdx - 4 ? UNKNOWN_COMMA : (decimal == '.' ? COMMA_DOT : COMMA_UNKNOWN));
     }
     if (format == null) {
       return new NumberParseFailure("No matching number format.");

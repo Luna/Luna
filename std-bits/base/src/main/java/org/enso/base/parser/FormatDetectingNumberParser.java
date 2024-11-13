@@ -51,22 +51,21 @@ public class FormatDetectingNumberParser {
   private final boolean allowSymbol;
   private final boolean allowLeadingZeroes;
   private final boolean allowLeadingTrailingWhitespace;
+  private final boolean allowExponentialNotation;
   private NegativeSign negativeSign;
   private NumberWithSeparators numberWithSeparators;
-
-  public FormatDetectingNumberParser() {
-    this(true, true, true, NegativeSign.UNKNOWN, NumberWithSeparators.UNKNOWN);
-  }
 
   public FormatDetectingNumberParser(
       boolean allowSymbol,
       boolean allowLeadingZeroes,
       boolean allowLeadingTrailingWhitespace,
+      boolean allowExponentialNotation,
       NegativeSign negativeSign,
       NumberWithSeparators numberWithSeparators) {
     this.allowSymbol = allowSymbol;
     this.allowLeadingZeroes = allowLeadingZeroes;
     this.allowLeadingTrailingWhitespace = allowLeadingTrailingWhitespace;
+    this.allowExponentialNotation = allowExponentialNotation;
     this.negativeSign = negativeSign;
     this.numberWithSeparators = numberWithSeparators;
   }
@@ -94,6 +93,9 @@ public class FormatDetectingNumberParser {
    * @return the parsed number, or a failure if the parse was unsuccessful.
    */
   public NumberParseResult parse(CharSequence value, boolean integer) {
+    // Ensure that if we are allowing exponential notation, we are not parsing an integer.
+    assert !(allowExponentialNotation && integer);
+
     // State
     boolean lastWasWhitespace = false;
     boolean encounteredContent = false;
@@ -128,7 +130,7 @@ public class FormatDetectingNumberParser {
             return new NumberParseFailure("Multiple Number Sections.");
           }
 
-          var numberPart = numberWithSeparators.parse(value, idx, integer, false);
+          var numberPart = numberWithSeparators.parse(value, idx, integer, allowExponentialNotation);
 
           // If the format changed, catch new format and unwrap result.
           if (numberPart instanceof NumberWithSeparators.NumberParseResultWithFormat newFormat) {
