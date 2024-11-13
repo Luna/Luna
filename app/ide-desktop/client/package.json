@@ -34,7 +34,7 @@
     "@electron/notarize": "2.1.0",
     "@playwright/test": "^1.45.0",
     "@types/mime-types": "^2.1.1",
-    "@types/node": "^20.11.21",
+    "@types/node": "^22.9.0",
     "@types/opener": "^1.4.0",
     "@types/semver": "^7.5.8",
     "@types/tar": "^6.1.4",
@@ -46,13 +46,13 @@
     "enso-common": "workspace:*",
     "enso-gui": "workspace:*",
     "enso-runner": "workspace:*",
-    "esbuild": "^0.19.3",
+    "esbuild": "^0.23.0",
     "esbuild-plugin-wasm": "^1.1.0",
     "fast-glob": "^3.2.12",
     "playwright": "^1.45.0",
     "portfinder": "^1.0.32",
     "tsx": "^4.7.1",
-    "vite": "^5.3.5"
+    "vite": "^5.4.10"
   },
   "//": [
     "vite is required for the watch script",
