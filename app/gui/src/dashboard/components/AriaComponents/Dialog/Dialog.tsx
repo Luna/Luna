@@ -123,7 +123,7 @@ const DIALOG_STYLES = tv({
     closeButton: 'col-start-1 col-end-1 mr-auto',
     heading: 'col-start-2 col-end-2 my-0 text-center',
     content: 'relative flex-auto overflow-y-auto max-h-[inherit]',
-    measuredContent: 'content',
+    measuredContent: 'flex flex-col max-h-[90vh]',
   },
   compoundVariants: [
     { type: 'modal', size: 'small', class: 'max-w-sm' },
