@@ -187,7 +187,7 @@ public enum NumberWithSeparators {
       return integer
           ? parseFixedInteger(value, idx, separators.endIdx(), separators.first())
           : parseFixedDecimal(
-              value, idx, separators.endIdx(), separators.first(), separators.second());
+              value, idx, separators.endIdx(), separators.first(), separators.second(), separators.exponential());
     }
 
     return integer
@@ -200,7 +200,8 @@ public enum NumberWithSeparators {
             separators.first(),
             separators.second(),
             separators.count(),
-            separators.lastSeparatorIdx());
+            separators.lastSeparatorIdx(),
+            separators.exponential());
   }
 
   /** Internal record for returning when a new format is matched. */
@@ -304,27 +305,27 @@ public enum NumberWithSeparators {
 
   /** Given a known double format, parse the sequence. */
   private NumberParseResult parseFixedDecimal(
-      CharSequence value, int idx, int endIdx, char firstSeparator, char secondSeparator) {
+      CharSequence value, int idx, int endIdx, char firstSeparator, char secondSeparator, boolean exponential) {
     // Deal with the special cases first.
     if (this == DOT_UNKNOWN || this == UNKNOWN_DOT) {
       // Haven't encountered a thousand separator, but know the decimal separator.
       // If DOT_UNKNOWN then could be European or English, but treat as English.
       assert firstSeparator == '.' && secondSeparator == Constants.NONE;
-      return NO_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
+      return NO_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator, exponential);
     } else if (this == COMMA_UNKNOWN) {
       // Have only encountered a Comma(s), so treat as English format (COMMA_DOT).
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return COMMA_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
+      return COMMA_DOT.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator, exponential);
     } else if (this == UNKNOWN_COMMA) {
       // Have encountered a comma and know is a decimal separator.
       assert firstSeparator == ',' && secondSeparator == Constants.NONE;
-      return NO_COMMA.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
+      return NO_COMMA.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator, exponential);
     }
 
     assert thousands != Constants.UNKNOWN && decimal != Constants.UNKNOWN;
 
     // If no decimal separator, then must be an integer.
-    if (firstSeparator != decimal && secondSeparator != decimal) {
+    if (!exponential && firstSeparator != decimal && secondSeparator != decimal) {
       return parseFixedInteger(value, idx, endIdx, firstSeparator);
     }
 
@@ -366,19 +367,20 @@ public enum NumberWithSeparators {
       char firstSeparator,
       char secondSeparator,
       int separatorCount,
-      int lastSeparatorIdx) {
+      int lastSeparatorIdx,
+      boolean exponential) {
     assert thousands == Constants.UNKNOWN || decimal == Constants.UNKNOWN;
 
     // Special case when single separator equal to decimal point.
     if (separatorCount == 1 && firstSeparator == decimal) {
       var fixed = decimal == '.' ? NO_DOT : NO_COMMA;
-      return fixed.parseFixedDecimal(value, idx, endIdx, Constants.NONE, decimal);
+      return fixed.parseFixedDecimal(value, idx, endIdx, Constants.NONE, decimal, exponential);
     }
 
     // Cases of no separators or repeated single separator - must be integer.
-    if (firstSeparator == Constants.NONE
+    if (!exponential && (firstSeparator == Constants.NONE
         || (secondSeparator == Constants.NONE
-            && (separatorCount > 1 || firstSeparator == ' ' || firstSeparator == '\''))) {
+            && (separatorCount > 1 || firstSeparator == ' ' || firstSeparator == '\'')))) {
       var result =
           thousands == Constants.UNKNOWN
               ? parseUnknownInteger(value, idx, endIdx, firstSeparator, separatorCount)
@@ -390,6 +392,11 @@ public enum NumberWithSeparators {
       return (result instanceof NumberParseFailure)
           ? result
           : (resolveCommaUnknown ? new NumberParseResultWithFormat(COMMA_DOT, result) : result);
+    }
+
+    // Case when in exponential notation and no separators.
+    if (exponential && firstSeparator == Constants.NONE) {
+      return NO_DOT.parseFixedDecimal(value, idx, endIdx, Constants.NONE, Constants.NONE, exponential);
     }
 
     // Need to resolve the format.
@@ -441,7 +448,7 @@ public enum NumberWithSeparators {
       return new NumberParseFailure("Invalid format matched.");
     }
 
-    var result = format.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator);
+    var result = format.parseFixedDecimal(value, idx, endIdx, firstSeparator, secondSeparator, exponential);
     return (result instanceof NumberParseFailure)
         ? result
         : new NumberParseResultWithFormat(format, result);
