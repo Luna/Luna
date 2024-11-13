@@ -252,8 +252,7 @@ type Data_Formatter
         us_parsers = if self.decimal_point != Auto || self.thousand_separator != "" then [] else
             ## In default mode, add the English pattern to ensure they dominate.
             english = self.with_number_formatting decimal_point='.' thousand_separator=','
-            system = self.with_number_formatting decimal_point='.' thousand_separator='\0'
-            [english.make_integer_parser auto_mode=True, system.make_integer_parser auto_mode=True, english.make_decimal_parser auto_mode=True, system.make_decimal_parser auto_mode=True]
+            [english.make_integer_parser auto_mode=True, english.make_decimal_parser auto_mode=True]
         remaining_parsers = [self.make_integer_parser auto_mode=True, self.make_decimal_parser auto_mode=True, self.make_boolean_parser]
         parsers = date_parsers + us_parsers + remaining_parsers
         ## Unfortunately, the [] literal allows to create a vector containing
