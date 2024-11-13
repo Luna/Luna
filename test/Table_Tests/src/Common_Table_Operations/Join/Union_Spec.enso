@@ -519,6 +519,23 @@ run_union_tests group_builder setup call_union =
         problems = [No_Common_Type.Warning_Convert_To_Text [Value_Type.Time, Value_Type.Date] "D"]
         Problems.test_problem_handling action problems tester
 
+    # This test is not run on DB as all-null columns will not be Mixed there.
+    if setup.is_database.not then group_builder.specify "if no common type can be found, will fall back to converting all types to text and warn (all-null columns edge case)" <|
+        # If a column is all-null, it will often have Mixed type. But that should not prevent the union from falling into the mixed type.
+        t1 = table_builder [["A", [Nothing]]]
+        t2 = table_builder [["A", [2, 3]]]
+        t3 = table_builder [["A", [Nothing, Nothing]]]
+        t4 = table_builder [["A", ['a', 'b']]]
+        t5 = table_builder [["A", [Nothing]]]
+
+        t1.at "A" . value_type . should_equal Value_Type.Mixed
+        setup.expect_integer_type <| t2.at "A"
+
+        t = call_union [t1, t2, t3, t4, t5]
+        expect_column_names ["A"] t
+        t.at "A" . to_vector . should_equal [Nothing, '2', '3', Nothing, 'a', 'b']
+        t.at "A" . value_type . is_text . should_be_true
+
     group_builder.specify "will use the _output_ column name in the warnings when matching by position (so input names may differ)" <|
         t1 = table_builder [["A", [1]]]
         t2 = table_builder [["B", ["a"]]]
