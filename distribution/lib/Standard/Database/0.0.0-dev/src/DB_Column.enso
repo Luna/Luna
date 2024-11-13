@@ -1,10 +1,10 @@
 from Standard.Base import all
 import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
+import Standard.Base.Errors.Common.Floating_Point_Equality
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Errors.Illegal_State.Illegal_State
 import Standard.Base.Internal.Rounding_Helpers
-from Standard.Base.Errors.Common import Index_Out_Of_Bounds, Floating_Point_Equality
 from Standard.Base.Widget_Helpers import make_data_cleanse_vector_selector, make_format_chooser, make_regex_text_widget
 
 import Standard.Table.Internal.Column_Naming_Helper.Column_Naming_Helper
