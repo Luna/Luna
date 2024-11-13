@@ -1,9 +1,9 @@
 import createDebug from 'debug'
-import { Base64 } from 'js-base64'
 import * as json from 'lib0/json'
 import * as map from 'lib0/map'
 import { ObservableV2 } from 'lib0/observable'
 import * as random from 'lib0/random'
+import * as zlib from 'node:zlib'
 import * as Ast from 'ydoc-shared/ast'
 import { astCount } from 'ydoc-shared/ast'
 import { EnsoFileParts, combineFileParts, splitFileContents } from 'ydoc-shared/ensoFile'
@@ -486,12 +486,22 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     }
   }
 
-  private static encodeCodeSnapshot(code: string): string {
-    return Base64.encode(code)
+  private static encodeCodeSnapshot(code: string): string | undefined {
+    try {
+      return zlib.deflateSync(Buffer.from(code, 'utf8')).toString('base64')
+    } catch (e) {
+      console.warn('Failed to encode code snapshot.', e)
+      return
+    }
   }
 
-  private static decodeCodeSnapshot(snapshot: string): string {
-    return Base64.decode(snapshot)
+  private static decodeCodeSnapshot(snapshot: string): string | undefined {
+    try {
+      return zlib.inflateSync(Buffer.from(snapshot, 'base64')).toString('utf8')
+    } catch (e) {
+      console.warn('Failed to decode code snapshot.', e)
+      return
+    }
   }
 
   private sendLsUpdate(
@@ -505,6 +515,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     const newSnapshot = newCode && {
       snapshot: ModulePersistence.encodeCodeSnapshot(newCode),
     }
+    if (newMetadata) newMetadata.snapshot = this.syncedMeta.ide.snapshot
     const newMetadataJson =
       newMetadata &&
       json.stringify({
@@ -568,6 +579,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       this.syncedContent = newContent
       this.syncedVersion = newVersion
       if (newMetadata) this.syncedMeta.ide = newMetadata
+      if (newSnapshot) this.syncedMeta.ide.snapshot = newSnapshot.snapshot
       if (newCode) this.syncedCode = newCode
       if (newIdMapToPersistJson) this.syncedIdMap = newIdMapToPersistJson
       if (newMetadataJson) this.syncedMetaJson = newMetadataJson
@@ -606,7 +618,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             // the code was externally edited. In this case we try to fix the spans by running
             // the `syncToCode` on the saved code snapshot.
             const { root, spans } = Ast.parseModuleWithSpans(snapshotCode, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedIdMap = deserializeIdMap(idMapJson)
 
             const edit = syncModule.edit()
@@ -615,7 +627,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             syncModule.applyEdit(edit)
           } else {
             const { root, spans } = Ast.parseModuleWithSpans(code, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedSpans = spans
           }
         }
@@ -623,7 +635,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       const astRoot = syncModule.root()
       if (!astRoot) return
       if ((code !== this.syncedCode || idMapJson !== this.syncedIdMap) && idMapJson) {
-        const spans = parsedSpans ?? Ast.print(astRoot).info
+        const spans = parsedSpans ?? Ast.printWithSpans(astRoot).info
         if (idMapJson !== this.syncedIdMap && parsedIdMap === undefined) {
           const idMap = deserializeIdMap(idMapJson)
           const idsAssigned = Ast.setExternalIds(syncModule, spans, idMap)
@@ -651,7 +663,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         (nodeMeta.length !== 0 || widgetMeta.length !== 0)
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
-        astRoot.visitRecursiveAst(ast => {
+        astRoot.visitRecursive(ast => {
           if (!externalIdToAst.has(ast.externalId)) externalIdToAst.set(ast.externalId, ast)
         })
         const missing = new Set<string>()

@@ -47,7 +47,7 @@ import {
   tsvTableToEnsoExpression,
   writeClipboard,
 } from '@/components/GraphEditor/clipboard'
-import { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
+import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
 import { useAutoBlur } from '@/util/autoBlur'
 import type {
   CellEditingStartedEvent,
@@ -66,6 +66,8 @@ import type {
   RowHeightParams,
   SortChangedEvent,
 } from 'ag-grid-enterprise'
+import * as iter from 'enso-common/src/utilities/data/iter'
+import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
 import { type ComponentInstance, reactive, ref, shallowRef, watch } from 'vue'
 
 const DEFAULT_ROW_HEIGHT = 22
@@ -82,6 +84,8 @@ const _props = defineProps<{
   suppressMoveWhenColumnDragging?: boolean
   textFormatOption?: TextFormatOptions
   processDataFromClipboard?: (params: ProcessDataFromClipboardParams<TData>) => string[][] | null
+  pinnedTopRowData?: TData[]
+  pinnedRowHeightMultiplier?: number
 }>()
 const emit = defineEmits<{
   cellEditingStarted: [event: CellEditingStartedEvent]
@@ -104,6 +108,10 @@ function onGridReady(event: GridReadyEvent<TData>) {
 }
 
 function getRowHeight(params: RowHeightParams): number {
+  if (params.node.rowPinned === 'top') {
+    return DEFAULT_ROW_HEIGHT * (_props.pinnedRowHeightMultiplier ?? 2)
+  }
+
   if (_props.textFormatOption === 'off') {
     return DEFAULT_ROW_HEIGHT
   }
@@ -114,14 +122,11 @@ function getRowHeight(params: RowHeightParams): number {
     return DEFAULT_ROW_HEIGHT
   }
 
-  const returnCharsCount = textValues.map((text: string) => {
-    const crlfCount = (text.match(/\r\n/g) || []).length
-    const crCount = (text.match(/\r/g) || []).length
-    const lfCount = (text.match(/\n/g) || []).length
-    return crCount + lfCount - crlfCount
-  })
+  const returnCharsCount = iter.map(textValues, (text) =>
+    iter.count(text.matchAll(LINE_BOUNDARIES)),
+  )
 
-  const maxReturnCharsCount = Math.max(...returnCharsCount)
+  const maxReturnCharsCount = iter.reduce(returnCharsCount, Math.max, 0)
   return (maxReturnCharsCount + 1) * DEFAULT_ROW_HEIGHT
 }
 
@@ -269,6 +274,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       :suppressDragLeaveHidesColumns="suppressDragLeaveHidesColumns"
       :suppressMoveWhenColumnDragging="suppressMoveWhenColumnDragging"
       :processDataFromClipboard="processDataFromClipboard"
+      :pinnedTopRowData="pinnedTopRowData"
       @gridReady="onGridReady"
       @firstDataRendered="updateColumnWidths"
       @rowDataUpdated="updateColumnWidths($event), emit('rowDataUpdated', $event)"

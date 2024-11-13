@@ -1,5 +1,6 @@
 from Standard.Base import all
 import Standard.Base.Data.Array_Proxy.Array_Proxy
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
 import Standard.Base.Data.Vector.No_Wrap
 import Standard.Base.Errors.Common.Arithmetic_Error
 import Standard.Base.Errors.Common.Incomparable_Values
@@ -22,6 +23,7 @@ import project.Internal.Column_Ops
 import project.Internal.Date_Time_Helpers
 import project.Internal.Java_Problems
 import project.Internal.Parse_Values_Helper
+import project.Internal.Read_Many_Helpers
 import project.Internal.Storage
 import project.Internal.Value_Type_Helpers
 import project.Internal.Widget_Helpers
@@ -2101,7 +2103,7 @@ type Column
     map : (Any -> Any) -> Boolean -> Value_Type | Auto -> Column ! Invalid_Value_Type
     map self function skip_nothing=True expected_value_type=Auto =
         new_fn = if skip_nothing then (x-> if x.is_nothing then Nothing else function x) else function
-        new_st = self.to_vector.map on_problems=No_Wrap new_fn
+        new_st = self.to_vector.map on_problems=No_Wrap.Value new_fn
         Column.from_vector self.name new_st value_type=expected_value_type
 
     ## ALIAS combine, join by row position, merge
@@ -2149,7 +2151,7 @@ type Column
                             function x y
             False -> function
         new_name = naming_helper.binary_operation_name "x" self that
-        vec = self.to_vector.zip on_problems=No_Wrap that.to_vector new_fn
+        vec = self.to_vector.zip on_problems=No_Wrap.Value that.to_vector new_fn
         Column.from_vector new_name vec value_type=expected_value_type
 
     ## GROUP Standard.Base.Metadata
@@ -2927,3 +2929,8 @@ apply_unary_map column:Column new_name:Text function expected_result_type:Value_
     Java_Problems.with_map_operation_problem_aggregator column.name Problem_Behavior.Report_Warning java_problem_aggregator->
         map_column = UnaryOperation.mapFunction column.java_column function nothing_unchanged storage_type new_name java_problem_aggregator
         Column.Value map_column
+
+## PRIVATE
+Many_Files_List.from (that : Column) =
+    Read_Many_Helpers.ensure_column_type_valid_to_be_files_list that <|
+        Many_Files_List.Value that that.to_vector

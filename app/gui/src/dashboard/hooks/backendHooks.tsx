@@ -777,12 +777,6 @@ export function useUploadFiles(backend: Backend, category: Category) {
       const siblingProjects = siblings.filter(backendModule.assetIsProject)
       const siblingFileTitles = new Set(siblingFiles.map((asset) => asset.title))
       const siblingProjectTitles = new Set(siblingProjects.map((asset) => asset.title))
-      const files = reversedFiles.filter(backendModule.fileIsNotProject)
-      const projects = reversedFiles.filter(backendModule.fileIsProject)
-      const duplicateFiles = files.filter((file) => siblingFileTitles.has(file.name))
-      const duplicateProjects = projects.filter((project) =>
-        siblingProjectTitles.has(backendModule.stripProjectExtension(project.name)),
-      )
       const ownerPermission = tryCreateOwnerPermission(
         parentPath ?? '',
         category,
@@ -790,7 +784,35 @@ export function useUploadFiles(backend: Backend, category: Category) {
         users ?? [],
         userGroups ?? [],
       )
-      const fileMap = new Map<AssetId, File>()
+      const files = reversedFiles.filter(backendModule.fileIsNotProject).map((file) => {
+        const asset = backendModule.createPlaceholderFileAsset(
+          backendModule.escapeSpecialCharacters(file.name),
+          parentId,
+          ownerPermission,
+        )
+        return { asset, file }
+      })
+      const projects = reversedFiles.filter(backendModule.fileIsProject).map((file) => {
+        const basename = backendModule.escapeSpecialCharacters(
+          backendModule.stripProjectExtension(file.name),
+        )
+        const asset = backendModule.createPlaceholderProjectAsset(
+          basename,
+          parentId,
+          ownerPermission,
+          user,
+          localBackend?.joinPath(parentId, basename) ?? null,
+        )
+        return { asset, file }
+      })
+      const duplicateFiles = files.filter((file) => siblingFileTitles.has(file.asset.title))
+      const duplicateProjects = projects.filter((project) =>
+        siblingProjectTitles.has(backendModule.stripProjectExtension(project.asset.title)),
+      )
+      const fileMap = new Map<AssetId, File>([
+        ...files.map(({ asset, file }) => [asset.id, file] as const),
+        ...projects.map(({ asset, file }) => [asset.id, file] as const),
+      ])
       const uploadedFileIds: AssetId[] = []
       const addIdToSelection = (id: AssetId) => {
         uploadedFileIds.push(id)
@@ -807,7 +829,9 @@ export function useUploadFiles(backend: Backend, category: Category) {
           switch (true) {
             case backendModule.assetIsProject(asset): {
               const { extension } = backendModule.extractProjectExtension(file.name)
-              const title = backendModule.stripProjectExtension(asset.title)
+              const title = backendModule.escapeSpecialCharacters(
+                backendModule.stripProjectExtension(asset.title),
+              )
 
               await uploadFileMutation
                 .mutateAsync(
@@ -828,11 +852,9 @@ export function useUploadFiles(backend: Backend, category: Category) {
               break
             }
             case backendModule.assetIsFile(asset): {
+              const title = backendModule.escapeSpecialCharacters(asset.title)
               await uploadFileMutation
-                .mutateAsync(
-                  { fileId, fileName: asset.title, parentDirectoryId: asset.parentId },
-                  file,
-                )
+                .mutateAsync({ fileId, fileName: title, parentDirectoryId: asset.parentId }, file)
                 .then(({ id }) => {
                   addIdToSelection(id)
                 })
@@ -847,32 +869,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
 
       if (duplicateFiles.length === 0 && duplicateProjects.length === 0) {
         toggleDirectoryExpansion(parentId, true)
-
-        const placeholderFiles = files.map((file) => {
-          const asset = backendModule.createPlaceholderFileAsset(
-            file.name,
-            parentId,
-            ownerPermission,
-          )
-          fileMap.set(asset.id, file)
-          return asset
-        })
-
-        const placeholderProjects = projects.map((project) => {
-          const basename = backendModule.stripProjectExtension(project.name)
-          const asset = backendModule.createPlaceholderProjectAsset(
-            basename,
-            parentId,
-            ownerPermission,
-            user,
-            localBackend?.joinPath(parentId, basename) ?? null,
-          )
-          fileMap.set(asset.id, project)
-          return asset
-        })
-
-        const assets = [...placeholderFiles, ...placeholderProjects]
-
+        const assets = [...files, ...projects].map(({ asset }) => asset)
         void Promise.all(assets.map((asset) => doUploadFile(asset, 'new')))
       } else {
         const siblingFilesByName = new Map(siblingFiles.map((file) => [file.title, file]))
@@ -883,12 +880,16 @@ export function useUploadFiles(backend: Backend, category: Category) {
           // This is SAFE, as `duplicateFiles` only contains files that have siblings
           // with the same name.
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          current: siblingFilesByName.get(file.name)!,
-          new: backendModule.createPlaceholderFileAsset(file.name, parentId, ownerPermission),
-          file,
+          current: siblingFilesByName.get(file.asset.title)!,
+          new: backendModule.createPlaceholderFileAsset(
+            file.asset.title,
+            parentId,
+            ownerPermission,
+          ),
+          file: file.file,
         }))
         const conflictingProjects = duplicateProjects.map((project) => {
-          const basename = backendModule.stripProjectExtension(project.name)
+          const basename = backendModule.stripProjectExtension(project.asset.title)
           return {
             // This is SAFE, as `duplicateProjects` only contains projects that have
             // siblings with the same name.
@@ -901,7 +902,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
               user,
               localBackend?.joinPath(parentId, basename) ?? null,
             ),
-            file: project,
+            file: project.file,
           }
         })
         setModal(
@@ -930,24 +931,26 @@ export function useUploadFiles(backend: Backend, category: Category) {
               toggleDirectoryExpansion(parentId, true)
 
               const newFiles = files
-                .filter((file) => !siblingFileTitles.has(file.name))
+                .filter((file) => !siblingFileTitles.has(file.asset.title))
                 .map((file) => {
                   const asset = backendModule.createPlaceholderFileAsset(
-                    file.name,
+                    file.asset.title,
                     parentId,
                     ownerPermission,
                   )
-                  fileMap.set(asset.id, file)
+                  fileMap.set(asset.id, file.file)
                   return asset
                 })
 
               const newProjects = projects
                 .filter(
                   (project) =>
-                    !siblingProjectTitles.has(backendModule.stripProjectExtension(project.name)),
+                    !siblingProjectTitles.has(
+                      backendModule.stripProjectExtension(project.asset.title),
+                    ),
                 )
                 .map((project) => {
-                  const basename = backendModule.stripProjectExtension(project.name)
+                  const basename = backendModule.stripProjectExtension(project.asset.title)
                   const asset = backendModule.createPlaceholderProjectAsset(
                     basename,
                     parentId,
@@ -955,7 +958,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
                     user,
                     localBackend?.joinPath(parentId, basename) ?? null,
                   )
-                  fileMap.set(asset.id, project)
+                  fileMap.set(asset.id, project.file)
                   return asset
                 })
 

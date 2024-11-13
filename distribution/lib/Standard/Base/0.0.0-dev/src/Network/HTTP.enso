@@ -165,7 +165,7 @@ type HTTP
                     # Create Unified Header list
                     boundary_header_list = if resolved_body.boundary.is_nothing then [] else [Header.multipart_form_data resolved_body.boundary]
                     all_headers = headers + boundary_header_list
-                    mapped_headers = all_headers.map on_problems=No_Wrap .to_java_pair
+                    mapped_headers = all_headers.map on_problems=No_Wrap.Value .to_java_pair
 
                     response = Response.Value (EnsoSecretHelper.makeRequest (self.make_client self resolved_body.hash) builder req.uri.to_java_representation mapped_headers (cache_policy.should_use_cache req))
                     if error_on_failure_code.not || response.code.is_success then response else
@@ -260,6 +260,9 @@ private _resolve_body body:Request_Body hash_function =
             ## ToDo: Support hashing a file.
             hash = if hash_function.is_nothing then "" else Unimplemented.throw "Hashing a file body is not yet supported."
             Resolved_Body.Value (body_publishers.ofFile path) Nothing hash
+        Request_Body.Byte_Array bytes ->
+            hash = if hash_function.is_nothing then "" else hash_function bytes
+            Resolved_Body.Value (body_publishers.ofByteArray bytes) Nothing hash
         Request_Body.Form_Data form_data url_encoded ->
             _resolve_form_body form_data url_encoded hash_function
         Request_Body.Empty ->
