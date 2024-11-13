@@ -88,6 +88,10 @@ defineExpose({
   overscroll-behavior: none;
 }
 
+:deep(img.uploading) {
+  opacity: 0.5;
+}
+
 .EditorRoot :deep(.cm-editor) {
   position: relative;
   width: 100%;

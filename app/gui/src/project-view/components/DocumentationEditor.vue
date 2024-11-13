@@ -10,7 +10,7 @@ import { ProjectFiles, useProjectFiles } from '@/stores/projectFiles'
 import { Vec2 } from '@/util/data/vec2'
 import type { ToValue } from '@/util/reactivity'
 import { useToast } from '@/util/toast'
-import { ComponentInstance, ref, toRef, toValue, watch } from 'vue'
+import { ComponentInstance, computed, reactive, ref, toRef, toValue, watch } from 'vue'
 import type { Path } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, mapOk, withContext, type Result } from 'ydoc-shared/util/data/result'
 import * as Y from 'yjs'
@@ -65,7 +65,7 @@ function useDocumentationImages(
     return pathUniqueId(path)
   }
 
-  const uploadedImages = new Map<string, Promise<Blob>>()
+  const uploadedImages = reactive(new Map<string, Promise<Blob>>())
 
   const transformImageUrl = fetcherUrlTransformer(
     async (url: string) => {
@@ -73,7 +73,15 @@ function useDocumentationImages(
       if (!path) return
       return withContext(
         () => `Locating documentation image (${url})`,
-        () => mapOk(path, (path) => ({ location: path, uniqueId: pathUniqueId(path) })),
+        () =>
+          mapOk(path, (path) => {
+            const id = pathUniqueId(path)
+            return {
+              location: path,
+              uniqueId: id,
+              uploading: computed(() => uploadedImages.has(id)),
+            }
+          }),
       )
     },
     async (path) => {
@@ -112,6 +120,10 @@ function useDocumentationImages(
       uploadErrorToast.reportError(filename.error)
       return
     }
+    const path: Path = { rootId, segments: ['images', filename.value] }
+    const id = pathUniqueId(path)
+    uploadedImages.set(id, blobPromise)
+
     const insertedLink = `\n![Image](/images/${encodeURI(filename.value)})\n`
     switch (position.type) {
       case 'selection':
@@ -120,9 +132,6 @@ function useDocumentationImages(
       case 'coords':
         markdownEditor.value.putTextAtCoord(insertedLink, position.coords)
     }
-    const path: Path = { rootId, segments: ['images', filename.value] }
-    const id = pathUniqueId(path)
-    uploadedImages.set(id, blobPromise)
     try {
       const blob = await blobPromise
       const uploadResult = await projectFiles.writeFileBinary(path, blob)
