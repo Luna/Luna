@@ -106,6 +106,11 @@ ThisBuild / publish / skip := true
 val simpleLibraryServerTag = Tags.Tag("simple-library-server")
 Global / concurrentRestrictions += Tags.limit(simpleLibraryServerTag, 1)
 
+/** Tag limiting the concurrent spawning of `native-image` subprocess.
+  */
+val nativeImageBuildTag = NativeImage.nativeImageBuildTag
+Global / concurrentRestrictions += Tags.limit(nativeImageBuildTag, 1)
+
 lazy val gatherLicenses =
   taskKey[Unit](
     "Gathers licensing information for relevant dependencies of all distributions"
@@ -586,7 +591,8 @@ val bouncyCastle = Seq(
 // === Google =================================================================
 val googleApiClientVersion         = "2.2.0"
 val googleApiServicesSheetsVersion = "v4-rev612-1.25.0"
-val googleAnalyticsDataVersion     = "0.44.0"
+val googleAnalyticsAdminVersion    = "0.62.0"
+val googleAnalyticsDataVersion     = "0.63.0"
 
 // === Other ==================================================================
 
@@ -643,7 +649,7 @@ lazy val componentModulesIds =
     "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion,
     (`runtime-language-arrow` / projectID).value,
     (`syntax-rust-definition` / projectID).value,
-    (`ydoc-server` / projectID).value,
+    //(`ydoc-server` / projectID).value,
     (`profiling-utils` / projectID).value
   )
 }
@@ -731,7 +737,7 @@ lazy val componentModulesPaths =
     (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
     (`jna-wrapper` / Compile / exportedModuleBin).value,
-    (`ydoc-server` / Compile / exportedModuleBin).value,
+    //(`ydoc-server` / Compile / exportedModuleBin).value,
     (`library-manager` / Compile / exportedModuleBin).value,
     (`logging-config` / Compile / exportedModuleBin).value,
     (`logging-utils` / Compile / exportedModuleBin).value,
@@ -1712,8 +1718,8 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     },
     Test / addModules := Seq(
       (`syntax-rust-definition` / javaModuleName).value,
-      (`profiling-utils` / javaModuleName).value,
-      (`ydoc-server` / javaModuleName).value
+      (`profiling-utils` / javaModuleName).value
+      //(`ydoc-server` / javaModuleName).value
     ),
     Test / moduleDependencies := {
       GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ Seq(
@@ -1723,8 +1729,8 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     },
     Test / internalModuleDependencies := Seq(
       (`profiling-utils` / Compile / exportedModule).value,
-      (`syntax-rust-definition` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value
+      (`syntax-rust-definition` / Compile / exportedModule).value
+      //(`ydoc-server` / Compile / exportedModule).value
     ),
     Test / javaOptions ++= testLogProviderOptions,
     Test / test := (Test / test).dependsOn(buildEngineDistribution).value
@@ -1772,7 +1778,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
   .dependsOn(testkit % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
   .dependsOn(`logging-service-logback` % "test->test")
-  .dependsOn(`ydoc-server` % Test)
+  //.dependsOn(`ydoc-server` % Test)
   .dependsOn(`profiling-utils` % Test)
 
 lazy val `json-rpc-server` = project
@@ -2246,7 +2252,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`directory-watcher-wrapper` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value,
+      //(`ydoc-server` / Compile / exportedModule).value,
       (`logging-utils` / Compile / exportedModule).value,
       (`logging-utils-akka` / Compile / exportedModule).value,
       (`logging-service` / Compile / exportedModule).value,
@@ -2331,7 +2337,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
       (`runtime-instrument-id-execution` / Compile / exportedModule).value,
       (`runtime-language-epb` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value,
+      //(`ydoc-server` / Compile / exportedModule).value,
       (`syntax-rust-definition` / Compile / exportedModule).value,
       (`profiling-utils` / Compile / exportedModule).value,
       (`logging-service-logback` / Compile / exportedModule).value,
@@ -2383,7 +2389,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       javaModuleName.value,
       (`syntax-rust-definition` / javaModuleName).value,
       (`profiling-utils` / javaModuleName).value,
-      (`ydoc-server` / javaModuleName).value,
+      //(`ydoc-server` / javaModuleName).value,
       (`library-manager` / javaModuleName).value
     ),
     Test / addReads := {
@@ -2438,7 +2444,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
   .dependsOn(`logging-service-logback` % "test->test")
   .dependsOn(`library-manager-test` % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
-  .dependsOn(`ydoc-server`)
+//.dependsOn(`ydoc-server`)
 
 lazy val cleanInstruments = taskKey[Unit](
   "Cleans fragile class files to force a full recompilation and preserve" +
@@ -2855,7 +2861,7 @@ lazy val `runtime-integration-tests` =
         (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
-        (`ydoc-server` / Compile / exportedModule).value,
+        //(`ydoc-server` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
         (`logging-service-logback` / Compile / exportedModule).value,
@@ -2905,7 +2911,7 @@ lazy val `runtime-integration-tests` =
         "scala.library",
         (`runtime` / javaModuleName).value,
         (`runtime-test-instruments` / javaModuleName).value,
-        (`ydoc-server` / javaModuleName).value,
+        //(`ydoc-server` / javaModuleName).value,
         (`runtime-instrument-common` / javaModuleName).value,
         (`text-buffer` / javaModuleName).value,
         "truffle.tck.tests"
@@ -3015,7 +3021,7 @@ lazy val `runtime-benchmarks` =
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
         (`runtime-language-arrow` / Compile / exportedModule).value,
-        (`ydoc-server` / Compile / exportedModule).value,
+        //(`ydoc-server` / Compile / exportedModule).value,
         (`benchmarks-common` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
@@ -3683,6 +3689,7 @@ lazy val `engine-runner` = project
   .dependsOn(cli)
   .dependsOn(`profiling-utils`)
   .dependsOn(`library-manager`)
+  .dependsOn(`distribution-manager`)
   .dependsOn(`edition-updater`)
   .dependsOn(`runtime-parser`)
   .dependsOn(`logging-service`)
@@ -4036,7 +4043,7 @@ lazy val `std-benchmarks` = (project in file("std-bits/benchmarks"))
     }.evaluated
   )
   .dependsOn(`bench-processor`)
-  .dependsOn(`ydoc-server`)
+  //.dependsOn(`ydoc-server`)
   .dependsOn(`runtime-language-arrow`)
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`profiling-utils`)
@@ -4598,6 +4605,7 @@ lazy val `std-google-api` = project
     libraryDependencies ++= Seq(
       "com.google.api-client" % "google-api-client"          % googleApiClientVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.apis"       % "google-api-services-sheets" % googleApiServicesSheetsVersion exclude ("com.google.code.findbugs", "jsr305"),
+      "com.google.analytics"  % "google-analytics-admin"     % googleAnalyticsAdminVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.analytics"  % "google-analytics-data"      % googleAnalyticsDataVersion exclude ("com.google.code.findbugs", "jsr305")
     ),
     Compile / packageBin := Def.task {
@@ -4612,6 +4620,7 @@ lazy val `std-google-api` = project
       result
     }.value
   )
+  .dependsOn(`std-table` % "provided")
 
 lazy val `std-database` = project
   .in(file("std-bits") / "database")
