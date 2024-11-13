@@ -157,8 +157,8 @@ final class WebSocket implements Polyfill, ProxyExecutable {
         yield WebServer.builder()
             .host(host)
             .port(port)
-            .addRouting(webSocketRou
-            .addRouting(webSocketRouting)ting)
+            .addRouting(webSocketRouting)
+            .addRouting(httpRouting)
             .build();
       }
 
