@@ -39,7 +39,7 @@ function useDocumentationImages(
   modulePath: ToValue<Path | undefined>,
   projectFiles: Pick<
     ProjectFiles,
-    'projectRootId' | 'readFileBinary' | 'writeFileBinary' | 'pickUniqueName'
+    'projectRootId' | 'readFileBinary' | 'writeFileBinary' | 'pickUniqueName' | 'ensureDirExists'
   >,
 ) {
   function urlToPath(url: string): Result<Path> | undefined {
@@ -49,6 +49,7 @@ function useDocumentationImages(
     }
     const appliedUrl = new URL(url, `file:///${modulePathValue.segments.join('/')}`)
     if (appliedUrl.protocol === 'file:') {
+      // The pathname starts with '/', so we remove "" segment.
       const segments = decodeURI(appliedUrl.pathname).split('/').slice(1)
       return Ok({ rootId: modulePathValue.rootId, segments })
     } else {
@@ -109,13 +110,9 @@ function useDocumentationImages(
       console.error('Tried to upload image while mardown editor is still not loaded')
       return
     }
-    const filename = await projectFiles.pickUniqueName(
-      {
-        rootId,
-        segments: ['images'],
-      },
-      name,
-    )
+    const dirPath = { rootId, segments: ['images'] }
+    await projectFiles.ensureDirExists(dirPath)
+    const filename = await projectFiles.pickUniqueName(dirPath, name)
     if (!filename.ok) {
       uploadErrorToast.reportError(filename.error)
       return
