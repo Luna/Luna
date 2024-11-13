@@ -13,7 +13,7 @@ import scala.jdk.javaapi.CollectionConverters;
 /**
  * Utility class that finds installed managed runtimes (Graal JDK) from {@link DistributionManager}.
  */
-public class GraalVersionManager {
+public final class GraalVersionManager {
   private final DistributionManager distributionManager;
   private final Environment environment;
   private static final Logger logger = LoggerFactory.getLogger(GraalVersionManager.class);
