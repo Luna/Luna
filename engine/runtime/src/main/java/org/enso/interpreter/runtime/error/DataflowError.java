@@ -3,7 +3,6 @@ package org.enso.interpreter.runtime.error;
 import static org.enso.interpreter.runtime.error.PanicException.handleExceptionMessage;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleStackTrace;
 import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.dsl.Bind;
@@ -17,7 +16,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.Objects;
-import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.callable.IndirectInvokeMethodNode;
 import org.enso.interpreter.node.expression.builtin.text.util.TypeToDisplayTextNode;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -212,15 +210,5 @@ public final class DataflowError extends AbstractTruffleException {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().dataflowError();
-  }
-
-  @ExportMessage
-  boolean hasLanguage() {
-    return true;
-  }
-
-  @ExportMessage
-  Class<? extends TruffleLanguage<?>> getLanguage() {
-    return EnsoLanguage.class;
   }
 }
