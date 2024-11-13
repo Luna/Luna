@@ -340,13 +340,11 @@ function getValueTypeIcon(valueType: string) {
 /**
  * Generates the column definition for the table vizulization, including displaying the data value type and
  * data quality indicators.
- *
- * @param {string} name - The name which will be displayed in the table header and used to idenfiy the column.
- *
- * @param {number} [options.index] - The index of column the corresponds to the data in the `dataQuality` arrays
+ * @param name - The name which will be displayed in the table header and used to idenfiy the column.
+ * @param [options.index] - The index of column the corresponds to the data in the `dataQuality` arrays
  * (`number_of_nothing` and `number_of_whitespace`). This identifies the correct indicators for each column
  * to be displayed in the toolip. If absent the data quality metrics will not be shown.
- * @param {ValueType | null | undefined} [options.valueType] - The data type of the column, displayed as an icon
+ * @param [options.valueType] - The data type of the column, displayed as an icon
  * and in text within the tooltip. If absent the value type icon and text will not be shown.
  */
 function toField(
