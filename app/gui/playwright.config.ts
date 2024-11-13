@@ -57,6 +57,7 @@ process.env.PLAYWRIGHT_PORT_PV = `${ports.projectView}`
 
 export default defineConfig({
   fullyParallel: true,
+  workers: 2,
   forbidOnly: !!process.env.CI,
   repeatEach: process.env.CI ? 3 : 1,
   reporter: 'html',
