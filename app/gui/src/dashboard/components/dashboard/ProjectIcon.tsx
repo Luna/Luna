@@ -64,6 +64,7 @@ const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, SpinnerSt
 
 /** Props for a {@link ProjectIcon}. */
 export interface ProjectIconProps {
+  readonly isPlaceholder: boolean
   readonly backend: Backend
   readonly isDisabled: boolean
   readonly isOpened: boolean
@@ -72,7 +73,7 @@ export interface ProjectIconProps {
 
 /** An interactive icon indicating the status of a project. */
 export default function ProjectIcon(props: ProjectIconProps) {
-  const { backend, item, isOpened, isDisabled } = props
+  const { backend, item, isOpened, isDisabled, isPlaceholder } = props
 
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
@@ -84,10 +85,15 @@ export default function ProjectIcon(props: ProjectIconProps) {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const itemProjectState = item.projectState ?? CLOSED_PROJECT_STATE
   const { data: projectState, isError } = reactQuery.useQuery({
-    ...projectHooks.createGetProjectDetailsQuery.createPassiveListener(item.id),
-    select: (data) => data?.state,
-    enabled: isOpened,
+    ...projectHooks.createGetProjectDetailsQuery({
+      assetId: item.id,
+      parentId: item.parentId,
+      backend,
+    }),
+    select: (data) => data.state,
+    enabled: !isPlaceholder && isOpened,
   })
+
   const status = projectState?.type
   const isRunningInBackground = projectState?.executeAsync ?? false
 

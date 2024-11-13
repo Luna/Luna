@@ -134,7 +134,7 @@
   "duplicateProjectBackendError": "Could not duplicate project as '$0'",
   "closeProjectBackendError": "Could not close project '$0'",
   "listProjectSessionsBackendError": "Could not list sessions for project '$0'",
-  "getProjectDetailsBackendError": "Could not get details of project '$0'",
+  "getProjectDetailsBackendError": "Could not get details of project",
   "getProjectLogsBackendError": "Could not get logs for project '$0'",
   "openProjectBackendError": "Could not open project '$0'",
   "openProjectMissingCredentialsBackendError": "Could not open project '$0': Missing credentials",

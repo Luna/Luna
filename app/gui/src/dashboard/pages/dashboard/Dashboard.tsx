@@ -298,7 +298,7 @@ function DashboardInner(props: DashboardProps) {
               </tabBar.Tab>
 
               {launchedProjects.map((project) => (
-                <tabBar.Tab
+                <tabBar.ProjectTab
                   data-testid="editor-tab-button"
                   id={project.id}
                   project={project}
@@ -316,7 +316,7 @@ function DashboardInner(props: DashboardProps) {
                   }}
                 >
                   {project.title}
-                </tabBar.Tab>
+                </tabBar.ProjectTab>
               ))}
 
               <tabBar.Tab

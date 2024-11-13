@@ -18,9 +18,10 @@ import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 
-import * as backend from '#/services/Backend'
-
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useBackendForProjectType } from '#/providers/BackendProvider'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
+import { ProjectState } from '#/services/Backend'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
@@ -157,24 +158,20 @@ export default function TabBar(props: TabBarProps) {
 interface InternalTabProps extends Readonly<React.PropsWithChildren> {
   readonly 'data-testid'?: string
   readonly id: string
-  readonly project?: LaunchedProject
   readonly isActive: boolean
   readonly isHidden?: boolean
-  readonly icon: string | null
+  readonly icon: React.ReactNode | string | null
   readonly labelId: text.TextId
   readonly onClose?: () => void
-  readonly onLoadEnd?: () => void
 }
 
 /** A tab in a {@link TabBar}. */
 export function Tab(props: InternalTabProps) {
-  const { id, project, isActive, isHidden = false, icon, labelId, children, onClose } = props
-  const { onLoadEnd } = props
+  const { id, isActive, isHidden = false, icon, labelId, children, onClose } = props
   const { getText } = textProvider.useText()
   const inputBindings = useInputBindings()
   const { setSelectedTab } = useTabBarContext()
   const ref = React.useRef<HTMLDivElement | null>(null)
-  const isLoadingRef = React.useRef(true)
   const actuallyActive = isActive && !isHidden
   const [resizeObserver] = React.useState(
     () =>
@@ -209,21 +206,6 @@ export function Tab(props: InternalTabProps) {
     }
   }, [actuallyActive, id, setSelectedTab])
 
-  const { isLoading, data } = reactQuery.useQuery<backend.Project | null>(
-    project?.id ?
-      projectHooks.createGetProjectDetailsQuery.createPassiveListener(project.id)
-    : { queryKey: ['__IGNORE__'], queryFn: reactQuery.skipToken },
-  )
-
-  const isFetching = isLoading || data == null || data.state.type !== backend.ProjectState.opened
-
-  React.useEffect(() => {
-    if (!isFetching && isLoadingRef.current) {
-      isLoadingRef.current = false
-      onLoadEnd?.()
-    }
-  }, [isFetching, onLoadEnd])
-
   return (
     <aria.Tab
       data-testid={props['data-testid']}
@@ -249,27 +231,68 @@ export function Tab(props: InternalTabProps) {
         isHidden && 'hidden',
       )}
     >
-      {icon != null &&
-        (isLoading ?
-          <StatelessSpinner
-            state="loading-medium"
-            size={16}
-            className={tailwindMerge.twMerge(onClose && 'group-hover:hidden focus-visible:hidden')}
-          />
-        : <SvgMask
-            src={icon}
-            className={tailwindMerge.twMerge(onClose && 'group-hover:hidden focus-visible:hidden')}
-          />)}
-      {data?.name != null ?
-        <ariaComponents.Text truncate="1" className="max-w-40">
-          {data.name}
-        </ariaComponents.Text>
-      : children}
+      {typeof icon === 'string' ?
+        <SvgMask
+          src={icon}
+          className={tailwindMerge.twMerge(onClose && 'group-hover:hidden focus-visible:hidden')}
+        />
+      : icon}
+
+      <ariaComponents.Text truncate="1" className="max-w-40">
+        {children}
+      </ariaComponents.Text>
+
       {onClose && (
         <div className="flex">
           <ariaComponents.CloseButton onPress={onClose} />
         </div>
       )}
     </aria.Tab>
+  )
+}
+
+/**
+ * Props for a {@link ProjectTab}.
+ */
+export interface ProjectTabProps extends InternalTabProps {
+  readonly project: LaunchedProject
+  readonly onLoadEnd?: () => void
+}
+
+/**
+ * Project Tab is a {@link Tab} that displays the name of the project.
+ */
+export function ProjectTab(props: ProjectTabProps) {
+  const { project, onLoadEnd, children, ...rest } = props
+
+  const backend = useBackendForProjectType(project.type)
+
+  const stableOnLoadEnd = useEventCallback(() => {
+    onLoadEnd?.()
+  })
+
+  const projectDetailsQuery = reactQuery.useQuery({
+    ...projectHooks.createGetProjectDetailsQuery({
+      assetId: project.id,
+      parentId: project.parentId,
+      backend,
+    }),
+  })
+
+  const isReady =
+    projectDetailsQuery.isSuccess && projectDetailsQuery.data.state.type === ProjectState.opened
+
+  React.useEffect(() => {
+    if (isReady) {
+      stableOnLoadEnd()
+    }
+  }, [isReady, stableOnLoadEnd])
+
+  const icon = isReady ? null : <StatelessSpinner state="loading-medium" size={16} />
+
+  return (
+    <Tab {...rest} icon={icon}>
+      {children}
+    </Tab>
   )
 }

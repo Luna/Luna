@@ -80,6 +80,7 @@ export interface AssetRowInnerProps {
 /** Props for an {@link AssetRow}. */
 export interface AssetRowProps {
   readonly isOpened: boolean
+  readonly isPlaceholder: boolean
   readonly visibility: Visibility | undefined
   readonly id: backendModule.AssetId
   readonly parentId: backendModule.DirectoryId
@@ -117,7 +118,17 @@ export interface AssetRowProps {
 
 /** A row containing an {@link backendModule.AnyAsset}. */
 export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
-  const { id, parentId, isKeyboardSelected, isOpened, select, state, columns, onClick } = props
+  const {
+    id,
+    parentId,
+    isKeyboardSelected,
+    isOpened,
+    select,
+    state,
+    columns,
+    onClick,
+    isPlaceholder,
+  } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
@@ -177,14 +188,19 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
 
   const isCloud = isCloudCategory(category)
 
+  console.log('isPlaceholder', isPlaceholder, asset.type)
+
   const { data: projectState } = useQuery({
-    ...createGetProjectDetailsQuery.createPassiveListener(
-      // This is SAFE, as `isOpened` is only true for projects.
+    ...createGetProjectDetailsQuery({
+      // This is safe because we disable the query when the asset is not a project.
+      // see `enabled` property below.
       // eslint-disable-next-line no-restricted-syntax
-      asset.id as backendModule.ProjectId,
-    ),
-    select: (data) => data?.state.type,
-    enabled: asset.type === backendModule.AssetType.project,
+      assetId: asset.id as backendModule.ProjectId,
+      parentId: asset.parentId,
+      backend,
+    }),
+    select: (data) => data.state.type,
+    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder,
   })
 
   const toastAndLog = useToastAndLog()
@@ -320,11 +336,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [
-                      asset.id,
-                      asset.parentId,
-                      asset.title,
-                    ]),
+                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, asset.parentId]),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -679,6 +691,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                   return (
                     <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
                       <Render
+                        isPlaceholder={isPlaceholder}
                         keyProp={id}
                         isOpened={isOpened}
                         backendType={backend.type}

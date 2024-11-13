@@ -87,7 +87,6 @@ interface PlaceholderOverrides {
   readonly duplicateProjectBackendError: [string]
   readonly closeProjectBackendError: [string]
   readonly listProjectSessionsBackendError: [string]
-  readonly getProjectDetailsBackendError: [string]
   readonly getProjectLogsBackendError: [string]
   readonly openProjectBackendError: [string]
   readonly openProjectMissingCredentialsBackendError: [string]

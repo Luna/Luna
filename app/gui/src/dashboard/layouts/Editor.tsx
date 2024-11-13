@@ -83,16 +83,12 @@ export interface EditorProps {
 export default function Editor(props: EditorProps) {
   const { project, hidden, isOpening, startProject, isOpeningFailed, openingError } = props
 
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
+  const backend = backendProvider.useBackendForProjectType(project.type)
 
   const projectStatusQuery = projectHooks.createGetProjectDetailsQuery({
-    type: project.type,
     assetId: project.id,
     parentId: project.parentId,
-    title: project.title,
-    remoteBackend,
-    localBackend,
+    backend,
   })
 
   const projectQuery = reactQuery.useQuery({

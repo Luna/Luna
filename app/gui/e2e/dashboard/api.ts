@@ -12,6 +12,7 @@ import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 
 import * as actions from './actions'
 
+import invariant from 'tiny-invariant'
 import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'json' }
 
 // =================
@@ -144,6 +145,9 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
   const addAsset = <T extends backend.AnyAsset>(asset: T) => {
     assets.push(asset)
     assetMap.set(asset.id, asset)
+
+    console.log('addAsset', asset.id)
+
     return asset
   }
 
@@ -499,6 +503,9 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       ) as unknown as Query
       const parentId = body.parent_id ?? defaultDirectoryId
       let filteredAssets = assets.filter((asset) => asset.parentId === parentId)
+
+      console.log('filteredAssets', { filteredAssets, assets })
+
       // This lint rule is broken; there is clearly a case for `undefined` below.
       switch (body.filter_by) {
         case backend.FilterBy.active: {
@@ -571,29 +578,43 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     }))
 
     // === Endpoints with dummy implementations ===
-
     await get(remoteBackendPaths.getProjectDetailsPath(GLOB_PROJECT_ID), (_route, request) => {
       const projectId = backend.ProjectId(request.url().match(/[/]projects[/]([^?/]+)/)?.[1] ?? '')
       const project = assetMap.get(projectId)
-      if (!project?.projectState) {
-        throw new Error('Attempting to get a project that does not exist.')
-      } else {
-        return {
-          organizationId: defaultOrganizationId,
-          projectId: projectId,
-          name: 'example project name',
-          state: project.projectState,
-          packageName: 'Project_root',
-          // eslint-disable-next-line camelcase
-          ide_version: null,
-          // eslint-disable-next-line camelcase
-          engine_version: {
-            value: '2023.2.1-nightly.2023.9.29',
-            lifecycle: backend.VersionLifecycle.development,
-          },
-          address: backend.Address('ws://localhost/'),
-        } satisfies backend.ProjectRaw
-      }
+
+      invariant(
+        project,
+        `Cannot get details for a project that does not exist. Project ID: ${projectId} \n
+        Please make sure that you've created the project before opening it.
+        ------------------------------------------------------------------------------------------------
+        
+        Existing projects: ${Array.from(assetMap.values())
+          .filter((asset) => asset.type === backend.AssetType.project)
+          .map((asset) => asset.id)
+          .join(', ')}`,
+      )
+      invariant(
+        project.projectState,
+        `Attempting to get a project that does not have a state. Usually it is a bug in the application.
+        ------------------------------------------------------------------------------------------------
+        Tried to get: \n ${JSON.stringify(project, null, 2)}`,
+      )
+
+      return {
+        organizationId: defaultOrganizationId,
+        projectId: projectId,
+        name: 'example project name',
+        state: project.projectState,
+        packageName: 'Project_root',
+        // eslint-disable-next-line camelcase
+        ide_version: null,
+        // eslint-disable-next-line camelcase
+        engine_version: {
+          value: '2023.2.1-nightly.2023.9.29',
+          lifecycle: backend.VersionLifecycle.development,
+        },
+        address: backend.Address('ws://localhost/'),
+      } satisfies backend.ProjectRaw
     })
 
     // === Endpoints returning `void` ===
@@ -603,6 +624,8 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       interface Body {
         readonly parentDirectoryId: backend.DirectoryId
       }
+
+      console.log('remoteBackendPaths.copyAssetPath', request.url())
 
       const assetId = request.url().match(/[/]assets[/]([^?/]+)/)?.[1]
       // This could be an id for an arbitrary asset, but pretend it's a
@@ -622,7 +645,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
           })
         }
       } else {
-        const body: Body = await request.postDataJSON()
+        const body: Body = request.postDataJSON()
         const parentId = body.parentDirectoryId
         // Can be any asset ID.
         const id = backend.DirectoryId(`directory-${uniqueString.uniqueString()}`)
@@ -638,7 +661,8 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         newAsset.parentId = parentId
         newAsset.title += ' (copy)'
         addAsset(newAsset)
-        await route.fulfill({ json })
+
+        return json
       }
     })
 
@@ -667,11 +691,19 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await post(remoteBackendPaths.openProjectPath(GLOB_PROJECT_ID), async (route, request) => {
       const projectId = backend.ProjectId(request.url().match(/[/]projects[/]([^?/]+)/)?.[1] ?? '')
+
       const project = assetMap.get(projectId)
+
+      invariant(
+        project,
+        `Tried to open a project that does not exist. Project ID: ${projectId} \n Please make sure that you've created the project before opening it.`,
+      )
+
       if (project?.projectState) {
         object.unsafeMutable(project.projectState).type = backend.ProjectState.opened
       }
-      await route.fulfill()
+
+      route.fulfill()
     })
     await delete_(remoteBackendPaths.deleteTagPath(GLOB_TAG_ID), async (route) => {
       await route.fulfill()
@@ -931,6 +963,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         projectId: id,
         state: { type: backend.ProjectState.closed, volumeId: '' },
       }
+
       addProject(title, {
         description: null,
         id,
@@ -950,6 +983,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         ],
         projectState: json.state,
       })
+
       return json
     })
     await post(remoteBackendPaths.CREATE_DIRECTORY_PATH + '*', (_route, request) => {

@@ -113,6 +113,7 @@ import {
   assetIsProject,
   AssetType,
   BackendType,
+  createPlaceholderAssetId,
   createPlaceholderFileAsset,
   createPlaceholderProjectAsset,
   createRootDirectoryAsset,
@@ -422,6 +423,8 @@ export default function AssetsTable(props: AssetsTableProps) {
     [expandedDirectoryIds],
   )
 
+  console.log('expandedDirectoryIds', expandedDirectoryIds)
+
   const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
   const duplicateProjectMutation = useMutation(backendMutationOptions(backend, 'duplicateProject'))
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
@@ -510,6 +513,8 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const rootDirectoryContent = directories.rootDirectory.data
   const isLoading = directories.rootDirectory.isLoading && !directories.rootDirectory.isError
+
+  console.log('rootDirectoryContent', JSON.stringify(directories.directories.values(), null, 2))
 
   const assetTree = useMemo(() => {
     const rootPath = 'rootPath' in category ? category.rootPath : backend.rootPath(user)
@@ -1606,7 +1611,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       case AssetListEventType.newProject: {
         const parent = nodeMapRef.current.get(event.parentKey)
         const projectName = getNewProjectName(event.preferredName, event.parentId)
-        const dummyId = ProjectId(uniqueString())
+        const dummyId = createPlaceholderAssetId(AssetType.project)
         const path =
           backend instanceof LocalBackend ? backend.joinPath(event.parentId, projectName) : null
         const placeholderItem: ProjectAsset = {
@@ -1656,7 +1661,8 @@ export default function AssetsTable(props: AssetsTableProps) {
             throw error
           })
           .then((createdProject) => {
-            event.onCreated?.(createdProject)
+            event.onCreated?.(createdProject, placeholderItem.parentId)
+
             doOpenProject({
               id: createdProject.projectId,
               type: backend.type,
@@ -2429,6 +2435,7 @@ export default function AssetsTable(props: AssetsTableProps) {
           {nodes.map((node) => (
             <NameColumn
               key={node.key}
+              isPlaceholder={node.isPlaceholder()}
               isOpened={false}
               keyProp={node.key}
               item={node.item}
@@ -2594,6 +2601,7 @@ export default function AssetsTable(props: AssetsTableProps) {
         return (
           <AssetRow
             key={item.key + item.path}
+            isPlaceholder={item.isPlaceholder()}
             isOpened={openedProjects.some(({ id }) => item.item.id === id)}
             visibility={visibilities.get(item.key)}
             columns={columns}

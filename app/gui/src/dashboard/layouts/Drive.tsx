@@ -120,7 +120,10 @@ export default function Drive(props: DriveProps) {
     (
       templateId: string | null = null,
       templateName: string | null = null,
-      onCreated?: (project: backendModule.CreatedProject) => void,
+      onCreated?: (
+        project: backendModule.CreatedProject,
+        parentId: backendModule.DirectoryId,
+      ) => void,
       onError?: () => void,
     ) => {
       dispatchAssetListEvent({

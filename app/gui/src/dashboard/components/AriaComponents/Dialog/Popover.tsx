@@ -92,23 +92,18 @@ export function Popover(props: PopoverProps) {
     contextState?.close()
   })
 
-  const isOpen = contextState?.isOpen ?? false
-
   utlities.useInteractOutside({
     ref: dialogRef,
     id: dialogId,
     onInteractOutside: close,
   })
 
-  if (!isOpen) {
-    return null
-  }
-
   return (
     <aria.Popover
       className={(values) =>
         POPOVER_STYLES({
-          ...values,
+          isEntering: values.isEntering,
+          isExiting: values.isExiting,
           size,
           rounded,
           className: typeof className === 'function' ? className(values) : className,

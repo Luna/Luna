@@ -723,10 +723,11 @@ export async function login(
   first = true,
 ) {
   await test.test.step('Login', async () => {
-    await locateEmailInput(page).fill(email, { noWaitAfter: true })
-    await locatePasswordInput(page).fill(password, { noWaitAfter: true })
+    await locateEmailInput(page).fill(email)
+    await locatePasswordInput(page).fill(password)
     await locateLoginButton(page).click()
     await test.expect(page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
+
     if (first) {
       await passAgreementsDialog({ page, setupAPI })
       await test.expect(page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()

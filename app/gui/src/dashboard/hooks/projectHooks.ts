@@ -22,9 +22,8 @@ import {
 } from '#/providers/ProjectsProvider'
 
 import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
+import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
-import type LocalBackend from '#/services/LocalBackend'
-import type RemoteBackend from '#/services/RemoteBackend'
 
 // ====================================
 // === createGetProjectDetailsQuery ===
@@ -44,12 +43,9 @@ const ACTIVE_SYNC_INTERVAL_MS = 100
 
 /** Options for {@link createGetProjectDetailsQuery}. */
 export interface CreateOpenedProjectQueryOptions {
-  readonly type: backendModule.BackendType
   readonly assetId: backendModule.Asset<backendModule.AssetType.project>['id']
   readonly parentId: backendModule.Asset<backendModule.AssetType.project>['parentId']
-  readonly title: backendModule.Asset<backendModule.AssetType.project>['title']
-  readonly remoteBackend: RemoteBackend
-  readonly localBackend: LocalBackend | null
+  readonly backend: Backend
 }
 
 /** Return a function to update a project asset in the TanStack Query cache. */
@@ -84,10 +80,9 @@ function useSetProjectAsset() {
 
 /** Project status query.  */
 export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOptions) {
-  const { assetId, parentId, title, remoteBackend, localBackend, type } = options
+  const { assetId, parentId, backend } = options
 
-  const backend = type === backendModule.BackendType.remote ? remoteBackend : localBackend
-  const isLocal = type === backendModule.BackendType.local
+  const isLocal = backend.type === backendModule.BackendType.local
 
   return reactQuery.queryOptions({
     queryKey: createGetProjectDetailsQuery.getQueryKey(assetId),
@@ -118,19 +113,13 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    queryFn: async () => {
-      invariant(backend != null, 'Backend is null')
-
-      return await backend.getProjectDetails(assetId, parentId, title)
+    queryFn: () => {
+      console.trace('getProjectDetails', assetId, parentId)
+      return backend.getProjectDetails(assetId, parentId)
     },
   })
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const
-createGetProjectDetailsQuery.createPassiveListener = (id: LaunchedProjectId) =>
-  reactQuery.queryOptions<backendModule.Project | null>({
-    queryKey: createGetProjectDetailsQuery.getQueryKey(id),
-    initialData: null,
-  })
 
 // ==============================
 // === useOpenProjectMutation ===

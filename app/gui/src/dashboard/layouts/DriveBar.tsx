@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 
-import { skipToken, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -40,7 +40,8 @@ import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { ProjectState, type CreatedProject, type Project, type ProjectId } from '#/services/Backend'
+import type { DirectoryId } from '#/services/Backend'
+import { ProjectState, type CreatedProject, type ProjectId } from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
@@ -60,7 +61,7 @@ export interface DriveBarProps {
   readonly doCreateProject: (
     templateId?: string | null,
     templateName?: string | null,
-    onCreated?: (project: CreatedProject) => void,
+    onCreated?: (project: CreatedProject, parentId: DirectoryId) => void,
     onError?: () => void,
   ) => void
   readonly doCreateDirectory: () => void
@@ -106,7 +107,10 @@ export default function DriveBar(props: DriveBarProps) {
   })
   const [isCreatingProjectFromTemplate, setIsCreatingProjectFromTemplate] = React.useState(false)
   const [isCreatingProject, setIsCreatingProject] = React.useState(false)
-  const [createdProjectId, setCreatedProjectId] = React.useState<ProjectId | null>(null)
+  const [createdProjectId, setCreatedProjectId] = React.useState<{
+    projectId: ProjectId
+    parentId: DirectoryId
+  } | null>(null)
   const pasteData = usePasteData()
   const effectivePasteData =
     (
@@ -130,8 +134,8 @@ export default function DriveBar(props: DriveBarProps) {
         doCreateProject(
           null,
           null,
-          (project) => {
-            setCreatedProjectId(project.projectId)
+          (project, parentId) => {
+            setCreatedProjectId({ projectId: project.projectId, parentId })
           },
           () => {
             setIsCreatingProject(false)
@@ -144,11 +148,18 @@ export default function DriveBar(props: DriveBarProps) {
     })
   }, [isCloud, doCreateDirectory, doCreateProject, inputBindings])
 
-  const createdProjectQuery = useQuery<Project | null>(
-    createdProjectId ?
-      createGetProjectDetailsQuery.createPassiveListener(createdProjectId)
-    : { queryKey: ['__IGNORE__'], queryFn: skipToken },
-  )
+  const createdProjectQuery = useQuery({
+    ...createGetProjectDetailsQuery({
+      // This is safe because we disable the query when `createdProjectId` is `null`.
+      // see `enabled` property below.
+      // eslint-disable-next-line no-restricted-syntax
+      assetId: createdProjectId?.projectId as ProjectId,
+      // eslint-disable-next-line no-restricted-syntax
+      parentId: createdProjectId?.parentId as DirectoryId,
+      backend,
+    }),
+    enabled: createdProjectId != null,
+  })
 
   const isFetching =
     (createdProjectQuery.isLoading ||
@@ -249,8 +260,8 @@ export default function DriveBar(props: DriveBarProps) {
                   doCreateProject(
                     templateId,
                     templateName,
-                    (project) => {
-                      setCreatedProjectId(project.projectId)
+                    ({ projectId }, parentId) => {
+                      setCreatedProjectId({ projectId, parentId })
                     },
                     () => {
                       setIsCreatingProjectFromTemplate(false)
@@ -267,15 +278,18 @@ export default function DriveBar(props: DriveBarProps) {
               loading={isCreatingProject}
               loaderPosition="icon"
               onPress={() => {
+                console.log('creating project', { createdProjectId })
                 setIsCreatingProject(true)
                 doCreateProject(
                   null,
                   null,
-                  (project) => {
-                    setCreatedProjectId(project.projectId)
+                  ({ projectId }, parentId) => {
+                    console.log('created project', projectId)
+                    setCreatedProjectId({ projectId, parentId })
                     setIsCreatingProject(false)
                   },
                   () => {
+                    console.log('failed to create project')
                     setIsCreatingProject(false)
                   },
                 )

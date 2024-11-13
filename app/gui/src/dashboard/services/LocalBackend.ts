@@ -310,7 +310,6 @@ export default class LocalBackend extends Backend {
   override async getProjectDetails(
     projectId: backend.ProjectId,
     directory: backend.DirectoryId | null,
-    title: string,
   ): Promise<backend.Project> {
     const { id } = extractTypeAndId(projectId)
     const state = this.projectManager.projects.get(id)
@@ -323,7 +322,7 @@ export default class LocalBackend extends Backend {
         )
         .find((metadata) => metadata.id === id)
       if (project == null) {
-        throw new Error(`Could not get details of project '${title}'.`)
+        throw new Error(`Could not get details of project.`)
       } else {
         const version =
           project.engineVersion == null ?
@@ -705,7 +704,7 @@ export default class LocalBackend extends Backend {
         id = await response.text()
       }
       const projectId = newProjectId(projectManager.UUID(id))
-      const project = await this.getProjectDetails(projectId, body.parentDirectoryId, body.fileName)
+      const project = await this.getProjectDetails(projectId, body.parentDirectoryId)
       this.uploadedFiles.set(uploadId, { id: projectId, project })
     }
     return { presignedUrls: [], uploadId, sourcePath: backend.S3FilePath('') }
