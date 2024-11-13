@@ -1,4 +1,5 @@
 import project.Any.Any
+export project.Data.Download.Downlad_Mode.Download_Mode
 import project.Data.Pair.Pair
 import project.Data.Read.Many_Files_List.Many_Files_List
 import project.Data.Read.Return_As.Return_As
@@ -440,8 +441,8 @@ post (uri:(URI | Text)=(Missing_Argument.throw "uri")) (body:Request_Body=..Empt
    - headers: The headers to send with the request. Defaults to an empty vector.
 @uri (Text_Input display=..Always)
 @headers Header.default_widget
-download : (URI | Text) -> Writable_File -> HTTP_Method -> Vector (Header | Pair Text Text) -> File ! Request_Error | HTTP_Error
-download (uri:(URI | Text)=(Missing_Argument.throw "uri")) file:Writable_File (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) =
+download : (URI | Text) -> Writable_File -> Download_Mode -> HTTP_Method -> Vector (Header | Pair Text Text) -> File ! Request_Error | HTTP_Error
+download (uri:(URI | Text)=(Missing_Argument.throw "uri")) file:Writable_File (mode:Download_Mode=..If_Not_Exists) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) =
     Context.Output.if_enabled disabled_message="As writing is disabled, cannot download to a file. Press the Write button ▶ to perform the operation." panic=False <|
         response = HTTP.fetch uri method headers cache_policy=Cache_Policy.No_Cache
         case Data_Link.is_data_link response.body.metadata of
