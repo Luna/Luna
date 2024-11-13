@@ -41,7 +41,7 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
             _add_objects_column base_table objects
         Return_As_Table.Merged_Table columns_to_keep match_columns ->
             tables = objects.map _interpret_object_as_table
-            _merge_input_and_tables base_table tables
+            _merge_input_and_tables base_table tables columns_to_keep match_columns
 
 _input_as_table (input : Many_Files_List) -> Table =
     case input.original_value of
@@ -54,9 +54,13 @@ _input_as_table (input : Many_Files_List) -> Table =
 
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
-_merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) -> Table =
-    # TODO what to do about 0 row tables?
-
+_merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) columns_to_keep match_columns -> Table =
+    # TODO what to do about 0 row arrays (they should not introduce useless columns) / tables?
+    counts = tables_for_rows.map .row_count
+    unified_tables = Table.from_union tables_for_rows columns_to_keep match_columns
+    multiplicated_inputs = _duplicate_rows input_table counts
+    Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
+    multiplicated_inputs.zip unified_tables right_prefix=""
 
 _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
     unique_naming = base_table.column_naming_helper.create_unique_name_strategy

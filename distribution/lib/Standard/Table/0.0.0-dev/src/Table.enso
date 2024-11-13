@@ -2677,7 +2677,7 @@ type Table
         java_conditions = join_resolution.conditions
         new_java_table = Java_Problems.with_problem_aggregator on_problems java_aggregator->
             self.java_table.join right.java_table java_conditions join_kind.to_java (columns_to_keep.at 0) (columns_to_keep.at 1) right_columns_to_drop right_prefix java_aggregator
-        Table.Value new_from_java_table
+        Table.Value new_java_table
 
     ## ALIAS append, cartesian join
        GROUP Standard.Base.Calculations
@@ -2927,10 +2927,10 @@ type Table
        ? Column Renaming
 
          If columns from the two tables have colliding names, a prefix (by
-         default `Right_`) is added to the name of the column from the right
+         default `Right `) is added to the name of the column from the right
          table. The left column remains unchanged. It is possible that the new
          name will be in use, in this case it will be resolved using the normal
-         renaming strategy - adding subsequent `_1`, `_2` etc.
+         renaming strategy - adding subsequent ` 1`, ` 2` etc.
 
        ? Row Ordering For In-Memory Tables
 
