@@ -772,6 +772,10 @@ public final class Module extends EnsoObject {
   boolean isMemberInvocable(String member) {
     return member.equals(MethodNames.Module.GET_METHOD)
         || member.equals(MethodNames.Module.REPARSE)
+        || member.equals(MethodNames.Module.GATHER_IMPORT_STATEMENTS)
+        || member.equals(MethodNames.Module.GENERATE_DOCS)
+        || member.equals(MethodNames.Module.GET_NAME)
+        || member.equals(MethodNames.Module.GET_TYPE)
         || member.equals(MethodNames.Module.SET_SOURCE)
         || member.equals(MethodNames.Module.SET_SOURCE_FILE)
         || member.equals(MethodNames.Module.GET_ASSOCIATED_TYPE)
