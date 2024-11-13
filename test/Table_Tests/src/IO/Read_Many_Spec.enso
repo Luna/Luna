@@ -239,6 +239,14 @@ add_specs suite_builder =
                 r.at "a" . value_type . should_equal Value_Type.Mixed
                 r.at "a" . to_vector . should_equal [JS_Object.from_pairs [], []]
 
+        group_builder.specify "has sane behaviour if no files were provided" <|
+            col = Column.from_vector "C" []
+            Data.read_many col return=..Vector . should_equal []
+            t = Data.read_many col
+            t.should_be_a Table
+            t.row_count . should_equal 0
+            t.column_names . should_equal ["C"]
+
         group_builder.specify "will rename duplicated columns, keeping columns from the input unchanged" <|
             tmp_file = enso_project.data / "transient" / "table.csv"
             (Table.new [["Path", [1]], ["Col", [2]]]).write tmp_file on_existing_file=..Overwrite . should_succeed

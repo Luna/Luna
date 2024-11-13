@@ -131,6 +131,9 @@ add_specs suite_builder =
             r1.should_equal [js_object, Nothing, "Hello World!"]
             Problems.expect_only_warning File_Error r1
 
+        group_builder.specify "should return empty vector if no files were provided" <|
+            Data.read_many [] . should_equal []
+
 main filter=Nothing =
     suite = Test.build suite_builder->
         add_specs suite_builder
