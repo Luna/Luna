@@ -223,15 +223,21 @@ add_specs suite_builder =
             Panic.with_finalizer (base_dir.delete recursive=True) <|
                 'A,B'.write (base_dir / "1_empty_table.csv")
                 'B,C'.write (base_dir / "2_empty_table.csv")
+                'B,C\n1,2\n3,4'.write (base_dir / "3_table.csv")
 
                 files = Data.list base_dir . sort on=.name
                 r = Data.read_many files format=(..Delimited ',' headers=True) return=..Merged_Table
                 r.should_be_a Table
                 r.column_names . should_equal ["Path", "A", "B", "C"]
-                r.row_count . should_equal 2
-                r.at "A" . to_vector . should_equal [Nothing, Nothing]
-                r.at "B" . to_vector . should_equal [Nothing, Nothing]
-                r.at "C" . to_vector . should_equal [Nothing, Nothing]
+                r.row_count . should_equal 4
+                r.at "Path" . at 0 . name . should_equal "1_empty_table.csv"
+                r.at "Path" . at 1 . name . should_equal "2_empty_table.csv"
+                r.at "Path" . at 2 . name . should_equal "3_table.csv"
+                r.at "Path" . at 3 . name . should_equal "3_table.csv"
+
+                r.at "A" . to_vector . should_equal [Nothing, Nothing, Nothing, Nothing]
+                r.at "B" . to_vector . should_equal [Nothing, Nothing, 1, 3]
+                r.at "C" . to_vector . should_equal [Nothing, Nothing, 2, 4]
 
         group_builder.specify "will fallback to Char if no common type can be found for primitive values" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
