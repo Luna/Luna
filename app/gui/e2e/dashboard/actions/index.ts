@@ -856,25 +856,39 @@ export async function mockAllAnimations({ page }: MockParams) {
  * Mock unneeded URLs.
  */
 export async function mockUnneededUrls({ page }: MockParams) {
+  const EULA_JSON = JSON.stringify(apiModule.EULA_JSON)
+  const PRIVACY_JSON = JSON.stringify(apiModule.PRIVACY_JSON)
+  const checkerboardSvg = `
+    <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+      <rect width="8" height="8" fill="#f0f0f0"/>
+      <rect x="8" y="8" width="8" height="8" fill="#f0f0f0"/>
+      <rect x="8" y="0" width="8" height="8" fill="#ffffff"/>
+      <rect x="0" y="8" width="8" height="8" fill="#ffffff"/>
+    </svg>`
+
   return Promise.all([
     page.route('https://*.ingest.sentry.io/api/*/envelope/*', async (route) => {
       await route.fulfill()
     }),
+
     page.route('https://api.mapbox.com/mapbox-gl-js/*/mapbox-gl.css', async (route) => {
       await route.fulfill({ contentType: 'text/css', body: '' })
     }),
+
     page.route('https://ensoanalytics.com/eula.json', async (route) => {
-      await route.fulfill({ contentType: 'text/json', body: JSON.stringify(apiModule.EULA_JSON) })
+      await route.fulfill({ contentType: 'text/json', body: EULA_JSON })
     }),
 
     page.route('https://ensoanalytics.com/privacy.json', async (route) => {
-      await route.fulfill({
-        contentType: 'text/json',
-        body: JSON.stringify(apiModule.PRIVACY_JSON),
-      })
+      await route.fulfill({ contentType: 'text/json', body: PRIVACY_JSON })
     }),
+
     page.route('https://fonts.googleapis.com/css2*', async (route) => {
       await route.fulfill({ contentType: 'text/css', body: '' })
+    }),
+
+    page.route('*/**/*.svg', async (route) => {
+      await route.fulfill({ contentType: 'image/svg+xml', body: checkerboardSvg })
     }),
   ])
 }

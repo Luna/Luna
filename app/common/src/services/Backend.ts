@@ -709,6 +709,12 @@ export function findLeastUsedColor(labels: Iterable<Label>) {
 // === AssetType ===
 // =================
 
+export enum SpecialAssetType {
+  loading = 'specialLoading',
+  empty = 'specialEmpty',
+  error = 'specialError',
+}
+
 /** All possible types of directory entries. */
 export enum AssetType {
   project = 'project',
@@ -728,12 +734,19 @@ export enum AssetType {
 }
 
 /** The corresponding ID newtype for each {@link AssetType}. */
-export interface IdType {
+export interface IdType extends RealAssetIdType, SpecialAssetIdType {}
+
+export type RealAssetId = ProjectId | FileId | DatalinkId | SecretId | DirectoryId
+export interface RealAssetIdType {
   readonly [AssetType.project]: ProjectId
   readonly [AssetType.file]: FileId
   readonly [AssetType.datalink]: DatalinkId
   readonly [AssetType.secret]: SecretId
   readonly [AssetType.directory]: DirectoryId
+}
+
+export type SpecialAssetId = LoadingAssetId | EmptyAssetId | ErrorAssetId
+export interface SpecialAssetIdType {
   readonly [AssetType.specialLoading]: LoadingAssetId
   readonly [AssetType.specialEmpty]: EmptyAssetId
   readonly [AssetType.specialError]: ErrorAssetId

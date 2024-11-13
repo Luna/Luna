@@ -504,8 +504,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       const parentId = body.parent_id ?? defaultDirectoryId
       let filteredAssets = assets.filter((asset) => asset.parentId === parentId)
 
-      console.log('filteredAssets', { filteredAssets, assets })
-
       // This lint rule is broken; there is clearly a case for `undefined` below.
       switch (body.filter_by) {
         case backend.FilterBy.active: {
@@ -624,8 +622,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       interface Body {
         readonly parentDirectoryId: backend.DirectoryId
       }
-
-      console.log('remoteBackendPaths.copyAssetPath', request.url())
 
       const assetId = request.url().match(/[/]assets[/]([^?/]+)/)?.[1]
       // This could be an id for an arbitrary asset, but pretend it's a

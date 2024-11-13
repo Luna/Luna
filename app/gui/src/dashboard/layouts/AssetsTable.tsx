@@ -60,6 +60,7 @@ import AssetListEventType from '#/events/AssetListEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   backendMutationOptions,
+  listDirectoryQueryOptions,
   useBackendQuery,
   useUploadFileWithToastMutation,
 } from '#/hooks/backendHooks'
@@ -423,8 +424,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     [expandedDirectoryIds],
   )
 
-  console.log('expandedDirectoryIds', expandedDirectoryIds)
-
   const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
   const duplicateProjectMutation = useMutation(backendMutationOptions(backend, 'duplicateProject'))
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
@@ -440,34 +439,14 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const directories = useQueries({
     // We query only expanded directories, as we don't want to load the data for directories that are not visible.
-    queries: useMemo(
-      () =>
-        expandedDirectoryIds.map((directoryId) =>
-          queryOptions({
-            queryKey: [
-              backend.type,
-              'listDirectory',
-              directoryId,
-              {
-                labels: null,
-                filterBy: CATEGORY_TO_FILTER_BY[category.type],
-                recentProjects: category.type === 'recent',
-              },
-            ] as const,
-            queryFn: async ({ queryKey: [, , parentId, params] }) => {
-              try {
-                return await backend.listDirectory({ ...params, parentId }, parentId)
-              } catch {
-                throw Object.assign(new Error(), { parentId })
-              }
-            },
-
-            enabled: !hidden,
-            meta: { persist: false },
-          }),
-        ),
-      [hidden, backend, category, expandedDirectoryIds],
-    ),
+    queries: expandedDirectoryIds.map((directoryId) => ({
+      ...listDirectoryQueryOptions({
+        backend,
+        parentId: directoryId,
+        category,
+      }),
+      enabled: !hidden,
+    })),
     combine: (results) => {
       const rootQuery = results[expandedDirectoryIds.indexOf(rootDirectory.id)]
 
@@ -476,6 +455,7 @@ export default function AssetsTable(props: AssetsTableProps) {
           isFetching: rootQuery?.isFetching ?? true,
           isLoading: rootQuery?.isLoading ?? true,
           isError: rootQuery?.isError ?? false,
+          error: rootQuery?.error,
           data: rootQuery?.data,
         },
         directories: new Map(
@@ -485,6 +465,7 @@ export default function AssetsTable(props: AssetsTableProps) {
               isFetching: res.isFetching,
               isLoading: res.isLoading,
               isError: res.isError,
+              error: res.error,
               data: res.data,
             },
           ]),
@@ -497,8 +478,11 @@ export default function AssetsTable(props: AssetsTableProps) {
   // This reduces the amount of rerenders by batching them together, so they happen less often.
   useQuery({
     queryKey: [backend.type, 'refetchListDirectory'],
-    queryFn: () =>
-      queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }).then(() => null),
+    queryFn: () => {
+      return queryClient
+        .refetchQueries({ queryKey: [backend.type, 'listDirectory'] })
+        .then(() => null)
+    },
     refetchInterval:
       enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
     refetchOnMount: 'always',
@@ -513,8 +497,6 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const rootDirectoryContent = directories.rootDirectory.data
   const isLoading = directories.rootDirectory.isLoading && !directories.rootDirectory.isError
-
-  console.log('rootDirectoryContent', JSON.stringify(directories.directories.values(), null, 2))
 
   const assetTree = useMemo(() => {
     const rootPath = 'rootPath' in category ? category.rootPath : backend.rootPath(user)
@@ -1547,22 +1529,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     }
   })
 
-  /** All items must have the same type. */
-  const insertAssets = useEventCallback(
-    (assets: readonly AnyAsset[], parentId: DirectoryId | null) => {
-      const actualParentId = parentId ?? rootDirectoryId
-
-      const listDirectoryQuery = queryClient.getQueryCache().find<DirectoryQuery>({
-        queryKey: [backend.type, 'listDirectory', actualParentId],
-        exact: false,
-      })
-
-      if (listDirectoryQuery?.state.data) {
-        listDirectoryQuery.setData([...listDirectoryQuery.state.data, ...assets])
-      }
-    },
-  )
-
   const onAssetListEvent = useEventCallback((event: AssetListEvent) => {
     switch (event.type) {
       case AssetListEventType.newFolder: {
@@ -1597,7 +1563,6 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
 
         doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
-        insertAssets([placeholderItem], event.parentId)
 
         void createDirectoryMutation
           .mutateAsync([{ parentId: placeholderItem.parentId, title: placeholderItem.title }])
@@ -1639,9 +1604,8 @@ export default function AssetsTable(props: AssetsTableProps) {
           parentsPath: '',
           virtualParentsPath: '',
         }
-        doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
 
-        insertAssets([placeholderItem], event.parentId)
+        doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
 
         void createProjectMutation
           .mutateAsync([
@@ -1893,7 +1857,6 @@ export default function AssetsTable(props: AssetsTableProps) {
           virtualParentsPath: '',
         }
         doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
-        insertAssets([placeholderItem], event.parentId)
 
         createDatalinkMutation.mutate([
           {
@@ -1930,7 +1893,6 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
 
         doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
-        insertAssets([placeholderItem], event.parentId)
 
         createSecretMutation.mutate([
           {
@@ -1978,8 +1940,6 @@ export default function AssetsTable(props: AssetsTableProps) {
           virtualParentsPath: '',
         }
 
-        insertAssets([placeholderItem], event.parentId)
-
         void duplicateProjectMutation
           .mutateAsync([event.original.id, event.versionId, placeholderItem.title])
           .catch((error) => {
@@ -2013,9 +1973,11 @@ export default function AssetsTable(props: AssetsTableProps) {
       }
       case AssetListEventType.delete: {
         const asset = nodeMapRef.current.get(event.key)?.item
+
         if (asset) {
           void doDelete(asset, false)
         }
+
         break
       }
       case AssetListEventType.emptyTrash: {
@@ -2044,6 +2006,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       }
     }
   })
+
   eventListProvider.useAssetListEventListener((event) => {
     if (!isLoading) {
       onAssetListEvent(event)
@@ -2606,6 +2569,7 @@ export default function AssetsTable(props: AssetsTableProps) {
             visibility={visibilities.get(item.key)}
             columns={columns}
             id={item.item.id}
+            type={item.item.type}
             parentId={item.directoryId}
             path={item.path}
             initialAssetEvents={item.initialAssetEvents}

@@ -113,10 +113,7 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    queryFn: () => {
-      console.trace('getProjectDetails', assetId, parentId)
-      return backend.getProjectDetails(assetId, parentId)
-    },
+    queryFn: () => backend.getProjectDetails(assetId, parentId),
   })
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const

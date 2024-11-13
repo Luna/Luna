@@ -19,11 +19,7 @@ import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import {
-  backendMutationOptions,
-  useAssetPassiveListenerStrict,
-  useBackendQuery,
-} from '#/hooks/backendHooks'
+import { backendMutationOptions, useAssetStrict, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -101,7 +97,12 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   const { backend, item, category, spotlightOn, isReadonly = false, path: pathRaw } = props
   const styles = ASSET_PROPERTIES_VARIANTS({})
 
-  const asset = useAssetPassiveListenerStrict(backend.type, item.id, item.parentId, category)
+  const asset = useAssetStrict({
+    backend,
+    assetId: item.id,
+    parentId: item.parentId,
+    category,
+  })
   const setAssetPanelProps = useSetAssetPanelProps()
 
   const driveStore = useDriveStore()
