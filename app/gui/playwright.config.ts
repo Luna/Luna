@@ -91,9 +91,36 @@ export default defineConfig({
       }),
   },
   projects: [
+    // Setup project
+    {
+      name: 'Setup Dashboard',
+      testDir: './e2e/dashboard',
+      testMatch: /.*\.setup\.ts/,
+      timeout: TIMEOUT_MS,
+      use: {
+        baseURL: `http://localhost:${ports.dashboard}`,
+        actionTimeout: TIMEOUT_MS,
+      },
+    },
     {
       name: 'Dashboard',
       testDir: './e2e/dashboard',
+      testMatch: /.*\.spec\.ts/,
+      dependencies: ['Setup Dashboard'],
+      expect: {
+        toHaveScreenshot: { threshold: 0 },
+        timeout: TIMEOUT_MS,
+      },
+      timeout: TIMEOUT_MS,
+      use: {
+        baseURL: `http://localhost:${ports.dashboard}`,
+        actionTimeout: TIMEOUT_MS,
+        storageState: 'playwright/.auth/user.json',
+      },
+    },
+    {
+      name: 'Auth',
+      testDir: './e2e/dashboard/auth',
       expect: {
         toHaveScreenshot: { threshold: 0 },
         timeout: TIMEOUT_MS,
@@ -138,7 +165,7 @@ export default defineConfig({
     },
     {
       command:
-        isCI || process.env.PROD ?
+        isCI || isProd ?
           `corepack pnpm exec vite -c vite.test.config.ts build && vite -c vite.test.config.ts preview --port ${ports.dashboard} --strictPort`
         : `corepack pnpm exec vite -c vite.test.config.ts --port ${ports.dashboard}`,
       timeout: 240 * 1000,

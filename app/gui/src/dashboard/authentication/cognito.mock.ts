@@ -80,6 +80,7 @@ export class Cognito {
     private readonly amplifyConfig: service.AmplifyConfig,
   ) {
     const username = localStorage.getItem(MOCK_EMAIL_KEY)
+    console.log('username:', username)
     if (username != null) {
       this.isSignedIn = true
       mockEmail = username

@@ -1,5 +1,6 @@
 /** @file Various actions, locators, and constants used in end-to-end tests. */
 import * as test from '@playwright/test'
+import * as path from 'path'
 
 import { TEXTS } from 'enso-common/src/text'
 
@@ -636,46 +637,6 @@ export async function expectNotOpacity0(locator: test.Locator) {
   })
 }
 
-/** A test assertion to confirm that the element is onscreen. */
-export async function expectOnScreen(locator: test.Locator) {
-  await test.test.step('Expect to be onscreen', async () => {
-    await test
-      .expect(async () => {
-        const pageBounds = await locator.evaluate(() => document.body.getBoundingClientRect())
-        const bounds = await locator.evaluate((el) => el.getBoundingClientRect())
-        test
-          .expect(
-            bounds.left < pageBounds.right &&
-              bounds.right > pageBounds.left &&
-              bounds.top < pageBounds.bottom &&
-              bounds.bottom > pageBounds.top,
-          )
-          .toBe(true)
-      })
-      .toPass()
-  })
-}
-
-/** A test assertion to confirm that the element is onscreen. */
-export async function expectNotOnScreen(locator: test.Locator) {
-  await test.test.step('Expect to not be onscreen', async () => {
-    await test
-      .expect(async () => {
-        const pageBounds = await locator.evaluate(() => document.body.getBoundingClientRect())
-        const bounds = await locator.evaluate((el) => el.getBoundingClientRect())
-        test
-          .expect(
-            bounds.left >= pageBounds.right ||
-              bounds.right <= pageBounds.left ||
-              bounds.top >= pageBounds.bottom ||
-              bounds.bottom <= pageBounds.top,
-          )
-          .toBe(true)
-      })
-      .toPass()
-  })
-}
-
 // ==========================
 // === Keyboard utilities ===
 // ==========================
@@ -723,9 +684,16 @@ export async function login(
   first = true,
 ) {
   await test.test.step('Login', async () => {
+    const url = new URL(page.url())
+
+    if (url.pathname !== '/login') {
+      return
+    }
+
     await locateEmailInput(page).fill(email)
     await locatePasswordInput(page).fill(password)
     await locateLoginButton(page).click()
+
     await test.expect(page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
 
     if (first) {
@@ -858,13 +826,6 @@ export async function mockAllAnimations({ page }: MockParams) {
 export async function mockUnneededUrls({ page }: MockParams) {
   const EULA_JSON = JSON.stringify(apiModule.EULA_JSON)
   const PRIVACY_JSON = JSON.stringify(apiModule.PRIVACY_JSON)
-  const checkerboardSvg = `
-    <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-      <rect width="8" height="8" fill="#f0f0f0"/>
-      <rect x="8" y="8" width="8" height="8" fill="#f0f0f0"/>
-      <rect x="8" y="0" width="8" height="8" fill="#ffffff"/>
-      <rect x="0" y="8" width="8" height="8" fill="#ffffff"/>
-    </svg>`
 
   return Promise.all([
     page.route('https://*.ingest.sentry.io/api/*/envelope/*', async (route) => {
@@ -885,10 +846,6 @@ export async function mockUnneededUrls({ page }: MockParams) {
 
     page.route('https://fonts.googleapis.com/css2*', async (route) => {
       await route.fulfill({ contentType: 'text/css', body: '' })
-    }),
-
-    page.route('*/**/*.svg', async (route) => {
-      await route.fulfill({ contentType: 'image/svg+xml', body: checkerboardSvg })
     }),
   ])
 }

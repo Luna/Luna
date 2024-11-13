@@ -146,8 +146,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     assets.push(asset)
     assetMap.set(asset.id, asset)
 
-    console.log('addAsset', asset.id)
-
     return asset
   }
 
@@ -411,9 +409,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     )
 
     if (process.env.MOCK_ALL_URLS === 'true') {
-      await page.route('https://ensoanalytics.com/eula.json', async (route) => {
-        await route.fulfill({ json: EULA_JSON })
-      })
       await page.route(
         'https://api.github.com/repos/enso-org/enso/releases/latest',
         async (route) => {
@@ -455,10 +450,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
           },
         })
       })
-    }
-    const isActuallyOnline = await page.evaluate(() => navigator.onLine)
-    if (!isActuallyOnline) {
-      await page.route('https://fonts.googleapis.com/*', (route) => route.abort())
     }
 
     await page.route(BASE_URL + '**', (_route, request) => {

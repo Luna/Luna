@@ -1,0 +1,15 @@
+import { test as setup } from '@playwright/test'
+import path from 'path'
+import * as actions from './actions'
+
+const __dirname = path.dirname(new URL(import.meta.url).pathname)
+const authFile = path.join(__dirname, '../../playwright/.auth/user.json')
+
+setup('authenticate', ({ page }) =>
+  actions
+    .mockAll({ page })
+    .login()
+    .do(async () => {
+      await page.context().storageState({ path: authFile })
+    }),
+)
