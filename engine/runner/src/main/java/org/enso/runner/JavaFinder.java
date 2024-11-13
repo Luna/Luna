@@ -1,6 +1,5 @@
 package org.enso.runner;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -34,9 +33,15 @@ final class JavaFinder {
     logger.warn("No appropriate JDK found in the distribution runtimes. Trying system-wide JDK.");
     var javaHome = System.getenv("JAVA_HOME");
     if (javaHome != null) {
-      var java = new File(javaHome, "bin/java").getAbsoluteFile();
-      if (java.exists()) {
-        return java.getAbsolutePath();
+      var binDir = Path.of(javaHome).resolve("bin");
+      Path javaExe;
+      if (System.getProperty("os.name").equals("windows")) {
+        javaExe = binDir.resolve("java.exe");
+      } else {
+        javaExe = binDir.resolve("java");
+      }
+      if (javaExe.toFile().exists()) {
+        return javaExe.toAbsolutePath().toString();
       }
     }
     if (isJavaOnPath()) {
