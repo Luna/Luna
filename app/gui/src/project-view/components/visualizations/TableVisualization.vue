@@ -85,7 +85,7 @@ interface UnknownTable {
 
 interface DataQualityPairs {
   number_of_nothing: number[]
-  number_of_whitespace: number[]
+  number_of_leading_trailing_whitespace: number[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -156,7 +156,7 @@ const pinnedTopRowData = computed(() => {
     const data_ = props.data
     const headers = data_.header
     const numberOfNothing = data_.data_quality_pairs!.number_of_nothing
-    const numberOfWhitespace = data_.data_quality_pairs!.number_of_whitespace
+    const numberOfWhitespace = data_.data_quality_pairs!.number_of_leading_trailing_whitespace
     const total = data_.all_rows_count as number
     if (headers?.length) {
       const pairs: Record<string, string> = headers.reduce(
