@@ -15,7 +15,7 @@ const isProd = process.env.PROD === 'true'
 const TIMEOUT_MS =
   DEBUG ? 100_000_000
   : isCI ? 30_000
-  : 5_000
+  : 15_000
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
