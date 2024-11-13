@@ -28,7 +28,11 @@ import { useToastAndLog, useToastAndLogWithId } from '#/hooks/toastAndLogHooks'
 import { CATEGORY_TO_FILTER_BY, type Category } from '#/layouts/CategorySwitcher/Category'
 import DuplicateAssetsModal from '#/modals/DuplicateAssetsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
-import { useSetSelectedKeys, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
+import {
+  useSetNewestFolderId,
+  useSetSelectedKeys,
+  useToggleDirectoryExpansion,
+} from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
@@ -510,6 +514,8 @@ export function useNewFolder(backend: Backend, category: Category) {
   const insertAssets = useInsertAssets(backend, category)
   const ensureListDirectory = useEnsureListDirectory(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
+  const setNewestFolderId = useSetNewestFolderId()
+  const setSelectedKeys = useSetSelectedKeys()
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
@@ -547,9 +553,14 @@ export function useNewFolder(backend: Backend, category: Category) {
 
     insertAssets([placeholderItem], parentId)
 
-    return await createDirectoryMutation.mutateAsync([
-      { parentId: placeholderItem.parentId, title: placeholderItem.title },
-    ])
+    return await createDirectoryMutation
+      .mutateAsync([{ parentId: placeholderItem.parentId, title: placeholderItem.title }])
+      .then((result) => {
+        const { id } = result
+        setNewestFolderId(id)
+        setSelectedKeys(new Set([id]))
+        return result
+      })
   })
 }
 
