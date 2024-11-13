@@ -14,7 +14,8 @@ import java.nio.CharBuffer;
  * @param lastSeparatorIdx - the index of the last separator found.
  * @param exponential - whether the number is in exponential notation.
  */
-public record Separators(char first, char second, int count, int endIdx, int lastSeparatorIdx, boolean exponential) {
+public record Separators(
+    char first, char second, int count, int endIdx, int lastSeparatorIdx, boolean exponential) {
   /**
    * Strip out the specified separators and replace with just full stop for decimal. If any
    * character other than a digit, thousands or decimal separator is encountered then return null.
@@ -214,7 +215,13 @@ public record Separators(char first, char second, int count, int endIdx, int las
       return null;
     }
 
-    return new Separators(firstSeparator, secondSeparator, separatorCount, endIdx, lastSeparator, exponentState == ExponentState.EXPONENT);
+    return new Separators(
+        firstSeparator,
+        secondSeparator,
+        separatorCount,
+        endIdx,
+        lastSeparator,
+        exponentState == ExponentState.EXPONENT);
   }
 
   private enum ExponentState {
