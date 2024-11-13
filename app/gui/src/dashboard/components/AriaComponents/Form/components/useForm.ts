@@ -23,21 +23,7 @@ function mapValueOnEvent(value: unknown) {
   }
 }
 
-/**
- * A hook that returns a form instance.
- * @param options - Either form options or a form instance
- *
- * If form instance is passed, it will be returned as is.
- *
- * If form options are passed, a form instance will be created and returned.
- *
- * ***Note:*** This hook accepts either a form instance(If form is created outside)
- * or form options(and creates a form instance).
- * This is useful when you want to create a form instance outside the component
- * and pass it to the component.
- * But be careful, You should not switch between the two types of arguments.
- * Otherwise you'll be fired
- */
+/** A hook that returns a form instance. */
 export function useForm<Schema extends types.TSchema, SubmitResult = void>(
   options: types.UseFormOptions<Schema, SubmitResult>,
 ): types.UseFormReturn<Schema> {
