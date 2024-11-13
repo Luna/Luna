@@ -2,7 +2,8 @@ package org.enso.compiler.refactoring
 
 import org.enso.compiler.core.Implicits.AsMetadata
 import org.enso.compiler.core.{ExternalID, IR, Identifier}
-import org.enso.compiler.core.ir.Name
+import org.enso.compiler.core.ir.{CallArgument, Name}
+import org.enso.compiler.core.ir.expression.Application
 import org.enso.compiler.data.BindingsMap
 import org.enso.compiler.pass.analyse.DataflowAnalysis
 import org.enso.compiler.pass.resolve.MethodCalls
@@ -64,24 +65,38 @@ trait IRUtils {
     for {
       usages <- findDynamicUsages(ir, node)
     } yield {
-      usages
-        .collect {
-          case usage: Name.Literal
-              if usage.isMethod && usage.name == node.name =>
-            usage
-        }
-        .flatMap { symbol =>
-          symbol.getMetadata(MethodCalls).flatMap { resolution =>
-            resolution.target match {
-              case BindingsMap.ResolvedModuleMethod(module, _)
-                  if module.getName == moduleName =>
-                Some(symbol)
-              case _ =>
-                None
-            }
+      usages.collect {
+        case Application.Prefix(function: Name.Literal, args, _, _, _)
+            if function.name == node.name =>
+          function.getMetadata(MethodCalls) match {
+            case Some(resolution) =>
+              resolution.target match {
+                case BindingsMap.ResolvedModuleMethod(module, _)
+                    if module.getName == moduleName =>
+                  Some(function)
+                case _ =>
+                  None
+              }
+            case None =>
+              args.headOption match {
+                case Some(arg) if isSyntheticArgument(arg) =>
+                  Some(function)
+                case _ =>
+                  None
+              }
           }
-        }
+      }.flatten
     }
+
+  /** Check if the provided argument is synthetic.
+    *
+    * @param argument the call argument
+    * @return `true` if the provided argument is synthetic
+    */
+  private def isSyntheticArgument(argument: CallArgument): Boolean = {
+    val argName = argument.value.showCode()
+    argName.startsWith("<") && argName.endsWith(">")
+  }
 
   /** Find usages of a static dependency in the [[DataflowAnalysis]] metadata.
     *
