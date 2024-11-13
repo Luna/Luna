@@ -64,7 +64,7 @@ type Dictionary key value
 
     ## ALIAS dictionary, lookup table
        GROUP Constants
-       ICON array_new2
+       ICON convert
        Builds a dictionary from two Vectors. The first vector contains the keys,
        and the second vector contains the values. The two vectors must be of the
        same length.
@@ -88,7 +88,7 @@ type Dictionary key value
 
     ## ALIAS dictionary, lookup table
        GROUP Constants
-       ICON array_new2
+       ICON convert
        Builds a dictionary from a vector of key-value pairs, with each key-value
        pair represented as a 2 element vector.
 
