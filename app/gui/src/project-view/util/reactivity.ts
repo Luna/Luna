@@ -3,29 +3,34 @@
 import { defaultEquality } from '@/util/equals'
 import { debouncedWatch } from '@vueuse/core'
 import { nop } from 'lib0/function'
-import {
-  callWithErrorHandling,
-  computed,
+import type {
   ComputedRef,
+  // (it is used in docs)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  DebuggerOptions,
   DeepReadonly,
-  effect,
-  effectScope,
-  isRef,
   MaybeRefOrGetter,
-  queuePostFlushCb,
-  reactive,
-  ReactiveEffect,
   ReactiveEffectOptions,
   ReactiveEffectRunner,
   Ref,
+  WatchSource,
+  WatchStopHandle,
+  WritableComputedRef,
+} from 'vue'
+import {
+  callWithErrorHandling,
+  computed,
+  effect,
+  effectScope,
+  isRef,
+  queuePostFlushCb,
+  reactive,
+  ReactiveEffect,
   shallowReactive,
   shallowRef,
   toRaw,
   toValue,
   watch,
-  WatchSource,
-  WatchStopHandle,
-  WritableComputedRef,
 } from 'vue'
 
 /** Cast watch source to an observable ref. */
@@ -344,6 +349,28 @@ export function useSelectRef<T>(
       } else {
         right.value = v
       }
+    },
+  })
+}
+
+/**
+ * Log any access to `anyRef`’s `value` property.
+ *
+ * {@link computed} and {@link watch} allow you to set custom
+ * {@link DebuggerOptions.onTrack} and {@link DebuggerOptions.onTrigger} callbacks,
+ * but they only allow tracking dependencies and recomputations, not access to the value itself.
+ *
+ * This function solves this issue by wrapping the `value` property of a ref with a custom getter.
+ * You can also set a debugger breakpoint in the getter to precisely track the callstack of each access.
+ */
+export function debugAccess(anyRef: Ref<any>, name: string) {
+  const originalGetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(anyRef), 'value')
+
+  Object.defineProperty(anyRef, 'value', {
+    ...originalGetter,
+    get: () => {
+      console.log(`Accessing ${name}`)
+      return originalGetter?.get?.call(anyRef)
     },
   })
 }
