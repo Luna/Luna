@@ -60,12 +60,20 @@ _input_as_table (input : Many_Files_List) -> Table =
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
 _merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) columns_to_keep match_columns -> Table =
-    # TODO what to do about 0 row arrays (they should not introduce useless columns) / tables?
-    counts = tables_for_rows.map .row_count
-    unified_tables = Table.from_union tables_for_rows columns_to_keep match_columns
+    adapted_tables = tables_for_rows.map table->
+        if (table.is_a Table . not) || (table.row_count > 0) then table else
+            _make_table_with_one_null_row table
+    counts = adapted_tables.map table-> case table of
+        Nothing -> 1
+        _ : Table -> table.row_count
+    unified_tables = Table.from_union adapted_tables columns_to_keep match_columns
     multiplicated_inputs = _duplicate_rows input_table counts
     Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
     multiplicated_inputs.zip unified_tables right_prefix=""
+
+_make_table_with_one_null_row (empty_table : Table) -> Table =
+    Runtime.assert (empty_table.row_count == 0) "The table must be empty."
+    Table.new (empty_table.columns.map c-> Column.from_vector c.name [Nothing] c.value_type)
 
 _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
     unique_naming = base_table.column_naming_helper.create_unique_name_strategy
@@ -73,10 +81,14 @@ _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
     objects_column_name = unique_naming.make_unique "Value"
     base_table.set (Column.from_vector objects_column_name objects) as=objects_column_name set_mode=..Add
 
-_interpret_object_as_table (object : Any) -> Table =
+_interpret_object_as_table (object : Any) -> Table | Nothing =
+    default =
+        Table.from_objects object treat_dictionary_as_sequence=False
     case object of
         table : Table -> table
-        _ -> Table.from_objects object treat_dictionary_as_sequence=False
+        vector : Vector ->
+            if vector.is_empty then Nothing else default
+        _ -> default
 
 ## Takes a table and a list of counts and returns a new table with the rows
    duplicated according to the counts.
