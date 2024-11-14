@@ -322,6 +322,36 @@ add_specs suite_builder =
             t3.row_count . should_equal 0
             t3.column_names . should_equal ["Path", "Value"]
 
+        group_builder.specify "should have sane behaviour if all files are weird" <|
+            with_temp_dir base_dir->
+                '{}'.write (base_dir / "1_js_object.json")
+                '[{}, {}]'.write (base_dir / "2_js_array.json")
+
+                files = Data.list base_dir . sort on=(.name)
+                r = Data.read_many files return=..Merged_Table
+                r.should_be_a Table
+                r.column_names . should_equal ["Path", "Value"]
+                r.row_count . should_equal 3
+                empty = JS_Object.from_pairs []
+                r.at "Value" . to_vector . should_equal [empty, empty, empty]
+
+            with_temp_dir base_dir->
+                '[]'.write (base_dir / "1_empty_array.json")
+                '[]'.write (base_dir / "2_empty_array.json")
+
+                files = Data.list base_dir . sort on=(.name)
+                r1 = Data.read_many files return=..Table_Of_Objects
+                r1.should_be_a Table
+                r1.row_count . should_equal 2
+                r1.column_names . should_equal ["Path", "Value"]
+                Problems.assume_no_problems r1
+
+                r2 = Data.read_many files return=..Merged_Table
+                r2.should_be_a Table
+                r2.row_count . should_equal 0
+                r2.column_names . should_equal ["Path"]
+                Problems.expect_only_warning No_Rows r2
+
         group_builder.specify "should rename duplicated columns, keeping columns from the input unchanged" <|
             tmp_file = enso_project.data / "transient" / "table.csv"
             (Table.new [["Path", [1]], ["Col", [2]]]).write tmp_file on_existing_file=..Overwrite . should_succeed
