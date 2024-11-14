@@ -1,6 +1,4 @@
 /** @file Mutations related to project management. */
-import * as React from 'react'
-
 import * as reactQuery from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
@@ -313,9 +311,7 @@ export function useOpenProject() {
 export function useOpenEditor() {
   const setPage = useSetPage()
   return eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
-    React.startTransition(() => {
-      setPage(projectId)
-    })
+    setPage(projectId)
   })
 }
 
@@ -328,7 +324,6 @@ export function useCloseProject() {
   const client = reactQuery.useQueryClient()
   const closeProjectMutation = useCloseProjectMutation()
   const removeLaunchedProject = useRemoveLaunchedProject()
-  const projectsStore = useProjectsStore()
   const setPage = useSetPage()
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
@@ -343,6 +338,7 @@ export function useCloseProject() {
         mutation.destroy()
       })
     closeProjectMutation.mutate(project)
+
     client
       .getMutationCache()
       .findAll({
@@ -356,11 +352,7 @@ export function useCloseProject() {
       })
     removeLaunchedProject(project.id)
 
-    // There is no shared enum type, but the other union member is the same type.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    if (projectsStore.getState().page === project.id) {
-      setPage(TabType.drive)
-    }
+    setPage(TabType.drive)
   })
 }
 
@@ -370,8 +362,9 @@ export function useCloseProject() {
 
 /** A function to close all projects. */
 export function useCloseAllProjects() {
-  const projectsStore = useProjectsStore()
   const closeProject = useCloseProject()
+  const projectsStore = useProjectsStore()
+
   return eventCallbacks.useEventCallback(() => {
     for (const launchedProject of projectsStore.getState().launchedProjects) {
       closeProject(launchedProject)

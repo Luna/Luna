@@ -86,11 +86,11 @@ export interface AssetRowProps {
   readonly id: backendModule.AssetId
   readonly parentId: backendModule.DirectoryId
   readonly type: backendModule.AssetType
+  readonly hidden: boolean
   readonly path: string
   readonly initialAssetEvents: readonly AssetEvent[] | null
   readonly depth: number
   readonly state: assetsTable.AssetsTableState
-  readonly hidden: boolean
   readonly columns: columnUtils.Column[]
   readonly isKeyboardSelected: boolean
   readonly grabKeyboardFocus: (item: backendModule.AnyAsset) => void
@@ -121,13 +121,13 @@ export interface AssetRowProps {
 /** A row containing an {@link backendModule.AnyAsset}. */
 // eslint-disable-next-line no-restricted-syntax
 export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
-  const { type, columns, depth, hidden, id } = props
+  const { type, columns, depth, id } = props
 
   switch (type) {
     case backendModule.AssetType.specialLoading:
     case backendModule.AssetType.specialEmpty:
     case backendModule.AssetType.specialError: {
-      return <AssetSpecialRow columns={columns} depth={depth} type={type} hidden={hidden} />
+      return <AssetSpecialRow columnsLength={columns.length} depth={depth} type={type} />
     }
     default: {
       // This is safe because we filter out special asset types in the switch statement above.
@@ -142,82 +142,82 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
  */
 export interface AssetSpecialRowProps {
   readonly type: backendModule.AssetType
-  readonly hidden: boolean
-  readonly columns: readonly columnUtils.Column[]
+  readonly columnsLength: number
   readonly depth: number
 }
 
 /**
  * Renders a special asset row.
  */
-function AssetSpecialRow(props: AssetSpecialRowProps) {
-  const { type, hidden, columns, depth } = props
+// eslint-disable-next-line no-restricted-syntax
+const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialRowProps) {
+  const { type, columnsLength, depth } = props
 
   const { getText } = textProvider.useText()
 
   switch (type) {
     case backendModule.AssetType.specialLoading: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row w-container items-center justify-center rounded-full rounded-rows-child',
-                  indent.indentClass(depth),
-                )}
-              >
-                <StatelessSpinner size={24} state="loading-medium" />
-              </div>
-            </td>
-          </tr>
-        )
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row w-container items-center justify-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <StatelessSpinner size={24} state="loading-medium" />
+            </div>
+          </td>
+        </tr>
+      )
     }
     case backendModule.AssetType.specialEmpty: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
-                  indent.indentClass(depth),
-                )}
-              >
-                <img src={BlankIcon} />
-                <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
-                  {getText('thisFolderIsEmpty')}
-                </Text>
-              </div>
-            </td>
-          </tr>
-        )
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row items-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <img src={BlankIcon} />
+              <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
+                {getText('thisFolderIsEmpty')}
+              </Text>
+            </div>
+          </td>
+        </tr>
+      )
     }
     case backendModule.AssetType.specialError: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
-                  indent.indentClass(depth),
-                )}
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row items-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <img src={BlankIcon} />
+              <Text
+                className="px-name-column-x text-danger placeholder"
+                disableLineHeightCompensation
               >
-                <img src={BlankIcon} />
-                <Text
-                  className="px-name-column-x text-danger placeholder"
-                  disableLineHeightCompensation
-                >
-                  {getText('thisFolderFailedToFetch')}
-                </Text>
-              </div>
-            </td>
-          </tr>
-        )
+                {getText('thisFolderFailedToFetch')}
+              </Text>
+            </div>
+          </td>
+        </tr>
+      )
     }
     default: {
       invariant(false, 'Unsupported special asset type: ' + type)
     }
   }
-}
+})
 
 /**
  * Props for a {@link RealAssetRow}.

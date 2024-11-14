@@ -2573,7 +2573,7 @@ export default function AssetsTable(props: AssetsTableProps) {
             initialAssetEvents={item.initialAssetEvents}
             depth={item.depth}
             state={state}
-            hidden={hidden || visibilities.get(item.key) === Visibility.hidden}
+            hidden={visibilities.get(item.key) === Visibility.hidden}
             isKeyboardSelected={
               keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
             }

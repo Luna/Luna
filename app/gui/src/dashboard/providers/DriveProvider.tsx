@@ -455,13 +455,20 @@ export function useSetAssetPanelSelectedTab() {
 /** Search suggestions. */
 export function useSuggestions() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.suggestions)
+  return zustand.useStore(store, (state) => state.suggestions, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Set search suggestions. */
 export function useSetSuggestions() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setSuggestions)
+  const setSuggestions = zustand.useStore(store, (state) => state.setSuggestions)
+  return useEventCallback((suggestions: readonly Suggestion[]) => {
+    React.startTransition(() => {
+      setSuggestions(suggestions)
+    })
+  })
 }
 
 /** Whether the Asset Panel is hidden. */

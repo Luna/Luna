@@ -113,7 +113,7 @@ AnimatedBackground.Item = memo(function AnimatedBackgroundItem(props: AnimatedBa
           <motion.div
             layout="position"
             layoutId={`background-${layoutId}`}
-            className="absolute inset-0"
+            className="pointer-events-none absolute inset-0"
             transition={transition}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
