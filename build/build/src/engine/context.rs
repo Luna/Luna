@@ -15,7 +15,6 @@ use crate::enso::BenchmarkOptions;
 use crate::enso::BuiltEnso;
 use crate::enso::IrCaches;
 use crate::paths::cache_directory;
-use crate::paths::default_data_directory;
 use crate::paths::Paths;
 use crate::paths::TargetTriple;
 use crate::paths::ENSO_DATA_DIRECTORY;
@@ -688,20 +687,25 @@ pub async fn runner_sanity_test(
             .run_ok()
             .await;
 
+        let all_cmds = test_base.and(test_internal_base).and(test_geo);
+
         // The following test does not actually run anything, it just checks if the engine
         // can accept `--jvm` argument and evaluates something.
-        let test_jvm_arg = Command::new(&enso)
-            .args([
-                "--jvm",
-                "--run",
-                repo_root.test.join("Base_Tests").as_str(),
-                "__NON_EXISTING_TEST__",
-            ])
-            .set_env(ENSO_DATA_DIRECTORY, &default_data_directory())?
-            .run_ok()
-            .await;
-
-        test_base.and(test_internal_base).and(test_geo).and(test_jvm_arg)
+        if TARGET_OS != OS::Windows {
+            let test_jvm_arg = Command::new(&enso)
+                .args([
+                    "--jvm",
+                    "--run",
+                    repo_root.test.join("Base_Tests").as_str(),
+                    "__NON_EXISTING_TEST__",
+                ])
+                .set_env(ENSO_DATA_DIRECTORY, engine_package)?
+                .run_ok()
+                .await;
+            all_cmds.and(test_jvm_arg)
+        } else {
+            all_cmds
+        }
     } else {
         Ok(())
     }
