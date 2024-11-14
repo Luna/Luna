@@ -2,7 +2,17 @@ import project.Data.Time.Duration.Duration
 
 type Download_Mode
     ## Download the file if it does not already exist on disk.
-    If_Npt_Exists
+    If_Not_Exists
 
     ## Download the file if it is older than the specified age.
     If_Older_than age:Duration
+
+    ## PRIVATE
+       Decide if a download should be done, basd on the mode and the file's
+       last-modified-time.
+    should_download self (file:File) =
+        case self of
+            If_Not_Exists ->
+                file.exists
+            If_Older_Than age ->
+                file.exists && file.last_modified_time > (Date_Time.now - age)

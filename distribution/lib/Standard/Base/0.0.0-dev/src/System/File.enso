@@ -474,6 +474,20 @@ type File
     last_modified_time self =
         File_Error.handle_java_exceptions self <| self.last_modified_time_builtin
 
+    ## GROUP Metadata
+       ICON metadata
+       Sets the last modified time of a file.
+
+       > Example
+         Sets the last modified time of a file.
+
+             import Standard.Examples
+
+             Examples.csv.set_last_modified_time (Date_Time.new 2024 11 14 10 55)
+    set_last_modified_time : Date_Time -> Nothing ! File_Error
+    set_last_modified_time self date_time =
+        File_Error.handle_java_exceptions self <| self.set_last_modified_time_builtin date_time
+
     ## ICON metadata
        Gets the POSIX permissions associated with the file.
 

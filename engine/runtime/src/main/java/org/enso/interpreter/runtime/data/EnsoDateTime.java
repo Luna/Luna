@@ -32,6 +32,10 @@ public final class EnsoDateTime implements EnsoObject {
     this.dateTime = dateTime;
   }
 
+  public ZonedDateTime toZonedDateTime() {
+    return dateTime;
+  }
+
   @Builtin.Method(
       name = "epoch_start",
       description = "Return the Enso start of the Epoch",
