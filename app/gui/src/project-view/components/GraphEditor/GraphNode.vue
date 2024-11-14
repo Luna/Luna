@@ -462,7 +462,6 @@ function recomputeOnce() {
         :nodePosition="nodePosition"
         :nodeSize="graphSelectionSize"
         :class="{ draggable: true, dragged: isDragged }"
-        :selected
         :color
         :externalHovered="nodeHovered"
         @visible="selectionVisible = $event"
