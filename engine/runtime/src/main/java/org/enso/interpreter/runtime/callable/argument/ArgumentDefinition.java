@@ -2,7 +2,7 @@ package org.enso.interpreter.runtime.callable.argument;
 
 import java.util.Optional;
 import org.enso.interpreter.node.ExpressionNode;
-import org.enso.interpreter.node.callable.argument.ReadArgumentCheckNode;
+import org.enso.interpreter.node.typecheck.ReadArgumentCheckNode;
 
 /** Tracks the specifics about how arguments are defined at the callable definition site. */
 public final class ArgumentDefinition {

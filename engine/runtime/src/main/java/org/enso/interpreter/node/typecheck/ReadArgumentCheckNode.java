@@ -1,4 +1,4 @@
-package org.enso.interpreter.node.callable.argument;
+package org.enso.interpreter.node.typecheck;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -26,6 +26,7 @@ import org.enso.interpreter.node.EnsoRootNode;
 import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.node.callable.ApplicationNode;
 import org.enso.interpreter.node.callable.InvokeCallableNode.DefaultsExecutionMode;
+import org.enso.interpreter.node.callable.argument.ReadArgumentNode;
 import org.enso.interpreter.node.callable.thunk.ThunkExecutorNode;
 import org.enso.interpreter.node.expression.builtin.meta.AtomWithAHoleNode;
 import org.enso.interpreter.node.expression.builtin.meta.IsValueOfTypeNode;
@@ -402,7 +403,7 @@ public abstract class ReadArgumentCheckNode extends Node {
             CompilerAsserts.neverPartOfCompilation();
             var convNode = LiteralNode.build(convAndType.getLeft());
             var intoNode = LiteralNode.build(convAndType.getRight());
-            var valueNode = ran.plainRead();
+            var valueNode = ran.copyWithoutCheck();
             var args =
                 new CallArgument[] {
                   new CallArgument(null, intoNode), new CallArgument(null, valueNode)

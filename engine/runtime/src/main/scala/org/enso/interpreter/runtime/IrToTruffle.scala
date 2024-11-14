@@ -67,7 +67,7 @@ import org.enso.compiler.pass.resolve.{
   TypeSignatures
 }
 import org.enso.interpreter.node.callable.argument.ReadArgumentNode
-import org.enso.interpreter.node.callable.argument.ReadArgumentCheckNode
+import org.enso.interpreter.node.typecheck.ReadArgumentCheckNode
 import org.enso.interpreter.node.callable.function.{
   BlockNode,
   CreateFunctionNode

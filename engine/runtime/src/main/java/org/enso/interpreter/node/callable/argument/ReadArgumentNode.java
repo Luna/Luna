@@ -4,6 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import org.enso.interpreter.node.ExpressionNode;
+import org.enso.interpreter.node.typecheck.ReadArgumentCheckNode;
 import org.enso.interpreter.runtime.callable.function.Function;
 
 /**
@@ -36,7 +37,8 @@ public final class ReadArgumentNode extends ExpressionNode {
     return new ReadArgumentNode(position, defaultValue, check);
   }
 
-  ReadArgumentNode plainRead() {
+  /** Copies the read argument node. Removes all type checks associated with it. */
+  public final ReadArgumentNode copyWithoutCheck() {
     var node = (ReadArgumentNode) this.copy();
     node.checkType = null;
     return node;

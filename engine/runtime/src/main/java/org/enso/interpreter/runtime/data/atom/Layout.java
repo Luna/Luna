@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.List;
 import org.enso.interpreter.dsl.atom.LayoutSpec;
-import org.enso.interpreter.node.callable.argument.ReadArgumentCheckNode;
+import org.enso.interpreter.node.typecheck.ReadArgumentCheckNode;
 import org.enso.interpreter.runtime.callable.argument.ArgumentDefinition;
 
 /**
