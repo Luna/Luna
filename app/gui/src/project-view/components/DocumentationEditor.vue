@@ -163,12 +163,11 @@ const supportedImageTypes: Record<string, { extension: string }> = {
 }
 
 async function handleFileDrop(event: DragEvent) {
-  console.log('HANDLE FILE DROP')
   if (!event.dataTransfer?.items) return
   for (const item of event.dataTransfer.items) {
-    if (item.kind !== 'file' || !(item.type in supportedImageTypes)) return
+    if (item.kind !== 'file' || !Object.hasOwn(supportedImageTypes, item.type)) continue
     const file = item.getAsFile()
-    if (!file) return
+    if (!file) continue
     const clientPos = new Vec2(event.clientX, event.clientY)
     event.stopPropagation()
     event.preventDefault()
@@ -177,7 +176,7 @@ async function handleFileDrop(event: DragEvent) {
 }
 
 const handler = documentationEditorBindings.handler({
-  pasteImage: () => {
+  paste: () => {
     window.navigator.clipboard.read().then(async (items) => {
       if (markdownEditor.value == null) return
       for (const item of items) {

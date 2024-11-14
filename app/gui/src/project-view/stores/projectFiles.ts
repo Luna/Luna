@@ -75,6 +75,10 @@ export function useProjectFiles(projectStore: {
     )
   }
 
+  /**
+   * Check if directory exists. If it does not, or it is a file, `Ok(false)` is returned.
+   * In case of error, the directory existence is not confirmed nor disproved.
+   */
   async function dirExists(path: Path): Promise<Result<boolean>> {
     const info = await lsRpc.fileInfo(path)
     if (info.ok) return Ok(info.value.attributes.kind.type == 'Directory')

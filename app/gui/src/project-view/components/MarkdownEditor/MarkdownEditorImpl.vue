@@ -8,7 +8,7 @@ import {
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
 import VueComponentHost from '@/components/VueComponentHost.vue'
 import { Vec2 } from '@/util/data/vec2'
-import { EditorState } from '@codemirror/state'
+import { EditorState, Text } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
 import { type ComponentInstance, onMounted, ref, toRef, useCssModule, watch } from 'vue'
@@ -50,20 +50,24 @@ onMounted(() => {
 
 const editing = ref(false)
 
+/** Replace text in given document range with `text`, putting text cursor after inserted text. */
+function putTextAt(text: string, from: number, to: number) {
+  const insert = Text.of([text])
+  editorView.dispatch({
+    changes: { from, to, insert },
+    selection: { anchor: from + insert.length },
+  })
+}
+
 defineExpose({
   putText: (text: string) => {
-    const range = editorView.state.selection.ranges[0]!
-    editorView.dispatch({
-      changes: { from: range.from, to: range.to, insert: text },
-      selection: { anchor: range.from + text.length },
-    })
+    const range = editorView.state.selection.main
+    putTextAt(text, range.from, range.to)
   },
+  putTextAt,
   putTextAtCoords: (text: string, coords: Vec2) => {
     const pos = editorView.posAtCoords(coords, false)
-    editorView.dispatch({
-      changes: { from: pos, to: pos, insert: text },
-      selection: { anchor: pos + text.length },
-    })
+    putTextAt(text, pos, pos)
   },
 })
 </script>

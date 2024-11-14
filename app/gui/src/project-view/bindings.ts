@@ -12,7 +12,7 @@ export const codeEditorBindings = defineKeybinds('code-editor', {
 export const documentationEditorBindings = defineKeybinds('documentation-editor', {
   toggle: ['Mod+D'],
   openLink: ['Mod+PointerMain'],
-  pasteImage: ['Mod+V'],
+  paste: ['Mod+V'],
 })
 
 export const interactionBindings = defineKeybinds('current-interaction', {
