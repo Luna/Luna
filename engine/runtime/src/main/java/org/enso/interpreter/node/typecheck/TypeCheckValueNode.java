@@ -50,8 +50,9 @@ public abstract class TypeCheckValueNode extends Node {
    * @return {@code null} when the check isn't satisfied and conversion isn't possible or non-{@code
    *     null} value that can be used as a result
    */
-  public final Object handleCheckOrConversion(VirtualFrame frame, Object value) {
-    var result = executeCheckOrConversion(frame, value);
+  public final Object handleCheckOrConversion(
+      VirtualFrame frame, Object value, ExpressionNode expr) {
+    var result = executeCheckOrConversion(frame, value, expr);
     if (result == null) {
       throw panicAtTheEnd(value);
     }
@@ -60,7 +61,8 @@ public abstract class TypeCheckValueNode extends Node {
 
   abstract Object findDirectMatch(VirtualFrame frame, Object value);
 
-  abstract Object executeCheckOrConversion(VirtualFrame frame, Object value);
+  abstract Object executeCheckOrConversion(
+      VirtualFrame frame, Object value, ExpressionNode valueNode);
 
   abstract String expectedTypeMessage();
 

@@ -4,6 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
@@ -30,12 +31,12 @@ final class AllOfNode extends TypeCheckValueNode {
 
   @Override
   @ExplodeLoop
-  Object executeCheckOrConversion(VirtualFrame frame, Object value) {
+  Object executeCheckOrConversion(VirtualFrame frame, Object value, ExpressionNode expr) {
     var values = new Object[checks.length];
     var valueTypes = new Type[checks.length];
     var at = 0;
     for (var n : checks) {
-      var result = n.executeCheckOrConversion(frame, value);
+      var result = n.executeCheckOrConversion(frame, value, expr);
       if (result == null) {
         return null;
       }

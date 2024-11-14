@@ -4,6 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.enso.interpreter.node.ExpressionNode;
 
 final class OneOfNode extends TypeCheckValueNode {
 
@@ -28,13 +29,13 @@ final class OneOfNode extends TypeCheckValueNode {
 
   @Override
   @ExplodeLoop
-  Object executeCheckOrConversion(VirtualFrame frame, Object value) {
+  Object executeCheckOrConversion(VirtualFrame frame, Object value, ExpressionNode expr) {
     java.lang.Object direct = findDirectMatch(frame, value);
     if (direct != null) {
       return direct;
     }
     for (org.enso.interpreter.node.typecheck.TypeCheckValueNode n : checks) {
-      java.lang.Object result = n.executeCheckOrConversion(frame, value);
+      java.lang.Object result = n.executeCheckOrConversion(frame, value, expr);
       if (result != null) {
         return result;
       }

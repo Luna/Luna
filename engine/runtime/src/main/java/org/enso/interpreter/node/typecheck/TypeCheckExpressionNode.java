@@ -20,7 +20,7 @@ final class TypeCheckExpressionNode extends ExpressionNode {
   @Override
   public Object executeGeneric(VirtualFrame frame) {
     java.lang.Object value = original.executeGeneric(frame);
-    java.lang.Object result = check.handleCheckOrConversion(frame, value);
+    java.lang.Object result = check.handleCheckOrConversion(frame, value, original);
     return result;
   }
 

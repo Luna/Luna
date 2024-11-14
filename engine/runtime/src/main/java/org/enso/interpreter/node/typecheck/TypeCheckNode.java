@@ -9,12 +9,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeUtil;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.EnsoRootNode;
+import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.node.callable.ApplicationNode;
 import org.enso.interpreter.node.callable.InvokeCallableNode;
-import org.enso.interpreter.node.callable.argument.ReadArgumentNode;
 import org.enso.interpreter.node.expression.builtin.meta.IsValueOfTypeNode;
 import org.enso.interpreter.node.expression.literal.LiteralNode;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -42,10 +41,11 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
     this.expectedType = expectedType;
   }
 
-  abstract Object executeCheckOrConversion(VirtualFrame frame, Object value);
+  abstract Object executeCheckOrConversion(
+      VirtualFrame frame, Object value, ExpressionNode valueSource);
 
   @Specialization
-  Object doPanicSentinel(VirtualFrame frame, PanicSentinel panicSentinel) {
+  Object doPanicSentinel(VirtualFrame frame, PanicSentinel panicSentinel, ExpressionNode ignore) {
     throw panicSentinel;
   }
 
@@ -53,13 +53,15 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
   Object doUnresolvedConstructor(
       VirtualFrame frame,
       UnresolvedConstructor unresolved,
+      ExpressionNode ignore,
       @Cached UnresolvedConstructor.ConstructNode construct) {
     var state = Function.ArgumentsHelper.getState(frame.getArguments());
     return construct.execute(frame, state, expectedType, unresolved);
   }
 
   @Specialization(rewriteOn = InvalidAssumptionException.class)
-  Object doCheckNoConversionNeeded(VirtualFrame frame, Object v) throws InvalidAssumptionException {
+  Object doCheckNoConversionNeeded(VirtualFrame frame, Object v, ExpressionNode ignore)
+      throws InvalidAssumptionException {
     var ret = findDirectMatch(frame, v);
     if (ret != null) {
       return ret;
@@ -74,17 +76,22 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
   Object doWithConversionCached(
       VirtualFrame frame,
       Object v,
+      ExpressionNode valueSource,
       @Cached.Shared("typeOfNode") @Cached TypeOfNode typeOfNode,
       @Cached(value = "findType(typeOfNode, v)", dimensions = 1) Type[] cachedType,
-      @Cached("findConversionNode(cachedType)") ApplicationNode convertNode) {
+      @Cached("findConversionNode(valueSource, cachedType)") ApplicationNode convertNode) {
     return handleWithConversion(frame, v, convertNode);
   }
 
   @Specialization(replaces = "doWithConversionCached")
   Object doWithConversionUncached(
-      VirtualFrame frame, Object v, @Cached.Shared("typeOfNode") @Cached TypeOfNode typeOfNode) {
+      VirtualFrame frame,
+      Object v,
+      ExpressionNode expr,
+      @Cached.Shared("typeOfNode") @Cached TypeOfNode typeOfNode) {
     var type = findType(typeOfNode, v);
-    return doWithConversionUncachedBoundary(frame == null ? null : frame.materialize(), v, type);
+    return doWithConversionUncachedBoundary(
+        frame == null ? null : frame.materialize(), v, expr, type);
   }
 
   @ExplodeLoop
@@ -134,7 +141,10 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
     return null;
   }
 
-  ApplicationNode findConversionNode(Type[] allTypes) {
+  ApplicationNode findConversionNode(ExpressionNode valueNode, Type[] allTypes) {
+    if (valueNode == null) {
+      return null;
+    }
     if (allTypes == null) {
       allTypes = new Type[] {null};
     }
@@ -142,30 +152,15 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
       var convAndType = findConversion(from);
 
       if (convAndType != null) {
-        if (NodeUtil.findParent(this, ReadArgumentNode.class) instanceof ReadArgumentNode ran) {
-          CompilerAsserts.neverPartOfCompilation();
-          var convNode = LiteralNode.build(convAndType.getLeft());
-          var intoNode = LiteralNode.build(convAndType.getRight());
-          var valueNode = ran.copyWithoutCheck();
-          var args =
-              new CallArgument[] {
-                new CallArgument(null, intoNode), new CallArgument(null, valueNode)
-              };
-          return ApplicationNode.build(
-              convNode, args, InvokeCallableNode.DefaultsExecutionMode.EXECUTE);
-        } else if (NodeUtil.findParent(this, TypeCheckExpressionNode.class)
-            instanceof TypeCheckExpressionNode tcen) {
-          CompilerAsserts.neverPartOfCompilation();
-          var convNode = LiteralNode.build(convAndType.getLeft());
-          var intoNode = LiteralNode.build(convAndType.getRight());
-          var valueNode = tcen.getOriginal();
-          var args =
-              new CallArgument[] {
-                new CallArgument(null, intoNode), new CallArgument(null, valueNode)
-              };
-          return ApplicationNode.build(
-              convNode, args, InvokeCallableNode.DefaultsExecutionMode.EXECUTE);
-        }
+        CompilerAsserts.neverPartOfCompilation();
+        var convNode = LiteralNode.build(convAndType.getLeft());
+        var intoNode = LiteralNode.build(convAndType.getRight());
+        var args =
+            new CallArgument[] {
+              new CallArgument(null, intoNode), new CallArgument(null, valueNode)
+            };
+        return ApplicationNode.build(
+            convNode, args, InvokeCallableNode.DefaultsExecutionMode.EXECUTE);
       }
     }
     return null;
@@ -207,8 +202,9 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
   }
 
   @CompilerDirectives.TruffleBoundary
-  private Object doWithConversionUncachedBoundary(MaterializedFrame frame, Object v, Type[] type) {
-    var convertNode = findConversionNode(type);
+  private Object doWithConversionUncachedBoundary(
+      MaterializedFrame frame, Object v, ExpressionNode expr, Type[] type) {
+    var convertNode = findConversionNode(expr, type);
     return handleWithConversion(frame, v, convertNode);
   }
 

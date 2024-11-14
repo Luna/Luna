@@ -40,7 +40,7 @@ final class LazyCheckRootNode extends RootNode {
     assert args[0] instanceof Function fn && fn.isThunk();
     java.lang.Object raw =
         evalThunk.executeThunk(frame, args[0], state, BaseNode.TailStatus.NOT_TAIL);
-    java.lang.Object result = check.handleCheckOrConversion(frame, raw);
+    java.lang.Object result = check.handleCheckOrConversion(frame, raw, null);
     return result;
   }
 }
