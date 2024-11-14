@@ -61,7 +61,6 @@ pub fn is_numeric_literal(code: &str) -> bool {
                 }),
         _ => false,
     }
-    })
 }
 
 #[wasm_bindgen(start)]
