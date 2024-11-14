@@ -87,6 +87,7 @@ interface UnknownTable {
 interface DataQualityPairs {
   number_of_nothing: number[]
   number_of_leading_trailing_whitespace: number[]
+  number_of_whitespace: number[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -360,19 +361,24 @@ function toField(
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs
       // eslint-disable-next-line camelcase
-    : { number_of_nothing: [], number_of_whitespace: [] }
+    : { number_of_nothing: [], number_of_leading_trailing_whitespace: [], number_of_whitespace: [] }
 
   const nothingIsNonZero =
     index != null && dataQuality?.number_of_nothing ?
       (dataQuality.number_of_nothing[index] ?? 0) > 0
     : false
 
+  const LeadOrTrailingWhitespaceIsNonZero =
+    index != null && dataQuality?.number_of_nothing ?
+      (dataQuality.number_of_leading_trailing_whitespace[index] ?? 0) > 0
+      : false
+
   const whitespaceIsNonZero =
     index != null && dataQuality?.number_of_nothing ?
       (dataQuality.number_of_whitespace[index] ?? 0) > 0
     : false
 
-  const showDataQuality = nothingIsNonZero || whitespaceIsNonZero
+  const showDataQuality = nothingIsNonZero || LeadOrTrailingWhitespaceIsNonZero || whitespaceIsNonZero
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
@@ -402,6 +408,7 @@ function toField(
     headerTooltip: displayValue ? displayValue : '',
     tooltipComponentParams: {
       numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
+      numberOfLeadOrTrailSpace: index != null ? dataQuality.number_of_leading_trailing_whitespace[index] : null,
       numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
       total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
       showDataQuality,

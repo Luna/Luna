@@ -14,6 +14,7 @@ export class TableVisualisationTooltip implements ITooltipComp {
   init(
     params: ITooltipParams & {
       numberOfNothing: number
+      numberOfLeadOrTrailSpace: number
       numberOfWhitespace: number
       total: number
       showDataQuality: boolean
@@ -43,10 +44,13 @@ export class TableVisualisationTooltip implements ITooltipComp {
 
     const dataQualityTemplate = `
             <div style="display: ${getDisplay(params.numberOfNothing)};">
-                Nulls/Nothing: ${getPercentage(params.numberOfNothing)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
+                Nulls/Nothing: ${getPercentage(params.numberOfNothing)}% ${createIndicator(+getPercentage(params.numberOfNothing))}
+            </div>
+            <div style="display: ${getDisplay(params.numberOfLeadOrTrailSpace)};">
+                Trailing/Leading Whitespace: ${getPercentage(params.numberOfLeadOrTrailSpace)}% ${createIndicator(+getPercentage(params.numberOfLeadOrTrailSpace))}
             </div>
             <div style="display: ${getDisplay(params.numberOfWhitespace)};">
-                Trailing/Leading Whitespace: ${getPercentage(params.numberOfWhitespace)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
+                Text with non trival whitespace: ${getPercentage(params.numberOfWhitespace)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
             </div>
         `
 
