@@ -22,6 +22,6 @@ public abstract class EnsoObject implements TruffleObject {
 
   @ExportMessage
   public Object toDisplayString(boolean allowSideEffects) {
-    throw new UnsupportedOperationException("unimplemented");
+    return toString();
   }
 }
