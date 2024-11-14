@@ -12,10 +12,13 @@ import net from 'net'
 const DEBUG = process.env.DEBUG_E2E === 'true'
 const isCI = process.env.CI === 'true'
 const isProd = process.env.PROD === 'true'
+
 const TIMEOUT_MS =
   DEBUG ? 100_000_000
   : isCI ? 30_000
   : 15_000
+
+const WORKERS = '35%'
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
@@ -57,7 +60,7 @@ process.env.PLAYWRIGHT_PORT_PV = `${ports.projectView}`
 
 export default defineConfig({
   fullyParallel: true,
-  workers: 2,
+  workers: WORKERS,
   forbidOnly: !!process.env.CI,
   repeatEach: process.env.CI ? 3 : 1,
   reporter: 'html',
@@ -116,7 +119,7 @@ export default defineConfig({
       use: {
         baseURL: `http://localhost:${ports.dashboard}`,
         actionTimeout: TIMEOUT_MS,
-        storageState: 'playwright/.auth/user.json',
+        storageState: './playwright/.auth/user.json',
       },
     },
     {
