@@ -20,7 +20,10 @@ import { download } from '#/utilities/download'
 import { getDownloadUrl, getLatestRelease } from '#/utilities/github'
 import { startTransition, useState } from 'react'
 
-const CURRENT_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
+const CURRENT_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION ?? 'unknown-dev'
+const CURRENT_VERSION_IS_DEV = CURRENT_VERSION.endsWith('-dev')
+const CURRENT_VERSION_IS_NIGHTLY = CURRENT_VERSION.includes('-nightly')
+const CURRENT_VERSION_NUMBER = getVersionNumber(CURRENT_VERSION)
 // eslint-disable-next-line @typescript-eslint/no-magic-numbers
 const STALE_TIME = 24 * 60 * 60 * 1000 // 1 day
 // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -37,17 +40,9 @@ export default function VersionChecker() {
   const supportsLocalBackend = localBackend != null
   const overrideValue = useEnableVersionChecker()
   const setOverrideValue = useSetEnableVersionChecker()
+  const shouldOverride = overrideValue ?? false
 
-  const enableVersionChecker = (() => {
-    // In dev mode we can override the behavior using the devtools.
-    if (IS_DEV_MODE) {
-      return overrideValue ?? false
-    }
-
-    // Otherwise, we only check the version if we're connected to the local backend,
-    // because usually that means we're running inside an electron app.
-    return supportsLocalBackend
-  })()
+  const enableVersionChecker = IS_DEV_MODE ? shouldOverride : supportsLocalBackend
 
   const queryClient = useQueryClient()
   const metadataQuery = useQuery({
@@ -56,12 +51,30 @@ export default function VersionChecker() {
       const latestRelease = await getLatestRelease()
       return { ...latestRelease, isPostponed: false }
     },
-    select: (data) => ({
-      tagName: data.tag_name,
-      publishedAt: data.published_at,
-      htmlUrl: data.html_url,
-      isPostponed: data.isPostponed,
-    }),
+    select: (data) => {
+      const versionNumber = getVersionNumber(data.tag_name)
+      const publishedAt = new Date(data.published_at).toLocaleString(locale, {
+        dateStyle: 'long',
+      })
+
+      if (versionNumber == null) {
+        return {
+          versionNumber: CURRENT_VERSION_NUMBER,
+          publishedAt,
+          tagName: CURRENT_VERSION,
+          htmlUrl: data.html_url,
+          isPostponed: data.isPostponed,
+        }
+      }
+
+      return {
+        versionNumber,
+        publishedAt,
+        tagName: data.tag_name,
+        htmlUrl: data.html_url,
+        isPostponed: data.isPostponed,
+      }
+    },
     enabled: enableVersionChecker,
     meta: { persist: false },
     staleTime: (query) => {
@@ -100,13 +113,31 @@ export default function VersionChecker() {
     return null
   }
 
-  const latestVersion = metadataQuery.data.tagName
-  const htmlUrl = metadataQuery.data.htmlUrl
-  const publishedAt = new Date(metadataQuery.data.publishedAt).toLocaleString(locale, {
-    dateStyle: 'long',
-  })
+  const { versionNumber, tagName, htmlUrl, publishedAt } = metadataQuery.data
+  const latestVersionNumber = versionNumber
+  const latestVersion = tagName
 
-  if (latestVersion !== CURRENT_VERSION && !isOpen && !isLastStep) {
+  const shouldBeShown = (() => {
+    if (shouldOverride) {
+      return true
+    }
+
+    if (latestVersionNumber == null) {
+      return false
+    }
+
+    if (CURRENT_VERSION_NUMBER == null || CURRENT_VERSION_IS_DEV || CURRENT_VERSION_IS_NIGHTLY) {
+      return false
+    }
+
+    return latestVersionNumber > CURRENT_VERSION_NUMBER
+  })()
+
+  if (!shouldBeShown) {
+    return null
+  }
+
+  if (!isOpen && !isLastStep) {
     startTransition(() => {
       setIsOpen(true)
     })
@@ -160,7 +191,7 @@ export default function VersionChecker() {
                   <Text variant="body-sm">
                     {getText('yourVersion')}{' '}
                     <Text weight="bold" variant="body">
-                      {CURRENT_VERSION ?? getText('unknownPlaceholder')}
+                      {CURRENT_VERSION}
                     </Text>
                   </Text>
                 </Text.Group>
@@ -206,4 +237,14 @@ export default function VersionChecker() {
       )}
     </Dialog>
   )
+}
+
+/**
+ * Get the version number from a version string.
+ * @param version - The version string.
+ * @returns The version number, or null if the version string is not a valid version number.
+ */
+function getVersionNumber(version: string) {
+  const versionNumber = Number(version.replace('.', ''))
+  return isNaN(versionNumber) ? null : versionNumber
 }
