@@ -371,14 +371,15 @@ function toField(
   const LeadOrTrailingWhitespaceIsNonZero =
     index != null && dataQuality?.number_of_nothing ?
       (dataQuality.number_of_leading_trailing_whitespace[index] ?? 0) > 0
-      : false
+    : false
 
   const whitespaceIsNonZero =
     index != null && dataQuality?.number_of_nothing ?
       (dataQuality.number_of_whitespace[index] ?? 0) > 0
     : false
 
-  const showDataQuality = nothingIsNonZero || LeadOrTrailingWhitespaceIsNonZero || whitespaceIsNonZero
+  const showDataQuality =
+    nothingIsNonZero || LeadOrTrailingWhitespaceIsNonZero || whitespaceIsNonZero
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
@@ -408,7 +409,8 @@ function toField(
     headerTooltip: displayValue ? displayValue : '',
     tooltipComponentParams: {
       numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
-      numberOfLeadOrTrailSpace: index != null ? dataQuality.number_of_leading_trailing_whitespace[index] : null,
+      numberOfLeadOrTrailSpace:
+        index != null ? dataQuality.number_of_leading_trailing_whitespace[index] : null,
       numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
       total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
       showDataQuality,
