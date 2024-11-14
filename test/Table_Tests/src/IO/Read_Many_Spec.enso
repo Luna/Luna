@@ -2,7 +2,7 @@ from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 from Standard.Table import all
-from Standard.Table.Errors import Invalid_Value_Type
+from Standard.Table.Errors import Invalid_Value_Type, No_Rows
 from Standard.Database import all
 
 from Standard.Test import all
@@ -196,7 +196,7 @@ add_specs suite_builder =
         # Marker to not forget
         group_builder.specify "TODO" pending="Once 6281 is done we should update the test above." Nothing
 
-        group_builder.specify "should still include 1 all-Nothing row for a loaded empty array" <|
+        group_builder.specify "should warn when a file loads as empty array and not include it in the Merged_Table result" <|
             # But such array should not influence the columns present:
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
@@ -204,43 +204,64 @@ add_specs suite_builder =
             Panic.with_finalizer (base_dir.delete recursive=True) <|
                 '{"a": 1}'.write (base_dir / "1_js_object.json")
                 "[]".write (base_dir / "2_empty_array.json")
-                "[]".write (base_dir / "3_empty_array.json")
-                '{"a": 2, "b": "..."}'.write (base_dir / "4_js_object.json")
+                '[{"a": 2, "b": "..."}]'.write (base_dir / "3_js_object.json")
 
                 files = Data.list base_dir . sort on=(.name)
-                r = Data.read_many files return=..Merged_Table
-                r.should_be_a Table
-                within_table r <|
-                    r.column_names . should_equal ["Path", "a", "b"]
-                    r.row_count . should_equal 4
-                    r.at "a" . to_vector . should_equal [1, Nothing, Nothing, 2]
-                    r.at "b" . to_vector . should_equal [Nothing, Nothing, Nothing, "..."]
 
-        group_builder.specify "should still include 1 all-Nothing row for a Table with no rows" <|
-            # And such table should influence the columns present
+                r1 = Data.read_many files return=..Table_Of_Objects
+                r1.should_be_a Table
+                Problems.assume_no_problems r1
+                r1.row_count . should_equal 3
+                r1 . at "Path" . map .name . to_vector . should_equal ["1_js_object.json", "2_empty_array.json", "3_js_object.json"]
+                r1.at "Value" . at 1 . should_equal []
+
+                r2 = Data.read_many files return=..Merged_Table
+                r2.should_be_a Table
+                w2 = Problems.expect_only_warning No_Rows r2
+                w2.to_display_text . should_contain "2_empty_array.json"
+                w2.to_display_text . should_contain "loaded as an empty array, so it is not included in the `Merged_Table` result of `read_many`."
+                within_table r2 <|
+                    r2.column_names . should_equal ["Path", "a", "b"]
+                    r2.row_count . should_equal 2
+                    r2.at "Path" . map .name . to_vector . should_equal ["1_js_object.json", "3_js_object.json"]
+                    r2.at "a" . to_vector . should_equal [1, 2]
+                    r2.at "b" . to_vector . should_equal [Nothing, "..."]
+
+        group_builder.specify "should warn when a Table loads as 0-rows and is not included in Merged_Table result, but it should still influence the result columns" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
             Panic.with_finalizer (base_dir.delete recursive=True) <|
                 'A,B'.write (base_dir / "1_empty_table.csv")
-                'B,C'.write (base_dir / "2_empty_table.csv")
-                'B,C\n1,2\n3,4'.write (base_dir / "3_table.csv")
+                'B,C\n1,2'.write (base_dir / "2_table.csv")
 
                 files = Data.list base_dir . sort on=(.name)
-                r = Data.read_many files format=(..Delimited ',' headers=True) return=..Merged_Table
-                r.should_be_a Table
-                within_table r <|
-                    r.column_names . should_equal ["Path", "A", "B", "C"]
-                    r.row_count . should_equal 4
-                    r.at "Path" . at 0 . name . should_equal "1_empty_table.csv"
-                    r.at "Path" . at 1 . name . should_equal "2_empty_table.csv"
-                    r.at "Path" . at 2 . name . should_equal "3_table.csv"
-                    r.at "Path" . at 3 . name . should_equal "3_table.csv"
 
-                    # TODO once 6281 is done we should replace '1' with 1 as here we don't want the Nothing column to influence the result type
-                    r.at "A" . to_vector . should_equal [Nothing, Nothing, Nothing, Nothing]
-                    r.at "B" . to_vector . should_equal [Nothing, Nothing, '1', '3']
-                    r.at "C" . to_vector . should_equal [Nothing, Nothing, '2', '4']
+                r1 = Data.read_many files return=..Table_Of_Objects
+                r1.should_be_a Table
+                Problems.assume_no_problems r1
+                r1.row_count . should_equal 2
+                r1.at "Path" . map .name . to_vector . should_equal ["1_empty_table.csv", "2_table.csv"]
+                r1.at "Value" . at 0 . should_be_a Table
+                r1.at "Value" . at 0 . row_count . should_equal 0
+
+                r2 = Data.read_many files format=(..Delimited ',' headers=True) return=..Merged_Table
+                r2.should_be_a Table
+                w2 = Problems.expect_only_warning No_Rows r2
+                w2.to_display_text . should_contain "1_empty_table.csv"
+                w2.to_display_text . should_contain "contained 0 rows, so it did not contribute any rows to the `Merged_Table` result of `read_many`."
+                within_table r2 <|
+                    ## But it DOES influence the columns present.
+                       That is because the column structure is a 'structural' property, 
+                       we want the structure of the result to be the same regardless if it has 0 or more rows.
+                       If the workflow is run next time with this table having some rows, it is better that the structure is preserved.
+                       Otherwise, a workflow that is running fine could stop working once a file is changed to contain no rows, as some column could no longer be found.
+                    r2.column_names . should_equal ["Path", "A", "B", "C"]
+                    r2.row_count . should_equal 1
+                    r2.at "Path" . map .name . to_vector . should_equal ["2_table.csv"]
+                    r2.at "A" . to_vector . should_equal [Nothing]
+                    r2.at "B" . to_vector . should_equal [1]
+                    r2.at "C" . to_vector . should_equal [2]
 
         group_builder.specify "should allow to customize how the tables are merged" <|
             base_dir = enso_project.data / "transient" / "read_many_test"

@@ -889,3 +889,12 @@ type Mixing_Date_Time_Types
                 "Mixing Date and Date_Time values"+location+": the Date values have been automatically converted to Date_Time by adding a time of 00:00 in the default time-zone."
             Mixing_Date_Time_Types.Implicit_Time_Zone _ ->
                 "Mixing Date_Time values with and without timezone"+location+". A default timezone has been assumed where it was missing."
+
+## Indicates that a table with no rows has been returned.
+type No_Rows
+   ## PRIVATE
+      The message should be used to provide additional context.
+   private Warning message:Text
+
+   ## PRIVATE
+   to_display_text self -> Text = self.message
