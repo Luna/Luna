@@ -41,10 +41,12 @@ final class JavaFinder {
         javaExe = binDir.resolve("java");
       }
       if (javaExe.toFile().exists()) {
+        logger.warn("Found JDK in JAVA_HOME: {}", javaHome);
         return javaExe.toAbsolutePath().toString();
       }
     }
     if (isJavaOnPath()) {
+      logger.warn("Falling back to java on PATH");
       return "java";
     }
     return null;
@@ -79,7 +81,6 @@ final class JavaFinder {
           versionUsedForBuild);
       return newerRuntime.get().javaExecutable();
     }
-    logger.warn("No JDK found in the distribution runtimes.");
     return null;
   }
 
