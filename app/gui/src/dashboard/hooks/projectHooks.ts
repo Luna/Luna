@@ -84,8 +84,12 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
 
   return reactQuery.queryOptions({
     queryKey: createGetProjectDetailsQuery.getQueryKey(assetId),
+    queryFn: () => backend.getProjectDetails(assetId, parentId),
     meta: { persist: false },
-    gcTime: 0,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    networkMode: backend.type === backendModule.BackendType.remote ? 'online' : 'always',
     refetchInterval: ({ state }) => {
       const states = [backendModule.ProjectState.opened, backendModule.ProjectState.closed]
 
@@ -108,10 +112,6 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
         }
       }
     },
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    queryFn: () => backend.getProjectDetails(assetId, parentId),
   })
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const

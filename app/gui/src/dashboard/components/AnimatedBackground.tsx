@@ -108,23 +108,51 @@ AnimatedBackground.Item = memo(function AnimatedBackgroundItem(props: AnimatedBa
 
   return (
     <div className={twJoin('relative *:isolate', className)}>
-      <AnimatePresence initial={!isActive}>
-        {isActive && (
-          <motion.div
-            layout="position"
-            layoutId={`background-${layoutId}`}
-            className="pointer-events-none absolute inset-0"
-            transition={transition}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {underlayElement}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AnimatedBackgroundItemUnderlay
+        isActive={isActive}
+        underlayElement={underlayElement}
+        layoutId={layoutId}
+        transition={transition}
+      />
 
       {children}
     </div>
+  )
+})
+
+/**
+ * Props for {@link AnimatedBackgroundItemUnderlay}.
+ */
+interface AnimatedBackgroundItemUnderlayProps {
+  readonly isActive: boolean
+  readonly underlayElement: React.ReactNode
+  readonly layoutId: string
+  readonly transition: Transition
+}
+
+/**
+ * Underlay for {@link AnimatedBackground.Item}.
+ */
+const AnimatedBackgroundItemUnderlay = memo(function AnimatedBackgroundItemUnderlay(
+  props: AnimatedBackgroundItemUnderlayProps,
+) {
+  const { isActive, underlayElement, layoutId, transition } = props
+
+  return (
+    <AnimatePresence initial={!isActive}>
+      {isActive && (
+        <motion.div
+          layout="position"
+          layoutId={`background-${layoutId}`}
+          className="pointer-events-none absolute inset-0"
+          transition={transition}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {underlayElement}
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 })

@@ -6,7 +6,6 @@ import { useVisualTooltip } from '#/components/AriaComponents'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Suspense } from '#/components/Suspense'
 import SvgMask from '#/components/SvgMask'
-import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, useRef } from 'react'
 
@@ -63,48 +62,47 @@ export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabPro
       className="aspect-square w-full cursor-pointer"
       data-testid={`asset-panel-tab-${id}`}
     >
-      {({ isSelected }) => (
-        <>
-          <AnimatedBackground.Item
-            isSelected={isSelected && isExpanded}
-            className="h-full w-full rounded-2xl"
-            underlayElement={UNDERLAY_ELEMENT}
-          >
-            <motion.div
-              className="h-full w-full"
-              // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-              initial={{ x: 100 }}
-              animate={{ x: 0 }}
-              // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-              exit={{ x: 100 }}
-              transition={DEFAULT_TRANSITION_OPTIONS}
+      {({ isSelected, isHovered }) => {
+        const isActive = isSelected && isExpanded
+        return (
+          <>
+            <AnimatedBackground.Item
+              isSelected={isActive}
+              className="h-full w-full rounded-2xl"
+              underlayElement={UNDERLAY_ELEMENT}
             >
-              <div
-                ref={tabRef}
-                className="flex h-full w-full items-center justify-center"
-                {...targetProps}
+              <motion.div
+                className="h-full w-full"
+                // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+                initial={{ x: 100 }}
+                animate={{ x: 0 }}
+                // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+                exit={{ x: 100 }}
               >
-                <SvgMask src={icon} />
-              </div>
-            </motion.div>
-          </AnimatedBackground.Item>
+                <motion.div
+                  variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
+                  initial="inactive"
+                  animate={!isActive && isHovered ? 'active' : 'inactive'}
+                  className="bg-inv absolute inset-x-1.5 inset-y-1.5 -z-1 rounded-full transition-colors duration-300"
+                />
 
-          {tooltip}
-        </>
-      )}
+                <div
+                  ref={tabRef}
+                  className="flex h-full w-full items-center justify-center"
+                  {...targetProps}
+                >
+                  <SvgMask src={icon} />
+                </div>
+              </motion.div>
+            </AnimatedBackground.Item>
+
+            {tooltip}
+          </>
+        )
+      }}
     </Tab>
   )
 })
-
-const DEFAULT_TRANSITION_OPTIONS: Spring = {
-  type: 'spring',
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  stiffness: 300,
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  damping: 40,
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  mass: 0.8,
-}
 
 /** Props for a {@link AssetPanelTabPanel}. */
 export interface AssetPanelTabPanelProps extends TabPanelProps {
@@ -129,7 +127,6 @@ export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
                 animate={{ x: 0, filter: 'blur(0px)', opacity: 1 }}
                 // eslint-disable-next-line @typescript-eslint/no-magic-numbers
                 exit={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
-                transition={DEFAULT_TRANSITION_OPTIONS}
                 className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
               >
                 <Suspense loaderProps={{ className: 'my-auto' }}>

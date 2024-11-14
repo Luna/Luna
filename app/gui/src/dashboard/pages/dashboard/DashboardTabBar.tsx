@@ -80,22 +80,18 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
           onLoadEnd,
         }) as const,
     ),
-  ]
-
-  if (page === TabType.settings) {
-    tabs.push({
+    {
       id: TabType.settings,
       icon: SettingsIcon,
       labelId: 'settingsPageName' satisfies TextId,
       'data-testid': 'settings-tab-button',
-      isActive: true,
+      isHidden: page !== TabType.settings,
       children: getText('settingsPageName'),
-      // @ts-expect-error -- TODO: fix this
       onClose: onCloseSettings,
       // eslint-disable-next-line @typescript-eslint/naming-convention
       Component: TabBar.Tab,
-    } as const)
-  }
+    },
+  ]
 
   return (
     <TabBar className="bg-primary/5" items={tabs}>

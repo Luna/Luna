@@ -31,23 +31,13 @@ export interface TabBarProps<T extends object> extends aria.TabListProps<T> {
 
 /** Switcher to choose the currently visible full-screen page. */
 export default function TabBar<T extends object>(props: TabBarProps<T>) {
-  return <TabBarInner<T> {...props} />
-}
-
-/**
- * Props for {@link TabBarInner}.
- */
-interface TabBarInnerProps<T extends object> extends TabBarProps<T> {}
-
-/**
- * Inner component for {@link TabBar}.
- */
-function TabBarInner<T extends object>(props: TabBarInnerProps<T>) {
   const { className, ...rest } = props
+
+  const classes = React.useMemo(() => tailwindMerge.twJoin('flex grow', className), [className])
 
   return (
     <AnimatedBackground>
-      <div className={tailwindMerge.twMerge('relative flex grow', className)}>
+      <div className={classes}>
         <aria.TabList<T> className="flex h-12 shrink-0 grow" {...rest} />
       </div>
     </AnimatedBackground>
@@ -72,8 +62,8 @@ export interface TabProps extends Readonly<React.PropsWithChildren> {
 const UNDERLAY_ELEMENT = (
   <>
     <div className="h-full w-full rounded-t-4xl bg-dashboard" />
-    <div className="absolute -left-6 bottom-0 aspect-square w-6 -rotate-90 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-dashboard-background)_70%)]" />
-    <div className="absolute -right-6 bottom-0 aspect-square w-6 -rotate-90 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-dashboard-background)_70%)]" />
+    <div className="absolute -left-5 bottom-0 aspect-square w-5 -rotate-90 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-dashboard-background)_70%)]" />
+    <div className="absolute -right-5 bottom-0 aspect-square w-5 -rotate-90 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-dashboard-background)_70%)]" />
   </>
 )
 
@@ -101,38 +91,44 @@ export function Tab(props: TabProps) {
       id={id}
       aria-label={getText(labelId)}
       className={tailwindMerge.twJoin(
-        'relative',
-        !isActive &&
-          'cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 [&.disabled]:cursor-not-allowed [&.disabled]:opacity-30',
+        'disabled:cursor-not-allowed disabled:opacity-30 [&.disabled]:cursor-not-allowed [&.disabled]:opacity-30',
+        !isActive && 'cursor-pointer',
         isHidden && 'hidden',
       )}
     >
       {({ isSelected, isHovered }) => (
         <AnimatedBackground.Item
           isSelected={isSelected}
-          className="flex h-full w-full items-center justify-center gap-3 rounded-t-3xl pl-3.5 pr-4"
+          className="h-full w-full rounded-t-3xl pl-4 pr-4"
           underlayElement={UNDERLAY_ELEMENT}
         >
-          <motion.div
-            variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
-            initial="inactive"
-            animate={!isSelected && isHovered ? 'active' : 'inactive'}
-            className="absolute inset-x-1 inset-y-2 rounded-3xl bg-dashboard transition-colors duration-300"
-          />
+          <div className="relative z-1 flex h-full w-full items-center justify-center gap-3">
+            <motion.div
+              variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
+              initial="inactive"
+              animate={!isSelected && isHovered ? 'active' : 'inactive'}
+              className="absolute -inset-x-2.5 inset-y-2 -z-1 rounded-3xl bg-dashboard transition-colors duration-300"
+            />
 
-          {typeof icon === 'string' ?
-            <SvgMask src={icon} className={onClose && 'group-hover:hidden focus-visible:hidden'} />
-          : icon}
+            {typeof icon === 'string' ?
+              <SvgMask
+                src={icon}
+                className={tailwindMerge.twJoin(
+                  onClose && 'group-hover:hidden focus-visible:hidden',
+                )}
+              />
+            : icon}
 
-          <ariaComponents.Text truncate="1" className="max-w-40">
-            {children}
-          </ariaComponents.Text>
+            <ariaComponents.Text truncate="1" className="max-w-40">
+              {children}
+            </ariaComponents.Text>
 
-          {onClose && (
-            <div className="flex">
-              <ariaComponents.CloseButton onPress={onClose} />
-            </div>
-          )}
+            {onClose && (
+              <div className="relative">
+                <ariaComponents.CloseButton onPress={onClose} />
+              </div>
+            )}
+          </div>
         </AnimatedBackground.Item>
       )}
     </aria.Tab>
@@ -160,10 +156,6 @@ export function ProjectTab(props: ProjectTabProps) {
   const backend = useBackendForProjectType(project.type)
 
   const stableOnLoadEnd = useEventCallback(() => {
-    if (didNotifyOnLoadEnd.current) {
-      return
-    }
-    didNotifyOnLoadEnd.current = true
     onLoadEnd?.(project)
   })
 
@@ -178,17 +170,22 @@ export function ProjectTab(props: ProjectTabProps) {
       backend,
     }),
     select: (data) => data.state.type === ProjectState.opened,
-    meta: {
-      persist: false,
-      onSuccess: (opened) => {
-        if (opened === true) {
-          stableOnLoadEnd()
-        }
-      },
-    },
   })
 
   const isReady = isSuccess && isOpened
+
+  React.useEffect(() => {
+    if (isReady && !didNotifyOnLoadEnd.current) {
+      didNotifyOnLoadEnd.current = true
+      stableOnLoadEnd()
+    }
+  }, [isReady, stableOnLoadEnd])
+
+  React.useEffect(() => {
+    if (!isReady) {
+      didNotifyOnLoadEnd.current = false
+    }
+  }, [isReady])
 
   const icon = isReady ? iconRaw : SPINNER
 

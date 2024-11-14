@@ -247,7 +247,7 @@ const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) 
 })
 
 /**
- *
+ * Internal props for a {@link RealAssetRow}.
  */
 export interface RealAssetRowInternalProps extends AssetRowProps {
   readonly asset: backendModule.AnyAsset

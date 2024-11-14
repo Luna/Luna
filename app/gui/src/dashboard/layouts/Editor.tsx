@@ -91,10 +91,7 @@ export default function Editor(props: EditorProps) {
     backend,
   })
 
-  const projectQuery = reactQuery.useQuery({
-    ...projectStatusQuery,
-    networkMode: project.type === backendModule.BackendType.remote ? 'online' : 'always',
-  })
+  const projectQuery = reactQuery.useQuery(projectStatusQuery)
 
   const isProjectClosed = projectQuery.data?.state.type === backendModule.ProjectState.closed
 

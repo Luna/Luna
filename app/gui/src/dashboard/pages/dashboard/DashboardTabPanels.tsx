@@ -88,16 +88,13 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
         />
       ),
     })),
-  ]
 
-  if (page === TabType.settings) {
-    tabPanels.push({
+    {
       id: TabType.settings,
-      shouldForceMount: true,
       className: 'flex min-h-0 grow',
       children: <Settings />,
-    })
-  }
+    },
+  ]
 
   return (
     <Collection items={tabPanels}>

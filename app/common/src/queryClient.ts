@@ -49,9 +49,6 @@ declare module '@tanstack/query-core' {
        * @default true
        */
       readonly persist?: boolean
-      readonly onSuccess?: <T>(data: T, query: queryCore.Query<T>) => void
-      readonly onError?: <T>(error: Error, query: queryCore.Query<T>) => void
-      readonly onSettled?: <T>(data: T, error: Error | null, query: queryCore.Query<T>) => void
     }
   }
 }
@@ -115,32 +112,6 @@ export function createQueryClient(): QueryClient {
               }),
             ),
           )
-        }
-      },
-    }),
-    queryCache: new queryCore.QueryCache({
-      onSuccess: (data, query) => {
-        if (query.meta?.onSuccess) {
-          let selectedData: unknown = data
-
-          // for some reason `tanstack/query` passes non-selected data to `onSuccess`
-          // so we need to select the data ourselves if a selector is provided
-          // if you need to access to original data, you can use `query.state.data`
-          if ('select' in query.options && typeof query.options.select === 'function') {
-            selectedData = query.options.select(data)
-          }
-
-          query.meta?.onSuccess?.(selectedData, query as queryCore.Query<unknown>)
-        }
-      },
-      onError: (error, query) => {
-        if (query.meta?.onError) {
-          query.meta?.onError(error, query as queryCore.Query<unknown>)
-        }
-      },
-      onSettled: (data, error, query) => {
-        if (query.meta?.onSettled) {
-          query.meta?.onSettled(data, error, query as queryCore.Query<unknown>)
         }
       },
     }),
