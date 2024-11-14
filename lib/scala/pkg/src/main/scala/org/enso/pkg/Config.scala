@@ -95,9 +95,7 @@ object Contact {
   *                             edition
   * @param componentGroups the description of component groups provided by this
   *                        package
-  * @param originalJson a Json object holding the original values that this
-  *                     Config was created from, used to preserve configuration
-  *                     keys that are not known
+  * @param scripts list of scripts that could be called for the given library
   */
 case class Config(
   name: String,
@@ -109,7 +107,8 @@ case class Config(
   maintainers: List[Contact],
   edition: Option[Editions.RawEdition],
   preferLocalLibraries: Boolean,
-  componentGroups: Option[ComponentGroups]
+  componentGroups: Option[ComponentGroups],
+  scripts: List[Script]
 ) {
 
   /** Converts the configuration into a YAML representation. */
@@ -147,6 +146,7 @@ object Config {
     val Edition: String        = "edition"
     val PreferLocalLibraries   = "prefer-local-libraries"
     val ComponentGroups        = "component-groups"
+    val Scripts: String        = "scripts"
   }
 
   implicit val yamlDecoder: YamlDecoder[Config] =
@@ -164,6 +164,7 @@ object Config {
           val booleanDecoder = implicitly[YamlDecoder[Boolean]]
           val componentGroups =
             implicitly[YamlDecoder[Option[ComponentGroups]]]
+          val scriptsDecoder = implicitly[YamlDecoder[List[Script]]]
           for {
             name <- clazzMap
               .get(JsonFields.Name)
@@ -220,6 +221,10 @@ object Config {
               .get(JsonFields.ComponentGroups)
               .map(componentGroups.decode)
               .getOrElse(Right(None))
+            scripts <- clazzMap
+              .get(JsonFields.Scripts)
+              .map(scriptsDecoder.decode)
+              .getOrElse(Right(Nil))
           } yield Config(
             name,
             normalizedName,
@@ -230,7 +235,8 @@ object Config {
             maintainers,
             edition,
             preferLocalLibraries,
-            componentGroups
+            componentGroups,
+            scripts
           )
       }
     }
@@ -243,6 +249,7 @@ object Config {
         val booleanEncoder  = implicitly[YamlEncoder[Boolean]]
         val componentGroupsEncoder =
           implicitly[YamlEncoder[ComponentGroups]]
+        val scriptsEncoder = implicitly[YamlEncoder[List[Script]]]
 
         val elements = new util.ArrayList[(String, Object)]()
         elements.add((JsonFields.Name, value.name))
@@ -287,6 +294,12 @@ object Config {
             (JsonFields.ComponentGroups, componentGroupsEncoder.encode(v))
           )
         )
+
+        if (value.scripts.nonEmpty) {
+          elements.add(
+            (JsonFields.Scripts, scriptsEncoder.encode(value.scripts))
+          )
+        }
 
         toMap(elements)
       }

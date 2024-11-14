@@ -55,6 +55,7 @@ import org.graalvm.polyglot.io.MessageTransport;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import scala.Option$;
+import scala.collection.immutable.List$;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.FiniteDuration;
@@ -599,7 +600,8 @@ public class Main {
             authors,
             nil(),
             "",
-            Option$.MODULE$.empty());
+            Option$.MODULE$.empty(),
+            List$.MODULE$.empty());
     throw exitSuccess();
   }
 
