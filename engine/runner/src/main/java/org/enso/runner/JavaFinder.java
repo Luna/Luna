@@ -3,6 +3,7 @@ package org.enso.runner;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.concurrent.TimeUnit;
 import org.enso.distribution.DistributionManager;
 import org.enso.distribution.Environment;
 import org.enso.runtimeversionmanager.components.GraalRuntime;
@@ -88,8 +89,8 @@ final class JavaFinder {
     try {
       ProcessBuilder processBuilder = new ProcessBuilder("java", "-h");
       Process process = processBuilder.start();
-      int exitCode = process.waitFor();
-      return exitCode == 0;
+      boolean exitSucc = process.waitFor(5L, TimeUnit.SECONDS);
+      return exitSucc;
     } catch (IOException | InterruptedException e) {
       return false;
     }
