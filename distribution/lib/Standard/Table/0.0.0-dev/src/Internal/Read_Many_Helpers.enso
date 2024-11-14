@@ -84,14 +84,14 @@ _interpret_object_as_table (object : Any) -> Table | Nothing =
     case object of
         table : Table -> table
         vector : Vector ->
-            if vector.is_empty then Nothing else default
+            if vector.is_empty then Table.new [["Value", []]] else default
         _ -> default
 
 ## Takes a table and a list of counts and returns a new table with the rows
    duplicated according to the counts.
    The vector should have the same number of elements as the number of rows in the table.
 _duplicate_rows (table : Table) (counts : Vector Integer) -> Table =
-    Runtime.assert (table.row_count == counts.size) "The number of counts must match the number of rows in the table."
+    Runtime.assert (table.row_count == counts.length) "The number of counts must match the number of rows in the table."
     mask_array = counts
         . map_with_index ix-> count-> Vector.fill count ix
         . flatten

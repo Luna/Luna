@@ -38,7 +38,7 @@ import Standard.Table.Internal.Table_Ref.Table_Ref
 import Standard.Table.Internal.Unique_Name_Strategy.Unique_Name_Strategy
 import Standard.Table.Internal.Value_Type_Helpers
 import Standard.Table.Internal.Widget_Helpers
-import Standard.Table.Match_Columns as Match_Columns_Helpers
+import Standard.Table.Internal.Match_Columns_Helpers
 import Standard.Table.Row.Row
 import Standard.Table.Rows_To_Read.Rows_To_Read
 import Standard.Table.Value_Type.By_Type
