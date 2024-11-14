@@ -225,6 +225,7 @@ object Config {
               .get(JsonFields.Scripts)
               .map(scriptsDecoder.decode)
               .getOrElse(Right(Nil))
+              .flatMap(validateScripts)
           } yield Config(
             name,
             normalizedName,
@@ -238,6 +239,23 @@ object Config {
             componentGroups,
             scripts
           )
+      }
+
+      private def validateScripts(
+        scripts: List[Script]
+      ): Either[Throwable, List[Script]] = {
+        val grouped   = scripts.groupBy(_.name)
+        val nonUnique = grouped.find(_._2.length > 1)
+        nonUnique match {
+          case Some((scriptName, groupedScripts)) =>
+            Left(
+              new YAMLException(
+                s"Scripts have to be unique, got ${groupedScripts.length} for $scriptName"
+              )
+            )
+          case _ =>
+            Right(scripts)
+        }
       }
     }
 

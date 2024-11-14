@@ -207,7 +207,8 @@ object ComponentGroupsValidatorSpec {
           ),
           extendedGroups = Nil
         )
-      )
+      ),
+      scripts = Nil
     )
 
   /** Create a library name from config. */

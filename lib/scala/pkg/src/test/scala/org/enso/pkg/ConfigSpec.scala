@@ -32,7 +32,9 @@ class ConfigSpec
           Contact(None, Some("c@example.com"))
         ),
         preferLocalLibraries = true,
-        componentGroups      = None
+        componentGroups      = None,
+        scripts =
+          List(Script("refresh", List("Standard.Base.Http.Caches.refresh")))
       )
       val deserialized = Config.fromYaml(config.toYaml).get
       deserialized shouldEqual config
@@ -68,6 +70,61 @@ class ConfigSpec
       val parsed = Config.fromYaml(config).get
 
       parsed.edition shouldBe None
+    }
+  }
+
+  "Scripts" should {
+    "correctly de-serialize and serialize back" in {
+      val config =
+        """|name: FooBar
+           |namespace: local
+           |scripts:
+           |- refresh:
+           |  - Standard.Base.Http.Caches.refresh
+           |  - Standard.Base.Caches.refresh
+           |""".stripMargin
+      val parsed = Config.fromYaml(config).get
+
+      val expectedScripts = List(
+        Script(
+          "refresh",
+          List(
+            "Standard.Base.Http.Caches.refresh",
+            "Standard.Base.Caches.refresh"
+          )
+        )
+      )
+      parsed.scripts shouldEqual expectedScripts
+      val serialized = parsed.toYaml
+      serialized shouldEqual config
+    }
+
+    "reject duplicate entries" in {
+      val config =
+        """|name: FooBar
+           |namespace: local
+           |scripts:
+           |- refresh:
+           |  - Standard.Base.Http.Caches.refresh
+           |- refresh:
+           |  - Standard.Base.Http.Caches.refresh
+           |""".stripMargin
+      val parsed = Config.fromYaml(config)
+      parsed.isFailure shouldBe true
+      parsed.failed.get.getMessage should include("Scripts have to be unique")
+    }
+
+    "reject unknown scripts" in {
+      val config =
+        """|name: FooBar
+           |namespace: local
+           |scripts:
+           |- startup:
+           |  - Standard.Base.Boot.start
+           |""".stripMargin
+      val parsed = Config.fromYaml(config)
+      parsed.isFailure shouldBe true
+      parsed.failed.get.getMessage should include("Unknown script: startup")
     }
   }
 

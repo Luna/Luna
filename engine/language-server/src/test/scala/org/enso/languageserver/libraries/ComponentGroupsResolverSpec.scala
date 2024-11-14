@@ -280,7 +280,8 @@ object ComponentGroupsResolverSpec {
       maintainers          = Nil,
       edition              = None,
       preferLocalLibraries = true,
-      componentGroups      = Some(componentGroups)
+      componentGroups      = Some(componentGroups),
+      scripts              = Nil
     )
 
   /** Create a new config. */
@@ -298,7 +299,8 @@ object ComponentGroupsResolverSpec {
       maintainers          = Nil,
       edition              = None,
       preferLocalLibraries = true,
-      componentGroups      = None
+      componentGroups      = None,
+      scripts              = Nil
     )
 
   /** Create a new component group. */

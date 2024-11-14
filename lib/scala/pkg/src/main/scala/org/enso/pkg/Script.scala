@@ -33,7 +33,7 @@ object Script {
     values: Seq[String]
   ): Either[String, Script] = {
     if (knownScripts.contains(name)) Right(Script(name, values))
-    else Left("Uknown script: " + name)
+    else Left("Unknown script: " + name)
   }
 
   /** [[Decoder]] instance for the [[Script]]. */

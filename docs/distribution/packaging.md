@@ -213,6 +213,24 @@ If the flag is not specified, it defaults to `false`, delegating all library
 resolution to the edition configuration. However, newly created projects will
 have it set to `true`.
 
+### scripts
+
+**Optional** _List of scripts_: The name(s) of scripts that are supported by the
+given library and should be invoked when an action is requested. Scripts
+themselves can take a list of arguments and are constrained by the format of the
+config file.
+
+Currently supported scripts are:
+
+- **Refresh** A list of Fully Qualified Names of methods of the library to be
+  called when a project is being recomputed. For example
+
+```yaml
+refresh:
+  - Standard.Base.Http.Caches.refresh
+  - Standard.Base.Caches.refresh
+```
+
 ### The `visualization` Directory
 
 As Enso is a visual language, a package may contain a specification of how data
