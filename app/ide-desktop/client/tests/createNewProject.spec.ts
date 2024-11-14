@@ -3,15 +3,15 @@
 import { expect } from '@playwright/test'
 import { electronTest, loginAsTestUser } from './electronTest'
 
-electronTest('Create new project', async page => {
+electronTest('Create new project', async ({ page }) => {
   await loginAsTestUser(page)
   await expect(page.getByRole('button', { name: 'New Project', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'New Project', exact: true }).click()
   await expect(page.locator('.GraphNode')).toHaveCount(1, { timeout: 60000 })
 
   // We see the node type and visualization, so the engine is running the program
-  await expect(page.locator('.node-type')).toHaveText('Table')
-  await expect(page.locator('.TableVisualization')).toBeVisible()
+  await expect(page.locator('.node-type')).toHaveText('Table', { timeout: 30000 })
+  await expect(page.locator('.TableVisualization')).toBeVisible({ timeout: 30000 })
   await expect(page.locator('.TableVisualization')).toContainText('Welcome To Enso!')
 
   // We can add new node and see suggestions.

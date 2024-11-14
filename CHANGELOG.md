@@ -24,6 +24,8 @@
   component.][11452]
 - [New documentation editor provides improved Markdown editing experience, and
   paves the way for new documentation features.][11469]
+- ["Write" button in component menu allows to evaluate it separately from the
+  rest of the workflow][11523].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -40,6 +42,7 @@
 [11448]: https://github.com/enso-org/enso/pull/11448
 [11452]: https://github.com/enso-org/enso/pull/11452
 [11469]: https://github.com/enso-org/enso/pull/11469
+[11523]: https://github.com/enso-org/enso/pull/11523
 
 #### Enso Standard Library
 
@@ -49,11 +52,14 @@
   programmatically.][11255]
 - [DB_Table may be saved as a Data Link.][11371]
 - [Support for dates before 1900 in Excel and signed AWS requests.][11373]
+- [Added `Data.read_many` that allows to read a list of files in a single
+  operation.][11490]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
 [11371]: https://github.com/enso-org/enso/pull/11371
 [11373]: https://github.com/enso-org/enso/pull/11373
+[11490]: https://github.com/enso-org/enso/pull/11490
 
 #### Enso Language & Runtime
 
