@@ -15,6 +15,7 @@ use crate::enso::BenchmarkOptions;
 use crate::enso::BuiltEnso;
 use crate::enso::IrCaches;
 use crate::paths::cache_directory;
+use crate::paths::default_data_directory;
 use crate::paths::Paths;
 use crate::paths::TargetTriple;
 use crate::paths::ENSO_DATA_DIRECTORY;
@@ -696,7 +697,7 @@ pub async fn runner_sanity_test(
                 repo_root.test.join("Base_Tests").as_str(),
                 "__NON_EXISTING_TEST__",
             ])
-            .set_env(ENSO_DATA_DIRECTORY, engine_package)?
+            .set_env(ENSO_DATA_DIRECTORY, &default_data_directory())?
             .run_ok()
             .await;
 
