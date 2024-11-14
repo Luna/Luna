@@ -162,7 +162,7 @@ add_specs suite_builder =
                 # a JS string
                 '"str"'.write (base_dir / "7_js_string.json")
 
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 IO.println (Meta.type_of files.first)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
@@ -207,7 +207,7 @@ add_specs suite_builder =
                 "[]".write (base_dir / "3_empty_array.json")
                 '{"a": 2, "b": "..."}'.write (base_dir / "4_js_object.json")
 
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
                 within_table r <|
@@ -226,7 +226,7 @@ add_specs suite_builder =
                 'B,C'.write (base_dir / "2_empty_table.csv")
                 'B,C\n1,2\n3,4'.write (base_dir / "3_table.csv")
 
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 r = Data.read_many files format=(..Delimited ',' headers=True) return=..Merged_Table
                 r.should_be_a Table
                 within_table r <|
@@ -250,7 +250,7 @@ add_specs suite_builder =
                 '{"a": 1, "b": 2}'.write (base_dir / "1_js_object.json")
                 '{"b": 3, "c": 4}'.write (base_dir / "2_js_object.json")
 
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 
                 r1 = Data.read_many files return=(..Merged_Table columns_to_keep=..In_All)
                 r1.should_be_a Table
@@ -279,7 +279,7 @@ add_specs suite_builder =
             Panic.with_finalizer (base_dir.delete recursive=True) <|
                 '{"a": 1}'.write (base_dir / "1_js_object.json")
                 '{"a": "str"}'.write (base_dir / "2_js_object.json")
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
                 r.column_names . should_equal ["Path", "a"]
@@ -293,7 +293,7 @@ add_specs suite_builder =
             Panic.with_finalizer (base_dir.delete recursive=True) <|
                 '{"a": {}}'.write (base_dir / "1_js_object.json")
                 '{"a": []}'.write (base_dir / "2_js_object.json")
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
                 r.column_names . should_equal ["Path", "a"]

@@ -993,7 +993,7 @@ add_specs suite_builder =
                 (Table.new [["A", [100]], ["B", [200]], ["C", [300]]]).write f3 format=(..Sheet "nr 1") . should_succeed
                 (Table.new [["A", [400, 500, 600]]]).write f3 format=(..Sheet "nr 2") . should_succeed
 
-                files = Data.list base_dir . sort on=.name
+                files = Data.list base_dir . sort on=(.name)
 
                 r1 = Data.read_many files return=..Table_Of_Objects
                 r1.should_be_a Table
