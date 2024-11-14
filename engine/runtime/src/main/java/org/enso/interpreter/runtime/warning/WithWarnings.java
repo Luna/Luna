@@ -270,6 +270,12 @@ public final class WithWarnings extends EnsoObject {
     throw asException(node);
   }
 
+  @ExportMessage
+  public Object toDisplayString(
+      boolean allowSideEffects, @CachedLibrary("this.value") InteropLibrary interop) {
+    return interop.toDisplayString(value, allowSideEffects);
+  }
+
   @Override
   public String toString() {
     return "WithWarnings{"
