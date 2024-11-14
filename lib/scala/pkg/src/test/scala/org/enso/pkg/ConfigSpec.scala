@@ -114,7 +114,7 @@ class ConfigSpec
       parsed.failed.get.getMessage should include("Scripts have to be unique")
     }
 
-    "reject unknown scripts" in {
+    "accept unknown scripts" in {
       val config =
         """|name: FooBar
            |namespace: local
@@ -123,8 +123,8 @@ class ConfigSpec
            |  - Standard.Base.Boot.start
            |""".stripMargin
       val parsed = Config.fromYaml(config)
-      parsed.isFailure shouldBe true
-      parsed.failed.get.getMessage should include("Unknown script: startup")
+      parsed.isSuccess shouldBe true
+      parsed.get.scripts.head.name shouldBe "startup"
     }
   }
 

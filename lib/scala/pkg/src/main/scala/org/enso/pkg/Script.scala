@@ -11,8 +11,6 @@ case class Script(name: String, arguments: Seq[String])
 
 object Script {
 
-  val knownScripts = List("refresh")
-
   /** [[Encoder]] instance for the [[Script]]. */
   implicit val encoder: Encoder[Script] = { script =>
     val vs = script.arguments.map(Json.fromString)
@@ -28,21 +26,12 @@ object Script {
       }
     }
 
-  private def find(
-    name: String,
-    values: Seq[String]
-  ): Either[String, Script] = {
-    if (knownScripts.contains(name)) Right(Script(name, values))
-    else Left("Unknown script: " + name)
-  }
-
   /** [[Decoder]] instance for the [[Script]]. */
   implicit val decoder: Decoder[Script] = { json =>
     for {
       key    <- json.key.toRight(DecodingFailure("no key", Nil))
       fields <- json.get[List[String]](key)
-      script <- find(key, fields).left.map(v => DecodingFailure(v, Nil))
-    } yield script
+    } yield Script(key, fields)
   }
 
   implicit val yamlDecoder: YamlDecoder[Script] =
@@ -58,10 +47,9 @@ object Script {
                   val valuesDecoder = implicitly[YamlDecoder[Seq[String]]]
 
                   for {
-                    k      <- stringDecoder.decode(scalarNode)
-                    vs     <- valuesDecoder.decode(seqNode)
-                    script <- find(k, vs).left.map(new YAMLException(_))
-                  } yield script
+                    k  <- stringDecoder.decode(scalarNode)
+                    vs <- valuesDecoder.decode(seqNode)
+                  } yield Script(k, vs)
                 case _ =>
                   Left(
                     new YAMLException(
