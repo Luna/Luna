@@ -79,7 +79,7 @@ add_specs suite_builder =
             r3.column_names . should_equal ["X", "pAtH", "Value"]
             check_returned_vector (r3.at "Value" . to_vector)
 
-        group_builder.specify "will fail if no `path` column can be found or its ambiguous" <|
+        group_builder.specify "should fail if no `path` column can be found or its ambiguous" <|
             table1 = Table.new [["X", [1, 2]], ["Y", files_vector]]
             r1 = Data.read_many table1 return=..Vector
             r1.should_fail_with Illegal_Argument
@@ -109,7 +109,7 @@ add_specs suite_builder =
             Data.read_many (table.at "path") . should_fail_with Invalid_Value_Type
             Data.read_many (table.select_columns ["X"]) . should_fail_with Invalid_Value_Type
 
-        group_builder.specify "if input is a Column or Table, the return type will default to a merged table" <|
+        group_builder.specify "if input is a Column or Table, the return type should default to a merged table" <|
             r1 = Data.read_many (Column.from_vector "my column" files_vector)
             r1.should_be_a Table
             r1.column_names . should_equal ["my column", "Value", "a", "b", "c"]
@@ -136,7 +136,7 @@ add_specs suite_builder =
             r2.column_names . should_equal ["Path", "Value", "a", "b", "c"]
             check_common_columns r2
 
-        group_builder.specify "will merge files that read as non-Table values into a Table using reasonable defaults" <|
+        group_builder.specify "should merge files that read as non-Table values into a Table using reasonable defaults" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
@@ -196,8 +196,8 @@ add_specs suite_builder =
         # Marker to not forget
         group_builder.specify "TODO" pending="Once 6281 is done we should update the test above." Nothing
 
-        group_builder.specify "will still include 1 all-Nothing row for a loaded empty array" <|
-            # But such array will not influence the columns present:
+        group_builder.specify "should still include 1 all-Nothing row for a loaded empty array" <|
+            # But such array should not influence the columns present:
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
@@ -216,8 +216,8 @@ add_specs suite_builder =
                     r.at "a" . to_vector . should_equal [1, Nothing, Nothing, 2]
                     r.at "b" . to_vector . should_equal [Nothing, Nothing, Nothing, "..."]
 
-        group_builder.specify "will still include 1 all-Nothing row for a Table with no rows" <|
-            # And such table WILL influence the columns present
+        group_builder.specify "should still include 1 all-Nothing row for a Table with no rows" <|
+            # And such table should influence the columns present
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
@@ -242,7 +242,37 @@ add_specs suite_builder =
                     r.at "B" . to_vector . should_equal [Nothing, Nothing, '1', '3']
                     r.at "C" . to_vector . should_equal [Nothing, Nothing, '2', '4']
 
-        group_builder.specify "will fallback to Char if no common type can be found for primitive values" <|
+        group_builder.specify "should allow to customize how the tables are merged" <|
+            base_dir = enso_project.data / "transient" / "read_many_test"
+            base_dir.delete_if_exists recursive=True
+            base_dir.create_directory . should_succeed
+            Panic.with_finalizer (base_dir.delete recursive=True) <|
+                '{"a": 1, "b": 2}'.write (base_dir / "1_js_object.json")
+                '{"b": 3, "c": 4}'.write (base_dir / "2_js_object.json")
+
+                files = Data.list base_dir . sort on=.name
+                
+                r1 = Data.read_many files return=(..Merged_Table columns_to_keep=..In_All)
+                r1.should_be_a Table
+                within_table r1 <|
+                    r1.column_names . should_equal ["Path", "b"]
+                    r1.at "b" . to_vector . should_equal [2, 3]
+
+                r2 = Data.read_many files return=(..Merged_Table columns_to_keep=(..In_List ["a", "c"]))
+                r2.should_be_a Table
+                within_table r2 <|
+                    r2.column_names . should_equal ["Path", "a", "c"]
+                    r2.at "a" . to_vector . should_equal [1, Nothing]
+                    r2.at "c" . to_vector . should_equal [Nothing, 4]
+
+                r3 = Data.read_many files return=(..Merged_Table match=..By_Position)
+                r3.should_be_a Table
+                within_table r3 <|
+                    r3.column_names . should_equal ["Path", "a", "b"]
+                    r3.at "a" . to_vector . should_equal [1, 3]
+                    r3.at "b" . to_vector . should_equal [2, 4]
+
+        group_builder.specify "should fallback to Char if no common type can be found for primitive values" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
@@ -256,7 +286,7 @@ add_specs suite_builder =
                 r.at "a" . value_type . should_equal Value_Type.Char
                 r.at "a" . to_vector . should_equal ["1", "str"]
 
-        group_builder.specify "but will keep Mixed type if more complex types are found, like dictionary" <|
+        group_builder.specify "but should keep Mixed type if more complex types are found, like dictionary" <|
             base_dir = enso_project.data / "transient" / "read_many_test"
             base_dir.delete_if_exists recursive=True
             base_dir.create_directory . should_succeed
@@ -289,7 +319,7 @@ add_specs suite_builder =
             t3.row_count . should_equal 0
             t3.column_names . should_equal ["Path", "Value"]
 
-        group_builder.specify "will rename duplicated columns, keeping columns from the input unchanged" <|
+        group_builder.specify "should rename duplicated columns, keeping columns from the input unchanged" <|
             tmp_file = enso_project.data / "transient" / "table.csv"
             (Table.new [["Path", [1]], ["Col", [2]]]).write tmp_file on_existing_file=..Overwrite . should_succeed
             Panic.with_finalizer tmp_file.delete <|
