@@ -4,7 +4,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import org.enso.interpreter.node.ExpressionNode;
-import org.enso.interpreter.node.typecheck.TypeCheckValueNode;
 import org.enso.interpreter.runtime.callable.function.Function;
 
 /**
@@ -15,13 +14,11 @@ import org.enso.interpreter.runtime.callable.function.Function;
 public final class ReadArgumentNode extends ExpressionNode {
   private final int index;
   @Child ExpressionNode defaultValue;
-  @Child TypeCheckValueNode checkType;
   private final CountingConditionProfile defaultingProfile = CountingConditionProfile.create();
 
-  private ReadArgumentNode(int position, ExpressionNode defaultValue, TypeCheckValueNode check) {
+  private ReadArgumentNode(int position, ExpressionNode defaultValue) {
     this.index = position;
     this.defaultValue = defaultValue;
-    this.checkType = check;
   }
 
   /**
@@ -29,18 +26,15 @@ public final class ReadArgumentNode extends ExpressionNode {
    *
    * @param position the argument's position at the definition site
    * @param defaultValue the default value provided for that argument
-   * @param check {@code null} or node to check type of input
    * @return a node representing the argument at position {@code idx}
    */
-  public static ReadArgumentNode build(
-      int position, ExpressionNode defaultValue, TypeCheckValueNode check) {
-    return new ReadArgumentNode(position, defaultValue, check);
+  public static ReadArgumentNode build(int position, ExpressionNode defaultValue) {
+    return new ReadArgumentNode(position, defaultValue);
   }
 
   /** Copies the read argument node. Removes all type checks associated with it. */
   public final ReadArgumentNode copyWithoutCheck() {
     var node = (ReadArgumentNode) this.copy();
-    node.checkType = null;
     return node;
   }
 
@@ -69,9 +63,6 @@ public final class ReadArgumentNode extends ExpressionNode {
       } else {
         v = arguments[index];
       }
-    }
-    if (checkType != null) {
-      v = checkType.handleCheckOrConversion(frame, v);
     }
     return v;
   }

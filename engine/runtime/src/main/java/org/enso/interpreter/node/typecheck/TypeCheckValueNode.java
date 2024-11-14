@@ -26,9 +26,20 @@ public abstract class TypeCheckValueNode extends Node {
     this.comment = comment;
   }
 
-  /** */
+  /**
+   * Wraps expression node with additional type check.
+   *
+   * @param original the expression node
+   * @param check node performing type check or {@code null}
+   * @return wrapper around {@code original} or directly {@code original} if there is {@code null}
+   *     check
+   */
   public static ExpressionNode wrap(ExpressionNode original, TypeCheckValueNode check) {
-    return new TypeCheckExpressionNode(original, check);
+    if (check == null) {
+      return original;
+    } else {
+      return new TypeCheckExpressionNode(original, check);
+    }
   }
 
   /**
