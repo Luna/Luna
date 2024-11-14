@@ -146,7 +146,7 @@ read_many (paths : Many_Files_List = Missing_Argument.throw "paths") format=Auto
     return_as = Return_As.resolve return
     loaded_objects = paths.paths_to_load.map on_problems=on_problems path->
         Data.read path format on_problems
-    return_as.make_return paths loaded_objects
+    return_as.make_return paths loaded_objects on_problems
 
 ## ALIAS load text, open text
    GROUP Input

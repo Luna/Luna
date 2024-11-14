@@ -39,8 +39,8 @@ type Return_As_Table
         Panic.catch Type_Error (value:Return_As_Table) _->Nothing
 
     ## PRIVATE
-    make_return self (input : Many_Files_List) (objects : Vector Any) =
-        Read_Many_Helpers.make_return self input objects
+    make_return self (input : Many_Files_List) (objects : Vector Any) (on_problems : Problem_Behavior) =
+        Read_Many_Helpers.make_return self input objects on_problems
 
 ## PRIVATE
 Return_As.from (that : Return_As_Table) =

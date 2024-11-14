@@ -5,6 +5,7 @@ import project.Data.Vector.Vector
 import project.Error.Error
 import project.Errors.Common.Type_Error
 import project.Errors.Illegal_Argument.Illegal_Argument
+import project.Errors.Problem_Behavior.Problem_Behavior
 import project.Function.Function
 import project.Metadata.Display
 import project.Metadata.Widget
@@ -32,8 +33,8 @@ type Return_As
     to_display_text self -> Text = self.underlying.to_display_text
 
     ## PRIVATE
-    make_return self (input : Many_Files_List) (objects : Vector Any) =
-        self.underlying.make_return input objects
+    make_return self (input : Many_Files_List) (objects : Vector Any) (on_problems : Problem_Behavior) =
+        self.underlying.make_return input objects on_problems
 
     ## PRIVATE
        Resolve an unresolved constructor to the actual type.
@@ -75,8 +76,8 @@ type Return_As_Base
         Panic.catch Type_Error (value:Return_As_Base) _->Nothing
 
     ## PRIVATE
-    make_return self (input : Many_Files_List) (objects : Vector Any) =
-        _ = input
+    make_return self (input : Many_Files_List) (objects : Vector Any) (on_problems : Problem_Behavior) =
+        _ = [input, on_problems]
         objects
 
 ## PRIVATE
