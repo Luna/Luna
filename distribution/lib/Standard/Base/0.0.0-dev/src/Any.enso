@@ -79,7 +79,7 @@ type Any
     to_text self = @Builtin_Method "Any.to_text"
 
     ## GROUP convert
-       ICON convert
+       ICON enso_logo
        Convert the value to a corresponding Enso code representation.
 
        > Example
