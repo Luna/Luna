@@ -1,17 +1,16 @@
 import { ITooltipComp, ITooltipParams } from '@ag-grid-community/core'
 
-
 /**
  * Custom tooltip for table visualization.
  */
 export class TableVisualisationTooltip implements ITooltipComp {
   eGui!: HTMLElement
 
-/**
- * Initializes the tooltip with the provided parameters.
- * @param params The tooltip parameters: the data quality metrics, total row count,
- * and a flag whether to show/hide the data quality indicators.
- */
+  /**
+   * Initializes the tooltip with the provided parameters.
+   * @param params The tooltip parameters: the data quality metrics, total row count,
+   * and a flag whether to show/hide the data quality indicators.
+   */
   init(
     params: ITooltipParams & {
       numberOfNothing: number
@@ -60,9 +59,9 @@ export class TableVisualisationTooltip implements ITooltipComp {
         `
   }
 
-/**
- * Returns the tooltip DOM element.
- */
+  /**
+   * Returns the tooltip DOM element.
+   */
   getGui() {
     return this.eGui
   }
