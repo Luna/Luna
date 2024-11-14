@@ -12,7 +12,7 @@ import org.enso.interpreter.runtime.callable.function.FunctionSchema;
 final class LazyCheckRootNode extends RootNode {
 
   @Child private ThunkExecutorNode evalThunk;
-  @Child private ReadArgumentCheckNode check;
+  @Child private TypeCheckValueNode check;
   static final FunctionSchema SCHEMA =
       FunctionSchema.newBuilder()
           .argumentDefinitions(
@@ -21,7 +21,7 @@ final class LazyCheckRootNode extends RootNode {
           .hasPreapplied(true)
           .build();
 
-  LazyCheckRootNode(TruffleLanguage<?> language, ReadArgumentCheckNode check) {
+  LazyCheckRootNode(TruffleLanguage<?> language, TypeCheckValueNode check) {
     super(language);
     this.check = check;
     this.evalThunk = ThunkExecutorNode.build();

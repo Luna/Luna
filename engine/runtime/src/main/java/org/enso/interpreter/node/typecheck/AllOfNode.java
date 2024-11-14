@@ -8,18 +8,18 @@ import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
-final class AllOfNode extends ReadArgumentCheckNode {
+final class AllOfNode extends TypeCheckValueNode {
 
-  @Children private ReadArgumentCheckNode[] checks;
+  @Children private TypeCheckValueNode[] checks;
   @Child private TypesLibrary types;
 
-  AllOfNode(String name, ReadArgumentCheckNode[] checks) {
+  AllOfNode(String name, TypeCheckValueNode[] checks) {
     super(name);
     this.checks = checks;
     this.types = TypesLibrary.getFactory().createDispatched(checks.length);
   }
 
-  ReadArgumentCheckNode[] getChecks() {
+  TypeCheckValueNode[] getChecks() {
     return checks;
   }
 
@@ -50,7 +50,7 @@ final class AllOfNode extends ReadArgumentCheckNode {
   String expectedTypeMessage() {
     var parts =
         Arrays.stream(checks)
-            .map(ReadArgumentCheckNode::expectedTypeMessage)
+            .map(TypeCheckValueNode::expectedTypeMessage)
             .collect(Collectors.toList());
     return joinTypeParts(parts, "&");
   }

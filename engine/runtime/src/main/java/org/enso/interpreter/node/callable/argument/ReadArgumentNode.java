@@ -4,7 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import org.enso.interpreter.node.ExpressionNode;
-import org.enso.interpreter.node.typecheck.ReadArgumentCheckNode;
+import org.enso.interpreter.node.typecheck.TypeCheckValueNode;
 import org.enso.interpreter.runtime.callable.function.Function;
 
 /**
@@ -15,10 +15,10 @@ import org.enso.interpreter.runtime.callable.function.Function;
 public final class ReadArgumentNode extends ExpressionNode {
   private final int index;
   @Child ExpressionNode defaultValue;
-  @Child ReadArgumentCheckNode checkType;
+  @Child TypeCheckValueNode checkType;
   private final CountingConditionProfile defaultingProfile = CountingConditionProfile.create();
 
-  private ReadArgumentNode(int position, ExpressionNode defaultValue, ReadArgumentCheckNode check) {
+  private ReadArgumentNode(int position, ExpressionNode defaultValue, TypeCheckValueNode check) {
     this.index = position;
     this.defaultValue = defaultValue;
     this.checkType = check;
@@ -33,7 +33,7 @@ public final class ReadArgumentNode extends ExpressionNode {
    * @return a node representing the argument at position {@code idx}
    */
   public static ReadArgumentNode build(
-      int position, ExpressionNode defaultValue, ReadArgumentCheckNode check) {
+      int position, ExpressionNode defaultValue, TypeCheckValueNode check) {
     return new ReadArgumentNode(position, defaultValue, check);
   }
 

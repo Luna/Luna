@@ -9,7 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import org.enso.interpreter.node.expression.builtin.meta.IsValueOfTypeNode;
 import org.enso.interpreter.runtime.util.CachingSupplier;
 
-abstract class MetaCheckNode extends ReadArgumentCheckNode {
+abstract class MetaCheckNode extends TypeCheckValueNode {
 
   private final CachingSupplier<? extends Object> expectedSupplier;
   @CompilerDirectives.CompilationFinal private String expectedTypeMessage;

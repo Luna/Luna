@@ -18,16 +18,16 @@ import org.enso.interpreter.runtime.error.DataflowError;
 import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.util.CachingSupplier;
 
-public abstract class ReadArgumentCheckNode extends Node {
+public abstract class TypeCheckValueNode extends Node {
   private final String comment;
   @CompilerDirectives.CompilationFinal private String expectedTypeMessage;
 
-  ReadArgumentCheckNode(String comment) {
+  TypeCheckValueNode(String comment) {
     this.comment = comment;
   }
 
   /** */
-  public static ExpressionNode wrap(ExpressionNode original, ReadArgumentCheckNode check) {
+  public static ExpressionNode wrap(ExpressionNode original, TypeCheckValueNode check) {
     return new TypeCheckExpressionNode(original, check);
   }
 
@@ -104,7 +104,7 @@ public abstract class ReadArgumentCheckNode extends Node {
     throw new PanicException(err, this);
   }
 
-  public static ReadArgumentCheckNode allOf(String argumentName, ReadArgumentCheckNode... checks) {
+  public static TypeCheckValueNode allOf(String argumentName, TypeCheckValueNode... checks) {
     var list = Arrays.asList(checks);
     var flatten =
         list.stream()
@@ -122,7 +122,7 @@ public abstract class ReadArgumentCheckNode extends Node {
     };
   }
 
-  public static ReadArgumentCheckNode oneOf(String comment, List<ReadArgumentCheckNode> checks) {
+  public static TypeCheckValueNode oneOf(String comment, List<TypeCheckValueNode> checks) {
     var arr = toArray(checks);
     return switch (arr.length) {
       case 0 -> null;
@@ -131,12 +131,12 @@ public abstract class ReadArgumentCheckNode extends Node {
     };
   }
 
-  public static ReadArgumentCheckNode build(EnsoContext ctx, String comment, Type expectedType) {
+  public static TypeCheckValueNode build(EnsoContext ctx, String comment, Type expectedType) {
     assert ctx.getBuiltins().any() != expectedType : "Don't check for Any: " + expectedType;
     return TypeCheckNodeGen.create(comment, expectedType);
   }
 
-  public static ReadArgumentCheckNode meta(
+  public static TypeCheckValueNode meta(
       String comment, Supplier<? extends Object> metaObjectSupplier) {
     var cachingSupplier = CachingSupplier.wrap(metaObjectSupplier);
     return MetaCheckNodeGen.create(comment, cachingSupplier);
@@ -153,12 +153,12 @@ public abstract class ReadArgumentCheckNode extends Node {
     return v instanceof DataflowError || AtomWithAHoleNode.isHole(v);
   }
 
-  private static ReadArgumentCheckNode[] toArray(List<ReadArgumentCheckNode> list) {
+  private static TypeCheckValueNode[] toArray(List<TypeCheckValueNode> list) {
     if (list == null) {
-      return new ReadArgumentCheckNode[0];
+      return new TypeCheckValueNode[0];
     }
     var cnt = (int) list.stream().filter(n -> n != null).count();
-    var arr = new ReadArgumentCheckNode[cnt];
+    var arr = new TypeCheckValueNode[cnt];
     var it = list.iterator();
     for (int i = 0; i < cnt; ) {
       var element = it.next();

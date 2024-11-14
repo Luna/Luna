@@ -6,9 +6,9 @@ import org.enso.interpreter.node.ExpressionNode;
 final class TypeCheckExpressionNode extends ExpressionNode {
 
   @Child private ExpressionNode original;
-  @Child private ReadArgumentCheckNode check;
+  @Child private TypeCheckValueNode check;
 
-  TypeCheckExpressionNode(ExpressionNode original, ReadArgumentCheckNode check) {
+  TypeCheckExpressionNode(ExpressionNode original, TypeCheckValueNode check) {
     this.check = check;
     this.original = original;
   }

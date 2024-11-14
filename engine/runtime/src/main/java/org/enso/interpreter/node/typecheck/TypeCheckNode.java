@@ -29,7 +29,7 @@ import org.enso.interpreter.runtime.error.PanicSentinel;
 import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.graalvm.collections.Pair;
 
-abstract class TypeCheckNode extends ReadArgumentCheckNode {
+abstract class TypeCheckNode extends TypeCheckValueNode {
   private final Type expectedType;
   @Node.Child IsValueOfTypeNode checkType;
   @CompilerDirectives.CompilationFinal private String expectedTypeMessage;
@@ -96,7 +96,7 @@ abstract class TypeCheckNode extends ReadArgumentCheckNode {
       if (lazyCheck == null) {
         CompilerDirectives.transferToInterpreter();
         var enso = EnsoLanguage.get(this);
-        var node = (ReadArgumentCheckNode) copy();
+        var node = (TypeCheckValueNode) copy();
         lazyCheck = new LazyCheckRootNode(enso, node);
       }
       var lazyCheckFn = lazyCheck.wrapThunk(fn);
