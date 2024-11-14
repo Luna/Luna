@@ -44,6 +44,7 @@ import { provideGraphStore } from '@/stores/graph'
 import type { RequiredImport } from '@/stores/graph/imports'
 import { providePersisted } from '@/stores/persisted'
 import { useProjectStore } from '@/stores/project'
+import { provideNodeExecution } from '@/stores/project/nodeExecution'
 import { provideRightDock, StorageMode } from '@/stores/rightDock'
 import { provideSuggestionDbStore } from '@/stores/suggestionDatabase'
 import type { SuggestionId, Typename } from '@/stores/suggestionDatabase/entry'
@@ -82,6 +83,7 @@ const widgetRegistry = provideWidgetRegistry(graphStore.db)
 const _visualizationStore = provideVisualizationStore(projectStore)
 
 provideFullscreenContext(rootNode)
+provideNodeExecution(projectStore)
 ;(window as any)._mockSuggestion = suggestionDb.mockSuggestion
 
 onMounted(() => {
