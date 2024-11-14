@@ -334,10 +334,11 @@ add_specs suite_builder =
                 files = Data.list base_dir . sort on=(.name)
                 r = Data.read_many files return=..Merged_Table
                 r.should_be_a Table
-                r.column_names . should_equal ["Path", "Value"]
-                r.row_count . should_equal 3
-                empty = JS_Object.from_pairs []
-                r.at "Value" . to_vector . should_equal [empty, empty, empty]
+                Problems.expect_warning Illegal_Argument r
+                within_table r <|
+                    r.column_names . should_equal ["Path", "Value"]
+                    empty = JS_Object.from_pairs []
+                    r.at "Value" . to_vector . should_equal [empty, empty, empty]
 
             with_temp_dir base_dir->
                 '[]'.write (base_dir / "1_empty_array.json")
