@@ -471,7 +471,7 @@ public final class EnsoFile implements EnsoObject {
   @Builtin.WrapException(from = IOException.class)
   @TruffleBoundary
   public void setLastModifiedTime(EnsoDateTime dateTime) throws IOException {
-    truffleFile.setLastModifiedTime(FileTime.from(dateTime.toZonedDateTime().toInstance()));
+    truffleFile.setLastModifiedTime(FileTime.from(dateTime.toZonedDateTime().toInstant()));
   }
 
   @Builtin.Method(name = "posix_permissions_builtin")

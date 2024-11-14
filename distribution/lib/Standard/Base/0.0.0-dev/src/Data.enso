@@ -1,5 +1,5 @@
 import project.Any.Any
-export project.Data.Download.Downlad_Mode.Download_Mode
+import project.Data.Download.Download_Mode.Download_Mode
 import project.Data.Pair.Pair
 import project.Data.Read.Many_Files_List.Many_Files_List
 import project.Data.Read.Return_As.Return_As
@@ -444,7 +444,7 @@ post (uri:(URI | Text)=(Missing_Argument.throw "uri")) (body:Request_Body=..Empt
 download : (URI | Text) -> Writable_File -> Download_Mode -> HTTP_Method -> Vector (Header | Pair Text Text) -> File ! Request_Error | HTTP_Error
 download (uri:(URI | Text)=(Missing_Argument.throw "uri")) file:Writable_File (mode:Download_Mode=..If_Not_Exists) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) =
     Context.Output.if_enabled disabled_message="As writing is disabled, cannot download to a file. Press the Write button ▶ to perform the operation." panic=False <|
-        _cache_download_maybe file mode <|
+        mode.if_should_download file <|
             response = HTTP.fetch uri method headers cache_policy=Cache_Policy.No_Cache
             case Data_Link.is_data_link response.body.metadata of
                 True ->
@@ -460,8 +460,3 @@ type Raw_Response
     ## PRIVATE
     get_dropdown_options : Vector Option
     get_dropdown_options = [Option "Raw HTTP Response" (Meta.get_qualified_type_name Raw_Response)]
-
-## PRIVATE
-_cache_download_maybe file:Writable_File mode:Download_Mode ~action =
-    if file.is_local.not then action else
-        if mode.should_download file.file then action else Nothing

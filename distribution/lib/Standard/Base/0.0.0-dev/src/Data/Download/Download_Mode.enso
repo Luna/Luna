@@ -1,18 +1,23 @@
+import project.Data.Time.Date_Time.Date_Time
 import project.Data.Time.Duration.Duration
+import project.Nothing.Nothing
+import project.System.File.Generic.Writable_File.Writable_File
 
 type Download_Mode
     ## Download the file if it does not already exist on disk.
     If_Not_Exists
 
     ## Download the file if it is older than the specified age.
-    If_Older_than age:Duration
+    If_Older_Than age:Duration
 
     ## PRIVATE
-       Decide if a download should be done, basd on the mode and the file's
-       last-modified-time.
-    should_download self (file:File) =
-        case self of
-            If_Not_Exists ->
-                file.exists
-            If_Older_Than age ->
-                file.exists && file.last_modified_time > (Date_Time.now - age)
+       Possibly download a file, based on the file type, download mode, and file
+       age.
+    if_should_download self (file:Writable_File) ~action =
+        if file.file.exists.not then action else
+            case self of
+                Download_Mode.If_Not_Exists ->
+                    Nothing
+                Download_Mode.If_Older_Than age ->
+                    if file.last_modified_time > (Date_Time.now - age) then Nothing else
+                        action
