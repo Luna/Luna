@@ -83,7 +83,7 @@ export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabPro
                   variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
                   initial="inactive"
                   animate={!isActive && isHovered ? 'active' : 'inactive'}
-                  className="bg-inv absolute inset-x-1.5 inset-y-1.5 -z-1 rounded-full transition-colors duration-300"
+                  className="absolute inset-x-1.5 inset-y-1.5 -z-1 rounded-full bg-invert transition-colors duration-300"
                 />
 
                 <div
