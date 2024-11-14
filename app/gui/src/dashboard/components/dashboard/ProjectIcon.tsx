@@ -115,18 +115,23 @@ export default function ProjectIcon(props: ProjectIconProps) {
     userOpeningProject == null ? null : getText('xIsUsingTheProject', userOpeningProject.name)
 
   const state = (() => {
+    if (!isOpened && !isPlaceholder) {
+      return backendModule.ProjectState.closed
+    }
     // Project is closed, show open button
     if (!isOpened) {
       return (projectState ?? itemProjectState).type
-    } else if (status == null) {
+    }
+
+    if (status == null) {
       // Project is opened, but not yet queried.
       return backendModule.ProjectState.openInProgress
-    } else if (status === backendModule.ProjectState.closed) {
+    }
+    if (status === backendModule.ProjectState.closed) {
       // Project is opened locally, but not on the backend yet.
       return backendModule.ProjectState.openInProgress
-    } else {
-      return status
     }
+    return status
   })()
 
   const spinnerState = ((): SpinnerState => {

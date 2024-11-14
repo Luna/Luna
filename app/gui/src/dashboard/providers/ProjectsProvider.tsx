@@ -262,13 +262,10 @@ export function useAddLaunchedProject() {
 /** A function to remove a launched project. */
 export function useRemoveLaunchedProject() {
   const store = useProjectsStore()
-  const removeLaunchedProject = zustand.useStore(store, (state) => state.removeLaunchedProject, {
-    unsafeEnableTransition: true,
-  })
+  const removeLaunchedProject = zustand.useStore(store, (state) => state.removeLaunchedProject)
+
   return eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
-    React.startTransition(() => {
-      removeLaunchedProject(projectId)
-    })
+    removeLaunchedProject(projectId)
   })
 }
 
