@@ -144,6 +144,17 @@ run_union_tests group_builder setup call_union =
         m.at "C" . to_vector . should_equal [Nothing, Nothing, Nothing, "d", "e", "f", "g", "h", "i"]
         m.at "D" . to_vector . should_equal [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, 0]
 
+    group_builder.specify "table with 0 rows will still influence the output structure with its columns" <|
+        t1 = table1.get
+        t2 = table2.get.filter "A" (..Greater 100)
+
+        table = call_union [t1, t2]
+        m = materialize_and_maybe_sort table
+        expect_column_names ["A", "B", "C"] m
+        m.at "A" . to_vector . should_equal [1, 2, 3]
+        m.at "B" . to_vector . should_equal ["a", "b", "c"]
+        m.at "C" . to_vector . should_equal [Nothing, Nothing, Nothing]
+
     group_builder.specify "should drop unmatched columns and warn, if In_All is selected" <|
         t1 = table1.get                             # A, B
         t2 = table2.get                             # C, A
