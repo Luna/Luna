@@ -233,7 +233,7 @@ type Excel_Workbook
                 _ : Text -> ExcelReader.readRangeByName java_workbook query java_headers skip_rows java_limit java_problem_aggregator
                 _ : Integer ->
                     names = self.sheet_names
-                    if (query < 1 || query >= names.length) then Error.throw (Illegal_Argument.Error "Worksheet index out of range.") else
+                    if (query < 1 || query >= names.length) then Error.throw (Illegal_Argument.Error "Worksheet index out of range (1 - "+names.length.to_text+").") else
                         ExcelReader.readRangeByName java_workbook (names.at (query - 1)) java_headers skip_rows java_limit java_problem_aggregator
         limit.attach_warning (Table.Value java_table)
 
