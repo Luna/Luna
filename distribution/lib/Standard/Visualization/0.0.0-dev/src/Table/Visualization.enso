@@ -70,8 +70,14 @@ leading_trailing_whitespace_count col =
 ##PRIVATE
 whitespace_count_xyz : Column -> Integer | Nothing
 whitespace_count_xyz col =
+    whitespace_chars_unicode = ['\u00A0', '\u202F', '\u2002', '\u2003', '\u202F', '\u3000']
+    filter_whitespace string =
+        split_str = if string.is_a Text then string.split case_sensitivity=Case_Sensitivity.Insensitive else []
+        split_str.filter Filter_Condition.Contains whitespace_chars_unicode
+
     find_whitespace col = 
-        filtered = col.to_vector.filter (c-> c.is_a Text && ..Is_In ['\u00A0', '\u202F', '\u2002', '\u2003', '\u202F', '\u3000'])
+        mapped = col.to_vector.map filter_whitespace
+        filtered = mapped.filter m-> (m.length > 0)
         filtered.length
     if (col.value_type == Value_Type.Mixed || col.value_type.is_text) then find_whitespace col else Nothing 
 
@@ -200,7 +206,8 @@ make_json_for_table dataframe all_rows_count include_index_col is_db_table =
     links       = ["get_child_node_action", "get_row"]
     number_of_nothing = if is_db_table then Nothing else columns.map c-> c.count_nothing
     number_of_leading_trailing_whitespace = if is_db_table then Nothing else columns.map c-> leading_trailing_whitespace_count c
-    data_quality_pairs = JS_Object.from_pairs [["number_of_nothing", number_of_nothing], ["number_of_leading_trailing_whitespace", number_of_leading_trailing_whitespace]]
+    number_of_whitespace =  if is_db_table then Nothing else columns.map c-> whitespace_count_xyz c
+    data_quality_pairs = JS_Object.from_pairs [["number_of_nothing", number_of_nothing], ["number_of_leading_trailing_whitespace", number_of_leading_trailing_whitespace], ["number_of_whitespace", number_of_whitespace]]
     pairs       = [header, value_type, data, all_rows, has_index_col, links, ["data_quality_pairs", data_quality_pairs] ,["type", "Table"]]
     JS_Object.from_pairs pairs
 
