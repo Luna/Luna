@@ -20,8 +20,9 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 @Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
 @ExportLibrary(TypesLibrary.class)
+@ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
 public final class Warning extends EnsoObject {
-  private final Object value;
+  final Object value;
   private final Object origin;
   private final long sequenceId;
 
@@ -104,6 +105,12 @@ public final class Warning extends EnsoObject {
       map = mapInsertNode.execute(null, map, warn.getSequenceId(), warn);
     }
     return map;
+  }
+
+  @ExportMessage
+  @Override
+  public Object toDisplayString(boolean enableSideEffects) {
+    return toString();
   }
 
   @CompilerDirectives.TruffleBoundary
