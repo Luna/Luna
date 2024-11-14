@@ -1,6 +1,5 @@
 package org.enso.interpreter.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -22,8 +21,8 @@ public abstract class EnsoObject implements TruffleObject {
   }
 
   @ExportMessage
-  @TruffleBoundary
   public Object toDisplayString(boolean allowSideEffects) {
-    return toString();
+    // Not implemented on purpose - should be implemented by subclasses.
+    throw new AssertionError("unimplemented");
   }
 }
