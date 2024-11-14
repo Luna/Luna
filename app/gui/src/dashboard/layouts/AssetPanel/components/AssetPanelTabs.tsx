@@ -37,8 +37,8 @@ export interface AssetPanelTabProps extends TabProps {
 const UNDERLAY_ELEMENT = (
   <>
     <div className="h-full w-full rounded-r-2xl bg-background" />
-    <div className="absolute -top-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background)_70%)]" />
-    <div className="absolute -bottom-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background)_70%)]" />
+    <div className="absolute -top-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background)_70%)]" />
+    <div className="absolute -bottom-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background)_70%)]" />
   </>
 )
 
