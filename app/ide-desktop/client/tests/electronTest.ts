@@ -1,10 +1,10 @@
 /** @file Commonly used functions for electron tests */
 
 import { _electron, expect, type Page, test } from '@playwright/test'
+import { TEXTS } from 'enso-common/src/text'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import pathModule from 'node:path'
-import { TEXTS } from 'enso-common/src/text'
 
 const LOADING_TIMEOUT = 10000
 const TEXT = TEXTS.english
