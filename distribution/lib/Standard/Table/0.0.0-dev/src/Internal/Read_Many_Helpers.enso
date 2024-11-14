@@ -57,11 +57,14 @@ _input_as_table (input : Many_Files_List) -> Table =
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
 _merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) columns_to_keep match_columns on_problems -> Table =
-    no_rows = tables_for_rows.is_empty || tables_for_rows.all .is_nothing
-    if no_rows then input_table else
-        counts = adapted_tables.map table-> case table of
-            Nothing -> 1
-            _ : Table -> table.row_count
+    counts = tables_for_rows.map table-> case table of
+        Nothing -> 0
+        _ : Table -> table.row_count
+    adapted_tables = tables_for_rows.filter ..Not_Nothing
+    ## If there are no tables to merge, union would fail. 
+       Each entry is then contributing 0 rows, so we need to return an empty table. 
+       But it should have the same structure as the input table.
+    if adapted_tables.is_empty then (input_table.take 0) else
         unified_tables = Table.from_union adapted_tables columns_to_keep match_columns on_problems
         multiplicated_inputs = _duplicate_rows input_table counts
         Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
@@ -85,11 +88,11 @@ _interpret_object_as_table (object : Any) path (on_problems : Problem_Behavior) 
     case object of
         table : Table -> 
             if table.row_count > 0 then table else
-                on_problems.attach_problems_after table <|
+                on_problems.attach_problem_after table <|
                     (No_Rows.Warning "The "+path.to_display_text+" loaded as a table with 0 rows, so it did not contribute any rows to the `Merged_Table` result of `read_many`.")
         vector : Vector ->
             if vector.not_empty then default else
-                on_problems.attach_problems_after Nothing <|
+                on_problems.attach_problem_after Nothing <|
                     (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `Merged_Table` result of `read_many`.")
         _ -> default
 

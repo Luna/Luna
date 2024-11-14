@@ -228,13 +228,15 @@ add_specs suite_builder =
 
                 files = Data.list base_dir . sort on=(.name)
 
-                r1 = Data.read_many files return=..Table_Of_Objects
+                r1 = Data.read_many files format=(..Delimited ',' headers=True) return=..Table_Of_Objects
                 r1.should_be_a Table
                 Problems.assume_no_problems r1
                 r1.row_count . should_equal 2
                 r1.at "Path" . map .name . to_vector . should_equal ["1_empty_table.csv", "2_table.csv"]
-                r1.at "Value" . at 0 . should_be_a Table
-                r1.at "Value" . at 0 . row_count . should_equal 0
+                empty_table1 = r1.at "Value" . at 0
+                empty_table1.should_be_a Table
+                empty_table1.row_count . should_equal 0
+                empty_table1.column_names . should_equal ["A", "B"]
 
                 r2 = Data.read_many files format=(..Delimited ',' headers=True) return=..Merged_Table
                 r2.should_be_a Table
