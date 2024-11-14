@@ -359,6 +359,7 @@ function toField(
   const dataQuality =
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs
+      // eslint-disable-next-line camelcase
     : { number_of_nothing: [], number_of_whitespace: [] }
 
   const nothingIsNonZero =
