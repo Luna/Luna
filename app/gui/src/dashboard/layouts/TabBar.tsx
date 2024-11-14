@@ -263,7 +263,7 @@ export interface ProjectTabProps extends InternalTabProps {
  * Project Tab is a {@link Tab} that displays the name of the project.
  */
 export function ProjectTab(props: ProjectTabProps) {
-  const { project, onLoadEnd, children, ...rest } = props
+  const { project, onLoadEnd, ...rest } = props
 
   const backend = useBackendForProjectType(project.type)
 
@@ -271,16 +271,18 @@ export function ProjectTab(props: ProjectTabProps) {
     onLoadEnd?.()
   })
 
-  const projectDetailsQuery = reactQuery.useQuery({
+  const { data: isOpened, isSuccess } = reactQuery.useQuery({
     ...projectHooks.createGetProjectDetailsQuery({
       assetId: project.id,
       parentId: project.parentId,
       backend,
     }),
+    select: (data) => {
+      return data.state.type === ProjectState.opened
+    },
   })
 
-  const isReady =
-    projectDetailsQuery.isSuccess && projectDetailsQuery.data.state.type === ProjectState.opened
+  const isReady = isSuccess && isOpened
 
   React.useEffect(() => {
     if (isReady) {
@@ -290,9 +292,5 @@ export function ProjectTab(props: ProjectTabProps) {
 
   const icon = isReady ? null : <StatelessSpinner state="loading-medium" size={16} />
 
-  return (
-    <Tab {...rest} icon={icon}>
-      {children}
-    </Tab>
-  )
+  return <Tab {...rest} icon={icon} />
 }

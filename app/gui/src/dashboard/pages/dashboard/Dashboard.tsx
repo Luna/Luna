@@ -277,6 +277,10 @@ function DashboardInner(props: DashboardProps) {
         }}
       >
         <aria.Tabs
+          // This is a workarount to force react-aria-component to display dynamic tabs
+          // Ideally it should be refactored using collections API
+          // see: https://react-spectrum.adobe.com/react-aria/Tabs.html#dynamic-items
+          key={launchedProjects.map((p) => p.id).join(',')}
           className="relative flex min-h-full grow select-none flex-col container-size"
           selectedKey={page}
           onSelectionChange={(newPage) => {
@@ -296,41 +300,42 @@ function DashboardInner(props: DashboardProps) {
               >
                 {getText('drivePageName')}
               </tabBar.Tab>
-
-              {launchedProjects.map((project) => (
-                <tabBar.ProjectTab
-                  data-testid="editor-tab-button"
-                  id={project.id}
-                  project={project}
-                  key={project.id}
-                  // There is no shared enum type, but the other union member is the same type.
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-                  isActive={page === project.id}
-                  icon={WorkspaceIcon}
-                  labelId="editorPageName"
+              {launchedProjects.map((project) => {
+                return (
+                  <tabBar.ProjectTab
+                    key={project.id}
+                    data-testid="editor-tab-button"
+                    id={project.id}
+                    project={project}
+                    // There is no shared enum type, but the other union member is the same type.
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+                    isActive={page === project.id}
+                    icon={WorkspaceIcon}
+                    labelId="editorPageName"
+                    onClose={() => {
+                      closeProject(project)
+                    }}
+                    onLoadEnd={() => {
+                      openEditor(project.id)
+                    }}
+                  >
+                    {project.title}
+                  </tabBar.ProjectTab>
+                )
+              })}
+              {page === TabType.settings && (
+                <tabBar.Tab
+                  isActive
+                  id={TabType.settings}
+                  icon={SettingsIcon}
+                  labelId="settingsPageName"
                   onClose={() => {
-                    closeProject(project)
-                  }}
-                  onLoadEnd={() => {
-                    openEditor(project.id)
+                    setPage(TabType.drive)
                   }}
                 >
-                  {project.title}
-                </tabBar.ProjectTab>
-              ))}
-
-              <tabBar.Tab
-                isActive
-                id={TabType.settings}
-                isHidden={page !== TabType.settings}
-                icon={SettingsIcon}
-                labelId="settingsPageName"
-                onClose={() => {
-                  setPage(TabType.drive)
-                }}
-              >
-                {getText('settingsPageName')}
-              </tabBar.Tab>
+                  {getText('settingsPageName')}
+                </tabBar.Tab>
+              )}
             </TabBar>
 
             <UserBar
