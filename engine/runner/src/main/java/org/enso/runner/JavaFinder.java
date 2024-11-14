@@ -36,7 +36,7 @@ final class JavaFinder {
     if (javaHome != null) {
       var binDir = Path.of(javaHome).resolve("bin");
       Path javaExe;
-      if (System.getProperty("os.name").equals("windows")) {
+      if (isOnWindows()) {
         javaExe = binDir.resolve("java.exe");
       } else {
         javaExe = binDir.resolve("java");
@@ -46,11 +46,18 @@ final class JavaFinder {
         return javaExe.toAbsolutePath().toString();
       }
     }
+    logger.warn("No JDK found in JAVA_HOME. Trying java on PATH.");
     if (isJavaOnPath()) {
-      logger.warn("Falling back to java on PATH");
-      return "java";
+      var javaExe = isOnWindows() ? "java.exe" : "java";
+      logger.warn("Falling back to java on PATH: {}", javaExe);
+      return javaExe;
     }
+    logger.warn("No JDK found on PATH. Cannot start the runtime.");
     return null;
+  }
+
+  private static boolean isOnWindows() {
+    return System.getProperty("os.name").equals("windows");
   }
 
   /**
@@ -87,7 +94,12 @@ final class JavaFinder {
 
   private static boolean isJavaOnPath() {
     try {
-      ProcessBuilder processBuilder = new ProcessBuilder("java", "-h");
+      ProcessBuilder processBuilder;
+      if (isOnWindows()) {
+        processBuilder = new ProcessBuilder("java.exe", "-h");
+      } else {
+        processBuilder = new ProcessBuilder("java", "-h");
+      }
       Process process = processBuilder.start();
       boolean exitSucc = process.waitFor(5L, TimeUnit.SECONDS);
       return exitSucc;
