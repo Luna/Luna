@@ -1,3 +1,4 @@
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { describe, expect, test } from 'vitest'
 import { assert } from '../../util/assert'
 import { MutableModule } from '../mutableModule'
@@ -91,7 +92,7 @@ test('Creating comments: indented', () => {
   expect(statement.module.root()?.code()).toBe(`main =\n    ## ${docText}\n    x = 1`)
 })
 
-describe('Markdown documentation', () => {
+describe('Function documentation (Markdown)', () => {
   const cases = [
     {
       source: '## My function',
@@ -159,7 +160,7 @@ describe('Markdown documentation', () => {
     const moduleSource = `${source}\nmain =\n    x = 1`
     const topLevel = parseModule(moduleSource)
     topLevel.module.setRoot(topLevel)
-    const main = [...topLevel.statements()][0]
+    const main = iter.first(topLevel.statements())
     assert(main instanceof MutableFunctionDef)
     expect(main.name.code()).toBe('main')
     expect(main.mutableDocumentationMarkdown().toJSON()).toBe(markdown)
@@ -169,7 +170,7 @@ describe('Markdown documentation', () => {
     const functionCode = 'main =\n    x = 1'
     const topLevel = parseModule(functionCode)
     topLevel.module.setRoot(topLevel)
-    const main = [...topLevel.statements()][0]
+    const main = iter.first(topLevel.statements())
     assert(main instanceof MutableFunctionDef)
     const markdownYText = main.mutableDocumentationMarkdown()
     expect(markdownYText.toJSON()).toBe('')
@@ -215,7 +216,7 @@ describe('Markdown documentation', () => {
     const topLevel = parseModule(originalSourceWithDocComment)
     expect(topLevel.code()).toBe(originalSourceWithDocComment)
 
-    const main = [...topLevel.statements()][0]
+    const main = iter.first(topLevel.statements())
     assert(main instanceof MutableFunctionDef)
     const markdownYText = main.mutableDocumentationMarkdown()
     markdownYText.delete(0, markdownYText.length)

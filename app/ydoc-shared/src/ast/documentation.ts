@@ -33,6 +33,8 @@ export function* docLineToConcrete(
   for (const newline of docLine.newlines) yield preferUnspaced(newline)
 }
 
+// === Markdown ===
+
 /**
  * Render function documentation to concrete tokens. If the `markdown` content has the same value as when `docLine` was
  * parsed (as indicated by `hash`), the `docLine` will be used (preserving concrete formatting). If it is different, the
@@ -46,12 +48,12 @@ export function functionDocsToConcrete(
 ): Iterable<RawConcreteChild> | undefined {
   return (
     hash && docLine && xxHash128(markdown) === hash ? docLineToConcrete(docLine, indent)
-    : markdown ? yTextToTokens(markdown, (indent || '') + '   ')
+    : markdown ? markdownYTextToTokens(markdown, (indent || '') + '   ')
     : undefined
   )
 }
 
-function yTextToTokens(yText: string, indent: string): Iterable<ConcreteChild<Token>> {
+function markdownYTextToTokens(yText: string, indent: string): Iterable<ConcreteChild<Token>> {
   const tokensBuilder = new DocTokensBuilder(indent)
   standardizeMarkdown(yText, tokensBuilder)
   return tokensBuilder.build()

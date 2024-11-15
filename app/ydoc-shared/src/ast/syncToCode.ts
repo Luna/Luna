@@ -1,29 +1,32 @@
 import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import { assert, assertDefined } from '../util/assert'
-import type { SourceRangeEdit, SpanTree } from '../util/data/text'
 import {
+  type SourceRangeEdit,
+  type SpanTree,
   applyTextEdits,
   applyTextEditsToSpans,
   enclosingSpans,
   textChangeToEdits,
   trimEnd,
 } from '../util/data/text'
-import type { SourceRange, SourceRangeKey } from '../yjsModel'
-import { rangeLength, sourceRangeFromKey, sourceRangeKey } from '../yjsModel'
+import {
+  type SourceRange,
+  type SourceRangeKey,
+  rangeLength,
+  sourceRangeFromKey,
+  sourceRangeKey,
+} from '../yjsModel'
 import { xxHash128 } from './ffi'
-import * as RawAst from './generated/ast'
-import type { NodeKey, NodeSpanMap } from './idMap'
-import { newExternalId } from './idMap'
+import { type NodeKey, type NodeSpanMap, newExternalId } from './idMap'
 import type { Module, MutableModule } from './mutableModule'
-import { abstract, rawParseBlock, rawParseModule } from './parse'
+import { parseInSameContext } from './parse'
 import { printWithSpans } from './print'
 import { isTokenId } from './token'
 import {
   Assignment,
   Ast,
   type AstId,
-  BodyBlock,
   MutableAssignment,
   type MutableAst,
   type Owned,
@@ -34,7 +37,6 @@ import {
 
 /**
  * Recursion helper for {@link syntaxHash}.
- * @internal
  */
 function hashSubtreeSyntax(ast: Ast, hashesOut: Map<SyntaxHash, Ast[]>): SyntaxHash {
   let content = ''
@@ -55,6 +57,7 @@ function hashSubtreeSyntax(ast: Ast, hashesOut: Map<SyntaxHash, Ast[]>): SyntaxH
 declare const brandHash: unique symbol
 /** See {@link syntaxHash}. */
 type SyntaxHash = string & { [brandHash]: never }
+
 /** Applies the syntax-data hashing function to the input, and brands the result as a `SyntaxHash`. */
 function hashString(input: string): SyntaxHash {
   return xxHash128(input) as SyntaxHash
@@ -172,9 +175,8 @@ export function applyTextEditsToAst(
 ) {
   const printed = printWithSpans(ast)
   const code = applyTextEdits(printed.code, textEdits)
-  const rawParsed = parseInSameContext(code, ast)
   ast.module.transact(() => {
-    const parsed = abstract(ast.module, rawParsed, code)
+    const parsed = parseInSameContext(ast.module, code, ast)
     const toSync = calculateCorrespondence(
       ast,
       printed.info.nodes,
@@ -185,29 +187,6 @@ export function applyTextEditsToAst(
     )
     syncTree(ast, parsed.root, toSync, ast.module, metadataSource)
   })
-}
-
-/**
- * Determines the context of `ast`: module root, body block, statement, or expression; parses the given code in the same
- * context.
- */
-function parseInSameContext(code: string, ast: Ast) {
-  const astModuleRoot = ast.module.root()
-  const rawParsedBlock =
-    ast instanceof BodyBlock && astModuleRoot && ast.is(astModuleRoot) ?
-      rawParseModule(code)
-    : rawParseBlock(code)
-  const rawParsedStatement =
-    ast instanceof BodyBlock ? undefined : (
-      iter.tryGetSoleValue(rawParsedBlock.statements)?.expression
-    )
-  const rawParsedExpression =
-    ast.isExpression() ?
-      rawParsedStatement?.type === RawAst.Tree.Type.ExpressionStatement ?
-        rawParsedStatement.expression
-      : undefined
-    : undefined
-  return rawParsedExpression ?? rawParsedStatement ?? rawParsedBlock
 }
 
 /** Replace `target` with `newContent`, reusing nodes according to the correspondence in `toSync`. */
