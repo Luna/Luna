@@ -26,6 +26,7 @@
   paves the way for new documentation features.][11469]
 - ["Write" button in component menu allows to evaluate it separately from the
   rest of the workflow][11523].
+- [The documentation editor can now display tables][11564]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -43,6 +44,7 @@
 [11452]: https://github.com/enso-org/enso/pull/11452
 [11469]: https://github.com/enso-org/enso/pull/11469
 [11523]: https://github.com/enso-org/enso/pull/11523
+[11564]: https://github.com/enso-org/enso/pull/11564
 
 #### Enso Standard Library
 
