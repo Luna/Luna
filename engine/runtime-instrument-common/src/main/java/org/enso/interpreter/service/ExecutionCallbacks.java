@@ -15,6 +15,7 @@ import org.enso.interpreter.instrument.profiling.ExecutionTime;
 import org.enso.interpreter.instrument.profiling.ProfilingInfo;
 import org.enso.interpreter.node.callable.FunctionCallInstrumentationNode;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
+import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.enso.interpreter.runtime.type.Constants;
@@ -98,16 +99,16 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
   @Override
   public void updateCachedResult(IdExecutionService.Info info) {
     Object result = info.getResult();
-    String resultType = typeOf(result);
+    String[] resultTypes = typeOf(result);
     UUID nodeId = info.getId();
-    String cachedType = cache.getType(nodeId);
+    String[] cachedTypes = cache.getTypes(nodeId);
     FunctionCallInfo call = functionCallInfoById(nodeId);
     FunctionCallInfo cachedCall = cache.getCall(nodeId);
     ProfilingInfo[] profilingInfo = new ProfilingInfo[] {new ExecutionTime(info.getElapsedTime())};
 
     ExpressionValue expressionValue =
         new ExpressionValue(
-            nodeId, result, resultType, cachedType, call, cachedCall, profilingInfo, false);
+            nodeId, result, resultTypes, cachedTypes, call, cachedCall, profilingInfo, false);
     syncState.setExpressionUnsync(nodeId);
     syncState.setVisualizationUnsync(nodeId);
 
@@ -119,7 +120,7 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
       cache.offer(nodeId, result);
       cache.putCall(nodeId, call);
     }
-    cache.putType(nodeId, resultType);
+    cache.putTypes(nodeId, resultTypes);
 
     callOnComputedCallback(expressionValue);
     executeOneshotExpressions(nodeId, result, info);
@@ -165,7 +166,7 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
         new ExpressionValue(
             nodeId,
             result,
-            cache.getType(nodeId),
+            cache.getTypes(nodeId),
             typeOf(result),
             calls.get(nodeId),
             cache.getCall(nodeId),
@@ -214,20 +215,29 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
     return calls.get(nodeId);
   }
 
-  private String typeOf(Object value) {
-    String resultType;
+  private String[] typeOf(Object value) {
     if (value instanceof UnresolvedSymbol) {
-      resultType = Constants.UNRESOLVED_SYMBOL;
-    } else {
-      var typeOfNode = TypeOfNode.getUncached();
-      Object typeResult = value == null ? null : typeOfNode.execute(value);
-      if (typeResult instanceof Type t) {
-        resultType = getTypeQualifiedName(t);
-      } else {
-        resultType = null;
-      }
+      return new String[] {Constants.UNRESOLVED_SYMBOL};
     }
-    return resultType;
+
+    if (value instanceof EnsoMultiValue multiValue) {
+      var valueTypes = multiValue.allTypes();
+      var resultTypes = new String[valueTypes.length];
+
+      for (int i = 0; i < valueTypes.length; i++) {
+        resultTypes[i] = getTypeQualifiedName(valueTypes[i]);
+      }
+
+      return resultTypes;
+    }
+
+    var typeOfNode = TypeOfNode.getUncached();
+    Object typeResult = value == null ? null : typeOfNode.execute(value);
+    if (typeResult instanceof Type t) {
+      return new String[] {getTypeQualifiedName(t)};
+    }
+
+    return null;
   }
 
   @CompilerDirectives.TruffleBoundary
