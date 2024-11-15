@@ -34,8 +34,9 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         name: Download cache
+        id: cache
         with:
           path: |
             .eslintcache
@@ -74,6 +75,16 @@ jobs:
         continue-on-error: true
         run: pnpm run ci:test
 
+      - name: Save cache
+        uses: actions/cache/save@v4
+        if: always() && steps.cache.outputs.cache-hit != 'true'
+        id: save-cache
+        with:
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+          path: |
+            .eslintcache
+            node_modules/.cache/prettier
+
       - name: Annotate Code Linting Results
         uses: ataylorme/eslint-annotate-action@v3
         with:
@@ -83,7 +94,7 @@ jobs:
           only-pr-files: true
 
       - name: ❌ Fail if any checks failed
-        if: steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure'
+        if: always() && (steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
         run: |
           echo "Prettier outcome: ${{ steps.prettier.outcome }}"
           echo "Lint outcome: ${{ steps.lint.outcome }}"
