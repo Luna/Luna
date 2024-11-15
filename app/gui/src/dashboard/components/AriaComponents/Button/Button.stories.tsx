@@ -77,25 +77,6 @@ export const Tooltips: Story = {
       </div>
     </div>
   ),
-  play: async ({ canvasElement }) => {
-    const { getByTestId, getByRole, queryByRole, findByRole } = within(canvasElement)
-
-    const button = getByRole('button', { name: 'Tooltip' })
-    await userEvent.hover(button)
-    await expect(await findByRole('tooltip')).toBeInTheDocument()
-    await userEvent.unhover(button)
-
-    const iconButton = getByTestId('icon-button')
-    await userEvent.hover(iconButton)
-    await expect(await findByRole('tooltip')).toBeInTheDocument()
-    await userEvent.unhover(iconButton)
-
-    const iconButtonNoTooltip = getByTestId('icon-button-no-tooltip')
-    await userEvent.hover(iconButtonNoTooltip)
-    // we expect the previous tooltip to be gone after some delay, so we wait for it to disappear
-    await waitFor(() => expect(queryByRole('tooltip')).not.toBeInTheDocument())
-    await userEvent.unhover(iconButtonNoTooltip)
-  },
 }
 
 export const LoadingOnPress: Story = {

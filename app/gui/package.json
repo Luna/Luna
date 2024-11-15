@@ -35,10 +35,12 @@
     "postinstall": "playwright install",
     "generate-metadata": "node scripts/generateIconMetadata.js",
     "storybook": "pnpm run \"/^storybook:.*/\"",
-    "storybook:react": "FRAMEWORK=react storybook dev -p 6006",
-    "build-storybook:react": "FRAMEWORK=react storybook build",
-    "storybook:vue": "FRAMEWORK=vue storybook dev -p 6007",
-    "build-storybook:vue": "FRAMEWORK=vue storybook build"
+    "storybook:react": "cross-env FRAMEWORK=react storybook dev -p 6006",
+    "build-storybook:react": "cross-env FRAMEWORK=react storybook build",
+    "storybook:vue": "cross-env FRAMEWORK=vue storybook dev -p 6007",
+    "build-storybook:vue": "cross-env FRAMEWORK=vue storybook build",
+    "ci:chromatic:react": "cross-env FRAMEWORK=react chromatic deploy",
+    "ci:chromatic:vue": "git diff --quiet HEAD develop -- ./app/gui || echo changed && cross-env FRAMEWORK=vue chromatic deploy"
   },
   "dependencies": {
     "@ag-grid-community/client-side-row-model": "^31.1.1",
@@ -173,6 +175,7 @@
     "chalk": "^5.3.0",
     "cross-env": "^7.0.3",
     "css.escape": "^1.5.1",
+    "chromatic": "11.18.1",
     "d3": "^7.4.0",
     "enso-chat": "git://github.com/enso-org/enso-bot",
     "enso-common": "workspace:*",
