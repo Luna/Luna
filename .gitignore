@@ -38,6 +38,7 @@ generated/
 
 node_modules/
 eslint_report.json
+.eslintcache
 
 ############
 ## System ##

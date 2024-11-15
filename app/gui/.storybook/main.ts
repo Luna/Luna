@@ -17,14 +17,13 @@ const sharedConfig: Partial<ReactStorybookConfig> = {
     '@storybook/addon-interactions',
   ],
   features: {},
-  core: {
-    disableTelemetry: true,
-  },
+  core: { disableTelemetry: true },
   env: { FRAMEWORK: framework },
 
   previewHead: (head) => {
     return `
     <script>
+      window.global = window;
       window.ENV = {
         FRAMEWORK: '${framework}',
       }
