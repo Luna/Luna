@@ -58,7 +58,7 @@ type Return_As
     default_value (paths : Many_Files_List) -> Return_As =
         ## If the argument is an error, we fall back to a default value that is
            always available - Vector, to avoid compounding more errors.
-        if paths.is_error then Return_As_Base.Vector else
+        if paths.is_error then Return_As_Base.As_Vector else
             paths.default_return
 
 ## PRIVATE
