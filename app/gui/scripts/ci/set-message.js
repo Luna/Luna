@@ -2,7 +2,7 @@
 // @ts-nocheck
 import { dedent } from './dedent.js'
 
-export default async function setMessage({ header, body, prNumber, repo, github }) {
+export async function setMessage({ header, body, prNumber, repo, github }) {
   const commentList = await github.paginate(
     'GET /repos/:owner/:repo/issues/:issue_number/comments',
     // eslint-disable-next-line camelcase
