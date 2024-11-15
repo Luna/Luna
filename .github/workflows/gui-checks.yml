@@ -175,7 +175,7 @@ jobs:
           version: v0.12.1
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: 📥 Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v4
