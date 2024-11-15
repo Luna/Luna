@@ -274,6 +274,8 @@ export function useOpenProject() {
   const enableMultitabs = useFeatureFlag('enableMultitabs')
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+    console.log(enableMultitabs, projectsStore.getState())
+
     if (!enableMultitabs) {
       // Since multiple tabs cannot be opened at the same time, the opened projects need to be closed first.
       if (projectsStore.getState().launchedProjects.length > 0) {
@@ -286,6 +288,7 @@ export function useOpenProject() {
       predicate: (mutation) => mutation.options.scope?.id === project.id,
     })
     const isOpeningTheSameProject = existingMutation?.state.status === 'pending'
+
     if (!isOpeningTheSameProject) {
       openProjectMutation.mutate(project)
       const openingProjectMutation = client.getMutationCache().find({
@@ -327,6 +330,7 @@ export function useCloseProject() {
   const setPage = useSetPage()
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+    console.log('closeProject', project)
     client
       .getMutationCache()
       .findAll({
@@ -337,6 +341,7 @@ export function useCloseProject() {
         mutation.setOptions({ ...mutation.options, retry: false })
         mutation.destroy()
       })
+
     closeProjectMutation.mutate(project)
 
     client
@@ -350,6 +355,7 @@ export function useCloseProject() {
       .forEach((mutation) => {
         mutation.setOptions({ ...mutation.options, scope: { id: project.id } })
       })
+
     removeLaunchedProject(project.id)
 
     setPage(TabType.drive)
@@ -366,7 +372,9 @@ export function useCloseAllProjects() {
   const projectsStore = useProjectsStore()
 
   return eventCallbacks.useEventCallback(() => {
-    for (const launchedProject of projectsStore.getState().launchedProjects) {
+    const launchedProjects = projectsStore.getState().launchedProjects
+
+    for (const launchedProject of launchedProjects) {
       closeProject(launchedProject)
     }
   })

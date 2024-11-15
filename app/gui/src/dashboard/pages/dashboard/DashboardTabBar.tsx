@@ -93,9 +93,13 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
     },
   ]
 
+  console.log('tabs', {
+    launchedProjects,
+  })
+
   return (
     <TabBar className="bg-primary/5" items={tabs}>
-      {/* @ts-expect-error - Making ts happy here requires to much attention */}
+      {/* @ts-expect-error - Making ts happy here requires too much attention */}
       {(tab) => <tab.Component {...tab} />}
     </TabBar>
   )
