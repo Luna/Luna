@@ -42,7 +42,6 @@ jobs:
             app/gui/.gitignore
 
       - name: List all changed files
-        if: ${{ steps.changed-files.outputs.any_changed == 'false' }}
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
