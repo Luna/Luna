@@ -32,9 +32,9 @@
     "format:workflows": "prettier --write .github/workflows",
     "ci-check": "corepack pnpm run --aggregate-output /^ci:/",
     "ci:prettier": "prettier --check .",
-    "ci:lint": "corepack pnpm run -r lint",
+    "ci:lint": "corepack pnpm run -r --parallel lint",
     "ci:test": "corepack pnpm run -r --parallel test",
-    "ci:typecheck": "corepack pnpm run -r typecheck",
+    "ci:typecheck": "corepack pnpm run -r --parallel typecheck",
     "ci:chromatic:react": "corepack pnpm run -r --filter enso-gui chromatic:react",
     "ci:chromatic:vue": "corepack pnpm run -r --filter enso-gui chromatic:vue"
   },

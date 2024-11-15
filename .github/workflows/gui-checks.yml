@@ -1,0 +1,101 @@
+name: GUI Checks
+on: workflow_call
+
+# Cancel in-progress workflows if a new one is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-chromatic
+  cancel-in-progress: true
+
+permissions:
+  contents: read # Read-only access to repository contents
+  issues: write # Write access to issues
+  pull-requests: write # Write access to pull requests
+  statuses: write # Write access to commit statuses
+
+jobs:
+  lint:
+    name: 👮 Lint GUI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
+        name: Installing wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: v0.12.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier
+        continue-on-error: true
+        run: pnpm run ci:prettier
+
+      - name: Lint
+        continue-on-error: true
+        run: pnpm run ci:lint
+
+      - name: Typecheck
+        continue-on-error: true
+        run: pnpm run ci:typecheck
+
+      - name: Unit Tests
+        continue-on-error: true
+        run: pnpm run ci:test
+
+      - name: Fail if any linting errors occurred
+        if: failure()
+        run: exit 1
+
+  playwright:
+    name: 🎭 Playwright Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
+        name: Installing wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: v0.12.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Playwright Tests
+        working-directory: app/gui
+        continue-on-error: true
+        run: pnpm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: app/gui/playwright-report/
+          retention-days: 30
