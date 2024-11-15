@@ -91,7 +91,7 @@ watch(
       </div>
       <div class="scrollArea">
         <MarkdownEditor
-          :yText="yText"
+          :content="yText"
           :transformImageUrl="transformImageUrl"
           :toolbarContainer="toolbarElement"
         />

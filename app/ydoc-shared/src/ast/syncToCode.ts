@@ -19,12 +19,14 @@ import type { Module, MutableModule } from './mutableModule'
 import { abstract, rawParseBlock, rawParseModule } from './parse'
 import { printWithSpans } from './print'
 import { isTokenId } from './token'
-import type { AstId, MutableAst, Owned } from './tree'
 import {
   Assignment,
-  Ast,
+  type Ast,
+  type AstId,
+  BodyBlock,
   MutableAssignment,
-  MutableBodyBlock,
+  type MutableAst,
+  type Owned,
   rewriteRefs,
   syncFields,
   syncNodeMetadata,
@@ -168,23 +170,35 @@ export function applyTextEditsToAst(
   textEdits: SourceRangeEdit[],
   metadataSource: Module,
 ) {
-  ast.module.transact(() => applyTextEditsToAstImpl(ast, textEdits, metadataSource))
-}
-
-function applyTextEditsToAstImpl(
-  ast: MutableAst,
-  textEdits: SourceRangeEdit[],
-  metadataSource: Module,
-) {
   const printed = printWithSpans(ast)
   const code = applyTextEdits(printed.code, textEdits)
+  const rawParsed = parseInSameContext(code, ast)
+  ast.module.transact(() => {
+    const parsed = abstract(ast.module, rawParsed, code)
+    const toSync = calculateCorrespondence(
+      ast,
+      printed.info.nodes,
+      parsed.root,
+      parsed.spans.nodes,
+      textEdits,
+      code,
+    )
+    syncTree(ast, parsed.root, toSync, ast.module, metadataSource)
+  })
+}
+
+/**
+ * Determines the context of `ast`: module root, body block, statement, or expression; parses the given code in the same
+ * context.
+ */
+function parseInSameContext(code: string, ast: Ast) {
   const astModuleRoot = ast.module.root()
   const rawParsedBlock =
-    ast instanceof MutableBodyBlock && astModuleRoot && ast.is(astModuleRoot) ?
+    ast instanceof BodyBlock && astModuleRoot && ast.is(astModuleRoot) ?
       rawParseModule(code)
     : rawParseBlock(code)
   const rawParsedStatement =
-    ast instanceof MutableBodyBlock ? undefined : (
+    ast instanceof BodyBlock ? undefined : (
       iter.tryGetSoleValue(rawParsedBlock.statements)?.expression
     )
   const rawParsedExpression =
@@ -193,17 +207,7 @@ function applyTextEditsToAstImpl(
         rawParsedStatement.expression
       : undefined
     : undefined
-  const rawParsed = rawParsedExpression ?? rawParsedStatement ?? rawParsedBlock
-  const parsed = abstract(ast.module, rawParsed, code)
-  const toSync = calculateCorrespondence(
-    ast,
-    printed.info.nodes,
-    parsed.root,
-    parsed.spans.nodes,
-    textEdits,
-    code,
-  )
-  syncTree(ast, parsed.root, toSync, ast.module, metadataSource)
+  return rawParsedExpression ?? rawParsedStatement ?? rawParsedBlock
 }
 
 /** Replace `target` with `newContent`, reusing nodes according to the correspondence in `toSync`. */

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import TableEditorCell from '@/components/MarkdownEditor/TableEditorCell.vue'
+import MarkdownEditorImpl from '@/components/MarkdownEditor/MarkdownEditorImpl.vue'
 import type { Text } from '@codemirror/state'
 import { SyntaxNode, TreeCursor } from '@lezer/common'
-import { shallowRef, watch } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 
 const { source, parsed } = defineProps<{
   source: Text
@@ -13,61 +13,52 @@ const emit = defineEmits<{
   edit: []
 }>()
 
-const headers = shallowRef(new Array<string>())
-const rows = shallowRef(new Array<string[]>())
-
 function parseRow(cursor: TreeCursor, output: string[]) {
   if (!cursor.firstChild()) return
   do {
     if (cursor.name === 'TableCell') {
       output.push(source.sliceString(cursor.from, cursor.to))
-    } else if (cursor.name === 'TableDelimiter') {
-    } else {
+    } else if (cursor.name !== 'TableDelimiter') {
       console.warn('Unexpected in table row:', cursor.name)
     }
   } while (cursor.nextSibling())
   cursor.parent()
 }
 
-watch(
-  () => parsed,
-  (parsed) => {
-    const cursor = parsed.cursor()
-    if (!cursor.firstChild()) return
-    let newRows: string[][] = []
-    let newHeaders: string[] = []
+const content = computed(() => {
+  let headers: string[] = []
+  let rows: string[][] = []
+  const cursor = parsed.cursor()
+  if (cursor.firstChild()) {
     do {
       if (cursor.name === 'TableRow') {
         const newRow: string[] = []
         parseRow(cursor, newRow)
-        newRows.push(newRow)
+        rows.push(newRow)
       } else if (cursor.name === 'TableHeader') {
-        parseRow(cursor, newHeaders)
-      } else if (cursor.name === 'TableDelimiter') {
-      } else {
+        parseRow(cursor, headers)
+      } else if (cursor.name !== 'TableDelimiter') {
         console.warn('Unexpected at top level of table:', cursor.name)
       }
     } while (cursor.nextSibling())
-    headers.value = newHeaders
-    rows.value = newRows
-  },
-  { immediate: true },
-)
+  }
+  return { headers, rows }
+})
 </script>
 
 <template>
   <table>
     <thead>
       <tr>
-        <th v-for="cell in headers" class="cell">
-          <TableEditorCell :source="cell" />
+        <th v-for="cell in content.headers" class="cell">
+          <MarkdownEditorImpl :content="cell" />
         </th>
       </tr>
     </thead>
     <tbody class="tableBody">
-      <tr v-for="row in rows" class="row">
+      <tr v-for="row in content.rows" class="row">
         <td v-for="cell in row" class="cell">
-          <TableEditorCell :source="cell" />
+          <MarkdownEditorImpl :content="cell" />
         </td>
       </tr>
     </tbody>
@@ -80,5 +71,8 @@ watch(
 }
 .tableBody .row:nth-of-type(even) {
   background-color: #f3f3f3;
+}
+:deep(.cm-line) {
+  padding-right: 6px;
 }
 </style>

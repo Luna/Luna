@@ -1,3 +1,11 @@
+/**
+ * @file CodeMirror extension for synchronizing with a Yjs Text object.
+ * Based on <https://github.com/yjs/y-codemirror.next>. Initial changes from upstream:
+ * - Translated from JSDoc-typed JS to Typescript.
+ * - Refactored for stricter typing.
+ * - Changes to match project code style.
+ */
+
 import * as cmView from '@codemirror/view'
 import { type Awareness } from 'y-protocols/awareness.js'
 import * as Y from 'yjs'
@@ -24,8 +32,6 @@ export {
 }
 
 /**
- * @param ytext
- * @param awareness
  * @param undoManager Set undoManager to false to disable the undo-redo plugin
  */
 export const yCollab = (

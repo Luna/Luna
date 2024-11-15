@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ensoDiagnostics } from '@/components/CodeEditor/diagnostics'
+import { useEnsoDiagnostics } from '@/components/CodeEditor/diagnostics'
 import { ensoSyntax } from '@/components/CodeEditor/ensoSyntax'
 import { useEnsoSourceSync } from '@/components/CodeEditor/sync'
 import { ensoHoverTooltip } from '@/components/CodeEditor/tooltips'
@@ -34,6 +34,7 @@ const editorView = new EditorView()
 ;(window as any).__codeEditorApi = testSupport(editorView)
 
 const { updateListener, connectModuleListener } = useEnsoSourceSync(graphStore, editorView)
+const ensoDiagnostics = useEnsoDiagnostics(projectStore, graphStore, editorView)
 
 watch(
   () => projectStore.module,
@@ -51,7 +52,7 @@ watch(
           ensoSyntax(),
           updateListener,
           ensoHoverTooltip(graphStore, suggestionDbStore),
-          ensoDiagnostics(projectStore, graphStore, editorView),
+          ensoDiagnostics,
         ],
       }),
     )

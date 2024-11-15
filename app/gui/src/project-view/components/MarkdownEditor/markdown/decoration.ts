@@ -312,12 +312,6 @@ class TableWidget extends WidgetType {
     return -1
   }
 
-  override eq(other: WidgetType) {
-    return (
-      other instanceof TableWidget && false // TODO?
-    )
-  }
-
   override toDOM(): HTMLElement {
     if (!this.container) {
       const container = markRaw(document.createElement('div'))

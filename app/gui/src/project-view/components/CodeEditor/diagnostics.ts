@@ -5,7 +5,7 @@ import { type Extension, StateEffect, StateField } from '@codemirror/state'
 import { type EditorView } from '@codemirror/view'
 import * as iter from 'enso-common/src/utilities/data/iter'
 import { computed, shallowRef, watch } from 'vue'
-import { type Diagnostic as LSDiagnostic } from 'ydoc-shared/languageServerTypes'
+import { type Diagnostic as LSDiagnostic, type Position } from 'ydoc-shared/languageServerTypes'
 
 const executionContextDiagnostics = shallowRef<Diagnostic[]>([])
 
@@ -22,23 +22,44 @@ const diagnosticsVersion = StateField.define({
   },
 })
 
-/** TODO: Add docs */
-function lsDiagnosticsToCMDiagnostics(source: string, diagnostics: LSDiagnostic[]): Diagnostic[] {
-  if (!diagnostics.length) return []
-  const results: Diagnostic[] = []
+/** Given a text, indexes it and returns a function for converting between different ways of identifying positions. */
+function stringPosConverter(text: string) {
   let pos = 0
-  const lineStartIndices = []
-  for (const line of source.split('\n')) {
-    lineStartIndices.push(pos)
+  const lineStartIndex: number[] = []
+  for (const line of text.split('\n')) {
+    lineStartIndex.push(pos)
     pos += line.length + 1
   }
+  const length = text.length
+
+  function lineColToIndex({
+    line,
+    character,
+  }: {
+    line: number
+    character: number
+  }): number | undefined {
+    const startIx = lineStartIndex[line]
+    if (startIx == null) return
+    const ix = startIx + character
+    if (ix > length) return
+    return ix
+  }
+
+  return { lineColToIndex }
+}
+
+/** Convert the Language Server's diagnostics to CodeMirror diagnostics. */
+function lsDiagnosticsToCMDiagnostics(
+  diagnostics: LSDiagnostic[],
+  lineColToIndex: (lineCol: Position) => number | undefined,
+) {
+  const results: Diagnostic[] = []
   for (const diagnostic of diagnostics) {
     if (!diagnostic.location) continue
-    const from =
-      (lineStartIndices[diagnostic.location.start.line] ?? 0) + diagnostic.location.start.character
-    const to =
-      (lineStartIndices[diagnostic.location.end.line] ?? 0) + diagnostic.location.end.character
-    if (to > source.length || from > source.length) {
+    const from = lineColToIndex(diagnostic.location.start)
+    const to = lineColToIndex(diagnostic.location.end)
+    if (to == null || from == null) {
       // Suppress temporary errors if the source is not the version of the document the LS is reporting diagnostics for.
       continue
     }
@@ -51,7 +72,11 @@ function lsDiagnosticsToCMDiagnostics(source: string, diagnostics: LSDiagnostic[
   return results
 }
 
-export function ensoDiagnostics(
+/**
+ * CodeMirror extension providing diagnostics for an Enso module. Provides CodeMirror diagnostics based on dataflow
+ * errors, and diagnostics the LS provided in an `executionStatus` message.
+ */
+export function useEnsoDiagnostics(
   projectStore: Pick<ProjectStore, 'computedValueRegistry' | 'dataflowErrors' | 'diagnostics'>,
   graphStore: Pick<GraphStore, 'moduleSource' | 'db'>,
   editorView: EditorView,
@@ -89,16 +114,16 @@ export function ensoDiagnostics(
     editorView.dispatch({ effects: diagnosticsUpdated.of(null) })
     forceLinting(editorView)
   })
-  // The LS protocol doesn't identify what version of the file updates are in reference to. When diagnostics are received
-  // from the LS, we map them to the text assuming that they are applicable to the current version of the module. This
-  // will be correct if there is no one else editing, and we aren't editing faster than the LS can send updates. Typing
-  // too quickly can result in incorrect ranges, but at idle it should correct itself when we receive new diagnostics.
+  // The LS protocol doesn't identify what version of the file updates are in reference to. When diagnostics are
+  // received from the LS, we map them to the text assuming that they are applicable to the current version of the
+  // module. This will be correct if there is no one else editing, and we aren't editing faster than the LS can send
+  // updates. Typing too quickly can result in incorrect ranges, but at idle it should correct itself when we receive
+  // new diagnostics.
   watch(
     () => projectStore.diagnostics,
     (diagnostics) => {
-      const moduleSourceValue = graphStore.moduleSource.text
-      executionContextDiagnostics.value =
-        moduleSourceValue ? lsDiagnosticsToCMDiagnostics(moduleSourceValue, diagnostics) : []
+      const { lineColToIndex } = stringPosConverter(graphStore.moduleSource.text)
+      executionContextDiagnostics.value = lsDiagnosticsToCMDiagnostics(diagnostics, lineColToIndex)
     },
   )
   return [
