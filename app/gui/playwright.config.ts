@@ -15,10 +15,11 @@ const isProd = process.env.PROD === 'true'
 
 const TIMEOUT_MS =
   DEBUG ? 100_000_000
-  : isCI ? 30_000
+  : isCI ? 60_000
   : 15_000
 
-const WORKERS = isCI ? 1 : '35%'
+// We tend to use less CPU on CI to reduce the number of failures due to timeouts.
+const WORKERS = isCI ? '25%' : '35%'
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
