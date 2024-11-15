@@ -113,7 +113,7 @@ jobs:
 
       - name: 🎭 Playwright Tests
         working-directory: app/gui
-        run: pnpm run test:e2e --shard ${{ matrix.shard }}
+        run: pnpm run e2e --shard ${{ matrix.shard }}
 
       - name: 🔗 Merge into HTML Report
         run: pnpm exec playwright merge-reports
