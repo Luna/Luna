@@ -16,7 +16,7 @@ export type SortModel = {
 export interface SortFilterNodesButtonOptions {
   filterModel: ToValue<{
     [key: string]: {
-      values: any[]
+      values: string[]
       filterType: string
     }
   }>
@@ -74,7 +74,7 @@ function useSortFilterNodesButton({
     : Ast.TextLiteral.new(item)
   }
 
-  function makeFilterPattern(module: Ast.MutableModule, columnName: string, items: any[]) {
+  function makeFilterPattern(module: Ast.MutableModule, columnName: string, items: string[]) {
     if (
       (items?.length === 1 && items.indexOf('true') != -1) ||
       (items?.length === 1 && items.indexOf('false') != -1)
@@ -103,7 +103,7 @@ function useSortFilterNodesButton({
     )
   }
 
-  function getAstPatternFilter(columnName: string, items: any[]) {
+  function getAstPatternFilter(columnName: string, items: string[]) {
     return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
@@ -112,7 +112,7 @@ function useSortFilterNodesButton({
     )
   }
 
-  function getAstPatternFilterAndSort(columnName: string, items: any[]) {
+  function getAstPatternFilterAndSort(columnName: string, items: string[]) {
     return Pattern.new<Ast.Expression>((ast) =>
       Ast.OprApp.new(
         ast.module,
