@@ -34,6 +34,16 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
+      - uses: actions/cache@v4
+        name: Download cache
+        with:
+          path: |
+            .eslintcache
+            node_modules/.cache/prettier
+          key: ${{ runner.os }}-gui-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-gui
+
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -69,6 +79,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           report-json: "**/eslint_report.json"
+          markdown-report-on-step-summary: true
+          only-pr-files: true
 
       - name: ❌ Fail if any checks failed
         if: steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure'
@@ -123,14 +135,43 @@ jobs:
         working-directory: app/gui
         run: pnpm run e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
+      - name: ⬆️ Upload blob report to GitHub Actions Artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report
+          retention-days: 1
+
+  merge-reports:
+    # Merge reports after playwright-tests, even if some shards have failed
+    if: ${{ !cancelled() }}
+    needs: [playwright]
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: 📦 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 📥 Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: app/gui/blob-report
+          pattern: blob-report-*
+          merge-multiple: true
+
       - name: 🔗 Merge into HTML Report
         working-directory: app/gui
         run: pnpm playwright merge-reports --reporter html ./blob-report
 
-      - uses: actions/upload-artifact@v4
-        name: ⬆️ Upload Playwright Report
-        if: ${{ !cancelled() }}
+      - name: ⬆️ Upload HTML report
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report--attempt-${{ github.run_attempt }}
           path: app/gui/playwright-report/
           retention-days: 14
