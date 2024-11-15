@@ -60,10 +60,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 📥 Download storybook cache
-        uses: actions/download-artifact@v4
+        uses: actions/cache@v4
         with:
-          name: storybook-cache
+          key: ${{ runner.os }}-gui-${{ github.run_id }}
           path: app/gui/node_modules/.cache/
+          restore-keys: |
+            ${{ runner.os }}-gui
 
       - name: 🚀 Deploy to Chromatic
         id: publish_chromatic
