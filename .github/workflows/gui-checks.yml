@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 24
       matrix:
         shardIndex: [1, 2, 3, 4, 5, 6]
         shardTotal: [6]
