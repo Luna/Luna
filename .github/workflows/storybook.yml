@@ -46,6 +46,7 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
