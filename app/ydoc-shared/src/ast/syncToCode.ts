@@ -21,7 +21,7 @@ import { printWithSpans } from './print'
 import { isTokenId } from './token'
 import {
   Assignment,
-  type Ast,
+  Ast,
   type AstId,
   BodyBlock,
   MutableAssignment,
