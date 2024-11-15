@@ -24,7 +24,7 @@ jobs:
     runs-on:
       - self-hosted
       - Linux
-    name: Detect changed files in GUI
+    name: 🔍 Detect changed files in GUI
     outputs:
       all_changed_files: ${{ steps.changed-files.outputs.all_changed_files }}
       any_changed: ${{ steps.changed-files.outputs.any_changed }}
@@ -60,7 +60,7 @@ jobs:
     secrets: inherit
 
   storybook:
-    name: Deploy Storybook
+    name: 📚 Deploy Storybook
     uses: ./.github/workflows/storybook.yml
     needs: [changed-files]
     if: ${{ needs.changed-files.outputs.any_changed == 'true' }}

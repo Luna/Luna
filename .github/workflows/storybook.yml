@@ -58,15 +58,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - uses: actions/cache@v4
-        name: Download storybook cache
-        with:
-          path: |
-            app/gui/node_modules/.cache
-          key: ${{ runner.os }}-storybook-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-storybook
-
       - name: Publish to Chromatic
         id: publish_chromatic
         uses: chromaui/action@v11
