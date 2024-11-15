@@ -34,7 +34,7 @@ interface Error {
   all_rows_count?: undefined
 }
 
-interface ValueType {
+export interface ValueType {
   constructor: string
   display_text: string
 }
@@ -119,6 +119,7 @@ const isTruncated = ref(false)
 const isCreateNodeEnabled = ref(false)
 const filterModel = ref({})
 const sortModel = ref<SortModel[]>([])
+const colTypeMap = ref<Record<string, string>>({})
 const dataGroupingMap = shallowRef<Map<string, boolean>>()
 const defaultColDef: Ref<ColDef> = ref({
   editable: false,
@@ -605,6 +606,14 @@ watchEffect(() => {
   defaultColDef.value.sortable = !isTruncated.value
 })
 
+watchEffect(() => {
+  if(typeof props.data === 'object' && !('error' in props.data)) {
+    const valueTypes = 'value_type' in props.data ? props.data.value_type : []
+    const headers = 'header' in props.data ? props.data.header : []
+    headers?.forEach((header, index) => { if (valueTypes[index]) { colTypeMap.value[header] = valueTypes[index].constructor } })    
+  }
+})
+
 function checkSortAndFilter(e: SortChangedEvent) {
   const gridApi = e.api
   const columnApi = e.columnApi
@@ -657,6 +666,7 @@ config.setToolbar(
     isDisabled: () => !isCreateNodeEnabled.value,
     isFilterSortNodeEnabled,
     createNodes: config.createNodes,
+    colTypeMap
   }),
 )
 </script>
