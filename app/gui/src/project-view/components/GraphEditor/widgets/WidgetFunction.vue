@@ -80,6 +80,7 @@ const innerInput = computed(() => {
  * handling deletions of arguments and rewriting the applications to named as appropriate.
  */
 function handleArgUpdate(update: WidgetUpdate): boolean {
+  console.log('handleArgUpdate', update)
   const app = application.value
   if (update.portUpdate && app instanceof ArgumentApplication) {
     if (!('value' in update.portUpdate)) {

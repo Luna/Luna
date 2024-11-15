@@ -16,6 +16,7 @@ declare module '@/providers/widgetRegistry' {
   export interface WidgetInput {
     [DisplayIcon]?: {
       icon: Icon | URLString
+      allowChoice?: boolean
       showContents?: boolean
     }
   }

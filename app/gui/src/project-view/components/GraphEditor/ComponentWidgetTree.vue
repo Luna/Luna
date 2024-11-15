@@ -94,6 +94,7 @@ export const ICON_WIDTH = 16
   <WidgetTreeRoot
     class="ComponentWidgetTree"
     :externalId="nodeId"
+    :potentialSelfArgumentId="potentialSelfArgumentId"
     :input="rootPort"
     :rootElement="rootElement"
     :conditionalPorts="conditionalPorts"

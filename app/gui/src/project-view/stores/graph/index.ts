@@ -768,12 +768,16 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       if (expressionInfo?.methodCall == null) return false
 
       const definedOnType = tryQualifiedName(expressionInfo.methodCall.methodPointer.definedOnType)
-      const openModuleName = qnLastSegment(proj.modulePath.value)
-      if (definedOnType.ok && qnLastSegment(definedOnType.value) !== openModuleName) {
+      if (definedOnType.ok && definedOnType.value !== proj.modulePath.value) {
         // Cannot enter node that is not defined on current module.
         // TODO: Support entering nodes in other modules within the same project.
         return false
       }
+      console.log(
+        'definedOnType',
+        definedOnType.ok ? definedOnType.value : null,
+        proj.modulePath.value,
+      )
       return true
     }
 

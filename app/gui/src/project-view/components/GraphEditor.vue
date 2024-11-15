@@ -708,7 +708,6 @@ const groupColors = computed(() => {
   contain: layout;
   overflow: clip;
   touch-action: none;
-  --group-color-fallback: #006b8a;
   --node-color-no-type: #596b81;
   --output-node-color: #006b8a;
 }

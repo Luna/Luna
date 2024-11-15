@@ -392,7 +392,7 @@ function recomputeOnce() {
   <div
     v-show="!edited"
     ref="rootNode"
-    class="GraphNode"
+    class="GraphNode define-node-colors"
     :style="{
       transform,
       minWidth: isVisualizationEnabled ? `${visualizationWidth ?? 200}px` : undefined,
@@ -573,20 +573,10 @@ function recomputeOnce() {
   border-radius: var(--node-border-radius);
   transition: box-shadow 0.2s ease-in-out;
   box-sizing: border-box;
-  /** Space between node and component above and below, such as comments and errors. */
-  --node-vertical-gap: 4px;
-
-  --node-color-primary: color-mix(
-    in oklab,
-    var(--node-group-color) 100%,
-    var(--node-group-color) 0%
-  );
-  --node-color-port: color-mix(in oklab, var(--node-color-primary) 85%, white 15%);
-  --node-color-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
 
   &.executionState-Unknown,
   &.executionState-Pending {
-    --node-color-primary: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
+    --node-color-primary: var(--node-color-pending);
   }
 }
 

@@ -20,7 +20,7 @@ function handleWidgetUpdates() {
 </script>
 
 <template>
-  <div ref="rootElement" class="FunctionSignatureEditor">
+  <div ref="rootElement" class="FunctionSignatureEditor define-node-colors">
     <WidgetTreeRoot
       :externalId="functionAst.externalId"
       :input="treeRootInput"
@@ -33,7 +33,15 @@ function handleWidgetUpdates() {
 
 <style scoped>
 .FunctionSignatureEditor {
-  padding: 20px;
-  min-height: 100px;
+  margin: 4px 8px;
+  padding: 4px;
+
+  /* TODO */
+  --node-group-color: var(--group-color-fallback);
+
+  border-radius: var(--node-border-radius);
+  transition: background-color 0.2s ease;
+  background-color: var(--node-color-primary);
+  box-sizing: border-box;
 }
 </style>

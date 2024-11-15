@@ -70,7 +70,7 @@ function isFunctionName(
 export const widgetDefinition = defineWidget(
   isFunctionName,
   {
-    priority: -20,
+    priority: 2,
     score: Score.Perfect,
   },
   import.meta.hot,

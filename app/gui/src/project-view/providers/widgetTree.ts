@@ -2,6 +2,7 @@ import { createContextStore } from '@/providers'
 import { type WidgetEditHandlerRoot } from '@/providers/widgetRegistry/editHandler'
 import { Ast } from '@/util/ast'
 import { computed, proxyRefs, shallowRef, type Ref, type ShallowUnwrapRef } from 'vue'
+import { AstId } from 'ydoc-shared/ast'
 import { ExternalId } from 'ydoc-shared/yjsModel'
 
 export const [provideWidgetTree, injectWidgetTree] = createContextStore(
@@ -12,6 +13,7 @@ export const [provideWidgetTree, injectWidgetTree] = createContextStore(
     conditionalPorts: Ref<Set<Ast.AstId> | undefined>,
     extended: Ref<boolean>,
     hasActiveAnimations: Ref<boolean>,
+    potentialSelfArgumentId: Ref<AstId | undefined>,
     emitOpenFullMenu: () => void,
   ) => {
     const { setCurrentEditRoot, currentEdit } = useCurrentEdit()
@@ -21,6 +23,7 @@ export const [provideWidgetTree, injectWidgetTree] = createContextStore(
       conditionalPorts,
       extended,
       hasActiveAnimations,
+      potentialSelfArgumentId,
       setCurrentEditRoot,
       currentEdit,
       emitOpenFullMenu,

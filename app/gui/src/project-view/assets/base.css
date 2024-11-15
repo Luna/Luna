@@ -54,6 +54,22 @@
 
   --node-border-radius: calc(var(--node-base-height) / 2);
   --node-port-border-radius: calc(var(--node-port-height) / 2);
+
+  /** Space between node and component above and below, such as comments and errors. */
+  --node-vertical-gap: 4px;
+  --group-color-fallback: #006b8a;
+}
+
+/** Class used on containers that need to define node-group-color, thus need to recompute node color variables. */
+.define-node-colors {
+  --node-color-primary: color-mix(
+    in oklab,
+    var(--node-group-color) 100%,
+    var(--node-group-color) 0%
+  );
+  --node-color-port: color-mix(in oklab, var(--node-color-primary) 85%, white 15%);
+  --node-color-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
+  --node-color-pending: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
 }
 
 /*********************************

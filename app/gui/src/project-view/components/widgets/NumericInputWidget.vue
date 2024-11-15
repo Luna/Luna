@@ -31,6 +31,9 @@ watch(editedValue, (newValue) => {
   } else if (isNumericLiteral('0' + newValue)) {
     lastValidValue.value = '0' + newValue
   }
+  console.log('newValue', newValue)
+  console.log('isNumericLiteral', isNumericLiteral(newValue))
+  console.log('lastValidValue', lastValidValue.value)
 })
 const valueString = computed(() => (props.modelValue != null ? props.modelValue.toString() : ''))
 watch(valueString, (newValue) => (editedValue.value = newValue), { immediate: true })
