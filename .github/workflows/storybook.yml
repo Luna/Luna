@@ -101,7 +101,7 @@ jobs:
         name: Download storybook cache
         with:
           path: |
-            **/node_modules/.cache
+            app/gui/node_modules/.cache
           key: ${{ runner.os }}-storybook-${{ github.run_id }}
           restore-keys: |
             ${{ runner.os }}-storybook
