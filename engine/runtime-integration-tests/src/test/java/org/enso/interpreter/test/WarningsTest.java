@@ -2,6 +2,7 @@ package org.enso.interpreter.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +13,7 @@ import org.enso.common.MethodNames;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.warning.AppendWarningNode;
 import org.enso.interpreter.runtime.warning.Warning;
+import org.enso.interpreter.runtime.warning.WarningsLibrary;
 import org.enso.interpreter.runtime.warning.WithWarnings;
 import org.enso.test.utils.ContextUtils;
 import org.graalvm.polyglot.Context;
@@ -193,5 +195,12 @@ public class WarningsTest {
     assertTrue("But it represents an exception object", errorWithWarning.isException());
     assertEquals(
         "Standard.Base.Error.Error", errorWithWarning.getMetaObject().getMetaQualifiedName());
+  }
+
+  @Test
+  public void warningIsWarning_ViaWarningsLibrary() {
+    var warn = wrap.execute("Warning", 42L);
+    var warnsLib = WarningsLibrary.getUncached();
+    assertThat(warnsLib.hasWarnings(warn), is(true));
   }
 }
