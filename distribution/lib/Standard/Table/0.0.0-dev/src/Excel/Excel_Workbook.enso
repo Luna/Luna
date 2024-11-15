@@ -19,6 +19,7 @@ import project.Excel.Excel_Range.Excel_Range
 import project.Headers.Headers
 import project.Internal.Excel_Reader
 import project.Internal.Excel_Section.Excel_Section
+import project.Internal.Interpret_As_Table_For_Read_Many.Interpret_As_Table_For_Read_Many
 import project.Internal.Java_Problems
 import project.Internal.Problem_Builder.Problem_Builder
 import project.Match_Columns.Match_Columns
@@ -420,3 +421,10 @@ private _query_widget wb:Excel_Workbook display:Display=..Always -> Widget =
     default_address = "'" + wb.sheet_names.first.replace "'" "''" + "'!A1:E5"
     options = [Option "<By Index>" "1", Option "<Range>" "Excel_Range.from_address "+default_address.pretty] + (wb.tables.at "Name" . to_vector . map t-> Option t t.pretty)
     Single_Choice display=display values=options
+
+## PRIVATE
+   Loads all sheets in the Excel workbook and merges them into a single table.
+Interpret_As_Table_For_Read_Many.from (that:Excel_Workbook) =
+    callback columns_to_keep match_columns on_problems =
+        that.read_many return=(..As_Merged_Table columns_to_keep match_columns) on_problems=on_problems
+    Interpret_As_Table_For_Read_Many.Value callback

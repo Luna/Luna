@@ -1,0 +1,12 @@
+from Standard.Base import all
+
+import project.Columns_To_Keep.Columns_To_Keep
+import project.Match_Columns.Match_Columns
+import project.Table.Table
+
+## PRIVATE
+   A type may implement this type class to provide a custom way to interpret it 
+   as a table when reading many files.
+type Interpret_As_Table_For_Read_Many
+    ## PRIVATE
+    Value (into_table : Columns_To_Keep -> Match_Columns -> Problem_Behavior -> Table)

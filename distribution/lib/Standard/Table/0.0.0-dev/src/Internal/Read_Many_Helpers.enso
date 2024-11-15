@@ -2,12 +2,14 @@ private
 
 from Standard.Base import all
 import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
+import Standard.Base.Errors.Common.No_Such_Conversion
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Column.Column
 import project.Errors.Invalid_Value_Type
 import project.Errors.No_Rows
 import project.Extensions.Table_Conversions
+import project.Internal.Interpret_As_Table_For_Read_Many.Interpret_As_Table_For_Read_Many
 import project.Return_As_Table.Return_As_Table
 import project.Table.Table
 import project.Value_Type.Value_Type
@@ -42,7 +44,7 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
             _add_objects_column base_table objects
         Return_As_Table.As_Merged_Table columns_to_keep match_columns ->
             tables = input.paths_to_load.zip objects path-> object->
-                _interpret_object_as_table object path on_problems
+                _interpret_object_as_table object path columns_to_keep match_columns on_problems
             _merge_input_and_tables base_table tables columns_to_keep match_columns on_problems
 
 _input_as_table (input : Many_Files_List) -> Table =
@@ -83,7 +85,7 @@ _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
 
 ## Tries to interpret the object as a table.
    The provided path is used as additional context for any warnings that may need to be reported according to `on_problems`.
-_interpret_object_as_table (object : Any) path (on_problems : Problem_Behavior) -> Table | Nothing =
+_interpret_object_as_table (object : Any) path columns_to_keep match_columns (on_problems : Problem_Behavior) -> Table | Nothing =
     default =
         Table.from_objects object treat_dictionary_as_sequence=False . catch Illegal_Argument error->
             problem = Illegal_Argument.Error "Problem converting "+object.to_display_text+" (loaded from "+path.to_display_text+") to a Table: "+error.to_display_text cause=error
@@ -100,7 +102,10 @@ _interpret_object_as_table (object : Any) path (on_problems : Problem_Behavior) 
             if vector.not_empty then default else
                 on_problems.attach_problem_after Nothing <|
                     (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `As_Merged_Table` result of `read_many`.")
-        _ -> default
+        _ ->
+            special_case = Panic.catch No_Such_Conversion (object:Interpret_As_Table_For_Read_Many) _->Nothing
+            if special_case.is_nothing then default else
+                special_case.into_table columns_to_keep match_columns on_problems
 
 ## Takes a table and a list of counts and returns a new table with the rows
    duplicated according to the counts.
