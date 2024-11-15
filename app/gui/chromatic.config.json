@@ -4,5 +4,5 @@
   "autoAcceptChanges": "main",
   "exitOnceUploaded": true,
   "skip": "dependabot/**",
-  "buildScriptName": "build-storybook:react"
+  "buildScriptName": "ci:chromatic:react"
 }
