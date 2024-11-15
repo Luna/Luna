@@ -300,11 +300,11 @@ case object TailCallMegaPass extends IRPass {
     */
   private def analyseCallArg(argument: CallArgument): CallArgument = {
     argument match {
-      case arg: CallArgument.Specified =>
+      case arg @ CallArgument.Specified(_, expr, _, _) =>
         arg
           .copy(
             // Note [Call Argument Tail Position]
-            value = analyseExpression(arg.value, isInTailPosition = true)
+            value = analyseExpression(expr, isInTailPosition = true)
           )
           .updateMetadata(TAIL_META)
     }

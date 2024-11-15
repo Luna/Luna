@@ -105,12 +105,7 @@ case object SectionsToBinOpMegaPass extends IRPass {
       case sectionLeft @ Section.Left(arg, op, loc, passData) =>
         val rightArgName = freshNameSupply.newName()
         val rightCallArg =
-          CallArgument.Specified(
-            None,
-            rightArgName,
-            true,
-            identifiedLocation = null
-          )
+          CallArgument.Specified(None, rightArgName, identifiedLocation = null)
         val rightDefArg = DefinitionArgument.Specified(
           rightArgName.duplicate(),
           None,
@@ -122,12 +117,7 @@ case object SectionsToBinOpMegaPass extends IRPass {
         if (arg.value.isInstanceOf[Name.Blank]) {
           val leftArgName = freshNameSupply.newName()
           val leftCallArg =
-            CallArgument.Specified(
-              None,
-              leftArgName,
-              true,
-              identifiedLocation = null
-            )
+            CallArgument.Specified(None, leftArgName, identifiedLocation = null)
           val leftDefArg = DefinitionArgument.Specified(
             leftArgName.duplicate(),
             None,
@@ -171,12 +161,7 @@ case object SectionsToBinOpMegaPass extends IRPass {
       case sectionSides @ Section.Sides(op, loc, passData) =>
         val leftArgName = freshNameSupply.newName()
         val leftCallArg =
-          CallArgument.Specified(
-            None,
-            leftArgName,
-            true,
-            identifiedLocation = null
-          )
+          CallArgument.Specified(None, leftArgName, identifiedLocation = null)
         val leftDefArg = DefinitionArgument.Specified(
           leftArgName.duplicate(),
           None,
@@ -187,12 +172,7 @@ case object SectionsToBinOpMegaPass extends IRPass {
 
         val rightArgName = freshNameSupply.newName()
         val rightCallArg =
-          CallArgument.Specified(
-            None,
-            rightArgName,
-            true,
-            identifiedLocation = null
-          )
+          CallArgument.Specified(None, rightArgName, identifiedLocation = null)
         val rightDefArg = DefinitionArgument.Specified(
           rightArgName.duplicate(),
           None,
@@ -244,12 +224,7 @@ case object SectionsToBinOpMegaPass extends IRPass {
       case sectionRight @ Section.Right(op, arg, loc, passData) =>
         val leftArgName = freshNameSupply.newName()
         val leftCallArg =
-          CallArgument.Specified(
-            None,
-            leftArgName,
-            true,
-            identifiedLocation = null
-          )
+          CallArgument.Specified(None, leftArgName, identifiedLocation = null)
         val leftDefArg =
           DefinitionArgument.Specified(
             leftArgName.duplicate(),
@@ -266,7 +241,6 @@ case object SectionsToBinOpMegaPass extends IRPass {
             CallArgument.Specified(
               None,
               rightArgName,
-              true,
               identifiedLocation = null
             )
           val rightDefArg = DefinitionArgument.Specified(

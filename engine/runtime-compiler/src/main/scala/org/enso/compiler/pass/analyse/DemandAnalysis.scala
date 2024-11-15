@@ -265,10 +265,10 @@ case object DemandAnalysis extends IRPass {
     */
   def analyseCallArgument(arg: CallArgument): CallArgument = {
     arg match {
-      case arg: CallArgument.Specified =>
-        arg.copy(
+      case spec @ CallArgument.Specified(_, expr, _, _) =>
+        spec.copy(
           value = analyseExpression(
-            arg.value,
+            expr,
             isInsideCallArgument = true
           )
         )
