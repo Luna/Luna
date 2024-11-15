@@ -57,8 +57,7 @@ export class TableVisualisationTooltip implements ITooltipComp {
     this.eGui.innerHTML = `
             <div><b>Column value type:</b> ${params.value}</div>
             <div style="display: ${params.showDataQuality ? 'block' : 'none'};"">
-                <b>Data Quality Indicators</b>
-                ${dataQualityTemplate}
+              ${dataQualityTemplate}
             </div>
         `
   }
