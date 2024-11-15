@@ -18,7 +18,7 @@ const TIMEOUT_MS =
   : isCI ? 30_000
   : 15_000
 
-const WORKERS = '35%'
+const WORKERS = isCI ? 1 : '35%'
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
