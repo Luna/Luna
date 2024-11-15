@@ -128,8 +128,8 @@ spec_fmt suite_builder header file read_method sheet_count=5 =
             table2 = wb.read_many return=Old_Return_As.Merged_Table
             table2.row_count . should_equal 25
 
-            table2 = wb.read_many return=..Merged_Table
-            table2.row_count . should_equal 25
+            table3 = wb.read_many return=..Merged_Table
+            table3.row_count . should_equal 25
 
         group_builder.specify "should let you read some sheets from xlsx" <|
             wb = read_method file
