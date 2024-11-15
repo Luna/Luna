@@ -498,7 +498,7 @@ importers:
         specifier: ^7.4.0
         version: 7.9.0
       dedent:
-        specifier: ^1.5.3
+        specifier: 1.5.3
         version: 1.5.3
       enso-chat:
         specifier: git://github.com/enso-org/enso-bot
