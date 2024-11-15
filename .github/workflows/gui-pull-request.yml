@@ -17,6 +17,7 @@ permissions:
   issues: write # Write access to issues
   pull-requests: write # Write access to pull requests
   statuses: write # Write access to commit statuses
+  checks: write
 
 jobs:
   changed-files:

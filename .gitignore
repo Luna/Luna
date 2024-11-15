@@ -37,6 +37,7 @@ generated/
 ############
 
 node_modules/
+eslint_report.json
 
 ############
 ## System ##
