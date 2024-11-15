@@ -45,6 +45,7 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
   @Override
   public MiniIRPass createForModuleCompilation(ModuleContext moduleContext) {
     var bindingsMap = moduleContext.bindingsAnalysis();
+    assert bindingsMap != null;
     return new Mini(bindingsMap);
   }
 
