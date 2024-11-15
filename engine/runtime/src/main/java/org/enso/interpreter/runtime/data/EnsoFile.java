@@ -772,10 +772,17 @@ public final class EnsoFile extends EnsoObject {
     return fromString(context, System.getProperty("user.home"));
   }
 
+  @ExportMessage
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    return "(File " + truffleFile.getPath() + ")";
+  }
+
   @Override
   @TruffleBoundary
   public String toString() {
-    return "(File " + truffleFile.getPath() + ")";
+    return toDisplayString(false);
   }
 
   @ExportMessage

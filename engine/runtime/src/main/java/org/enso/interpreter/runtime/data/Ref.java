@@ -2,6 +2,7 @@ package org.enso.interpreter.runtime.data;
 
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
@@ -67,5 +68,11 @@ public final class Ref extends EnsoObject {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().ref();
+  }
+
+  @ExportMessage
+  Object toDisplayString(
+      boolean allowSideEffects, @CachedLibrary(limit = "3") InteropLibrary interop) {
+    return interop.toDisplayString(value, allowSideEffects);
   }
 }

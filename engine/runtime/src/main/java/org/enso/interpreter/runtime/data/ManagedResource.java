@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -92,5 +93,12 @@ public final class ManagedResource extends EnsoObject {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().managedResource();
+  }
+
+  @ExportMessage
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    return resource.toString();
   }
 }
