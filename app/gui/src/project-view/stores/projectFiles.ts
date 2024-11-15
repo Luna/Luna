@@ -120,9 +120,7 @@ export function useProjectFiles(projectStore: {
     if (!engineChecksum.ok) return engineChecksum
     const hexChecksum = bytesToHex(checksum.digest())
     if (hexChecksum != engineChecksum.value.checksum) {
-      return Err(
-        `Uploading file failed, checksum does not match. ${hexChecksum} != ${engineChecksum.value.checksum}`,
-      )
+      return Err(`Checksum does not match. ${hexChecksum} != ${engineChecksum.value.checksum}`)
     } else {
       return Ok()
     }
