@@ -108,12 +108,12 @@ add_specs suite_builder =
         group_builder.specify "should work with paths as Text" <|
             files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
             paths = files.map .path
-            r1 = Data.read_many paths return=..Vector
+            r1 = Data.read_many paths return=..As_Vector
             r1.should_equal [js_object, "Hello World!"]
 
         three_files = [enso_project.data / "sample.json", enso_project.data / "nonexistent.txt", enso_project.data / "helloworld.txt"]
         group_builder.specify "should allow to Report_Error if any file fails to load" <|
-            r1 = Data.read_many three_files return=..Vector on_problems=..Report_Error
+            r1 = Data.read_many three_files return=..As_Vector on_problems=..Report_Error
             # The error reports as File_Error
             r1.should_fail_with File_Error
             # But it's actually Map_Error with index metadata
@@ -122,12 +122,12 @@ add_specs suite_builder =
             r1.catch.inner_error.should_be_a File_Error.Not_Found
 
         group_builder.specify "should allow to Ignore errors if any file fails to load" <|
-            r1 = Data.read_many three_files return=..Vector on_problems=..Ignore
+            r1 = Data.read_many three_files return=..As_Vector on_problems=..Ignore
             r1.should_equal [js_object, Nothing, "Hello World!"]
             Problems.assume_no_problems r1
 
         group_builder.specify "should allow to continue loading if errors are encountered, but report them as warnings" <|
-            r1 = Data.read_many three_files return=..Vector on_problems=..Report_Warning
+            r1 = Data.read_many three_files return=..As_Vector on_problems=..Report_Warning
             r1.should_equal [js_object, Nothing, "Hello World!"]
             Problems.expect_only_warning File_Error r1
 

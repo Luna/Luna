@@ -17,8 +17,8 @@ type Return_As_Table
        added columns will get a suffix.
 
        When the source was a simple Vector, the returned table will also contain
-       a `File Name` column.
-    Table_Of_Objects
+       a `Path` column.
+    With_New_Column
 
     ## All files are interpreted as tables and then merged into a single table
        by a union operation.
@@ -27,12 +27,12 @@ type Return_As_Table
        format reads it as something else than a table, then it is expanded in
        the same way as `Table.from_objects`.
     @columns_to_keep Columns_To_Keep.default_widget
-    Merged_Table (columns_to_keep : Columns_To_Keep = Columns_To_Keep.In_Any) (match : Match_Columns = Match_Columns.By_Name)
+    As_Merged_Table (columns_to_keep : Columns_To_Keep = Columns_To_Keep.In_Any) (match : Match_Columns = Match_Columns.By_Name)
 
     ## PRIVATE
     get_dropdown_options : Vector Option
     get_dropdown_options =
-        [Option "Table of Objects" "..Table_Of_Objects", Option "Merged Table" "..Merged_Table"]
+        [Option "With New Column" "..With_New_Column", Option "As Merged Table" "..As_Merged_Table"]
 
     ## PRIVATE
     resolve value =

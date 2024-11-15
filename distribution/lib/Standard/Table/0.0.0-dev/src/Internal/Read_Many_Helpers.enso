@@ -23,7 +23,7 @@ find_files_list_in_table (that : Table) -> Many_Files_List =
             if path_columns.column_count > 1 then Error.throw (Illegal_Argument.Error "Multiple 'paths' column candidates found: "+path_columns.column_names.to_display_text+".") else
                 path_columns.at 0
     ensure_column_type_valid_to_be_files_list found_column <|
-        Many_Files_List.Value that found_column.to_vector Return_As_Table.Merged_Table
+        Many_Files_List.Value that found_column.to_vector Return_As_Table.As_Merged_Table
 
 ensure_column_type_valid_to_be_files_list (column : Column) ~action =
     is_expected_type = case column.value_type of
@@ -38,9 +38,9 @@ ensure_column_type_valid_to_be_files_list (column : Column) ~action =
 make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects : Vector Any) (on_problems : Problem_Behavior) -> Table =
     base_table = _input_as_table input
     case return_shape of
-        Return_As_Table.Table_Of_Objects ->
+        Return_As_Table.With_New_Column ->
             _add_objects_column base_table objects
-        Return_As_Table.Merged_Table columns_to_keep match_columns ->
+        Return_As_Table.As_Merged_Table columns_to_keep match_columns ->
             tables = input.paths_to_load.zip objects path-> object->
                 _interpret_object_as_table object path on_problems
             _merge_input_and_tables base_table tables columns_to_keep match_columns on_problems
@@ -95,11 +95,11 @@ _interpret_object_as_table (object : Any) path (on_problems : Problem_Behavior) 
         table : Table -> 
             if table.row_count > 0 then table else
                 on_problems.attach_problem_after table <|
-                    (No_Rows.Warning "The "+path.to_display_text+" loaded as a table with 0 rows, so it did not contribute any rows to the `Merged_Table` result of `read_many`.")
+                    (No_Rows.Warning "The "+path.to_display_text+" loaded as a table with 0 rows, so it did not contribute any rows to the `As_Merged_Table` result of `read_many`.")
         vector : Vector ->
             if vector.not_empty then default else
                 on_problems.attach_problem_after Nothing <|
-                    (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `Merged_Table` result of `read_many`.")
+                    (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `As_Merged_Table` result of `read_many`.")
         _ -> default
 
 ## Takes a table and a list of counts and returns a new table with the rows

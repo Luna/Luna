@@ -2935,4 +2935,4 @@ apply_unary_map column:Column new_name:Text function expected_result_type:Value_
 ## PRIVATE
 Many_Files_List.from (that : Column) =
     Read_Many_Helpers.ensure_column_type_valid_to_be_files_list that <|
-        Many_Files_List.Value that that.to_vector Return_As_Table.Merged_Table
+        Many_Files_List.Value that that.to_vector Return_As_Table.As_Merged_Table

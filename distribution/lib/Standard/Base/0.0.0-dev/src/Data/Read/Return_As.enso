@@ -65,11 +65,11 @@ type Return_As
 type Return_As_Base
     ## Will return a Vector of objects that were loaded.
        The order of the returned Vector is the same as in the input.
-    Vector
+    As_Vector
 
     ## PRIVATE
     get_dropdown_options : Vector Option
-    get_dropdown_options = [Option "Vector" "..Vector"]
+    get_dropdown_options = [Option "As Vector" "..As_Vector"]
 
     ## PRIVATE
     resolve value =
