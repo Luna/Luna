@@ -28,7 +28,7 @@
     "preinstall": "corepack pnpm run generate-metadata",
     "//": "max-warnings set to 41 to match the amount of warnings introduced by the new react compiler. Eventual goal is to remove all the warnings.",
     "lint": "eslint . --cache --max-warnings=41",
-    "playwright:install": "playwright install --with-deps chromium",
+    "playwright:install": "playwright install chromium",
     "preview": "vite preview",
     "storybook": "pnpm run \"/^storybook:.*/\"",
     "storybook:react": "cross-env FRAMEWORK=react storybook dev -p 6006",
