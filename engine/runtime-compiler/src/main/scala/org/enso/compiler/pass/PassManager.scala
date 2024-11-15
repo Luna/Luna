@@ -1,9 +1,11 @@
 package org.enso.compiler.pass
 
+import org.enso.common.{Asserts, CompilationStage}
 import org.slf4j.LoggerFactory
 import org.enso.compiler.context.{InlineContext, ModuleContext}
 import org.enso.compiler.core.ir.{Expression, Module}
 import org.enso.compiler.core.CompilerError
+import org.enso.compiler.pass.analyse.BindingAnalysis
 
 // TODO [AA] In the future, the pass ordering should be _computed_ from the list
 //  of available passes, rather than just verified.
@@ -67,6 +69,8 @@ class PassManager(
     ir: Module,
     moduleContext: ModuleContext
   ): Module = {
+    Asserts.assertInJvm(validateConsistency(ir, moduleContext))
+
     passes.foldLeft(ir)((ir, group) =>
       runPassesOnModule(ir, moduleContext, group)
     )
@@ -84,6 +88,8 @@ class PassManager(
     moduleContext: ModuleContext,
     passGroup: PassGroup
   ): Module = {
+    Asserts.assertInJvm(validateConsistency(ir, moduleContext))
+
     if (!passes.contains(passGroup)) {
       throw new CompilerError("Cannot run an unvalidated pass group.")
     }
@@ -233,6 +239,34 @@ class PassManager(
     val totalLength = before.map(_.passes.length).sum
 
     ix - totalLength == indexOfPassInGroup
+  }
+
+  private def validateConsistency(
+    ir: Module,
+    moduleContext: ModuleContext
+  ): Boolean = {
+    if (
+      moduleContext.module.getCompilationStage.isAtLeast(
+        CompilationStage.AFTER_PARSING
+      )
+    ) {
+      if (!(moduleContext.module.getIr eq ir)) {
+        throw new AssertionError(
+          "Mismatch of IR between ModuleContext and IR in " + moduleContext
+            .getName()
+        )
+      }
+      val bmFromCtx  = moduleContext.bindingsAnalysis()
+      val bmFromMeta = ir.passData.get(BindingAnalysis)
+      if (bmFromCtx != null) {
+        Asserts.assertInJvm(bmFromMeta.isDefined)
+        Asserts.assertInJvm(bmFromCtx == bmFromMeta.get)
+      }
+      if (bmFromMeta.isDefined) {
+        Asserts.assertInJvm(bmFromCtx == bmFromMeta.get)
+      }
+    }
+    true
   }
 
   /** Updates the metadata in a copy of the IR when updating that metadata
