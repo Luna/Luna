@@ -100,7 +100,7 @@ class JsonRpcServer(
           logger.trace(s"Sent text message ${textMessage.text}.")
         }
 
-    Flow.fromSinkAndSource(incomingMessages, outgoingMessages)
+    Flow.fromSinkAndSourceCoupled(incomingMessages, outgoingMessages)
   }
 
   override protected def serverRoute(port: Int): Route = {
