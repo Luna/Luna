@@ -149,7 +149,7 @@ jobs:
         with:
           name: blob-report-${{ matrix.shardIndex }}
           path: app/gui/blob-report
-          retention-days: 1
+          retention-days: 7
 
   merge-reports:
     name: 🔗 Merge Playwright Reports
