@@ -89,7 +89,8 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        shard: [1/4, 2/4, 3/4, 4/4]
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
 
     steps:
       - uses: actions/checkout@v4
@@ -120,10 +121,11 @@ jobs:
 
       - name: 🎭 Playwright Tests
         working-directory: app/gui
-        run: pnpm run e2e --shard ${{ matrix.shard }}
+        run: pnpm run e2e --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
       - name: 🔗 Merge into HTML Report
-        run: pnpm exec playwright merge-reports
+        working-directory: app/gui
+        run: pnpm playwright merge-reports --reporter html ./blob-report
 
       - uses: actions/upload-artifact@v4
         name: ⬆️ Upload Playwright Report
