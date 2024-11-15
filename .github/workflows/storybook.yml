@@ -130,7 +130,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            import setMessage from '${{ github.workspace }}/app/gui/scripts/ci/set-message'
+            const setMessage = await import('${{ github.workspace }}/app/gui/scripts/ci/set-message')
 
             await setMessage({
               header: "## 🧪 Storybook is successfully deployed!",
