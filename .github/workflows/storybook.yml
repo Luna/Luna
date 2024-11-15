@@ -29,6 +29,7 @@ permissions:
 
 jobs:
   deploy-chromatic-react:
+    environment:
     name: Deploy Storybook to Chromatic (React)
     runs-on: ubuntu-latest
     outputs:
@@ -37,6 +38,7 @@ jobs:
     env:
       CHROMATIC_RETRIES: 3
       LOG_LEVEL: "error"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     steps:
       - uses: actions/checkout@v3
 
@@ -83,6 +85,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v4
+        with:
+          node-version: lts
       - name: Comment PR
         uses: actions/github-script@v6
         with:
