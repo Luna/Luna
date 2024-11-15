@@ -274,8 +274,6 @@ export function useOpenProject() {
   const enableMultitabs = useFeatureFlag('enableMultitabs')
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
-    console.log(enableMultitabs, projectsStore.getState())
-
     if (!enableMultitabs) {
       // Since multiple tabs cannot be opened at the same time, the opened projects need to be closed first.
       if (projectsStore.getState().launchedProjects.length > 0) {
@@ -330,7 +328,6 @@ export function useCloseProject() {
   const setPage = useSetPage()
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
-    console.log('closeProject', project)
     client
       .getMutationCache()
       .findAll({
