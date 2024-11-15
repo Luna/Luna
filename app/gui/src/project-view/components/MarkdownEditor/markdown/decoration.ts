@@ -147,16 +147,16 @@ function parseLinkLike(node: SyntaxNode, doc: Text) {
   const urlOpen = textClose.nextSibling // (
   // The parser accepts partial links such as `[Missing url]`.
   if (!urlOpen) return
-  const urlNode = urlOpen.nextSibling
+  const urlNode =
+    urlOpen.nextSibling?.name === 'LinkMark' ?
+      urlOpen.nextSibling?.nextSibling
+    : urlOpen.nextSibling
   // If the URL is empty, this will be the closing 'LinkMark'.
   if (urlNode?.name !== 'URL') return
-  const url = doc.sliceString(urlNode.from, urlNode.to)
-  // See https://spec.commonmark.org/0.31.2/#link-destination
-  const withTriangleBrackets = url.startsWith('<') && url.endsWith('>')
   return {
     textFrom: textOpen.to,
     textTo: textClose.from,
-    url: withTriangleBrackets ? url.slice(1, -1) : url,
+    url: doc.sliceString(urlNode.from, urlNode.to),
   }
 }
 
