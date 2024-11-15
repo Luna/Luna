@@ -38,8 +38,13 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
+          fetch-tags: false
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
+        name: ⎔ Setup Node
         with:
           node-version: 20
           cache: "pnpm"
