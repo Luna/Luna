@@ -20,7 +20,7 @@ const TIMEOUT_MS =
 
 // We tend to use less CPU on CI to reduce the number of failures due to timeouts.
 // Instead of using workers on CI, we use shards to run tests in parallel.
-const WORKERS = isCI ? 1 : '35%'
+const WORKERS = isCI ? '25%' : '35%'
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
