@@ -19,6 +19,7 @@ from Standard.Test import all
 import Standard.Examples
 
 import project.Util
+from project.Common_Table_Operations.Util import within_table
 
 polyglot java import org.enso.table_test_helpers.RandomHelpers
 
@@ -993,33 +994,35 @@ add_specs suite_builder =
                 (Table.new [["A", [10, 20]], ["B", [30, 40]]]).write (base_dir / "2.xlsx") . should_succeed
 
                 f3 = base_dir / "3.xlsx"
-                (Table.new [["A", [100]], ["B", [200]], ["C", [300]]]).write f3 format=(..Sheet "nr 1") . should_succeed
-                (Table.new [["A", [400, 500, 600]]]).write f3 format=(..Sheet "nr 2") . should_succeed
+                (Table.new [["A", [100]], ["B", [200]], ["C", [300]]]).write f3 format=(..Sheet "nr 1") on_existing_file=..Overwrite . should_succeed
+                (Table.new [["A", [400, 500, 600]]]).write f3 format=(..Sheet "nr 2") on_existing_file=..Append . should_succeed
 
                 files = Data.list base_dir . sort on=(.name)
 
                 r1 = Data.read_many files return=..With_New_Column
                 r1.should_be_a Table
-                r1.column_names . should_equal ["Path", "Value"]
-                r1.row_count . should_equal 3
-                r1.at "Value" . at 0 . should_be_a Table
-                r1.at "Value" . at 1 . should_be_a Excel_Workbook
-                r1.at "Value" . at 2 . should_be_a Excel_Workbook
+                within_table r1 <|
+                    r1.column_names . should_equal ["Path", "Value"]
+                    r1.row_count . should_equal 3
+                    r1.at "Value" . at 0 . should_be_a Table
+                    r1.at "Value" . at 1 . should_be_a Excel_Workbook
+                    r1.at "Value" . at 2 . should_be_a Excel_Workbook
 
                 r2 = Data.read_many files return=..As_Merged_Table
                 r2.should_be_a Table
-                r2.column_names . should_equal ["Path", "Sheet Name", "A", "B", "C"]
+                within_table r2 <|
+                    r2.column_names . should_equal ["Path", "Sheet Name", "A", "B", "C"]
 
-                # We transform the Path to just file name for easier testing
-                rows = (r2.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
-                rows.at 0 . should_equal ["1.tsv",      Nothing,   1,       3, Nothing]
-                rows.at 1 . should_equal ["1.tsv",      Nothing,   2,       4, Nothing]
-                rows.at 2 . should_equal ["2.xlsx", "EnsoSheet",  10,      30, Nothing]
-                rows.at 3 . should_equal ["2.xlsx", "EnsoSheet",  20,      40, Nothing]
-                rows.at 4 . should_equal ["3.xlsx",      "nr 1", 100,     200,     300]
-                rows.at 5 . should_equal ["3.xlsx",      "nr 2", 400, Nothing, Nothing]
-                rows.at 6 . should_equal ["3.xlsx",      "nr 2", 500, Nothing, Nothing]
-                rows.at 7 . should_equal ["3.xlsx",      "nr 2", 600, Nothing, Nothing]
+                    # We transform the Path to just file name for easier testing
+                    rows = (r2.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
+                    rows.at 0 . should_equal ["1.tsv",      Nothing,   1,       3, Nothing]
+                    rows.at 1 . should_equal ["1.tsv",      Nothing,   2,       4, Nothing]
+                    rows.at 2 . should_equal ["2.xlsx", "EnsoSheet",  10,      30, Nothing]
+                    rows.at 3 . should_equal ["2.xlsx", "EnsoSheet",  20,      40, Nothing]
+                    rows.at 4 . should_equal ["3.xlsx",      "nr 1", 100,     200,     300]
+                    rows.at 5 . should_equal ["3.xlsx",      "nr 2", 400, Nothing, Nothing]
+                    rows.at 6 . should_equal ["3.xlsx",      "nr 2", 500, Nothing, Nothing]
+                    rows.at 7 . should_equal ["3.xlsx",      "nr 2", 600, Nothing, Nothing]
 
     suite_builder.group "Problems" group_builder->
         group_builder.specify "should report a user-friendly error message when format is missing a required argument" <|
