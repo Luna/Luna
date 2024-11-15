@@ -40,6 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prettier
+        id: prettier
         continue-on-error: true
         run: pnpm run ci:prettier
 
@@ -48,21 +49,29 @@ jobs:
         run: pnpm run ci:lint
 
       - name: Typecheck
+        id: typecheck
         continue-on-error: true
         run: pnpm run ci:typecheck
 
       - name: Unit Tests
+        id: unit-tests
         continue-on-error: true
         run: pnpm run ci:test
 
       - name: Fail if any linting errors occurred
-        if: failure()
+        if: steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure'
         run: exit 1
 
   playwright:
     name: 🎭 Playwright Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        shard: [1/4, 2/4, 3/4, 4/4]
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,6 +81,7 @@ jobs:
         run: corepack enable
 
       - uses: actions/setup-node@v4
+        name: ⎔ Setup Node
         with:
           node-version: 20
           cache: "pnpm"
@@ -82,17 +92,16 @@ jobs:
         with:
           version: v0.12.1
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright Browsers
+      - name: 📺 Install Playwright Browsers
         working-directory: app/gui
         run: pnpm run playwright:install
 
-      - name: Playwright Tests
+      - name: 🎭 Playwright Tests
         working-directory: app/gui
-        continue-on-error: true
-        run: pnpm run test:e2e
+        run: pnpm run test:e2e --shard ${{ matrix.shard }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -100,3 +109,4 @@ jobs:
           name: playwright-report
           path: app/gui/playwright-report/
           retention-days: 30
+      
