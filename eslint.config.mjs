@@ -564,6 +564,7 @@ export default [
       'jsdoc/require-param-type': 'off',
       'jsdoc/require-file-overview': 'off',
       '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 ]

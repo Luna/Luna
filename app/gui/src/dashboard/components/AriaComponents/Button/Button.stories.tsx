@@ -1,18 +1,18 @@
 import Enso from '#/assets/enso_logo.svg'
+import type * as aria from '#/components/aria'
 import { Text } from '#/components/AriaComponents'
 import type { Meta, StoryObj } from '@storybook/react'
 import { expect, userEvent, within } from '@storybook/test'
-import { Button, type ButtonProps } from './Button'
+import type { BaseButtonProps } from './Button'
+import { Button } from './Button'
 
-/**
- *
- */
-type Story = StoryObj<ButtonProps>
+type Story = StoryObj<BaseButtonProps<aria.ButtonRenderProps>>
 
 export default {
   title: 'Components/AriaComponents/Button',
   component: Button,
-} satisfies Meta<ButtonProps>
+  render: (props) => <Button {...props} />,
+} as Meta<BaseButtonProps<aria.ButtonRenderProps>>
 
 export const Variants: Story = {
   render: () => (
@@ -93,6 +93,7 @@ export const LoadingOnPress: Story = {
   },
   play: async ({ canvasElement }) => {
     const { getByRole, findByTestId } = within(canvasElement)
+
     const button = getByRole('button', { name: 'Click me to trigger loading' })
     await userEvent.click(button)
     await expect(button).toHaveAttribute('disabled')
