@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -13,6 +13,7 @@ import DataDownloadIcon from '#/assets/data_download.svg'
 import DataUploadIcon from '#/assets/data_upload.svg'
 import Plus2Icon from '#/assets/plus2.svg'
 import RightPanelIcon from '#/assets/right_panel.svg'
+import { Input as AriaInput } from '#/components/aria'
 import {
   Button,
   ButtonGroup,
@@ -47,18 +48,18 @@ import {
   useCanCreateAssets,
   useCanDownload,
   useDriveStore,
-  useIsAssetPanelVisible,
   usePasteData,
-  useSetIsAssetPanelPermanentlyVisible,
-  useSetIsAssetPanelTemporarilyVisible,
 } from '#/providers/DriveProvider'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
+import type { DirectoryId } from '#/services/Backend'
+import { ProjectState, type CreatedProject, type ProjectId } from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
+import { AssetPanelToggle } from './AssetPanel'
 
 // ================
 // === DriveBar ===
@@ -85,15 +86,12 @@ export default function DriveBar(props: DriveBarProps) {
     false,
   )
 
-  const driveStore = useDriveStore()
   const { unsetModal } = useSetModal()
   const { getText } = useText()
+  const driveStore = useDriveStore()
   const inputBindings = useInputBindings()
   const dispatchAssetEvent = useDispatchAssetEvent()
   const canCreateAssets = useCanCreateAssets()
-  const isAssetPanelVisible = useIsAssetPanelVisible()
-  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
-  const setIsAssetPanelPermanentlyVisible = useSetIsAssetPanelPermanentlyVisible()
   const createAssetButtonsRef = React.useRef<HTMLDivElement>(null)
   const isCloud = isCloudCategory(category)
   const { isOffline } = useOffline()
@@ -184,26 +182,8 @@ export default function DriveBar(props: DriveBarProps) {
   const assetPanelToggle = (
     <>
       {/* Spacing. */}
-      <div className={!isAssetPanelVisible ? 'w-5' : 'hidden'} />
-      <div className="absolute right-[15px] top-[27px] z-1">
-        <Button
-          size="medium"
-          variant="custom"
-          isActive={isAssetPanelVisible}
-          icon={RightPanelIcon}
-          aria-label={isAssetPanelVisible ? getText('openAssetPanel') : getText('closeAssetPanel')}
-          onPress={() => {
-            const isAssetPanelTemporarilyVisible =
-              driveStore.getState().isAssetPanelTemporarilyVisible
-            if (isAssetPanelTemporarilyVisible) {
-              setIsAssetPanelTemporarilyVisible(false)
-              setIsAssetPanelPermanentlyVisible(false)
-            } else {
-              setIsAssetPanelPermanentlyVisible(!isAssetPanelVisible)
-            }
-          }}
-        />
-      </div>
+      <div className="ml-auto" />
+      <AssetPanelToggle showWhen="collapsed" className="my-auto" />
     </>
   )
 
@@ -320,6 +300,7 @@ export default function DriveBar(props: DriveBarProps) {
                   />
                 </DialogTrigger>
               )}
+
               {isCloud && (
                 <DialogTrigger>
                   <Button
