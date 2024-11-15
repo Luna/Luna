@@ -37,7 +37,7 @@ jobs:
         id: cache
         with:
           path: |
-            .eslintcache
+            **/.eslintcache
             node_modules/.cache/prettier
           key: ${{ runner.os }}-gui-${{ github.run_id }}
           restore-keys: |
