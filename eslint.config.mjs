@@ -525,12 +525,6 @@ export default [
     },
   },
   {
-    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
-    rules: {
-      'no-restricted-syntax': 'off',
-    },
-  },
-  {
     files: ['**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
     ignores: ['**/build.mjs'],
     rules: {
@@ -560,6 +554,16 @@ export default [
       ],
       // This rule does not work with TypeScript, and TypeScript already does this.
       'no-undef': 'off',
+    },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
     },
   },
 ]
