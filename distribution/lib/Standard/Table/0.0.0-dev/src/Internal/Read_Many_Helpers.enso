@@ -60,7 +60,8 @@ _merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) c
     counts = tables_for_rows.map table-> case table of
         Nothing -> 0
         _ : Table -> table.row_count
-    adapted_tables = tables_for_rows.filter ..Not_Nothing
+    adapted_tables = _inherit_warnings_from_vector tables_for_rows <| 
+        tables_for_rows.filter ..Not_Nothing
     ## If there are no tables to merge, union would fail. 
        Each entry is then contributing 0 rows, so we need to return an empty table. 
        But it should have the same structure as the input table.
@@ -111,3 +112,9 @@ _duplicate_rows (table : Table) (counts : Vector Integer) -> Table =
         . flatten
     mask = OrderMask.fromArray mask_array
     from_java_table (table.java_table.applyMask mask)
+
+## Workaround for bug https://github.com/enso-org/enso/issues/11570
+   Once that is addressed, this function may be removed.
+private _inherit_warnings_from_vector vector:Vector ~action =
+    result = action
+    Warning.set result (Warning.get_all vector + Warning.get_all result)
