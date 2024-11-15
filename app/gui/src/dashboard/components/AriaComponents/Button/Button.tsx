@@ -332,6 +332,8 @@ export const Button = forwardRef(function Button(
   })()
   const tooltipElement = shouldShowTooltip ? tooltip ?? ariaProps['aria-label'] : null
 
+  console.log('tooltipElement', tooltipElement)
+
   const isLoading = loading || implicitlyLoading
   const isDisabled = props.isDisabled ?? isLoading
   const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
