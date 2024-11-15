@@ -39,8 +39,8 @@
     "build-storybook:react": "cross-env FRAMEWORK=react storybook build",
     "storybook:vue": "cross-env FRAMEWORK=vue storybook dev -p 6007",
     "build-storybook:vue": "cross-env FRAMEWORK=vue storybook build",
-    "ci:chromatic:react": "cross-env FRAMEWORK=react chromatic deploy",
-    "ci:chromatic:vue": "git diff --quiet HEAD develop -- ./app/gui || echo changed && cross-env FRAMEWORK=vue chromatic deploy"
+    "chromatic:react": "cross-env FRAMEWORK=react chromatic deploy",
+    "chromatic:vue": "cross-env FRAMEWORK=vue chromatic deploy"
   },
   "dependencies": {
     "@aws-amplify/auth": "5.6.5",
