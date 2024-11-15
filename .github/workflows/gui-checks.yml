@@ -42,15 +42,16 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: 🧠 Typecheck
-        id: typecheck
-        continue-on-error: true
-        run: pnpm run ci:typecheck
-
       - name: 📝 Prettier
         id: prettier
         continue-on-error: true
         run: pnpm run ci:prettier
+
+      # Next Tasks are depend on Typecheck, because we build libraries at this stage
+      - name: 🧠 Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: pnpm run ci:typecheck
 
       - name: 🧹 Lint
         id: lint
