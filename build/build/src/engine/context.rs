@@ -345,11 +345,16 @@ impl RunContext {
 
         if !tasks.is_empty() {
             debug!("Building distributions and native images.");
+            let mut sbt_arg;
             if crate::ci::big_memory_machine() {
-                sbt.call_arg(Sbt::concurrent_tasks(tasks)).await?;
+                sbt_arg = Sbt::concurrent_tasks(tasks);
             } else {
-                sbt.call_arg(Sbt::sequential_tasks(tasks)).await?;
+                sbt_arg = Sbt::sequential_tasks(tasks);
             }
+            if self.config.clean_before {
+                sbt_arg = Sbt::sequential_tasks(vec!["clean", &sbt_arg]);
+            }
+            sbt.call_arg(sbt_arg).await?;
         }
 
         // === End of Build project-manager distribution and native image ===

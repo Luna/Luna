@@ -179,6 +179,8 @@ impl Benchmarks {
 /// Basically a recipe of what to do with `sbt` and its artifacts.
 #[derive(Clone, Debug)]
 pub struct BuildConfigurationFlags {
+    /// Clean before performing other build steps.
+    pub clean_before: bool,
     /// Run JVM tests.
     pub test_jvm: bool,
     /// Whether the Enso standard library should be tested.
@@ -297,6 +299,7 @@ impl BuildConfigurationFlags {
 impl Default for BuildConfigurationFlags {
     fn default() -> Self {
         Self {
+            clean_before: true,
             test_jvm: false,
             test_standard_library: None,
             build_benchmarks: false,
