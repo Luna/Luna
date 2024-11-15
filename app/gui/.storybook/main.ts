@@ -58,12 +58,6 @@ const reactConfig: ReactStorybookConfig = {
     name: '@storybook/react-vite',
     options: { strictMode: true },
   },
-  // refs: {
-  //   ProjectView: {
-  //     title: 'Project View',
-  //     url: 'http://localhost:6006',
-  //   },
-  // },
 }
 
 export default framework === 'vue' ? vueConfig : reactConfig
