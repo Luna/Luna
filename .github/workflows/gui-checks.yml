@@ -89,6 +89,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           report-json: "./**/eslint_report.json"
           markdown-report-on-step-summary: true
+          check-name: 🧹 GUI Lint Results
 
       - name: ❌ Fail if any check failed
         if: always() && (steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
