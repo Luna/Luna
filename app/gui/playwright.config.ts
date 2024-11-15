@@ -65,7 +65,8 @@ export default defineConfig({
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: !!process.env.CI,
   repeatEach: process.env.CI ? 3 : 1,
-  reporter: 'html',
+  reporter: isCI ? 'blob' : 'html',
+  retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
     actionTimeout: 5000,
