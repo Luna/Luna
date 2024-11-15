@@ -497,6 +497,9 @@ importers:
       d3:
         specifier: ^7.4.0
         version: 7.9.0
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
       enso-chat:
         specifier: git://github.com/enso-org/enso-bot
         version: enso-support@https://codeload.github.com/enso-org/enso-bot/tar.gz/aa903b6e639a31930ee4fff55c5639e4471fa48d
@@ -4375,6 +4378,14 @@ packages:
   decompress-response@6.0.0:
     resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
     engines: {node: '>=10'}
+
+  dedent@1.5.3:
+    resolution: {integrity: sha512-NHQtfOOW68WD8lgypbLA5oT+Bt0xXJhiYvoR6SmmNXZfpzOGXwdKWmcwG8N7PwVVWV3eF/68nmD9BaJSsTBhyQ==}
+    peerDependencies:
+      babel-plugin-macros: ^3.1.0
+    peerDependenciesMeta:
+      babel-plugin-macros:
+        optional: true
 
   deep-eql@4.1.4:
     resolution: {integrity: sha512-SUwdGfqdKOwxCPeVYjwSyRpJ7Z+fhpwIAtmCUdZIWZ/YP5R9WAsyuSgpLVDi9bjWoN2LXHNss/dk3urXtdQxGg==}
@@ -12852,6 +12863,8 @@ snapshots:
   decompress-response@6.0.0:
     dependencies:
       mimic-response: 3.1.0
+
+  dedent@1.5.3: {}
 
   deep-eql@4.1.4:
     dependencies:

@@ -1,0 +1,98 @@
+# This file is not auto-generated. Feel free to edit it.
+
+name: Storybook Chromatic Deployment
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    paths-ignore:
+      - "build/**"
+      - "lib/**"
+      - "engine/**"
+      - "docs/**"
+      - "tools/**"
+      - "test/**"
+      - "project/**"
+      - "app/ide-desktop/**"
+
+# Cancel in-progress workflows if a new one is started
+concurrency:
+  group: ci-pull-request=${{github.ref}}-1
+  cancel-in-progress: true
+
+permissions:
+  contents: read # Read-only access to repository contents
+  issues: write # Write access to issues
+  pull-requests: write # Write access to pull requests
+  statuses: write # Write access to commit statuses
+
+jobs:
+  deploy-chromatic-react:
+    name: Deploy Storybook to Chromatic (React)
+    runs-on: ubuntu-latest
+    outputs:
+      dashboardUrl: ${{ steps.publish_chromatic.outputs.url }}
+      dashboardStorybookUrl: ${{ steps.publish_chromatic.outputs.storybookUrl }}
+    env:
+      CHROMATIC_RETRIES: 3
+      LOG_LEVEL: "error"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: actions/cache@v4
+        name: Download storybook cache
+        with:
+          path: |
+            **/node_modules/.cache
+          key: ${{ runner.os }}-storybook-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-storybook
+
+      - name: Publish to Chromatic
+        id: publish_chromatic
+        uses: chromaui/action@v1
+        with:
+          autoAcceptChanges: develop
+          exitZeroOnChanges: true
+          exitOnceUploaded: true
+          configFile: "app/gui/chromatic.config.json"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          projectToken: ${{ secrets.DASHBOARD_CHROMATIC_PROJECT_TOKEN }}
+
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    needs: deploy-chromatic-react
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+      - name: Comment PR
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            import setMessage from '${{ github.workspace }}/app/gui/scripts/ci/set-message'
+
+            await setMessage({
+              header: "## 🧪 Storybook is successfully deployed!",
+              body: `
+                ### 📊 Dashboard:
+                - 👀 Review changes: ${{ needs.deploy-chromatic-react.outputs.dashboardUrl }}
+                - 👨‍🎨 Preview storybook: ${{ needs.deploy-chromatic-react.outputs.dashboardStorybookUrl }}
+              `,
+              github,
+              repo: context.repo,
+              prNumber: context.payload.pull_request.number
+            })
