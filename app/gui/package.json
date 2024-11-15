@@ -32,6 +32,7 @@
     "test-dev:e2e": "cross-env NODE_ENV=production playwright test --ui",
     "test-dev-dashboard:e2e": "cross-env NODE_ENV=production playwright test ./e2e/dashboard/ --ui",
     "preinstall": "corepack pnpm run generate-metadata",
+    "playwright:install": "playwright install",
     "generate-metadata": "node scripts/generateIconMetadata.js",
     "storybook": "pnpm run \"/^storybook:.*/\"",
     "storybook:react": "cross-env FRAMEWORK=react storybook dev -p 6006",
