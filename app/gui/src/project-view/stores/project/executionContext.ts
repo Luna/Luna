@@ -15,6 +15,7 @@ import * as random from 'lib0/random'
 import { reactive } from 'vue'
 import type { LanguageServer } from 'ydoc-shared/languageServer'
 import {
+  methodPointerEquals,
   stackItemsEqual,
   type ContextId,
   type Diagnostic,
@@ -45,16 +46,26 @@ function visualizationConfigEqual(
   b: NodeVisualizationConfiguration,
 ): boolean {
   return (
-    a === b ||
+    visualizationConfigPreprocessorEqual(a, b) &&
+    (a.positionalArgumentsExpressions === b.positionalArgumentsExpressions ||
+      (Array.isArray(a.positionalArgumentsExpressions) &&
+        Array.isArray(b.positionalArgumentsExpressions) &&
+        array.equalFlat(a.positionalArgumentsExpressions, b.positionalArgumentsExpressions)))
+  )
+}
+
+/** Same as {@link visualizationConfigEqual}, but ignores differences in {@link NodeVisualizationConfiguration.positionalArgumentsExpressions}. */
+export function visualizationConfigPreprocessorEqual(
+  a: NodeVisualizationConfiguration,
+  b: NodeVisualizationConfiguration,
+): boolean {
+  return (
+    a == b ||
     (a.visualizationModule === b.visualizationModule &&
-      (a.positionalArgumentsExpressions === b.positionalArgumentsExpressions ||
-        (Array.isArray(a.positionalArgumentsExpressions) &&
-          Array.isArray(b.positionalArgumentsExpressions) &&
-          array.equalFlat(a.positionalArgumentsExpressions, b.positionalArgumentsExpressions))) &&
       (a.expression === b.expression ||
         (typeof a.expression === 'object' &&
           typeof b.expression === 'object' &&
-          object.equalFlat(a.expression, b.expression))))
+          methodPointerEquals(a.expression, b.expression))))
   )
 }
 
@@ -253,16 +264,25 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
     this.sync()
   }
 
-  /** TODO: Add docs */
+  /** See {@link LanguageServer.recomputeExecutionContext}. */
   recompute(
-    expressionIds: 'all' | ExternalId[] = 'all',
+    invalidatedIds?: 'all' | ExternalId[],
     executionEnvironment?: ExecutionEnvironment,
+    expressionConfigs?: {
+      expressionId: ExpressionId
+      executionEnvironment?: ExecutionEnvironment
+    }[],
   ) {
     this.queue.pushTask(async (state) => {
       if (state.status !== 'created') {
         this.sync()
       }
-      await this.lsRpc.recomputeExecutionContext(this.id, expressionIds, executionEnvironment)
+      await this.lsRpc.recomputeExecutionContext(
+        this.id,
+        invalidatedIds,
+        executionEnvironment,
+        expressionConfigs,
+      )
       return state
     })
   }
