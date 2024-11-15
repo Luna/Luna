@@ -28,14 +28,14 @@ import org.enso.interpreter.runtime.error.PanicSentinel;
 import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.graalvm.collections.Pair;
 
-abstract class TypeCheckNode extends TypeCheckValueNode {
+non-sealed abstract class SingleTypeCheckNode extends AbstractTypeCheckNode {
   private final Type expectedType;
   @Node.Child IsValueOfTypeNode checkType;
   @CompilerDirectives.CompilationFinal private String expectedTypeMessage;
   @CompilerDirectives.CompilationFinal private LazyCheckRootNode lazyCheck;
   @Node.Child private EnsoMultiValue.CastToNode castTo;
 
-  TypeCheckNode(String name, Type expectedType) {
+  SingleTypeCheckNode(String name, Type expectedType) {
     super(name);
     this.checkType = IsValueOfTypeNode.build();
     this.expectedType = expectedType;
@@ -103,12 +103,13 @@ abstract class TypeCheckNode extends TypeCheckValueNode {
       if (lazyCheck == null) {
         CompilerDirectives.transferToInterpreter();
         var enso = EnsoLanguage.get(this);
-        var node = (TypeCheckValueNode) copy();
-        lazyCheck = new LazyCheckRootNode(enso, node);
+        var node = (AbstractTypeCheckNode) copy();
+        lazyCheck = new LazyCheckRootNode(enso, new TypeCheckValueNode(node));
       }
       var lazyCheckFn = lazyCheck.wrapThunk(fn);
       return lazyCheckFn;
     }
+    assert EnsoContext.get(this).getBuiltins().any() != expectedType : "Don't check for Any: " + expectedType;
     if (v instanceof EnsoMultiValue mv) {
       if (castTo == null) {
         CompilerDirectives.transferToInterpreter();

@@ -806,7 +806,7 @@ class IrToTruffle(
                 methodDef.methodName.name,
                 fn.arguments,
                 fn.body,
-                TypeCheckValueNode.build(context, "conversion", toType),
+                TypeCheckValueNode.single("conversion", toType),
                 None,
                 true
               )
@@ -853,10 +853,8 @@ class IrToTruffle(
       if (oneOf.contains(null)) {
         null
       } else {
-        TypeCheckValueNode.oneOf(
-          comment,
-          oneOf.asJava
-        )
+        val arr: Array[TypeCheckValueNode] = oneOf.toArray
+        TypeCheckValueNode.oneOf(comment, arr: _*)
       }
     case i: `type`.Set.Intersection =>
       TypeCheckValueNode.allOf(
@@ -866,8 +864,7 @@ class IrToTruffle(
       )
     case p: Application.Prefix => extractAscribedType(comment, p.function)
     case _: Tpe.Function =>
-      TypeCheckValueNode.build(
-        context,
+      TypeCheckValueNode.single(
         comment,
         context.getTopScope().getBuiltins().function()
       )
@@ -888,7 +885,7 @@ class IrToTruffle(
           if (context.getBuiltins().any() == typeOrAny) {
             null
           } else {
-            TypeCheckValueNode.build(context, comment, typeOrAny)
+            TypeCheckValueNode.single(comment, typeOrAny)
           }
         case Some(
               BindingsMap

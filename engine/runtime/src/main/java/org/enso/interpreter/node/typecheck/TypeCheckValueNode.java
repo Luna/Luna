@@ -1,6 +1,5 @@
 package org.enso.interpreter.node.typecheck;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.Arrays;
@@ -8,22 +7,21 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.enso.interpreter.node.ExpressionNode;
-import org.enso.interpreter.node.expression.builtin.meta.AtomWithAHoleNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedConstructor;
 import org.enso.interpreter.runtime.callable.function.Function;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.text.Text;
-import org.enso.interpreter.runtime.error.DataflowError;
 import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.util.CachingSupplier;
 
-public abstract class TypeCheckValueNode extends Node {
-  private final String comment;
-  @CompilerDirectives.CompilationFinal private String expectedTypeMessage;
+/** A node and a factory for nodes performing type checks (including necessary conversions). */
+public final class TypeCheckValueNode extends Node {
+  private @Child AbstractTypeCheckNode check;
 
-  TypeCheckValueNode(String comment) {
-    this.comment = comment;
+  TypeCheckValueNode(AbstractTypeCheckNode check) {
+    assert check != null;
+    this.check = check;
   }
 
   /**
@@ -52,109 +50,99 @@ public abstract class TypeCheckValueNode extends Node {
    */
   public final Object handleCheckOrConversion(
       VirtualFrame frame, Object value, ExpressionNode expr) {
-    var result = executeCheckOrConversion(frame, value, expr);
+    var result = check.executeCheckOrConversion(frame, value, expr);
     if (result == null) {
       throw panicAtTheEnd(value);
     }
     return result;
   }
 
-  abstract Object findDirectMatch(VirtualFrame frame, Object value);
-
-  abstract Object executeCheckOrConversion(
-      VirtualFrame frame, Object value, ExpressionNode valueNode);
-
-  abstract String expectedTypeMessage();
-
-  protected final String joinTypeParts(List<String> parts, String separator) {
-    assert !parts.isEmpty();
-    if (parts.size() == 1) {
-      return parts.get(0);
+  /**
+   * Combines existing type checks into "all of" check.
+   *
+   * @param comment description of the check meaning
+   * @param checks existing type checks
+   * @return node the composed check or {@code null} if no check is needed
+   */
+  public static TypeCheckValueNode allOf(String comment, TypeCheckValueNode... checks) {
+    if (checks == null) {
+      return null;
     }
-
-    var separatorWithSpace = " " + separator + " ";
-    var builder = new StringBuilder();
-    boolean isFirst = true;
-    for (String part : parts) {
-      if (isFirst) {
-        isFirst = false;
-      } else {
-        builder.append(separatorWithSpace);
-      }
-
-      // If the part contains a space, it means it is not a single type but already a more complex
-      // expression with a separator.
-      // So to ensure we don't mess up the expression layers, we need to add parentheses around it.
-      boolean needsParentheses = part.contains(" ");
-      if (needsParentheses) {
-        builder.append("(");
-      }
-      builder.append(part);
-      if (needsParentheses) {
-        builder.append(")");
-      }
-    }
-
-    return builder.toString();
-  }
-
-  final PanicException panicAtTheEnd(Object v) {
-    if (expectedTypeMessage == null) {
-      CompilerDirectives.transferToInterpreterAndInvalidate();
-      expectedTypeMessage = expectedTypeMessage();
-    }
-    var ctx = EnsoContext.get(this);
-    Text msg;
-    if (v instanceof UnresolvedConstructor) {
-      msg = Text.create("Cannot find constructor {got} among {exp}");
-    } else {
-      var where = Text.create(comment == null ? "expression" : comment);
-      var exp = Text.create("expected ");
-      var got = Text.create(" to be {exp}, but got {got}");
-      msg = Text.create(exp, Text.create(where, got));
-    }
-    var err = ctx.getBuiltins().error().makeTypeErrorOfComment(expectedTypeMessage, v, msg);
-    throw new PanicException(err, this);
-  }
-
-  public static TypeCheckValueNode allOf(String argumentName, TypeCheckValueNode... checks) {
     var list = Arrays.asList(checks);
     var flatten =
         list.stream()
+            .filter(n -> n != null)
+            .map(n -> n.check)
             .flatMap(
                 n ->
-                    n instanceof AllOfNode all
+                    n instanceof AllOfTypesCheckNode all
                         ? Arrays.asList(all.getChecks()).stream()
                         : Stream.of(n))
             .toList();
     var arr = toArray(flatten);
     return switch (arr.length) {
       case 0 -> null;
-      case 1 -> arr[0];
-      default -> new AllOfNode(argumentName, arr);
+      case 1 -> new TypeCheckValueNode(arr[0]);
+      default -> new TypeCheckValueNode(new AllOfTypesCheckNode(comment, arr));
     };
   }
 
-  public static TypeCheckValueNode oneOf(String comment, List<TypeCheckValueNode> checks) {
-    var arr = toArray(checks);
-    return switch (arr.length) {
+  /**
+   * Combines existing checks into "one of" check.
+   *
+   * @param comment description of the check meaning
+   * @param checks existing type checks
+   * @return node the composed check or {@code null} if no check is needed
+   */
+  public static TypeCheckValueNode oneOf(String comment, TypeCheckValueNode... checks) {
+    if (checks == null) {
+      return null;
+    }
+    var list = Stream.of(checks).filter(n -> n != null).toList();
+    return switch (list.size()) {
       case 0 -> null;
-      case 1 -> arr[0];
-      default -> new OneOfNode(comment, arr);
+      case 1 -> list.get(0);
+      default -> {
+        var abstractTypeCheckList = list.stream().map(n -> n.check).toList();
+        var abstractTypeCheckArr = toArray(abstractTypeCheckList);
+        yield new TypeCheckValueNode(new OneOfTypesCheckNode(comment, abstractTypeCheckArr));
+      }
     };
   }
 
-  public static TypeCheckValueNode build(EnsoContext ctx, String comment, Type expectedType) {
-    assert ctx.getBuiltins().any() != expectedType : "Don't check for Any: " + expectedType;
-    return TypeCheckNodeGen.create(comment, expectedType);
+  /**
+   * Constructs "single type" check.
+   *
+   * @param comment description of the check meaning
+   * @param expectedType the type to check for - it shouldn't be {@code Any}
+   * @return node performing the check
+   */
+  public static TypeCheckValueNode single(String comment, Type expectedType) {
+    var typeCheckNodeImpl = SingleTypeCheckNodeGen.create(comment, expectedType);
+    return new TypeCheckValueNode(typeCheckNodeImpl);
   }
 
+  /**
+   * Constructs node to check for {@code polyglot java import} checks.
+   *
+   * @param comment description of the check meaning
+   * @param metaObjectSupplier provider of the meta object to check for
+   * @return node performing the check
+   */
   public static TypeCheckValueNode meta(
       String comment, Supplier<? extends Object> metaObjectSupplier) {
     var cachingSupplier = CachingSupplier.wrap(metaObjectSupplier);
-    return MetaCheckNodeGen.create(comment, cachingSupplier);
+    var typeCheckNodeImpl = MetaTypeCheckNodeGen.create(comment, cachingSupplier);
+    return new TypeCheckValueNode(typeCheckNodeImpl);
   }
 
+  /**
+   * Check whether given function is "lazy thunk". E.g. if it is a thunk wrapped by "lazy type
+   * check".
+   *
+   * @param fn function to check
+   * @return result of the check
+   */
   public static boolean isWrappedThunk(Function fn) {
     if (fn.getSchema() == LazyCheckRootNode.SCHEMA) {
       return fn.getPreAppliedArguments()[0] instanceof Function wrappedFn && wrappedFn.isThunk();
@@ -162,16 +150,25 @@ public abstract class TypeCheckValueNode extends Node {
     return false;
   }
 
-  static boolean isAllFitValue(Object v) {
-    return v instanceof DataflowError || AtomWithAHoleNode.isHole(v);
+  private final PanicException panicAtTheEnd(Object v) {
+    var expectedTypeMessage = check.getExpectedTypeMessage();
+    var ctx = EnsoContext.get(this);
+    Text msg;
+    if (v instanceof UnresolvedConstructor) {
+      msg = Text.create("Cannot find constructor {got} among {exp}");
+    } else {
+      msg = check.getComment();
+    }
+    var err = ctx.getBuiltins().error().makeTypeErrorOfComment(expectedTypeMessage, v, msg);
+    throw new PanicException(err, this);
   }
 
-  private static TypeCheckValueNode[] toArray(List<TypeCheckValueNode> list) {
+  private static AbstractTypeCheckNode[] toArray(List<AbstractTypeCheckNode> list) {
     if (list == null) {
-      return new TypeCheckValueNode[0];
+      return new AbstractTypeCheckNode[0];
     }
     var cnt = (int) list.stream().filter(n -> n != null).count();
-    var arr = new TypeCheckValueNode[cnt];
+    var arr = new AbstractTypeCheckNode[cnt];
     var it = list.iterator();
     for (int i = 0; i < cnt; ) {
       var element = it.next();

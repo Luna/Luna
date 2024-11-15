@@ -9,12 +9,15 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import org.enso.interpreter.node.expression.builtin.meta.IsValueOfTypeNode;
 import org.enso.interpreter.runtime.util.CachingSupplier;
 
-abstract class MetaCheckNode extends TypeCheckValueNode {
-
+/**
+ * Node for checking {@code polyglot java import} types. This class (and its subclasses)
+ * are an implementation detail. The API to perform the is in {@link TypeCheckNode}.
+ */
+non-sealed abstract class MetaTypeCheckNode extends AbstractTypeCheckNode {
   private final CachingSupplier<? extends Object> expectedSupplier;
   @CompilerDirectives.CompilationFinal private String expectedTypeMessage;
 
-  MetaCheckNode(String name, CachingSupplier<? extends Object> expectedMetaSupplier) {
+  MetaTypeCheckNode(String name, CachingSupplier<? extends Object> expectedMetaSupplier) {
     super(name);
     this.expectedSupplier = expectedMetaSupplier;
   }

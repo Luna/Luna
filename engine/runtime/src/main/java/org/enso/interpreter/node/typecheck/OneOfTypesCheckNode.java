@@ -6,11 +6,11 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.enso.interpreter.node.ExpressionNode;
 
-final class OneOfNode extends TypeCheckValueNode {
+final class OneOfTypesCheckNode extends AbstractTypeCheckNode {
 
-  @Children private TypeCheckValueNode[] checks;
+  @Children private AbstractTypeCheckNode[] checks;
 
-  OneOfNode(String name, TypeCheckValueNode[] checks) {
+  OneOfTypesCheckNode(String name, AbstractTypeCheckNode[] checks) {
     super(name);
     this.checks = checks;
   }
@@ -18,7 +18,7 @@ final class OneOfNode extends TypeCheckValueNode {
   @Override
   @ExplodeLoop
   final Object findDirectMatch(VirtualFrame frame, Object value) {
-    for (org.enso.interpreter.node.typecheck.TypeCheckValueNode n : checks) {
+    for (var n : checks) {
       java.lang.Object result = n.findDirectMatch(frame, value);
       if (result != null) {
         return result;
@@ -34,7 +34,7 @@ final class OneOfNode extends TypeCheckValueNode {
     if (direct != null) {
       return direct;
     }
-    for (org.enso.interpreter.node.typecheck.TypeCheckValueNode n : checks) {
+    for (var n : checks) {
       java.lang.Object result = n.executeCheckOrConversion(frame, value, expr);
       if (result != null) {
         return result;
@@ -47,7 +47,7 @@ final class OneOfNode extends TypeCheckValueNode {
   String expectedTypeMessage() {
     java.util.List<java.lang.String> parts =
         Arrays.stream(checks)
-            .map(TypeCheckValueNode::expectedTypeMessage)
+            .map(AbstractTypeCheckNode::expectedTypeMessage)
             .collect(Collectors.toList());
     return joinTypeParts(parts, "|");
   }
