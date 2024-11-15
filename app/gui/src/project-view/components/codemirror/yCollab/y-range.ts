@@ -5,6 +5,7 @@ import * as Y from 'yjs'
  * absolute positions. (https://docs.yjs.dev/api/relative-positions)
  */
 export class YRange {
+  /** TODO: Add docs */
   constructor(
     readonly yanchor: Y.RelativePosition,
     readonly yhead: Y.RelativePosition,
@@ -13,6 +14,7 @@ export class YRange {
     this.yhead = yhead
   }
 
+  /** TODO: Add docs */
   toJSON() {
     return {
       yanchor: Y.relativePositionToJSON(this.yanchor),
@@ -20,6 +22,7 @@ export class YRange {
     }
   }
 
+  /** TODO: Add docs */
   static fromJSON(json: { yanchor: unknown; yhead: unknown }) {
     return new YRange(
       Y.createRelativePositionFromJSON(json.yanchor),

@@ -31,13 +31,16 @@ export {
   yUndoManagerKeymap,
 }
 
-/**
- * @param undoManager Set undoManager to false to disable the undo-redo plugin
- */
+/* CodeMirror Extension for synchronizing the editor state with a {@link Y.Text}. */
 export const yCollab = (
   ytext: Y.Text & { doc: Y.Doc },
   awareness: Awareness | null,
-  { undoManager = new Y.UndoManager(ytext) }: { undoManager?: Y.UndoManager | false } = {},
+  {
+    undoManager = new Y.UndoManager(ytext),
+  }: {
+    /** Set to false to disable the undo-redo plugin */
+    undoManager?: Y.UndoManager | false
+  } = {},
 ) => {
   const ySyncConfig = new YSyncConfig(ytext, awareness)
   const plugins = [ySyncFacet.of(ySyncConfig), ySync]

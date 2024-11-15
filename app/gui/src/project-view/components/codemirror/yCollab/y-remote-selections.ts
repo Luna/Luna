@@ -118,12 +118,14 @@ class YRemoteCaretWidget extends cmView.WidgetType {
   }
 }
 
+/** TODO: Add docs */
 export class YRemoteSelectionsPluginValue {
   private readonly conf: YSyncConfig
   private readonly _awareness: Awareness
   decorations: cmView.DecorationSet
   private readonly _listener: ({ added, updated, removed }: any) => void
 
+  /** TODO: Add docs */
   constructor(view: cmView.EditorView) {
     this.conf = view.state.facet(ySyncFacet)
     assert(this.conf.awareness != null)
@@ -138,10 +140,12 @@ export class YRemoteSelectionsPluginValue {
     this.decorations = cmState.RangeSet.of([])
   }
 
+  /** TODO: Add docs */
   destroy() {
     this._awareness.off('change', this._listener)
   }
 
+  /** TODO: Add docs */
   update(update: cmView.ViewUpdate) {
     const ytext = this.conf.ytext
     const ydoc = ytext.doc

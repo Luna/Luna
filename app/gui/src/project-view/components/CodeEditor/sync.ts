@@ -22,6 +22,7 @@ function textEditToChangeSpec({ range: [from, to], insert }: SourceRangeEdit): C
 // Indicates a change updating the text to correspond to the given module state.
 const synchronizedModule = Annotation.define<MutableModule>()
 
+/** @returns A CodeMirror Extension that synchronizes the editor state with the AST of an Enso module. */
 export function useEnsoSourceSync(
   graphStore: Pick<GraphStore, 'moduleSource' | 'viewModule' | 'startEdit' | 'commitEdit'>,
   editorView: EditorView,

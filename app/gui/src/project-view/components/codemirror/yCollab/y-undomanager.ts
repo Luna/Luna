@@ -6,28 +6,32 @@ import * as Y from 'yjs'
 import { type YRange } from './y-range'
 import { ySyncAnnotation, type YSyncConfig, ySyncFacet } from './y-sync'
 
+/** TODO: Add docs */
 export class YUndoManagerConfig {
+  /** TODO: Add docs */
   constructor(readonly undoManager: Y.UndoManager) {}
 
+  /** TODO: Add docs */
   addTrackedOrigin(origin: unknown) {
     this.undoManager.addTrackedOrigin(origin)
   }
 
+  /** TODO: Add docs */
   removeTrackedOrigin(origin: unknown) {
     this.undoManager.removeTrackedOrigin(origin)
   }
 
   /**
-   * @return {boolean} Whether a change was undone.
+   * @returns Whether a change was undone.
    */
-  undo() {
+  undo(): boolean {
     return this.undoManager.undo() != null
   }
 
   /**
-   * @return {boolean} Whether a change was redone.
+   * @returns Whether a change was redone.
    */
-  redo() {
+  redo(): boolean {
     return this.undoManager.redo() != null
   }
 }

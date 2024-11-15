@@ -2,15 +2,11 @@
 import MarkdownEditorImpl from '@/components/MarkdownEditor/MarkdownEditorImpl.vue'
 import type { Text } from '@codemirror/state'
 import { SyntaxNode, TreeCursor } from '@lezer/common'
-import { computed, shallowRef, watch } from 'vue'
+import { computed } from 'vue'
 
 const { source, parsed } = defineProps<{
   source: Text
   parsed: SyntaxNode
-}>()
-
-const emit = defineEmits<{
-  edit: []
 }>()
 
 function parseRow(cursor: TreeCursor, output: string[]) {
@@ -26,8 +22,8 @@ function parseRow(cursor: TreeCursor, output: string[]) {
 }
 
 const content = computed(() => {
-  let headers: string[] = []
-  let rows: string[][] = []
+  const headers: string[] = []
+  const rows: string[][] = []
   const cursor = parsed.cursor()
   if (cursor.firstChild()) {
     do {
@@ -50,14 +46,14 @@ const content = computed(() => {
   <table>
     <thead>
       <tr>
-        <th v-for="cell in content.headers" class="cell">
+        <th v-for="(cell, c) in content.headers" :key="c" class="cell">
           <MarkdownEditorImpl :content="cell" />
         </th>
       </tr>
     </thead>
     <tbody class="tableBody">
-      <tr v-for="row in content.rows" class="row">
-        <td v-for="cell in row" class="cell">
+      <tr v-for="(row, r) in content.rows" :key="r" class="row">
+        <td v-for="(cell, c) in row" :key="c" class="cell">
           <MarkdownEditorImpl :content="cell" />
         </td>
       </tr>

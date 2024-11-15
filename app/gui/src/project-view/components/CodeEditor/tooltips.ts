@@ -45,6 +45,7 @@ function hoverTooltip(
   ]
 }
 
+/** @returns A CodeMirror extension that creates tooltips containing type and syntax information for Enso code. */
 export function ensoHoverTooltip(
   graphStore: Pick<GraphStore, 'moduleSource' | 'db'>,
   suggestionDbStore: Pick<SuggestionDbStore, 'entries'>,

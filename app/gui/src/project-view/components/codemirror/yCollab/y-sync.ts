@@ -5,10 +5,12 @@ import { assertDefined } from 'ydoc-shared/util/assert'
 import * as Y from 'yjs'
 import { YRange } from './y-range'
 
+/** TODO: Add docs */
 export class YSyncConfig {
   readonly undoManager: Y.UndoManager
   readonly ytext: Y.Text & { doc: Y.Doc }
 
+  /** TODO: Add docs */
   constructor(
     ytext: Y.Text & { doc: Y.Doc },
     readonly awareness: Awareness | null,
@@ -40,17 +42,12 @@ export class YSyncConfig {
    * It cannot be guaranteed that absolute index positions can be synced up between peers.
    * This might lead to undesired behavior when implementing features that require that all peers see the
    * same marked range (e.g. a comment plugin).
-   *
-   * @param {number} pos
-   * @param {number} [assoc]
    */
   toYPos(pos: number, assoc = 0) {
     return Y.createRelativePositionFromTypeIndex(this.ytext, pos, assoc)
   }
 
-  /**
-   * @param {Y.RelativePosition | Object} rpos
-   */
+  /** TODO: Add docs */
   fromYPos(rpos: Y.RelativePosition | object) {
     const pos = Y.createAbsolutePositionFromRelativePosition(
       Y.createRelativePositionFromJSON(rpos),
@@ -67,6 +64,7 @@ export class YSyncConfig {
     }
   }
 
+  /** TODO: Add docs */
   toYRange(range: cmState.SelectionRange) {
     const assoc = range.assoc
     const yanchor = this.toYPos(range.anchor, assoc)
@@ -74,6 +72,7 @@ export class YSyncConfig {
     return new YRange(yanchor, yhead)
   }
 
+  /** TODO: Add docs */
   fromYRange(yrange: YRange) {
     const anchor = this.fromYPos(yrange.yanchor)
     const head = this.fromYPos(yrange.yhead)
