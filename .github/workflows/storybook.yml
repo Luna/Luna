@@ -70,6 +70,8 @@ jobs:
     env:
       CHROMATIC_RETRIES: 3
       LOG_LEVEL: "error"
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.DASHBOARD_CHROMATIC_PROJECT_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v3
@@ -111,8 +113,6 @@ jobs:
           exitZeroOnChanges: true
           exitOnceUploaded: true
           configFile: "chromatic.config.json"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          projectToken: ${{ secrets.DASHBOARD_CHROMATIC_PROJECT_TOKEN }}
 
   comment-on-pr:
     name: Comment on PR
