@@ -80,7 +80,7 @@ jobs:
         with:
           key: ${{ steps.cache.outputs.cache-primary-key }}
           path: |
-            .eslintcache
+            **/.eslintcache
             node_modules/.cache/prettier
 
       - name: 📝 Annotate Code Linting Results
