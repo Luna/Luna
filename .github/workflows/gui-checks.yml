@@ -16,9 +16,7 @@ permissions:
 jobs:
   lint:
     name: 👮 Lint GUI
-    runs-on:
-      - self-hosted
-      - Linux
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -91,7 +89,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           report-json: "**/eslint_report.json"
           markdown-report-on-step-summary: true
-          only-pr-files: true
 
       - name: ❌ Fail if any check failed
         if: always() && (steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
