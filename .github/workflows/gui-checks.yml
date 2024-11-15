@@ -42,6 +42,11 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: 🧠 Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: pnpm run ci:typecheck
+
       - name: 📝 Prettier
         id: prettier
         continue-on-error: true
@@ -51,11 +56,6 @@ jobs:
         id: lint
         continue-on-error: true
         run: pnpm run ci:lint
-
-      - name: 🧠 Typecheck
-        id: typecheck
-        continue-on-error: true
-        run: pnpm run ci:typecheck
 
       - name: 🧪 Unit Tests
         id: unit-tests
