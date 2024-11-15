@@ -1,6 +1,6 @@
 /** @file Functions related to displaying text. */
 
-import ENGLISH from './english.json' assert { type: 'json' }
+import ENGLISH from './english.json' with { type: 'json' }
 
 // =============
 // === Types ===
@@ -60,6 +60,7 @@ interface PlaceholderOverrides {
   readonly chromeVersionX: [chromeVersion: string]
   readonly userAgentX: [userAgent: string]
   readonly compareVersionXWithLatest: [versionNumber: number]
+  readonly projectSessionX: [count: number]
   readonly onDateX: [dateString: string]
   readonly xUsersAndGroupsSelected: [usersAndGroupsCount: number]
   readonly removeTheLocalDirectoryXFromFavorites: [directoryName: string]
@@ -77,8 +78,6 @@ interface PlaceholderOverrides {
   readonly listFolderBackendError: [string]
   readonly createFolderBackendError: [string]
   readonly updateFolderBackendError: [string]
-  readonly listAssetVersionsBackendError: [string]
-  readonly getFileContentsBackendError: [string]
   readonly updateAssetBackendError: [string]
   readonly deleteAssetBackendError: [string]
   readonly undoDeleteAssetBackendError: [string]
@@ -88,7 +87,6 @@ interface PlaceholderOverrides {
   readonly duplicateProjectBackendError: [string]
   readonly closeProjectBackendError: [string]
   readonly listProjectSessionsBackendError: [string]
-  readonly getProjectDetailsBackendError: [string]
   readonly getProjectLogsBackendError: [string]
   readonly openProjectBackendError: [string]
   readonly openProjectMissingCredentialsBackendError: [string]
@@ -145,6 +143,8 @@ interface PlaceholderOverrides {
   readonly arbitraryFieldTooLarge: [maxSize: string]
   readonly arbitraryFieldTooSmall: [minSize: string]
   readonly uploadLargeFileStatus: [uploadedParts: number, totalParts: number]
+
+  readonly latestVersion: [version: string, date: string]
 }
 
 /** An tuple of `string` for placeholders for each {@link TextId}. */
