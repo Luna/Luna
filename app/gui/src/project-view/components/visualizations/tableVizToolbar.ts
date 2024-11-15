@@ -24,7 +24,7 @@ export interface SortFilterNodesButtonOptions {
   isDisabled: ToValue<boolean>
   isFilterSortNodeEnabled: ToValue<boolean>
   createNodes: (...options: NodeCreationOptions[]) => void,
-  colTypeMap: Record<string, string>
+  colTypeMap: Map<string, string>
 }
 
 export interface FormatMenuOptions {
@@ -64,13 +64,11 @@ function useSortFilterNodesButton({
   const filterPattern = computed(() => Pattern.parseExpression('__ (__ __)')!)
   
   const formatItem = (item: any, columnName: string, module: Ast.MutableModule) => {
-    const columnType = colTypeMap.value[columnName]
+    const columnType = colTypeMap.get(columnName) ?? ''
     const isNumber = ['Integer',
       'Float',
       'Decimal',
       'Byte']
-    console.log({columnType})
-    // take column value type and cast 
     return isNumber.indexOf(columnType) != -1 ?
       Ast.tryNumberToEnso(Number(item), module)!
     : Ast.TextLiteral.new(item)
