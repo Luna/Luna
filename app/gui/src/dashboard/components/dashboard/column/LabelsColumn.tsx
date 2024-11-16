@@ -93,7 +93,6 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
             isDisabled
             key={label}
             color={labelsByName.get(label)?.color ?? backendModule.COLORS[0]}
-            onPress={() => {}}
           >
             {label}
           </Label>

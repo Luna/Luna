@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as detect from 'enso-common/src/detect'
 
 import FindIcon from '#/assets/find.svg'
+import { unsafeWriteValue } from '#/utilities/write'
 
 import * as backendHooks from '#/hooks/backendHooks'
 
@@ -17,17 +18,16 @@ import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
 import SvgMask from '#/components/SvgMask'
 
-import type Backend from '#/services/Backend'
-
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useSuggestions } from '#/providers/DriveProvider'
+import type Backend from '#/services/Backend'
+import type { Label as BackendLabel } from '#/services/Backend'
 import * as array from '#/utilities/array'
 import AssetQuery from '#/utilities/AssetQuery'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { unsafeWriteValue } from '#/utilities/write'
 import { AnimatePresence, motion } from 'framer-motion'
 
 // =============
@@ -285,6 +285,30 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     }
   }, [query, setQuery])
 
+  const onSearchFieldKeyDown = useEventCallback((event: aria.KeyboardEvent) => {
+    event.continuePropagation()
+  })
+
+  const searchFieldOnChange = useEventCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (querySource.current !== QuerySource.internal) {
+      querySource.current = QuerySource.typing
+      setQuery(AssetQuery.fromString(event.target.value))
+    }
+  })
+
+  const searchInputOnKeyDown = useEventCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      event.key === 'Enter' &&
+      !event.shiftKey &&
+      !event.altKey &&
+      !event.metaKey &&
+      !event.ctrlKey
+    ) {
+      // Clone the query to refresh results.
+      setQuery(query.clone())
+    }
+  })
+
   return (
     <FocusArea direction="horizontal">
       {(innerProps) => (
@@ -335,9 +359,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
                 aria-label={getText('assetSearchFieldLabel')}
                 className="relative grow before:text before:absolute before:-inset-x-1 before:my-auto before:rounded-full before:transition-all"
                 value={query.query}
-                onKeyDown={(event) => {
-                  event.continuePropagation()
-                }}
+                onKeyDown={onSearchFieldKeyDown}
               >
                 <aria.Input
                   type="search"
@@ -351,24 +373,8 @@ function AssetSearchBar(props: AssetSearchBarProps) {
                     : getText('localBackendSearchPlaceholder')
                   }
                   className="focus-child peer text relative z-1 w-full bg-transparent placeholder-primary/40"
-                  onChange={(event) => {
-                    if (querySource.current !== QuerySource.internal) {
-                      querySource.current = QuerySource.typing
-                      setQuery(AssetQuery.fromString(event.target.value))
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === 'Enter' &&
-                      !event.shiftKey &&
-                      !event.altKey &&
-                      !event.metaKey &&
-                      !event.ctrlKey
-                    ) {
-                      // Clone the query to refresh results.
-                      setQuery(query.clone())
-                    }
-                  }}
+                  onChange={searchFieldOnChange}
+                  onKeyDown={searchInputOnKeyDown}
                 />
               </aria.SearchField>
             </FocusRing>
@@ -522,7 +528,7 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
         index === selectedIndex && 'bg-selected-frame',
       )}
       onPress={(event) => {
-        querySource.current = QuerySource.internal
+        unsafeWriteValue(querySource, 'current', QuerySource.internal)
         setQuery(
           selectedIndices.has(index) ?
             suggestion.deleteFromQuery(event.shiftKey ? query : baseQuery.current)
@@ -568,6 +574,25 @@ const Labels = React.memo(function Labels(props: LabelsProps) {
 
   const labels = backendHooks.useBackendQuery(backend, 'listTags', []).data ?? []
 
+  const labelOnPress = useEventCallback(
+    (event: aria.PressEvent | React.MouseEvent<HTMLButtonElement>, label?: BackendLabel) => {
+      if (label == null) {
+        return
+      }
+      unsafeWriteValue(querySource, 'current', QuerySource.internal)
+      setQuery((oldQuery) => {
+        const newQuery = oldQuery.withToggled(
+          'labels',
+          'negativeLabels',
+          label.value,
+          event.shiftKey,
+        )
+        unsafeWriteValue(baseQuery, 'current', newQuery)
+        return newQuery
+      })
+    },
+  )
+
   return (
     <>
       {isCloud && labels.length !== 0 && (
@@ -582,23 +607,12 @@ const Labels = React.memo(function Labels(props: LabelsProps) {
                 <Label
                   key={label.id}
                   color={label.color}
+                  label={label}
                   active={
                     negated || query.labels.some((term) => array.shallowEqual(term, [label.value]))
                   }
                   negated={negated}
-                  onPress={(event) => {
-                    querySource.current = QuerySource.internal
-                    setQuery((oldQuery) => {
-                      const newQuery = oldQuery.withToggled(
-                        'labels',
-                        'negativeLabels',
-                        label.value,
-                        event.shiftKey,
-                      )
-                      baseQuery.current = newQuery
-                      return newQuery
-                    })
-                  }}
+                  onPress={labelOnPress}
                 >
                   {label.value}
                 </Label>
