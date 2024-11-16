@@ -173,7 +173,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
         variant="custom"
         tooltip={tooltip}
         tooltipPlacement="right"
-        className={tailwindMerge.twMerge(
+        className={tailwindMerge.twJoin(
           'min-w-0 flex-auto grow-0',
           isCurrent && 'focus-default',
           isDisabled && 'cursor-not-allowed hover:bg-transparent',
@@ -182,13 +182,14 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
         onPress={onPress}
       >
         <div
-          className={tailwindMerge.twMerge(
+          className={tailwindMerge.twJoin(
             'group flex h-row min-w-0 flex-auto items-center gap-icon-with-text rounded-full px-button-x selectable',
             isCurrent && 'disabled active',
             !isCurrent && !isDisabled && 'hover:bg-selected-frame',
           )}
         >
           <SvgMask src={icon} className={twMerge('shrink-0', iconClassName)} />
+
           <ariaComponents.Text slot="description" truncate="1" className="flex-auto">
             {label}
           </ariaComponents.Text>

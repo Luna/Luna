@@ -79,6 +79,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   const state = aria.useTooltipTriggerState({
     closeDelay: DEFAULT_DELAY,
     delay: DEFAULT_DELAY,
+    isDisabled,
   })
 
   const handleHoverChange = eventCallback.useEventCallback((isHovered: boolean) => {
@@ -109,7 +110,13 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
     onHoverChange: handleHoverChange,
   })
 
-  const { tooltipProps } = aria.useTooltipTrigger({}, state, targetRef)
+  const { tooltipProps } = aria.useTooltipTrigger(
+    {
+      isDisabled,
+    },
+    state,
+    targetRef,
+  )
 
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const { overlayProps, updatePosition } = aria.useOverlayPosition({
