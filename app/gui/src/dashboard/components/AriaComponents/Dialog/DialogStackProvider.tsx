@@ -77,10 +77,14 @@ export function DialogStackRegistrar(props: React.PropsWithChildren<DialogStackI
   const { add, slice } = useStore(store, (state) => ({ add: state.add, slice: state.slice }))
 
   React.useEffect(() => {
-    add({ id, type })
+    React.startTransition(() => {
+      add({ id, type })
+    })
 
     return () => {
-      slice(id)
+      React.startTransition(() => {
+        slice(id)
+      })
     }
   }, [add, slice, id, type])
 
