@@ -132,7 +132,6 @@ export interface AssetSearchBarProps {
 /** A search bar containing a text input, and a list of suggestions. */
 function AssetSearchBar(props: AssetSearchBarProps) {
   const { backend, isCloud, query, setQuery } = props
-  const { getText } = textProvider.useText()
   const { modalRef } = modalProvider.useModalRef()
   /** A cached query as of the start of tabbing. */
   const baseQuery = React.useRef(query)
@@ -354,36 +353,77 @@ function AssetSearchBar(props: AssetSearchBarProps) {
               src={FindIcon}
               className="absolute left-2 top-[50%] z-1 mt-[1px] -translate-y-1/2 text-primary/40"
             />
-            <FocusRing placement="before">
-              <aria.SearchField
-                aria-label={getText('assetSearchFieldLabel')}
-                className="relative grow before:text before:absolute before:-inset-x-1 before:my-auto before:rounded-full before:transition-all"
-                value={query.query}
-                onKeyDown={onSearchFieldKeyDown}
-              >
-                <aria.Input
-                  type="search"
-                  ref={searchRef}
-                  size={1}
-                  placeholder={
-                    isCloud ?
-                      detect.isOnMacOS() ?
-                        getText('remoteBackendSearchPlaceholderMacOs')
-                      : getText('remoteBackendSearchPlaceholder')
-                    : getText('localBackendSearchPlaceholder')
-                  }
-                  className="focus-child peer text relative z-1 w-full bg-transparent placeholder-primary/40"
-                  onChange={searchFieldOnChange}
-                  onKeyDown={searchInputOnKeyDown}
-                />
-              </aria.SearchField>
-            </FocusRing>
+
+            <AssetSearchBarInput
+              query={query}
+              isCloud={isCloud}
+              onSearchFieldKeyDown={onSearchFieldKeyDown}
+              searchRef={searchRef}
+              searchFieldOnChange={searchFieldOnChange}
+              searchInputOnKeyDown={searchInputOnKeyDown}
+            />
           </aria.Label>
         </div>
       )}
     </FocusArea>
   )
 }
+
+/** Props for a {@link AssetSearchBarInput}. */
+interface AssetSearchBarInputProps {
+  readonly query: AssetQuery
+  readonly isCloud: boolean
+  readonly onSearchFieldKeyDown: (event: aria.KeyboardEvent) => void
+  readonly searchRef: React.RefObject<HTMLInputElement>
+  readonly searchFieldOnChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  readonly searchInputOnKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void
+}
+
+/**
+ * Renders the search field.
+ */
+// eslint-disable-next-line no-restricted-syntax
+const AssetSearchBarInput = React.memo(function AssetSearchBarInput(
+  props: AssetSearchBarInputProps,
+) {
+  const {
+    query,
+    isCloud,
+    onSearchFieldKeyDown,
+    searchRef,
+    searchFieldOnChange,
+    searchInputOnKeyDown,
+  } = props
+  const { getText } = textProvider.useText()
+  return (
+    <>
+      <FocusRing placement="before">
+        <aria.SearchField
+          aria-label={getText('assetSearchFieldLabel')}
+          className="relative grow before:text before:absolute before:-inset-x-1 before:my-auto before:rounded-full before:transition-all"
+          value={query.query}
+          onKeyDown={onSearchFieldKeyDown}
+        >
+          <aria.Input
+            type="search"
+            ref={searchRef}
+            size={1}
+            placeholder={
+              isCloud ?
+                detect.isOnMacOS() ?
+                  getText('remoteBackendSearchPlaceholderMacOs')
+                : getText('remoteBackendSearchPlaceholder')
+              : getText('localBackendSearchPlaceholder')
+            }
+            className="focus-child peer text relative z-1 w-full bg-transparent placeholder-primary/40"
+            onChange={searchFieldOnChange}
+            onKeyDown={searchInputOnKeyDown}
+          />
+        </aria.SearchField>
+      </FocusRing>
+    </>
+  )
+})
 
 /**
  * Props for a {@link AssetSearchBarPopover}.

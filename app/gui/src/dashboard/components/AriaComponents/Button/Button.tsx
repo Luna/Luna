@@ -278,219 +278,218 @@ export const BUTTON_STYLES = tv({
 })
 
 /** A button allows a user to perform an action, with mouse, touch, and keyboard interactions. */
-export const Button = forwardRef(function Button(
-  props: ButtonProps,
-  ref: React.ForwardedRef<HTMLButtonElement>,
-) {
-  const {
-    className,
-    contentClassName,
-    children,
-    variant,
-    icon,
-    loading = false,
-    isActive,
-    showIconOnHover,
-    iconPosition,
-    size,
-    fullWidth,
-    rounded,
-    tooltip,
-    tooltipPlacement,
-    testId,
-    loaderPosition = 'full',
-    extraClickZone: extraClickZoneProp,
-    onPress = () => {},
-    variants = BUTTON_STYLES,
-    ...ariaProps
-  } = props
-  const focusChildProps = focusHooks.useFocusChild()
+export const Button = React.memo(
+  forwardRef(function Button(props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) {
+    const {
+      className,
+      contentClassName,
+      children,
+      variant,
+      icon,
+      loading = false,
+      isActive,
+      showIconOnHover,
+      iconPosition,
+      size,
+      fullWidth,
+      rounded,
+      tooltip,
+      tooltipPlacement,
+      testId,
+      loaderPosition = 'full',
+      extraClickZone: extraClickZoneProp,
+      onPress = () => {},
+      variants = BUTTON_STYLES,
+      ...ariaProps
+    } = props
+    const focusChildProps = focusHooks.useFocusChild()
 
-  const [implicitlyLoading, setImplicitlyLoading] = React.useState(false)
-  const contentRef = React.useRef<HTMLSpanElement>(null)
-  const loaderRef = React.useRef<HTMLSpanElement>(null)
+    const [implicitlyLoading, setImplicitlyLoading] = React.useState(false)
+    const contentRef = React.useRef<HTMLSpanElement>(null)
+    const loaderRef = React.useRef<HTMLSpanElement>(null)
 
-  const isLink = ariaProps.href != null
+    const isLink = ariaProps.href != null
 
-  const Tag = isLink ? aria.Link : aria.Button
+    const Tag = isLink ? aria.Link : aria.Button
 
-  const goodDefaults = {
-    ...(isLink ? { rel: 'noopener noreferrer' } : { type: 'button' as const }),
-    'data-testid': testId,
-  }
-
-  const isIconOnly = (children == null || children === '' || children === false) && icon != null
-  const shouldShowTooltip = (() => {
-    if (tooltip === false) {
-      return false
-    } else if (isIconOnly) {
-      return true
-    } else {
-      return tooltip != null
+    const goodDefaults = {
+      ...(isLink ? { rel: 'noopener noreferrer' } : { type: 'button' as const }),
+      'data-testid': testId,
     }
-  })()
-  const tooltipElement = shouldShowTooltip ? tooltip ?? ariaProps['aria-label'] : null
 
-  const isLoading = loading || implicitlyLoading
-  const isDisabled = props.isDisabled ?? isLoading
-  const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
-
-  React.useLayoutEffect(() => {
-    const delay = 350
-
-    if (isLoading) {
-      const loaderAnimation = loaderRef.current?.animate(
-        [{ opacity: 0 }, { opacity: 0, offset: 1 }, { opacity: 1 }],
-        { duration: delay, easing: 'linear', delay: 0, fill: 'forwards' },
-      )
-      const contentAnimation =
-        loaderPosition !== 'full' ? null : (
-          contentRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
-            duration: 0,
-            easing: 'linear',
-            delay,
-            fill: 'forwards',
-          })
-        )
-
-      return () => {
-        loaderAnimation?.cancel()
-        contentAnimation?.cancel()
-      }
-    } else {
-      return () => {}
-    }
-  }, [isLoading, loaderPosition])
-
-  const handlePress = (event: aria.PressEvent): void => {
-    if (!isDisabled) {
-      const result = onPress?.(event)
-
-      if (result instanceof Promise) {
-        setImplicitlyLoading(true)
-        void result.finally(() => {
-          setImplicitlyLoading(false)
-        })
-      }
-    }
-  }
-
-  const styles = variants({
-    isDisabled,
-    isActive,
-    loading: isLoading,
-    fullWidth,
-    size,
-    rounded,
-    variant,
-    iconPosition,
-    showIconOnHover,
-    extraClickZone: extraClickZoneProp,
-    iconOnly: isIconOnly,
-  })
-
-  const childrenFactory = (
-    render: aria.ButtonRenderProps | aria.LinkRenderProps,
-  ): React.ReactNode => {
-    const iconComponent = (() => {
-      if (icon == null) {
-        return null
-      } else if (isLoading && loaderPosition === 'icon') {
-        return (
-          <span className={styles.icon()}>
-            <StatelessSpinner state="loading-medium" size={16} />
-          </span>
-        )
+    const isIconOnly = (children == null || children === '' || children === false) && icon != null
+    const shouldShowTooltip = (() => {
+      if (tooltip === false) {
+        return false
+      } else if (isIconOnly) {
+        return true
       } else {
-        /* @ts-expect-error any here is safe because we transparently pass it to the children, and ts infer the type outside correctly */
-        const actualIcon = typeof icon === 'function' ? icon(render) : icon
-
-        if (typeof actualIcon === 'string') {
-          return <SvgMask src={actualIcon} className={styles.icon()} />
-        } else {
-          return <span className={styles.icon()}>{actualIcon}</span>
-        }
+        return tooltip != null
       }
     })()
-    // Icon only button
-    if (isIconOnly) {
-      return <span className={styles.extraClickZone()}>{iconComponent}</span>
-    } else {
-      // Default button
-      return (
-        <>
-          {iconComponent}
-          <span className={styles.text()}>
-            {/* @ts-expect-error any here is safe because we transparently pass it to the children, and ts infer the type outside correctly */}
-            {typeof children === 'function' ? children(render) : children}
-          </span>
-        </>
-      )
+    const tooltipElement = shouldShowTooltip ? tooltip ?? ariaProps['aria-label'] : null
+
+    const isLoading = loading || implicitlyLoading
+    const isDisabled = props.isDisabled ?? isLoading
+    const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
+
+    React.useLayoutEffect(() => {
+      const delay = 350
+
+      if (isLoading) {
+        const loaderAnimation = loaderRef.current?.animate(
+          [{ opacity: 0 }, { opacity: 0, offset: 1 }, { opacity: 1 }],
+          { duration: delay, easing: 'linear', delay: 0, fill: 'forwards' },
+        )
+        const contentAnimation =
+          loaderPosition !== 'full' ? null : (
+            contentRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+              duration: 0,
+              easing: 'linear',
+              delay,
+              fill: 'forwards',
+            })
+          )
+
+        return () => {
+          loaderAnimation?.cancel()
+          contentAnimation?.cancel()
+        }
+      } else {
+        return () => {}
+      }
+    }, [isLoading, loaderPosition])
+
+    const handlePress = (event: aria.PressEvent): void => {
+      if (!isDisabled) {
+        const result = onPress?.(event)
+
+        if (result instanceof Promise) {
+          setImplicitlyLoading(true)
+          void result.finally(() => {
+            setImplicitlyLoading(false)
+          })
+        }
+      }
     }
-  }
 
-  const { tooltip: visualTooltip, targetProps } = ariaComponents.useVisualTooltip({
-    targetRef: contentRef,
-    children: tooltipElement,
-    isDisabled: !shouldUseVisualTooltip,
-    ...(tooltipPlacement && { overlayPositionProps: { placement: tooltipPlacement } }),
-  })
+    const styles = variants({
+      isDisabled,
+      isActive,
+      loading: isLoading,
+      fullWidth,
+      size,
+      rounded,
+      variant,
+      iconPosition,
+      showIconOnHover,
+      extraClickZone: extraClickZoneProp,
+      iconOnly: isIconOnly,
+    })
 
-  const button = (
-    <Tag
-      // @ts-expect-error ts errors are expected here because we are merging props with different types
-      ref={ref}
-      // @ts-expect-error ts errors are expected here because we are merging props with different types
-      {...aria.mergeProps<aria.ButtonProps>()(goodDefaults, ariaProps, focusChildProps, {
-        isDisabled,
-        // we use onPressEnd instead of onPress because for some reason react-aria doesn't trigger
-        // onPress on EXTRA_CLICK_ZONE, but onPress{start,end} are triggered
-        onPressEnd: (e) => {
-          if (!isDisabled) {
-            handlePress(e)
-          }
-        },
-        className: aria.composeRenderProps(className, (classNames, states) =>
-          styles.base({ className: classNames, ...states }),
-        ),
-      })}
-    >
-      {(render: aria.ButtonRenderProps | aria.LinkRenderProps) => (
-        <span className={styles.wrapper()}>
-          <span
-            ref={contentRef}
-            className={styles.content({ className: contentClassName })}
-            {...targetProps}
-          >
-            {}
-            {childrenFactory(render)}
-          </span>
-
-          {isLoading && loaderPosition === 'full' && (
-            <span ref={loaderRef} className={styles.loader()}>
+    const childrenFactory = (
+      render: aria.ButtonRenderProps | aria.LinkRenderProps,
+    ): React.ReactNode => {
+      const iconComponent = (() => {
+        if (icon == null) {
+          return null
+        } else if (isLoading && loaderPosition === 'icon') {
+          return (
+            <span className={styles.icon()}>
               <StatelessSpinner state="loading-medium" size={16} />
             </span>
-          )}
-        </span>
-      )}
-    </Tag>
-  )
+          )
+        } else {
+          /* @ts-expect-error any here is safe because we transparently pass it to the children, and ts infer the type outside correctly */
+          const actualIcon = typeof icon === 'function' ? icon(render) : icon
 
-  return (
-    tooltipElement == null ? button
-    : shouldUseVisualTooltip ?
-      <>
-        {button}
-        {visualTooltip}
-      </>
-    : <ariaComponents.TooltipTrigger delay={0} closeDelay={0}>
-        {button}
+          if (typeof actualIcon === 'string') {
+            return <SvgMask src={actualIcon} className={styles.icon()} />
+          } else {
+            return <span className={styles.icon()}>{actualIcon}</span>
+          }
+        }
+      })()
+      // Icon only button
+      if (isIconOnly) {
+        return <span className={styles.extraClickZone()}>{iconComponent}</span>
+      } else {
+        // Default button
+        return (
+          <>
+            {iconComponent}
+            <span className={styles.text()}>
+              {/* @ts-expect-error any here is safe because we transparently pass it to the children, and ts infer the type outside correctly */}
+              {typeof children === 'function' ? children(render) : children}
+            </span>
+          </>
+        )
+      }
+    }
 
-        <ariaComponents.Tooltip
-          {...(tooltipPlacement != null ? { placement: tooltipPlacement } : {})}
-        >
-          {tooltipElement}
-        </ariaComponents.Tooltip>
-      </ariaComponents.TooltipTrigger>
-  )
-})
+    const { tooltip: visualTooltip, targetProps } = ariaComponents.useVisualTooltip({
+      targetRef: contentRef,
+      children: tooltipElement,
+      isDisabled: !shouldUseVisualTooltip,
+      ...(tooltipPlacement && { overlayPositionProps: { placement: tooltipPlacement } }),
+    })
+
+    const button = (
+      <Tag
+        // @ts-expect-error ts errors are expected here because we are merging props with different types
+        ref={ref}
+        // @ts-expect-error ts errors are expected here because we are merging props with different types
+        {...aria.mergeProps<aria.ButtonProps>()(goodDefaults, ariaProps, focusChildProps, {
+          isDisabled,
+          // we use onPressEnd instead of onPress because for some reason react-aria doesn't trigger
+          // onPress on EXTRA_CLICK_ZONE, but onPress{start,end} are triggered
+          onPressEnd: (e) => {
+            if (!isDisabled) {
+              handlePress(e)
+            }
+          },
+          className: aria.composeRenderProps(className, (classNames, states) =>
+            styles.base({ className: classNames, ...states }),
+          ),
+        })}
+      >
+        {(render: aria.ButtonRenderProps | aria.LinkRenderProps) => (
+          <span className={styles.wrapper()}>
+            <span
+              ref={contentRef}
+              className={styles.content({ className: contentClassName })}
+              {...targetProps}
+            >
+              {}
+              {childrenFactory(render)}
+            </span>
+
+            {isLoading && loaderPosition === 'full' && (
+              <span ref={loaderRef} className={styles.loader()}>
+                <StatelessSpinner state="loading-medium" size={16} />
+              </span>
+            )}
+          </span>
+        )}
+      </Tag>
+    )
+
+    return (
+      tooltipElement == null ? button
+      : shouldUseVisualTooltip ?
+        <>
+          {button}
+          {visualTooltip}
+        </>
+      : <ariaComponents.TooltipTrigger delay={0} closeDelay={0}>
+          {button}
+
+          <ariaComponents.Tooltip
+            {...(tooltipPlacement != null ? { placement: tooltipPlacement } : {})}
+          >
+            {tooltipElement}
+          </ariaComponents.Tooltip>
+        </ariaComponents.TooltipTrigger>
+    )
+  }),
+)

@@ -225,7 +225,7 @@ export interface CategorySwitcherProps {
 }
 
 /** A switcher to choose the currently visible assets table categoryModule.categoryType. */
-export default function CategorySwitcher(props: CategorySwitcherProps) {
+function CategorySwitcher(props: CategorySwitcherProps) {
   const { category, setCategory } = props
   const { user } = authProvider.useFullUserSession()
   const { getText } = textProvider.useText()
@@ -482,3 +482,5 @@ export default function CategorySwitcher(props: CategorySwitcherProps) {
     </div>
   )
 }
+
+export default React.memo(CategorySwitcher)

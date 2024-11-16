@@ -3,7 +3,7 @@
  *
  * `<AnimatedBackground />` component visually highlights selected items by sliding a background into view when hovered over or clicked.
  */
-import type { Transition } from 'framer-motion'
+import type { Transition, Variants } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { PropsWithChildren } from 'react'
 import { createContext, memo, useContext, useId, useMemo } from 'react'
@@ -130,6 +130,11 @@ interface AnimatedBackgroundItemUnderlayProps {
   readonly transition: Transition
 }
 
+const VARIANTS: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+}
+
 /**
  * Underlay for {@link AnimatedBackground.Item}.
  */
@@ -147,9 +152,10 @@ const AnimatedBackgroundItemUnderlay = memo(function AnimatedBackgroundItemUnder
           layoutId={`background-${layoutId}`}
           className="pointer-events-none absolute inset-0"
           transition={transition}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          variants={VARIANTS}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
         >
           {underlayElement}
         </motion.div>
