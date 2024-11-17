@@ -436,18 +436,40 @@ export default function AssetsTable(props: AssetsTableProps) {
     [expandedDirectoryIds],
   )
 
-  const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
-  const duplicateProjectMutation = useMutation(backendMutationOptions(backend, 'duplicateProject'))
-  const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
-  const createSecretMutation = useMutation(backendMutationOptions(backend, 'createSecret'))
-  const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
-  const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
+  const createProjectMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'createProject'), [backend]),
+  )
+  const duplicateProjectMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'duplicateProject'), [backend]),
+  )
+  const createDirectoryMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'createDirectory'), [backend]),
+  )
+  const createSecretMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'createSecret'), [backend]),
+  )
+  const updateSecretMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
+  )
+  const createDatalinkMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'createDatalink'), [backend]),
+  )
   const uploadFileMutation = useUploadFileWithToastMutation(backend)
-  const copyAssetMutation = useMutation(backendMutationOptions(backend, 'copyAsset'))
-  const deleteAssetMutation = useMutation(backendMutationOptions(backend, 'deleteAsset'))
-  const undoDeleteAssetMutation = useMutation(backendMutationOptions(backend, 'undoDeleteAsset'))
-  const updateAssetMutation = useMutation(backendMutationOptions(backend, 'updateAsset'))
-  const closeProjectMutation = useMutation(backendMutationOptions(backend, 'closeProject'))
+  const copyAssetMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'copyAsset'), [backend]),
+  )
+  const deleteAssetMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'deleteAsset'), [backend]),
+  )
+  const undoDeleteAssetMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'undoDeleteAsset'), [backend]),
+  )
+  const updateAssetMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'updateAsset'), [backend]),
+  )
+  const closeProjectMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'closeProject'), [backend]),
+  )
 
   const directories = useQueries({
     // We query only expanded directories, as we don't want to load the data for directories that are not visible.
@@ -488,21 +510,26 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   // We use a different query to refetch the directory data in the background.
   // This reduces the amount of rerenders by batching them together, so they happen less often.
-  useQuery({
-    queryKey: [backend.type, 'refetchListDirectory'],
-    queryFn: () => {
-      return queryClient
-        .refetchQueries({ queryKey: [backend.type, 'listDirectory'] })
-        .then(() => null)
-    },
-    refetchInterval:
-      enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
-    refetchOnMount: 'always',
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    enabled: !hidden,
-    meta: { persist: false },
-  })
+  useQuery(
+    useMemo(
+      () => ({
+        queryKey: [backend.type, 'refetchListDirectory'],
+        queryFn: () => {
+          return queryClient
+            .refetchQueries({ queryKey: [backend.type, 'listDirectory'] })
+            .then(() => null)
+        },
+        refetchInterval:
+          enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
+        refetchOnMount: 'always',
+        refetchIntervalInBackground: false,
+        refetchOnWindowFocus: true,
+        enabled: !hidden,
+        meta: { persist: false },
+      }),
+      [backend, enableAssetsTableBackgroundRefresh, assetsTableBackgroundRefreshInterval, hidden],
+    ),
+  )
 
   /** Return type of the query function for the listDirectory query. */
   type DirectoryQuery = typeof directories.rootDirectory.data
