@@ -28,7 +28,7 @@ import AssetQuery from '#/utilities/AssetQuery'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, Variants } from 'framer-motion'
 
 // =============
 // === Types ===
@@ -51,6 +51,7 @@ enum QuerySource {
 
 /** A suggested query. */
 export interface Suggestion {
+  readonly key: string
   readonly render: () => React.ReactNode
   readonly addToQuery: (query: AssetQuery) => AssetQuery
   readonly deleteFromQuery: (query: AssetQuery) => AssetQuery
@@ -136,14 +137,17 @@ function AssetSearchBar(props: AssetSearchBarProps) {
   /** A cached query as of the start of tabbing. */
   const baseQuery = React.useRef(query)
   const rawSuggestions = useSuggestions()
-  const [suggestions, setSuggestions] = React.useState(rawSuggestions)
-  const suggestionsRef = React.useRef(rawSuggestions)
+
+  const suggestionsRef = useSyncRef(rawSuggestions)
+
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [areSuggestionsVisible, privateSetAreSuggestionsVisible] = React.useState(false)
   const areSuggestionsVisibleRef = React.useRef(areSuggestionsVisible)
   const querySource = React.useRef(QuerySource.external)
   const rootRef = React.useRef<HTMLLabelElement | null>(null)
   const searchRef = React.useRef<HTMLInputElement | null>(null)
+
+  const suggestions = React.useDeferredValue(rawSuggestions)
 
   const setAreSuggestionsVisible = useEventCallback((value: boolean) => {
     React.startTransition(() => {
@@ -173,14 +177,8 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     }
   }, [query])
 
-  React.useEffect(() => {
-    if (querySource.current !== QuerySource.tabbing) {
-      setSuggestions(rawSuggestions)
-      suggestionsRef.current = rawSuggestions
-    }
-  }, [rawSuggestions])
-
   const selectedIndexDeps = useSyncRef({ query, setQuery, suggestions })
+
   React.useEffect(() => {
     const deps = selectedIndexDeps.current
     if (
@@ -464,7 +462,7 @@ function AssetSearchBarPopover(props: AssetSearchBarPopoverProps) {
 
   return (
     <>
-      <AnimatePresence>
+      <AnimatePresence mode="sync">
         {areSuggestionsVisible && (
           <motion.div
             initial={{ gridTemplateRows: '0fr', opacity: 0 }}
@@ -495,21 +493,23 @@ function AssetSearchBarPopover(props: AssetSearchBarPopoverProps) {
                 />
                 {/* Suggestions */}
                 <div className="flex max-h-search-suggestions-list flex-col overflow-y-auto overflow-x-hidden pb-0.5 pl-0.5">
-                  {suggestions.map((suggestion, index) => (
-                    <SuggestionRenderer
-                      key={index}
-                      index={index}
-                      selectedIndex={selectedIndex}
-                      selectedIndices={selectedIndices}
-                      querySource={querySource}
-                      setQuery={setQuery}
-                      suggestion={suggestion}
-                      setSelectedIndices={setSelectedIndices}
-                      setAreSuggestionsVisible={setAreSuggestionsVisible}
-                      query={query}
-                      baseQuery={baseQuery}
-                    />
-                  ))}
+                  <AnimatePresence mode="sync">
+                    {suggestions.map((suggestion, index) => (
+                      <SuggestionRenderer
+                        key={suggestion.key}
+                        index={index}
+                        selectedIndex={selectedIndex}
+                        selectedIndices={selectedIndices}
+                        querySource={querySource}
+                        setQuery={setQuery}
+                        suggestion={suggestion}
+                        setSelectedIndices={setSelectedIndices}
+                        setAreSuggestionsVisible={setAreSuggestionsVisible}
+                        query={query}
+                        baseQuery={baseQuery}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
@@ -553,44 +553,75 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
     baseQuery,
   } = props
 
+  const suggestionRendererVariants: Variants = {
+    initial: (index: number) => ({
+      opacity: 0,
+      y: -10,
+      scaleY: 0.5,
+      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
+    }),
+    animate: (index: number) => ({
+      opacity: 1,
+      y: 0,
+      scaleY: 1,
+      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
+    }),
+    exit: (index: number) => ({
+      opacity: 0,
+      y: 10,
+      scaleY: 0.5,
+      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
+    }),
+  }
+
   return (
-    <aria.Button
-      data-testid="asset-search-suggestion"
-      key={index}
-      ref={(el) => {
-        if (index === selectedIndex) {
-          el?.focus()
-        }
-      }}
-      className={tailwindMerge.twMerge(
-        'flex cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
-        selectedIndices.has(index) && 'bg-primary/10',
-        index === selectedIndex && 'bg-selected-frame',
-      )}
-      onPress={(event) => {
-        unsafeWriteValue(querySource, 'current', QuerySource.internal)
-        setQuery(
-          selectedIndices.has(index) ?
-            suggestion.deleteFromQuery(event.shiftKey ? query : baseQuery.current)
-          : suggestion.addToQuery(event.shiftKey ? query : baseQuery.current),
-        )
-        if (event.shiftKey) {
-          setSelectedIndices(
-            new Set(
-              selectedIndices.has(index) ?
-                [...selectedIndices].filter((otherIndex) => otherIndex !== index)
-              : [...selectedIndices, index],
-            ),
-          )
-        } else {
-          setAreSuggestionsVisible(false)
-        }
-      }}
+    <motion.div
+      layoutId={`suggestion-${index}`}
+      layout
+      custom={0}
+      variants={suggestionRendererVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
     >
-      <ariaComponents.Text variant="body" truncate="1" className="w-full">
-        {suggestion.render()}
-      </ariaComponents.Text>
-    </aria.Button>
+      <aria.Button
+        data-testid="asset-search-suggestion"
+        key={index}
+        ref={(el) => {
+          if (index === selectedIndex) {
+            el?.focus()
+          }
+        }}
+        className={tailwindMerge.twMerge(
+          'flex w-full cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
+          selectedIndices.has(index) && 'bg-primary/10',
+          index === selectedIndex && 'bg-selected-frame',
+        )}
+        onPress={(event) => {
+          unsafeWriteValue(querySource, 'current', QuerySource.internal)
+          setQuery(
+            selectedIndices.has(index) ?
+              suggestion.deleteFromQuery(event.shiftKey ? query : baseQuery.current)
+            : suggestion.addToQuery(event.shiftKey ? query : baseQuery.current),
+          )
+          if (event.shiftKey) {
+            setSelectedIndices(
+              new Set(
+                selectedIndices.has(index) ?
+                  [...selectedIndices].filter((otherIndex) => otherIndex !== index)
+                : [...selectedIndices, index],
+              ),
+            )
+          } else {
+            setAreSuggestionsVisible(false)
+          }
+        }}
+      >
+        <ariaComponents.Text variant="body" truncate="1" className="w-full">
+          {suggestion.render()}
+        </ariaComponents.Text>
+      </aria.Button>
+    </motion.div>
   )
 })
 

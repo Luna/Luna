@@ -11,6 +11,8 @@ import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo } from 'react'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+
 /**
  * Props for a {@link AssetPanelToggle}.
  */
@@ -44,6 +46,12 @@ export const AssetPanelToggle = memo(function AssetPanelToggle(props: AssetPanel
 
   const canDisplay = showWhen === 'collapsed' ? isAssetPanelHidden : !isAssetPanelHidden
 
+  const toggleAssetPanel = useEventCallback(() => {
+    setIsAssetPanelHidden(!isAssetPanelHidden)
+  })
+
+  console.log('isAssetPanelHidden', isAssetPanelHidden)
+
   return (
     <AnimatePresence initial={!canDisplay} mode="sync">
       {canDisplay && (
@@ -69,9 +77,7 @@ export const AssetPanelToggle = memo(function AssetPanelToggle(props: AssetPanel
             isActive={!isAssetPanelHidden}
             icon={RightPanelIcon}
             aria-label={getText('openAssetPanel')}
-            onPress={() => {
-              setIsAssetPanelHidden(!isAssetPanelHidden)
-            }}
+            onPress={toggleAssetPanel}
           />
         </motion.div>
       )}

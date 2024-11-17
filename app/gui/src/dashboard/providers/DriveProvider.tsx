@@ -443,12 +443,14 @@ export function useSetAssetPanelSelectedTab() {
   const store = useDriveStore()
 
   return useEventCallback((selectedTab: AssetPanelContextProps['selectedTab']) => {
-    const current = store.getState().assetPanelProps
-    if (current.selectedTab !== selectedTab) {
-      store.setState({
-        assetPanelProps: { ...current, selectedTab },
-      })
-    }
+    React.startTransition(() => {
+      const current = store.getState().assetPanelProps
+      if (current.selectedTab !== selectedTab) {
+        store.setState({
+          assetPanelProps: { ...current, selectedTab },
+        })
+      }
+    })
   })
 }
 
@@ -463,7 +465,9 @@ export function useSuggestions() {
 /** Set search suggestions. */
 export function useSetSuggestions() {
   const store = useDriveStore()
-  const setSuggestions = zustand.useStore(store, (state) => state.setSuggestions)
+  const setSuggestions = zustand.useStore(store, (state) => state.setSuggestions, {
+    unsafeEnableTransition: true,
+  })
   return useEventCallback((suggestions: readonly Suggestion[]) => {
     React.startTransition(() => {
       setSuggestions(suggestions)
@@ -473,12 +477,14 @@ export function useSetSuggestions() {
 
 /** Whether the Asset Panel is hidden. */
 export function useIsAssetPanelHidden() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.isAssetPanelHidden)
+  return zustand.useStore(useDriveStore(), (state) => state.isAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set whether the Asset Panel is hidden. */
 export function useSetIsAssetPanelHidden() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setIsAssetPanelHidden)
+  return zustand.useStore(useDriveStore(), (state) => state.setIsAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
 }

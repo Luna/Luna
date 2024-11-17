@@ -6,6 +6,7 @@ import * as aria from '#/components/aria'
 import * as mergeRefs from '#/utilities/mergeRefs'
 import * as twv from '#/utilities/tailwindVariants'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { forwardRef } from '#/utilities/react'
 import { memo } from 'react'
 import * as textProvider from './TextProvider'
@@ -165,7 +166,7 @@ export const Text = memo(
       className,
     })
 
-    const isTooltipDisabled = () => {
+    const isTooltipDisabled = useEventCallback(() => {
       if (tooltipDisplay === 'whenOverflowing') {
         return !truncate
       } else if (tooltipDisplay === 'always') {
@@ -173,7 +174,7 @@ export const Text = memo(
       } else {
         return false
       }
-    }
+    })
 
     const { tooltip, targetProps } = visualTooltip.useVisualTooltip({
       isDisabled: isTooltipDisabled(),
