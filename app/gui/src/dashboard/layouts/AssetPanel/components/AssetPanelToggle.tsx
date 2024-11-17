@@ -50,8 +50,6 @@ export const AssetPanelToggle = memo(function AssetPanelToggle(props: AssetPanel
     setIsAssetPanelHidden(!isAssetPanelHidden)
   })
 
-  console.log('isAssetPanelHidden', isAssetPanelHidden)
-
   return (
     <AnimatePresence initial={!canDisplay} mode="sync">
       {canDisplay && (

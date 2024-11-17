@@ -462,12 +462,12 @@ function AssetSearchBarPopover(props: AssetSearchBarPopoverProps) {
 
   return (
     <>
-      <AnimatePresence mode="sync">
+      <AnimatePresence mode="wait" custom={suggestions.length}>
         {areSuggestionsVisible && (
           <motion.div
-            initial={{ gridTemplateRows: '0fr', opacity: 0 }}
-            animate={{ gridTemplateRows: '1fr', opacity: 1 }}
-            exit={{ gridTemplateRows: '0fr', opacity: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
             className={ariaComponents.DIALOG_BACKGROUND({
               className:
                 'absolute left-0 right-0 top-0 z-1 grid w-full overflow-hidden rounded-default border-0.5 border-primary/20 -outline-offset-1 outline-primary',
@@ -493,23 +493,21 @@ function AssetSearchBarPopover(props: AssetSearchBarPopoverProps) {
                 />
                 {/* Suggestions */}
                 <div className="flex max-h-search-suggestions-list flex-col overflow-y-auto overflow-x-hidden pb-0.5 pl-0.5">
-                  <AnimatePresence mode="sync">
-                    {suggestions.map((suggestion, index) => (
-                      <SuggestionRenderer
-                        key={suggestion.key}
-                        index={index}
-                        selectedIndex={selectedIndex}
-                        selectedIndices={selectedIndices}
-                        querySource={querySource}
-                        setQuery={setQuery}
-                        suggestion={suggestion}
-                        setSelectedIndices={setSelectedIndices}
-                        setAreSuggestionsVisible={setAreSuggestionsVisible}
-                        query={query}
-                        baseQuery={baseQuery}
-                      />
-                    ))}
-                  </AnimatePresence>
+                  {suggestions.map((suggestion, index) => (
+                    <SuggestionRenderer
+                      key={suggestion.key}
+                      index={index}
+                      selectedIndex={selectedIndex}
+                      selectedIndices={selectedIndices}
+                      querySource={querySource}
+                      setQuery={setQuery}
+                      suggestion={suggestion}
+                      setSelectedIndices={setSelectedIndices}
+                      setAreSuggestionsVisible={setAreSuggestionsVisible}
+                      query={query}
+                      baseQuery={baseQuery}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -553,75 +551,44 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
     baseQuery,
   } = props
 
-  const suggestionRendererVariants: Variants = {
-    initial: (index: number) => ({
-      opacity: 0,
-      y: -10,
-      scaleY: 0.5,
-      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
-    }),
-    animate: (index: number) => ({
-      opacity: 1,
-      y: 0,
-      scaleY: 1,
-      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
-    }),
-    exit: (index: number) => ({
-      opacity: 0,
-      y: 10,
-      scaleY: 0.5,
-      transition: { duration: 0.2, delay: 0.05 * index, ease: 'easeInOut' },
-    }),
-  }
-
   return (
-    <motion.div
-      layoutId={`suggestion-${index}`}
-      layout
-      custom={0}
-      variants={suggestionRendererVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    >
-      <aria.Button
-        data-testid="asset-search-suggestion"
-        key={index}
-        ref={(el) => {
-          if (index === selectedIndex) {
-            el?.focus()
-          }
-        }}
-        className={tailwindMerge.twMerge(
-          'flex w-full cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
-          selectedIndices.has(index) && 'bg-primary/10',
-          index === selectedIndex && 'bg-selected-frame',
-        )}
-        onPress={(event) => {
-          unsafeWriteValue(querySource, 'current', QuerySource.internal)
-          setQuery(
-            selectedIndices.has(index) ?
-              suggestion.deleteFromQuery(event.shiftKey ? query : baseQuery.current)
-            : suggestion.addToQuery(event.shiftKey ? query : baseQuery.current),
+    <aria.Button
+      data-testid="asset-search-suggestion"
+      key={index}
+      ref={(el) => {
+        if (index === selectedIndex) {
+          el?.focus()
+        }
+      }}
+      className={tailwindMerge.twMerge(
+        'flex w-full cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
+        selectedIndices.has(index) && 'bg-primary/10',
+        index === selectedIndex && 'bg-selected-frame',
+      )}
+      onPress={(event) => {
+        unsafeWriteValue(querySource, 'current', QuerySource.internal)
+        setQuery(
+          selectedIndices.has(index) ?
+            suggestion.deleteFromQuery(event.shiftKey ? query : baseQuery.current)
+          : suggestion.addToQuery(event.shiftKey ? query : baseQuery.current),
+        )
+        if (event.shiftKey) {
+          setSelectedIndices(
+            new Set(
+              selectedIndices.has(index) ?
+                [...selectedIndices].filter((otherIndex) => otherIndex !== index)
+              : [...selectedIndices, index],
+            ),
           )
-          if (event.shiftKey) {
-            setSelectedIndices(
-              new Set(
-                selectedIndices.has(index) ?
-                  [...selectedIndices].filter((otherIndex) => otherIndex !== index)
-                : [...selectedIndices, index],
-              ),
-            )
-          } else {
-            setAreSuggestionsVisible(false)
-          }
-        }}
-      >
-        <ariaComponents.Text variant="body" truncate="1" className="w-full">
-          {suggestion.render()}
-        </ariaComponents.Text>
-      </aria.Button>
-    </motion.div>
+        } else {
+          setAreSuggestionsVisible(false)
+        }
+      }}
+    >
+      <ariaComponents.Text variant="body" truncate="1" className="w-full">
+        {suggestion.render()}
+      </ariaComponents.Text>
+    </aria.Button>
   )
 })
 
