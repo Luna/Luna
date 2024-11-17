@@ -38,11 +38,10 @@ export interface DirectoryNameColumnProps extends column.AssetColumnProps {
  * This should never happen.
  */
 export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
-  const { item, selected, state, rowState, setRowState, isEditable, depth } = props
-  const { backend, nodeMap, doToggleDirectoryExpansion, expandedDirectoryIds } = state
+  const { item, selected, state, rowState, setRowState, isEditable, depth, isExpanded } = props
+  const { backend, nodeMap, doToggleDirectoryExpansion } = state
   const { getText } = textProvider.useText()
   const driveStore = useDriveStore()
-  const isExpanded = expandedDirectoryIds.includes(item.id)
 
   const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))
 
@@ -67,8 +66,8 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
-        'group flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
+      className={tailwindMerge.twJoin(
+        'group flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {
@@ -93,7 +92,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
         variant="custom"
         aria-label={isExpanded ? getText('collapse') : getText('expand')}
         tooltipPlacement="left"
-        className={tailwindMerge.twMerge(
+        className={tailwindMerge.twJoin(
           'm-0 hidden cursor-pointer border-0 transition-transform duration-arrow group-hover:m-name-column-icon group-hover:inline-block',
           isExpanded && 'rotate-90',
         )}

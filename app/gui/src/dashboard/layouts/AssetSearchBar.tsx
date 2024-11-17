@@ -20,7 +20,6 @@ import SvgMask from '#/components/SvgMask'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
-import { useSuggestions } from '#/providers/DriveProvider'
 import type Backend from '#/services/Backend'
 import type { Label as BackendLabel } from '#/services/Backend'
 import * as array from '#/utilities/array'
@@ -28,7 +27,8 @@ import AssetQuery from '#/utilities/AssetQuery'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { AnimatePresence, motion, Variants } from 'framer-motion'
+import { createStore, useStore } from '#/utilities/zustand'
+import { AnimatePresence, motion } from 'framer-motion'
 
 // =============
 // === Types ===
@@ -67,6 +67,25 @@ interface InternalTagsProps {
   readonly querySource: React.MutableRefObject<QuerySource>
   readonly query: AssetQuery
   readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+}
+
+export const searchbarSuggestionsStore = createStore<{
+  readonly suggestions: readonly Suggestion[]
+  readonly setSuggestions: (suggestions: readonly Suggestion[]) => void
+}>((set) => ({
+  suggestions: [],
+  setSuggestions: (suggestions) => {
+    set({ suggestions })
+  },
+}))
+
+/**
+ * Sets the suggestions.
+ */
+export function useSetSuggestions() {
+  return useStore(searchbarSuggestionsStore, (state) => state.setSuggestions, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Tags (`name:`, `modified:`, etc.) */
@@ -136,9 +155,12 @@ function AssetSearchBar(props: AssetSearchBarProps) {
   const { modalRef } = modalProvider.useModalRef()
   /** A cached query as of the start of tabbing. */
   const baseQuery = React.useRef(query)
-  const rawSuggestions = useSuggestions()
 
+  const rawSuggestions = useStore(searchbarSuggestionsStore, (state) => state.suggestions, {
+    unsafeEnableTransition: true,
+  })
   const suggestionsRef = useSyncRef(rawSuggestions)
+  const suggestions = React.useDeferredValue(rawSuggestions)
 
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [areSuggestionsVisible, privateSetAreSuggestionsVisible] = React.useState(false)
@@ -146,8 +168,6 @@ function AssetSearchBar(props: AssetSearchBarProps) {
   const querySource = React.useRef(QuerySource.external)
   const rootRef = React.useRef<HTMLLabelElement | null>(null)
   const searchRef = React.useRef<HTMLInputElement | null>(null)
-
-  const suggestions = React.useDeferredValue(rawSuggestions)
 
   const setAreSuggestionsVisible = useEventCallback((value: boolean) => {
     React.startTransition(() => {
@@ -269,7 +289,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
       root?.removeEventListener('keydown', onSearchKeyDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [setQuery, modalRef, setAreSuggestionsVisible])
+  }, [setQuery, modalRef, setAreSuggestionsVisible, suggestionsRef])
 
   // Reset `querySource` after all other effects have run.
   React.useEffect(() => {

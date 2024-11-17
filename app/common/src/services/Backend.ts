@@ -842,8 +842,6 @@ export function isPlaceholderId(id: AssetId) {
     return false
   }
 
-  console.log('isPlaceholderId id', id, PLACEHOLDER_SIGNATURE in id)
-
   return PLACEHOLDER_SIGNATURE in id
 }
 

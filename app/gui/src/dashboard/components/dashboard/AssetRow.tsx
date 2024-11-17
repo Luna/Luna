@@ -81,6 +81,7 @@ export interface AssetRowInnerProps {
 /** Props for an {@link AssetRow}. */
 export interface AssetRowProps {
   readonly isOpened: boolean
+
   readonly isPlaceholder: boolean
   readonly visibility: Visibility | undefined
   readonly id: backendModule.AssetId
@@ -96,6 +97,7 @@ export interface AssetRowProps {
   readonly grabKeyboardFocus: (item: backendModule.AnyAsset) => void
   readonly onClick: (props: AssetRowInnerProps, event: React.MouseEvent) => void
   readonly select: (item: backendModule.AnyAsset) => void
+  readonly isExpanded: boolean
   readonly onDragStart?: (
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
@@ -267,6 +269,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     columns,
     onClick,
     isPlaceholder,
+    isExpanded,
     type,
     asset,
   } = props
@@ -689,7 +692,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   }
                 }}
                 className={tailwindMerge.twMerge(
-                  'h-table-row rounded-full transition-all ease-in-out rounded-rows-child [contain-intrinsic-size:40px] [content-visibility:auto]',
+                  'h-table-row rounded-full transition-all ease-in-out contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
                   visibility,
                   (isDraggedOver || selected) && 'selected',
                 )}
@@ -830,6 +833,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
                       <Render
                         isPlaceholder={isPlaceholder}
+                        isExpanded={isExpanded}
                         keyProp={id}
                         isOpened={isOpened}
                         backendType={backend.type}

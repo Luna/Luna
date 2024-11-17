@@ -11,40 +11,31 @@ import versionsIcon from '#/assets/versions.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useBackend } from '#/providers/BackendProvider'
-import {
-  useAssetPanelProps,
-  useAssetPanelSelectedTab,
-  useIsAssetPanelExpanded,
-  useIsAssetPanelHidden,
-  useSetAssetPanelSelectedTab,
-  useSetIsAssetPanelExpanded,
-} from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
 import LocalStorage from '#/utilities/LocalStorage'
-import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
+import { useStore } from '#/utilities/zustand'
+import type { BackendType } from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
 import { z } from 'zod'
 import { AssetDocs } from '../AssetDocs'
 import AssetProjectSessions from '../AssetProjectSessions'
-import type { AssetPropertiesSpotlight } from '../AssetProperties'
 import AssetProperties from '../AssetProperties'
 import AssetVersions from '../AssetVersions/AssetVersions'
 import type { Category } from '../CategorySwitcher/Category'
+import {
+  assetPanelStore,
+  useIsAssetPanelExpanded,
+  useSetIsAssetPanelExpanded,
+} from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
+import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
 
 const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
-
-/** Determines the content of the {@link AssetPanel}. */
-const ASSET_PANEL_TABS = ['settings', 'versions', 'sessions', 'schedules', 'docs'] as const
-
-/** Determines the content of the {@link AssetPanel}. */
-type AssetPanelTab = (typeof ASSET_PANEL_TABS)[number]
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -64,15 +55,6 @@ LocalStorage.register({
   isAssetPanelHidden: { schema: z.boolean() },
   isAssetPanelVisible: { schema: z.boolean() },
 })
-
-/** Props supplied by the row. */
-export interface AssetPanelContextProps {
-  readonly backend: Backend | null
-  readonly selectedTab: AssetPanelTab
-  readonly item: AnyAsset | null
-  readonly path: string | null
-  readonly spotlightOn: AssetPropertiesSpotlight | null
-}
 
 /**
  * Props for an {@link AssetPanel}.
@@ -97,7 +79,9 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
  * It is used to view and interact with assets in the drive.
  */
 export function AssetPanel(props: AssetPanelProps) {
-  const isHidden = useIsAssetPanelHidden()
+  const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
   const isExpanded = useIsAssetPanelExpanded()
 
   const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
@@ -137,11 +121,21 @@ export function AssetPanel(props: AssetPanelProps) {
 const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
-  const { item, spotlightOn, path } = useAssetPanelProps()
+  const { item, spotlightOn, path } = useStore(assetPanelStore, (state) => ({
+    item: state.assetPanelProps.item,
+    spotlightOn: state.assetPanelProps.spotlightOn,
+    path: state.assetPanelProps.path,
+  }))
 
-  const selectedTab = useAssetPanelSelectedTab()
-  const setSelectedTab = useSetAssetPanelSelectedTab()
-  const isHidden = useIsAssetPanelHidden()
+  const selectedTab = useStore(assetPanelStore, (state) => state.selectedTab, {
+    unsafeEnableTransition: true,
+  })
+  const setSelectedTab = useStore(assetPanelStore, (state) => state.setSelectedTab, {
+    unsafeEnableTransition: true,
+  })
+  const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
 
   const isReadonly = category.type === 'trash'
 

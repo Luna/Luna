@@ -23,11 +23,11 @@ import { backendMutationOptions, useAssetStrict, useBackendQuery } from '#/hooks
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
+import { assetPanelStore, useSetAssetPanelProps } from '#/layouts/AssetPanel/'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend } from '#/providers/BackendProvider'
-import { useDriveStore, useSetAssetPanelProps } from '#/providers/DriveProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -70,6 +70,8 @@ export default function AssetProperties(props: AssetPropertiesProps) {
     return <Result status="info" title={getText('assetProperties.notSelected')} centered />
   }
 
+  console.log('AssetProperties', { isReadonly })
+
   return (
     <AssetPropertiesInternal
       backend={backend}
@@ -105,10 +107,8 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   })
   const setAssetPanelProps = useSetAssetPanelProps()
 
-  const driveStore = useDriveStore()
-
   const closeSpotlight = useEventCallback(() => {
-    const assetPanelProps = driveStore.getState().assetPanelProps
+    const assetPanelProps = assetPanelStore.getState().assetPanelProps
     setAssetPanelProps({ ...assetPanelProps, spotlightOn: null })
   })
   const { user } = useFullUserSession()

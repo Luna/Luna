@@ -69,6 +69,7 @@ import { useOpenProject } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
+import { useSetSuggestions } from '#/layouts/AssetSearchBar'
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
 import {
@@ -87,15 +88,11 @@ import {
 } from '#/providers/BackendProvider'
 import {
   useDriveStore,
-  useResetAssetPanelProps,
-  useSetAssetPanelProps,
   useSetCanCreateAssets,
   useSetCanDownload,
-  useSetIsAssetPanelTemporarilyVisible,
   useSetNewestFolderId,
   useSetPasteData,
   useSetSelectedKeys,
-  useSetSuggestions,
   useSetTargetDirectory,
   useSetVisuallySelectedKeys,
 } from '#/providers/DriveProvider'
@@ -152,6 +149,7 @@ import { toRfc3339 } from '#/utilities/dateTime'
 import type { AssetRowsDragPayload } from '#/utilities/drag'
 import { ASSET_ROWS, LABELS, setDragImageToBlank } from '#/utilities/drag'
 import { fileExtension } from '#/utilities/fileInfo'
+import { noop } from '#/utilities/functions'
 import type { DetailedRectangle } from '#/utilities/geometry'
 import { DEFAULT_HANDLER } from '#/utilities/inputBindings'
 import LocalStorage from '#/utilities/LocalStorage'
@@ -168,6 +166,12 @@ import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
+import {
+  assetPanelStore,
+  useResetAssetPanelProps,
+  useSetAssetPanelProps,
+  useSetIsAssetPanelTemporarilyVisible,
+} from './AssetPanel'
 
 // ============================
 // === Global configuration ===
@@ -307,7 +311,6 @@ interface DragSelectionInfo {
 export interface AssetsTableState {
   readonly backend: Backend
   readonly rootDirectoryId: DirectoryId
-  readonly expandedDirectoryIds: readonly DirectoryId[]
   readonly scrollContainerRef: RefObject<HTMLElement>
   readonly category: Category
   readonly sortInfo: SortInfo<SortableColumn> | null
@@ -508,6 +511,8 @@ export default function AssetsTable(props: AssetsTableProps) {
     },
   })
 
+  const queryClient = useQueryClient()
+
   // We use a different query to refetch the directory data in the background.
   // This reduces the amount of rerenders by batching them together, so they happen less often.
   useQuery(
@@ -527,7 +532,13 @@ export default function AssetsTable(props: AssetsTableProps) {
         enabled: !hidden,
         meta: { persist: false },
       }),
-      [backend, enableAssetsTableBackgroundRefresh, assetsTableBackgroundRefreshInterval, hidden],
+      [
+        backend.type,
+        enableAssetsTableBackgroundRefresh,
+        assetsTableBackgroundRefreshInterval,
+        hidden,
+        queryClient,
+      ],
     ),
   )
 
@@ -860,8 +871,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   const isAssetContextMenuVisible =
     category.type !== 'cloud' || user.plan == null || user.plan === Plan.solo
 
-  const queryClient = useQueryClient()
-
   const isMainDropzoneVisible = useIntersectionRatio(
     rootRef,
     mainDropzoneRef,
@@ -903,7 +912,10 @@ export default function AssetsTable(props: AssetsTableProps) {
             if (item != null && item.isType(AssetType.directory)) {
               setTargetDirectory(item)
             }
-            if (item != null && item.item.id !== driveStore.getState().assetPanelProps.item?.id) {
+            if (
+              item != null &&
+              item.item.id !== assetPanelStore.getState().assetPanelProps.item?.id
+            ) {
               setAssetPanelProps({ backend, item: item.item, path: item.path })
               setIsAssetPanelTemporarilyVisible(false)
             }
@@ -1280,7 +1292,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doMove = useEventCallback(async (newParentId: DirectoryId | null, asset: AnyAsset) => {
     try {
-      if (asset.id === driveStore.getState().assetPanelProps.item?.id) {
+      if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
         resetAssetPanelProps()
       }
       await updateAssetMutation.mutateAsync([
@@ -1294,7 +1306,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const doDelete = useEventCallback(async (asset: AnyAsset, forever: boolean = false) => {
-    if (asset.id === driveStore.getState().assetPanelProps.item?.id) {
+    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
       resetAssetPanelProps()
     }
     if (asset.type === AssetType.directory) {
@@ -1319,7 +1331,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const doDeleteById = useEventCallback(async (assetId: AssetId, forever: boolean = false) => {
-    if (assetId === driveStore.getState().assetPanelProps.item?.id) {
+    if (assetId === assetPanelStore.getState().assetPanelProps.item?.id) {
       resetAssetPanelProps()
     }
     const asset = nodeMapRef.current.get(assetId)?.item
@@ -2117,7 +2129,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doRestore = useEventCallback(async (asset: AnyAsset) => {
     try {
-      if (asset.id === driveStore.getState().assetPanelProps.item?.id) {
+      if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
         resetAssetPanelProps()
       }
       await undoDeleteAssetMutation.mutateAsync([asset.id, asset.title])
@@ -2183,7 +2195,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     // The type MUST be here to trigger excess property errors at typecheck time.
     () => ({
       backend,
-      expandedDirectoryIds,
       rootDirectoryId,
       scrollContainerRef: rootRef,
       category,
@@ -2203,7 +2214,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     }),
     [
       backend,
-      expandedDirectoryIds,
       rootDirectoryId,
       category,
       sortInfo,
@@ -2443,10 +2453,11 @@ export default function AssetsTable(props: AssetsTableProps) {
             <NameColumn
               key={node.key}
               isPlaceholder={node.isPlaceholder()}
-              isOpened={false}
+              isExpanded={false}
               keyProp={node.key}
               item={node.item}
               depth={0}
+              isOpened={false}
               backendType={backend.type}
               state={state}
               // Default states.
@@ -2454,8 +2465,8 @@ export default function AssetsTable(props: AssetsTableProps) {
               selected={false}
               rowState={INITIAL_ROW_STATE}
               // The drag placeholder cannot be interacted with.
-              setSelected={() => {}}
-              setRowState={() => {}}
+              setSelected={noop}
+              setRowState={noop}
               isEditable={false}
             />
           ))}
@@ -2609,6 +2620,11 @@ export default function AssetsTable(props: AssetsTableProps) {
           <AssetRow
             key={item.key + item.path}
             isPlaceholder={item.isPlaceholder()}
+            isExpanded={
+              item.item.type === AssetType.directory ?
+                openedProjects.some(({ id }) => item.item.id === id)
+              : false
+            }
             isOpened={openedProjects.some(({ id }) => item.item.id === id)}
             visibility={visibilities.get(item.key)}
             columns={columns}

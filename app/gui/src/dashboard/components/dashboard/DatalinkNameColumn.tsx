@@ -6,7 +6,7 @@ import EditableSpan from '#/components/EditableSpan'
 
 import type * as backendModule from '#/services/Backend'
 
-import { useSetIsAssetPanelTemporarilyVisible } from '#/providers/DriveProvider'
+import { useSetIsAssetPanelTemporarilyVisible } from '#/layouts/AssetPanel'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
@@ -43,8 +43,8 @@ export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
-        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
+      className={tailwindMerge.twJoin(
+        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {

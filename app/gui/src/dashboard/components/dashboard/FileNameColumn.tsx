@@ -59,8 +59,8 @@ export default function FileNameColumn(props: FileNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
-        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
+      className={tailwindMerge.twJoin(
+        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {

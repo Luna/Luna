@@ -5,11 +5,11 @@
 import RightPanelIcon from '#/assets/right_panel.svg'
 import { Button } from '#/components/AriaComponents'
 
-import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo } from 'react'
+import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '../AssetPanelState'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 

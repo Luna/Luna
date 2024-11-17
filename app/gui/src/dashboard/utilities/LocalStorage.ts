@@ -62,12 +62,13 @@ export default class LocalStorage {
   // when `LocalStorageData` is declaration merged into.
   // eslint-disable-next-line no-restricted-syntax
   static keyMetadata = {} as Record<LocalStorageKey, LocalStorageKeyMetadata<LocalStorageKey>>
+  private static instance: LocalStorage | null = null
   localStorageKey = common.PRODUCT_NAME.toLowerCase()
   protected values: Partial<LocalStorageData>
   private readonly eventTarget = new EventTarget()
 
   /** Create a {@link LocalStorage}. */
-  constructor() {
+  private constructor() {
     const savedValues: unknown = JSON.parse(localStorage.getItem(this.localStorageKey) ?? '{}')
     const newValues: Partial<Record<LocalStorageKey, LocalStorageData[LocalStorageKey]>> = {}
     if (typeof savedValues === 'object' && savedValues != null) {
@@ -87,6 +88,17 @@ export default class LocalStorage {
     // correct type for each corresponding key.
     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     this.values = newValues as any
+  }
+
+  /**
+   * Gets the singleton instance of {@link LocalStorage}.
+   */
+  static getInstance() {
+    if (LocalStorage.instance == null) {
+      LocalStorage.instance = new LocalStorage()
+    }
+
+    return LocalStorage.instance
   }
 
   /** Register runtime behavior associated with a {@link LocalStorageKey}. */

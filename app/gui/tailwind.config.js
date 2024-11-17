@@ -559,19 +559,19 @@ inset 0 -36px 51px -51px #00000014`,
           '.rounded-rows': {
             [`:where(
               & > tbody > tr:nth-child(odd of .rounded-rows-child) > td:not(.rounded-rows-skip-level),
-              & > tbody > tr:nth-child(odd of .rounded-rows-child) > td.rounded-rows-skip-level > *
+              & > tbody > tr:nth-child(odd of .rounded-rows-child) > td.rounded-rows-skip-level > .rounded-rows-child
             )`]: {
               backgroundColor: `rgb(0 0 0 / 3%)`,
             },
             [`:where(
               & > tbody > tr.rounded-rows-child.selected > td:not(.rounded-rows-skip-level),
-              & > tbody > tr.rounded-rows-child.selected > td.rounded-rows-skip-level > *
+              & > tbody > tr.rounded-rows-child.selected > td.rounded-rows-skip-level > .rounded-rows-child
             )`]: {
               backgroundColor: 'rgb(255 255 255 / 90%)',
             },
             [`:where(
               & > tbody > tr.rounded-rows-child[data-drop-target] > td:not(.rounded-rows-skip-level),
-              & > tbody > tr.rounded-rows-child[data-drop-target] > td.rounded-rows-skip-level > *
+              & > tbody > tr.rounded-rows-child[data-drop-target] > td.rounded-rows-skip-level > .rounded-rows-child
             )`]: {
               backgroundColor: 'rgb(0 0 0 / 8%)',
             },

@@ -109,6 +109,7 @@ export interface AssetPanelTabPanelProps extends TabPanelProps {
   readonly resetKeys?: unknown[]
 }
 
+const SUSPENSE_LOADER_PROPS = { className: 'my-auto' }
 /** Display a tab panel. */
 export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
   const { children, id = '', resetKeys = [] } = props
@@ -129,7 +130,7 @@ export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
                 exit={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
                 className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
               >
-                <Suspense loaderProps={{ className: 'my-auto' }}>
+                <Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
                   <ErrorBoundary resetKeys={[renderProps.state.selectedItem, ...resetKeys]}>
                     <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 px-4 py-5">
                       {typeof children === 'function' ? children(renderProps) : children}

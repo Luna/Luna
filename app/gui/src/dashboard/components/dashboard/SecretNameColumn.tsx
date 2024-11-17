@@ -52,7 +52,7 @@ export default function SecretNameColumn(props: SecretNameColumnProps) {
   return (
     <div
       className={tailwindMerge.twMerge(
-        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
+        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {
