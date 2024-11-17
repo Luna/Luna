@@ -3,10 +3,8 @@ import * as React from 'react'
 
 import * as modalProvider from '#/providers/ModalProvider'
 
-import Modal from '#/components/Modal'
-
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { DIALOG_BACKGROUND } from '../components/AriaComponents'
 
 // =================
 // === Constants ===
@@ -56,8 +54,10 @@ export default function DragModal(props: DragModalProps) {
       }
     }
     const onDragEnd = () => {
-      onDragEndOuter()
-      unsetModal()
+      React.startTransition(() => {
+        onDragEndOuter()
+        unsetModal()
+      })
     }
     // Update position (non-FF)
     document.addEventListener('drag', onDrag, { capture: true })
@@ -72,14 +72,16 @@ export default function DragModal(props: DragModalProps) {
   }, [offsetPx, offsetXPx, offsetYPx, onDragEndOuter, unsetModal])
 
   return (
-    <Modal className="pointer-events-none absolute size-full overflow-hidden">
+    <div className="pointer-events-none absolute size-full overflow-hidden">
       <div
         {...passthrough}
         style={{ left, top, ...style }}
-        className={tailwindMerge.twMerge('relative w-min', className)}
+        className={DIALOG_BACKGROUND({
+          className: ['relative w-min', className],
+        })}
       >
         {children}
       </div>
-    </Modal>
+    </div>
   )
 }

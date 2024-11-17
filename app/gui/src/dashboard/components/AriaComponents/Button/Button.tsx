@@ -68,6 +68,8 @@ export const BUTTON_STYLES = tv({
     'group',
     // we need to set the height to max-content to prevent the button from growing in flex containers
     'h-[max-content]',
+
+    'flex-none',
     // basic outline
     'outline-offset-[1px] outline-transparent',
     // buttons always have borders

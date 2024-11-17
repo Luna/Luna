@@ -2,7 +2,8 @@
  * @file A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind
  * classes.
  */
-import { twMerge } from '#/utilities/tailwindMerge'
+import * as React from 'react'
+import { twJoin } from 'tailwind-merge'
 
 /** The state of the spinner. It should go from `initial`, to `loading`, to `done`. */
 export type SpinnerState = 'done' | 'initial' | 'loading-fast' | 'loading-medium' | 'loading-slow'
@@ -27,14 +28,17 @@ export interface SpinnerProps {
 }
 
 /** A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind classes. */
-export function Spinner(props: SpinnerProps) {
+// eslint-disable-next-line no-restricted-syntax
+export const Spinner = React.memo(function Spinner(props: SpinnerProps) {
   const { size, padding, className, state } = props
+
+  const cssClasses = twJoin('pointer-events-none contain-strict', className)
 
   return (
     <svg
       width={size}
       height={size}
-      className={className}
+      className={cssClasses}
       style={{ padding }}
       viewBox="0 0 24 24"
       fill="none"
@@ -50,11 +54,11 @@ export function Spinner(props: SpinnerProps) {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth={3}
-        className={twMerge(
+        className={twJoin(
           'pointer-events-none origin-center !animate-spin-ease transition-stroke-dasharray [transition-duration:var(--spinner-slow-transition-duration)]',
           SPINNER_CSS_CLASSES[state],
         )}
       />
     </svg>
   )
-}
+})
