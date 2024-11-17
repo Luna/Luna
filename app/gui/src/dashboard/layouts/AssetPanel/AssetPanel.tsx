@@ -9,6 +9,7 @@ import sessionsIcon from '#/assets/group.svg'
 import inspectIcon from '#/assets/inspect.svg'
 import versionsIcon from '#/assets/versions.svg'
 
+import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
@@ -121,11 +122,9 @@ export function AssetPanel(props: AssetPanelProps) {
 const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
-  const { item, spotlightOn, path } = useStore(assetPanelStore, (state) => ({
-    item: state.assetPanelProps.item,
-    spotlightOn: state.assetPanelProps.spotlightOn,
-    path: state.assetPanelProps.path,
-  }))
+  const itemId = useStore(assetPanelStore, (state) => state.assetPanelProps.item?.id, {
+    unsafeEnableTransition: true,
+  })
 
   const selectedTab = useStore(assetPanelStore, (state) => state.selectedTab, {
     unsafeEnableTransition: true,
@@ -188,28 +187,23 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
               className="absolute left-0 top-0 h-full w-full bg-background"
               style={{ width: ASSET_PANEL_WIDTH }}
             >
-              <AssetPanelTabs.TabPanel id="settings" resetKeys={[item?.id]}>
-                <AssetProperties
-                  backend={backend}
-                  item={item}
-                  isReadonly={isReadonly}
-                  category={category}
-                  spotlightOn={spotlightOn}
-                  path={path}
-                />
-              </AssetPanelTabs.TabPanel>
+              <ErrorBoundary resetKeys={[itemId]}>
+                <AssetPanelTabs.TabPanel id="settings">
+                  <AssetProperties backend={backend} isReadonly={isReadonly} category={category} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="versions" resetKeys={[item?.id]}>
-                <AssetVersions backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="versions">
+                  <AssetVersions backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="sessions" resetKeys={[item?.id]}>
-                <AssetProjectSessions backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="sessions">
+                  <AssetProjectSessions backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="docs" resetKeys={[item?.id]}>
-                <AssetDocs backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="docs">
+                  <AssetDocs backend={backend} />
+                </AssetPanelTabs.TabPanel>
+              </ErrorBoundary>
             </motion.div>
           </div>
         )}

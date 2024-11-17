@@ -40,6 +40,7 @@ interface DriveStore {
   readonly setCanDownload: (canDownload: boolean) => void
   readonly pasteData: PasteData<DrivePastePayload> | null
   readonly setPasteData: (pasteData: PasteData<DrivePastePayload> | null) => void
+
   readonly selectedKeys: ReadonlySet<AssetId>
   readonly setSelectedKeys: (selectedKeys: ReadonlySet<AssetId>) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null

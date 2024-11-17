@@ -44,7 +44,7 @@ export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
   return (
     <div
       className={tailwindMerge.twJoin(
-        'flex h-table-row w-full min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
+        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {

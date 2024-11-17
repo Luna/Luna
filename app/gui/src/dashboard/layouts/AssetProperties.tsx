@@ -37,6 +37,7 @@ import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
+import { useStore } from '../utilities/zustand'
 
 const ASSET_PROPERTIES_VARIANTS = tv({
   base: '',
@@ -51,26 +52,31 @@ export type AssetPropertiesSpotlight = 'datalink' | 'description' | 'secret'
 /** Props for an {@link AssetPropertiesProps}. */
 export interface AssetPropertiesProps {
   readonly backend: Backend
-  readonly item: AnyAsset | null
-  readonly path: string | null
   readonly category: Category
   readonly isReadonly?: boolean
-  readonly spotlightOn?: AssetPropertiesSpotlight | null
 }
 
 /**
  * Display and modify the properties of an asset.
  */
 export default function AssetProperties(props: AssetPropertiesProps) {
-  const { item, isReadonly = false, backend, category, spotlightOn = null, path } = props
+  const { isReadonly = false, backend, category } = props
+
+  const { item, spotlightOn, path } = useStore(
+    assetPanelStore,
+    (state) => ({
+      item: state.assetPanelProps.item,
+      spotlightOn: state.assetPanelProps.spotlightOn ?? null,
+      path: state.assetPanelProps.path,
+    }),
+    { unsafeEnableTransition: true },
+  )
 
   const { getText } = useText()
 
   if (item == null || path == null) {
     return <Result status="info" title={getText('assetProperties.notSelected')} centered />
   }
-
-  console.log('AssetProperties', { isReadonly })
 
   return (
     <AssetPropertiesInternal
@@ -88,8 +94,9 @@ export default function AssetProperties(props: AssetPropertiesProps) {
  * Props for {@link AssetPropertiesInternal}.
  */
 export interface AssetPropertiesInternalProps extends AssetPropertiesProps {
-  readonly item: NonNullable<AssetPropertiesProps['item']>
-  readonly path: NonNullable<AssetPropertiesProps['path']>
+  readonly item: AnyAsset
+  readonly path: string | null
+  readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
 /**

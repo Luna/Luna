@@ -2625,6 +2625,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                 openedProjects.some(({ id }) => item.item.id === id)
               : false
             }
+            onCutAndPaste={cutAndPaste}
             isOpened={openedProjects.some(({ id }) => item.item.id === id)}
             visibility={visibilities.get(item.key)}
             columns={columns}
@@ -2792,7 +2793,7 @@ export default function AssetsTable(props: AssetsTableProps) {
         error={getText('couldNotConnectToPM')}
         resetErrorBoundary={reconnectToProjectManager}
       />
-    : <div className="relative grow">
+    : <div className="relative grow contain-strict">
         <FocusArea direction="vertical">
           {(innerProps) => (
             <div

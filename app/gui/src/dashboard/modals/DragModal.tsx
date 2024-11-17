@@ -77,7 +77,7 @@ export default function DragModal(props: DragModalProps) {
         {...passthrough}
         style={{ left, top, ...style }}
         className={DIALOG_BACKGROUND({
-          className: ['relative w-min', className],
+          className: ['relative z-10 w-min -translate-x-1/3 -translate-y-1/3', className],
         })}
       >
         {children}

@@ -9,6 +9,7 @@ import BlankIcon from '#/assets/blank.svg'
 import * as dragAndDropHooks from '#/hooks/dragAndDropHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
+import type { DrivePastePayload } from '#/providers/DriveProvider'
 import { useDriveStore, useSetSelectedKeys } from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
@@ -30,7 +31,6 @@ import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
 import type { AssetEvent } from '#/events/assetEvent'
-import { useCutAndPaste } from '#/events/assetListEvent'
 import {
   backendMutationOptions,
   backendQueryOptions,
@@ -117,6 +117,12 @@ export interface AssetRowProps {
   readonly onDrop?: (
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
+  ) => void
+  readonly onCutAndPaste?: (
+    newParentKey: backendModule.DirectoryId,
+    newParentId: backendModule.DirectoryId,
+    pasteData: DrivePastePayload,
+    nodeMap: ReadonlyMap<backendModule.AssetId, assetTreeNode.AnyAssetTreeNode>,
   ) => void
 }
 
@@ -299,7 +305,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const cutAndPaste = useCutAndPaste(category)
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
@@ -692,7 +697,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   }
                 }}
                 className={tailwindMerge.twMerge(
-                  'h-table-row rounded-full transition-all ease-in-out rounded-rows-child',
+                  'h-table-row rounded-full transition-all ease-in-out  rounded-rows-child',
                   visibility,
                   (isDraggedOver || selected) && 'selected',
                 )}

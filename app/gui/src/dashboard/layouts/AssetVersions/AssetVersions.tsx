@@ -8,12 +8,13 @@ import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 import { Result } from '#/components/Result'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 import AssetVersion from '#/layouts/AssetVersions/AssetVersion'
-import { useAssetVersions } from '#/layouts/AssetVersions/useAssetVersions'
 import * as textProvider from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 import * as dateTime from '#/utilities/dateTime'
+import { useStore } from '../../utilities/zustand.ts'
+import { assetPanelStore } from '../AssetPanel/AssetPanelState.ts'
 import { assetVersionsQueryOptions } from './useAssetVersions.ts'
 
 // ==============================
@@ -33,14 +34,17 @@ interface AddNewVersionVariables {
 /** Props for a {@link AssetVersions}. */
 export interface AssetVersionsProps {
   readonly backend: Backend
-  readonly item: AnyAsset | null
 }
 
 /**
  * Display a list of previous versions of an asset.
  */
 export default function AssetVersions(props: AssetVersionsProps) {
-  const { item, backend } = props
+  const { backend } = props
+
+  const { item } = useStore(assetPanelStore, (state) => ({ item: state.assetPanelProps.item }), {
+    unsafeEnableTransition: true,
+  })
 
   const { getText } = textProvider.useText()
 
@@ -81,13 +85,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
     readonly backendService.S3ObjectVersion[]
   >([])
 
-  const versionsQuery = useSuspenseQuery(
-    assetVersionsQueryOptions({
-      assetId: item.id,
-      backend,
-      onError: (backendError) => toastAndLog('listVersionsError', backendError),
-    }),
-  )
+  const versionsQuery = useSuspenseQuery(assetVersionsQueryOptions({ assetId: item.id, backend }))
 
   const latestVersion = versionsQuery.data.find((version) => version.isLatest)
 
