@@ -70,14 +70,14 @@ export default function SettingsTab(props: SettingsTabProps) {
           ))}
         </div>
       : <div
-          className="flex min-h-full grow flex-col gap-settings-section lg:h-auto lg:flex-row"
+          className="grid min-h-full grow grid-cols-1 gap-settings-section lg:h-auto lg:grid-cols-2"
           {...contentProps}
         >
           {columns.map((sectionsInColumn, i) => (
             <div
               key={i}
               className={twMerge(
-                'flex h-fit flex-1 flex-col gap-settings-subsection pb-12',
+                'flex h-fit max-w-[500px] flex-1 flex-col gap-settings-subsection pb-12',
                 classes[i],
               )}
             >

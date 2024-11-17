@@ -92,8 +92,15 @@ AnimatedBackground.Item = memo(function AnimatedBackgroundItem(props: AnimatedBa
     animationClassName,
     children,
     isSelected,
-    underlayElement = <div className={twJoin('h-full w-full', animationClassName)} />,
+    underlayElement: rawUnderlayElement,
   } = props
+
+  const defaultUnderlayElement = useMemo(
+    () => <div className={twJoin('h-full w-full', animationClassName)} />,
+    [animationClassName],
+  )
+
+  const underlayElement = rawUnderlayElement ?? defaultUnderlayElement
 
   const context = useContext(AnimatedBackgroundContext)
   invariant(context, '<AnimatedBackground.Item /> must be placed within an <AnimatedBackground />')
