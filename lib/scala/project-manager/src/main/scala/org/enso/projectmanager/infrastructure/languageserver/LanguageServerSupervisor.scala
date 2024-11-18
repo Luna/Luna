@@ -121,6 +121,7 @@ class LanguageServerSupervisor(
   }
 
   private def stop(): Unit = {
+    logger.trace("Language Server Supervisor is shutting down")
     if (context.children.isEmpty) {
       context.stop(self)
     } else {

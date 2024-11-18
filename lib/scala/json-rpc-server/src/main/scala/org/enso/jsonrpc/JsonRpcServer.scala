@@ -75,9 +75,12 @@ class JsonRpcServer(
         }
         .to(
           Sink.actorRef[MessageHandler.WebMessage](
-            messageHandler,
-            MessageHandler.Disconnected(port),
-            { _: Throwable =>
+            messageHandler, {
+              logger.trace("JSON sink stream finished with no failure")
+              MessageHandler.Disconnected(port)
+            },
+            { e: Throwable =>
+              logger.trace("JSON sink stream finished with a failure", e)
               MessageHandler.Disconnected(port)
             }
           )

@@ -180,6 +180,7 @@ final class PathWatcher(
     clients: Set[ActorRef]
   ): Unit = {
     if (clients.isEmpty) {
+      logger.trace("No more clients watching {}. Stopping", base)
       context.stop(self)
     } else {
       context.become(initializedStage(root, base, clients))
