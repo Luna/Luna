@@ -1,9 +1,9 @@
+import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import type { MockYdocProviderImpl } from '@/util/crdt'
 import type { WebSocketHandler } from '@/util/net'
 import type { QualifiedName } from '@/util/qualifiedName'
 import * as random from 'lib0/random'
-import * as Ast from 'ydoc-shared/ast'
 import {
   Builder,
   EnsoUUID,
@@ -28,7 +28,7 @@ import { uuidToBits } from 'ydoc-shared/uuid'
 import * as Y from 'yjs'
 import { mockFsDirectoryHandle, type FileTree } from '../util/convert/fsAccess'
 import { mockDataWSHandler as originalMockDataWSHandler } from './dataServer'
-import mockDb from './mockSuggestions.json' assert { type: 'json' }
+import mockDb from './mockSuggestions.json' with { type: 'json' }
 
 const mockProjectId = random.uuidv4() as Uuid
 const standardBase = 'Standard.Base' as QualifiedName
@@ -49,6 +49,7 @@ const mainFile = `\
 ## Module documentation
 from Standard.Base import all
 
+## A collapsed function
 func1 arg =
     f2 = Main.func2 arg
     result = f2 - 5
@@ -459,8 +460,10 @@ export const mockLSHandler: MockTransportData = async (method, data, transport) 
         expressionId: ExpressionId
         expression: string
       }
-      const aiPromptPat = Pattern.parse('Standard.Visualization.AI.build_ai_prompt __ . to_json')
-      const exprAst = Ast.parse(data_.expression)
+      const aiPromptPat = Pattern.parseExpression(
+        'Standard.Visualization.AI.build_ai_prompt __ . to_json',
+      )
+      const exprAst = Ast.parseExpression(data_.expression)!
       if (aiPromptPat.test(exprAst)) {
         sendVizUpdate(
           data_.visualizationId,

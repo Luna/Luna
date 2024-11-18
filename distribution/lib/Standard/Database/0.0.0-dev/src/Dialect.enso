@@ -8,6 +8,7 @@ from Standard.Table import Aggregate_Column, Join_Kind, Value_Type
 import project.Connection.Connection.Connection
 import project.DB_Column.DB_Column
 import project.DB_Table.DB_Table
+import project.Dialect_Flag.Dialect_Flag
 import project.Internal.Column_Fetcher.Column_Fetcher
 import project.Internal.DB_Wrapped_Error.DB_Wrapped_Error
 import project.Internal.Error_Mapper.Error_Mapper
@@ -23,7 +24,6 @@ import project.Internal.SQL_Type_Mapping.SQL_Type_Mapping
 import project.Internal.SQL_Type_Reference.SQL_Type_Reference
 import project.Internal.SQLite.SQLite_Dialect
 import project.Internal.Statement_Setter.Statement_Setter
-import project.Dialect_Flag.Dialect_Flag
 import project.SQL.SQL_Builder
 import project.SQL_Statement.SQL_Statement
 import project.SQL_Type.SQL_Type
@@ -270,11 +270,11 @@ type Dialect
         Unimplemented.throw "This is an interface only."
 
     ## PRIVATE
-       Generates a column for the given expression for use in the SELECT clause. 
+       Generates a expression for use in the SELECT OR WHERE clause. 
        Used for databases where the expression syntax is different in the SELECT clause 
        to the syntax in the WHERE clause
-    generate_column_for_select self base_gen expr:(SQL_Expression | Order_Descriptor | Query) name:Text -> SQL_Builder =
-        _ = [base_gen, expr, name]
+    generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
+        _ = [base_gen, expr, for_select]
         Unimplemented.throw "This is an interface only."
 
     ## PRIVATE
