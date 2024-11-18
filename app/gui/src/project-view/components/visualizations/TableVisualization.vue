@@ -363,23 +363,17 @@ function toField(
       // eslint-disable-next-line camelcase
     : { number_of_nothing: [], number_of_leading_trailing_whitespace: [], number_of_whitespace: [] }
 
-  const nothingIsNonZero =
-    index != null && dataQuality?.number_of_nothing ?
-      (dataQuality.number_of_nothing[index] ?? 0) > 0
-    : false
+  const numberOfNothing = index != null ? dataQuality.number_of_nothing[index] : null
+  const numberOfLeadOrTrailSpace =
+    index != null ? dataQuality.number_of_leading_trailing_whitespace[index] : null
+  const numberOfWhitespace = index != null ? dataQuality.number_of_whitespace[index] : null
 
-  const LeadOrTrailingWhitespaceIsNonZero =
-    index != null && dataQuality?.number_of_nothing ?
-      (dataQuality.number_of_leading_trailing_whitespace[index] ?? 0) > 0
-    : false
-
-  const whitespaceIsNonZero =
-    index != null && dataQuality?.number_of_nothing ?
-      (dataQuality.number_of_whitespace[index] ?? 0) > 0
-    : false
+  const nothingIsNonZero = (numberOfNothing ?? 0) > 0
+  const leadOrTrailingWhitespaceIsNonZero = (numberOfLeadOrTrailSpace ?? 0) > 0
+  const whitespaceIsNonZero = (numberOfWhitespace ?? 0) > 0
 
   const showDataQuality =
-    nothingIsNonZero || LeadOrTrailingWhitespaceIsNonZero || whitespaceIsNonZero
+    nothingIsNonZero || leadOrTrailingWhitespaceIsNonZero || whitespaceIsNonZero
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
@@ -408,10 +402,9 @@ function toField(
     tooltipComponent: TableVisualisationTooltip,
     headerTooltip: displayValue ? displayValue : '',
     tooltipComponentParams: {
-      numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
-      numberOfLeadOrTrailSpace:
-        index != null ? dataQuality.number_of_leading_trailing_whitespace[index] : null,
-      numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
+      numberOfNothing,
+      numberOfLeadOrTrailSpace,
+      numberOfWhitespace,
       total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
       showDataQuality,
     },

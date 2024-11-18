@@ -71,7 +71,7 @@ leading_trailing_whitespace_count col =
 contains_atleast_one_in_list : Text -> Vector -> Boolean
 contains_atleast_one_in_list str list =
     does_contain_list = list.map (char-> str.contains char)
-    filtered = does_contain_list.filter (c-> c)
+    filtered = does_contain_list.filter c->c
     filtered.length > 1
 
 ##PRIVATE
