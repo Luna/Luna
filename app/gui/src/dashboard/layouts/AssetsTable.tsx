@@ -2194,7 +2194,7 @@ export default function AssetsTable(props: AssetsTableProps) {
             isPlaceholder={item.isPlaceholder()}
             isExpanded={
               item.item.type === AssetType.directory ?
-                openedProjects.some(({ id }) => item.item.id === id)
+                expandedDirectoryIds.includes(item.item.id)
               : false
             }
             onCutAndPaste={cutAndPaste}
