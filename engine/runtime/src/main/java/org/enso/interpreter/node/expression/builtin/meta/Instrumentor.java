@@ -1,6 +1,7 @@
 package org.enso.interpreter.node.expression.builtin.meta;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.interop.InteropException;
@@ -127,6 +128,7 @@ final class Instrumentor extends EnsoObject implements IdExecutionService.Callba
   }
 
   @Override
+  @TruffleBoundary
   public Object toDisplayString(boolean allowSideEffects) {
     String rootName;
     if (target.getRootNode() != null) {

@@ -1,5 +1,6 @@
 package org.enso.interpreter.node.controlflow.caseexpr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
@@ -30,6 +31,7 @@ final class BranchResult extends EnsoObject {
   }
 
   @Override
+  @TruffleBoundary
   public Object toDisplayString(boolean allowSideEffects) {
     return "BranchResult(" + isMatched + ")";
   }
