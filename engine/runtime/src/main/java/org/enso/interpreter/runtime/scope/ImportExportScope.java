@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.scope;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.util.List;
 import org.enso.compiler.context.CompilerContext;
 import org.enso.interpreter.runtime.Module;
@@ -69,6 +70,7 @@ public class ImportExportScope extends EnsoObject {
   }
 
   @Override
+  @TruffleBoundary
   public Object toDisplayString(boolean allowSideEffects) {
     return "ImportExportScope{" + module.getName().toString() + "}";
   }
