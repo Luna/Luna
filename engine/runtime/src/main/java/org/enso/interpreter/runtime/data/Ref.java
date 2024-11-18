@@ -94,7 +94,7 @@ public final class Ref implements EnsoObject {
       var ret = ref.get();
       return ret == null ? EnsoContext.get(null).getNothing() : ret;
     } else {
-      return value;
+      return v;
     }
   }
 }
