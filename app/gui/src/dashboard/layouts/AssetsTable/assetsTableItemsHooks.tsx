@@ -1,16 +1,19 @@
 /** @file A hook to return the items in the assets table. */
 import { useMemo } from 'react'
 
-import { AssetId, AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
+import type { AssetId} from 'enso-common/src/services/Backend';
+import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
 import { PermissionAction } from 'enso-common/src/utilities/permissions'
 
-import { Column, SortableColumn } from '#/components/dashboard/column/columnUtils'
-import { DirectoryId } from '#/services/ProjectManager'
-import AssetQuery from '#/utilities/AssetQuery'
+import type { SortableColumn } from '#/components/dashboard/column/columnUtils';
+import { Column } from '#/components/dashboard/column/columnUtils'
+import type { DirectoryId } from '#/services/ProjectManager'
+import type AssetQuery from '#/utilities/AssetQuery'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import Visibility from '#/utilities/Visibility'
 import { fileExtension } from '#/utilities/fileInfo'
-import { SortDirection, SortInfo } from '#/utilities/sorting'
+import type { SortInfo } from '#/utilities/sorting';
+import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
 
 /** Options for {@link useAssetsTableItems}. */

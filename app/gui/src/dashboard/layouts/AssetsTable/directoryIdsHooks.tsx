@@ -4,10 +4,11 @@ import { useMemo, useState } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import { DirectoryId, Path, createRootDirectoryAsset } from 'enso-common/src/services/Backend'
+import type { DirectoryId} from 'enso-common/src/services/Backend';
+import { Path, createRootDirectoryAsset } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
-import { Category } from '#/layouts/CategorySwitcher/Category'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
