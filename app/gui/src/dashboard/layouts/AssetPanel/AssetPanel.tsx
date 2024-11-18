@@ -10,6 +10,7 @@ import inspectIcon from '#/assets/inspect.svg'
 import versionsIcon from '#/assets/versions.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { ProjectExecutions } from '#/layouts/AssetProjectExecutions'
 import { useBackend } from '#/providers/BackendProvider'
 import {
   useAssetPanelProps,
@@ -74,9 +75,7 @@ export interface AssetPanelContextProps {
   readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
-/**
- * Props for an {@link AssetPanel}.
- */
+/** Props for an {@link AssetPanel}. */
 export interface AssetPanelProps {
   readonly backendType: BackendType
   readonly category: Category
@@ -131,9 +130,7 @@ export function AssetPanel(props: AssetPanelProps) {
   )
 }
 
-/**
- * The internal implementation of the Asset Panel Tabs.
- */
+/** The internal implementation of the Asset Panel Tabs. */
 const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
@@ -213,6 +210,10 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
                 <AssetProjectSessions backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
 
+              <AssetPanelTabs.TabPanel id="executions" resetKeys={[item?.id]}>
+                <ProjectExecutions backend={backend} item={item} />
+              </AssetPanelTabs.TabPanel>
+
               <AssetPanelTabs.TabPanel id="docs" resetKeys={[item?.id]}>
                 <AssetDocs backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
@@ -250,6 +251,13 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
             id="sessions"
             icon={sessionsIcon}
             label={getText('projectSessions')}
+            isExpanded={isExpanded}
+            onPress={expandTab}
+          />
+          <AssetPanelTabs.Tab
+            id="executions"
+            icon={sessionsIcon}
+            label={getText('executions')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />

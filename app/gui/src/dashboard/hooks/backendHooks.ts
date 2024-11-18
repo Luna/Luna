@@ -75,6 +75,7 @@ export type MutationMethod = DefineBackendMethods<
   | 'deleteAsset'
   | 'deleteDatalink'
   | 'deleteInvitation'
+  | 'deleteProjectExecution'
   | 'deleteTag'
   | 'deleteUser'
   | 'deleteUserGroup'
