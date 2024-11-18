@@ -22,17 +22,6 @@ const PROJECT_EXECUTION_STYLES = tv({
   base: 'flex flex-row gap-1 w-full items-center',
   variants: {
     isEnabled: { false: { time: 'opacity-50', optionContainer: 'opacity-50' } },
-    repeatInterval: {
-      hourly: { repeatInterval: 'bg-[oklch(65%_0.2_100)] text-white' },
-      daily: { repeatInterval: 'bg-[oklch(65%_0.2_139)] text-white' },
-      weekly: { repeatInterval: 'bg-[oklch(65%_0.2_250)] text-white' },
-      monthly: { repeatInterval: 'bg-[oklch(65%_0.2_295)] text-white' },
-    },
-    parallelMode: {
-      ignore: { parallelMode: 'bg-[oklch(65%_0.2_100)] text-white' },
-      restart: { parallelMode: 'bg-[oklch(65%_0.2_60)] text-white' },
-      parallel: { parallelMode: 'bg-[oklch(65%_0.2_250)] text-white' },
-    },
   },
   slots: {
     timeContainer: 'group flex flex-row items-center gap-2 grow px-2 py-0.5',
@@ -70,8 +59,6 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
 
   const styles = PROJECT_EXECUTION_STYLES({
     isEnabled: projectExecution.enabled,
-    repeatInterval: projectExecution.repeatInterval,
-    parallelMode: projectExecution.parallelMode,
   })
 
   const deleteProjectExecution = useMutation(
@@ -146,7 +133,7 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
         </Button>
         <Button
           size="xsmall"
-          variant="custom"
+          variant="outline"
           icon={RepeatIcon}
           tooltip={getText('repeatIntervalLabel')}
           className={styles.repeatInterval()}
@@ -155,7 +142,7 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
         </Button>
         <Button
           size="xsmall"
-          variant="custom"
+          variant="outline"
           tooltip={getText('parallelModeLabel')}
           icon={ParallelIcon}
           className={styles.parallelMode()}
