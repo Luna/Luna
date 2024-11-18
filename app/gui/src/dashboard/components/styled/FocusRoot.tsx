@@ -7,7 +7,6 @@ import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 
 import * as aria from '#/components/aria'
 import * as withFocusScope from '#/components/styled/withFocusScope'
-import { useSingleUnmount } from '#/hooks/lifecycleHooks'
 
 // =================
 // === FocusRoot ===
@@ -30,10 +29,6 @@ function FocusRoot(props: FocusRootProps) {
   const { active = true, children } = props
   const navigator2D = navigator2DProvider.useNavigator2D()
   const cleanupRef = React.useRef(() => {})
-
-  useSingleUnmount(() => {
-    cleanupRef.current()
-  })
 
   const cachedChildren = React.useMemo(
     () =>

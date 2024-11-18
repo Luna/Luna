@@ -12,7 +12,6 @@ import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import { type DOMAttributes, useFocusManager, useFocusWithin } from '#/components/aria'
 import { withFocusScope } from '#/components/styled/withFocusScope'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useSingleUnmount } from '#/hooks/lifecycleHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 
 /** Props returned by {@link useFocusWithin}. */
@@ -46,10 +45,6 @@ function FocusArea(props: FocusAreaProps) {
   const cleanupRef = useRef(() => {})
   const focusChildClassRef = useSyncRef(focusChildClass)
   const focusDefaultClassRef = useSyncRef(focusDefaultClass)
-
-  useSingleUnmount(() => {
-    cleanupRef.current()
-  })
 
   // The following group of functions are for suppressing `react-compiler` lints.
   const cleanup = useEventCallback(() => {
