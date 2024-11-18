@@ -548,12 +548,20 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
       toastAndLog('uploadLargeFileError', error)
     },
   } = options
-  const uploadFileStartMutation = useMutation(backendMutationOptions(backend, 'uploadFileStart'))
+  const uploadFileStartMutation = useMutation(
+    useMemo(() => backendMutationOptions(backend, 'uploadFileStart'), [backend]),
+  )
   const uploadFileChunkMutation = useMutation(
-    backendMutationOptions(backend, 'uploadFileChunk', { retry: chunkRetries }),
+    useMemo(
+      () => backendMutationOptions(backend, 'uploadFileChunk', { retry: chunkRetries }),
+      [backend, chunkRetries],
+    ),
   )
   const uploadFileEndMutation = useMutation(
-    backendMutationOptions(backend, 'uploadFileEnd', { retry: endRetries }),
+    useMemo(
+      () => backendMutationOptions(backend, 'uploadFileEnd', { retry: endRetries }),
+      [backend, endRetries],
+    ),
   )
   const [variables, setVariables] =
     useState<[params: backendModule.UploadFileRequestParams, file: File]>()
