@@ -33,14 +33,12 @@ final class LazyCheckRootNode extends RootNode {
 
   @Override
   public Object execute(VirtualFrame frame) {
-    org.enso.interpreter.runtime.state.State state =
-        Function.ArgumentsHelper.getState(frame.getArguments());
-    java.lang.Object[] args = Function.ArgumentsHelper.getPositionalArguments(frame.getArguments());
+    var state = Function.ArgumentsHelper.getState(frame.getArguments());
+    var args = Function.ArgumentsHelper.getPositionalArguments(frame.getArguments());
     assert args.length == 1;
     assert args[0] instanceof Function fn && fn.isThunk();
-    java.lang.Object raw =
-        evalThunk.executeThunk(frame, args[0], state, BaseNode.TailStatus.NOT_TAIL);
-    java.lang.Object result = check.handleCheckOrConversion(frame, raw, null);
+    var raw = evalThunk.executeThunk(frame, args[0], state, BaseNode.TailStatus.NOT_TAIL);
+    var result = check.handleCheckOrConversion(frame, raw, null);
     return result;
   }
 }
