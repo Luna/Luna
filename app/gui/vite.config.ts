@@ -21,18 +21,7 @@ const YDOC_SERVER_URL =
   : process.env.NODE_ENV === 'development' ? dynHostnameWsUrl(5976)
   : undefined
 
-function ensureNoUndefinedEnv(name: string) {
-  if (process.env[name] === 'undefined') {
-    throw new Error(
-      `Environment variable ${name} is defined as "undefined" string value, which is not valid!`,
-    )
-  }
-}
-
 await readEnvironmentFromFile()
-
-ensureNoUndefinedEnv('ENSO_CLOUD_DASHBOARD_VERSION')
-ensureNoUndefinedEnv('ENSO_IDE_VERSION')
 
 const entrypoint =
   process.env.E2E === 'true' ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'

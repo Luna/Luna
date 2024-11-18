@@ -24,10 +24,12 @@ export async function readEnvironmentFromFile() {
     }
   })()
   console.info('Build info: ' + JSON.stringify(buildInfo))
+  discardUndefinedEnv('ENSO_CLOUD_DASHBOARD_VERSION')
+  discardUndefinedEnv('ENSO_IDE_VERSION')
 
   try {
     const file = await fs.readFile(filePath, { encoding: 'utf-8' })
-    console.info(`Reading environment from file: {filePath}`)
+    console.info(`Reading environment from file: ${filePath}`)
     /** @type {readonly (readonly [string, string])[]} */
     let entries = file.split('\n').flatMap(line => {
       if (/^\s*$|^.s*#/.test(line)) {
@@ -71,6 +73,16 @@ export async function readEnvironmentFromFile() {
       console.warn(`Missing keys: ${missingKeys.map(key => `'${key}'`).join(', ')}`)
       console.error(error)
     }
+  }
+}
+
+/**
+ * Discard environment variable value when is an "undefined" string.
+ * @param {string} name Name of an env variable.
+ */
+function discardUndefinedEnv(name) {
+  if (process.env[name] === 'undefined') {
+    delete process.env[name]
   }
 }
 
