@@ -519,10 +519,10 @@ export default function AssetsTable(props: AssetsTableProps) {
     useMemo(
       () => ({
         queryKey: [backend.type, 'refetchListDirectory'],
-        queryFn: () => {
-          return queryClient
+        queryFn: async () => {
+          await queryClient
             .refetchQueries({ queryKey: [backend.type, 'listDirectory'] })
-            .then(() => null)
+          return null
         },
         refetchInterval:
           enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
