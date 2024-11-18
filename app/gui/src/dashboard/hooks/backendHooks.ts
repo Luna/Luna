@@ -199,6 +199,10 @@ const INVALIDATION_MAP: Partial<
   updateAsset: ['listDirectory', 'listAssetVersions'],
   closeProject: ['listDirectory', 'listAssetVersions'],
   updateDirectory: ['listDirectory'],
+  createProjectExecution: ['listProjectExecutions'],
+  syncProjectExecution: ['listProjectExecutions'],
+  updateProjectExecution: ['listProjectExecutions'],
+  deleteProjectExecution: ['listProjectExecutions'],
 }
 
 /** The type of the corresponding mutation for the given backend method. */

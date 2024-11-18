@@ -11,10 +11,6 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
 
-// =========================
-// === ProjectExecutions ===
-// =========================
-
 /** Props for a {@link ProjectExecutions}. */
 export interface ProjectExecutionsProps {
   readonly backend: Backend
@@ -70,7 +66,7 @@ function ProjectExecutionsInternal(props: ProjectExecutionsInternalProps) {
   const projectExecutions = projectExecutionsQuery.data
 
   return (
-    <div className="pointer-events-auto flex flex-col items-center gap-2 overflow-y-auto overflow-x-hidden">
+    <div className="pointer-events-auto flex flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden">
       <ButtonGroup>
         <DialogTrigger>
           <Button variant="outline">{getText('newProjectExecution')}</Button>

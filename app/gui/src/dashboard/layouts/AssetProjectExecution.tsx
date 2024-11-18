@@ -45,10 +45,6 @@ const PROJECT_EXECUTION_STYLES = tv({
   },
 })
 
-// ========================
-// === ProjectExecution ===
-// ========================
-
 /** Props for a {@link ProjectExecution}. */
 export interface ProjectExecutionProps {
   readonly backend: Backend

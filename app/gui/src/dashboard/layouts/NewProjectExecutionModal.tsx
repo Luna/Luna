@@ -128,10 +128,6 @@ function createUpsertExecutionSchema(getText: GetText) {
 }
 /* eslint-enable @typescript-eslint/no-magic-numbers */
 
-// ================================
-// === NewProjectExecutionModal ===
-// ================================
-
 /** Props for a {@link NewProjectExecutionModal}. */
 export interface NewProjectExecutionModalProps {
   readonly backend: Backend
