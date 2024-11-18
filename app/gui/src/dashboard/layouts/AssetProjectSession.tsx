@@ -8,23 +8,11 @@ import type Backend from '#/services/Backend'
 import type { ProjectSession as BackendProjectSession, ProjectAsset } from '#/services/Backend'
 import { formatDateTime } from '#/utilities/dateTime'
 
-<<<<<<<< HEAD:app/dashboard/src/layouts/AssetPanel/ProjectSession.tsx
-/** Props for a {@link ProjectSession}. */
-export interface ProjectSessionProps {
-  readonly backend: Backend
-  readonly project: ProjectAsset
-  readonly projectSession: BackendProjectSession
-}
-
-/** Displays information describing a specific version of an asset. */
-export default function ProjectSession(props: ProjectSessionProps) {
-  const { backend, project, projectSession } = props
-========
 /** Props for a {@link AssetProjectSession}. */
 export interface AssetProjectSessionProps {
   readonly backend: Backend
   readonly project: ProjectAsset
-  readonly projectSession: ProjectSession
+  readonly projectSession: BackendProjectSession
   readonly index: number
 }
 
@@ -32,7 +20,6 @@ export interface AssetProjectSessionProps {
 export default function AssetProjectSession(props: AssetProjectSessionProps) {
   const { backend, project, projectSession, index } = props
 
->>>>>>>> develop:app/gui/src/dashboard/layouts/AssetProjectSession.tsx
   const { getText } = useText()
 
   return (
