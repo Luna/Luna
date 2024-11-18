@@ -113,6 +113,11 @@ public final class Warning extends EnsoObject {
     return toString();
   }
 
+  @ExportMessage
+  boolean isNull() {
+    return false;
+  }
+
   @CompilerDirectives.TruffleBoundary
   @Override
   public String toString() {
