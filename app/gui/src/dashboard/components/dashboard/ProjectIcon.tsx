@@ -19,7 +19,7 @@ import * as backendModule from '#/services/Backend'
 
 import { useBackendQuery } from '#/hooks/backendHooks'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
@@ -86,7 +86,11 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const itemProjectState = item.projectState ?? CLOSED_PROJECT_STATE
-  const { data: projectState, isError } = reactQuery.useQuery({
+  const {
+    data: projectState,
+    isError,
+    refetch,
+  } = reactQuery.useQuery({
     ...projectHooks.createGetProjectDetailsQuery({
       assetId: item.id,
       parentId: item.parentId,
@@ -103,9 +107,13 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   const isOtherUserUsingProject =
     isCloud && itemProjectState.openedBy != null && itemProjectState.openedBy !== user.email
+
   const { data: users } = useBackendQuery(backend, 'listUsers', [], {
+    staleTime: Infinity,
+    gcTime: Infinity,
     enabled: isOtherUserUsingProject,
   })
+
   const userOpeningProject = useMemo(
     () =>
       !isOtherUserUsingProject ? null : (
@@ -113,6 +121,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
       ),
     [isOtherUserUsingProject, itemProjectState.openedBy, users],
   )
+
   const userOpeningProjectTooltip =
     userOpeningProject == null ? null : getText('xIsUsingTheProject', userOpeningProject.name)
 
@@ -135,6 +144,10 @@ export default function ProjectIcon(props: ProjectIconProps) {
     }
     return status
   })()
+
+  useEffect(() => {
+    void refetch()
+  }, [itemProjectState, refetch])
 
   const spinnerState = ((): SpinnerState => {
     if (!isOpened) {

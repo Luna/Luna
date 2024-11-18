@@ -62,3 +62,22 @@ export const Spinner = React.memo(function Spinner(props: SpinnerProps) {
     </svg>
   )
 })
+
+/**
+ * Props for a {@link IndefiniteSpinner}.
+ */
+export interface IndefiniteSpinnerProps extends Omit<SpinnerProps, 'state'> {}
+
+/**
+ * A spinning arc that animates indefinitely.
+ */
+export function IndefiniteSpinner(props: IndefiniteSpinnerProps) {
+  const { size, padding, className } = props
+
+  const cssClasses = twJoin(
+    'pointer-events-none flex-none contain-strict h-10 w-10 animate-spin ease-in-out rounded-full border-4 border-primary/10 border-l-primary',
+    className,
+  )
+
+  return <div className={cssClasses} style={{ padding, width: size, height: size }} />
+}

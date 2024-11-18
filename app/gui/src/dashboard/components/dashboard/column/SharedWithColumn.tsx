@@ -7,7 +7,6 @@ import type { AssetColumnProps } from '#/components/dashboard/column'
 import PermissionDisplay from '#/components/dashboard/PermissionDisplay'
 import { PaywallDialogButton } from '#/components/Paywall'
 import AssetEventType from '#/events/AssetEventType'
-import { useAssetStrict } from '#/hooks/backendHooks'
 import { usePaywall } from '#/hooks/billing'
 import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
@@ -36,19 +35,14 @@ interface SharedWithColumnPropsInternal extends Pick<AssetColumnProps, 'item'> {
 export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
   const { item, state, isReadonly = false } = props
   const { backend, category, setQuery } = state
-  const asset = useAssetStrict({
-    backend,
-    assetId: item.id,
-    parentId: item.parentId,
-    category,
-  })
+
   const { user } = useFullUserSession()
   const dispatchAssetEvent = useDispatchAssetEvent()
   const { isFeatureUnderPaywall } = usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
-  const assetPermissions = asset.permissions ?? []
+  const assetPermissions = item.permissions ?? []
   const { setModal } = useSetModal()
-  const self = tryFindSelfPermission(user, asset.permissions)
+  const self = tryFindSelfPermission(user, item.permissions)
   const plusButtonRef = React.useRef<HTMLButtonElement>(null)
   const managesThisAsset =
     !isReadonly &&
@@ -103,11 +97,11 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
               <ManagePermissionsModal
                 backend={backend}
                 category={category}
-                item={asset}
+                item={item}
                 self={self}
                 eventTarget={plusButtonRef.current}
                 doRemoveSelf={() => {
-                  dispatchAssetEvent({ type: AssetEventType.removeSelf, id: asset.id })
+                  dispatchAssetEvent({ type: AssetEventType.removeSelf, id: item.id })
                 }}
               />,
             )

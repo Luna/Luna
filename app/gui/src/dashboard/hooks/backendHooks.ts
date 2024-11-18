@@ -13,7 +13,6 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import invariant from 'tiny-invariant'
 
 import {
   backendQueryOptions as backendQueryOptionsBase,
@@ -26,18 +25,8 @@ import { CATEGORY_TO_FILTER_BY, type Category } from '#/layouts/CategorySwitcher
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
-import {
-  AssetType,
-  BackendType,
-  type AssetId,
-  type DirectoryAsset,
-  type DirectoryId,
-  type User,
-  type UserGroupInfo,
-} from '#/services/Backend'
-import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
+import { BackendType, type DirectoryId, type User, type UserGroupInfo } from '#/services/Backend'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
-import { toRfc3339 } from '../utilities/dateTime'
 
 // The number of bytes in 1 megabyte.
 const MB_BYTES = 1_000_000
@@ -311,7 +300,6 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
     // setTimeouts to the query. Improves performance.
     // Anyways, refetching is handled by another query.
     staleTime: Infinity,
-    gcTime: Infinity,
     queryFn: async () => {
       try {
         return await backend.listDirectory(
@@ -343,96 +331,6 @@ export interface UploadFileMutationProgress {
   readonly event: 'begin' | 'chunk' | 'end'
   readonly sentMb: number
   readonly totalMb: number
-}
-
-/**
- *
- */
-export interface UseAssetOptions extends ListDirectoryQueryOptions {
-  readonly assetId: AssetId
-}
-
-/** Data for a specific asset. */
-export function useAsset(options: UseAssetOptions) {
-  const { parentId, assetId } = options
-
-  const { data: asset } = useQuery({
-    ...listDirectoryQueryOptions(options),
-    select: (data) => data.find((child) => child.id === assetId),
-  })
-
-  if (asset) {
-    return asset
-  }
-
-  const shared = {
-    parentId,
-    projectState: null,
-    extension: null,
-    description: '',
-    modifiedAt: toRfc3339(new Date()),
-    permissions: [],
-    labels: [],
-    parentsPath: '',
-    virtualParentsPath: '',
-  }
-  switch (true) {
-    case assetId === USERS_DIRECTORY_ID: {
-      return {
-        ...shared,
-        id: assetId,
-        title: 'Users',
-        type: AssetType.directory,
-      } satisfies DirectoryAsset
-    }
-    case assetId === TEAMS_DIRECTORY_ID: {
-      return {
-        ...shared,
-        id: assetId,
-        title: 'Teams',
-        type: AssetType.directory,
-      } satisfies DirectoryAsset
-    }
-    case backendModule.isLoadingAssetId(assetId): {
-      return {
-        ...shared,
-        id: assetId,
-        title: '',
-        type: AssetType.specialLoading,
-      } satisfies backendModule.SpecialLoadingAsset
-    }
-    case backendModule.isEmptyAssetId(assetId): {
-      return {
-        ...shared,
-        id: assetId,
-        title: '',
-        type: AssetType.specialEmpty,
-      } satisfies backendModule.SpecialEmptyAsset
-    }
-    case backendModule.isErrorAssetId(assetId): {
-      return {
-        ...shared,
-        id: assetId,
-        title: '',
-        type: AssetType.specialError,
-      } satisfies backendModule.SpecialErrorAsset
-    }
-    default: {
-      return
-    }
-  }
-}
-
-/** Data for a specific asset. */
-export function useAssetStrict(options: UseAssetOptions) {
-  const asset = useAsset(options)
-
-  invariant(
-    asset,
-    `Expected asset to be defined, but got undefined, Asset ID: ${JSON.stringify(options.assetId)}`,
-  )
-
-  return asset
 }
 
 /** Return matching in-flight mutations */

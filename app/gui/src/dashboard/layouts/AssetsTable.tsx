@@ -1,5 +1,6 @@
 /** @file Table displaying a list of projects. */
 import {
+  memo,
   startTransition,
   useEffect,
   useImperativeHandle,
@@ -43,7 +44,6 @@ import Label from '#/components/dashboard/Label'
 import { ErrorDisplay } from '#/components/ErrorBoundary'
 import { IsolateLayout } from '#/components/IsolateLayout'
 import SelectionBrush from '#/components/SelectionBrush'
-import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
@@ -159,6 +159,7 @@ import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
+import { IndefiniteSpinner } from '../components/Spinner'
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -2182,7 +2183,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       <tr className="h-row">
         <td colSpan={columns.length} className="bg-transparent">
           <div className="grid w-container justify-around">
-            <StatelessSpinner size={LOADING_SPINNER_SIZE_PX} state="initial" />
+            <IndefiniteSpinner size={LOADING_SPINNER_SIZE_PX} />
           </div>
         </td>
       </tr>
@@ -2367,7 +2368,8 @@ export default function AssetsTable(props: AssetsTableProps) {
             <IsolateLayout className="h-full w-full">
               <div
                 {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
-                  className: 'flex-1 overflow-auto container-size w-full h-full',
+                  className:
+                    'flex-1 overflow-auto container-size w-full h-full scroll-p-24 scroll-smooth',
                   onKeyDown,
                   onBlur: (event) => {
                     if (
@@ -2420,21 +2422,11 @@ export default function AssetsTable(props: AssetsTableProps) {
                             })}
                           >
                             {hiddenColumns.map((column) => (
-                              <Button
-                                size="custom"
-                                variant="custom"
+                              <HiddenColumn
                                 key={column}
-                                icon={COLUMN_ICONS[column]}
-                                aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
-                                onPress={() => {
-                                  const newExtraColumns = new Set(enabledColumns)
-                                  if (enabledColumns.has(column)) {
-                                    newExtraColumns.delete(column)
-                                  } else {
-                                    newExtraColumns.add(column)
-                                  }
-                                  setEnabledColumns(newExtraColumns)
-                                }}
+                                column={column}
+                                enabledColumns={enabledColumns}
+                                onColumnClick={setEnabledColumns}
                               />
                             ))}
                           </div>
@@ -2468,3 +2460,42 @@ export default function AssetsTable(props: AssetsTableProps) {
         )}
       </div>
 }
+
+/**
+ *
+ */
+interface HiddenColumnProps {
+  readonly column: Column
+  readonly enabledColumns: ReadonlySet<Column>
+  readonly onColumnClick: (columns: ReadonlySet<Column>) => void
+}
+
+/**
+ * Display a button to show/hide a column.
+ */
+const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
+  const { column, enabledColumns, onColumnClick } = props
+
+  const { getText } = useText()
+
+  const onPress = useEventCallback(() => {
+    const newExtraColumns = new Set(enabledColumns)
+    if (enabledColumns.has(column)) {
+      newExtraColumns.delete(column)
+    } else {
+      newExtraColumns.add(column)
+    }
+    onColumnClick(newExtraColumns)
+  })
+
+  return (
+    <Button
+      size="custom"
+      variant="custom"
+      key={column}
+      icon={COLUMN_ICONS[column]}
+      aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
+      onPress={onPress}
+    />
+  )
+})

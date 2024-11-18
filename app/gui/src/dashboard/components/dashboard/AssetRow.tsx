@@ -17,7 +17,6 @@ import * as textProvider from '#/providers/TextProvider'
 import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
-import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
@@ -35,12 +34,12 @@ import { useCutAndPaste } from '#/events/assetListEvent'
 import {
   backendMutationOptions,
   backendQueryOptions,
-  useAsset,
   useBackendMutationState,
 } from '#/hooks/backendHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useAsset } from '#/layouts/AssetsTable/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import { download } from '#/utilities/download'
@@ -53,13 +52,12 @@ import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 import invariant from 'tiny-invariant'
+import { IndefiniteSpinner } from '../Spinner'
 
 // =================
 // === Constants ===
 // =================
 
-/** The height of the header row. */
-const HEADER_HEIGHT_PX = 40
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
  * to make a directory row expand.
@@ -175,7 +173,7 @@ const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialR
                 indent.indentClass(depth),
               )}
             >
-              <StatelessSpinner size={24} state="loading-medium" />
+              <IndefiniteSpinner size={24} />
             </div>
           </td>
         </tr>
@@ -238,16 +236,11 @@ type RealAssetRowProps = AssetRowProps & { readonly id: backendModule.RealAssetI
  */
 // eslint-disable-next-line no-restricted-syntax
 const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) {
-  const { id, parentId, state } = props
-  const { category, backend } = state
+  const { id } = props
 
-  const asset = useAsset({
-    backend,
-    parentId,
-    category,
-    assetId: id,
-  })
+  const asset = useAsset(id)
 
+  // should never happen since we only render real assets and they are always defined
   if (asset == null) {
     return null
   }
@@ -283,7 +276,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
-  const { doRestore, doMove, category, scrollContainerRef, rootDirectoryId, backend } = state
+  const { doRestore, doMove, category, rootDirectoryId, backend } = state
   const { doToggleDirectoryExpansion } = state
 
   const driveStore = useDriveStore()
@@ -301,7 +294,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const wasSoleSelectedRef = React.useRef(isSoleSelected)
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
@@ -672,29 +664,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 ref={(element) => {
                   rootRef.current = element
 
-                  requestAnimationFrame(() => {
-                    if (
-                      isSoleSelected &&
-                      !wasSoleSelectedRef.current &&
-                      element != null &&
-                      scrollContainerRef.current != null
-                    ) {
-                      const rect = element.getBoundingClientRect()
-                      const scrollRect = scrollContainerRef.current.getBoundingClientRect()
-                      const scrollUp = rect.top - (scrollRect.top + HEADER_HEIGHT_PX)
-                      const scrollDown = rect.bottom - scrollRect.bottom
-
-                      if (scrollUp < 0 || scrollDown > 0) {
-                        scrollContainerRef.current.scrollBy({
-                          top: scrollUp < 0 ? scrollUp : scrollDown,
-                          behavior: 'smooth',
-                        })
-                      }
-                    }
-                    wasSoleSelectedRef.current = isSoleSelected
-                  })
-
                   if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
+                    element.scrollIntoView({ block: 'nearest' })
                     element.focus()
                   }
                 }}

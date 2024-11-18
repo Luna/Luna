@@ -19,7 +19,7 @@ import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import { backendMutationOptions, useAssetStrict, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -106,12 +106,6 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   const { backend, item, category, spotlightOn, isReadonly = false, path: pathRaw } = props
   const styles = ASSET_PROPERTIES_VARIANTS({})
 
-  const asset = useAssetStrict({
-    backend,
-    assetId: item.id,
-    parentId: item.parentId,
-    category,
-  })
   const setAssetPanelProps = useSetAssetPanelProps()
 
   const closeSpotlight = useEventCallback(() => {
@@ -142,9 +136,9 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
     backend,
     'getDatalink',
     // eslint-disable-next-line no-restricted-syntax
-    [asset.id as DatalinkId, asset.title],
+    [item.id as DatalinkId, item.title],
     {
-      enabled: asset.type === AssetType.datalink,
+      enabled: item.type === AssetType.datalink,
       ...(featureFlags.enableAssetsTableBackgroundRefresh ?
         { refetchInterval: featureFlags.assetsTableBackgroundRefreshInterval }
       : {}),
@@ -164,21 +158,21 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   })
 
   const labels = useBackendQuery(backend, 'listTags', []).data ?? []
-  const self = permissions.tryFindSelfPermission(user, asset.permissions)
+  const self = permissions.tryFindSelfPermission(user, item.permissions)
   const ownsThisAsset = self?.permission === permissions.PermissionAction.own
   const canEditThisAsset =
     ownsThisAsset ||
     self?.permission === permissions.PermissionAction.admin ||
     self?.permission === permissions.PermissionAction.edit
-  const isSecret = asset.type === AssetType.secret
-  const isDatalink = asset.type === AssetType.datalink
+  const isSecret = item.type === AssetType.secret
+  const isDatalink = item.type === AssetType.datalink
   const isCloud = backend.type === BackendType.remote
   const pathComputed =
     category.type === 'recent' || category.type === 'trash' ? null
     : isCloud ? `${pathRaw}${item.type === AssetType.datalink ? '.datalink' : ''}`
-    : asset.type === AssetType.project ?
-      mapNonNullish(localBackend?.getProjectPath(asset.id) ?? null, normalizePath)
-    : normalizePath(extractTypeAndId(asset.id).id)
+    : item.type === AssetType.project ?
+      mapNonNullish(localBackend?.getProjectPath(item.id) ?? null, normalizePath)
+    : normalizePath(extractTypeAndId(item.id).id)
   const path =
     pathComputed == null ? null
     : isCloud ? encodeURI(pathComputed)
@@ -190,19 +184,19 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   )
   const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
   const displayedDescription =
-    editDescriptionMutation.variables?.[0] === asset.id ?
-      editDescriptionMutation.variables[1].description ?? asset.description
-    : asset.description
+    editDescriptionMutation.variables?.[0] === item.id ?
+      editDescriptionMutation.variables[1].description ?? item.description
+    : item.description
 
   const editDescriptionForm = Form.useForm({
     schema: (z) => z.object({ description: z.string() }),
-    defaultValues: { description: asset.description ?? '' },
+    defaultValues: { description: item.description ?? '' },
     onSubmit: async ({ description }) => {
-      if (description !== asset.description) {
+      if (description !== item.description) {
         await editDescriptionMutation.mutateAsync([
-          asset.id,
+          item.id,
           { parentDirectoryId: null, description },
-          asset.title,
+          item.title,
         ])
       }
       setIsEditingDescription(false)
@@ -212,11 +206,11 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
 
   React.useEffect(() => {
     setIsEditingDescription(false)
-  }, [asset.id, setIsEditingDescription])
+  }, [item.id, setIsEditingDescription])
 
   React.useEffect(() => {
-    resetEditDescriptionForm({ description: asset.description ?? '' })
-  }, [asset.description, resetEditDescriptionForm])
+    resetEditDescriptionForm({ description: item.description ?? '' })
+  }, [item.description, resetEditDescriptionForm])
 
   const editDatalinkForm = Form.useForm({
     schema: (z) => z.object({ datalink: z.custom((x) => validateDatalink(x)) }),
@@ -226,8 +220,8 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
         {
           // The UI to submit this form is only visible if the asset is a datalink.
           // eslint-disable-next-line no-restricted-syntax
-          datalinkId: asset.id as DatalinkId,
-          name: asset.title,
+          datalinkId: item.id as DatalinkId,
+          name: item.title,
           parentDirectoryId: null,
           value: datalink,
         },
@@ -327,7 +321,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
                   <Text className="text inline-block">{getText('labels')}</Text>
                 </td>
                 <td className="flex w-full gap-1 p-0">
-                  {asset.labels?.map((value) => {
+                  {item.labels?.map((value) => {
                     const label = labels.find((otherLabel) => otherLabel.value === value)
                     return (
                       label != null && (
@@ -356,10 +350,10 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
             noDialog
             canReset
             canCancel={false}
-            id={asset.id}
-            name={asset.title}
+            id={item.id}
+            name={item.title}
             doCreate={async (name, value) => {
-              await updateSecretMutation.mutateAsync([asset.id, { value }, name])
+              await updateSecretMutation.mutateAsync([item.id, { value }, name])
             }}
           />
         </div>

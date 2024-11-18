@@ -313,6 +313,7 @@ export function useOpenProject() {
         ...openingProjectMutation.options,
         scope: { id: project.id },
       })
+
       addLaunchedProject(project)
     }
   })

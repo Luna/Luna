@@ -1,7 +1,7 @@
 /** @file A hook to return the items in the assets table. */
-import { useMemo } from 'react'
+import { startTransition, useEffect, useMemo } from 'react'
 
-import type { AssetId } from 'enso-common/src/services/Backend'
+import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
 import { PermissionAction } from 'enso-common/src/utilities/permissions'
 
@@ -15,6 +15,8 @@ import { fileExtension } from '#/utilities/fileInfo'
 import type { SortInfo } from '#/utilities/sorting'
 import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
+import { createStore, useStore } from '#/utilities/zustand.ts'
+import invariant from 'tiny-invariant'
 
 /** Options for {@link useAssetsTableItems}. */
 export interface UseAssetsTableOptions {
@@ -24,9 +26,46 @@ export interface UseAssetsTableOptions {
   readonly expandedDirectoryIds: readonly DirectoryId[]
 }
 
+export const ASSET_ITEMS_STORE = createStore<{
+  readonly items: AnyAsset[]
+  readonly setItems: (items: AnyAsset[]) => void
+}>((set) => ({
+  items: [],
+  setItems: (items) => {
+    set({ items })
+  },
+}))
+
+/**
+ * Return the asset with the given id.
+ */
+export function useAsset(id: AssetId) {
+  return useStore(
+    ASSET_ITEMS_STORE,
+    (store) => store.items.find((item) => item.id === id) ?? null,
+    {
+      unsafeEnableTransition: true,
+    },
+  )
+}
+
+/**
+ * Return the asset with the given id, or throw an error if it is undefined.
+ */
+export function useAssetStrict(id: AssetId) {
+  const asset = useAsset(id)
+  invariant(
+    asset,
+    `Expected asset to be defined, but got undefined, Asset ID: ${JSON.stringify(id)}`,
+  )
+  return asset
+}
+
 /** A hook to return the items in the assets table. */
 export function useAssetsTableItems(options: UseAssetsTableOptions) {
   const { assetTree, sortInfo, query, expandedDirectoryIds } = options
+
+  const setAssetItems = useStore(ASSET_ITEMS_STORE, (store) => store.setItems)
 
   const filter = useMemo(() => {
     const globCache: Record<string, RegExp> = {}
@@ -161,9 +200,15 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
 
   const displayItems = useMemo(() => {
     if (sortInfo == null) {
-      return assetTree.preorderTraversal((children) =>
+      const flatTree = assetTree.preorderTraversal((children) =>
         children.filter((child) => expandedDirectoryIds.includes(child.directoryId)),
       )
+
+      startTransition(() => {
+        setAssetItems(flatTree.map((item) => item.item))
+      })
+
+      return flatTree
     } else {
       const multiplier = sortInfo.direction === SortDirection.ascending ? 1 : -1
       let compare: (a: AnyAssetTreeNode, b: AnyAssetTreeNode) => number
@@ -181,11 +226,23 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
           break
         }
       }
-      return assetTree.preorderTraversal((tree) =>
+      const flatTree = assetTree.preorderTraversal((tree) =>
         [...tree].filter((child) => expandedDirectoryIds.includes(child.directoryId)).sort(compare),
       )
+
+      startTransition(() => {
+        setAssetItems(flatTree.map((item) => item.item))
+      })
+
+      return flatTree
     }
-  }, [assetTree, sortInfo, expandedDirectoryIds])
+  }, [sortInfo, assetTree, expandedDirectoryIds, setAssetItems])
+
+  // useEffect(() => {
+  //   startTransition(() => {
+  //     setAssetItems(displayItems.map((item) => item.item))
+  //   })
+  // }, [displayItems, setAssetItems])
 
   const visibleItems = useMemo(
     () => displayItems.filter((item) => visibilities.get(item.key) !== Visibility.hidden),
