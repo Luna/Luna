@@ -149,26 +149,23 @@ function createUsersMeQuery(
     queryKey: [remoteBackend.type, 'usersMe', session?.clientId] as const,
     queryFn: async () => {
       if (session == null) {
-        // eslint-disable-next-line no-restricted-syntax
         return Promise.resolve(null)
       }
-      try {
-        const user = await remoteBackend.usersMe()
 
-        // if API returns null, user is not yet registered
-        // but already authenticated with Cognito
-        return user == null ?
-            ({ type: UserSessionType.partial, ...session } satisfies PartialUserSession)
-          : ({ type: UserSessionType.full, user, ...session } satisfies FullUserSession)
-      } catch (error) {
-        if (error instanceof backendModule.NotAuthorizedError) {
-          await performLogout()
-          return null
-        } else {
-          // eslint-disable-next-line no-restricted-syntax
+      return remoteBackend
+        .usersMe()
+        .then((user) => {
+          return user == null ?
+              ({ type: UserSessionType.partial, ...session } satisfies PartialUserSession)
+            : ({ type: UserSessionType.full, user, ...session } satisfies FullUserSession)
+        })
+        .catch((error) => {
+          if (error instanceof backendModule.NotAuthorizedError) {
+            return performLogout().then(() => null)
+          }
+
           throw error
-        }
-      }
+        })
     },
   })
 }
@@ -203,7 +200,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     gtag.event(name, params)
   }, [])
 
-  const performLogout = async () => {
+  const performLogout = useEventCallback(async () => {
     await cognito.signOut()
 
     const parentDomain = location.hostname.replace(/^[^.]*\./, '')
@@ -217,7 +214,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     await queryClient.clearWithPersister()
 
     return Promise.resolve()
-  }
+  })
 
   const logoutMutation = reactQuery.useMutation({
     mutationKey: [remoteBackend.type, 'usersMe', 'logout', session?.clientId] as const,
@@ -333,7 +330,6 @@ export default function AuthProvider(props: AuthProviderProps) {
       const challenge = user.challengeName ?? 'NO_CHALLENGE'
 
       if (['SMS_MFA', 'SOFTWARE_TOKEN_MFA'].includes(challenge)) {
-        // eslint-disable-next-line no-restricted-syntax
         return { challenge, user } as const
       }
 

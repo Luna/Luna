@@ -5,7 +5,7 @@ import * as focusHooks from '#/hooks/focusHooks'
 
 import * as aria from '#/components/aria'
 import * as ariaComponents from '#/components/AriaComponents'
-import StatelessSpinner, * as spinnerModule from '#/components/StatelessSpinner'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
 import { forwardRef } from '#/utilities/react'
@@ -398,7 +398,7 @@ export const Button = forwardRef(function Button(
       } else if (isLoading && loaderPosition === 'icon') {
         return (
           <span className={styles.icon()}>
-            <StatelessSpinner state={spinnerModule.SpinnerState.loadingMedium} size={16} />
+            <StatelessSpinner state="loading-medium" size={16} />
           </span>
         )
       } else {
@@ -439,8 +439,9 @@ export const Button = forwardRef(function Button(
   const button = (
     <Tag
       // @ts-expect-error ts errors are expected here because we are merging props with different types
+      ref={ref}
+      // @ts-expect-error ts errors are expected here because we are merging props with different types
       {...aria.mergeProps<aria.ButtonProps>()(goodDefaults, ariaProps, focusChildProps, {
-        ref,
         isDisabled,
         // we use onPressEnd instead of onPress because for some reason react-aria doesn't trigger
         // onPress on EXTRA_CLICK_ZONE, but onPress{start,end} are triggered
@@ -461,13 +462,13 @@ export const Button = forwardRef(function Button(
             className={styles.content({ className: contentClassName })}
             {...targetProps}
           >
-            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-argument */}
+            {}
             {childrenFactory(render)}
           </span>
 
           {isLoading && loaderPosition === 'full' && (
             <span ref={loaderRef} className={styles.loader()}>
-              <StatelessSpinner state={spinnerModule.SpinnerState.loadingMedium} size={16} />
+              <StatelessSpinner state="loading-medium" size={16} />
             </span>
           )}
         </span>

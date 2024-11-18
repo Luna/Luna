@@ -11,7 +11,7 @@ import * as tar from 'tar'
 import * as yaml from 'yaml'
 
 import * as common from 'enso-common'
-import GLOBAL_CONFIG from 'enso-common/src/config.json' assert { type: 'json' }
+import GLOBAL_CONFIG from 'enso-common/src/config.json' with { type: 'json' }
 
 import * as projectManagement from './projectManagement'
 
@@ -122,7 +122,6 @@ export default function projectManagerShimMiddleware(
           response.writeHead(
             // This is SAFE. The documentation says:
             // Only valid for response obtained from ClientRequest.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             actualResponse.statusCode!,
             actualResponse.statusMessage,
             actualResponse.headers,
@@ -264,7 +263,6 @@ export default function projectManagerShimMiddleware(
                           } else {
                             // This error moves control flow to the
                             // `catch` clause directly below.
-                            // eslint-disable-next-line no-restricted-syntax
                             throw new Error('Invalid project metadata.')
                           }
                         } catch {

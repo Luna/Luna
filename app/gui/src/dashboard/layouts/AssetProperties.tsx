@@ -16,13 +16,10 @@ import {
 import SharedWithColumn from '#/components/dashboard/column/SharedWithColumn'
 import { DatalinkFormInput } from '#/components/dashboard/DatalinkInput'
 import Label from '#/components/dashboard/Label'
-import StatelessSpinner, * as statelessSpinner from '#/components/StatelessSpinner'
+import { Result } from '#/components/Result'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import {
-  backendMutationOptions,
-  useAssetPassiveListenerStrict,
-  useBackendQuery,
-} from '#/hooks/backendHooks'
+import { backendMutationOptions, useAssetStrict, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -34,17 +31,12 @@ import { useDriveStore, useSetAssetPanelProps } from '#/providers/DriveProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { AssetType, BackendType, Plan, type DatalinkId } from '#/services/Backend'
+import { AssetType, BackendType, Plan, type AnyAsset, type DatalinkId } from '#/services/Backend'
 import { extractTypeAndId } from '#/services/LocalBackend'
-import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
-
-// =======================
-// === AssetProperties ===
-// =======================
 
 const ASSET_PROPERTIES_VARIANTS = tv({
   base: '',
@@ -59,31 +51,65 @@ export type AssetPropertiesSpotlight = 'datalink' | 'description' | 'secret'
 /** Props for an {@link AssetPropertiesProps}. */
 export interface AssetPropertiesProps {
   readonly backend: Backend
-  readonly item: AnyAssetTreeNode
+  readonly item: AnyAsset | null
+  readonly path: string | null
   readonly category: Category
   readonly isReadonly?: boolean
-  readonly spotlightOn: AssetPropertiesSpotlight | undefined
+  readonly spotlightOn?: AssetPropertiesSpotlight | null
 }
 
-/** Display and modify the properties of an asset. */
+/**
+ * Display and modify the properties of an asset.
+ */
 export default function AssetProperties(props: AssetPropertiesProps) {
-  const { backend, item, category, spotlightOn, isReadonly = false } = props
+  const { item, isReadonly = false, backend, category, spotlightOn = null, path } = props
+
+  const { getText } = useText()
+
+  if (item == null || path == null) {
+    return <Result status="info" title={getText('assetProperties.notSelected')} centered />
+  }
+
+  return (
+    <AssetPropertiesInternal
+      backend={backend}
+      item={item}
+      isReadonly={isReadonly}
+      category={category}
+      spotlightOn={spotlightOn}
+      path={path}
+    />
+  )
+}
+
+/**
+ * Props for {@link AssetPropertiesInternal}.
+ */
+export interface AssetPropertiesInternalProps extends AssetPropertiesProps {
+  readonly item: NonNullable<AssetPropertiesProps['item']>
+  readonly path: NonNullable<AssetPropertiesProps['path']>
+}
+
+/**
+ * Internal implementation of {@link AssetProperties}.
+ */
+function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
+  const { backend, item, category, spotlightOn, isReadonly = false, path: pathRaw } = props
   const styles = ASSET_PROPERTIES_VARIANTS({})
 
-  const asset = useAssetPassiveListenerStrict(
-    backend.type,
-    item.item.id,
-    item.item.parentId,
+  const asset = useAssetStrict({
+    backend,
+    assetId: item.id,
+    parentId: item.parentId,
     category,
-  )
+  })
   const setAssetPanelProps = useSetAssetPanelProps()
+
+  const driveStore = useDriveStore()
+
   const closeSpotlight = useEventCallback(() => {
     const assetPanelProps = driveStore.getState().assetPanelProps
-    if (assetPanelProps != null) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { spotlightOn: unusedSpotlightOn, ...rest } = assetPanelProps
-      setAssetPanelProps(rest)
-    }
+    setAssetPanelProps({ ...assetPanelProps, spotlightOn: null })
   })
   const { user } = useFullUserSession()
   const isEnterprise = user.plan === Plan.enterprise
@@ -91,7 +117,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
   const localBackend = useLocalBackend()
   const [isEditingDescriptionRaw, setIsEditingDescriptionRaw] = React.useState(false)
   const isEditingDescription = isEditingDescriptionRaw || spotlightOn === 'description'
-  const setIsEditingDescription = React.useCallback(
+  const setIsEditingDescription = useEventCallback(
     (valueOrUpdater: React.SetStateAction<boolean>) => {
       setIsEditingDescriptionRaw((currentValue) => {
         if (typeof valueOrUpdater === 'function') {
@@ -103,7 +129,6 @@ export default function AssetProperties(props: AssetPropertiesProps) {
         return valueOrUpdater
       })
     },
-    [closeSpotlight],
   )
   const featureFlags = useFeatureFlags()
   const datalinkQuery = useBackendQuery(
@@ -118,22 +143,15 @@ export default function AssetProperties(props: AssetPropertiesProps) {
       : {}),
     },
   )
-  const driveStore = useDriveStore()
-  const descriptionRef = React.useRef<HTMLDivElement>(null)
   const descriptionSpotlight = useSpotlight({
-    ref: descriptionRef,
     enabled: spotlightOn === 'description',
     close: closeSpotlight,
   })
-  const secretRef = React.useRef<HTMLDivElement>(null)
   const secretSpotlight = useSpotlight({
-    ref: secretRef,
     enabled: spotlightOn === 'secret',
     close: closeSpotlight,
   })
-  const datalinkRef = React.useRef<HTMLDivElement>(null)
   const datalinkSpotlight = useSpotlight({
-    ref: datalinkRef,
     enabled: spotlightOn === 'datalink',
     close: closeSpotlight,
   })
@@ -148,16 +166,16 @@ export default function AssetProperties(props: AssetPropertiesProps) {
   const isSecret = asset.type === AssetType.secret
   const isDatalink = asset.type === AssetType.datalink
   const isCloud = backend.type === BackendType.remote
-  const pathRaw =
+  const pathComputed =
     category.type === 'recent' || category.type === 'trash' ? null
-    : isCloud ? `${item.path}${item.type === AssetType.datalink ? '.datalink' : ''}`
+    : isCloud ? `${pathRaw}${item.type === AssetType.datalink ? '.datalink' : ''}`
     : asset.type === AssetType.project ?
       mapNonNullish(localBackend?.getProjectPath(asset.id) ?? null, normalizePath)
     : normalizePath(extractTypeAndId(asset.id).id)
   const path =
-    pathRaw == null ? null
-    : isCloud ? encodeURI(pathRaw)
-    : pathRaw
+    pathComputed == null ? null
+    : isCloud ? encodeURI(pathComputed)
+    : pathComputed
   const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
   const editDescriptionMutation = useMutation(
     // Provide an extra `mutationKey` so that it has its own loading state.
@@ -165,7 +183,9 @@ export default function AssetProperties(props: AssetPropertiesProps) {
   )
   const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
   const displayedDescription =
-    editDescriptionMutation.variables?.[1].description ?? asset.description
+    editDescriptionMutation.variables?.[0] === asset.id ?
+      editDescriptionMutation.variables[1].description ?? asset.description
+    : asset.description
 
   const editDescriptionForm = Form.useForm({
     schema: (z) => z.object({ description: z.string() }),
@@ -181,6 +201,15 @@ export default function AssetProperties(props: AssetPropertiesProps) {
       setIsEditingDescription(false)
     },
   })
+  const resetEditDescriptionForm = editDescriptionForm.reset
+
+  React.useEffect(() => {
+    setIsEditingDescription(false)
+  }, [asset.id, setIsEditingDescription])
+
+  React.useEffect(() => {
+    resetEditDescriptionForm({ description: asset.description ?? '' })
+  }, [asset.description, resetEditDescriptionForm])
 
   const editDatalinkForm = Form.useForm({
     schema: (z) => z.object({ datalink: z.custom((x) => validateDatalink(x)) }),
@@ -205,11 +234,11 @@ export default function AssetProperties(props: AssetPropertiesProps) {
   }, [datalinkQuery.data, editDatalinkFormRef])
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-8">
       {descriptionSpotlight.spotlightElement}
       {secretSpotlight.spotlightElement}
       {datalinkSpotlight.spotlightElement}
-      <div ref={descriptionRef} className={styles.section()} {...descriptionSpotlight.props}>
+      <div className={styles.section()} {...descriptionSpotlight.props}>
         <Heading
           level={2}
           className="flex h-side-panel-heading items-center gap-side-panel-section py-side-panel-heading-y text-lg leading-snug"
@@ -309,7 +338,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
       )}
 
       {isSecret && (
-        <div ref={secretRef} className={styles.section()} {...secretSpotlight.props}>
+        <div className={styles.section()} {...secretSpotlight.props}>
           <Heading
             level={2}
             className="h-side-panel-heading py-side-panel-heading-y text-lg leading-snug"
@@ -330,7 +359,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
       )}
 
       {isDatalink && (
-        <div ref={datalinkRef} className={styles.section()} {...datalinkSpotlight.props}>
+        <div className={styles.section()} {...datalinkSpotlight.props}>
           <Heading
             level={2}
             className="h-side-panel-heading py-side-panel-heading-y text-lg leading-snug"
@@ -339,7 +368,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
           </Heading>
           {datalinkQuery.isLoading ?
             <div className="grid place-items-center self-stretch">
-              <StatelessSpinner size={48} state={statelessSpinner.SpinnerState.loadingMedium} />
+              <StatelessSpinner size={48} state="loading-medium" />
             </div>
           : <Form form={editDatalinkForm} className="w-full">
               <DatalinkFormInput
@@ -362,6 +391,6 @@ export default function AssetProperties(props: AssetPropertiesProps) {
           }
         </div>
       )}
-    </>
+    </div>
   )
 }

@@ -4,6 +4,9 @@ import * as test from '@playwright/test'
 import { Plan } from 'enso-common/src/services/Backend'
 import * as actions from './actions'
 
+// Reset storage state for this file to avoid being authenticated
+test.test.use({ storageState: { cookies: [], origins: [] } })
+
 test.test('setup (free plan)', ({ page }) =>
   actions
     .mockAll({
@@ -68,7 +71,6 @@ test.test('setup (team plan)', ({ page }) =>
     })
     .loginAsNewUser()
     .setUsername('test user')
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     .selectTeamPlan(Plan.team, 10)
     .setOrganizationName('test organization')
     .inviteUsers('foo@bar.baz bar@bar.baz, baz@example.com; other+email@org.co.uk')

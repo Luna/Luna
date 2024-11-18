@@ -1,3 +1,4 @@
+import project.Data.Numbers.Float
 import project.Data.Numbers.Integer
 import project.Data.Text.Extensions
 import project.Data.Text.Text
@@ -14,6 +15,7 @@ from project.Data.Boolean import Boolean, False, True
 polyglot java import java.lang.ArithmeticException
 polyglot java import java.lang.ClassCastException
 polyglot java import java.lang.OutOfMemoryError
+polyglot java import org.enso.base.cache.ResponseTooLargeException
 polyglot java import org.enso.base.CompareException
 
 ## An error indicating that no value was found.
@@ -509,6 +511,7 @@ type Missing_Argument
         Error.throw (Missing_Argument.Error argument_name function_name call_location)
 
 ## Warning when additional warnings occurred.
+@Builtin_Type
 type Additional_Warnings
     ## PRIVATE
     Error (count:Integer)
@@ -551,5 +554,55 @@ type Out_Of_Range
     ## PRIVATE
     to_text : Text
     to_text self =
-        extra = if self.message.is_nothing then "" else ": "+self.message.to_text
+        extra = if self.message.is_nothing then "" else " (message = "+self.message.to_text+")"
         "(Out_Of_Range (value = "+self.value.to_text+")" + extra + ")"
+
+## Indiciates that the response from a remote endpoint is over the size limit.
+type Response_Too_Large
+    ## PRIVATE
+    Error limit:Integer
+
+    ## PRIVATE
+       Create a human-readable version of the error.
+    to_display_text : Text
+    to_display_text self =
+        suggestion = " Use `Data.fetch` with `cache_policy=No_Cache`, or use `Data.download` to fetch the data to a local file, and `Data.read` to read the file."
+        "Response too large: repsonse size is over the limit ("+self.limit.to_text+")" + suggestion
+
+    ## PRIVATE
+    to_text : Text
+    to_text self =
+        "(Response_Too_Large (limit = "+self.limit.to_text+")" + ")"
+
+    ## PRIVATE
+       Convert the Java exception to an Enso dataflow error.
+    handle_java_exception ~action =
+        Panic.catch ResponseTooLargeException action (cause-> Error.throw (Response_Too_Large.Error cause.payload.getLimit))
+
+## Indicates that some operation relies on equality on floating-point values,
+   which is not recommended.
+type Floating_Point_Equality
+    ## PRIVATE
+       Represents a general floating-point equality error, such as a direct comparison.
+    Error (location:Text)
+
+    ## PRIVATE
+       Represents the use of a floating-point value as a `Dictionary` key.
+    Used_As_Dictionary_Key value:Float
+
+    ## PRIVATE
+       Create a human-readable version of the error.
+    to_display_text : Text
+    to_display_text self = case self of
+        Floating_Point_Equality.Error location ->
+            "Relying on equality of floating-point numbers is not recommended (within "+location+")."
+        Floating_Point_Equality.Used_As_Dictionary_Key value ->
+            "Float used as dictionary key: "+value.to_text
+
+    ## PRIVATE
+    to_text : Text
+    to_text self = case self of
+        Floating_Point_Equality.Error location ->
+            "(Error  (location = "+location+"))"
+        Floating_Point_Equality.Used_As_Dictionary_Key value ->
+            "(Used_As_Dictionary_Key (value = "+value.to_text+"))"

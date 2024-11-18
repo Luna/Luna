@@ -3,7 +3,7 @@ import * as React from 'react'
 
 import * as reactDom from 'react-dom'
 
-import * as chat from 'enso-chat/chat'
+import * as chat from '#/services/Chat'
 
 import CloseLargeIcon from '#/assets/close_large.svg'
 import DefaultUserIcon from '#/assets/default_user.svg'
@@ -430,7 +430,6 @@ export default function Chat(props: ChatProps) {
    * This is SAFE, because this component is only rendered when `accessToken` is present.
    * See `dashboard.tsx` for its sole usage.
    */
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const accessToken = rawAccessToken
 
   const [isPaidUser, setIsPaidUser] = React.useState(true)
@@ -481,6 +480,7 @@ export default function Chat(props: ChatProps) {
       element.scrollTop = element.scrollHeight - element.clientHeight
     }
     // Auto-scroll MUST only happen when the message list changes.
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
 
@@ -852,8 +852,6 @@ export default function Chat(props: ChatProps) {
           <ariaComponents.Button
             size="custom"
             variant="custom"
-            // This UI element does not appear anywhere else.
-            // eslint-disable-next-line no-restricted-syntax
             className="mx-2 my-1 text-wrap rounded-2xl bg-call-to-action/90 p-2 text-center leading-cozy text-white hover:bg-call-to-action"
             onPress={upgradeToPro}
           >

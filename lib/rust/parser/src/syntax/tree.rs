@@ -104,10 +104,11 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
         Ident {
             pub token: token::Ident<'s>,
         },
-        /// A `private` keyword, marking associated expressions as project-private.
+        /// A private-module declaration. This must be at the top level of a module. It also should
+        /// be before any other declarations or statements (this is not currently enforced in the
+        /// parser).
         Private {
-            pub keyword: token::Private<'s>,
-            pub body: Option<Tree<'s>>,
+            pub keyword: token::PrivateKeyword<'s>,
         },
         /// A numeric literal, like `10`.
         Number {
@@ -205,6 +206,8 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
         },
         /// A variable assignment, like `foo = bar 23`.
         Assignment {
+            /// Documentation applied to the variable.
+            pub doc_line: Option<DocLine<'s>>,
             /// The pattern which should be unified with the expression.
             pub pattern: Tree<'s>,
             /// The `=` token.
@@ -214,6 +217,15 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
         },
         /// A function definition, like `add x y = x + y`.
         Function {
+            /// Documentation applied to the function.
+            pub doc_line: Option<DocLine<'s>>,
+            /// Annotations applied to the function.
+            pub annotation_lines: Vec<AnnotationLine<'s>>,
+            /// A type signature for the function, on its own line.
+            pub signature_line: Option<TypeSignatureLine<'s>>,
+            /// The `private` keyword, if present. This is allowed at top level and in type
+            /// definitions, must be `None` if the context is a function body.
+            pub private: Option<token::PrivateKeyword<'s>>,
             /// The (qualified) name to which the function should be bound.
             pub name: Tree<'s>,
             /// The argument patterns.
@@ -264,15 +276,10 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
             pub body:  Option<Tree<'s>>,
             pub close: Option<token::CloseSymbol<'s>>,
         },
-        /// Statement declaring the type of a variable.
-        TypeSignature {
-            /// (Qualified) name of the item whose type is being declared.
-            pub variable: Tree<'s>,
-            /// The `:` token.
-            pub operator: token::TypeAnnotationOperator<'s>,
-            /// The variable's type.
-            #[reflect(rename = "type")]
-            pub type_:    Tree<'s>,
+        /// Declaration of the type of a function, that was not able to be attached to a subsequent
+        /// function definition.
+        TypeSignatureDeclaration {
+            pub signature: TypeSignature<'s>,
         },
         /// An expression with explicit type information attached.
         TypeAnnotated {
@@ -312,17 +319,9 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
             pub rest:  Vec<OperatorDelimitedTree<'s>>,
             pub right: token::CloseSymbol<'s>,
         },
-        /// An expression preceded by an annotation. For example:
-        /// ```enso
-        /// @on_problems Problem_Behavior.get_widget_attribute
-        /// Table.select_columns : Vector Text | Column_Selector -> Boolean -> Problem_Behavior -> Table
-        /// ```
-        Annotated {
-            pub token:      token::AnnotationOperator<'s>,
-            pub annotation: token::Ident<'s>,
-            pub argument:   Option<Tree<'s>>,
-            pub newlines:   Vec<token::Newline<'s>>,
-            pub expression: Option<Tree<'s>>,
+        /// An annotation without a following function definition.
+        Annotation {
+            pub annotation: FunctionAnnotation<'s>,
         },
         /// An expression preceded by a special built-in annotation, e.g. `@Tail_Call foo 4`.
         AnnotatedBuiltin {
@@ -331,21 +330,31 @@ macro_rules! with_ast_definition { ($f:ident ($($args:tt)*)) => { $f! { $($args)
             pub newlines:   Vec<token::Newline<'s>>,
             pub expression: Option<Tree<'s>>,
         },
-        /// An expression preceded by a doc comment.
-        Documented {
-            /// The documentation.
-            pub documentation: DocComment<'s>,
-            /// The item being documented.
-            pub expression: Option<Tree<'s>>,
+        /// A documentation comment that wasn't attached to a following documentable item.
+        Documentation {
+            pub docs: DocComment<'s>,
+        },
+        /// An expression at the top level of a block.
+        ExpressionStatement {
+            /// Documentation applied to the expression.
+            pub doc_line: Option<DocLine<'s>>,
+            /// The expression.
+            pub expression: Tree<'s>,
         },
         /// Defines a type constructor.
         ConstructorDefinition {
+            /// Documentation applied to the constructor.
+            pub doc_line:         Option<DocLine<'s>>,
+            /// Annotations applied to the constructor.
+            pub annotation_lines: Vec<AnnotationLine<'s>>,
+            /// The `private` keyword, if present.
+            pub private:          Option<token::PrivateKeyword<'s>>,
             /// The identifier naming the type constructor.
-            pub constructor:   token::Ident<'s>,
+            pub constructor:      token::Ident<'s>,
             /// The arguments the type constructor accepts, specified inline.
-            pub arguments:     Vec<ArgumentDefinition<'s>>,
+            pub arguments:        Vec<ArgumentDefinition<'s>>,
             /// The arguments the type constructor accepts, specified on their own lines.
-            pub block:         Vec<ArgumentDefinitionLine<'s>>,
+            pub block:            Vec<ArgumentDefinitionLine<'s>>,
         },
     }
 }};}
@@ -364,6 +373,7 @@ macro_rules! generate_variant_constructors {
         impl<'s> Tree<'s> {
             $(
                 /// Constructor.
+                #[allow(clippy::too_many_arguments)]
                 pub fn [<$variant:snake:lower>]($($(mut $field : $field_ty),*)?) -> Self {
                     let span = span_builder![$($($field),*)?];
                     Tree(span, $variant($($($field),*)?))
@@ -486,7 +496,23 @@ impl<'s> span::Builder<'s> for TextElement<'s> {
 
 // === Documentation ===
 
-/// A documentation comment.
+/// A documentation comment line.
+#[cfg_attr(feature = "debug", derive(Visitor))]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Reflect, Deserialize)]
+pub struct DocLine<'s> {
+    /// The documentation.
+    pub docs:     DocComment<'s>,
+    /// Empty lines between the comment and the item.
+    pub newlines: Vec<token::Newline<'s>>,
+}
+
+impl<'s> span::Builder<'s> for DocLine<'s> {
+    fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
+        span.add(&mut self.docs).add(&mut self.newlines)
+    }
+}
+
+/// Contents of a documentation comment.
 #[cfg_attr(feature = "debug", derive(Visitor))]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Reflect, Deserialize)]
 pub struct DocComment<'s> {
@@ -494,13 +520,11 @@ pub struct DocComment<'s> {
     pub open:     token::TextStart<'s>,
     /// The documentation text.
     pub elements: Vec<TextElement<'s>>,
-    /// Empty lines between the comment and the item.
-    pub newlines: Vec<token::Newline<'s>>,
 }
 
 impl<'s> span::Builder<'s> for DocComment<'s> {
     fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
-        span.add(&mut self.open).add(&mut self.elements).add(&mut self.newlines)
+        span.add(&mut self.open).add(&mut self.elements)
     }
 }
 
@@ -525,6 +549,86 @@ impl<'s> span::Builder<'s> for FractionalDigits<'s> {
 
 
 // === Functions ===
+
+/// A function annotation line.
+///
+/// For example, the `@on_problems` line in:
+/// ```enso
+/// @on_problems Problem_Behavior.get_widget_attribute
+/// Table.select_columns : Vector Text | Column_Selector -> Boolean -> Problem_Behavior -> Table
+/// ```
+#[cfg_attr(feature = "debug", derive(Visitor))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Reflect, Deserialize)]
+pub struct AnnotationLine<'s> {
+    /// The annotation.
+    pub annotation: FunctionAnnotation<'s>,
+    /// The end of the line.
+    pub newlines:   NonEmptyVec<token::Newline<'s>>,
+}
+
+impl<'s> span::Builder<'s> for AnnotationLine<'s> {
+    fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
+        span.add(&mut self.annotation).add(&mut self.newlines)
+    }
+}
+
+/// Contents of a function annotation line.
+///
+/// For example:
+/// ```enso
+/// @on_problems Problem_Behavior.get_widget_attribute
+/// ```
+#[cfg_attr(feature = "debug", derive(Visitor))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Reflect, Deserialize)]
+pub struct FunctionAnnotation<'s> {
+    /// The `@` token.
+    pub operator:   token::AnnotationOperator<'s>,
+    /// The annotation.
+    pub annotation: token::Ident<'s>,
+    /// An argument to the annotation.
+    pub argument:   Option<Tree<'s>>,
+}
+
+impl<'s> span::Builder<'s> for FunctionAnnotation<'s> {
+    fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
+        span.add(&mut self.operator).add(&mut self.annotation).add(&mut self.argument)
+    }
+}
+
+/// A function type signature line.
+#[cfg_attr(feature = "debug", derive(Visitor))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Reflect, Deserialize)]
+pub struct TypeSignatureLine<'s> {
+    /// The type signature.
+    pub signature: TypeSignature<'s>,
+    /// The end of the type signature line.
+    pub newlines:  NonEmptyVec<token::Newline<'s>>,
+}
+
+impl<'s> span::Builder<'s> for TypeSignatureLine<'s> {
+    fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
+        span.add(&mut self.signature).add(&mut self.newlines)
+    }
+}
+
+/// Specification of the type of an item.
+#[cfg_attr(feature = "debug", derive(Visitor))]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Reflect, Deserialize)]
+pub struct TypeSignature<'s> {
+    /// (Qualified) name of the item whose type is being declared.
+    pub name:     Tree<'s>,
+    /// The `:` token.
+    pub operator: token::TypeAnnotationOperator<'s>,
+    /// The declared type.
+    #[reflect(rename = "type")]
+    pub type_:    Tree<'s>,
+}
+
+impl<'s> span::Builder<'s> for TypeSignature<'s> {
+    fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
+        span.add(&mut self.name).add(&mut self.operator).add(&mut self.type_)
+    }
+}
 
 /// A function argument definition.
 #[cfg_attr(feature = "debug", derive(Visitor))]
@@ -648,20 +752,20 @@ impl<'s> span::Builder<'s> for CaseLine<'s> {
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Reflect, Deserialize)]
 pub struct Case<'s> {
     /// Documentation, if present.
-    pub documentation: Option<DocComment<'s>>,
+    pub doc_line:   Option<DocLine<'s>>,
     /// The pattern being matched. It is an error for this to be absent.
-    pub pattern:       Option<Tree<'s>>,
+    pub pattern:    Option<Tree<'s>>,
     /// Token.
-    pub arrow:         Option<token::ArrowOperator<'s>>,
+    pub arrow:      Option<token::ArrowOperator<'s>>,
     /// The expression associated with the pattern. It is an error for this to be empty.
-    pub expression:    Option<Tree<'s>>,
+    pub expression: Option<Tree<'s>>,
 }
 
 impl<'s> Case<'s> {
     /// Return a mutable reference to the `left_offset` of this object (which will actually belong
     /// to one of the object's children, if it has any).
     pub fn left_offset_mut(&mut self) -> Option<&mut Offset<'s>> {
-        None.or_else(|| self.documentation.as_mut().map(|t| &mut t.open.left_offset))
+        None.or_else(|| self.doc_line.as_mut().map(|t| &mut t.docs.open.left_offset))
             .or_else(|| self.pattern.as_mut().map(|t| &mut t.span.left_offset))
             .or_else(|| self.arrow.as_mut().map(|t| &mut t.left_offset))
             .or_else(|| self.expression.as_mut().map(|e| &mut e.span.left_offset))
@@ -670,7 +774,7 @@ impl<'s> Case<'s> {
 
 impl<'s> span::Builder<'s> for Case<'s> {
     fn add_to_span(&mut self, span: Span<'s>) -> Span<'s> {
-        span.add(&mut self.documentation)
+        span.add(&mut self.doc_line)
             .add(&mut self.pattern)
             .add(&mut self.arrow)
             .add(&mut self.expression)
@@ -802,7 +906,7 @@ pub const WARNINGS: [&str; WarningId::NUM_WARNINGS as usize] =
     ["Spacing is inconsistent with operator precedence"];
 
 #[allow(missing_copy_implementations)] // Future errors may have attached information.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(missing_docs)] // See associated messages defined below.
 pub enum SyntaxError {
     ArgDefUnexpectedOpInParenClause,
@@ -818,7 +922,8 @@ pub enum SyntaxError {
     StmtInvalidAssignmentOrMethod,
     StmtLhsInvalidOperatorSpacing,
     StmtUnexpectedAssignmentInModuleBody,
-    StmtUnexpectedPrivateUsage,
+    StmtUnexpectedPrivateSubject,
+    StmtUnexpectedPrivateContext,
     TypeBodyUnexpectedPrivateUsage,
     TypeDefExpectedTypeName,
     ExprUnexpectedAssignment,
@@ -832,6 +937,8 @@ pub enum SyntaxError {
     PatternUnexpectedDot,
     CaseOfInvalidCase,
     DocumentationUnexpectedNonInitial,
+    AnnotationUnexpectedInExpression,
+    AnnotationExpectedDefinition,
 }
 
 impl From<SyntaxError> for Cow<'static, str> {
@@ -852,10 +959,10 @@ impl From<SyntaxError> for Cow<'static, str> {
             StmtInvalidAssignmentOrMethod => "Invalid assignment or method definition",
             StmtLhsInvalidOperatorSpacing =>
                 "Each operator on the left side of an assignment operator must be applied to two operands, with the same spacing on each side",
-            StmtUnexpectedAssignmentInModuleBody =>
-                "Unexpected variable assignment in module statement",
-            StmtUnexpectedPrivateUsage =>
-                "In a body block, the `private` keyword can only be applied to a function definition",
+            StmtUnexpectedAssignmentInModuleBody => "Unexpected variable assignment in module statement",
+            StmtUnexpectedPrivateSubject =>
+                "The `private` keyword cannot be applied to this type of symbol",
+            StmtUnexpectedPrivateContext => "The `private` keyword is not expected in this context",
             TypeBodyUnexpectedPrivateUsage =>
                 "In a type definition, the `private` keyword can only be applied to a constructor or function definition",
             TypeDefExpectedTypeName => "Expected type identifier in type declaration",
@@ -869,6 +976,10 @@ impl From<SyntaxError> for Cow<'static, str> {
             PatternUnexpectedDot => "In a pattern, the dot operator can only be used in a qualified name",
             CaseOfInvalidCase => "Invalid case expression.",
             DocumentationUnexpectedNonInitial => "Unexpected documentation at end of line",
+            AnnotationUnexpectedInExpression =>
+                "A function annotation is only allowed in statement context, not in an expression",
+            AnnotationExpectedDefinition =>
+                "A function annotation must be followed by a function definition or constructor definition",
         })
         .into()
     }
@@ -1008,7 +1119,7 @@ pub fn to_ast(token: Token) -> Tree {
         | token::Variant::AnnotationOperator(_)
         | token::Variant::CommaOperator(_)
         // Keywords are handled by macros.
-        | token::Variant::Private(_)
+        | token::Variant::PrivateKeyword(_)
         | token::Variant::TypeKeyword(_)
         | token::Variant::ForeignKeyword(_)
         | token::Variant::AllKeyword(_)

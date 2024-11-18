@@ -24,6 +24,7 @@ import {
   useEnableVersionChecker,
   usePaywallDevtools,
   useSetEnableVersionChecker,
+  useShowDevtools,
 } from './EnsoDevtoolsProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
@@ -54,6 +55,9 @@ export function EnsoDevtools() {
   const { authQueryKey, session } = authProvider.useAuth()
   const queryClient = reactQuery.useQueryClient()
   const { getFeature } = billing.usePaywallFeatures()
+
+  const showDevtools = useShowDevtools()
+
   const { features, setFeature } = usePaywallDevtools()
   const enableVersionChecker = useEnableVersionChecker()
   const setEnableVersionChecker = useSetEnableVersionChecker()
@@ -65,6 +69,10 @@ export function EnsoDevtools() {
 
   const featureFlags = useFeatureFlags()
   const setFeatureFlags = useSetFeatureFlags()
+
+  if (!showDevtools) {
+    return null
+  }
 
   return (
     <Portal>
@@ -180,8 +188,8 @@ export function EnsoDevtools() {
                   <ariaComponents.Switch
                     form={form}
                     name="enableMultitabs"
-                    label={getText('enableMultitabs')}
-                    description={getText('enableMultitabsDescription')}
+                    label={getText('ensoDevtoolsFeatureFlags.enableMultitabs')}
+                    description={getText('ensoDevtoolsFeatureFlags.enableMultitabsDescription')}
                     onChange={(value) => {
                       setFeatureFlags('enableMultitabs', value)
                     }}
@@ -191,8 +199,10 @@ export function EnsoDevtools() {
                     <ariaComponents.Switch
                       form={form}
                       name="enableAssetsTableBackgroundRefresh"
-                      label={getText('enableAssetsTableBackgroundRefresh')}
-                      description={getText('enableAssetsTableBackgroundRefreshDescription')}
+                      label={getText('ensoDevtoolsFeatureFlags.enableAssetsTableBackgroundRefresh')}
+                      description={getText(
+                        'ensoDevtoolsFeatureFlags.enableAssetsTableBackgroundRefreshDescription',
+                      )}
                       onChange={(value) => {
                         setFeatureFlags('enableAssetsTableBackgroundRefresh', value)
                       }}
@@ -202,8 +212,12 @@ export function EnsoDevtools() {
                       type="number"
                       inputMode="numeric"
                       name="assetsTableBackgroundRefreshInterval"
-                      label={getText('enableAssetsTableBackgroundRefreshInterval')}
-                      description={getText('enableAssetsTableBackgroundRefreshIntervalDescription')}
+                      label={getText(
+                        'ensoDevtoolsFeatureFlags.assetsTableBackgroundRefreshInterval',
+                      )}
+                      description={getText(
+                        'ensoDevtoolsFeatureFlags.assetsTableBackgroundRefreshIntervalDescription',
+                      )}
                       onChange={(event) => {
                         setFeatureFlags(
                           'assetsTableBackgroundRefreshInterval',

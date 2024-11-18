@@ -20,7 +20,7 @@ import * as portfinder from 'portfinder'
 
 import * as common from 'enso-common'
 import * as buildUtils from 'enso-common/src/buildUtils'
-import GLOBAL_CONFIG from 'enso-common/src/config.json' assert { type: 'json' }
+import GLOBAL_CONFIG from 'enso-common/src/config.json' with { type: 'json' }
 
 import * as authentication from '@/authentication'
 import * as config from '@/config'
@@ -130,6 +130,13 @@ class App {
         electron.app.whenReady().then(
           async () => {
             logger.log('Electron application is ready.')
+
+            electron.protocol.handle('enso', request =>
+              projectManager.handleProjectProtocol(
+                decodeURIComponent(request.url.replace('enso://', '')),
+              ),
+            )
+
             await this.main(windowSize)
           },
           error => {
@@ -270,7 +277,6 @@ class App {
          * not yet created at this point, but it will be created by the time the
          * authentication module uses the lambda providing the window.
          */
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         authentication.initAuthentication(() => this.window!)
       })
     } catch (err) {
@@ -296,12 +302,9 @@ class App {
       // The first return value is the original string, which is not needed.
       // These all cannot be null as the format is known at runtime.
       const [, projectManagerHost, projectManagerPort] =
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         GLOBAL_CONFIG.projectManagerEndpoint.match(/^ws:\/\/(.+):(.+)$/)!
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.projectManagerHost ??= projectManagerHost!
       this.projectManagerPort ??= await portfinder.getPortPromise({
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         port: parseInt(projectManagerPort!),
       })
       const projectManagerUrl = `ws://${this.projectManagerHost}:${this.projectManagerPort}`
@@ -317,10 +320,7 @@ class App {
         : []
       const backendOpts = [...backendVerboseOpts, ...backendProfileOpts]
       const backendEnv = Object.assign({}, process.env, {
-        // These are environment variables, and MUST be in CONSTANT_CASE.
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         SERVER_HOST: this.projectManagerHost,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         SERVER_PORT: `${this.projectManagerPort}`,
       })
       projectManager.spawn(this.args, backendOpts, backendEnv)
@@ -587,7 +587,6 @@ class App {
                 window.webContents.once('did-finish-load', onLoad)
                 setTimeout(() => {
                   void window.loadURL(address.toString())
-                  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
                 }, 1_000)
               }
             })

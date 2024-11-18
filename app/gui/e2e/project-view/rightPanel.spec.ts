@@ -1,6 +1,6 @@
 import { expect, test } from 'playwright/test'
 import * as actions from './actions'
-import { mockMethodCallInfo } from './expressionUpdates'
+import { mockCollapsedFunctionInfo, mockMethodCallInfo } from './expressionUpdates'
 import { CONTROL_KEY } from './keyboard'
 import * as locate from './locate'
 
@@ -13,7 +13,7 @@ test('Main method documentation', async ({ page }) => {
   await expect(locate.rightDock(page)).toBeVisible()
 
   // Right-dock displays main method documentation.
-  await expect(locate.lexicalContent(locate.rightDock(page))).toHaveText('The main method')
+  await expect(locate.editorRoot(locate.rightDock(page))).toHaveText('The main method')
 
   // Documentation hotkey closes right-dock.p
   await page.keyboard.press(`${CONTROL_KEY}+D`)
@@ -26,16 +26,16 @@ test('Doc panel focus (regression #10471)', async ({ page }) => {
   await page.keyboard.press(`${CONTROL_KEY}+D`)
   await page.keyboard.press(`${CONTROL_KEY}+\``)
   await expect(locate.rightDock(page)).toBeVisible()
-  await expect(locate.bottomDock(page)).toBeVisible()
+  const codeEditor = page.locator('.CodeEditor')
+  await expect(codeEditor).toBeVisible()
 
   // Focus code editor.
-  await locate.bottomDock(page).click()
+  await codeEditor.click()
 
   await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const codeEditor = (window as any).__codeEditorApi
-    const docStart = codeEditor.indexOf('The main method')
-    codeEditor.placeCursor(docStart + 8)
+    const codeEditorApi = (window as any).__codeEditorApi
+    const docStart = codeEditorApi.indexOf('The main method')
+    codeEditorApi.placeCursor(docStart + 8)
   })
   await page.keyboard.press('Space')
   await page.keyboard.press('T')
@@ -44,7 +44,6 @@ test('Doc panel focus (regression #10471)', async ({ page }) => {
   await page.keyboard.press('T')
 
   const content = await page.evaluate(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const codeEditor = (window as any).__codeEditorApi
     return codeEditor.textContent()
   })
@@ -70,4 +69,21 @@ test('Component help', async ({ page }) => {
   })
   await locate.graphNodeByBinding(page, 'data').click()
   await expect(locate.rightDock(page)).toHaveText(/Reads a file into Enso/)
+})
+
+test('Documentation reflects entered function', async ({ page }) => {
+  await actions.goToGraph(page)
+
+  // Open the panel
+  await expect(locate.rightDock(page)).toBeHidden()
+  await page.keyboard.press(`${CONTROL_KEY}+D`)
+  await expect(locate.rightDock(page)).toBeVisible()
+
+  // Enter the collapsed function
+  await mockCollapsedFunctionInfo(page, 'final', 'func1')
+  await locate.graphNodeByBinding(page, 'final').dblclick()
+  await expect(locate.navBreadcrumb(page)).toHaveText(['Mock Project', 'func1'])
+
+  // Editor should contain collapsed function's docs
+  await expect(locate.editorRoot(locate.rightDock(page))).toHaveText('A collapsed function')
 })

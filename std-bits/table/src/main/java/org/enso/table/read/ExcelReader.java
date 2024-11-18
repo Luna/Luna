@@ -279,7 +279,7 @@ public class ExcelReader {
     }
   }
 
-  private static Table readRange(
+  public static Table readRange(
       Workbook workbook,
       ExcelRange excelRange,
       ExcelHeaders.HeaderBehavior headers,
@@ -311,6 +311,7 @@ public class ExcelReader {
       int skipRows,
       int rowCount,
       ProblemAggregator problemAggregator) {
+
     ExcelSheet sheet = new ExcelSheet(workbook, sheetIndex);
 
     // Expand Single Cell

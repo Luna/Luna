@@ -25,7 +25,6 @@ import StartModalActions from './StartModalActions'
 // === Constants ===
 // =================
 
-// eslint-disable-next-line @typescript-eslint/no-magic-numbers
 const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
 
 // =======================
@@ -257,7 +256,6 @@ export default class DrivePageActions extends PageActions {
   createFolder() {
     return this.step('Create folder', async (page) => {
       await page.getByRole('button', { name: TEXT.newFolder, exact: true }).click()
-      // eslint-disable-next-line no-restricted-properties
       await test.expect(page.locator('input:focus')).toBeVisible()
       await page.keyboard.press('Escape')
     })
@@ -287,11 +285,62 @@ export default class DrivePageActions extends PageActions {
     })
   }
 
+  /** Show the Asset Panel. */
+  showAssetPanel() {
+    return this.step('Show asset panel', async (page) => {
+      const isShown = await this.isAssetPanelShown(page)
+
+      if (!isShown) {
+        await this.toggleAssetPanel()
+      }
+    })
+  }
+
+  /** Hide the Asset Panel. */
+  hideAssetPanel() {
+    return this.step('Hide asset panel', async (page) => {
+      const isShown = await this.isAssetPanelShown(page)
+
+      if (isShown) {
+        await this.toggleAssetPanel()
+      }
+    })
+  }
+
   /** Toggle the Asset Panel open or closed. */
   toggleAssetPanel() {
-    return this.step('Toggle asset panel', (page) =>
-      page.getByLabel('Asset Panel').locator('visible=true').click(),
-    )
+    return this.step('Toggle asset panel', async (page) => {
+      page.getByLabel('Asset Panel').locator('visible=true').click()
+      await this.waitForAssetPanelShown(page)
+    })
+  }
+
+  /**
+   * Check if the Asset Panel is shown.
+   */
+  async isAssetPanelShown(page: test.Page) {
+    return await page
+      .getByTestId('asset-panel')
+      .isVisible({ timeout: 0 })
+      .then(
+        () => true,
+        () => false,
+      )
+  }
+
+  /**
+   * Wait for the Asset Panel to be shown and visually stable
+   */
+  async waitForAssetPanelShown(page: test.Page) {
+    await page.getByTestId('asset-panel').waitFor({ state: 'visible' })
+  }
+
+  /** Show the description tab of the Asset Panel. */
+  toggleDescriptionAssetPanel() {
+    return this.step('Toggle description asset panel', async (page) => {
+      await this.showAssetPanel()
+      await page.getByTestId('asset-panel-tab-settings').click()
+    })
   }
 
   /** Interact with the container element of the assets table. */

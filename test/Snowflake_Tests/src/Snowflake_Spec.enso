@@ -509,10 +509,9 @@ snowflake_specific_spec suite_builder default_connection db_name setup =
             do_round -1.2222222222222235 15 use_bankers=True . should_equal -1.222222222222224
 
         group_builder.specify "Can handle NaN/Infinity" <|
-            nan_result = if setup.test_selection.is_nan_and_nothing_distinct then Number.nan else Nothing
             ops = [.round, .truncate, .ceil, .floor]
             ops.each op->
-                do_op Number.nan op . should_equal nan_result
+                do_op Number.nan op . should_equal Number.nan
                 do_op Number.positive_infinity op . should_equal Number.positive_infinity
                 do_op Number.negative_infinity op . should_equal Number.negative_infinity
 
@@ -547,9 +546,10 @@ add_snowflake_specs suite_builder create_connection_fn db_name =
         (agg_in_memory_table.take (..First 0)).select_into_database_table default_connection.get (Name_Generator.random_name "Agg_Empty") primary_key=Nothing temporary=True
 
     is_feature_supported_fn feature:Feature = default_connection.get.dialect.is_feature_supported feature
+    is_operation_supported_fn operation:Text = default_connection.get.dialect.is_operation_supported operation
     flagged_fn = default_connection.get.dialect.flagged
 
-    setup = Common_Table_Operations.Main.Test_Setup.Config prefix agg_table_fn empty_agg_table_fn table_builder materialize is_database=True test_selection=common_selection aggregate_test_selection=aggregate_selection create_connection_func=create_connection_fn light_table_builder=light_table_builder is_integer_type=is_snowflake_integer is_feature_supported=is_feature_supported_fn flagged=flagged_fn
+    setup = Common_Table_Operations.Main.Test_Setup.Config prefix agg_table_fn empty_agg_table_fn table_builder materialize is_database=True test_selection=common_selection aggregate_test_selection=aggregate_selection create_connection_func=create_connection_fn light_table_builder=light_table_builder is_integer_type=is_snowflake_integer is_feature_supported=is_feature_supported_fn flagged=flagged_fn is_operation_supported=is_operation_supported_fn
 
     Common_Spec.add_specs suite_builder prefix create_connection_fn default_connection setup
     snowflake_specific_spec suite_builder default_connection db_name setup

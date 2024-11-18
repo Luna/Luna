@@ -27,7 +27,7 @@ import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { lazy } from 'react'
 
 const LazyQRCode = lazy(() =>
-  // eslint-disable-next-line @typescript-eslint/naming-convention,@typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   import('qrcode.react').then(({ QRCodeCanvas }) => ({ default: QRCodeCanvas })),
 )
 
@@ -148,19 +148,21 @@ export function SetupTwoFaForm() {
           }
         }}
       >
-        {({ values }) => (
-          <>
-            <Switch
-              name="enabled"
-              description={getText('enable2FADescription')}
-              label={getText('enable2FA')}
-            />
+        <>
+          <Switch
+            name="enabled"
+            description={getText('enable2FADescription')}
+            label={getText('enable2FA')}
+          />
 
-            <ErrorBoundary>
-              <Suspense>{values.enabled === true && <TwoFa />}</Suspense>
-            </ErrorBoundary>
-          </>
-        )}
+          <ErrorBoundary>
+            <Suspense>
+              <Form.FieldValue name="enabled">
+                {(enabled) => enabled === true && <TwoFa />}
+              </Form.FieldValue>
+            </Suspense>
+          </ErrorBoundary>
+        </>
       </Form>
     )
   }
