@@ -4,10 +4,11 @@
  * The asset panel is a sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
-import docsIcon from '#/assets/file_text.svg'
-import sessionsIcon from '#/assets/group.svg'
-import inspectIcon from '#/assets/inspect.svg'
-import versionsIcon from '#/assets/versions.svg'
+import DocsIcon from '#/assets/file_text.svg'
+import SessionsIcon from '#/assets/group.svg'
+import InspectIcon from '#/assets/inspect.svg'
+import RepeatIcon from '#/assets/repeat.svg'
+import VersionsIcon from '#/assets/versions.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { ProjectExecutions } from '#/layouts/AssetProjectExecutions'
@@ -234,14 +235,14 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
         <AssetPanelTabs.TabList>
           <AssetPanelTabs.Tab
             id="settings"
-            icon={inspectIcon}
+            icon={InspectIcon}
             label={getText('properties')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
-            icon={versionsIcon}
+            icon={VersionsIcon}
             label={getText('versions')}
             isExpanded={isExpanded}
             isDisabled={isHidden}
@@ -249,21 +250,21 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
           />
           <AssetPanelTabs.Tab
             id="sessions"
-            icon={sessionsIcon}
+            icon={SessionsIcon}
             label={getText('projectSessions')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="executions"
-            icon={sessionsIcon}
+            icon={RepeatIcon}
             label={getText('executions')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="docs"
-            icon={docsIcon}
+            icon={DocsIcon}
             label={getText('docs')}
             isExpanded={isExpanded}
             onPress={expandTab}
