@@ -1,5 +1,5 @@
 /** @file A hook to return the items in the assets table. */
-import { startTransition, useEffect, useMemo } from 'react'
+import { startTransition, useMemo } from 'react'
 
 import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
