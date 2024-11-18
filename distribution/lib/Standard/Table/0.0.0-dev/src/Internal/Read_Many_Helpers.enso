@@ -2,20 +2,18 @@ private
 
 from Standard.Base import all
 import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
-import Standard.Base.Errors.Common.No_Such_Conversion
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Column.Column
 import project.Errors.Invalid_Value_Type
-import project.Errors.No_Rows
 import project.Extensions.Table_Conversions
+import project.Internal.Column_Naming_Helper.Column_Naming_Helper
 import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Merged_Table_Strategy
+import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Table_Result
 import project.Return_As_Table.Return_As_Table
 import project.Table.Table
 import project.Value_Type.Value_Type
-from project.Table import from_java_table
-
-polyglot java import org.enso.table.data.mask.OrderMask
+from project.Internal.Table_Helpers import duplicate_rows
 
 find_files_list_in_table (that : Table) -> Many_Files_List =
     found_column = if that.column_count == 1 then that.at 0 else
@@ -44,7 +42,8 @@ make_return (return_shape : Return_As_Table) (input : Many_Files_List) (objects 
             _add_objects_column base_table objects
         Return_As_Table.As_Merged_Table columns_to_keep match_columns ->
             tables = input.paths_to_load.zip objects path-> object->
-                _interpret_object_as_table object path columns_to_keep match_columns on_problems
+                strategy = Read_Many_As_Merged_Table_Strategy.from object
+                strategy.into_table path columns_to_keep match_columns on_problems
             _merge_input_and_tables base_table tables columns_to_keep match_columns on_problems
 
 _input_as_table (input : Many_Files_List) -> Table =
@@ -58,20 +57,47 @@ _input_as_table (input : Many_Files_List) -> Table =
 
 ## Expands each table from `tables_for_rows` and computes their union, also
    duplicating the corresponding rows from `input_table`.
-_merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Table) columns_to_keep match_columns on_problems -> Table =
+_merge_input_and_tables (input_table : Table) (tables_for_rows : Vector Read_Many_As_Table_Result) columns_to_keep match_columns on_problems -> Table =
     counts = tables_for_rows.map table-> case table of
-        Nothing -> 0
-        _ : Table -> table.row_count
+        Read_Many_As_Table_Result.No_Data -> 0
+        Read_Many_As_Table_Result.Table _ data -> data.row_count
     adapted_tables = _inherit_warnings_from_vector tables_for_rows <| 
-        tables_for_rows.filter ..Not_Nothing
+        tables_for_rows.filter r-> r != Read_Many_As_Table_Result.No_Data
+        
     ## If there are no tables to merge, union would fail. 
        Each entry is then contributing 0 rows, so we need to return an empty table. 
        But it should have the same structure as the input table.
     if adapted_tables.is_empty then (input_table.take 0) else
-        unified_tables = Table.from_union adapted_tables columns_to_keep match_columns on_problems
-        multiplicated_inputs = _duplicate_rows input_table counts
-        Runtime.assert (unified_tables.row_count == multiplicated_inputs.row_count)
-        multiplicated_inputs.zip unified_tables right_prefix=""
+        unified_metadata = _unify_metadata adapted_tables on_problems
+        unified_data = Table.from_union (adapted_tables.map .data) columns_to_keep match_columns on_problems
+
+        multiplicated_inputs = duplicate_rows input_table counts
+        Runtime.assert (unified_data.row_count == multiplicated_inputs.row_count)
+        Runtime.assert (unified_metadata.is_nothing || (unified_metadata.row_count == unified_data.row_count))
+
+        first_pass = if unified_metadata.is_nothing then multiplicated_inputs else
+            multiplicated_inputs.zip unified_metadata right_prefix=""
+        first_pass.zip unified_data right_prefix=""
+
+## Unifies provided metadata tables, knowing that some tables may have no 
+   metadata - in such case we want to insert as many Nothing rows for metadata 
+   as there are rows in the corresponding data table.
+_unify_metadata (tables : Vector Read_Many_As_Table_Result) (on_problems : Problem_Behavior) -> Table | Nothing =
+    has_no_metadata = tables.all r-> r.metadata.is_nothing
+    if has_no_metadata then Nothing else
+        unique = Column_Naming_Helper.in_memory.create_unique_name_strategy
+        tables.each r->
+            if r.metadata.is_nothing.not then unique.mark_used r.metadata.column_names
+        
+        # A dummy column because we cannot create a table with 0 columns, it will be removed after union. We find an unique name for it to avoid conflicts.
+        dummy_column_name = unique.make_unique "Dummy"
+        tables_for_union = tables.map r->
+            if r.metadata.is_nothing.not then r.metadata else
+                Table.new [Column.from_repeated_item dummy_column_name Nothing r.data.row_count]
+        
+        # Metadata are always merged by-name and columns that appear only in some tables are kept.
+        unified_metadata = Table.from_union tables_for_union ..In_Any ..By_Name on_problems
+        unified_metadata.remove_columns [dummy_column_name]
 
 _make_table_with_one_null_row (empty_table : Table) -> Table =
     Runtime.assert (empty_table.row_count == 0) "The table must be empty."
@@ -82,41 +108,6 @@ _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
     unique_naming.mark_used base_table.column_names
     objects_column_name = unique_naming.make_unique "Value"
     base_table.set (Column.from_vector objects_column_name objects) as=objects_column_name set_mode=..Add
-
-## Tries to interpret the object as a table.
-   The provided path is used as additional context for any warnings that may need to be reported according to `on_problems`.
-_interpret_object_as_table (object : Any) path columns_to_keep match_columns (on_problems : Problem_Behavior) -> Table | Nothing =
-    default =
-        Table.from_objects object treat_dictionary_as_sequence=False . catch Illegal_Argument error->
-            problem = Illegal_Argument.Error "Problem converting "+object.to_display_text+" (loaded from "+path.to_display_text+") to a Table: "+error.to_display_text cause=error
-            on_problems.attach_problem_before problem <|
-                # If it was an array that failed to load, let's expand it to rows, otherwise have 1 row for the unknown object.
-                vec = if object.is_a Vector then object else [object]
-                Table.new [["Value", vec]]
-    case object of
-        table : Table -> 
-            if table.row_count > 0 then table else
-                on_problems.attach_problem_after table <|
-                    (No_Rows.Warning "The "+path.to_display_text+" loaded as a table with 0 rows, so it did not contribute any rows to the `As_Merged_Table` result of `read_many`.")
-        vector : Vector ->
-            if vector.not_empty then default else
-                on_problems.attach_problem_after Nothing <|
-                    (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `As_Merged_Table` result of `read_many`.")
-        _ ->
-            special_case = Panic.catch No_Such_Conversion (object:Read_Many_As_Merged_Table_Strategy) _->Nothing
-            if special_case.is_nothing then default else
-                special_case.into_table columns_to_keep match_columns on_problems
-
-## Takes a table and a list of counts and returns a new table with the rows
-   duplicated according to the counts.
-   The vector should have the same number of elements as the number of rows in the table.
-_duplicate_rows (table : Table) (counts : Vector Integer) -> Table =
-    Runtime.assert (table.row_count == counts.length) "The number of counts must match the number of rows in the table."
-    mask_array = counts
-        . map_with_index ix-> count-> Vector.fill count ix
-        . flatten
-    mask = OrderMask.fromArray mask_array
-    from_java_table (table.java_table.applyMask mask)
 
 ## Workaround for bug https://github.com/enso-org/enso/issues/11570
    Once that is addressed, this function may be removed.

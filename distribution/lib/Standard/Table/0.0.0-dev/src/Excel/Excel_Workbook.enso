@@ -14,12 +14,14 @@ from Standard.Base.Data.Filter_Condition import sql_like_to_regex
 from Standard.Base.Metadata.Choice import Option
 from Standard.Base.Metadata.Widget import Multiple_Choice, Single_Choice
 
+import project.Column.Column
 import project.Columns_To_Keep.Columns_To_Keep
 import project.Excel.Excel_Range.Excel_Range
 import project.Headers.Headers
 import project.Internal.Excel_Reader
 import project.Internal.Excel_Section.Excel_Section
 import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Merged_Table_Strategy
+import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Table_Result
 import project.Internal.Java_Problems
 import project.Internal.Problem_Builder.Problem_Builder
 import project.Match_Columns.Match_Columns
@@ -28,6 +30,7 @@ import project.Rows_To_Read.Rows_To_Read
 import project.Table.Table
 from project.Errors import Empty_Sheet
 from project.Internal.Excel_Reader import handle_invalid_location
+from project.Internal.Table_Helpers import duplicate_rows
 
 polyglot java import java.io.File as Java_File
 polyglot java import org.apache.poi.ss.usermodel.Workbook
@@ -359,23 +362,15 @@ type Excel_Workbook
     read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return=..As_Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
         resolved_return = _resolve_return_as_compatibility return
         if sheet_names.is_empty then Error.throw (Illegal_Argument.Error "No sheets selected.") else
-            tables = sheet_names.map on_problems=on_problems address-> self.read address headers on_problems=on_problems
+            tables = _read_sheets self sheet_names headers on_problems
             case resolved_return of
                 Return_As_Table.With_New_Column -> Table.new [["Sheet Name", sheet_names], ["Table", tables]]
                 Return_As_Table.As_Merged_Table columns_to_keep match ->
                     first_tbl = tables.find t-> t != Nothing
                     if first_tbl == Nothing then Error.throw (Illegal_Argument.Error "No valid sheets found.") else
-                        # TODO common
-                        unique = first_tbl.column_naming_helper.create_unique_name_strategy
-                        tables.each tbl-> if tbl != Nothing then unique.mark_used tbl.column_names
-                        new_column_name = unique.make_unique "Sheet Name"
-
-                        with_names = tables.zip sheet_names tbl->name-> if tbl == Nothing then Nothing else tbl.set name new_column_name . reorder_columns [new_column_name]
-                        result = Table.from_union (with_names.filter Filter_Condition.Not_Nothing) columns_to_keep=columns_to_keep match_columns=match
-
-                        problem_builder = Problem_Builder.new
-                        problem_builder.report_unique_name_strategy unique
-                        problem_builder.attach_problems_after on_problems result
+                        found_tables = tables.filter ..Not_Nothing
+                        unified_tables = Table.from_union found_tables columns_to_keep=columns_to_keep match_columns=match on_problems=on_problems
+                        (_sheet_names_table sheet_names found_tables).zip unified_tables right_prefix="" on_problems=on_problems
 
 ## PRIVATE
 close_connection c = c.close
@@ -415,16 +410,27 @@ private _resolve_return_as_compatibility return =
                 Return_As.Merged_Table columns_to_keep match ->
                     Return_As_Table.As_Merged_Table columns_to_keep match
 
-## PRIVATE
-   Creates a query widget for the `read` method.
+## Creates a query widget for the `read` method.
 private _query_widget wb:Excel_Workbook display:Display=..Always -> Widget =
     default_address = "'" + wb.sheet_names.first.replace "'" "''" + "'!A1:E5"
     options = [Option "<By Index>" "1", Option "<Range>" "Excel_Range.from_address "+default_address.pretty] + (wb.tables.at "Name" . to_vector . map t-> Option t t.pretty)
     Single_Choice display=display values=options
 
+private _read_sheets (workbook : Excel_Workbook) sheet_names headers on_problems =
+    sheet_names.map on_problems=on_problems address-> workbook.read address headers on_problems=on_problems
+
+private _sheet_names_table (sheet_names : Vector Text) (loaded_tables : Vector Table) -> Table =
+    table = Column.from_vector "Sheet Name" sheet_names . to_table
+    counts = loaded_tables.map t-> t.row_count
+    duplicate_rows table counts
+
 ## PRIVATE
    Loads all sheets in the Excel workbook and merges them into a single table.
 Read_Many_As_Merged_Table_Strategy.from (that:Excel_Workbook) =
-    callback columns_to_keep match_columns on_problems =
-        that.read_many return=(..As_Merged_Table columns_to_keep match_columns) on_problems=on_problems
+    callback _ columns_to_keep match_columns on_problems =
+        sheet_names = that.sheet_names
+        tables = _read_sheets that sheet_names ..Detect_Headers on_problems
+        metadata = _sheet_names_table sheet_names tables
+        data = Table.from_union tables columns_to_keep match_columns on_problems
+        Read_Many_As_Table_Result.Table metadata=metadata data=data
     Read_Many_As_Merged_Table_Strategy.Value callback
