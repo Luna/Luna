@@ -32,12 +32,6 @@ public final class ReadArgumentNode extends ExpressionNode {
     return new ReadArgumentNode(position, defaultValue);
   }
 
-  /** Copies the read argument node. Removes all type checks associated with it. */
-  public final ReadArgumentNode copyWithoutCheck() {
-    var node = (ReadArgumentNode) this.copy();
-    return node;
-  }
-
   /**
    * Computes the value of an argument in a function.
    *
