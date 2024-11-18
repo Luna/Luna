@@ -136,7 +136,7 @@ type Statistic
     bulk_widget display:Display=..When_Modified -> Widget =
         options = ["Count", "Minimum", "Maximum", "Sum", "Product", "Mean", "Variance", "Standard_Deviation", "Skew", "Kurtosis", "Covariance", "Pearson", "Spearman", "R_Squared"].map n-> Choice.Option n ".."+n
         items = Widget.Single_Choice options
-        Widget.Vector_Editor items "..Count"
+        Widget.Vector_Editor items "..Count" display=display
 
     ## PRIVATE
        Gets the order needed to compute a statistic for a moment based statistic.
