@@ -31,6 +31,7 @@ import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
 import type { AssetEvent } from '#/events/assetEvent'
+import { useCutAndPaste } from '#/events/assetListEvent'
 import {
   backendMutationOptions,
   backendQueryOptions,
@@ -312,6 +313,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const [innerRowState, setRowState] = React.useState<assetsTable.AssetRowState>(
     assetRowUtils.INITIAL_ROW_STATE,
   )
+  const cutAndPaste = useCutAndPaste(category)
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)
   const isEditingName = innerRowState.isEditingName || isNewlyCreated
