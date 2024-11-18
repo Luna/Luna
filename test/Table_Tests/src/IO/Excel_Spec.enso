@@ -1051,11 +1051,11 @@ add_specs suite_builder =
                     rows.at 1 . should_equal       [ "1.tsv",    "input 1",        Nothing,       2,  "data column", Nothing, Nothing]
                     rows.at 2 . should_equal       ["2.xlsx",    "input 2",    "EnsoSheet",      10,        Nothing,      20, Nothing]
                     rows.at 3 . should_equal       ["3.xlsx",    "input 3",         "nr 1",     300,        Nothing,     100,     200]
-                    rows.at 4 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,            400, Nothing, Nothing]
-                    rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,            500, Nothing, Nothing]
-                    rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,            600, Nothing, Nothing]
+                    rows.at 4 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,          "400", Nothing, Nothing]
+                    rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,          "500", Nothing, Nothing]
+                    rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,          "600", Nothing, Nothing]
 
-                r2 = Data.read_many input return=(..As_Merged_Table match_columns=..By_Position)
+                r2 = Data.read_many input return=(..As_Merged_Table match=..By_Position)
                 r2.should_be_a Table
                 within_table r2 <|
                     rows = (r2.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
@@ -1065,13 +1065,13 @@ add_specs suite_builder =
                     r2.column_names . should_equal [  "Path", "Sheet Name", "Sheet Name 1", "X",           "Y",     "Z"]
                     rows.at 0 . should_equal       [ "1.tsv",    "input 1",        Nothing,   1, "data column", Nothing]
                     rows.at 1 . should_equal       [ "1.tsv",    "input 1",        Nothing,   2, "data column", Nothing]
-                    rows.at 2 . should_equal       ["2.xlsx",    "input 2",    "EnsoSheet",  10,            20, Nothing]
-                    rows.at 3 . should_equal       ["3.xlsx",    "input 3",         "nr 1", 100,           200,     300]
+                    rows.at 2 . should_equal       ["2.xlsx",    "input 2",    "EnsoSheet",  10,          "20", Nothing]
+                    rows.at 3 . should_equal       ["3.xlsx",    "input 3",         "nr 1", 100,         "200",     300]
                     rows.at 4 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 400,       Nothing, Nothing]
                     rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 500,       Nothing, Nothing]
                     rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 600,       Nothing, Nothing]
 
-                r3 = Data.read_many input return=(..As_Merged_Table columns_to_keep=..In_All match_columns=..By_Position)
+                r3 = Data.read_many input return=(..As_Merged_Table columns_to_keep=..In_All match=..By_Position)
                 r3.should_be_a Table
                 within_table r3 <|
                     rows = (r3.set (r3.at "Path" . map .name) "Path").rows.map .to_vector
