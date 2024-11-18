@@ -6,12 +6,12 @@ import { fetcherUrlTransformer } from '@/components/MarkdownEditor/imageUrlTrans
 import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
-import { ProjectFiles, useProjectFiles } from '@/stores/projectFiles'
+import { useProjectFiles } from '@/stores/projectFiles'
 import { Vec2 } from '@/util/data/vec2'
 import type { ToValue } from '@/util/reactivity'
 import { useToast } from '@/util/toast'
 import { ComponentInstance, computed, reactive, ref, toRef, toValue, watch } from 'vue'
-import type { Path } from 'ydoc-shared/languageServerTypes'
+import type { Path, Uuid } from 'ydoc-shared/languageServerTypes'
 import { Err, Ok, mapOk, withContext, type Result } from 'ydoc-shared/util/data/result'
 import * as Y from 'yjs'
 
@@ -35,12 +35,20 @@ const uploadErrorToast = useToast.error()
 
 type UploadedImagePosition = { type: 'selection' } | { type: 'coords'; coords: Vec2 }
 
+/**
+ * A Project File management API for {@link useDocumentationImages} composable.
+ */
+interface ProjectFilesAPI {
+  projectRootId: Promise<Uuid | undefined>
+  readFileBinary(path: Path): Promise<Result<Blob>>
+  writeFileBinary(path: Path, content: Blob): Promise<Result>
+  pickUniqueName(path: Path, suggestedName: string): Promise<Result<string>>
+  ensureDirExists(path: Path): Promise<Result<void>>
+}
+
 function useDocumentationImages(
   modulePath: ToValue<Path | undefined>,
-  projectFiles: Pick<
-    ProjectFiles,
-    'projectRootId' | 'readFileBinary' | 'writeFileBinary' | 'pickUniqueName' | 'ensureDirExists'
-  >,
+  projectFiles: ProjectFilesAPI,
 ) {
   function urlToPath(url: string): Result<Path> | undefined {
     const modulePathValue = toValue(modulePath)
@@ -66,7 +74,7 @@ function useDocumentationImages(
     return pathUniqueId(path)
   }
 
-  const uploadedImages = reactive(new Map<string, Promise<Blob>>())
+  const currentlyUploading = reactive(new Map<string, Promise<Blob>>())
 
   const transformImageUrl = fetcherUrlTransformer(
     async (url: string) => {
@@ -80,7 +88,7 @@ function useDocumentationImages(
             return {
               location: path,
               uniqueId: id,
-              uploading: computed(() => uploadedImages.has(id)),
+              uploading: computed(() => currentlyUploading.has(id)),
             }
           }),
       )
@@ -88,9 +96,9 @@ function useDocumentationImages(
     async (path) => {
       return withContext(
         () => `Loading documentation image (${pathDebugRepr(path)})`,
-        () => {
-          const uploaded = uploadedImages.get(pathUniqueId(path))
-          return uploaded?.then((blob) => Ok(blob)) ?? projectFiles.readFileBinary(path)
+        async () => {
+          const uploaded = await currentlyUploading.get(pathUniqueId(path))
+          return uploaded ? Ok(uploaded) : projectFiles.readFileBinary(path)
         },
       )
     },
@@ -119,7 +127,7 @@ function useDocumentationImages(
     }
     const path: Path = { rootId, segments: ['images', filename.value] }
     const id = pathUniqueId(path)
-    uploadedImages.set(id, blobPromise)
+    currentlyUploading.set(id, blobPromise)
 
     const insertedLink = `\n![Image](/images/${encodeURI(filename.value)})\n`
     switch (position.type) {
@@ -128,6 +136,7 @@ function useDocumentationImages(
         break
       case 'coords':
         markdownEditor.value.putTextAtCoord(insertedLink, position.coords)
+        break
     }
     try {
       const blob = await blobPromise
@@ -135,7 +144,7 @@ function useDocumentationImages(
       if (!uploadResult.ok)
         uploadErrorToast.reportError(uploadResult.error, 'Failed to upload image')
     } finally {
-      uploadedImages.delete(id)
+      currentlyUploading.delete(id)
     }
   }
 

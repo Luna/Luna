@@ -55,7 +55,7 @@ export function useProjectFiles(projectStore: {
   }
 
   /** Check if directory exists and try to create one if missing. */
-  async function ensureDirExists(path: Path) {
+  async function ensureDirExists(path: Path): Promise<Result<void>> {
     const exists = await dirExists(path)
     if (!exists.ok) return exists
     if (exists.value) return Ok()

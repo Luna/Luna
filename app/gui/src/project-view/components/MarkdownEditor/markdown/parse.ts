@@ -218,8 +218,6 @@ const enum Mark {
 const LinkStart: DelimiterType = {}
 const ImageStart: DelimiterType = {}
 
-// function space(ch: number) { return ch == 32 || ch == 9 || ch == 10 || ch == 13 }
-
 const linkParser: InlineParser = {
   name: 'Link',
   parse: (cx, next, start) => {
