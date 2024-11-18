@@ -1,6 +1,7 @@
 <script lang="ts">
 import SvgButton from '@/components/SvgButton.vue'
-import { provideTooltipRegistry, TooltipRegistry } from '@/providers/tooltipState'
+import type { TooltipRegistry } from '@/providers/tooltipState'
+import { provideTooltipRegistry } from '@/providers/tooltipState'
 import type { IHeaderParams } from 'ag-grid-community'
 import { computed, ref, watch } from 'vue'
 
@@ -16,11 +17,8 @@ export interface HeaderEditHandlers {
  * (not in defaultColumnDef).
  */
 export type ColumnSpecificHeaderParams =
-  | {
-      type: 'astColumn'
-      editHandlers: HeaderEditHandlers
-    }
-  | { type: 'newColumn'; newColumnRequested: () => void }
+  | { type: 'astColumn'; editHandlers: HeaderEditHandlers }
+  | { type: 'newColumn'; enabled?: boolean; newColumnRequested: () => void }
   | { type: 'rowIndexColumn' }
 
 /**
@@ -105,6 +103,7 @@ function onMouseRightClick(event: MouseEvent) {
     class="addColumnButton"
     name="add"
     title="Add new column"
+    :disabled="!(params.enabled ?? true)"
     @click.stop="params.newColumnRequested()"
   />
   <div

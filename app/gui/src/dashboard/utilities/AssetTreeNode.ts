@@ -11,7 +11,6 @@ import * as backendModule from '#/services/Backend'
 export type AssetTreeNodeData = Pick<
   AssetTreeNode,
   | 'children'
-  | 'createdAt'
   | 'depth'
   | 'directoryId'
   | 'directoryKey'
@@ -58,7 +57,6 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
      * from the backend.
      */
     public readonly key: Item['id'] = item.id,
-    public readonly createdAt = new Date(),
   ) {
     this.type = item.type
   }
@@ -122,7 +120,6 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
       update.path ?? this.path,
       update.initialAssetEvents ?? this.initialAssetEvents,
       update.key ?? this.key,
-      update.createdAt ?? this.createdAt,
     ).asUnion()
   }
 
@@ -192,12 +189,23 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
 
   /** Returns all items in the tree, flattened into an array using pre-order traversal. */
   preorderTraversal(
-    preprocess: ((tree: AnyAssetTreeNode[]) => AnyAssetTreeNode[]) | null = null,
+    preprocess: (tree: AnyAssetTreeNode[]) => AnyAssetTreeNode[] = (tree) => tree,
   ): AnyAssetTreeNode[] {
     const children = this.children ?? []
-    return (preprocess?.(children) ?? children).flatMap((node) =>
-      node.children == null ? [node] : [node, ...node.preorderTraversal(preprocess)],
-    )
+
+    return preprocess(children).flatMap((node) => {
+      if (node.children == null) {
+        return [node]
+      }
+      return [node].concat(node.preorderTraversal(preprocess))
+    })
+  }
+
+  /**
+   * Checks whenever the asset is a placeholder.
+   */
+  isPlaceholder() {
+    return backendModule.isPlaceholderId(this.item.id)
   }
 
   /** Check whether a pending rename is valid. */

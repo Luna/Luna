@@ -37,6 +37,7 @@ import org.enso.compiler.core.ir.module.scope.imports.Polyglot;
 import org.enso.syntax2.ArgumentDefinition;
 import org.enso.syntax2.Base;
 import org.enso.syntax2.DocComment;
+import org.enso.syntax2.DocLine;
 import org.enso.syntax2.FunctionAnnotation;
 import org.enso.syntax2.Line;
 import org.enso.syntax2.Parser;
@@ -170,21 +171,18 @@ final class TreeToIr {
     List<Diagnostic> diag = nil();
     for (Line line : module.getStatements()) {
       var expr = line.getExpression();
-      // Documentation found among imports/exports or at the top of the module (if it starts with imports) is
-      // placed in `bindings` because that's what the Scala parser used to do.
-      while (expr instanceof Tree.Documented doc) {
-        Definition c;
-        try {
-          c = translateComment(doc, doc.getDocumentation());
-        } catch (SyntaxException ex) {
-          c = ex.toError();
-        }
-        bindings = join(c, bindings);
-        expr = doc.getExpression();
-      }
       switch (expr) {
         case Tree.Import imp -> imports = join(translateImport(imp), imports);
         case Tree.Export exp -> exports = join(translateExport(exp), exports);
+        case Tree.Documentation docs -> {
+          Definition docsIr;
+          try {
+            docsIr = translateComment(docs, docs.getDocs());
+          } catch (SyntaxException ex) {
+            docsIr = ex.toError();
+          }
+          bindings = join(docsIr, bindings);
+        }
         case Tree.Private priv -> {
           if (isPrivate) {
             var error = translateSyntaxError(priv, Syntax.UnexpectedExpression$.MODULE$);
@@ -245,22 +243,12 @@ final class TreeToIr {
 
       case Tree.Function fn -> translateMethodBinding(fn, appendTo);
 
-      case Tree.ForeignFunction fn when fn.getBody() instanceof Tree.TextLiteral body -> {
+      case Tree.ForeignFunction fn -> {
         var name = fn.getName();
         var nameLoc = getIdentifiedLocation(name);
         var methodRef = new Name.MethodReference(Option.empty(), buildName(name), nameLoc, meta());
         var args = translateArgumentsDefinition(fn.getArgs());
-        var languageName = fn.getLanguage().codeRepr();
-        var language = languageName;
-        if (language == null) {
-          var message = "Language '" + languageName + "' is not a supported polyglot language.";
-          var error = translateSyntaxError(inputAst, new Syntax.InvalidForeignDefinition(message));
-          yield join(error, appendTo);
-        }
-        var text = buildTextConstant(body, body.getElements());
-        var def =
-            new Foreign.Definition(language, text, getIdentifiedLocation(fn.getBody()), meta());
-        // Foreign functions are always considered private
+        var def = translateForeignFunction(fn);
         var binding = new Method.Binding(
             methodRef, args, true, def, getIdentifiedLocation(inputAst), meta());
         yield join(binding, appendTo);
@@ -272,10 +260,13 @@ final class TreeToIr {
         yield translateModuleSymbol(anno.getExpression(), join(annotation, appendTo));
       }
 
-      case Tree.Documented doc -> {
-        var comment = translateComment(doc, doc.getDocumentation());
-        yield translateModuleSymbol(doc.getExpression(), join(comment, appendTo));
+      case Tree.ExpressionStatement statement -> {
+        if (statement.getDocLine() instanceof DocLine docLine)
+          appendTo = join(translateComment(statement, docLine.getDocs()), appendTo);
+        yield translateModuleSymbol(statement.getExpression(), appendTo);
       }
+
+      case Tree.Documentation doc -> join(translateComment(doc, doc.getDocs()), appendTo);
 
       case Tree.TypeSignatureDeclaration sig -> {
         var ascription = translateMethodTypeSignature(sig.getSignature());
@@ -289,6 +280,22 @@ final class TreeToIr {
     };
   }
 
+  private Expression translateForeignFunction(Tree.ForeignFunction fn) throws SyntaxException {
+    var languageName = fn.getLanguage().codeRepr();
+    var language = languageName;
+    if (language == null) {
+      var message = "Language '" + languageName + "' is not a supported polyglot language.";
+        return translateSyntaxError(fn, new Syntax.InvalidForeignDefinition(message));
+    }
+    String text;
+    if (fn.getBody() instanceof Tree.TextLiteral body) {
+      text = buildTextConstant(body, body.getElements());
+    } else {
+      return translateSyntaxError(fn, new Syntax.InvalidForeignDefinition("Expected text literal as body"));
+    }
+    return new Foreign.Definition(language, text, getIdentifiedLocation(fn.getBody()), meta());
+  }
+
   private List<DefinitionArgument> translateArgumentsDefinition(
       java.util.List<ArgumentDefinition> args) throws SyntaxException {
     List<DefinitionArgument> res = nil();
@@ -300,6 +307,15 @@ final class TreeToIr {
   }
 
   List<IR> translateConstructorDefinition(Tree.ConstructorDefinition cons, List<IR> appendTo) {
+    if (cons.getDocLine() instanceof DocLine docLine) {
+      Definition docsIr;
+      try {
+        docsIr = translateComment(cons, docLine.getDocs());
+      } catch (SyntaxException ex) {
+        docsIr = ex.toError();
+      }
+      appendTo = join(docsIr, appendTo);
+    }
     for (var annoLine : cons.getAnnotationLines()) {
         appendTo = join(translateAnnotation(annoLine.getAnnotation()), appendTo);
     }
@@ -360,26 +376,21 @@ final class TreeToIr {
 
       case Tree.Function fun -> translateTypeMethodBinding(fun, appendTo);
 
-      case Tree.ForeignFunction fn when fn.getBody() instanceof Tree.TextLiteral body -> {
+      case Tree.ForeignFunction fn -> {
         var name = buildName(fn.getName());
         var args = translateArgumentsDefinition(fn.getArgs());
-        var languageName = fn.getLanguage().codeRepr();
-        var language = languageName;
-        if (language == null) {
-          var message = "Language '" + languageName + "' is not a supported polyglot language.";
-          var error = translateSyntaxError(inputAst, new Syntax.InvalidForeignDefinition(message));
-          yield join(error, appendTo);
-        }
-        var text = buildTextConstant(body, body.getElements());
-        var def =
-            new Foreign.Definition(language, text, getIdentifiedLocation(fn.getBody()), meta());
+        var def = translateForeignFunction(fn);
         var binding =
             new Function.Binding(name, args, def, false, getIdentifiedLocation(fn), true, meta());
         yield join(binding, appendTo);
       }
-      case Tree.Documented doc -> {
-        var irDoc = translateComment(doc, doc.getDocumentation());
-        yield translateTypeBodyExpression(doc.getExpression(), join(irDoc, appendTo));
+
+      case Tree.Documentation docs -> join(translateComment(docs, docs.getDocs()), appendTo);
+
+      case Tree.ExpressionStatement statement -> {
+        if (statement.getDocLine() instanceof DocLine docLine)
+          appendTo = join(translateComment(statement, docLine.getDocs()), appendTo);
+        yield translateTypeBodyExpression(statement.getExpression(), appendTo);
       }
 
       case Tree.AnnotatedBuiltin anno -> {
@@ -434,7 +445,7 @@ final class TreeToIr {
         } else {
           arg = new Name.Qualified(tail, loc, meta());
         }
-        var ca = new CallArgument.Specified(Option.empty(), arg, loc, meta());
+        var ca = new CallArgument.Specified(Option.empty(), arg, false, loc, meta());
         args = join(ca, args);
         yield name;
       }
@@ -442,7 +453,7 @@ final class TreeToIr {
     if (in == null) {
       return new Application.Prefix(type, args, false, getIdentifiedLocation(app), meta());
     } else {
-      var fn = new CallArgument.Specified(Option.empty(), type, getIdentifiedLocation(app), meta());
+      var fn = new CallArgument.Specified(Option.empty(), type, false, getIdentifiedLocation(app), meta());
       return new Operator.Binary(fn, in, args.head(), getIdentifiedLocation(app), meta());
     }
   }
@@ -459,6 +470,9 @@ final class TreeToIr {
 
   private List<Definition> translateMethodBinding(Tree.Function fn, List<Definition> appendTo)
       throws SyntaxException {
+    if (fn.getDocLine() instanceof DocLine docLine) {
+      appendTo = join(translateComment(fn, docLine.getDocs()), appendTo);
+    }
     for (var annoLine : fn.getAnnotationLines()) {
       appendTo = join(translateAnnotation(annoLine.getAnnotation()), appendTo);
     }
@@ -494,6 +508,15 @@ final class TreeToIr {
   }
 
   private List<IR> translateTypeMethodBinding(Tree.Function fun, List<IR> appendTo) {
+    if (fun.getDocLine() instanceof DocLine docLine) {
+      IR comment;
+      try {
+        comment = translateComment(fun, docLine.getDocs());
+      } catch (SyntaxException ex) {
+        comment = ex.toError();
+      }
+      appendTo = join(comment, appendTo);
+    }
     for (var annoLine : fun.getAnnotationLines()) {
       appendTo = join(translateAnnotation(annoLine.getAnnotation()), appendTo);
     }
@@ -629,14 +652,14 @@ final class TreeToIr {
         case Tree.App app -> {
           var expr = translateExpression(app.getArg(), false);
           var loc = getIdentifiedLocation(app.getArg());
-          args.add(new CallArgument.Specified(Option.empty(), expr, loc, meta()));
+          args.add(new CallArgument.Specified(Option.empty(), expr, false, loc, meta()));
           tree = app.getFunc();
         }
         case Tree.NamedApp app -> {
           var expr = translateExpression(app.getArg(), false);
           var loc = getIdentifiedLocation(app.getArg());
           var id = buildName(app, app.getName());
-          args.add(new CallArgument.Specified(Option.apply(id), expr, loc, meta()));
+          args.add(new CallArgument.Specified(Option.apply(id), expr, false, loc, meta()));
           tree = app.getFunc();
         }
         case Tree.OperatorBlockApplication app -> {
@@ -652,16 +675,16 @@ final class TreeToIr {
             }
             var expr = switch (translateExpression(l.getExpression().getExpression(), true)) {
               case Application.Prefix pref -> {
-                var arg = new CallArgument.Specified(Option.empty(), self, self.identifiedLocation(), meta());
+                var arg = new CallArgument.Specified(Option.empty(), self, false, self.identifiedLocation(), meta());
                 yield new Application.Prefix(pref.function(), join(arg, pref.arguments()), false, pref.identifiedLocation(), meta());
               }
               case Expression any -> {
-                var arg = new CallArgument.Specified(Option.empty(), self, self.identifiedLocation(), meta());
+                var arg = new CallArgument.Specified(Option.empty(), self, false, self.identifiedLocation(), meta());
                 yield new Application.Prefix(any, join(arg, nil()), false, any.identifiedLocation(), meta());
               }
             };
             var loc = getIdentifiedLocation(l.getExpression().getExpression());
-            args.add(at, new CallArgument.Specified(Option.empty(), expr, loc, meta()));
+            args.add(at, new CallArgument.Specified(Option.empty(), expr, false, loc, meta()));
             self = expr;
           }
           return self;
@@ -678,7 +701,7 @@ final class TreeToIr {
             if (oprApp.getLhs() != null) {
               var self = translateExpression(oprApp.getLhs(), isMethod);
               var loc = getIdentifiedLocation(oprApp.getLhs());
-              args.add(new CallArgument.Specified(Option.empty(), self, loc, meta()));
+              args.add(new CallArgument.Specified(Option.empty(), self, false, loc, meta()));
             }
           } else if (args.isEmpty()) {
             return null;
@@ -855,7 +878,7 @@ final class TreeToIr {
           var loc = getIdentifiedLocation(app);
           var both = applyOperator(op, lhs, rhs, loc);
           expr = both;
-          lhs = new CallArgument.Specified(Option.empty(), expr, loc, meta());
+          lhs = new CallArgument.Specified(Option.empty(), expr, false, loc, meta());
         }
         yield expr;
       }
@@ -972,8 +995,8 @@ final class TreeToIr {
             continue;
           }
           var branch = line.getCase();
-          if (branch.getDocumentation() != null) {
-            var comment = translateComment(cas, branch.getDocumentation());
+          if (branch.getDocLine() instanceof DocLine docLine) {
+            var comment = translateComment(cas, docLine.getDocs());
             var loc = getIdentifiedLocation(cas);
             var doc = new Pattern.Documentation(comment.doc(), loc, meta());
             var br = new Case.Branch(
@@ -1010,7 +1033,7 @@ final class TreeToIr {
             );
             case Expression expr -> {
               var negate = new Name.Literal("negate", true, null, Option.empty(), meta());
-              var arg = new CallArgument.Specified(Option.empty(), expr, expr.identifiedLocation(), meta());
+              var arg = new CallArgument.Specified(Option.empty(), expr, false, expr.identifiedLocation(), meta());
               yield new Application.Prefix(negate, join(arg, nil()), false, getIdentifiedLocation(un), meta());
             }
             case null ->
@@ -1023,9 +1046,7 @@ final class TreeToIr {
             getIdentifiedLocation(anno), meta());
         yield translateBuiltinAnnotation(ir, anno.getExpression(), nil());
       }
-      // Documentation can be attached to an expression in a few cases, like if someone documents a line of an
-      // `ArgumentBlockApplication`. The documentation is ignored.
-      case Tree.Documented docu -> translateExpression(docu.getExpression());
+
       case Tree.App app -> {
         var fn = translateExpression(app.getFunc(), isMethod);
         var loc = getIdentifiedLocation(app);
@@ -1059,6 +1080,7 @@ final class TreeToIr {
     var methodReference = new CallArgument.Specified(
             Option.empty(),
             methodName,
+            false,
             methodName.identifiedLocation(),
             meta()
     );
@@ -1099,10 +1121,28 @@ final class TreeToIr {
   private void translateBlockStatement(Tree tree, Collection<Expression> appendTo) {
     switch (tree) {
       case null -> {}
-      case Tree.Assignment assign -> {
-        appendTo.add(translateAssignment(assign));
+      case Tree.Assignment assignment -> {
+        if (assignment.getDocLine() instanceof DocLine docLine) {
+          Expression docsIr;
+          try {
+            docsIr = translateComment(assignment, docLine.getDocs());
+          } catch (SyntaxException ex) {
+            docsIr = ex.toError();
+          }
+          appendTo.add(docsIr);
+        }
+        appendTo.add(translateAssignment(assignment));
       }
       case Tree.Function fun -> {
+        if (fun.getDocLine() instanceof DocLine docLine) {
+          Expression comment;
+          try {
+            comment = translateComment(fun, docLine.getDocs());
+          } catch (SyntaxException ex) {
+            comment = ex.toError();
+          }
+          appendTo.add(comment);
+        }
         for (var annoLine : fun.getAnnotationLines()) {
           appendTo.add((Expression)translateAnnotation(annoLine.getAnnotation()));
         }
@@ -1114,15 +1154,26 @@ final class TreeToIr {
       case Tree.TypeSignatureDeclaration sig -> {
         appendTo.add(translateTypeSignatureToOprApp(sig.getSignature()));
       }
-      case Tree.Documented doc -> {
+      case Tree.Documentation docs -> {
         Expression ir;
         try {
-          ir = translateComment(doc, doc.getDocumentation());
+          ir = translateComment(docs, docs.getDocs());
         } catch (SyntaxException ex) {
           ir = ex.toError();
         }
         appendTo.add(ir);
-        translateBlockStatement(doc.getExpression(), appendTo);
+      }
+      case Tree.ExpressionStatement statement -> {
+        if (statement.getDocLine() instanceof DocLine docLine) {
+          Expression ir;
+          try {
+            ir = translateComment(statement, docLine.getDocs());
+          } catch (SyntaxException ex) {
+            ir = ex.toError();
+          }
+          appendTo.add(ir);
+        }
+        translateBlockStatement(statement.getExpression(), appendTo);
       }
       default -> {
         var expressionStatement = translateExpression(tree);
@@ -1203,7 +1254,7 @@ final class TreeToIr {
         case Tree.OprSectionBoundary section -> section.getAst();
         case Tree.TemplateFunction function -> function.getAst();
         case Tree.AnnotatedBuiltin annotated -> annotated.getExpression();
-        case Tree.Documented documented -> documented.getExpression();
+        case Tree.ExpressionStatement statement -> statement.getExpression();
         case Tree.Assignment assignment -> assignment.getExpr();
         case Tree.TypeAnnotated annotated -> annotated.getExpression();
         case Tree.App app when isApplication(app.getFunc()) -> app.getFunc();
@@ -1217,6 +1268,7 @@ final class TreeToIr {
         case Tree.CaseOf ignored -> null;
         case Tree.Array ignored -> null;
         case Tree.Tuple ignored -> null;
+        case Tree.Documentation ignored -> null;
         default -> null;
       };
     }
@@ -1343,7 +1395,7 @@ final class TreeToIr {
       args = (List<CallArgument>) args.tail();
     }
     List<CallArgument> allArgs = (List<CallArgument>) pref.arguments().appendedAll(args.reverse());
-    final CallArgument.Specified blockArg = new CallArgument.Specified(Option.empty(), block, block.identifiedLocation(), meta());
+    final CallArgument.Specified blockArg = new CallArgument.Specified(Option.empty(), block, false, block.identifiedLocation(), meta());
     List<CallArgument> withBlockArgs = (List<CallArgument>) allArgs.appended(blockArg);
     if (!checkArgs(withBlockArgs)) {
       return translateSyntaxError(pref.location().get(), Syntax.UnexpectedExpression$.MODULE$);
@@ -1483,12 +1535,12 @@ final class TreeToIr {
       case Tree.NamedApp app -> {
         var expr = translateExpression(app.getArg(), false);
         var id = sanitizeName(buildName(app, app.getName()));
-        yield new CallArgument.Specified(Option.apply(id), expr, loc, meta());
+        yield new CallArgument.Specified(Option.apply(id), expr, false, loc, meta());
       }
       case null -> null;
       default -> {
         var expr = translateExpression(arg, false);
-        yield new CallArgument.Specified(Option.empty(), expr, loc, meta());
+        yield new CallArgument.Specified(Option.empty(), expr, false, loc, meta());
       }
     };
   }
@@ -1496,7 +1548,7 @@ final class TreeToIr {
   CallArgument.Specified translateTypeCallArgument(Tree arg) {
     var loc = getIdentifiedLocation(arg);
     var expr = translateType(arg);
-    return new CallArgument.Specified(Option.empty(), expr, loc, meta());
+    return new CallArgument.Specified(Option.empty(), expr, false, loc, meta());
   }
 
   CallArgument.Specified unnamedCallArgument(Tree arg) {
@@ -1505,7 +1557,7 @@ final class TreeToIr {
     }
     var loc = getIdentifiedLocation(arg);
     var expr = translateExpression(arg);
-    return new CallArgument.Specified(Option.empty(), expr, loc, meta());
+    return new CallArgument.Specified(Option.empty(), expr, false, loc, meta());
   }
 
   /**

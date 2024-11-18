@@ -1,9 +1,9 @@
 import createDebug from 'debug'
-import { Base64 } from 'js-base64'
 import * as json from 'lib0/json'
 import * as map from 'lib0/map'
 import { ObservableV2 } from 'lib0/observable'
 import * as random from 'lib0/random'
+import * as zlib from 'node:zlib'
 import * as Ast from 'ydoc-shared/ast'
 import { astCount } from 'ydoc-shared/ast'
 import { EnsoFileParts, combineFileParts, splitFileContents } from 'ydoc-shared/ensoFile'
@@ -474,48 +474,60 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
 
   private static getIdMapToPersist(
     idMap: IdMap | undefined,
-    metadata: fileFormat.IdeMetadata['node'],
+    metadata: fileFormat.IdeMetadata,
   ): IdMap | undefined {
     if (idMap === undefined) {
       return
     } else {
-      const entriesIntersection = idMap.entries().filter(([, id]) => id in metadata)
+      const entriesIntersection = idMap
+        .entries()
+        .filter(([, id]) => id in metadata.node || id in (metadata.widget ?? {}))
       return new IdMap(entriesIntersection)
     }
   }
 
-  private static encodeCodeSnapshot(code: string): string {
-    return Base64.encode(code)
+  private static encodeCodeSnapshot(code: string): string | undefined {
+    try {
+      return zlib.deflateSync(Buffer.from(code, 'utf8')).toString('base64')
+    } catch (e) {
+      console.warn('Failed to encode code snapshot.', e)
+      return
+    }
   }
 
-  private static decodeCodeSnapshot(snapshot: string): string {
-    return Base64.decode(snapshot)
+  private static decodeCodeSnapshot(snapshot: string): string | undefined {
+    try {
+      return zlib.inflateSync(Buffer.from(snapshot, 'base64')).toString('utf8')
+    } catch (e) {
+      console.warn('Failed to decode code snapshot.', e)
+      return
+    }
   }
 
   private sendLsUpdate(
     synced: EnsoFileParts,
     newCode: string | undefined,
     newIdMap: IdMap | undefined,
-    newMetadata: fileFormat.IdeMetadata['node'] | undefined,
+    newMetadata: fileFormat.IdeMetadata | undefined,
   ) {
     if (this.syncedContent == null || this.syncedVersion == null) return
 
     const newSnapshot = newCode && {
       snapshot: ModulePersistence.encodeCodeSnapshot(newCode),
     }
+    if (newMetadata) newMetadata.snapshot = this.syncedMeta.ide.snapshot
     const newMetadataJson =
       newMetadata &&
       json.stringify({
         ...this.syncedMeta,
         ide: {
-          ...this.syncedMeta.ide,
+          ...newMetadata,
           ...newSnapshot,
-          node: newMetadata,
         },
       })
     const idMapToPersist =
       (newIdMap || newMetadata) &&
-      ModulePersistence.getIdMapToPersist(newIdMap, newMetadata ?? this.syncedMeta.ide.node)
+      ModulePersistence.getIdMapToPersist(newIdMap, newMetadata ?? this.syncedMeta.ide)
     const newIdMapToPersistJson = idMapToPersist && serializeIdMap(idMapToPersist)
     const code = newCode ?? synced.code
     const newContent = combineFileParts({
@@ -566,7 +578,8 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       if (!result.ok) return handleError(result.error)
       this.syncedContent = newContent
       this.syncedVersion = newVersion
-      if (newMetadata) this.syncedMeta.ide.node = newMetadata
+      if (newMetadata) this.syncedMeta.ide = newMetadata
+      if (newSnapshot) this.syncedMeta.ide.snapshot = newSnapshot.snapshot
       if (newCode) this.syncedCode = newCode
       if (newIdMapToPersistJson) this.syncedIdMap = newIdMapToPersistJson
       if (newMetadataJson) this.syncedMetaJson = newMetadataJson
@@ -583,6 +596,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       const { code, idMapJson, metadataJson } = contentsReceived
       const metadata = fileFormat.tryParseMetadataOrFallback(metadataJson)
       const nodeMeta = Object.entries(metadata.ide.node)
+      const widgetMeta = Object.entries(metadata.ide.widget ?? {})
 
       let parsedSpans
       let parsedIdMap
@@ -604,7 +618,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             // the code was externally edited. In this case we try to fix the spans by running
             // the `syncToCode` on the saved code snapshot.
             const { root, spans } = Ast.parseModuleWithSpans(snapshotCode, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedIdMap = deserializeIdMap(idMapJson)
 
             const edit = syncModule.edit()
@@ -613,7 +627,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
             syncModule.applyEdit(edit)
           } else {
             const { root, spans } = Ast.parseModuleWithSpans(code, syncModule)
-            syncModule.syncRoot(root)
+            syncModule.setRoot(root)
             parsedSpans = spans
           }
         }
@@ -621,7 +635,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       const astRoot = syncModule.root()
       if (!astRoot) return
       if ((code !== this.syncedCode || idMapJson !== this.syncedIdMap) && idMapJson) {
-        const spans = parsedSpans ?? Ast.print(astRoot).info
+        const spans = parsedSpans ?? Ast.printWithSpans(astRoot).info
         if (idMapJson !== this.syncedIdMap && parsedIdMap === undefined) {
           const idMap = deserializeIdMap(idMapJson)
           const idsAssigned = Ast.setExternalIds(syncModule, spans, idMap)
@@ -646,10 +660,10 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         (code !== this.syncedCode ||
           idMapJson !== this.syncedIdMap ||
           metadataJson !== this.syncedMetaJson) &&
-        nodeMeta.length !== 0
+        (nodeMeta.length !== 0 || widgetMeta.length !== 0)
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
-        astRoot.visitRecursiveAst(ast => {
+        astRoot.visitRecursive(ast => {
           if (!externalIdToAst.has(ast.externalId)) externalIdToAst.set(ast.externalId, ast)
         })
         const missing = new Set<string>()
@@ -671,6 +685,18 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
           const newColorOverride = meta.colorOverride
           if (oldColorOverride !== newColorOverride) metadata.set('colorOverride', newColorOverride)
         }
+        for (const [id, meta] of widgetMeta) {
+          if (typeof id !== 'string') continue
+          const ast = externalIdToAst.get(id as ExternalId)
+          if (!ast) {
+            missing.add(id)
+            continue
+          }
+          const widgetsMetadata = syncModule.getVersion(ast).mutableWidgetsMetadata()
+          for (const [widgetKey, widgetMeta] of Object.entries(meta)) {
+            widgetsMetadata.set(widgetKey, widgetMeta)
+          }
+        }
       }
 
       this.syncedCode = code
@@ -685,7 +711,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         contentsReceived,
         this.syncedCode ?? undefined,
         unsyncedIdMap,
-        this.syncedMeta?.ide?.node,
+        this.syncedMeta?.ide,
       )
   }
 

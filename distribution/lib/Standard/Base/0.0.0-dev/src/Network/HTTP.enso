@@ -1,19 +1,24 @@
 import project.Any.Any
 import project.Data.Dictionary.Dictionary
 import project.Data.Hashset.Hashset
+import project.Data.Numbers.Integer
 import project.Data.Pair.Pair
+import project.Data.Sort_Direction.Sort_Direction
 import project.Data.Text.Encoding.Encoding
 import project.Data.Text.Text
+import project.Data.Time.Date_Time.Date_Time
 import project.Data.Time.Duration.Duration
 import project.Data.Vector.No_Wrap
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Enso_Secret.Enso_Secret
 import project.Error.Error
 import project.Errors.Common.Forbidden_Operation
+import project.Errors.Common.Response_Too_Large
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Errors.Unimplemented.Unimplemented
 import project.Function.Function
 import project.Meta
+import project.Network.HTTP.Cache_Policy.Cache_Policy
 import project.Network.HTTP.Header.Header
 import project.Network.HTTP.HTTP_Error.HTTP_Error
 import project.Network.HTTP.HTTP_Method.HTTP_Method
@@ -31,8 +36,8 @@ from project.Data.Boolean import Boolean, False, True
 from project.Data.Json.Extensions import all
 from project.Data.Text.Extensions import all
 
-polyglot java import java.lang.IllegalArgumentException
 polyglot java import java.io.IOException
+polyglot java import java.lang.IllegalArgumentException
 polyglot java import java.net.http.HttpClient
 polyglot java import java.net.http.HttpClient.Builder as ClientBuilder
 polyglot java import java.net.http.HttpClient.Redirect
@@ -52,10 +57,14 @@ polyglot java import org.enso.base.net.http.UrlencodedBodyBuilder
 type HTTP
     ## PRIVATE
        Static helper for get-like methods
-    fetch : (URI | Text) -> HTTP_Method -> Vector (Header | Pair Text Text) -> Response ! Request_Error | HTTP_Error
-    fetch (uri:(URI | Text)) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) = if_fetch_method method <|
+
+       ! Response caching
+
+         See `Data.fetch` for information about response caching.
+    fetch : (URI | Text) -> HTTP_Method -> Vector (Header | Pair Text Text) -> Cache_Policy -> Response ! Request_Error | HTTP_Error
+    fetch (uri:(URI | Text)) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) (cache_policy:Cache_Policy = ..Default) = if_fetch_method method <|
         request = Request.new method uri (Header.unify_vector headers) Request_Body.Empty
-        HTTP.new.request request
+        HTTP.new.request request cache_policy=cache_policy
 
     ## PRIVATE
        Static helper for post-like methods
@@ -117,23 +126,33 @@ type HTTP
        Please note, this must be closed after use (either directly or via the
        helpers on Response_Body).
 
+       ! Response caching
+
+         See `Data.fetch` for information about response caching.
+
        Arguments:
        - req: The HTTP request to send using `self` HTTP client.
        - error_on_failure_code: Whether or not to throw an error if the response
          code is not a success code.
-    request : Request -> Boolean -> Response ! Request_Error | HTTP_Error | Illegal_Argument
-    request self req error_on_failure_code=True =
+    request : Request -> Boolean -> Cache_Policy -> Response ! Request_Error | HTTP_Error | Illegal_Argument | Response_Too_Large
+    request self req error_on_failure_code=True (cache_policy:Cache_Policy = ..Default) =
         # Prevent request if the method is a write-like method and output context is disabled.
         check_output_context ~action =
             if (if_fetch_method req.method True if_not=Context.Output.is_enabled) then action else
                 Error.throw (Forbidden_Operation.Error ("As writing is disabled, " + req.method.to_text + " request not sent. Press the Write button ▶ to send it."))
+        # You can only explicitly mention the cache for GET requests.
+        check_cache_policy ~action =
+            cache_policy_value_ok = req.method == HTTP_Method.Get || cache_policy != Cache_Policy.Use_Cache
+            if cache_policy_value_ok then action else
+                Error.throw (Illegal_Argument.Error "Cannot specify cache policy for a "+req.method.to_text+" request")
+
         handle_request_error =
             handler caught_panic =
                 exception = caught_panic.payload
                 Error.throw (Request_Error.Error (Meta.type_of exception . to_text) exception.getMessage)
             Panic.catch IllegalArgumentException handler=handler <| Panic.catch IOException handler=handler
 
-        handle_request_error <| Illegal_Argument.handle_java_exception <| check_output_context <|
+        handle_request_error <| Illegal_Argument.handle_java_exception <| check_output_context <| check_cache_policy <| Response_Too_Large.handle_java_exception <|
             headers = _resolve_headers req
             headers.if_not_error <|
                 resolved_body = _resolve_body req.body self.hash_method
@@ -145,13 +164,26 @@ type HTTP
                     # Create Unified Header list
                     boundary_header_list = if resolved_body.boundary.is_nothing then [] else [Header.multipart_form_data resolved_body.boundary]
                     all_headers = headers + boundary_header_list
-                    mapped_headers = all_headers.map on_problems=No_Wrap .to_java_pair
+                    mapped_headers = all_headers.map on_problems=No_Wrap.Value .to_java_pair
 
-                    response = Response.Value (EnsoSecretHelper.makeRequest (self.make_client self resolved_body.hash) builder req.uri.to_java_representation mapped_headers)
+                    response = Response.Value (EnsoSecretHelper.makeRequest (self.make_client self resolved_body.hash) builder req.uri.to_java_representation mapped_headers (cache_policy.should_use_cache req))
                     if error_on_failure_code.not || response.code.is_success then response else
                         body = response.body.decode_as_text.catch Any _->""
                         message = if body.is_empty then Nothing else body
                         Error.throw (HTTP_Error.Status_Error response.code message response.uri)
+
+    ## ALIAS flush
+       ICON temp
+       Clear the HTTP request cache.
+
+       > Example
+         Clear the HTTP response cache.
+
+             import Standard.Base.Network.HTTP
+
+             HTTP.clear_response_cache
+    clear_response_cache : Nothing
+    clear_response_cache -> Nothing = EnsoSecretHelper.getCache.clear
 
     ## PRIVATE
        ADVANCED
@@ -227,6 +259,9 @@ private _resolve_body body:Request_Body hash_function =
             ## ToDo: Support hashing a file.
             hash = if hash_function.is_nothing then "" else Unimplemented.throw "Hashing a file body is not yet supported."
             Resolved_Body.Value (body_publishers.ofFile path) Nothing hash
+        Request_Body.Byte_Array bytes ->
+            hash = if hash_function.is_nothing then "" else hash_function bytes
+            Resolved_Body.Value (body_publishers.ofByteArray bytes) Nothing hash
         Request_Body.Form_Data form_data url_encoded ->
             _resolve_form_body form_data url_encoded hash_function
         Request_Body.Empty ->
@@ -322,20 +357,20 @@ type Request_Error
 
 ## PRIVATE
    Access the HTTP's timeout (for testing purposes).
-get_timeout : HTTP -> Duration
-get_timeout http:HTTP = http.timeout
+_get_timeout : HTTP -> Duration
+_get_timeout http:HTTP = http.timeout
 
 ## PRIVATE
    Access the HTTP's follow_redirects (for testing purposes).
-get_follow_redirects : HTTP -> Boolean
-get_follow_redirects http:HTTP = http.follow_redirects
+_get_follow_redirects : HTTP -> Boolean
+_get_follow_redirects http:HTTP = http.follow_redirects
 
 ## PRIVATE
    Access the HTTP's proxy (for testing purposes).
-get_proxy : HTTP -> Proxy
-get_proxy http:HTTP = http.proxy
+_get_proxy : HTTP -> Proxy
+_get_proxy http:HTTP = http.proxy
 
 ## PRIVATE
     Access the HTTP's version (for testing purposes).
-get_version : HTTP -> HTTP_Version
-get_version http:HTTP = http.version
+_get_version : HTTP -> HTTP_Version
+_get_version http:HTTP = http.version

@@ -26,7 +26,8 @@ import type {
   VisualizationConfiguration,
 } from './languageServerTypes'
 import { Err, Ok, type Result } from './util/data/result'
-import { AbortScope, exponentialBackoff, ReconnectingWebSocketTransport } from './util/net'
+import type { ReconnectingWebSocketTransport } from './util/net'
+import { AbortScope, exponentialBackoff } from './util/net'
 import type { Uuid } from './yjsModel'
 
 const debugLog = debug('ydoc-shared:languageServer')
@@ -412,11 +413,16 @@ export class LanguageServer extends ObservableV2<Notifications & TransportEvents
     contextId: ContextId,
     invalidatedExpressions?: 'all' | string[],
     executionEnvironment?: ExecutionEnvironment,
+    expressionConfigs?: {
+      expressionId: ExpressionId
+      executionEnvironment?: ExecutionEnvironment
+    }[],
   ): Promise<LsRpcResult<void>> {
     return this.request('executionContext/recompute', {
       contextId,
       invalidatedExpressions,
       executionEnvironment,
+      expressionConfigs,
     })
   }
 

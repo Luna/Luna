@@ -12,17 +12,21 @@ const isVisualizationEnabled = defineModel<boolean>('isVisualizationEnabled', { 
 const props = defineProps<{
   isRecordingEnabledGlobally: boolean
   isRemovable: boolean
+  isEnterable: boolean
   matchableNodeColors: Set<string>
   documentationUrl: string | undefined
+  isBeingRecomputed: boolean
 }>()
 const emit = defineEmits<{
   'update:isVisualizationEnabled': [isVisualizationEnabled: boolean]
+  enterNode: []
   startEditing: []
   startEditingComment: []
   openFullMenu: []
   delete: []
   createNewNode: []
   toggleDocPanel: []
+  recompute: []
 }>()
 
 const isDropdownOpened = ref(false)
@@ -90,9 +94,25 @@ function readableBinding(binding: keyof (typeof graphBindings)['bindings']) {
             <SvgIcon name="comment" class="rowIcon" />
             <span>Add Comment</span>
           </MenuButton>
+          <MenuButton
+            data-testid="recompute"
+            :disabled="props.isBeingRecomputed"
+            @click.stop="closeDropdown(), emit('recompute')"
+          >
+            <SvgIcon name="workflow_play" class="rowIcon" />
+            <span>Write</span>
+          </MenuButton>
           <MenuButton @click.stop="closeDropdown(), (showColorPicker = true)">
             <SvgIcon name="paint_palette" class="rowIcon" />
             <span>Color Component</span>
+          </MenuButton>
+          <MenuButton
+            v-if="isEnterable"
+            data-testid="enter-node-button"
+            @click.stop="closeDropdown(), emit('enterNode')"
+          >
+            <SvgIcon name="open" class="rowIcon" />
+            <span>Open Grouped Components</span>
           </MenuButton>
           <MenuButton data-testid="edit-button" @click.stop="closeDropdown(), emit('startEditing')">
             <SvgIcon name="edit" class="rowIcon" />

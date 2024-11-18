@@ -106,6 +106,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
     isDisabled,
     onHoverChange: handleHoverChange,
   })
+
   const { hoverProps: tooltipHoverProps } = aria.useHover({
     isDisabled,
     onHoverChange: handleHoverChange,

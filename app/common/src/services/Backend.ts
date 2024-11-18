@@ -709,6 +709,12 @@ export function findLeastUsedColor(labels: Iterable<Label>) {
 // === AssetType ===
 // =================
 
+export enum SpecialAssetType {
+  loading = 'specialLoading',
+  empty = 'specialEmpty',
+  error = 'specialError',
+}
+
 /** All possible types of directory entries. */
 export enum AssetType {
   project = 'project',
@@ -728,12 +734,19 @@ export enum AssetType {
 }
 
 /** The corresponding ID newtype for each {@link AssetType}. */
-export interface IdType {
+export interface IdType extends RealAssetIdType, SpecialAssetIdType {}
+
+export type RealAssetId = ProjectId | FileId | DatalinkId | SecretId | DirectoryId
+export interface RealAssetIdType {
   readonly [AssetType.project]: ProjectId
   readonly [AssetType.file]: FileId
   readonly [AssetType.datalink]: DatalinkId
   readonly [AssetType.secret]: SecretId
   readonly [AssetType.directory]: DirectoryId
+}
+
+export type SpecialAssetId = LoadingAssetId | EmptyAssetId | ErrorAssetId
+export interface SpecialAssetIdType {
   readonly [AssetType.specialLoading]: LoadingAssetId
   readonly [AssetType.specialEmpty]: EmptyAssetId
   readonly [AssetType.specialError]: ErrorAssetId
@@ -762,8 +775,9 @@ export const ASSET_TYPE_ORDER: Readonly<Record<AssetType, number>> = {
  * Metadata uniquely identifying a directory entry.
  * These can be Projects, Files, Secrets, or other directories.
  */
-export interface BaseAsset {
-  readonly id: AssetId
+export interface Asset<Type extends AssetType = AssetType> {
+  readonly type: Type
+  readonly id: IdType[Type]
   readonly title: string
   readonly modifiedAt: dateTime.Rfc3339DateTime
   /**
@@ -774,16 +788,10 @@ export interface BaseAsset {
   readonly permissions: readonly AssetPermission[] | null
   readonly labels: readonly LabelName[] | null
   readonly description: string | null
-}
-
-/**
- * Metadata uniquely identifying a directory entry.
- * These can be Projects, Files, Secrets, or other directories.
- */
-export interface Asset<Type extends AssetType = AssetType> extends BaseAsset {
-  readonly type: Type
-  readonly id: IdType[Type]
   readonly projectState: Type extends AssetType.project ? ProjectStateType : null
+  readonly extension: Type extends AssetType.file ? string : null
+  readonly parentsPath: string
+  readonly virtualParentsPath: string
 }
 
 /** A convenience alias for {@link Asset}<{@link AssetType.directory}>. */
@@ -810,6 +818,35 @@ export type SpecialEmptyAsset = Asset<AssetType.specialEmpty>
 /** A convenience alias for {@link Asset}<{@link AssetType.specialError}>. */
 export type SpecialErrorAsset = Asset<AssetType.specialError>
 
+const PLACEHOLDER_SIGNATURE = Symbol('placeholder')
+
+/** Creates a new placeholder id. */
+function createPlaceholderId(from?: string): string {
+  const id = new String(from ?? uniqueString.uniqueString())
+
+  Object.defineProperty(id, PLACEHOLDER_SIGNATURE, {
+    value: true,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  })
+
+  return id as string
+}
+
+/**
+ * Whether a given {@link AssetId} is a placeholder id.
+ */
+export function isPlaceholderId(id: AssetId) {
+  if (typeof id === 'string') {
+    return false
+  }
+
+  console.log('isPlaceholderId id', id, PLACEHOLDER_SIGNATURE in id)
+
+  return PLACEHOLDER_SIGNATURE in id
+}
+
 /**
  * Creates a {@link DirectoryAsset} representing the root directory for the organization,
  * with all irrelevant fields initialized to default values.
@@ -823,9 +860,17 @@ export function createRootDirectoryAsset(directoryId: DirectoryId): DirectoryAss
     parentId: DirectoryId(''),
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Extract the file extension from a file name. */
+function fileExtension(fileNameOrPath: string) {
+  return fileNameOrPath.match(/[.]([^.]+?)$/)?.[1] ?? ''
 }
 
 /** Creates a {@link FileAsset} using the given values. */
@@ -836,14 +881,17 @@ export function createPlaceholderFileAsset(
 ): FileAsset {
   return {
     type: AssetType.file,
-    id: FileId(uniqueString.uniqueString()),
+    id: FileId(createPlaceholderId()),
     title,
     parentId,
     permissions: assetPermissions,
     modifiedAt: dateTime.toRfc3339(new Date()),
     projectState: null,
+    extension: fileExtension(title),
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
 }
 
@@ -857,7 +905,7 @@ export function createPlaceholderProjectAsset(
 ): ProjectAsset {
   return {
     type: AssetType.project,
-    id: ProjectId(uniqueString.uniqueString()),
+    id: ProjectId(createPlaceholderId()),
     title,
     parentId,
     permissions: assetPermissions,
@@ -868,8 +916,11 @@ export function createPlaceholderProjectAsset(
       ...(organization != null ? { openedBy: organization.email } : {}),
       ...(path != null ? { path } : {}),
     },
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
 }
 
@@ -881,14 +932,24 @@ export function createSpecialLoadingAsset(directoryId: DirectoryId): SpecialLoad
   return {
     type: AssetType.specialLoading,
     title: '',
-    id: LoadingAssetId(uniqueString.uniqueString()),
+    id: LoadingAssetId(
+      createPlaceholderId(`${AssetType.specialLoading}-${uniqueString.uniqueString()}`),
+    ),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link LoadingAssetId}. */
+export function isLoadingAssetId(id: string): id is LoadingAssetId {
+  return id.startsWith(`${AssetType.specialLoading}-`)
 }
 
 /**
@@ -899,14 +960,22 @@ export function createSpecialEmptyAsset(directoryId: DirectoryId): SpecialEmptyA
   return {
     type: AssetType.specialEmpty,
     title: '',
-    id: EmptyAssetId(uniqueString.uniqueString()),
+    id: EmptyAssetId(`${AssetType.specialEmpty}-${uniqueString.uniqueString()}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link EmptyAssetId}. */
+export function isEmptyAssetId(id: string): id is EmptyAssetId {
+  return id.startsWith(`${AssetType.specialEmpty}-`)
 }
 
 /**
@@ -917,14 +986,22 @@ export function createSpecialErrorAsset(directoryId: DirectoryId): SpecialErrorA
   return {
     type: AssetType.specialError,
     title: '',
-    id: ErrorAssetId(uniqueString.uniqueString()),
+    id: ErrorAssetId(`${AssetType.specialError}-${uniqueString.uniqueString()}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
     projectState: null,
+    extension: null,
     labels: [],
     description: null,
+    parentsPath: '',
+    virtualParentsPath: '',
   }
+}
+
+/** Whether a given {@link string} is an {@link ErrorAssetId}. */
+export function isErrorAssetId(id: string): id is ErrorAssetId {
+  return id.startsWith(`${AssetType.specialError}-`)
 }
 
 /** Any object with a `type` field matching the given `AssetType`. */
@@ -957,7 +1034,7 @@ export function createPlaceholderAssetId<Type extends AssetType>(
 ): IdType[Type] {
   // This is required so that TypeScript can check the `switch` for exhaustiveness.
   const assetType: AssetType = type
-  id ??= uniqueString.uniqueString()
+  id = createPlaceholderId(id)
   let result: AssetId
   switch (assetType) {
     case AssetType.directory: {
@@ -1378,12 +1455,38 @@ export function stripProjectExtension(name: string) {
 }
 
 /**
+ * Escape special characters in a project name to prevent them from being interpreted as path or regex
+ */
+export function escapeSpecialCharacters(name: string): string {
+  return name.replace(/[*+?^${}()|[\]\\]/g, ':')
+}
+
+/**
  * Return both the name and extension of the project file name (if any).
  * Otherwise, returns the entire name as the basename.
  */
 export function extractProjectExtension(name: string) {
   const [, basename, extension] = name.match(/^(.*)[.](tar[.]gz|zip|enso-project)$/) ?? []
   return { basename: basename ?? name, extension: extension ?? '' }
+}
+
+/** Check whether a pending rename is valid. */
+export function isNewTitleValid(
+  item: AnyAsset,
+  newTitle: string,
+  siblings?: readonly AnyAsset[] | null,
+) {
+  siblings ??= []
+  return (
+    newTitle !== '' &&
+    newTitle !== item.title &&
+    siblings.every(sibling => {
+      const isSelf = sibling.id === item.id
+      const hasSameType = sibling.type === item.type
+      const hasSameTitle = sibling.title === newTitle
+      return !(!isSelf && hasSameType && hasSameTitle)
+    })
+  )
 }
 
 /** Network error class. */
@@ -1478,7 +1581,7 @@ export default abstract class Backend {
     title: string,
   ): Promise<UpdatedDirectory>
   /** List previous versions of an asset. */
-  abstract listAssetVersions(assetId: AssetId, title: string | null): Promise<AssetVersions>
+  abstract listAssetVersions(assetId: AssetId): Promise<AssetVersions>
   /** Change the parent directory of an asset. */
   abstract updateAsset(assetId: AssetId, body: UpdateAssetRequestBody, title: string): Promise<void>
   /** Delete an arbitrary asset. */
@@ -1519,7 +1622,6 @@ export default abstract class Backend {
   abstract getProjectDetails(
     projectId: ProjectId,
     directoryId: DirectoryId | null,
-    title: string,
   ): Promise<Project>
   /** Return Language Server logs for a project session. */
   abstract getProjectSessionLogs(
@@ -1539,7 +1641,7 @@ export default abstract class Backend {
     title: string,
   ): Promise<UpdatedProject>
   /** Fetch the content of the `Main.enso` file of a project. */
-  abstract getFileContent(projectId: ProjectId, version: string, title: string): Promise<string>
+  abstract getFileContent(projectId: ProjectId, versionId?: S3ObjectVersionId): Promise<string>
   /** Return project memory, processor and storage usage. */
   abstract checkResources(projectId: ProjectId, title: string): Promise<ResourceUsage>
   /** Return a list of files accessible by the current user. */
@@ -1616,4 +1718,7 @@ export default abstract class Backend {
    * @param returnUrl - The URL to redirect to after the customer visits the portal.
    */
   abstract createCustomerPortalSession(returnUrl: string): Promise<string | null>
+
+  /** Resolve the path of an asset relative to a project. */
+  abstract resolveProjectAssetPath(projectId: ProjectId, relativePath: string): Promise<string>
 }

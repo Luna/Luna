@@ -61,6 +61,15 @@ export function unsafeMutable<T extends object>(object: T): { -readonly [K in ke
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
  * extra keys.
  */
+export function unsafeKeys<T extends object>(object: T): readonly (keyof T)[] {
+  // @ts-expect-error This is intentionally a wrapper function with a different type.
+  return Object.keys(object)
+}
+
+/**
+ * Return the entries of an object. UNSAFE only when it is possible for an object to have
+ * extra keys.
+ */
 export function unsafeEntries<T extends object>(
   object: T,
 ): readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][] {
@@ -153,3 +162,24 @@ export type ExtractKeys<T, U> = {
 
 /** An instance method of the given type. */
 export type MethodOf<T> = (this: T, ...args: never) => unknown
+
+// ===================
+// === useObjectId ===
+// ===================
+
+/** Composable providing support for managing object identities. */
+export function useObjectId() {
+  let lastId = 0
+  const idNumbers = new WeakMap<object, number>()
+  /** @returns A value that can be used to compare object identity. */
+  function objectId(o: object): number {
+    const id = idNumbers.get(o)
+    if (id == null) {
+      lastId += 1
+      idNumbers.set(o, lastId)
+      return lastId
+    }
+    return id
+  }
+  return { objectId }
+}

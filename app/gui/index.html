@@ -26,7 +26,7 @@
             style-src       'self' 'unsafe-inline' data: https://*;
             connect-src     'self' data: ws://localhost:* ws://127.0.0.1:* http://localhost:* https://* wss://*;
             worker-src      'self' blob:;
-            img-src         'self' blob: data: https://*;
+            img-src         'self' blob: enso: data: https://*;
             font-src        'self' data: https://*"
     />
     <meta
@@ -37,7 +37,7 @@
             maximum-scale = 1.0,
             user-scalable = no"
     />
-    <title>Enso Analytics</title>
+    <title>Enso %ENSO_IDE_VERSION%</title>
   </head>
   <body>
     <div id="enso-spotlight" class="enso-spotlight"></div>
