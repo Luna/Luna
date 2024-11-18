@@ -1,4 +1,6 @@
 from Standard.Base import all
+from Standard.Base.Metadata import Display, make_single_choice, Widget
+from Standard.Base.Metadata.Choice import Option
 
 ## Type describing a Google Analytics dimension or metric.
 type Google_Analytics_Field
