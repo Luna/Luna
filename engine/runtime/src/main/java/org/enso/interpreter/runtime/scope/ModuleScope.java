@@ -290,6 +290,11 @@ public final class ModuleScope extends EnsoObject {
     return "Scope" + module;
   }
 
+  @Override
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toString();
+  }
+
   public static class Builder {
 
     @CompilerDirectives.CompilationFinal private ModuleScope moduleScope = null;

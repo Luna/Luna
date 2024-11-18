@@ -227,6 +227,7 @@ public final class EnsoDateTime extends EnsoObject {
 
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
+  @Override
   public Object toDisplayString(boolean allowSideEffects) {
     return Core_Date_Utils.defaultZonedDateTimeFormatter.format(dateTime);
   }

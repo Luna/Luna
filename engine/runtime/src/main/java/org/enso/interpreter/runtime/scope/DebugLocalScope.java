@@ -297,5 +297,12 @@ public class DebugLocalScope extends EnsoObject {
     public String toString() {
       return memberNames.toString();
     }
+
+    @Override
+    @ExportMessage
+    @TruffleBoundary
+    public Object toDisplayString(boolean allowSideEffects) {
+      return toString();
+    }
   }
 }

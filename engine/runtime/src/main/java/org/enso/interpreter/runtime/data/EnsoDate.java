@@ -99,6 +99,7 @@ public final class EnsoDate extends EnsoObject {
 
   @CompilerDirectives.TruffleBoundary
   @ExportMessage
+  @Override
   public Object toDisplayString(boolean allowSideEffects) {
     return Core_Date_Utils.defaultLocalDateFormatter.format(date);
   }

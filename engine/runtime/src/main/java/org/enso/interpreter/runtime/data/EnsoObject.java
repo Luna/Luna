@@ -1,6 +1,5 @@
 package org.enso.interpreter.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -21,10 +20,10 @@ public abstract class EnsoObject implements TruffleObject {
     return EnsoLanguage.class;
   }
 
+  /**
+   * This abstract method needs to be declared here with the annotation {@code @ExportMessage} so
+   * that the Truffle DSL is satisfied.
+   */
   @ExportMessage
-  @TruffleBoundary
-  public Object toDisplayString(boolean allowSideEffects) {
-    // Not implemented on purpose - should be implemented by subclasses.
-    throw new AssertionError("unimplemented");
-  }
+  public abstract Object toDisplayString(boolean allowSideEffects);
 }

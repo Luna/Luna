@@ -73,6 +73,12 @@ final class HashEntriesVector extends EnsoObject {
     throw UnsupportedMessageException.create();
   }
 
+  @Override
+  @ExportMessage
+  public Object toDisplayString(boolean allowSideEffects) {
+    return "HashEntriesVector";
+  }
+
   @ExportLibrary(InteropLibrary.class)
   static final class EntryPair extends EnsoObject {
     private final Object key;
@@ -127,7 +133,7 @@ final class HashEntriesVector extends EnsoObject {
     @TruffleBoundary
     @ExportMessage
     @Override
-    public Object toDisplayString(boolean sideEffectsAllowed) {
+    public String toDisplayString(boolean sideEffectsAllowed) {
       return "(" + key + ", " + value + ")";
     }
   }

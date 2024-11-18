@@ -185,6 +185,7 @@ public final class EnsoDuration extends EnsoObject {
 
   @ExportMessage
   @TruffleBoundary
+  @Override
   public String toDisplayString(boolean allowSideEffects) {
     return duration.toString();
   }

@@ -28,4 +28,9 @@ final class BranchResult extends EnsoObject {
   static BranchResult success(Object result) {
     return new BranchResult(true, result);
   }
+
+  @Override
+  public Object toDisplayString(boolean allowSideEffects) {
+    return "BranchResult(" + isMatched + ")";
+  }
 }

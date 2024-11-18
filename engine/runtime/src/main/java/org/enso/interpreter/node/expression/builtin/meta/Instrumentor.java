@@ -125,4 +125,15 @@ final class Instrumentor extends EnsoObject implements IdExecutionService.Callba
   public Object getExecutionEnvironment(IdExecutionService.Info info) {
     return null;
   }
+
+  @Override
+  public Object toDisplayString(boolean allowSideEffects) {
+    String rootName;
+    if (target.getRootNode() != null) {
+      rootName = target.getRootNode().getQualifiedName();
+    } else {
+      rootName = "<unknown>";
+    }
+    return "Instrumentor(target = " + rootName + ")";
+  }
 }

@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.data.vector;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
@@ -61,6 +62,7 @@ final class ArrayOverBuffer extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   @Override
   public String toDisplayString(boolean allowSideEffects) {
     final InteropLibrary iop = InteropLibrary.getUncached();

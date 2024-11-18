@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -74,5 +75,12 @@ public final class Ref extends EnsoObject {
   Object toDisplayString(
       boolean allowSideEffects, @CachedLibrary(limit = "3") InteropLibrary interop) {
     return interop.toDisplayString(value, allowSideEffects);
+  }
+
+  @TruffleBoundary
+  @Override
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(allowSideEffects, InteropLibrary.getUncached());
   }
 }

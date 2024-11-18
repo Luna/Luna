@@ -108,6 +108,7 @@ public final class Warning extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   @Override
   public Object toDisplayString(boolean enableSideEffects) {
     return toString();

@@ -165,6 +165,7 @@ public final class EnsoTimeOfDay extends EnsoObject {
 
   @CompilerDirectives.TruffleBoundary
   @ExportMessage
+  @Override
   public Object toDisplayString(boolean allowSideEffects) {
     return DateTimeFormatter.ISO_LOCAL_TIME.format(localTime);
   }

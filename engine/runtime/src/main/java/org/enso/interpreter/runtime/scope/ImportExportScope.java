@@ -67,4 +67,9 @@ public class ImportExportScope extends EnsoObject {
       return null;
     }
   }
+
+  @Override
+  public Object toDisplayString(boolean allowSideEffects) {
+    return "ImportExportScope{" + module.getName().toString() + "}";
+  }
 }

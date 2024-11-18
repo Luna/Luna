@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.callable;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -75,13 +76,14 @@ public final class UnresolvedConstructor extends EnsoObject {
   }
 
   @Override
-  @CompilerDirectives.TruffleBoundary
+  @TruffleBoundary
   public String toString() {
     return ".." + name;
   }
 
   @ExportMessage
   @Override
+  @TruffleBoundary
   public String toDisplayString(boolean allowSideEffects) {
     return toString();
   }

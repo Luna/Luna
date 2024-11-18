@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -85,6 +86,7 @@ public final class EnsoTimeZone extends EnsoObject {
 
   @ExportMessage
   @Override
+  @TruffleBoundary
   public String toDisplayString(boolean ignoreSideEffects) {
     return zone.toString();
   }

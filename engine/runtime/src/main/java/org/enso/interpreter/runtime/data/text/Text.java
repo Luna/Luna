@@ -197,6 +197,12 @@ public final class Text extends EnsoObject {
     return Core_Text_Utils.computeGraphemeLength(toString());
   }
 
+  @Override
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(allowSideEffects, ToJavaStringNode.getUncached());
+  }
+
   @CompilerDirectives.TruffleBoundary
   @ExportMessage
   String toDisplayString(

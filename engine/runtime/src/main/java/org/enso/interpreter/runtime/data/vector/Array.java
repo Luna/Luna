@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.data.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -152,6 +153,7 @@ final class Array extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   @Override
   public String toDisplayString(boolean b) {
     return toString();

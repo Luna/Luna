@@ -182,6 +182,12 @@ public final class EnsoFile extends EnsoObject {
     public String toString() {
       return "EnsoOutputStream";
     }
+
+    @Override
+    @ExportMessage
+    public Object toDisplayString(boolean allowSideEffects) {
+      return toString();
+    }
   }
 
   @Builtin.Method(name = "input_stream_builtin")
@@ -225,6 +231,12 @@ public final class EnsoFile extends EnsoObject {
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
       return ArrayLikeHelpers.wrapStrings(MEMBERS);
+    }
+
+    @ExportMessage
+    @Override
+    public Object toDisplayString(boolean allowSideEffects) {
+      return "EnsoInputStream";
     }
 
     @TruffleBoundary(allowInlining = true)

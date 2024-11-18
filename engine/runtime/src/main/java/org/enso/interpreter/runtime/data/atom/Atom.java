@@ -382,6 +382,18 @@ public abstract class Atom extends EnsoObject {
     }
   }
 
+  @Override
+  @TruffleBoundary
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(
+        allowSideEffects,
+        InteropLibrary.getUncached(),
+        WarningsLibrary.getUncached(),
+        InteropLibrary.getUncached(),
+        BranchProfile.getUncached());
+  }
+
   @ExportMessage
   Text toDisplayString(
       boolean allowSideEffects,

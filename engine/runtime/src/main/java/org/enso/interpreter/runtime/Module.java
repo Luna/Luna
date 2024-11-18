@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -799,8 +800,15 @@ public final class Module extends EnsoObject {
         MethodNames.Module.EVAL_EXPRESSION);
   }
 
+  @ExportMessage
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    return "Module[" + name + ']';
+  }
+
   @Override
   public String toString() {
-    return "Module[" + name + ']';
+    return toDisplayString(false);
   }
 }

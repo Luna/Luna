@@ -69,4 +69,11 @@ public final class EnsoSource extends EnsoObject {
   Object getMembers(boolean includeInternal) {
     return ArrayLikeHelpers.wrapStrings(MEMBERS);
   }
+
+  @Override
+  @TruffleBoundary
+  @ExportMessage
+  public Object toDisplayString(boolean allowSideEffects) {
+    return "EnsoSource{" + (source != null ? source.toString() : "") + "}";
+  }
 }

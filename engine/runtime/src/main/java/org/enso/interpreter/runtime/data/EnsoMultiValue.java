@@ -73,6 +73,7 @@ public final class EnsoMultiValue extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   @Override
   public String toDisplayString(boolean ignore) {
     return toString();
