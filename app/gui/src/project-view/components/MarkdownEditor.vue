@@ -16,6 +16,6 @@ const LazyMarkdownEditor = defineAsyncComponent(
 
 <template>
   <Suspense>
-    <LazyMarkdownEditor v-bind="props" />
+    <LazyMarkdownEditor v-bind="props" class="MarkdownEditor" />
   </Suspense>
 </template>
