@@ -16,7 +16,7 @@ import project.Helpers
    Prepares a table or column for visualization.
 
    Arguments:
-   - x: The table to prepare for visualization.
+   - y: The table to prepare for visualization.
    - max_rows: The maximum number of rows to display.
 
    In case of Database backed data, it materializes a fragment of the data.
@@ -63,7 +63,7 @@ max_columns = 250
 whitespace_count : Column -> Integer | Nothing
 whitespace_count col =
     find_whitespace col = 
-        filtered = col.to_vector.filter (c-> c.is_a Text && (c.first.is_whitespace || c.last.is_whitespace))
+        filtered = col.to_vector.filter (c-> c.is_a Text && c.empty.not && (c.first.is_whitespace || c.last.is_whitespace))
         filtered.length
     if (col.value_type == Value_Type.Mixed || col.value_type.is_text) then find_whitespace col else Nothing 
 
