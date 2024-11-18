@@ -6,7 +6,7 @@ import project.Data.Complex.Complex
 
 add_specs suite_builder =
     suite_builder.group "Complex Multi Value" group_builder->
-        group_builder.specify "Cannot convert to flow if it has imaginary part" <|
+        group_builder.specify "Cannot convert to Float if it has imaginary part" <|
             c = Complex.new 1 5
             Test.expect_panic Type_Error (c:Float)
         group_builder.specify "Represents both Complex & Float with only real part" <|
