@@ -1024,6 +1024,74 @@ add_specs suite_builder =
                     rows.at 6 . should_equal ["3.xlsx",      "nr 2", 500, Nothing, Nothing]
                     rows.at 7 . should_equal ["3.xlsx",      "nr 2", 600, Nothing, Nothing]
 
+        group_builder.specify "during `read_many`, should not mix metadata columns with data columns with same name or when matching by position" <|
+            base_dir = enso_project.data / "transient" / "read_many_test"
+            base_dir.delete_if_exists recursive=True
+            base_dir.create_directory . should_succeed
+            Panic.with_finalizer (base_dir.delete recursive=True) <|
+                (Table.new [["Z", [1, 2]], ["Sheet Name", ['data column', '.']]]).write (base_dir / "1.tsv") . should_succeed
+                (Table.new [["Z", [10]], ["X", [20]]]).write (base_dir / "2.xlsx") . should_succeed
+
+                f3 = base_dir / "3.xlsx"
+                (Table.new [["X", [100]], ["Y", [200]], ["Z", [300]]]).write f3 format=(..Sheet "nr 1") on_existing_file=..Overwrite . should_succeed
+                (Table.new [["Y", [400, 500, 600]]]).write f3 format=(..Sheet "nr 2") on_existing_file=..Append . should_succeed
+
+                files = Data.list base_dir . sort on=(.name)
+                input = Table.new [["Path", files], ["Sheet Name", Vector.fill files.length "input column"]]
+                r1 = Data.read_many input
+                r1.should_be_a Table
+                within_table r1 <|
+                    # We transform the Path to just file name for easier testing
+                    rows = (r1.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
+
+                    # Each Sheet Name column comes out as separate: 1 - input, 2 - metadata, 3 - data
+                    # The order of columns is as they appear in the input, and they are matched by name
+                    r1.column_names . should_equal [  "Path",   "Sheet Name", "Sheet Name 1",     "Z", "Sheet Name 2",     "X",     "Y"]
+                    rows.at 0 . should_equal       [ "1.tsv", "input column",        Nothing,       1,  "data column", Nothing, Nothing]
+                    rows.at 1 . should_equal       [ "1.tsv", "input column",        Nothing,       2,  "data column", Nothing, Nothing]
+                    rows.at 2 . should_equal       ["2.xlsx", "input column",    "EnsoSheet",      10,        Nothing,      20, Nothing]
+                    rows.at 2 . should_equal       ["3.xlsx", "input column",         "nr 1",     300,        Nothing,     100,     200]
+                    rows.at 3 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     400]
+                    rows.at 4 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     500]
+                    rows.at 5 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     600]
+
+                # TODO!
+                r2 = Data.read_many input return=(..As_Merged_Table match_columns=..By_Position)
+                r1.should_be_a Table
+                within_table r1 <|
+                    # We transform the Path to just file name for easier testing
+                    rows = (r1.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
+
+                    # Each Sheet Name column comes out as separate: 1 - input, 2 - metadata, 3 - data
+                    # The order of columns is as they appear in the input, and they are matched by name
+                    r1.column_names . should_equal [  "Path",   "Sheet Name", "Sheet Name 1",     "Z", "Sheet Name 2",     "X",     "Y"]
+                    rows.at 0 . should_equal       [ "1.tsv", "input column",        Nothing,       1,  "data column", Nothing, Nothing]
+                    rows.at 1 . should_equal       [ "1.tsv", "input column",        Nothing,       2,  "data column", Nothing, Nothing]
+                    rows.at 2 . should_equal       ["2.xlsx", "input column",    "EnsoSheet",      10,        Nothing,      20, Nothing]
+                    rows.at 2 . should_equal       ["3.xlsx", "input column",         "nr 1",     300,        Nothing,     100,     200]
+                    rows.at 3 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     400]
+                    rows.at 4 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     500]
+                    rows.at 5 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     600]
+
+                # TODO!
+                r3 = Data.read_many input return=(..As_Merged_Table columns_to_keep=..In_All match_columns=..By_Position)
+                r1.should_be_a Table
+                within_table r1 <|
+                    # We transform the Path to just file name for easier testing
+                    rows = (r1.set (r2.at "Path" . map .name) "Path").rows.map .to_vector
+
+                    # Each Sheet Name column comes out as separate: 1 - input, 2 - metadata, 3 - data
+                    # The order of columns is as they appear in the input, and they are matched by name
+                    r1.column_names . should_equal [  "Path",   "Sheet Name", "Sheet Name 1",     "Z", "Sheet Name 2",     "X",     "Y"]
+                    rows.at 0 . should_equal       [ "1.tsv", "input column",        Nothing,       1,  "data column", Nothing, Nothing]
+                    rows.at 1 . should_equal       [ "1.tsv", "input column",        Nothing,       2,  "data column", Nothing, Nothing]
+                    rows.at 2 . should_equal       ["2.xlsx", "input column",    "EnsoSheet",      10,        Nothing,      20, Nothing]
+                    rows.at 2 . should_equal       ["3.xlsx", "input column",         "nr 1",     300,        Nothing,     100,     200]
+                    rows.at 3 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     400]
+                    rows.at 4 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     500]
+                    rows.at 5 . should_equal       ["3.xlsx", "input column",         "nr 2", Nothing,        Nothing, Nothing,     600]
+                
+
     suite_builder.group "Problems" group_builder->
         group_builder.specify "should report a user-friendly error message when format is missing a required argument" <|
             r = xlsx_sheet.read (..Range)

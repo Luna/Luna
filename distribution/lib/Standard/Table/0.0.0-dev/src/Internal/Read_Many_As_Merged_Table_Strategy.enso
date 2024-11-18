@@ -6,7 +6,7 @@ import project.Table.Table
 
 ## PRIVATE
    Determines how an object should be converted into a table for merging during 
-   a `read_many` operation with `Merged_Table` return mode.
+   a `read_many` operation with `As_Merged_Table` return mode.
 type Read_Many_As_Merged_Table_Strategy
     ## PRIVATE
     Value (into_table : Columns_To_Keep -> Match_Columns -> Problem_Behavior -> Table)
