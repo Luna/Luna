@@ -119,7 +119,6 @@ const isTruncated = ref(false)
 const isCreateNodeEnabled = ref(false)
 const filterModel = ref({})
 const sortModel = ref<SortModel[]>([])
-const colTypeMap = ref<Record<string, string>>({})
 const dataGroupingMap = shallowRef<Map<string, boolean>>()
 const defaultColDef: Ref<ColDef> = ref({
   editable: false,
@@ -606,12 +605,14 @@ watchEffect(() => {
   defaultColDef.value.sortable = !isTruncated.value
 })
 
-watchEffect(() => {
+const colTypeMap = computed(() => {
+  const colMap: Record<string, string> = {}
   if(typeof props.data === 'object' && !('error' in props.data)) {
     const valueTypes = 'value_type' in props.data ? props.data.value_type : []
     const headers = 'header' in props.data ? props.data.header : []
-    headers?.forEach((header, index) => { if (valueTypes[index]) { colTypeMap.value[header] = valueTypes[index].constructor } })    
+    headers?.forEach((header, index) => { if (valueTypes[index]) { colMap[header] = valueTypes[index].constructor } })
   }
+  return colMap
 })
 
 const getColumnValueToEnso = (columnName: string) => {
