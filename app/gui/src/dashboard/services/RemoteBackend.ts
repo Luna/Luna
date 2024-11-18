@@ -783,8 +783,10 @@ export default class RemoteBackend extends Backend {
     }*/
   }
 
-  /** Update a project execution.
-   * @throws An error if a non-successful status code (not 200-299) was received. */
+  /**
+   * Update a project execution.
+   * @throws An error if a non-successful status code (not 200-299) was received.
+   */
   override async updateProjectExecution(
     executionId: backend.ProjectExecutionId,
     body: backend.UpdateProjectExecutionRequestBody,
@@ -810,8 +812,10 @@ export default class RemoteBackend extends Backend {
     }*/
   }
 
-  /** Delete a project execution.
-   * @throws An error if a non-successful status code (not 200-299) was received. */
+  /**
+   * Delete a project execution.
+   * @throws An error if a non-successful status code (not 200-299) was received.
+   */
   override async deleteProjectExecution(
     executionId: backend.ProjectExecutionId,
     // projectTitle: string,
@@ -834,8 +838,10 @@ export default class RemoteBackend extends Backend {
     }*/
   }
 
-  /** Return a list of executions for a project.
-   * @throws An error if a non-successful status code (not 200-299) was received. */
+  /**
+   * Return a list of executions for a project.
+   * @throws An error if a non-successful status code (not 200-299) was received.
+   */
   override async listProjectExecutions(
     projectId: backend.ProjectId,
     // title: string,
@@ -854,8 +860,10 @@ export default class RemoteBackend extends Backend {
     }*/
   }
 
-  /** Update a project execution to use the latest version of a project.
-   * @throws An error if a non-successful status code (not 200-299) was received. */
+  /**
+   * Update a project execution to use the latest version of a project.
+   * @throws An error if a non-successful status code (not 200-299) was received.
+   */
   override async syncProjectExecution(
     executionId: backend.ProjectExecutionId,
     projectTitle: string,

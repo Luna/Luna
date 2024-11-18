@@ -78,8 +78,6 @@ interface PlaceholderOverrides {
   readonly listFolderBackendError: [folderTitle: string]
   readonly createFolderBackendError: [folderTitle: string]
   readonly updateFolderBackendError: [folderTitle: string]
-  readonly listAssetVersionsBackendError: [assetTitle: string]
-  readonly getFileContentsBackendError: [projectTitle: string]
   readonly updateAssetBackendError: [assetTitle: string]
   readonly deleteAssetBackendError: [assetTitle: string]
   readonly undoDeleteAssetBackendError: [assetTitle: string]
