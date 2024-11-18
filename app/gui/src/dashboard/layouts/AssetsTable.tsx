@@ -16,9 +16,8 @@ import {
   type SetStateAction,
 } from 'react'
 
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
 import { uniqueString } from 'enso-common/src/utilities/uniqueString'
@@ -64,6 +63,7 @@ import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import { useSetSuggestions } from '#/layouts/AssetSearchBar'
 import { useAssetTree, type DirectoryQuery } from '#/layouts/AssetsTable/assetTreeHooks'
+import { useDirectoryIds } from '#/layouts/AssetsTable/directoryIdsHooks'
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
 import {
@@ -91,7 +91,7 @@ import {
   useSetVisuallySelectedKeys,
 } from '#/providers/DriveProvider'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
-import { useLocalStorage, useLocalStorageState } from '#/providers/LocalStorageProvider'
+import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import { useLaunchedProjects } from '#/providers/ProjectsProvider'
@@ -106,7 +106,6 @@ import {
   createPlaceholderAssetId,
   createPlaceholderFileAsset,
   createPlaceholderProjectAsset,
-  createRootDirectoryAsset,
   DatalinkId,
   DirectoryId,
   escapeSpecialCharacters,
@@ -114,7 +113,6 @@ import {
   fileIsNotProject,
   fileIsProject,
   getAssetPermissionName,
-  Path,
   Plan,
   ProjectId,
   ProjectState,
@@ -155,7 +153,6 @@ import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import {
   assetPanelStore,
   useResetAssetPanelProps,
@@ -327,49 +324,6 @@ export interface AssetsTableProps {
 export interface AssetManagementApi {
   readonly getAsset: (id: AssetId) => AnyAsset | null
   readonly setAsset: (id: AssetId, asset: AnyAsset) => void
-}
-
-/** Options for {@link useDirectoryIds}. */
-interface UseDirectoryIdsOptions {
-  readonly category: Category
-}
-
-/** A hook returning the root directory id and expanded directory ids. */
-function useDirectoryIds(options: UseDirectoryIdsOptions) {
-  const { category } = options
-  const backend = useBackend(category)
-  const { user } = useFullUserSession()
-  const organizationQuery = useSuspenseQuery({
-    queryKey: [backend.type, 'getOrganization'],
-    queryFn: () => backend.getOrganization(),
-  })
-  const organization = organizationQuery.data
-
-  /**
-   * The expanded directories in the asset tree.
-   * The root directory is not included as it might change when a user switches
-   * between items in sidebar and we don't want to reset the expanded state using `useEffect`.
-   */
-  const [privateExpandedDirectoryIds, setExpandedDirectoryIds] =
-    useState<readonly DirectoryId[]>(EMPTY_ARRAY)
-
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
-  const rootDirectoryId = useMemo(() => {
-    const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null
-    const id =
-      'homeDirectoryId' in category ?
-        category.homeDirectoryId
-      : backend.rootDirectoryId(user, organization, localRootPath)
-    invariant(id, 'Missing root directory')
-    return id
-  }, [category, backend, user, organization, localRootDirectory])
-  const rootDirectory = useMemo(() => createRootDirectoryAsset(rootDirectoryId), [rootDirectoryId])
-  const expandedDirectoryIds = useMemo(
-    () => [rootDirectoryId].concat(privateExpandedDirectoryIds),
-    [privateExpandedDirectoryIds, rootDirectoryId],
-  )
-
-  return { setExpandedDirectoryIds, rootDirectoryId, rootDirectory, expandedDirectoryIds } as const
 }
 
 /** The table of project assets. */
