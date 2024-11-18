@@ -5,6 +5,9 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
@@ -14,16 +17,24 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "mutable", stdlibName = "Standard.Base.Runtime.Ref.Ref")
 public final class Ref implements EnsoObject {
+  /**
+   * {@code 0} - regular reference to an object {@code 1} - reference via {@link SoftReference}
+   * {@code 2} - reference via {@link WeakReference}
+   */
+  private final byte type;
+
   private volatile Object value;
 
   /**
    * Creates a new reference.
    *
    * @param value the initial value to store in the reference.
+   * @param referenceType type of reference to use
    */
   @Builtin.Method(description = "Creates a new Ref", autoRegister = false)
-  public Ref(Object value) {
-    this.value = value;
+  public Ref(Object value, long referenceType) {
+    this.type = (byte) (referenceType & 0x03);
+    this.value = wrapValue(value);
   }
 
   /**
@@ -32,7 +43,7 @@ public final class Ref implements EnsoObject {
   @Builtin.Method(name = "get", description = "Gets the value stored in the reference")
   @SuppressWarnings("generic-enso-builtin-type")
   public Object getValue() {
-    return value;
+    return unwrapValue(value);
   }
 
   /**
@@ -45,8 +56,8 @@ public final class Ref implements EnsoObject {
   @SuppressWarnings("generic-enso-builtin-type")
   public Object setValue(Object value) {
     Object old = this.value;
-    this.value = value;
-    return old;
+    this.value = wrapValue(value);
+    return unwrapValue(old);
   }
 
   @ExportMessage
@@ -67,5 +78,23 @@ public final class Ref implements EnsoObject {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().ref();
+  }
+
+  private final Object wrapValue(Object v) {
+    if (type == 0) {
+      return v;
+    }
+    assert !(v instanceof Reference<?>) : "Ref[" + type + ", " + v + "]";
+    var ctx = EnsoContext.get(null);
+    return ctx.getReferencesManager().create(v, type);
+  }
+
+  private final Object unwrapValue(Object v) {
+    if (v instanceof Reference<?> ref) {
+      var ret = ref.get();
+      return ret == null ? EnsoContext.get(null).getNothing() : ret;
+    } else {
+      return value;
+    }
   }
 }

@@ -7,6 +7,6 @@ import org.enso.interpreter.runtime.data.Ref;
 @BuiltinMethod(type = "Special", name = "<new_ref>")
 public class NewRefNode extends Node {
   public Ref execute() {
-    return new Ref(null);
+    return new Ref(null, 0);
   }
 }

@@ -96,6 +96,7 @@ public final class EnsoContext {
   private final ThreadManager threadManager;
   private final ThreadExecutors threadExecutors;
   private final ResourceManager resourceManager;
+  private final ReferencesManager referencesManager;
   private final boolean isInlineCachingDisabled;
   private final boolean isIrCachingDisabled;
   private final boolean shouldWaitForPendingSerializationJobs;
@@ -139,6 +140,7 @@ public final class EnsoContext {
     this.threadManager = new ThreadManager(environment);
     this.threadExecutors = new ThreadExecutors(this);
     this.resourceManager = new ResourceManager(this);
+    this.referencesManager = new ReferencesManager(this);
     this.isInlineCachingDisabled = getOption(RuntimeOptions.DISABLE_INLINE_CACHES_KEY);
     var isParallelismEnabled = getOption(RuntimeOptions.ENABLE_AUTO_PARALLELISM_KEY);
     this.isIrCachingDisabled =
@@ -799,6 +801,13 @@ public final class EnsoContext {
    */
   public ResourceManager getResourceManager() {
     return resourceManager;
+  }
+
+  /**
+   * @return the references manager for this context
+   */
+  public ReferencesManager getReferencesManager() {
+    return referencesManager;
   }
 
   /**
