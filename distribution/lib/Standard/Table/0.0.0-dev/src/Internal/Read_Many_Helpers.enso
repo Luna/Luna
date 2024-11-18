@@ -9,7 +9,7 @@ import project.Column.Column
 import project.Errors.Invalid_Value_Type
 import project.Errors.No_Rows
 import project.Extensions.Table_Conversions
-import project.Internal.Interpret_As_Table_For_Read_Many.Interpret_As_Table_For_Read_Many
+import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Merged_Table_Strategy
 import project.Return_As_Table.Return_As_Table
 import project.Table.Table
 import project.Value_Type.Value_Type
@@ -103,7 +103,7 @@ _interpret_object_as_table (object : Any) path columns_to_keep match_columns (on
                 on_problems.attach_problem_after Nothing <|
                     (No_Rows.Warning "The "+path.to_display_text+" loaded as an empty array, so it is not included in the `As_Merged_Table` result of `read_many`.")
         _ ->
-            special_case = Panic.catch No_Such_Conversion (object:Interpret_As_Table_For_Read_Many) _->Nothing
+            special_case = Panic.catch No_Such_Conversion (object:Read_Many_As_Merged_Table_Strategy) _->Nothing
             if special_case.is_nothing then default else
                 special_case.into_table columns_to_keep match_columns on_problems
 
