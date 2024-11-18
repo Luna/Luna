@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -25,6 +26,7 @@ public final class ReferencesManager {
    * @param type ({@code 1} use {@link SoftReference} or {@code 2} to use {@link WeakReference}
    * @return newly created reference to the provided object
    */
+  @CompilerDirectives.TruffleBoundary
   public <T> Reference<T> create(T obj, int type) {
     clearPendingReferences();
     var r =
@@ -38,6 +40,7 @@ public final class ReferencesManager {
   }
 
   /** Releases all the references. E.g. cleans all the cached values. */
+  @CompilerDirectives.TruffleBoundary
   public void releaseAll() {
     var arr = refs.toArray(Reference[]::new);
     for (var r : arr) {
@@ -46,6 +49,7 @@ public final class ReferencesManager {
     }
   }
 
+  @CompilerDirectives.TruffleBoundary
   private void clearPendingReferences() {
     for (; ; ) {
       var r = queue.poll();
