@@ -166,6 +166,7 @@ import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import {
   assetPanelStore,
   useResetAssetPanelProps,
@@ -355,6 +356,49 @@ export interface AssetManagementApi {
   readonly setAsset: (id: AssetId, asset: AnyAsset) => void
 }
 
+/** Options for {@link useDirectoryIds}. */
+interface UseDirectoryIdsOptions {
+  readonly category: Category
+}
+
+/** A hook returning the root directory id and expanded directory ids. */
+function useDirectoryIds(options: UseDirectoryIdsOptions) {
+  const { category } = options
+  const backend = useBackend(category)
+  const { user } = useFullUserSession()
+  const organizationQuery = useSuspenseQuery({
+    queryKey: [backend.type, 'getOrganization'],
+    queryFn: () => backend.getOrganization(),
+  })
+  const organization = organizationQuery.data
+
+  /**
+   * The expanded directories in the asset tree.
+   * The root directory is not included as it might change when a user switches
+   * between items in sidebar and we don't want to reset the expanded state using `useEffect`.
+   */
+  const [privateExpandedDirectoryIds, setExpandedDirectoryIds] =
+    useState<readonly DirectoryId[]>(EMPTY_ARRAY)
+
+  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
+  const rootDirectoryId = useMemo(() => {
+    const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null
+    const id =
+      'homeDirectoryId' in category ?
+        category.homeDirectoryId
+      : backend.rootDirectoryId(user, organization, localRootPath)
+    invariant(id, 'Missing root directory')
+    return id
+  }, [category, backend, user, organization, localRootDirectory])
+  const rootDirectory = useMemo(() => createRootDirectoryAsset(rootDirectoryId), [rootDirectoryId])
+  const expandedDirectoryIds = useMemo(
+    () => [rootDirectoryId].concat(privateExpandedDirectoryIds),
+    [privateExpandedDirectoryIds, rootDirectoryId],
+  )
+
+  return { setExpandedDirectoryIds, rootDirectoryId, rootDirectory, expandedDirectoryIds } as const
+}
+
 /** The table of project assets. */
 export default function AssetsTable(props: AssetsTableProps) {
   const { hidden, query, setQuery, category, assetManagementApiRef } = props
@@ -385,6 +429,9 @@ export default function AssetsTable(props: AssetsTableProps) {
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
 
+  const columns = getColumnList(user, backend.type, category).filter((column) =>
+    enabledColumns.has(column),
+  )
   const hiddenColumns = getColumnList(user, backend.type, category).filter(
     (column) => !enabledColumns.has(column),
   )
@@ -397,47 +444,16 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-  const organizationQuery = useSuspenseQuery({
-    queryKey: [backend.type, 'getOrganization'],
-    queryFn: () => backend.getOrganization(),
-  })
-
-  const organization = organizationQuery.data
 
   const nameOfProjectToImmediatelyOpenRef = useRef(initialProjectName)
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
-  const rootDirectoryId = useMemo(() => {
-    const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null
-    const id =
-      'homeDirectoryId' in category ?
-        category.homeDirectoryId
-      : backend.rootDirectoryId(user, organization, localRootPath)
-    invariant(id, 'Missing root directory')
-    return id
-  }, [category, backend, user, organization, localRootDirectory])
-
-  const rootDirectory = useMemo(() => createRootDirectoryAsset(rootDirectoryId), [rootDirectoryId])
 
   const enableAssetsTableBackgroundRefresh = useFeatureFlag('enableAssetsTableBackgroundRefresh')
   const assetsTableBackgroundRefreshInterval = useFeatureFlag(
     'assetsTableBackgroundRefreshInterval',
   )
-  /**
-   * The expanded directories in the asset tree.
-   * We don't include the root directory as it might change when a user switches
-   * between items in sidebar and we don't want to reset the expanded state using useEffect.
-   */
-  const [privateExpandedDirectoryIds, setExpandedDirectoryIds] = useState<DirectoryId[]>(() => [])
 
-  const expandedDirectoryIds = useMemo(
-    () => [rootDirectoryId].concat(privateExpandedDirectoryIds),
-    [privateExpandedDirectoryIds, rootDirectoryId],
-  )
-
-  const expandedDirectoryIdsSet = useMemo(
-    () => new Set(expandedDirectoryIds),
-    [expandedDirectoryIds],
-  )
+  const { rootDirectoryId, rootDirectory, expandedDirectoryIds, setExpandedDirectoryIds } =
+    useDirectoryIds({ category })
 
   const createProjectMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'createProject'), [backend]),
@@ -824,7 +840,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const displayItems = useMemo(() => {
     if (sortInfo == null) {
       return assetTree.preorderTraversal((children) =>
-        children.filter((child) => expandedDirectoryIdsSet.has(child.directoryId)),
+        children.filter((child) => expandedDirectoryIds.includes(child.directoryId)),
       )
     } else {
       const multiplier = sortInfo.direction === SortDirection.ascending ? 1 : -1
@@ -844,10 +860,10 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
       }
       return assetTree.preorderTraversal((tree) =>
-        [...tree].filter((child) => expandedDirectoryIdsSet.has(child.directoryId)).sort(compare),
+        [...tree].filter((child) => expandedDirectoryIds.includes(child.directoryId)).sort(compare),
       )
     }
-  }, [assetTree, sortInfo, expandedDirectoryIdsSet])
+  }, [assetTree, sortInfo, expandedDirectoryIds])
 
   const visibleItems = useMemo(
     () => displayItems.filter((item) => visibilities.get(item.key) !== Visibility.hidden),
@@ -1253,7 +1269,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doToggleDirectoryExpansion = useEventCallback(
     (directoryId: DirectoryId, _key: DirectoryId, override?: boolean) => {
-      const isExpanded = expandedDirectoryIdsSet.has(directoryId)
+      const isExpanded = expandedDirectoryIds.includes(directoryId)
       const shouldExpand = override ?? !isExpanded
 
       if (shouldExpand !== isExpanded) {
@@ -1276,7 +1292,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const doCopyOnBackend = useEventCallback(
     async (newParentId: DirectoryId | null, asset: AnyAsset) => {
       try {
-        newParentId ??= rootDirectoryId
+        newParentId = newParentId ?? rootDirectoryId
 
         await copyAssetMutation.mutateAsync([
           asset.id,
@@ -2139,7 +2155,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const hideColumn = useEventCallback((column: Column) => {
-    setEnabledColumns((columns) => withPresence(columns, column, false))
+    setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
   })
 
   const hiddenContextMenu = useMemo(
@@ -2580,12 +2596,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     getAsset,
     setAsset,
   }))
-
-  const columns = useMemo(
-    () =>
-      getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
-    [backend.type, category, enabledColumns, user],
-  )
 
   const headerRow = (
     <tr ref={headerRowRef} className="rounded-none text-sm font-semibold">
