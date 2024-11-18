@@ -21,14 +21,29 @@ const YDOC_SERVER_URL =
   : process.env.NODE_ENV === 'development' ? dynHostnameWsUrl(5976)
   : undefined
 
+function ensureNoUndefinedEnv(name: string) {
+  if (process.env[name] === 'undefined') {
+    throw new Error(
+      `Environment variable {name} is defined as "undefined" string value, which is not valid!`,
+    )
+  }
+}
+
+ensureNoUndefinedEnv('ENSO_CLOUD_DASHBOARD_VERSION')
+ensureNoUndefinedEnv('ENSO_IDE_VERSION')
+
 await readEnvironmentFromFile()
+
+ensureNoUndefinedEnv('ENSO_CLOUD_DASHBOARD_VERSION')
+ensureNoUndefinedEnv('ENSO_IDE_VERSION')
 
 const entrypoint =
   process.env.E2E === 'true' ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
 
 // NOTE(Frizi): This rename is for the sake of forward compatibility with not yet merged config refactor on bazel branch,
 // and because Vite's HTML env replacements only work with import.meta.env variables, not defines.
-process.env.ENSO_IDE_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
+process.env.ENSO_IDE_VERSION ??= process.env.ENSO_CLOUD_DASHBOARD_VERSION
+process.env.ENSO_IDE_AG_GRID_LICENSE_KEY ??= process.env.VITE_ENSO_AG_GRID_LICENSE_KEY
 
 // https://vitejs.dev/config/
 export default defineConfig({
