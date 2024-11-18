@@ -12,7 +12,9 @@ electronTest('Create new project', async ({ page }) => {
   // We see the node type and visualization, so the engine is running the program
   await expect(page.locator('.node-type')).toHaveText('Table', { timeout: 30000 })
   await expect(page.locator('.TableVisualization')).toBeVisible({ timeout: 30000 })
-  await expect(page.locator('.TableVisualization')).toContainText('Welcome To Enso!')
+  await expect(page.locator('.TableVisualization')).toContainText('Welcome To Enso!', {
+    timeout: 30000,
+  })
 
   // We can add new node and see suggestions.
   await page.locator('.GraphNode').click()
