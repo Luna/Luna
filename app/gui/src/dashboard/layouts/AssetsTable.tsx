@@ -174,10 +174,6 @@ import {
   useSetIsAssetPanelTemporarilyVisible,
 } from './AssetPanel'
 
-// ============================
-// === Global configuration ===
-// ============================
-
 declare module '#/utilities/LocalStorage' {
   /** */
   interface LocalStorageData {
@@ -188,10 +184,6 @@ declare module '#/utilities/LocalStorage' {
 LocalStorage.registerKey('enabledColumns', {
   schema: z.nativeEnum(Column).array().readonly(),
 })
-
-// =================
-// === Constants ===
-// =================
 
 /**
  * If the ratio of intersection between the main dropzone that should be visible, and the
@@ -293,20 +285,12 @@ const SUGGESTIONS_FOR_NEGATIVE_TYPE: assetSearchBar.Suggestion[] = [
   },
 ]
 
-// =========================
-// === DragSelectionInfo ===
-// =========================
-
 /** Information related to a drag selection. */
 interface DragSelectionInfo {
   readonly initialIndex: number
   readonly start: number
   readonly end: number
 }
-
-// ===================
-// === AssetsTable ===
-// ===================
 
 /** State passed through from a {@link AssetsTable} to every cell. */
 export interface AssetsTableState {
