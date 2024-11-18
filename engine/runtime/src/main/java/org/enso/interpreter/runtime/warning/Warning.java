@@ -20,7 +20,6 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 @Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
 @ExportLibrary(TypesLibrary.class)
-@ExportLibrary(WarningsLibrary.class)
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
 public final class Warning extends EnsoObject {
   final Object value;
@@ -132,27 +131,6 @@ public final class Warning extends EnsoObject {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().warning();
-  }
-
-  @ExportMessage
-  boolean hasWarnings() {
-    return true;
-  }
-
-  @ExportMessage
-  EnsoHashMap getWarnings(boolean shouldWrap, @Cached HashMapInsertNode insertNode) {
-    var map = insertNode.execute(null, EnsoHashMap.empty(), 0, this);
-    return map;
-  }
-
-  @ExportMessage
-  Object removeWarnings() throws UnsupportedMessageException {
-    throw UnsupportedMessageException.create();
-  }
-
-  @ExportMessage
-  boolean isLimitReached() {
-    return true;
   }
 
   public static Warning wrapMapError(WarningsLibrary warningsLib, Warning warning, long index) {
