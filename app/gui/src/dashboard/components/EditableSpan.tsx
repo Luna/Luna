@@ -85,6 +85,7 @@ export default function EditableSpan(props: EditableSpanProps) {
 
   aria.useInteractOutside({
     ref: formRef,
+    isDisabled: !editable,
     onInteractOutside: () => {
       onCancel()
     },
