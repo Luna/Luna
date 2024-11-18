@@ -20,8 +20,9 @@
   --color-invert-opacity: 100%;
   --color-invert: rgb(var(--color-invert-rgb) / var(--color-invert-opacity));
   --color-background-rgb: 255 255 255;
-  --color-background-opacity: 80%;
+  --color-background-opacity: 60%;
   --color-background: rgb(var(--color-background-rgb) / var(--color-background-opacity));
+  --color-background-hex: #fdfcfb;
 
   --color-dashboard-background-rgb: 239 234 228;
   --color-dashboard-background-opacity: 100%;

@@ -45,6 +45,7 @@ import SelectionBrush from '#/components/SelectionBrush'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
+import { IsolateLayout } from '#/components/IsolateLayout'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
 import AssetEventType from '#/events/AssetEventType'
 import { useCutAndPaste, type AssetListEvent } from '#/events/assetListEvent'
@@ -2359,86 +2360,88 @@ export default function AssetsTable(props: AssetsTableProps) {
     : <div className="relative grow contain-strict">
         <FocusArea direction="vertical">
           {(innerProps) => (
-            <div
-              {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
-                className: 'flex-1 overflow-auto container-size w-full h-full',
-                onKeyDown,
-                onBlur: (event) => {
-                  if (
-                    event.relatedTarget instanceof HTMLElement &&
-                    !event.currentTarget.contains(event.relatedTarget)
-                  ) {
-                    setKeyboardSelectedIndex(null)
-                  }
-                },
-                onDragEnter: updateIsDraggingFiles,
-                onDragOver: updateIsDraggingFiles,
-                onDragLeave: (event) => {
-                  if (
-                    !(event.relatedTarget instanceof Node) ||
-                    !event.currentTarget.contains(event.relatedTarget)
-                  ) {
-                    lastSelectedIdsRef.current = null
-                  }
-                },
-                onDragEnd: () => {
-                  setIsDraggingFiles(false)
-                },
-                ref: rootRef,
-              })}
-            >
-              {!hidden && hiddenContextMenu}
-              {!hidden && (
-                <SelectionBrush
-                  targetRef={rootRef}
-                  margin={16}
-                  onDrag={onSelectionDrag}
-                  onDragEnd={onSelectionDragEnd}
-                  onDragCancel={onSelectionDragCancel}
-                />
-              )}
-              <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                <div className="flex-0 sticky top-0 flex h-0 flex-col">
-                  <div
-                    data-testid="extra-columns"
-                    className="sticky right-0 flex self-end px-2 py-3"
-                  >
-                    <FocusArea direction="horizontal">
-                      {(columnsBarProps) => (
-                        <div
-                          {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
-                            className: 'inline-flex gap-icons',
-                            onFocus: () => {
-                              setKeyboardSelectedIndex(null)
-                            },
-                          })}
-                        >
-                          {hiddenColumns.map((column) => (
-                            <Button
-                              size="custom"
-                              variant="custom"
-                              key={column}
-                              icon={COLUMN_ICONS[column]}
-                              aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
-                              onPress={() => {
-                                const newExtraColumns = new Set(enabledColumns)
-                                if (enabledColumns.has(column)) {
-                                  newExtraColumns.delete(column)
-                                } else {
-                                  newExtraColumns.add(column)
-                                }
-                                setEnabledColumns(newExtraColumns)
-                              }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </FocusArea>
+            <IsolateLayout className="h-full w-full">
+              <div
+                {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
+                  className: 'flex-1 overflow-auto container-size w-full h-full',
+                  onKeyDown,
+                  onBlur: (event) => {
+                    if (
+                      event.relatedTarget instanceof HTMLElement &&
+                      !event.currentTarget.contains(event.relatedTarget)
+                    ) {
+                      setKeyboardSelectedIndex(null)
+                    }
+                  },
+                  onDragEnter: updateIsDraggingFiles,
+                  onDragOver: updateIsDraggingFiles,
+                  onDragLeave: (event) => {
+                    if (
+                      !(event.relatedTarget instanceof Node) ||
+                      !event.currentTarget.contains(event.relatedTarget)
+                    ) {
+                      lastSelectedIdsRef.current = null
+                    }
+                  },
+                  onDragEnd: () => {
+                    setIsDraggingFiles(false)
+                  },
+                  ref: rootRef,
+                })}
+              >
+                {!hidden && hiddenContextMenu}
+                {!hidden && (
+                  <SelectionBrush
+                    targetRef={rootRef}
+                    margin={16}
+                    onDrag={onSelectionDrag}
+                    onDragEnd={onSelectionDragEnd}
+                    onDragCancel={onSelectionDragCancel}
+                  />
+                )}
+                <div className="flex h-max min-h-full w-max min-w-full flex-col">
+                  <div className="flex-0 sticky top-0 flex h-0 flex-col">
+                    <div
+                      data-testid="extra-columns"
+                      className="sticky right-0 flex self-end px-2 py-3"
+                    >
+                      <FocusArea direction="horizontal">
+                        {(columnsBarProps) => (
+                          <div
+                            {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
+                              className: 'inline-flex gap-icons',
+                              onFocus: () => {
+                                setKeyboardSelectedIndex(null)
+                              },
+                            })}
+                          >
+                            {hiddenColumns.map((column) => (
+                              <Button
+                                size="custom"
+                                variant="custom"
+                                key={column}
+                                icon={COLUMN_ICONS[column]}
+                                aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
+                                onPress={() => {
+                                  const newExtraColumns = new Set(enabledColumns)
+                                  if (enabledColumns.has(column)) {
+                                    newExtraColumns.delete(column)
+                                  } else {
+                                    newExtraColumns.add(column)
+                                  }
+                                  setEnabledColumns(newExtraColumns)
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </FocusArea>
+                    </div>
                   </div>
+                  <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
                 </div>
-                <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
               </div>
-            </div>
+            </IsolateLayout>
           )}
         </FocusArea>
         {isDraggingFiles && !isMainDropzoneVisible && (

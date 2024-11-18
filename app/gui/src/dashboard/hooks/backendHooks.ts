@@ -311,6 +311,7 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
     // setTimeouts to the query. Improves performance.
     // Anyways, refetching is handled by another query.
     staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       try {
         return await backend.listDirectory(

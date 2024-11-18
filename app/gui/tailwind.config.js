@@ -21,6 +21,8 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         primary: 'rgb(var(--color-primary-rgb) / var(--color-primary-opacity))',
         invert: 'rgb(var(--color-invert-rgb) / var(--color-invert-opacity))',
         background: 'rgb(var(--color-background-rgb) / var(--color-background-opacity))',
+        'background-hex': 'var(--color-background-hex)',
+
         dashboard:
           'rgb(var(--color-dashboard-background-rgb) / var(--color-dashboard-background-opacity))',
         accent: 'rgb(var(--color-accent-rgb) / 100%)',
