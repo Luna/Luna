@@ -357,12 +357,18 @@ export default function AssetsTable(props: AssetsTableProps) {
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
 
-  const columns = getColumnList(user, backend.type, category).filter((column) =>
-    enabledColumns.has(column),
+  const columns = useMemo(
+    () =>
+      getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
+    [user, backend.type, category, enabledColumns],
   )
-  const hiddenColumns = getColumnList(user, backend.type, category).filter(
-    (column) => !enabledColumns.has(column),
+
+  const hiddenColumns = useMemo(
+    () =>
+      getColumnList(user, backend.type, category).filter((column) => !enabledColumns.has(column)),
+    [user, backend.type, category, enabledColumns],
   )
+
   const [sortInfo, setSortInfo] = useState<SortInfo<SortableColumn> | null>(null)
   const driveStore = useDriveStore()
   const setNewestFolderId = useSetNewestFolderId()
@@ -848,34 +854,35 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doCopyOnBackend = useEventCallback(
     async (newParentId: DirectoryId | null, asset: AnyAsset) => {
-      try {
-        newParentId = newParentId ?? rootDirectoryId
+      newParentId = newParentId ?? rootDirectoryId
 
-        await copyAssetMutation.mutateAsync([
+      return await copyAssetMutation
+        .mutateAsync([
           asset.id,
           newParentId,
           asset.title,
           nodeMapRef.current.get(newParentId)?.item.title ?? '(unknown)',
         ])
-      } catch (error) {
-        toastAndLog('copyAssetError', error, asset.title)
-      }
+        .catch((error) => {
+          toastAndLog('copyAssetError', error, asset.title)
+        })
     },
   )
 
   const doMove = useEventCallback(async (newParentId: DirectoryId | null, asset: AnyAsset) => {
-    try {
-      if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
-        resetAssetPanelProps()
-      }
-      await updateAssetMutation.mutateAsync([
+    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
+      resetAssetPanelProps()
+    }
+
+    return updateAssetMutation
+      .mutateAsync([
         asset.id,
         { parentDirectoryId: newParentId ?? rootDirectoryId, description: null },
         asset.title,
       ])
-    } catch (error) {
-      toastAndLog('moveAssetError', error, asset.title)
-    }
+      .catch((error) => {
+        toastAndLog('moveAssetError', error, asset.title)
+      })
   })
 
   const doDelete = useEventCallback(async (asset: AnyAsset, forever: boolean = false) => {
@@ -889,18 +896,16 @@ export default function AssetsTable(props: AssetsTableProps) {
         key: asset.id,
       })
     }
-    try {
-      if (asset.type === AssetType.project && backend.type === BackendType.local) {
-        try {
-          await closeProjectMutation.mutateAsync([asset.id, asset.title])
-        } catch {
-          // Ignored. The project was already closed.
-        }
-      }
-      await deleteAssetMutation.mutateAsync([asset.id, { force: forever }, asset.title])
-    } catch (error) {
-      toastAndLog('deleteAssetError', error, asset.title)
+
+    if (asset.type === AssetType.project && backend.type === BackendType.local) {
+      await closeProjectMutation.mutateAsync([asset.id, asset.title]).catch(noop)
     }
+
+    return deleteAssetMutation
+      .mutateAsync([asset.id, { force: forever }, asset.title])
+      .catch((error) => {
+        toastAndLog('deleteAssetError', error, asset.title)
+      })
   })
 
   const doDeleteById = useEventCallback(async (assetId: AssetId, forever: boolean = false) => {
@@ -1701,14 +1706,13 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const doRestore = useEventCallback(async (asset: AnyAsset) => {
-    try {
-      if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
-        resetAssetPanelProps()
-      }
-      await undoDeleteAssetMutation.mutateAsync([asset.id, asset.title])
-    } catch (error) {
-      toastAndLog('restoreAssetError', error, asset.title)
+    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
+      resetAssetPanelProps()
     }
+
+    return undoDeleteAssetMutation.mutateAsync([asset.id, asset.title]).catch((error) => {
+      toastAndLog('restoreAssetError', error, asset.title)
+    })
   })
 
   const hideColumn = useEventCallback((column: Column) => {

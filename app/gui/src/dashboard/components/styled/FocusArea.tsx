@@ -38,7 +38,13 @@ function FocusArea(props: FocusAreaProps) {
   const { focusChildClass = 'focus-child', focusDefaultClass = 'focus-default' } = props
   const { focusChildClass: outerFocusChildClass } = useFocusClasses()
   const [areaFocus, setAreaFocus] = useState(false)
-  const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setAreaFocus })
+
+  const onChangeFocusWithin = useEventCallback((value: boolean) => {
+    if (value === areaFocus) return
+    setAreaFocus(value)
+  })
+
+  const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: onChangeFocusWithin })
   const focusManager = useFocusManager()
   const navigator2D = useNavigator2D()
   const rootRef = useRef<HTMLElement | SVGElement | null>(null)
