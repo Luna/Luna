@@ -614,6 +614,18 @@ watchEffect(() => {
   }
 })
 
+const getColumnValueToEnso = (columnName: string) => {
+    const columnType = colTypeMap.value[columnName] ?? ''
+    const isNumber = ['Integer',
+      'Float',
+      'Decimal',
+      'Byte']
+  if (isNumber.indexOf(columnType) != -1) {
+      return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
+    }
+  return (item: string) => Ast.TextLiteral.new(item)
+  }
+
 function checkSortAndFilter(e: SortChangedEvent) {
   const gridApi = e.api
   const columnApi = e.columnApi
@@ -666,7 +678,7 @@ config.setToolbar(
     isDisabled: () => !isCreateNodeEnabled.value,
     isFilterSortNodeEnabled,
     createNodes: config.createNodes,
-    colTypeMap
+    getColumnValueToEnso
   }),
 )
 </script>
