@@ -1,6 +1,6 @@
+import * as iter from 'enso-common/src/utilities/data/iter'
 import diff from 'fast-diff'
 import { rangeEncloses, rangeLength, type SourceRange } from '../../yjsModel'
-import { Resumable } from './iterable'
 
 export type SourceRangeEdit = { range: SourceRange; insert: string }
 
@@ -60,16 +60,18 @@ export function offsetEdit(textEdit: SourceRangeEdit, offset: number): SourceRan
   return { ...textEdit, range: [textEdit.range[0] + offset, textEdit.range[1] + offset] }
 }
 
-/** Given:
+/**
+ * Given:
  *  @param textEdits - A change described by a set of text edits.
  *  @param spansBefore - A collection of spans in the text before the edit.
  *  @returns - A sequence of: Each span from `spansBefore` paired with the smallest span of the text after the edit that
- *  contains all text that was in the original span and has not been deleted. */
+ *  contains all text that was in the original span and has not been deleted.
+ */
 export function applyTextEditsToSpans(textEdits: SourceRangeEdit[], spansBefore: SourceRange[]) {
   // Gather start and end points.
   const numerically = (a: number, b: number) => a - b
-  const starts = new Resumable(spansBefore.map(([start, _end]) => start).sort(numerically))
-  const ends = new Resumable(spansBefore.map(([_start, end]) => end).sort(numerically))
+  const starts = new iter.Resumable(spansBefore.map(([start, _end]) => start).sort(numerically))
+  const ends = new iter.Resumable(spansBefore.map(([_start, end]) => end).sort(numerically))
 
   // Construct translations from old locations to new locations for all start and end points.
   const startMap = new Map<number, number>()
@@ -117,7 +119,8 @@ export interface SpanTree<NodeId> {
   children(): IterableIterator<SpanTree<NodeId>>
 }
 
-/** Given a span tree and some ranges, for each range find the smallest node that fully encloses it.
+/**
+ * Given a span tree and some ranges, for each range find the smallest node that fully encloses it.
  *  Return nodes paired with the ranges that are most closely enclosed by them.
  */
 export function enclosingSpans<NodeId>(

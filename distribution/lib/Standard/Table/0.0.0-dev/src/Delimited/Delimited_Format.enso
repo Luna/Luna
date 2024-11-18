@@ -1,7 +1,9 @@
 from Standard.Base import all
+import Standard.Base.Errors.Common.Type_Error
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Network.HTTP.Response.Response
 import Standard.Base.System.File.Generic.Writable_File.Writable_File
+import Standard.Base.System.File_Format.File_Name_Pattern
 import Standard.Base.System.File_Format_Metadata.File_Format_Metadata
 import Standard.Base.System.Input_Stream.Input_Stream
 from Standard.Base.Metadata.Choice import Option
@@ -65,7 +67,7 @@ type Delimited_Format
        Resolve an unresolved constructor to the actual type.
     resolve : Function -> Delimited_Format | Nothing
     resolve constructor =
-        Panic.catch Any (constructor:Delimited_Format) _->Nothing
+        Panic.catch Type_Error (constructor:Delimited_Format) _->Nothing
 
     ## PRIVATE
        ADVANCED
@@ -94,6 +96,10 @@ type Delimited_Format
     ## PRIVATE
     get_dropdown_options : Vector Option
     get_dropdown_options = [Option "Delimited" "..Delimited"]
+
+    ## PRIVATE
+    get_name_patterns -> Vector File_Name_Pattern =
+        [File_Name_Pattern.Value "CSV" ["*.csv"], File_Name_Pattern.Value "Tab Delimited" ["*.tsv", "*.tab"], File_Name_Pattern.Value "Delimited Flat Files" ["*.csv", "*.tsv", "*.tab"]]
 
     ## PRIVATE
        ADVANCED

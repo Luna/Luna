@@ -32,13 +32,13 @@ object Section {
     *
     * @param arg the argument (on the left of the operator)
     * @param operator the operator
-    * @param location the source location that the node corresponds to
+    * @param identifiedLocation the source location that the node corresponds to
     * @param passData the pass metadata associated with this node
     */
   sealed case class Left(
     arg: CallArgument,
     operator: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Section
       with IRKind.Sugar
@@ -67,11 +67,11 @@ object Section {
         arg != this.arg
         || operator != this.operator
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Left(arg, operator, location, passData)
+        val res = Left(arg, operator, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -143,12 +143,12 @@ object Section {
   /** Represents a sides operator section of the form `(op)`
     *
     * @param operator the operator
-    * @param location the source location that the node corresponds to
+    * @param identifiedLocation the source location that the node corresponds to
     * @param passData the pass metadata associated with this node
     */
   sealed case class Sides(
     operator: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Section
       with IRKind.Sugar
@@ -174,11 +174,11 @@ object Section {
       if (
         operator != this.operator
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Sides(operator, location, passData)
+        val res = Sides(operator, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -242,13 +242,13 @@ object Section {
     *
     * @param operator the operator
     * @param arg the argument (on the right of the operator)
-    * @param location the source location that the node corresponds to
+    * @param identifiedLocation the source location that the node corresponds to
     * @param passData the pass metadata associated with this node
     */
   sealed case class Right(
     operator: Name,
     arg: CallArgument,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Section
       with IRKind.Sugar
@@ -277,11 +277,11 @@ object Section {
         operator != this.operator
         || arg != this.arg
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Right(operator, arg, location, passData)
+        val res = Right(operator, arg, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res

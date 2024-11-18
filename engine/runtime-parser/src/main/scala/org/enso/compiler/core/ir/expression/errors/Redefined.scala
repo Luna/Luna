@@ -21,6 +21,10 @@ sealed trait Redefined extends Error {
   override def setLocation(location: Option[IdentifiedLocation]): Redefined
 
   /** @inheritdoc */
+  override def location: Option[IdentifiedLocation] =
+    Option(identifiedLocation)
+
+  /** @inheritdoc */
   override def duplicate(
     keepLocations: Boolean   = true,
     keepMetadata: Boolean    = true,
@@ -34,11 +38,11 @@ object Redefined {
   /** An error representing the redefinition or incorrect positioning of
     * the `self` argument to methods.
     *
-    * @param location the source location of the error
+    * @param identifiedLocation the source location of the error
     * @param passData the pass metadata for this node
     */
   sealed case class SelfArg(
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -62,11 +66,11 @@ object Redefined {
     ): SelfArg = {
       if (
         location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = SelfArg(location, passData)
+        val res = SelfArg(location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -116,17 +120,15 @@ object Redefined {
   /** An error representing the redefinition of a conversion in a given
     * module
     *
-    * @param targetType  the name of the atom the conversion was being
-    *                    redefined on
-    * @param sourceType  the source type for the conversion
-    * @param location    the location in the source to which this error
-    *                    corresponds
-    * @param passData    the pass metadata for the error
+    * @param targetType the name of the atom the conversion was being redefined on
+    * @param sourceType the source type for the conversion
+    * @param identifiedLocation the location in the source to which this error corresponds
+    * @param passData the pass metadata for the error
     */
   sealed case class Conversion(
     targetType: Option[Name],
     sourceType: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -159,11 +161,11 @@ object Redefined {
         targetType != this.targetType
         || sourceType != this.sourceType
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Conversion(targetType, sourceType, location, passData)
+        val res = Conversion(targetType, sourceType, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -251,13 +253,13 @@ object Redefined {
     *
     * @param typeName the name of the type the method was being redefined on
     * @param methodName the method name being redefined on `atomName`
-    * @param location the location in the source to which this error corresponds
+    * @param identifiedLocation the location in the source to which this error corresponds
     * @param passData the pass metadata for the error
     */
   sealed case class Method(
     typeName: Option[Name],
     methodName: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -289,11 +291,11 @@ object Redefined {
         typeName != this.typeName
         || methodName != this.methodName
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Method(typeName, methodName, location, passData)
+        val res = Method(typeName, methodName, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -381,13 +383,13 @@ object Redefined {
     *
     * @param atomName the name of the atom that clashes with the method
     * @param methodName the method name being redefined in the module
-    * @param location the location in the source to which this error corresponds
+    * @param identifiedLocation the location in the source to which this error corresponds
     * @param passData the pass metadata for the error
     */
   sealed case class MethodClashWithAtom(
     atomName: Name,
     methodName: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -419,14 +421,14 @@ object Redefined {
         atomName != this.atomName
         || methodName != this.methodName
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
         val res = MethodClashWithAtom(
           atomName,
           methodName,
-          location,
+          location.orNull,
           passData
         )
         res.diagnostics = diagnostics
@@ -507,12 +509,12 @@ object Redefined {
   /** An error representing the redefinition of an atom in a given module.
     *
     * @param typeName the name of the atom being redefined
-    * @param location the location in the source to which this error corresponds
+    * @param identifiedLocation the location in the source to which this error corresponds
     * @param passData the pass metadata for the error
     */
   sealed case class Type(
     typeName: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -542,11 +544,11 @@ object Redefined {
       if (
         typeName != this.typeName
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Type(typeName, location, passData)
+        val res = Type(typeName, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -612,14 +614,13 @@ object Redefined {
 
   /** An error representing the redefinition of an atom in a given module.
     *
-    * @param name    the name of the atom being redefined
-    * @param location    the location in the source to which this error
-    *                    corresponds
-    * @param passData    the pass metadata for the error
+    * @param name the name of the atom being redefined
+    * @param identifiedLocation the location in the source to which this error corresponds
+    * @param passData the pass metadata for the error
     */
   sealed case class Arg(
     name: Name,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Redefined
       with Diagnostic.Kind.Interactive
@@ -649,11 +650,11 @@ object Redefined {
       if (
         name != this.name
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Arg(name, location, passData)
+        val res = Arg(name, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
@@ -750,7 +751,7 @@ object Redefined {
     ): Binding = {
       if (
         invalidBinding != this.invalidBinding
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -788,8 +789,8 @@ object Redefined {
     ): Binding = this
 
     /** @inheritdoc */
-    override val location: Option[IdentifiedLocation] =
-      invalidBinding.location
+    override def identifiedLocation: IdentifiedLocation =
+      invalidBinding.identifiedLocation
 
     /** @inheritdoc */
     override def mapExpressions(

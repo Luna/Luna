@@ -106,6 +106,11 @@ ThisBuild / publish / skip := true
 val simpleLibraryServerTag = Tags.Tag("simple-library-server")
 Global / concurrentRestrictions += Tags.limit(simpleLibraryServerTag, 1)
 
+/** Tag limiting the concurrent spawning of `native-image` subprocess.
+  */
+val nativeImageBuildTag = NativeImage.nativeImageBuildTag
+Global / concurrentRestrictions += Tags.limit(nativeImageBuildTag, 1)
+
 lazy val gatherLicenses =
   taskKey[Unit](
     "Gathers licensing information for relevant dependencies of all distributions"
@@ -146,7 +151,7 @@ GatherLicenses.distributions := Seq(
     "engine",
     file("distribution/engine/THIRD-PARTY"),
     Distribution.sbtProjects(
-      runtime,
+      `runtime-and-langs`,
       `engine-runner`,
       `language-server`
     )
@@ -292,84 +297,96 @@ lazy val buildNativeImage =
 lazy val enso = (project in file("."))
   .settings(version := "0.1")
   .aggregate(
-    `persistance-dsl`,
-    `persistance`,
+    `akka-native`,
+    `akka-wrapper`,
+    `benchmark-java-helpers`,
+    `benchmarks-common`,
+    `bench-processor`,
+    cli,
+    `common-polyglot-core-utils`,
+    `connected-lock-manager`,
+    `connected-lock-manager-server`,
+    `desktop-environment`,
+    `directory-watcher-wrapper`,
+    `distribution-manager`,
+    downloader,
+    editions,
+    `edition-updater`,
+    `edition-uploader`,
+    `engine-common`,
+    `engine-runner-common`,
+    `engine-runner`,
+    `enso-test-java-helpers`,
+    `exploratory-benchmark-java-helpers`,
+    `fansi-wrapper`,
+    filewatcher,
+    `http-test-helper`,
     `interpreter-dsl`,
     `interpreter-dsl-test`,
+    `jna-wrapper`,
     `json-rpc-server-test`,
     `json-rpc-server`,
     `language-server`,
-    `polyglot-api`,
-    `polyglot-api-macros`,
-    `project-manager`,
-    `syntax-rust-definition`,
-    `text-buffer`,
-    yaml,
-    `scala-yaml`,
-    pkg,
-    cli,
-    `task-progress-notifications`,
-    `profiling-utils`,
-    `logging-utils`,
+    `language-server-deps-wrapper`,
+    launcher,
+    `library-manager`,
+    `library-manager-test`,
+    `locking-test-helper`,
     `logging-config`,
     `logging-service`,
     `logging-service-logback`,
-    `logging-utils-akka`,
-    filewatcher,
     `logging-truffle-connector`,
-    `locking-test-helper`,
-    `akka-native`,
-    `version-output`,
+    `logging-utils`,
+    `logging-utils-akka`,
+    `persistance`,
+    `persistance-dsl`,
+    pkg,
+    `polyglot-api`,
+    `polyglot-api-macros`,
+    `process-utils`,
+    `profiling-utils`,
+    `project-manager`,
     `refactoring-utils`,
-    `engine-runner-common`,
-    `engine-runner`,
     runtime,
-    searcher,
-    launcher,
-    downloader,
-    `runtime-integration-tests`,
+    `runtime-and-langs`,
     `runtime-benchmarks`,
-    `runtime-parser`,
     `runtime-compiler`,
-    `runtime-suggestions`,
-    `runtime-language-epb`,
+    `runtime-integration-tests`,
+    `runtime-parser`,
     `runtime-language-arrow`,
+    `runtime-language-epb`,
     `runtime-instrument-common`,
     `runtime-instrument-id-execution`,
     `runtime-instrument-repl-debugger`,
     `runtime-instrument-runtime-server`,
+    `runtime-integration-tests`,
+    `runtime-parser`,
+    `runtime-suggestions`,
     `runtime-version-manager`,
     `runtime-version-manager-test`,
-    editions,
+    `runtime-test-instruments`,
+    `scala-libs-wrapper`,
+    `scala-yaml`,
+    searcher,
     semver,
-    `distribution-manager`,
-    `edition-updater`,
-    `edition-uploader`,
-    `library-manager`,
-    `library-manager-test`,
-    `connected-lock-manager`,
-    `connected-lock-manager-server`,
-    `process-utils`,
-    testkit,
-    `test-utils`,
-    `common-polyglot-core-utils`,
+    `std-aws`,
     `std-base`,
+    `std-benchmarks`,
     `std-database`,
     `std-google-api`,
     `std-image`,
-    `std-table`,
-    `std-aws`,
-    `std-snowflake`,
     `std-microsoft`,
+    `std-snowflake`,
+    `std-table`,
     `std-tableau`,
-    `http-test-helper`,
-    `enso-test-java-helpers`,
-    `exploratory-benchmark-java-helpers`,
-    `benchmark-java-helpers`,
-    `benchmarks-common`,
-    `bench-processor`,
+    `syntax-rust-definition`,
+    `task-progress-notifications`,
+    testkit,
+    `test-utils`,
+    `text-buffer`,
+    `version-output`,
     `ydoc-server`,
-    `desktop-environment`
+    `zio-wrapper`
   )
   .settings(Global / concurrentRestrictions += Tags.exclusive(Exclusive))
   .settings(
@@ -439,7 +456,7 @@ val circeVersion              = "0.14.7"
 val circeGenericExtrasVersion = "0.14.3"
 val circe = Seq("circe-core", "circe-generic", "circe-parser")
   .map("io.circe" %% _ % circeVersion)
-val snakeyamlVersion = "2.2"
+val snakeyamlVersion = "2.3"
 
 // === Commons ================================================================
 
@@ -461,7 +478,7 @@ val commons = Seq(
 
 // === Helidon ================================================================
 val jakartaVersion = "2.0.1"
-val helidonVersion = "4.0.8"
+val helidonVersion = "4.1.2"
 val helidon = Seq(
   "io.helidon"                 % "helidon"                     % helidonVersion,
   "io.helidon.builder"         % "helidon-builder-api"         % helidonVersion,
@@ -574,7 +591,8 @@ val bouncyCastle = Seq(
 // === Google =================================================================
 val googleApiClientVersion         = "2.2.0"
 val googleApiServicesSheetsVersion = "v4-rev612-1.25.0"
-val googleAnalyticsDataVersion     = "0.44.0"
+val googleAnalyticsAdminVersion    = "0.62.0"
+val googleAnalyticsDataVersion     = "0.63.0"
 
 // === Other ==================================================================
 
@@ -664,7 +682,6 @@ lazy val componentModulesPaths =
       "com.google.protobuf"    % "protobuf-java"                % googleProtobufVersion,
       "commons-cli"            % "commons-cli"                  % commonsCliVersion,
       "commons-io"             % "commons-io"                   % commonsIoVersion,
-      "net.java.dev.jna"       % "jna"                          % jnaVersion,
       "org.yaml"               % "snakeyaml"                    % snakeyamlVersion,
       "org.eclipse.jgit"       % "org.eclipse.jgit"             % jgitVersion,
       "com.typesafe"           % "config"                       % typesafeConfigVersion,
@@ -719,6 +736,7 @@ lazy val componentModulesPaths =
     (`zio-wrapper` / Compile / exportedModuleBin).value,
     (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
+    (`jna-wrapper` / Compile / exportedModuleBin).value,
     (`ydoc-server` / Compile / exportedModuleBin).value,
     (`library-manager` / Compile / exportedModuleBin).value,
     (`logging-config` / Compile / exportedModuleBin).value,
@@ -909,15 +927,6 @@ lazy val `syntax-rust-definition` = project
     Compile / compile / javacOptions ++= Seq("-source", "11", "-target", "11")
   )
 
-lazy val yaml = (project in file("lib/java/yaml"))
-  .settings(
-    frgaalJavaCompilerSetting,
-    version := "0.1",
-    libraryDependencies ++= Seq(
-      "org.yaml" % "snakeyaml" % snakeyamlVersion % "provided"
-    )
-  )
-
 lazy val `scala-yaml` = (project in file("lib/scala/yaml"))
   .enablePlugins(JPMSPlugin)
   .configs(Test)
@@ -1089,11 +1098,14 @@ lazy val `logging-service-logback` = project
       "org.slf4j"        % "slf4j-api"               % slf4jVersion,
       "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion % "provided"
     ),
+    Compile / javaModuleName := "org.enso.logging.service.logback",
     Compile / shouldCompileModuleInfoManually := true,
     Compile / internalModuleDependencies := Seq(
       (`logging-service` / Compile / exportedModule).value,
       (`logging-config` / Compile / exportedModule).value
     ),
+    Test / shouldCompileModuleInfoManually := true,
+    Test / javaModuleName := "org.enso.logging.service.logback.test.provider",
     Test / moduleDependencies ++= scalaLibrary,
     Test / internalModuleDependencies := Seq(
       (Compile / exportedModule).value
@@ -1192,10 +1204,9 @@ lazy val `scala-libs-wrapper` = project
       "net.java.dev.jna"                       % "jna"                   % jnaVersion
     ),
     Compile / moduleDependencies ++= scalaLibrary ++ Seq(
-      "org.scala-lang"   % "scala-reflect" % scalacVersion,
-      "org.jline"        % "jline"         % jlineVersion,
-      "org.slf4j"        % "slf4j-api"     % slf4jVersion,
-      "net.java.dev.jna" % "jna"           % jnaVersion
+      "org.scala-lang" % "scala-reflect" % scalacVersion,
+      "org.jline"      % "jline"         % jlineVersion,
+      "org.slf4j"      % "slf4j-api"     % slf4jVersion
     ),
     assembly / assemblyExcludedJars := {
       JPMSUtils.filterModulesFromClasspath(
@@ -1295,6 +1306,34 @@ lazy val `language-server-deps-wrapper` = project
     }
   )
 
+lazy val `jna-wrapper` = project
+  .in(file("lib/java/jna-wrapper"))
+  .enablePlugins(JPMSPlugin)
+  .settings(
+    modularFatJarWrapperSettings,
+    autoScalaLibrary := false,
+    libraryDependencies ++= Seq(
+      "net.java.dev.jna" % "jna" % jnaVersion
+    ),
+    javaModuleName := "org.enso.jna.wrapper",
+    Compile / patchModules := {
+      val jna = JPMSUtils.filterModulesFromUpdate(
+        update.value,
+        scalaLibrary ++
+        Seq(
+          "net.java.dev.jna" % "jna" % jnaVersion
+        ),
+        streams.value.log,
+        moduleName.value,
+        scalaBinaryVersion.value,
+        shouldContainAll = true
+      )
+      Map(
+        javaModuleName.value -> jna
+      )
+    }
+  )
+
 lazy val `directory-watcher-wrapper` = project
   .in(file("lib/java/directory-watcher-wrapper"))
   .enablePlugins(JPMSPlugin)
@@ -1322,8 +1361,10 @@ lazy val `directory-watcher-wrapper` = project
       )
     },
     Compile / moduleDependencies ++= Seq(
-      "net.java.dev.jna" % "jna"       % jnaVersion,
-      "org.slf4j"        % "slf4j-api" % "1.7.36"
+      "org.slf4j" % "slf4j-api" % "1.7.36"
+    ),
+    Compile / internalModuleDependencies := Seq(
+      (`jna-wrapper` / Compile / exportedModule).value
     ),
     Compile / patchModules := {
       val scalaLibs = JPMSUtils.filterModulesFromUpdate(
@@ -1847,7 +1888,7 @@ lazy val `ydoc-server` = project
   .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
-    frgaalJavaCompilerSetting,
+    customFrgaalJavaCompilerSettings("21"),
     javaModuleName := "org.enso.ydoc",
     Compile / exportJars := true,
     crossPaths := false,
@@ -1865,8 +1906,9 @@ lazy val `ydoc-server` = project
     ),
     libraryDependencies ++= Seq(
       "org.graalvm.truffle"        % "truffle-api"                 % graalMavenPackagesVersion % "provided",
-      "org.graalvm.polyglot"       % "inspect"                     % graalMavenPackagesVersion % "runtime",
-      "org.graalvm.polyglot"       % "js"                          % graalMavenPackagesVersion % "runtime",
+      "org.graalvm.sdk"            % "nativeimage"                 % graalMavenPackagesVersion % "provided",
+      "org.graalvm.polyglot"       % "inspect-community"           % graalMavenPackagesVersion % "runtime",
+      "org.graalvm.polyglot"       % "js-community"                % graalMavenPackagesVersion % "runtime",
       "org.slf4j"                  % "slf4j-api"                   % slf4jVersion,
       "io.helidon.webclient"       % "helidon-webclient-websocket" % helidonVersion,
       "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion,
@@ -1918,9 +1960,25 @@ lazy val `ydoc-server` = project
         )
         .taskValue
   )
+  .settings(
+    NativeImage.smallJdk := None,
+    NativeImage.additionalCp := Seq.empty,
+    rebuildNativeImage := NativeImage
+      .buildNativeImage(
+        "ydoc",
+        staticOnLinux = false,
+        mainClass     = Some("org.enso.ydoc.Main")
+      )
+      .value,
+    buildNativeImage := NativeImage
+      .incrementalNativeImageBuild(
+        rebuildNativeImage,
+        "ydoc"
+      )
+      .value
+  )
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`logging-service-logback`)
-  .dependsOn(`profiling-utils`)
 
 lazy val `persistance` = (project in file("lib/java/persistance"))
   .enablePlugins(JPMSPlugin)
@@ -2271,7 +2329,6 @@ lazy val `language-server` = (project in file("engine/language-server"))
         "org.jline"              % "jline"                        % jlineVersion,
         "org.apache.tika"        % "tika-core"                    % tikaVersion,
         "com.ibm.icu"            % "icu4j"                        % icuVersion,
-        "net.java.dev.jna"       % "jna"                          % jnaVersion,
         "org.netbeans.api"       % "org-openide-util-lookup"      % netbeansApiVersion
       )
     },
@@ -2290,6 +2347,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`logging-service-logback` / Test / exportedModule).value,
       (`version-output` / Compile / exportedModule).value,
       (`scala-libs-wrapper` / Compile / exportedModule).value,
+      (`jna-wrapper` / Compile / exportedModule).value,
       (`akka-wrapper` / Compile / exportedModule).value,
       (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`fansi-wrapper` / Compile / exportedModule).value,
@@ -2629,7 +2687,7 @@ lazy val runtime = (project in file("engine/runtime"))
     version := ensoVersion,
     commands += WithDebugCommand.withDebug,
     inConfig(Compile)(truffleRunOptionsSettings),
-    libraryDependencies ++= GraalVM.langsPkgs ++ Seq(
+    libraryDependencies ++= Seq(
       "org.apache.commons"   % "commons-lang3"           % commonsLangVersion,
       "org.apache.tika"      % "tika-core"               % tikaVersion,
       "com.lihaoyi"         %% "fansi"                   % fansiVersion,
@@ -2637,6 +2695,7 @@ lazy val runtime = (project in file("engine/runtime"))
       "org.graalvm.sdk"      % "polyglot-tck"            % graalMavenPackagesVersion % "provided",
       "org.graalvm.truffle"  % "truffle-api"             % graalMavenPackagesVersion % "provided",
       "org.graalvm.truffle"  % "truffle-dsl-processor"   % graalMavenPackagesVersion % "provided",
+      "org.graalvm.regex"    % "regex"                   % graalMavenPackagesVersion % "provided",
       "org.netbeans.api"     % "org-openide-util-lookup" % netbeansApiVersion        % "provided",
       "org.scalacheck"      %% "scalacheck"              % scalacheckVersion         % Test,
       "org.scalactic"       %% "scalactic"               % scalacticVersion          % Test,
@@ -2723,6 +2782,14 @@ lazy val runtime = (project in file("engine/runtime"))
   .dependsOn(`connected-lock-manager`)
   .dependsOn(testkit % Test)
 
+lazy val `runtime-and-langs` = (project in file("engine/runtime-and-langs"))
+  .settings(
+    libraryDependencies ++= {
+      GraalVM.modules ++ GraalVM.langsPkgs
+    }
+  )
+  .dependsOn(runtime)
+
 /** A project holding all the runtime integration tests. These tests require, among other things,
   * the `org.enso.runtime` JPMS module, so it is easier to keep them in a separate project.
   * For standard unit tests, use `runtime/Test`.
@@ -2751,6 +2818,7 @@ lazy val `runtime-integration-tests` =
         "junit"                % "junit"                        % junitVersion              % Test,
         "com.github.sbt"       % "junit-interface"              % junitIfVersion            % Test,
         "org.hamcrest"         % "hamcrest-all"                 % hamcrestVersion           % Test,
+        "org.yaml"             % "snakeyaml"                    % snakeyamlVersion,
         "org.slf4j"            % "slf4j-api"                    % slf4jVersion
       ),
       Test / fork := true,
@@ -2849,6 +2917,8 @@ lazy val `runtime-integration-tests` =
         (`ydoc-server` / javaModuleName).value,
         (`runtime-instrument-common` / javaModuleName).value,
         (`text-buffer` / javaModuleName).value,
+        (`logging-service-logback` / Test / javaModuleName).value,
+        "ch.qos.logback.classic",
         "truffle.tck.tests"
       ),
       Test / addReads := {
@@ -2865,7 +2935,10 @@ lazy val `runtime-integration-tests` =
             (`text-buffer` / javaModuleName).value,
             (`semver` / javaModuleName).value,
             "truffle.tck.tests",
-            "org.openide.util.lookup.RELEASE180"
+            "org.openide.util.lookup.RELEASE180",
+            "ch.qos.logback.classic",
+            (`logging-service-logback` / Compile / javaModuleName).value,
+            (`logging-service-logback` / Test / javaModuleName).value
           ),
           testInstrumentsModName -> Seq(runtimeModName)
         )
@@ -3421,7 +3494,7 @@ lazy val `engine-runner` = project
     Compile / run / mainClass := Some("org.enso.runner.Main"),
     commands += WithDebugCommand.withDebug,
     inConfig(Compile)(truffleRunOptionsSettings),
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= GraalVM.modules ++ Seq(
       "org.graalvm.polyglot"    % "polyglot"                % graalMavenPackagesVersion,
       "org.graalvm.sdk"         % "polyglot-tck"            % graalMavenPackagesVersion % Provided,
       "commons-cli"             % "commons-cli"             % commonsCliVersion,
@@ -3493,7 +3566,8 @@ lazy val `engine-runner` = project
           epbLang
       ).distinct
       val stdLibsJars =
-        `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
+        `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
+        `table-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
       core ++ stdLibsJars
     },
     buildSmallJdk := {
@@ -3583,19 +3657,23 @@ lazy val `engine-runner` = project
             ),
             mainClass = Some("org.enso.runner.Main"),
             initializeAtRuntime = Seq(
-              "org.jline.nativ.JLineLibrary",
-              "org.jline.terminal.impl.jna",
-              "io.methvin.watchservice.jna.CarbonAPI",
-              "zio.internal.ZScheduler$$anon$4",
-              "org.enso.runner.Main$",
+              "org.apache",
+              "org.openxmlformats",
+              "org.jline",
+              "io.methvin.watchservice",
+              "zio.internal",
+              "org.enso.runner",
               "sun.awt",
               "sun.java2d",
               "sun.font",
               "java.awt",
               "com.sun.imageio",
-              "com.sun.jna.internal.Cleaner",
-              "com.sun.jna.Structure$FFIType",
-              "akka.http"
+              "com.sun.jna",
+              "com.microsoft",
+              "akka.http",
+              "org.enso.base",
+              "org.enso.image",
+              "org.enso.table"
             )
           )
       }
@@ -3615,11 +3693,11 @@ lazy val `engine-runner` = project
     }.value
   )
   .dependsOn(`version-output`)
-  .dependsOn(yaml)
   .dependsOn(pkg)
   .dependsOn(cli)
   .dependsOn(`profiling-utils`)
   .dependsOn(`library-manager`)
+  .dependsOn(`distribution-manager`)
   .dependsOn(`edition-updater`)
   .dependsOn(`runtime-parser`)
   .dependsOn(`logging-service`)
@@ -3656,8 +3734,7 @@ lazy val launcher = project
           "-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.NoOpLog",
           "-H:IncludeResources=.*Main.enso$"
         ),
-        includeRuntime = false,
-        mainClass      = Some("org.enso.launcher.cli.Main")
+        mainClass = Some("org.enso.launcher.cli.Main")
       )
       .dependsOn(assembly)
       .dependsOn(VerifyReflectionSetup.run)
@@ -3814,6 +3891,7 @@ lazy val `bench-processor` = (project in file("lib/scala/bench-processor"))
       "org.graalvm.polyglot" % "polyglot"                 % graalMavenPackagesVersion % "provided",
       "junit"                % "junit"                    % junitVersion              % Test,
       "com.github.sbt"       % "junit-interface"          % junitIfVersion            % Test,
+      "org.graalvm.regex"    % "regex"                    % graalMavenPackagesVersion % Test,
       "org.graalvm.truffle"  % "truffle-api"              % graalMavenPackagesVersion % Test
     ),
     Compile / javacOptions := ((Compile / javacOptions).value ++
@@ -3926,7 +4004,8 @@ lazy val `std-benchmarks` = (project in file("std-bits/benchmarks"))
       Map(
         runtimeModName -> Seq(
           "ALL-UNNAMED",
-          (`benchmarks-common` / javaModuleName).value
+          (`benchmarks-common` / javaModuleName).value,
+          (`bench-processor` / javaModuleName).value
         )
       )
     },
@@ -4534,6 +4613,7 @@ lazy val `std-google-api` = project
     libraryDependencies ++= Seq(
       "com.google.api-client" % "google-api-client"          % googleApiClientVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.apis"       % "google-api-services-sheets" % googleApiServicesSheetsVersion exclude ("com.google.code.findbugs", "jsr305"),
+      "com.google.analytics"  % "google-analytics-admin"     % googleAnalyticsAdminVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.analytics"  % "google-analytics-data"      % googleAnalyticsDataVersion exclude ("com.google.code.findbugs", "jsr305")
     ),
     Compile / packageBin := Def.task {
@@ -4548,6 +4628,7 @@ lazy val `std-google-api` = project
       result
     }.value
   )
+  .dependsOn(`std-table` % "provided")
 
 lazy val `std-database` = project
   .in(file("std-bits") / "database")

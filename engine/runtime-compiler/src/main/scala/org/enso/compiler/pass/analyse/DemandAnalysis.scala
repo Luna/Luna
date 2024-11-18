@@ -186,11 +186,10 @@ case object DemandAnalysis extends IRPass {
     } else {
       name match {
         case lit: Name.Literal if isDefined(lit) =>
-          val forceLocation = name.location
           val newNameLocation =
             name.location.map(l => new IdentifiedLocation(l.location()))
           val newName = lit.copy(location = newNameLocation)
-          Application.Force(newName, forceLocation)
+          Application.Force(newName, name.identifiedLocation())
         case _ => name
       }
     }
@@ -266,10 +265,10 @@ case object DemandAnalysis extends IRPass {
     */
   def analyseCallArgument(arg: CallArgument): CallArgument = {
     arg match {
-      case spec @ CallArgument.Specified(_, expr, _, _) =>
-        spec.copy(
+      case arg: CallArgument.Specified =>
+        arg.copy(
           value = analyseExpression(
-            expr,
+            arg.value,
             isInsideCallArgument = true
           )
         )

@@ -1,14 +1,14 @@
 from Standard.Base import all
-import Standard.Base.Errors.Common.No_Such_Method
 import Standard.Base.Errors.Deprecated.Deprecated
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+from Standard.Base.Errors.Common import Floating_Point_Equality, No_Such_Method
 
 import Standard.Table.Internal.Aggregate_Column_Helper
 import Standard.Table.Internal.Aggregate_Column_Helper.Internal_Order_By_Column_Reference
 import Standard.Table.Internal.Problem_Builder.Problem_Builder
 from Standard.Table import Aggregate_Column
 from Standard.Table.Aggregate_Column.Aggregate_Column import all
-from Standard.Table.Errors import Floating_Point_Equality, No_Output_Columns
+from Standard.Table.Errors import No_Output_Columns
 
 import project.DB_Table.DB_Table
 import project.Dialect.Dialect
@@ -18,7 +18,7 @@ import project.Internal.IR.Context.Context
 import project.Internal.IR.Internal_Column.Internal_Column
 import project.Internal.IR.SQL_Expression.SQL_Expression
 import project.Internal.SQL_Type_Reference.SQL_Type_Reference
-from project.Errors import Unsupported_Database_Operation
+from project.Errors import Aggregagtion_Requires_Order
 
 ## PRIVATE
    Creates an `Internal_Column` that will represent the computed aggregate.
@@ -278,4 +278,4 @@ map_column_inputs f:Function aggregate_column:Aggregate_Column -> Aggregate_Colu
 is_non_empty_selector v = v.is_nothing.not && v.not_empty
 
 ## PRIVATE
-throw_ordering_required op_name = Error.throw (Unsupported_Database_Operation.Error ("`" + op_name + "` aggregation requires at least one `order_by` column."))
+throw_ordering_required op_name = Error.throw (Aggregagtion_Requires_Order.Error op_name)

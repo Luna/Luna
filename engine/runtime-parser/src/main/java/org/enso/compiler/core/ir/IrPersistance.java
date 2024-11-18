@@ -3,7 +3,6 @@ package org.enso.compiler.core.ir;
 import java.io.IOException;
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.enso.compiler.core.ir.expression.Application;
@@ -76,22 +75,35 @@ public final class IrPersistance {
 
   @ServiceProvider(service = Persistance.class)
   public static final class PersistIdentifiedLocation extends Persistance<IdentifiedLocation> {
+
+    private static final int EMPTY_LOCATION = -1;
+
     public PersistIdentifiedLocation() {
-      super(IdentifiedLocation.class, false, 2);
+      super(IdentifiedLocation.class, false, 11259);
     }
 
     @Override
     protected void writeObject(IdentifiedLocation obj, Output out) throws IOException {
-      out.writeInline(Location.class, obj.location());
-      out.writeInline(Option.class, obj.id());
+      if (obj == null) {
+        out.writeInt(EMPTY_LOCATION);
+      } else {
+        out.writeInt(obj.start());
+        out.writeInt(obj.end());
+        out.writeInline(UUID.class, obj.uuid());
+      }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected IdentifiedLocation readObject(Input in) throws IOException, ClassNotFoundException {
-      var obj = in.readInline(Location.class);
-      var id = in.readInline(Option.class);
-      return IdentifiedLocation.create((Location) obj, id);
+      var start = in.readInt();
+      if (start == EMPTY_LOCATION) {
+        return null;
+      } else {
+        var end = in.readInt();
+        var uuid = in.readInline(UUID.class);
+        return new IdentifiedLocation(start, end, uuid);
+      }
     }
   }
 
@@ -429,33 +441,6 @@ public final class IrPersistance {
         arr[i] = in.readReference(Object.class);
       }
       return new IrLazySeq(arr, size);
-    }
-  }
-
-  @ServiceProvider(service = Persistance.class)
-  public static final class PersistMetadataStorage extends Persistance<MetadataStorage> {
-    public PersistMetadataStorage() {
-      super(MetadataStorage.class, false, 389);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    protected void writeObject(MetadataStorage obj, Output out) throws IOException {
-      var map = new LinkedHashMap<ProcessingPass, ProcessingPass.Metadata>();
-      obj.map(
-          (processingPass, data) -> {
-            map.put(processingPass, data);
-            return null;
-          });
-      out.writeInline(java.util.Map.class, map);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    protected MetadataStorage readObject(Input in) throws IOException, ClassNotFoundException {
-      var map = in.readInline(java.util.Map.class);
-      var storage = new MetadataStorage(map);
-      return storage;
     }
   }
 

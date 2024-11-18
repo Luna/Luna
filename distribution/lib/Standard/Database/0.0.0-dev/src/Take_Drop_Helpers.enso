@@ -31,7 +31,7 @@ take_drop_helper take_drop table selector:(Index_Sub_Range | Range | Integer) =
             row_column_name = table.make_temp_column_name
             table_with_row_number = table.add_row_number name=row_column_name from=0
 
-            subqueries = ranges.map on_problems=No_Wrap range->
+            subqueries = ranges.map on_problems=No_Wrap.Value range->
                 generate_subquery table_with_row_number row_column_name range
             combined = subqueries.reduce (a-> b-> a.union b)
             combined.remove_columns row_column_name
@@ -57,8 +57,7 @@ collect_ranges take_drop length selector:(Index_Sub_Range | Range | Integer) =
 check_supported : (Index_Sub_Range | Range | Integer) -> Any -> Any | Unsupported_Database_Operation
 check_supported selector:(Index_Sub_Range | Range | Integer) ~cont =
     err =
-        msg = selector.to_display_text + " is not supported for database backends"
-        Error.throw (Unsupported_Database_Operation.Error msg)
+        Error.throw (Unsupported_Database_Operation.Error selector.to_display_text)
 
     case selector of
         Index_Sub_Range.While _ -> err

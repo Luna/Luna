@@ -28,15 +28,23 @@ import scala.collection.immutable.List;
  * <p>See also: Note [IR Equality and hashing]
  */
 public interface IR {
-
   /**
    * Storage for metadata that the node has been tagged with as the result of various compiler
    * passes.
    */
   MetadataStorage passData();
 
+  /**
+   * The nullable source location that the node corresponds to.
+   *
+   * @return the node location or {@code null}
+   */
+  IdentifiedLocation identifiedLocation();
+
   /** The source location that the node corresponds to. */
-  Option<IdentifiedLocation> location();
+  default Option<IdentifiedLocation> location() {
+    return Option.apply(identifiedLocation());
+  }
 
   /**
    * Sets the location for an IR node.

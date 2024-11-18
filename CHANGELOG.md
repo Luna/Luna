@@ -4,8 +4,71 @@
 
 - [Rows and Columns may be now removed in Table Input Widget][11151]. The option
   is available in right-click context menu.
+- [Rows and Columns may be now reordered by dragging in Table Input
+  Widget][11271]
+- [Copying and pasting in Table Editor Widget now works properly][11332]
+- [Fix invisible selection in Table Input Widget][11358]
+- [Enable cloud file browser in local projects][11383]
+- [Changed the way of adding new column in Table Input Widget][11388]. The
+  "virtual column" is replaced with an explicit (+) button.
+- [New dropdown-based component menu][11398].
+- [Methods defined on Standard.Base.Any type are now visible on all
+  components][11451].
+- [Undo/redo buttons in the top bar][11433].
+- [Size of Table Input Widget is preserved and restored after project
+  re-opening][11435]
+- [Added application version to the title bar.][11446]
+- [Added "open grouped components" action to the context menu.][11447]
+- [Table Input Widget has now a limit of 256 cells.][11448]
+- [Added an error message screen displayed when viewing a deleted
+  component.][11452]
+- [New documentation editor provides improved Markdown editing experience, and
+  paves the way for new documentation features.][11469]
+- ["Write" button in component menu allows to evaluate it separately from the
+  rest of the workflow][11523].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
+[11271]: https://github.com/enso-org/enso/pull/11271
+[11332]: https://github.com/enso-org/enso/pull/11332
+[11358]: https://github.com/enso-org/enso/pull/11358
+[11383]: https://github.com/enso-org/enso/pull/11383
+[11388]: https://github.com/enso-org/enso/pull/11388
+[11398]: https://github.com/enso-org/enso/pull/11398
+[11451]: https://github.com/enso-org/enso/pull/11451
+[11433]: https://github.com/enso-org/enso/pull/11433
+[11435]: https://github.com/enso-org/enso/pull/11435
+[11446]: https://github.com/enso-org/enso/pull/11446
+[11447]: https://github.com/enso-org/enso/pull/11447
+[11448]: https://github.com/enso-org/enso/pull/11448
+[11452]: https://github.com/enso-org/enso/pull/11452
+[11469]: https://github.com/enso-org/enso/pull/11469
+[11523]: https://github.com/enso-org/enso/pull/11523
+
+#### Enso Standard Library
+
+- [The `enso://~` path now resolves to user's home directory in the
+  cloud.][11235]
+- [The user may set description and labels of an Enso Cloud asset
+  programmatically.][11255]
+- [DB_Table may be saved as a Data Link.][11371]
+- [Support for dates before 1900 in Excel and signed AWS requests.][11373]
+- [Added `Data.read_many` that allows to read a list of files in a single
+  operation.][11490]
+- [Added `Table.input` allowing creation of typed tables from vectors of data,
+  including auto parsing text columns.][11562]
+
+[11235]: https://github.com/enso-org/enso/pull/11235
+[11255]: https://github.com/enso-org/enso/pull/11255
+[11371]: https://github.com/enso-org/enso/pull/11371
+[11373]: https://github.com/enso-org/enso/pull/11373
+[11490]: https://github.com/enso-org/enso/pull/11490
+[11562]: https://github.com/enso-org/enso/pull/11562
+
+#### Enso Language & Runtime
+
+- [Arguments in constructor definitions may now be on their own lines][11374]
+
+[11374]: https://github.com/enso-org/enso/pull/11374
 
 # Enso 2024.4
 
@@ -27,6 +90,8 @@
 - [Fixed issue where drag'n'dropped files were not uploaded in cloud
   projects.][11014]
 - [Fixed files associations not properly registered on Windows][11030]
+- [Input components corresponding to function arguments are now
+  displayed.][11165]
 - [Fixed "rename project" button being broken after not changing project
   name][11103]
 - [Numbers starting with dot (`.5`) are accepted in Numeric Widget][11108]
@@ -41,6 +106,7 @@
 [11001]: https://github.com/enso-org/enso/pull/11001
 [11014]: https://github.com/enso-org/enso/pull/11014
 [11030]: https://github.com/enso-org/enso/pull/11030
+[11165]: https://github.com/enso-org/enso/pull/11165
 [11103]: https://github.com/enso-org/enso/pull/11103
 [11108]: https://github.com/enso-org/enso/pull/11108
 [11056]: https://github.com/enso-org/enso/pull/11056
@@ -58,10 +124,17 @@
 - [Support for creating Atoms in expressions.][10820]
 - [IO.print without new line][10858]
 - [Add `Text.to_decimal`.][10874]
-- [Added .floor, .ceil, .trunc to the in-memory `Decimal` column.][10887]
+- [Added `floor`, `ceil`, `trunc` to the in-memory `Decimal` column.][10887]
 - [Added vectorized .round to the in-memory `Decimal` column.][10912]
 - [`select_into_database_table` no longer defaults the primary key to the first
-  column][11120]
+  column.][11120]
+- [Extend the range of `floor`, `ceil`, `trunc` to values outside the `Long`
+  range.][11135]
+- [Added `format` parameter to `Decimal.parse`.][11205]
+- [Added `format` parameter to `Float.parse`.][11229]
+- [Implemented a cache for HTTP data requests, as well as a per-file response
+  size limit.][11342]
+- [Overhauled Google Analytics APIs.][11484]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -74,6 +147,11 @@
 [10887]: https://github.com/enso-org/enso/pull/10887
 [10912]: https://github.com/enso-org/enso/pull/10912
 [11120]: https://github.com/enso-org/enso/pull/11120
+[11135]: https://github.com/enso-org/enso/pull/11135
+[11205]: https://github.com/enso-org/enso/pull/11205
+[11229]: https://github.com/enso-org/enso/pull/11229
+[11342]: https://github.com/enso-org/enso/pull/11342
+[11484]: https://github.com/enso-org/enso/pull/11484
 
 #### Enso Language & Runtime
 

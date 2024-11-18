@@ -30,13 +30,13 @@ object Comment {
 
   /** A documentation comment in the Enso source.
     *
-    * @param doc         the documentation entity
-    * @param location    the source location that the node corresponds to
-    * @param passData    the pass metadata associated with this node
+    * @param doc the documentation entity
+    * @param identifiedLocation the source location that the node corresponds to
+    * @param passData the pass metadata associated with this node
     */
   sealed case class Documentation(
     doc: String,
-    override val location: Option[IdentifiedLocation],
+    override val identifiedLocation: IdentifiedLocation,
     override val passData: MetadataStorage = new MetadataStorage()
   ) extends Comment
       with IRKind.Primitive
@@ -62,11 +62,11 @@ object Comment {
       if (
         doc != this.doc
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
-        val res = Documentation(doc, location, passData)
+        val res = Documentation(doc, location.orNull, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res

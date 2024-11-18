@@ -7,7 +7,8 @@
 import { WebSocketTransport } from '@open-rpc/client-js'
 import WS from 'isomorphic-ws'
 import { WebSocket } from 'partysocket'
-import ReconnectingWebSocket, { Options, type WebSocketEventMap } from 'partysocket/ws'
+import type { Options } from 'partysocket/ws'
+import ReconnectingWebSocket, { type WebSocketEventMap } from 'partysocket/ws'
 
 export { ReconnectingWebSocket }
 
@@ -18,8 +19,10 @@ export interface AddEventListenerOptions {
   signal?: AbortSignal
 }
 
+/** A socket that automatically connects upon disconnect, for example after network issues. */
 export class ReconnectingWebSocketTransport extends WebSocketTransport {
   private _reconnectingConnection: ReconnectingWebSocket
+  /** Create a {@link ReconnectingWebSocketTransport}. */
   constructor(uri: string, wsOptions: Options = {}) {
     super(uri)
     this.uri = uri
@@ -31,10 +34,12 @@ export class ReconnectingWebSocketTransport extends WebSocketTransport {
     this.connection = this._reconnectingConnection as any
   }
 
+  /** Reconnect the underlying WebSocket. */
   public reconnect() {
     this._reconnectingConnection.reconnect()
   }
 
+  /** Add an event listener to the underlying WebSocket. */
   on<K extends keyof WebSocketEventMap>(
     type: K,
     cb: (
@@ -45,6 +50,7 @@ export class ReconnectingWebSocketTransport extends WebSocketTransport {
     this._reconnectingConnection.addEventListener(type, cb, options)
   }
 
+  /** Remove an event listener from the underlying WebSocket. */
   off<K extends keyof WebSocketEventMap>(
     type: K,
     cb: (

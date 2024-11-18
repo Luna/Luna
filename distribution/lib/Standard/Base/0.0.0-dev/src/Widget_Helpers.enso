@@ -15,10 +15,9 @@ from project.Metadata.Choice import Option
 
 ## PRIVATE
    Creates a Single_Choice Widget for text or secret value.
-make_text_secret_selector : Widget
-make_text_secret_selector =
+make_text_secret_selector display:Display=..When_Modified -> Widget =
     fqn = Meta.get_qualified_type_name Enso_Secret
-    make_single_choice [['<Text Value>', '""'], ['<Secret Value>', fqn+".get"]]
+    make_single_choice [['<Text Value>', '""'], ['<Secret Value>', fqn+".get"]] display=display
 
 ## PRIVATE
    Creates a Regex / Text Widget for search and replace.
@@ -130,6 +129,12 @@ make_data_cleanse_vector_selector display:Display=Display.Always =
     patterns = ['Leading_Whitespace', 'Trailing_Whitespace', 'Duplicate_Whitespace', 'All_Whitespace', "Newlines", 'Leading_Numbers', 'Trailing_Numbers', 'Non_ASCII', 'Tabs', 'Letters', 'Numbers', 'Punctuation', 'Symbols']
     options = patterns.map f-> Option f (".." + f)
     Widget.Multiple_Choice values=options display=display
+
+## PRIVATE
+   Creates a Single_Choice Widget for Any selectors with all types enabled.
+make_all_selector : Display -> Widget
+make_all_selector display:Display=..Always -> Widget =
+    make_any_selector display add_text=True add_number=True add_boolean=True add_date=True add_time=True add_date_time=True add_nothing=True
 
 ## PRIVATE
    Creates a Single_Choice Widget for Any selectors.

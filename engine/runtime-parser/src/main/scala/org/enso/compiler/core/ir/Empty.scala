@@ -7,12 +7,12 @@ import java.util.UUID
 
 /** A node representing an empty IR construct that can be used in any place.
   *
-  * @param location the source location that the node corresponds to
+  * @param identifiedLocation the source location that the node corresponds to
   * @param passData the pass metadata associated with this node
   */
 sealed case class Empty(
-  override val location: Option[IdentifiedLocation],
-  passData: MetadataStorage = new MetadataStorage()
+  override val identifiedLocation: IdentifiedLocation,
+  override val passData: MetadataStorage = new MetadataStorage()
 ) extends IR
     with Expression
     with IRKind.Primitive
@@ -35,11 +35,11 @@ sealed case class Empty(
   ): Empty = {
     if (
       location != this.location
-      || passData != this.passData
+      || (passData ne this.passData)
       || diagnostics != this.diagnostics
       || id != this.id
     ) {
-      val res = Empty(location, passData)
+      val res = Empty(location.orNull, passData)
       res.diagnostics = diagnostics
       res.id          = id
       res
