@@ -1,5 +1,5 @@
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
-import type { TextFormatOptions, ValueType } from '@/components/visualizations/TableVisualization.vue'
+import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
 import type { ToolbarItem } from '@/components/visualizations/toolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
@@ -23,8 +23,10 @@ export interface SortFilterNodesButtonOptions {
   sortModel: ToValue<SortModel[]>
   isDisabled: ToValue<boolean>
   isFilterSortNodeEnabled: ToValue<boolean>
-  createNodes: (...options: NodeCreationOptions[]) => void,
-  getColumnValueToEnso: (columnName: string) => ((columnValue: string, module: Ast.MutableModule) => Ast.Owned<Ast.MutableAst>)
+  createNodes: (...options: NodeCreationOptions[]) => void
+  getColumnValueToEnso: (
+    columnName: string,
+  ) => (columnValue: string, module: Ast.MutableModule) => Ast.Owned<Ast.MutableAst>
 }
 
 export interface FormatMenuOptions {
@@ -39,7 +41,7 @@ function useSortFilterNodesButton({
   isDisabled,
   isFilterSortNodeEnabled,
   createNodes,
-  getColumnValueToEnso
+  getColumnValueToEnso,
 }: SortFilterNodesButtonOptions): ComputedRef<ToolbarItem | undefined> {
   const sortPatternPattern = computed(() => Pattern.parseExpression('(..Name __ __ )')!)
 
@@ -62,7 +64,7 @@ function useSortFilterNodesButton({
   }
 
   const filterPattern = computed(() => Pattern.parseExpression('__ (__ __)')!)
-  
+
   function makeFilterPattern(module: Ast.MutableModule, columnName: string, items: string[]) {
     if (
       (items?.length === 1 && items.indexOf('true') != -1) ||
@@ -75,7 +77,7 @@ function useSortFilterNodesButton({
         boolToInclude,
       ])
     }
-    const valueFormatter = getColumnValueToEnso(columnName);
+    const valueFormatter = getColumnValueToEnso(columnName)
     const itemList = items.map((i) => valueFormatter(i, module))
     return filterPattern.value.instantiateCopied([
       Ast.TextLiteral.new(columnName),
@@ -125,7 +127,7 @@ function useSortFilterNodesButton({
     const sortModelValue = toValue(sortModel)
     if (Object.keys(filterModelValue).length) {
       for (const [columnName, columnFilter] of Object.entries(filterModelValue)) {
-        const items = columnFilter.values.map((item) => item )
+        const items = columnFilter.values.map((item) => item)
         const filterPatterns =
           sortModelValue.length ?
             getAstPatternFilterAndSort(columnName, items)

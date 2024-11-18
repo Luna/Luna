@@ -607,25 +607,38 @@ watchEffect(() => {
 
 const colTypeMap = computed(() => {
   const colMap: Record<string, string> = {}
-  if(typeof props.data === 'object' && !('error' in props.data)) {
+  if (typeof props.data === 'object' && !('error' in props.data)) {
     const valueTypes = 'value_type' in props.data ? props.data.value_type : []
     const headers = 'header' in props.data ? props.data.header : []
-    headers?.forEach((header, index) => { if (valueTypes[index]) { colMap[header] = valueTypes[index].constructor } })
+    headers?.forEach((header, index) => {
+      if (valueTypes[index]) {
+        colMap[header] = valueTypes[index].constructor
+      }
+    })
   }
   return colMap
 })
 
 const getColumnValueToEnso = (columnName: string) => {
-    const columnType = colTypeMap.value[columnName] ?? ''
-    const isNumber = ['Integer',
-      'Float',
-      'Decimal',
-      'Byte']
+  const columnType = colTypeMap.value[columnName] ?? ''
+  const isNumber = ['Integer', 'Float', 'Decimal', 'Byte']
   if (isNumber.indexOf(columnType) != -1) {
-      return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
-    }
-  return (item: string) => Ast.TextLiteral.new(item)
+    return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
+  if (columnType === 'Date') {
+    const datePattern = Pattern.parseExpression('(Date.new __ __ __)')
+
+    return (item: string, module: Ast.MutableModule) => {
+      const [year, month, day] = item.split(/[-/]/).map(Number)
+      return datePattern.instantiateCopied([
+        Ast.tryNumberToEnso(Number(year), module)!,
+        Ast.tryNumberToEnso(Number(month), module)!,
+        Ast.tryNumberToEnso(Number(day), module)!,
+      ])
+    }
+  }
+  return (item: string) => Ast.TextLiteral.new(item)
+}
 
 function checkSortAndFilter(e: SortChangedEvent) {
   const gridApi = e.api
@@ -679,7 +692,7 @@ config.setToolbar(
     isDisabled: () => !isCreateNodeEnabled.value,
     isFilterSortNodeEnabled,
     createNodes: config.createNodes,
-    getColumnValueToEnso
+    getColumnValueToEnso,
   }),
 )
 </script>
