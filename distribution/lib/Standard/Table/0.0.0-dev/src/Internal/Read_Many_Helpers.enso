@@ -6,7 +6,6 @@ import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Column.Column
 import project.Errors.Invalid_Value_Type
-import project.Extensions.Table_Conversions
 import project.Internal.Column_Naming_Helper.Column_Naming_Helper
 import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Merged_Table_Strategy
 import project.Internal.Read_Many_As_Merged_Table_Strategy.Read_Many_As_Table_Result

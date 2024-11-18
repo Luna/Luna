@@ -3,6 +3,7 @@ import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Columns_To_Keep.Columns_To_Keep
 import project.Errors.No_Rows
+import project.Extensions.Table_Conversions
 import project.Match_Columns.Match_Columns
 import project.Table.Table
 
