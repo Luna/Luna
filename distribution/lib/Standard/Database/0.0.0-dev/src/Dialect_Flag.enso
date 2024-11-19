@@ -82,7 +82,8 @@ type Dialect_Flag
     ## PRIVATE
        Specifies how the max size of the char
        type behaves after text_left/text_right.
-    Char_Max_Size_After_Substring
+       If True the orginal size is kept, if False the size is reset.
+    Char_Max_Size_After_Substring_Kept
     ## PRIVATE
        Specifies if the backend supports
        integer types of various sizes, like 16-bit or 32-bit integers.
