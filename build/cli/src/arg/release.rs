@@ -13,13 +13,13 @@ pub struct DeployRuntime {
 
 #[derive(Args, Clone, Debug)]
 pub struct DeployYdocPolyglot {
-    #[clap(long, default_value = enso_build::aws::ecr::runtime::NAME, enso_env())]
+    #[clap(long, default_value = enso_build::aws::ecr::ydoc::NAME, enso_env())]
     pub ecr_repository: String,
 }
 
 #[derive(Args, Clone, Debug)]
 pub struct DeployYdocNodejs {
-    #[clap(long, default_value = enso_build::aws::ecr::runtime::NAME, enso_env())]
+    #[clap(long, default_value = enso_build::aws::ecr::ydoc::NAME, enso_env())]
     pub ecr_repository: String,
 }
 

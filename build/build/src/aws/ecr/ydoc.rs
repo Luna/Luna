@@ -1,4 +1,4 @@
-//! This module contains data necessary to deploy Enso Runtime to the cloud.
+//! This module contains data necessary to deploy Ydoc to the cloud.
 
 use crate::prelude::*;
 
@@ -10,7 +10,7 @@ use ide_ci::programs::Docker;
 
 
 
-/// Name of the ECR repository with Runtime images.
+/// Name of the ECR repository with Ydoc images.
 pub const NAME: &str = "ydoc";
 
 /// Region where the ECR repository with Runtime images is located.
