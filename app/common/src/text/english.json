@@ -249,6 +249,7 @@
   "logs": "Logs",
   "showLogs": "Show Logs",
   "executions": "Executions",
+  "executionsCalendar": "Calendar",
   "accept": "Accept",
   "decline": "Decline",
   "clearTrash": "Clear Trash",

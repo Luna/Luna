@@ -1,4 +1,4 @@
-/** @file A list of exeuctions of a project. */
+/** @file A calendar showing executions of a project. */
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaComponents'
@@ -11,14 +11,14 @@ import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
 import ProjectExecution from './ProjectExecution'
 
-/** Props for a {@link ProjectExecutions}. */
-export interface ProjectExecutionsProps {
+/** Props for a {@link ProjectExecutionsCalendar}. */
+export interface ProjectExecutionsCalendarProps {
   readonly backend: Backend
   readonly item: AnyAsset | null
 }
 
-/** A list of exeuctions of a project. */
-export function ProjectExecutions(props: ProjectExecutionsProps) {
+/** A calendar showing executions of a project. */
+export function ProjectExecutionsCalendar(props: ProjectExecutionsCalendarProps) {
   const { backend, item } = props
 
   const { getText } = useText()
@@ -40,19 +40,19 @@ export function ProjectExecutions(props: ProjectExecutionsProps) {
   return (
     <ErrorBoundary>
       <Suspense>
-        <ProjectExecutionsInternal {...props} item={item} />
+        <ProjectExecutionsCalendarInternal {...props} item={item} />
       </Suspense>
     </ErrorBoundary>
   )
 }
 
-/** Props for a {@link ProjectExecutionsInternal}. */
-interface ProjectExecutionsInternalProps extends ProjectExecutionsProps {
+/** Props for a {@link ProjectExecutionsCalendarInternal}. */
+interface ProjectExecutionsCalendarInternalProps extends ProjectExecutionsCalendarProps {
   readonly item: ProjectAsset
 }
 
-/** A list of exeuctions of a project. */
-function ProjectExecutionsInternal(props: ProjectExecutionsInternalProps) {
+/** A calendar showing executions of a project. */
+function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInternalProps) {
   const { backend, item } = props
   const { getText } = useText()
 

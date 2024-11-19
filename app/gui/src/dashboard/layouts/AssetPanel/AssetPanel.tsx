@@ -22,6 +22,7 @@ import {
   type AssetPropertiesSpotlight,
 } from '#/layouts/AssetPanel/components/AssetProperties'
 import { AssetVersions } from '#/layouts/AssetPanel/components/AssetVersions'
+import { ProjectExecutionsCalendar } from '#/layouts/AssetPanel/components/ProjectExecutionsCalendar'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import {
@@ -217,6 +218,10 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
                 <ProjectExecutions backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
 
+              <AssetPanelTabs.TabPanel id="executionsCalendar" resetKeys={[item?.id]}>
+                <ProjectExecutionsCalendar backend={backend} item={item} />
+              </AssetPanelTabs.TabPanel>
+
               <AssetPanelTabs.TabPanel id="docs" resetKeys={[item?.id]}>
                 <AssetDocs backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
@@ -261,6 +266,13 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
             id="executions"
             icon={RepeatIcon}
             label={getText('executions')}
+            isExpanded={isExpanded}
+            onPress={expandTab}
+          />
+          <AssetPanelTabs.Tab
+            id="executionsCalendar"
+            icon={RepeatIcon}
+            label={getText('executionsCalendar')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
