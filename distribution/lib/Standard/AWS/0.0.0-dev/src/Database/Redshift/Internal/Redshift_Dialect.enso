@@ -161,6 +161,9 @@ type Redshift_Dialect
     prepare_fetch_types_query : SQL_Expression -> Context -> SQL_Statement
     prepare_fetch_types_query self expression context =
         Base_Generator.default_fetch_types_query self expression context
+   
+    ## PRIVATE
+    generate_collate self collation_name:Text -> Text = Base_Generator.default_generate_collate collation_name     
 
     ## PRIVATE
     check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation

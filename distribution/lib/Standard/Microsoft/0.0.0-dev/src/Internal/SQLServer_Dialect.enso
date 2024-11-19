@@ -222,6 +222,9 @@ type SQLServer_Dialect
         Base_Generator.default_fetch_types_query self expression context
 
     ## PRIVATE
+    generate_collate self collation_name:Text -> Text = ' COLLATE ' + collation_name
+
+    ## PRIVATE
     check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation
     check_aggregate_support self aggregate =
         _ = aggregate
@@ -591,14 +594,12 @@ make_order_descriptor internal_column sort_direction text_ordering =
                     Case_Sensitivity.Default ->
                         Order_Descriptor.Value (Internals_Access.column_expression internal_column) sort_direction nulls_order=nulls collation=Nothing
                     Case_Sensitivity.Sensitive ->
-                        Order_Descriptor.Value (Internals_Access.column_expression internal_column) sort_direction nulls_order=nulls collation="ucs_basic"
+                        Order_Descriptor.Value (Internals_Access.column_expression internal_column) sort_direction nulls_order=nulls collation="Latin1_General_BIN2"
                     Case_Sensitivity.Insensitive locale -> case locale == Locale.default of
                         False ->
                             Error.throw (Unsupported_Database_Operation.Error "Case insensitive ordering with custom locale")
                         True ->
-                            upper = SQL_Expression.Operation "UPPER" [Internals_Access.column_expression internal_column]
-                            folded_expression = SQL_Expression.Operation "LOWER" [upper]
-                            Order_Descriptor.Value folded_expression sort_direction nulls_order=nulls collation=Nothing
+                            Order_Descriptor.Value (Internals_Access.column_expression internal_column) sort_direction nulls_order=nulls collation="Latin1_General_CI_AS"
 
 ## PRIVATE
 bool_or = Base_Generator.lift_unary_op "BOOL_OR" arg->

@@ -222,6 +222,9 @@ type SQLite_Dialect
         Panic.throw (Illegal_State.Error "Type inference by asking the Database for the expected types is not supported in SQLite since it tended to give wrong results. This should have never been called - if it was - that is a bug in the Database library.")
 
     ## PRIVATE
+    generate_collate self collation_name:Text -> Text = Base_Generator.default_generate_collate collation_name
+
+    ## PRIVATE
     check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation
     check_aggregate_support self aggregate = case aggregate of
         Group_By _ _ -> True

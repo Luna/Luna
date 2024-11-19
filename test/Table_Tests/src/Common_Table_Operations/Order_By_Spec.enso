@@ -56,7 +56,6 @@ add_order_specs suite_builder setup =
     prefix = setup.prefix
     create_connection_fn = setup.create_connection_func
     test_selection = setup.test_selection
-    pending_collation = "Need more reliable testing for collation locale support"
 
     suite_builder.group prefix+"Table.sort" group_builder->
         data = Data.setup create_connection_fn setup.table_builder
@@ -269,7 +268,7 @@ add_order_specs suite_builder setup =
             t2.at "delta" . to_vector . should_equal ["a03", "a1", "a10", "a2"]
             t2.at "alpha" . to_vector . should_equal [0, 2, 3, 1]
 
-        group_builder.specify "should support case insensitive ordering" pending=pending_collation <|
+        group_builder.specify "should support case insensitive ordering" <|
             t1 = data.table.sort [..Name "eta"] text_ordering=(..Case_Insensitive)
             expected = case test_selection.case_insensitive_ascii_only of
                 True -> ["Aleph", "alpha", "Beta", "bądź"]
