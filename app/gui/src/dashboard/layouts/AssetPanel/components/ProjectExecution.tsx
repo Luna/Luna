@@ -73,8 +73,10 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
     <div className={styles.base()}>
       <div className={styles.timeContainer()}>
         <Text elementType="time" className={styles.time()}>
-          {time.dates?.[0] != null && `${time.dates[0] + 1} `}
-          {`${getText(time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday' : 'everyDay')} `}
+          {time.dates?.[0] != null ?
+            time.dates[0] + 1
+          : getText(time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday' : 'everyDay')
+          }{' '}
           {timeString}
         </Text>
         <Button
