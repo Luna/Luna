@@ -36,10 +36,18 @@ jobs:
         with:
           files: |
             app/**
+            package.json
+            pnpm-lock.yaml
+            pnpm-workspace.yaml
+            eslint.config.js
+            .prettierrc.js
+            .prettierignore
+            vitest.workspace.ts
           files_ignore: |
             app/ide-desktop/**
             app/gui/scripts/**
             app/gui/.gitignore
+            .git-*
 
       - name: List all changed files
         env:
