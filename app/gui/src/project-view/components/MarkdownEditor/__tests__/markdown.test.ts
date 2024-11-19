@@ -65,6 +65,15 @@ test.each([
     ],
   },
   {
+    markdown: '[Link text](<https://www.example.com/index.html>)',
+    expectedLinks: [
+      {
+        text: 'Link text',
+        href: 'https://www.example.com/index.html',
+      },
+    ],
+  },
+  {
     markdown: '[Unclosed url](https://www.example.com/index.html',
     expectedLinks: [],
   },

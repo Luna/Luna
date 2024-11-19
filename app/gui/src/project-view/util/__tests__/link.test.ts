@@ -9,6 +9,7 @@ const cases = {
     'https://some.local',
     'http://AsDf.GhI',
     'https://xn--ls8h.la/',
+    '](http://example.com',
   ],
   emails: [
     'example@gmail.com',
@@ -24,7 +25,6 @@ const cases = {
     'file://hello.world',
     'https://localhost',
     'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==',
-    '](http://example.com',
     '',
     'a@b',
     'a@b.c',
