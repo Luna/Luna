@@ -375,7 +375,7 @@ private _generate_expression dialect base_gen expr expression_kind:Expression_Ki
             "FALSE" -> "0"
             _ -> value
         wrapped = _align_type (SQL_Builder.code modified_value) Expression_Kind.Value expression_kind
-        pair wrapped [wrapped]
+        pair wrapped []
     SQL_Expression.Text_Literal _ ->
         wrapped_literal = base_gen.generate_expression dialect expr
         pair wrapped_literal []
@@ -435,7 +435,7 @@ private _op_return_kind op -> Expression_Kind =
     if return_bool_ops.contains op then Expression_Kind.Boolean_Condition else Expression_Kind.Value
 
 private _op_needs_to_materialize_null_checks op -> Boolean =
-    ["FILL_NULL", "COALESCE", "CAST"].contains op
+    ["FILL_NULL", "COALESCE"].contains op
 
 ## PRIVATE
 make_dialect_operations =
