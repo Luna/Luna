@@ -108,7 +108,7 @@ add_filter_specs suite_builder setup =
                 False -> t.filter "X" (Filter_Condition.Less than=10.0) . at "X" . to_vector . should_equal [2.5]
 
             # In some backends, NaN is greater than any other value, so it is > 10.0; in other implementations it is usually not greater nor smaller, so it gets filtered out.
-            nan_is_comparable = setup.test_selection.is_nan_comparable
+            nan_is_comparable = setup.flagged ..NaN_Non_Comparable . not
             t.filter "X" (Filter_Condition.Greater than=10.0) . at "ix" . to_vector . should_equal <|
                 case setup.flagged ..Supports_Infinity of
                     True -> if nan_is_comparable then [1, 4, 5] else [1, 5]

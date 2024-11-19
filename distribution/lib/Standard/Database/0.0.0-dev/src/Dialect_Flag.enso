@@ -53,7 +53,7 @@ type Dialect_Flag
        Specifies if NaN value is
        treated as greater than all numbers. If `False`, `NaN` is expected to
        yield False to both < and > comparisons.
-    Is_NaN_Comparable
+    NaN_Non_Comparable
     ## PRIAVTE
        If `order_by` was
        applied before, the distinct operation will return the first row from
