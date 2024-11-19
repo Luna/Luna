@@ -453,7 +453,21 @@ pub struct DeployRuntime;
 
 impl JobArchetype for DeployRuntime {
     fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-runtime")
+        RunStepsBuilder::new("release deploy-runtime")
+            .customize(|step| {
+                vec![step
+                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
+                    .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::runtime::NAME)
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
+                        "AWS_ACCESS_KEY_ID",
+                    )
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
+                        "AWS_SECRET_ACCESS_KEY",
+                    )
+                    .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::runtime::REGION)]
+            })
             .build_job("Upload Runtime to ECR", target)
     }
 }
@@ -463,25 +477,26 @@ pub struct DeployYdoc;
 
 impl JobArchetype for DeployYdoc {
     fn job(&self, target: Target) -> Job {
-        let command = format!("release deploy-ydoc-{}", get_input_expression(input::name::YDOC));
-        ecr_deploy_steps_builder(command)
+        let run_command =
+            format!("release deploy-ydoc-{}", get_input_expression(input::name::YDOC));
+        RunStepsBuilder::new(run_command)
+            .customize(|step| {
+                vec![step
+                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
+                    .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::ydoc::NAME)
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
+                        "AWS_ACCESS_KEY_ID",
+                    )
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
+                        "AWS_SECRET_ACCESS_KEY",
+                    )
+                    .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::ydoc::REGION)]
+            })
             .cleaning(RELEASE_CLEANING_POLICY)
             .build_job("Upload Ydoc to ECR", target)
     }
-}
-
-fn ecr_deploy_steps_builder(run_command: impl Into<String>) -> RunStepsBuilder {
-    RunStepsBuilder::new(run_command).customize(|step| {
-        vec![step
-            .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
-            .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::runtime::NAME)
-            .with_secret_exposed_as(secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID, "AWS_ACCESS_KEY_ID")
-            .with_secret_exposed_as(
-                secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
-                "AWS_SECRET_ACCESS_KEY",
-            )
-            .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::runtime::REGION)]
-    })
 }
 
 pub fn expose_os_specific_signing_secret(os: OS, step: Step) -> Step {
