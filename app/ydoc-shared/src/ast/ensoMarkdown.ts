@@ -10,7 +10,16 @@ import type {
   MarkdownParser,
   NodeSpec,
 } from '@lezer/markdown'
-import { parser as baseParser, Element, Emoji, GFM, Subscript, Superscript } from '@lezer/markdown'
+import {
+  parser as baseParser,
+  Element,
+  Emoji,
+  Strikethrough,
+  Subscript,
+  Superscript,
+  Table,
+  TaskList,
+} from '@lezer/markdown'
 import { assertDefined } from 'ydoc-shared/util/assert'
 
 function getType({ parser }: { parser: MarkdownParser }, name: string) {
@@ -394,31 +403,26 @@ function parseLinkLabel(
 // === Debugging ===
 
 /** Represents the structure of a @{link Tree} in a JSON-compatible format. */
-export interface DebugTree {
-  /** The name of the {@link NodeType} */
-  name: string
-  children: DebugTree[]
-}
+export type DebugTree = (string | DebugTree)[]
 
-// noinspection JSUnusedGlobalSymbols
 /** @returns A debug representation of the provided {@link Tree} */
-export function debugTree(tree: { cursor: () => TreeCursor }): DebugTree {
+export function debugTree(tree: { cursor: () => TreeCursor }, doc: string): DebugTree {
   const cursor = tree.cursor()
-  let current: DebugTree[] = []
-  const stack: DebugTree[][] = []
+  let current: (string | DebugTree)[] = []
+  const stack: (string | DebugTree)[][] = []
   cursor.iterate(
     node => {
-      const children: DebugTree[] = []
-      current.push({
-        name: node.name,
-        children,
-      })
+      const child: (string | DebugTree)[] = [node.name]
+      current.push(child)
       stack.push(current)
-      current = children
+      current = child
     },
-    () => (current = stack.pop()!),
+    node => {
+      if (current.length === 1) current.push(doc.slice(node.from, node.to))
+      current = stack.pop()!
+    },
   )
-  return current[0]!
+  return current[0]! as DebugTree
 }
 
 // === Helpers ===
@@ -457,9 +461,11 @@ const ensoMarkdownLanguageExtension = {
  *   a rendering mode where markup (and some associated spacing) is hidden.
  */
 export const markdownParser: MarkdownParser = baseParser.configure([
-  GFM,
+  Emoji,
+  Strikethrough,
   Subscript,
   Superscript,
-  Emoji,
+  Table,
+  TaskList,
   ensoMarkdownLanguageExtension,
 ])
