@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+use crate::ci_gen::input;
 use crate::ci_gen::not_default_branch;
 use crate::ci_gen::runs_on;
 use crate::ci_gen::secret;
@@ -15,6 +16,7 @@ use crate::ide::web::env::VITE_ENSO_MAPBOX_API_TOKEN;
 
 use core::panic;
 use ide_ci::actions::workflow::definition::cancel_workflow_action;
+use ide_ci::actions::workflow::definition::get_input_expression;
 use ide_ci::actions::workflow::definition::shell;
 use ide_ci::actions::workflow::definition::Access;
 use ide_ci::actions::workflow::definition::Job;
@@ -457,24 +459,14 @@ impl JobArchetype for DeployRuntime {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct DeployYdocPolyglot;
+pub struct DeployYdoc;
 
-impl JobArchetype for DeployYdocPolyglot {
+impl JobArchetype for DeployYdoc {
     fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-ydoc-polyglot")
+        let command = format!("release deploy-ydoc-{}", get_input_expression(input::name::YDOC));
+        ecr_deploy_steps_builder(command)
             .cleaning(RELEASE_CLEANING_POLICY)
-            .build_job("Upload polyglot Ydoc to ECR", target)
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct DeployYdocNodejs;
-
-impl JobArchetype for DeployYdocNodejs {
-    fn job(&self, target: Target) -> Job {
-        ecr_deploy_steps_builder("release deploy-ydoc-nodejs")
-            .cleaning(RELEASE_CLEANING_POLICY)
-            .build_job("Upload Node.js Ydoc to ECR", target)
+            .build_job("Upload Ydoc to ECR", target)
     }
 }
 
