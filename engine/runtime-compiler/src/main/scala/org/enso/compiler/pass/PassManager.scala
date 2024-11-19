@@ -241,10 +241,25 @@ class PassManager(
     ix - totalLength == indexOfPassInGroup
   }
 
+  /** Validates consistency between the IR accessible via `moduleContext` and `ir`.
+    * There is no way how to enforce this consistency statically.
+    * Should be called only iff assertions are enabled.
+    * @return true if they are consistent, otherwise throws [[AssertionError]].
+    */
   private def validateConsistency(
     ir: Module,
     moduleContext: ModuleContext
   ): Boolean = {
+    def hex(obj: Object): String = {
+      if (obj != null) {
+        val hexStr    = Integer.toHexString(System.identityHashCode(obj))
+        val className = obj.getClass.getSimpleName
+        s"$className@${hexStr}"
+      } else {
+        "null"
+      }
+    }
+
     if (
       moduleContext.module.getCompilationStage.isAtLeast(
         CompilationStage.AFTER_PARSING
@@ -252,18 +267,20 @@ class PassManager(
     ) {
       if (!(moduleContext.module.getIr eq ir)) {
         throw new AssertionError(
-          "Mismatch of IR between ModuleContext and IR in " + moduleContext
-            .getName()
+          "Mismatch of IR between ModuleContext and IR in module '" + moduleContext
+            .getName() + "'. " +
+          s"IR from moduleContext: ${hex(moduleContext.module.getIr)}, IR from module: ${hex(ir)}"
         )
       }
       val bmFromCtx  = moduleContext.bindingsAnalysis()
       val bmFromMeta = ir.passData.get(BindingAnalysis)
-      if (bmFromCtx != null) {
-        Asserts.assertInJvm(bmFromMeta.isDefined)
-        Asserts.assertInJvm(bmFromCtx == bmFromMeta.get)
-      }
-      if (bmFromMeta.isDefined) {
-        Asserts.assertInJvm(bmFromCtx == bmFromMeta.get)
+      if (bmFromMeta.isDefined || bmFromCtx != null) {
+        Asserts.assertInJvm(
+          bmFromCtx eq bmFromMeta.get,
+          s"BindingsMap mismatch between ModuleContext and IR in module '" +
+          moduleContext.getName() + "'. " +
+          s"BindingsMap from moduleContext: ${hex(bmFromCtx)}, BindingsMap from IR: ${hex(bmFromMeta.get)}"
+        )
       }
     }
     true
