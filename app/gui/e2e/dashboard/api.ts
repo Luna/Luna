@@ -647,7 +647,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         const body: Body = request.postDataJSON()
         const parentId = body.parentDirectoryId
         // Can be any asset ID.
-        const id = backend.DirectoryId(`directory-${uniqueString.uniqueString()}`)
+        const id = backend.DirectoryId(`${assetId?.split('-')[0]}-${uniqueString.uniqueString()}`)
         const json: backend.CopyAssetResponse = {
           asset: {
             id,
