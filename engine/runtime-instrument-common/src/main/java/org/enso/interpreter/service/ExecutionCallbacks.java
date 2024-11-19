@@ -101,7 +101,7 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
     Object result = info.getResult();
     String[] resultTypes = typeOf(result);
     UUID nodeId = info.getId();
-    String[] cachedTypes = cache.getTypes(nodeId);
+    String[] cachedTypes = cache.getType(nodeId);
     FunctionCallInfo call = functionCallInfoById(nodeId);
     FunctionCallInfo cachedCall = cache.getCall(nodeId);
     ProfilingInfo[] profilingInfo = new ProfilingInfo[] {new ExecutionTime(info.getElapsedTime())};
@@ -120,7 +120,7 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
       cache.offer(nodeId, result);
       cache.putCall(nodeId, call);
     }
-    cache.putTypes(nodeId, resultTypes);
+    cache.putType(nodeId, resultTypes);
 
     callOnComputedCallback(expressionValue);
     executeOneshotExpressions(nodeId, result, info);
@@ -166,7 +166,7 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
         new ExpressionValue(
             nodeId,
             result,
-            cache.getTypes(nodeId),
+            cache.getType(nodeId),
             typeOf(result),
             calls.get(nodeId),
             cache.getCall(nodeId),

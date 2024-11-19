@@ -107,7 +107,7 @@ public final class RuntimeCache implements java.util.function.Function<String, O
    * @return the previously cached type.
    */
   @CompilerDirectives.TruffleBoundary
-  public String[] putTypes(UUID key, String[] typeNames) {
+  public String[] putType(UUID key, String[] typeNames) {
     return types.put(key, typeNames);
   }
 
@@ -115,7 +115,7 @@ public final class RuntimeCache implements java.util.function.Function<String, O
    * @return the cached type of the expression
    */
   @CompilerDirectives.TruffleBoundary
-  public String[] getTypes(UUID key) {
+  public String[] getType(UUID key) {
     return types.get(key);
   }
 

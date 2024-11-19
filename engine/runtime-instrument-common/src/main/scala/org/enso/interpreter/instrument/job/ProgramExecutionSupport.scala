@@ -198,7 +198,7 @@ object ProgramExecutionSupport {
         val notExecuted =
           methodCallsCache.getNotExecuted(executionFrame.cache.getCalls)
         notExecuted.forEach { expressionId =>
-          val expressionTypes = executionFrame.cache.getTypes(expressionId)
+          val expressionTypes = executionFrame.cache.getType(expressionId)
           val expressionCall  = executionFrame.cache.getCall(expressionId)
           onCachedMethodCallCallback.accept(
             new ExpressionValue(
