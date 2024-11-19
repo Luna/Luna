@@ -86,11 +86,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const itemProjectState = item.projectState ?? CLOSED_PROJECT_STATE
-  const {
-    data: projectState,
-    isError,
-    refetch,
-  } = reactQuery.useQuery({
+  const { data: projectState, isError } = reactQuery.useQuery({
     ...projectHooks.createGetProjectDetailsQuery({
       assetId: item.id,
       parentId: item.parentId,
@@ -142,10 +138,6 @@ export default function ProjectIcon(props: ProjectIconProps) {
     }
     return status
   })()
-
-  useEffect(() => {
-    void refetch()
-  }, [itemProjectState, refetch])
 
   const spinnerState = ((): SpinnerState => {
     if (!isOpened) {
