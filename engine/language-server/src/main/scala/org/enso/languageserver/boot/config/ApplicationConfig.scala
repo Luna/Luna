@@ -11,16 +11,19 @@ object ApplicationConfig {
   private val ConfigFilename  = "application.conf"
   private val ConfigNamespace = "language-server"
 
-  def load(): ApplicationConfig = {
+  def load(configFileName: String): ApplicationConfig = {
     val contextClassLoader = Thread.currentThread().getContextClassLoader
     try {
       Thread.currentThread().setContextClassLoader(getClass.getClassLoader)
       ConfigSource
-        .resources(ConfigFilename)
+        .resources(configFileName)
         .withFallback(ConfigSource.systemProperties)
         .at(ConfigNamespace)
         .loadOrThrow[ApplicationConfig]
     } finally Thread.currentThread().setContextClassLoader(contextClassLoader)
   }
+
+  def load(): ApplicationConfig =
+    load(ConfigFilename)
 
 }

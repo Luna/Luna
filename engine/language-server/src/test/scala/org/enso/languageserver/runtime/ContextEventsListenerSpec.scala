@@ -496,7 +496,7 @@ class ContextEventsListenerSpec
       ProjectDirectoriesConfig.initialize(root.file),
       ProfilingConfig(),
       StartupConfig(),
-      ApplicationConfig.load(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
   }

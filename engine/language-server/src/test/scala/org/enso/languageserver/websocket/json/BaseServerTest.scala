@@ -118,7 +118,7 @@ abstract class BaseServerTest
       ProjectDirectoriesConfig(testContentRoot.file),
       ProfilingConfig(),
       StartupConfig(),
-      ApplicationConfig.load(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
 
@@ -191,7 +191,7 @@ abstract class BaseServerTest
   var cleanupCallbacks: List[() => Unit] = Nil
 
   var timingsConfig = TimingsConfig.default()
-  var appConfig     = ApplicationConfig.load()
+  var appConfig     = ApplicationConfig.load("application-test.conf")
 
   override def afterEach(): Unit = {
     cleanupCallbacks.foreach(_())

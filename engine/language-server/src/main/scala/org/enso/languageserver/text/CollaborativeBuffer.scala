@@ -975,7 +975,7 @@ class CollaborativeBuffer(
     buffer: Buffer,
     shutdownTimeout: Cancellable
   ): Receive = {
-    case DelayedShutdownTimeout(_) =>
+    case DelayedShutdownTimeout =>
       runtimeConnector ! Api.Request(
         Api.CloseFileNotification(buffer.fileWithMetadata.file)
       )
@@ -1090,7 +1090,7 @@ object CollaborativeBuffer {
 
   case class ReloadedBuffer(path: Path)
 
-  private case class DelayedShutdownTimeout(path: Path)
+  private case object DelayedShutdownTimeout
 
   /** Creates a configuration object used to create a [[CollaborativeBuffer]]
     *

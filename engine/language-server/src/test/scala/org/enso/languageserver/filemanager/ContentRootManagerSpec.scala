@@ -64,7 +64,7 @@ class ContentRootManagerSpec
       ProjectDirectoriesConfig.initialize(root.file),
       ProfilingConfig(),
       StartupConfig(),
-      ApplicationConfig.load(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
     rootActor   = system.actorOf(ContentRootManagerActor.props(config))

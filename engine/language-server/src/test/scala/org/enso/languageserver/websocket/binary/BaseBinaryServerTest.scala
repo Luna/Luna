@@ -56,7 +56,7 @@ abstract class BaseBinaryServerTest extends BinaryServerTestKit {
     ProjectDirectoriesConfig.initialize(testContentRoot.file),
     ProfilingConfig(),
     StartupConfig(),
-    ApplicationConfig.load(),
+    ApplicationConfig.load("application-test.conf"),
     None
   )
 
