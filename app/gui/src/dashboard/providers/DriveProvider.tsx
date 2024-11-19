@@ -19,7 +19,6 @@ import type {
   DirectoryId,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
-import { useEventCallback } from '../hooks/eventCallbackHooks'
 
 // ==================
 // === DriveStore ===
