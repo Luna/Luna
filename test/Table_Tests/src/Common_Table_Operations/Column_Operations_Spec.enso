@@ -20,7 +20,6 @@ from Standard.Test import all
 
 import enso_dev.Base_Tests.Data.Round_Spec
 
-import project.Common_Table_Operations.Main.Char_Max_Size_After_Substring_Behavior
 from project.Common_Table_Operations.Util import all
 
 main filter=Nothing = run_default_backend add_specs filter
