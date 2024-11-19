@@ -269,7 +269,7 @@ add_order_specs suite_builder setup =
             t2.at "delta" . to_vector . should_equal ["a03", "a1", "a10", "a2"]
             t2.at "alpha" . to_vector . should_equal [0, 2, 3, 1]
 
-        group_builder.specify "should support case insensitive ordering" pending=(if test_selection.case_insensitive_ordering.not then "Case insensitive ordering is not supported." else pending_collation) <|
+        group_builder.specify "should support case insensitive ordering" pending=pending_collation <|
             t1 = data.table.sort [..Name "eta"] text_ordering=(..Case_Insensitive)
             expected = case test_selection.case_insensitive_ascii_only of
                 True -> ["Aleph", "alpha", "Beta", "bądź"]
@@ -285,7 +285,7 @@ add_order_specs suite_builder setup =
             t4 = data.table.sort [..Name "psi" ..Descending] text_ordering=(..Case_Sensitive)
             t4.at "psi" . to_vector . should_equal ["c10", "c01", "C2", Nothing]
 
-        group_builder.specify "should support natural and case insensitive ordering at the same time" pending=(if (test_selection.case_insensitive_ordering.not) then "Case sensitive ordering is not supported.") <|
+        group_builder.specify "should support natural and case insensitive ordering at the same time" <|
             t1 = data.table.sort [..Name "psi"] text_ordering=(..Case_Insensitive sort_digits_as_numbers=True)
             case setup.flagged ..Supports_Sort_Digits_As_Numbers of
                 True -> t1.at "psi" . to_vector . should_equal [Nothing, "c01", "C2", "c10"]

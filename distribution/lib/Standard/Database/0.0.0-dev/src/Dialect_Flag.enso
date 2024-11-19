@@ -33,9 +33,6 @@ type Dialect_Flag
        Specifies if the backend supports natural ordering operations.
     Supports_Sort_Digits_As_Numbers
     ## PRIVATE
-       Specifies if the backend supports case insensitive ordering.
-    Case_Insensitive_Ordering
-    ## PRIVATE
        Specifies if the backend supports unicode normalization in its default ordering.
     Order_By_Unicode_Normalization_By_Default
     ## PRIVATE
