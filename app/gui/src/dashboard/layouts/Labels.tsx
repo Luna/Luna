@@ -5,33 +5,23 @@ import { useMutation } from '@tanstack/react-query'
 
 import PlusIcon from '#/assets/plus.svg'
 import Trash2Icon from '#/assets/trash2.svg'
-
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
 import * as ariaComponents from '#/components/AriaComponents'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
 import SvgMask from '#/components/SvgMask'
-
+import AssetEventType from '#/events/AssetEventType'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import DragModal from '#/modals/DragModal'
 import NewLabelModal from '#/modals/NewLabelModal'
-
+import * as modalProvider from '#/providers/ModalProvider'
+import * as textProvider from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-
-import AssetEventType from '#/events/AssetEventType'
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import * as array from '#/utilities/array'
 import type AssetQuery from '#/utilities/AssetQuery'
 import * as drag from '#/utilities/drag'
-
-// ==============
-// === Labels ===
-// ==============
 
 /** Props for a {@link Labels}. */
 export interface LabelsProps {
