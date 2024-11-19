@@ -67,7 +67,7 @@ export default function Settings() {
     backendMutationOptions(backend, 'updateOrganization'),
   ).mutateAsync
 
-  const [, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [localRootDirectory, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
   const updateLocalRootPath = useEventCallback((value: string) => {
     setLocalRootDirectory(value)
     if (localBackend) {
@@ -93,6 +93,7 @@ export default function Settings() {
       organization,
       updateUser,
       updateOrganization,
+      localRootPath: localRootDirectory,
       updateLocalRootPath,
       resetLocalRootPath,
       toastAndLog,
@@ -116,6 +117,7 @@ export default function Settings() {
       queryClient,
       isMatch,
       changePassword,
+      localRootDirectory,
     ],
   )
 
