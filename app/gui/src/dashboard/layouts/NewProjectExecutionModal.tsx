@@ -104,10 +104,10 @@ function createUpsertExecutionSchema(getText: GetText) {
             maxDurationMinutes,
             parallelMode,
             time: {
-              ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
-              ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
-              ...(repeatInterval !== 'hourly' && { hours: [utcDate.hour] }),
-              minute: utcDate.minute,
+              ...(repeatInterval === 'monthly' && { dates }),
+              ...(repeatInterval === 'weekly' && { days }),
+              ...(repeatInterval !== 'hourly' && { hours }),
+              minute,
             },
           }
         } else {
@@ -116,10 +116,10 @@ function createUpsertExecutionSchema(getText: GetText) {
             maxDurationMinutes,
             parallelMode,
             time: {
-              ...(repeatInterval === 'monthly' && { dates }),
-              ...(repeatInterval === 'weekly' && { days }),
-              ...(repeatInterval !== 'hourly' && { hours }),
-              minute,
+              ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
+              ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
+              ...(repeatInterval !== 'hourly' && { hours: [utcDate.hour] }),
+              minute: utcDate.minute,
             },
           }
         }

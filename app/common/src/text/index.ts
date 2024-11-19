@@ -143,6 +143,9 @@ interface PlaceholderOverrides {
 
   readonly repeatsAtX: [dates: string]
   readonly xMinutes: [minutes: number]
+  readonly xAm: [hour: string]
+  readonly xPm: [hour: string]
+  readonly everyHourXMinute: [minute: string]
   readonly groupNameSettingsInputDescription: [howLong: number]
   readonly xIsUsingTheProject: [userName: string]
   readonly xItemsCopied: [count: number]
