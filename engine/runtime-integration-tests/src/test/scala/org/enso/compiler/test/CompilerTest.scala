@@ -16,7 +16,7 @@ import org.enso.compiler.core.ir.MetadataStorage.MetadataPair
 import org.enso.compiler.data.BindingsMap.ModuleReference
 import org.enso.compiler.data.{BindingsMap, CompilerConfig}
 import org.enso.compiler.pass.analyse.BindingAnalysis
-import org.enso.compiler.pass.{PassConfiguration, PassManager}
+import org.enso.compiler.pass.{PassConfiguration, PassGroup, PassManager}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.enso.interpreter.runtime
@@ -30,6 +30,20 @@ import java.util.UUID
 trait CompilerTest extends AnyWordSpecLike with Matchers with CompilerRunner
 trait CompilerRunner {
   // === IR Utilities =========================================================
+
+  /** Utility method to access private field of [[PassManager]]. We cannot use
+    * a class in the same package because patching up the JPMS modules would
+    * be too complex. Let's just hack it via reflection here.
+    * @return
+    */
+  private def getPassesViaReflection(
+    passManager: PassManager
+  ): List[PassGroup] = {
+    val passesField = passManager.getClass.getDeclaredField("passes")
+    passesField.setAccessible(true)
+    val passes = passesField.get(passManager)
+    passes.asInstanceOf[List[PassGroup]]
+  }
 
   /** Provides an extension method allowing the running of a specified list of
     * passes on the provided IR.
@@ -48,7 +62,16 @@ trait CompilerRunner {
       passManager: PassManager,
       moduleContext: ModuleContext
     ): Module = {
-      passManager.runPassesOnModule(ir, moduleContext)
+      val passGroups = getPassesViaReflection(passManager)
+      val runtimeMod = runtime.Module.fromCompilerModule(moduleContext.module)
+      passGroups.foldLeft(ir)((curIr, group) => {
+        // Before a PassGroup is run on a module, we need to explicitly set the
+        // IR on the runtime module, as the pass manager will not do this for us.
+        // This is to ensure consistency between the curIr and IR stored in moduleContext
+        ModuleTestUtils.unsafeSetIr(runtimeMod, curIr)
+        val newIr = passManager.runPassesOnModule(curIr, moduleContext, group)
+        newIr
+      })
     }
   }
 

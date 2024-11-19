@@ -2909,6 +2909,16 @@ lazy val `runtime-integration-tests` =
           (`runtime` / javaModuleName).value -> Seq(javaSrcDir, testClassesDir)
         )
       },
+      Test / addOpens := {
+        val compilerModName = (`runtime-compiler` / javaModuleName).value
+        // In the tests, we access a private field of org.enso.compiler.pass.PassManager via reflection.
+        Map(
+          compilerModName + "/org.enso.compiler.pass" -> Seq(
+            (`runtime` / javaModuleName).value,
+            "ALL-UNNAMED"
+          )
+        )
+      },
       // runtime-integration-tests does not have module descriptor on its own, so we have
       // to explicitly add some modules to the resolution.
       Test / addModules := Seq(
