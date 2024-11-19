@@ -122,6 +122,26 @@ function normalizeMarkdown(rawMarkdown: string): string {
   return normalized
 }
 
+function stringCollector() {
+  let output = ''
+  const collector = {
+    text: (text: string) => (output += text),
+    wrapText: (text: string) => (output += text),
+    newline: () => (output += '\n'),
+  }
+  return { collector, output }
+}
+
+/**
+ * Convert from "normalized" Markdown (with hard line-breaks removed) to the standard format, with paragraphs separated
+ * by blank lines.
+ */
+export function normalizedMarkdownToStandard(normalizedMarkdown: string) {
+  const { collector, output } = stringCollector()
+  standardizeMarkdown(normalizedMarkdown, collector)
+  return output
+}
+
 /**
  * Convert from "normalized" Markdown to the on-disk representation, with paragraphs hard-wrapped and separated by blank
  * lines.
