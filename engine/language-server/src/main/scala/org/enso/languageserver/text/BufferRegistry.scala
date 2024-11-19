@@ -3,6 +3,7 @@ package org.enso.languageserver.text
 import akka.actor.{Actor, ActorRef, Cancellable, Props, Stash, Terminated}
 import com.typesafe.scalalogging.LazyLogging
 import org.enso.languageserver.boot.TimingsConfig
+import org.enso.languageserver.boot.config.TimeoutConfig
 import org.enso.languageserver.capability.CapabilityProtocol.{
   AcquireCapability,
   CapabilityAcquisitionBadRequest,
@@ -98,7 +99,8 @@ class BufferRegistry(
   vcsManager: ActorRef,
   runtimeConnector: ActorRef,
   contentRootManager: ContentRootManager,
-  timingsConfig: TimingsConfig
+  timingsConfig: TimingsConfig,
+  timeoutConfig: TimeoutConfig
 )(implicit
   versionCalculator: ContentBasedVersioning
 ) extends Actor
@@ -131,7 +133,8 @@ class BufferRegistry(
               path,
               fileManager,
               runtimeConnector,
-              timingsConfig = timingsConfig
+              timingsConfig = timingsConfig,
+              timeoutConfig = timeoutConfig
             ),
             s"collaborative-buffer-${UUID.randomUUID()}"
           )
@@ -150,7 +153,8 @@ class BufferRegistry(
               path,
               fileManager,
               runtimeConnector,
-              timingsConfig = timingsConfig
+              timingsConfig = timingsConfig,
+              timeoutConfig = timeoutConfig
             )
           )
         context.watch(bufferRef)
@@ -527,7 +531,8 @@ object BufferRegistry {
     vcsManager: ActorRef,
     runtimeConnector: ActorRef,
     contentRootManager: ContentRootManager,
-    timingsConfig: TimingsConfig
+    timingsConfig: TimingsConfig,
+    timeoutConfig: TimeoutConfig
   )(implicit
     versionCalculator: ContentBasedVersioning
   ): Props =
@@ -537,7 +542,8 @@ object BufferRegistry {
         vcsManager,
         runtimeConnector,
         contentRootManager,
-        timingsConfig
+        timingsConfig,
+        timeoutConfig
       )
     )
 

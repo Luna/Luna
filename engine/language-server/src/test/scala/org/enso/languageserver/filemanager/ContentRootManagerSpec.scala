@@ -5,6 +5,7 @@ import akka.testkit.{TestDuration, TestKit, TestProbe}
 import org.apache.commons.lang3.SystemUtils
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.data._
 import org.enso.languageserver.filemanager.ContentRootManagerProtocol.{
   ContentRootsAddedNotification,
@@ -63,6 +64,7 @@ class ContentRootManagerSpec
       ProjectDirectoriesConfig.initialize(root.file),
       ProfilingConfig(),
       StartupConfig(),
+      ApplicationConfig.load(),
       None
     )
     rootActor   = system.actorOf(ContentRootManagerActor.props(config))

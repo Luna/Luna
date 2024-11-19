@@ -4,7 +4,7 @@ import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 
 /** An `application.conf` configuration. */
-case class ApplicationConfig(ydoc: YdocConfig)
+case class ApplicationConfig(ydoc: YdocConfig, timeout: TimeoutConfig)
 
 object ApplicationConfig {
 

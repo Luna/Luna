@@ -102,6 +102,7 @@ final class ReceivesTreeUpdatesHandler(
           context.actorOf(
             PathWatcher.props(
               config.pathWatcher,
+              config.appConfig.timeout,
               contentRootManager,
               watcherFactory,
               fs,
@@ -131,6 +132,7 @@ final class ReceivesTreeUpdatesHandler(
             context.actorOf(
               PathWatcher.props(
                 config.pathWatcher,
+                config.appConfig.timeout,
                 contentRootManager,
                 watcherFactory,
                 fs,

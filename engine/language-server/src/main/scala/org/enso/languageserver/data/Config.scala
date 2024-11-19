@@ -2,12 +2,12 @@ package org.enso.languageserver.data
 
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.filemanager.ContentRootWithFile
 import org.enso.logger.masking.{MaskedPath, ToLogString}
 
 import java.io.File
 import java.nio.file.{Files, Path}
-
 import scala.concurrent.duration._
 
 /** Configuration of the path watcher.
@@ -157,6 +157,7 @@ case class Config(
   directories: ProjectDirectoriesConfig,
   profiling: ProfilingConfig,
   startup: StartupConfig,
+  appConfig: ApplicationConfig,
   aiCompletionConfig: Option[AICompletionConfig]
 ) extends ToLogString {
 

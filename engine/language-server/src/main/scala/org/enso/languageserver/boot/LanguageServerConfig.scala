@@ -1,8 +1,10 @@
 package org.enso.languageserver.boot
 
-import java.util.UUID
+import org.enso.languageserver.boot.config.ApplicationConfig
 
+import java.util.UUID
 import org.enso.runner.common.ProfilingConfig
+
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**  The config of the running Language Server instance.
@@ -27,6 +29,7 @@ case class LanguageServerConfig(
   contentRootPath: String,
   profilingConfig: ProfilingConfig,
   startupConfig: StartupConfig,
+  appConfig: ApplicationConfig,
   name: String                                      = "language-server",
   computeExecutionContext: ExecutionContextExecutor = ExecutionContext.global
 )
