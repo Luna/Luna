@@ -36,8 +36,8 @@ from project.Data.Boolean import Boolean, False, True
 from project.Data.Json.Extensions import all
 from project.Data.Text.Extensions import all
 
-polyglot java import java.lang.IllegalArgumentException
 polyglot java import java.io.IOException
+polyglot java import java.lang.IllegalArgumentException
 polyglot java import java.net.http.HttpClient
 polyglot java import java.net.http.HttpClient.Builder as ClientBuilder
 polyglot java import java.net.http.HttpClient.Redirect
@@ -49,7 +49,6 @@ polyglot java import java.net.http.HttpRequest.Builder
 polyglot java import java.net.InetSocketAddress
 polyglot java import java.net.ProxySelector
 polyglot java import javax.net.ssl.SSLContext
-polyglot java import org.enso.base.enso_cloud.EnsoHTTPResponseCache
 polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
 polyglot java import org.enso.base.file_system.File_Utils
 polyglot java import org.enso.base.net.http.MultipartBodyBuilder
@@ -184,7 +183,7 @@ type HTTP
 
              HTTP.clear_response_cache
     clear_response_cache : Nothing
-    clear_response_cache -> Nothing = EnsoHTTPResponseCache.clear
+    clear_response_cache -> Nothing = EnsoSecretHelper.getCache.clear
 
     ## PRIVATE
        ADVANCED

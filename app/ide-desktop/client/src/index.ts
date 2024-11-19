@@ -20,7 +20,7 @@ import * as portfinder from 'portfinder'
 
 import * as common from 'enso-common'
 import * as buildUtils from 'enso-common/src/buildUtils'
-import GLOBAL_CONFIG from 'enso-common/src/config.json' assert { type: 'json' }
+import GLOBAL_CONFIG from 'enso-common/src/config.json' with { type: 'json' }
 
 import * as authentication from '@/authentication'
 import * as config from '@/config'
@@ -130,6 +130,13 @@ class App {
         electron.app.whenReady().then(
           async () => {
             logger.log('Electron application is ready.')
+
+            electron.protocol.handle('enso', request =>
+              projectManager.handleProjectProtocol(
+                decodeURIComponent(request.url.replace('enso://', '')),
+              ),
+            )
+
             await this.main(windowSize)
           },
           error => {
