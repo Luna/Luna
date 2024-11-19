@@ -270,9 +270,9 @@ add_order_specs suite_builder setup =
 
         group_builder.specify "should support case insensitive ordering" <|
             t1 = data.table.sort [..Name "eta"] text_ordering=(..Case_Insensitive)
-            expected = case test_selection.case_insensitive_ascii_only of
-                True -> ["Aleph", "alpha", "Beta", "bądź"]
-                False -> ["Aleph", "alpha", "bądź", "Beta"]
+            expected = case setup.flagged ..Case_Insensitive_Non_Ascii of
+                False -> ["Aleph", "alpha", "Beta", "bądź"]
+                True -> ["Aleph", "alpha", "bądź", "Beta"]
             t1.at "eta" . to_vector . should_equal expected
 
             t2 = data.table.sort [..Name "eta"] text_ordering=(..Case_Sensitive)
