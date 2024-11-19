@@ -264,6 +264,7 @@ type Snowflake_Dialect
             Dialect_Flag.Allows_Mixed_Type_Comparisons -> False
             Dialect_Flag.Supports_Unicode_Normalization -> False
             Dialect_Flag.NaN_Non_Comparable -> False
+            Dialect_Flag.Distinct_Returns_First_Row_From_Group_If_Ordered -> False
 
     ## PRIVATE
        The default table types to use when listing tables.
@@ -825,7 +826,7 @@ make_distinct_extension distinct_expressions =
         ## We could use the ORDER BY here to ensure any previous ordering is preserved by distinct.
            But to do so we need to have a robust way of checking such ordering, even if subqueries were taken in the meantime.
            This may be related to #10321
-           Once fixed, should re-enable the `distinct_returns_first_row_from_group_if_ordered` flag back to `True`.
+           Once fixed, should re-enable the `Distinct_Returns_First_Row_From_Group_If_Ordered` flag back to `True`.
         SQL_Builder.code " QUALIFY ROW_NUMBER() OVER (PARTITION BY " ++ joined ++ " ORDER BY 1) = 1 "
     Context_Extension.Value position=550 expressions=distinct_expressions run_generator=run_generator
 

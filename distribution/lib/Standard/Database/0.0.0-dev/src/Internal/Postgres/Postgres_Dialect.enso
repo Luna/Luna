@@ -275,6 +275,7 @@ type Postgres_Dialect
             Dialect_Flag.Allows_Mixed_Type_Comparisons -> False
             Dialect_Flag.Supports_Unicode_Normalization -> False
             Dialect_Flag.NaN_Non_Comparable -> False
+            Dialect_Flag.Distinct_Returns_First_Row_From_Group_If_Ordered -> True
 
     ## PRIVATE
        The default table types to use when listing tables.
