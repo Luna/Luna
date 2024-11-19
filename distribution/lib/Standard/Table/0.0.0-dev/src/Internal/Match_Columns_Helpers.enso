@@ -120,7 +120,8 @@ private _match_columns_by_position tables columns_to_keep problem_builder = case
 
 ## PRIVATE
 type Column_Set
-    private Value (name : Text) (column_indices : Vector Integer)
+    ## PRIVATE
+    Value (name : Text) (column_indices : Vector Integer)
 
     private resolve_columns self (all_tables : Vector) = self.column_indices.zip all_tables i-> parent_table->
         case i of
