@@ -256,10 +256,14 @@ add_order_specs suite_builder setup =
                     t1.at "phi" . to_vector . should_equal [Nothing, 's\u0301b', "śa", "śc"]
                     t1.at "alpha" . to_vector . should_equal [2, 1, 0, 3]
 
-        group_builder.specify "should support natural ordering" pending=(if test_selection.natural_ordering.not then "Natural ordering is not supported.") <|
+        group_builder.specify "should support natural ordering" <|
             t1 = data.table.sort [..Name "delta"] text_ordering=(..Default sort_digits_as_numbers=True)
-            t1.at "delta" . to_vector . should_equal ["a1", "a2", "a03", "a10"]
-            t1.at "alpha" . to_vector . should_equal [2, 1, 0, 3]
+            case setup.flagged ..Supports_Sort_Digits_As_Numbers of
+                True ->
+                    t1.at "delta" . to_vector . should_equal ["a1", "a2", "a03", "a10"]
+                    t1.at "alpha" . to_vector . should_equal [2, 1, 0, 3]
+                False ->
+                    t1.should_fail_with (Unsupported_Database_Operation.Error "sort_digits_as_numbers")
 
             t2 = data.table.sort ["delta"] text_ordering=(..Default sort_digits_as_numbers=False)
             t2.at "delta" . to_vector . should_equal ["a03", "a1", "a10", "a2"]
@@ -281,18 +285,24 @@ add_order_specs suite_builder setup =
             t4 = data.table.sort [..Name "psi" ..Descending] text_ordering=(..Case_Sensitive)
             t4.at "psi" . to_vector . should_equal ["c10", "c01", "C2", Nothing]
 
-        group_builder.specify "should support natural and case insensitive ordering at the same time" pending=(if (test_selection.natural_ordering.not || test_selection.case_insensitive_ordering.not) then "Natural ordering or case sensitive ordering is not supported.") <|
+        group_builder.specify "should support natural and case insensitive ordering at the same time" pending=(if (test_selection.case_insensitive_ordering.not) then "Case sensitive ordering is not supported.") <|
             t1 = data.table.sort [..Name "psi"] text_ordering=(..Case_Insensitive sort_digits_as_numbers=True)
-            t1.at "psi" . to_vector . should_equal [Nothing, "c01", "C2", "c10"]
+            case setup.flagged ..Supports_Sort_Digits_As_Numbers of
+                True -> t1.at "psi" . to_vector . should_equal [Nothing, "c01", "C2", "c10"]
+                False -> t1.should_fail_with (Unsupported_Database_Operation.Error "sort_digits_as_numbers")
 
             t2 = data.table.sort [..Name "psi"] text_ordering=(..Default sort_digits_as_numbers=True)
-            t2.at "psi" . to_vector . should_equal [Nothing, "C2", "c01", "c10"]
+            case setup.flagged ..Supports_Sort_Digits_As_Numbers of
+                True -> t2.at "psi" . to_vector . should_equal [Nothing, "C2", "c01", "c10"]
+                False -> t2.should_fail_with (Unsupported_Database_Operation.Error "sort_digits_as_numbers")
 
             t3 = data.table.sort [..Name "psi"] text_ordering=(..Case_Insensitive)
             t3.at "psi" . to_vector . should_equal [Nothing, "c01", "c10", "C2"]
 
             t4 = data.table.sort [..Name "psi"]
-            t4.at "psi" . to_vector . should_equal [Nothing, "C2", "c01", "c10"]
+            case setup.flagged ..Case_Sensitive_Text_Comparison of
+                True -> t4.at "psi" . to_vector . should_equal [Nothing, "C2", "c01", "c10"]
+                False -> t4.at "psi" . to_vector . should_equal [Nothing, "c01", "c10", "C2"]
 
         group_builder.specify "text ordering settings should not affect numeric columns" <|
             ordering = ..Case_Insensitive sort_digits_as_numbers=True

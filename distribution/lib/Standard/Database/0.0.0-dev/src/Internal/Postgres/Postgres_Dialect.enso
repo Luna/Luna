@@ -266,6 +266,7 @@ type Postgres_Dialect
             Dialect_Flag.Supports_Case_Sensitive_Columns -> True
             Dialect_Flag.Supports_Infinity -> True
             Dialect_Flag.Case_Sensitive_Text_Comparison -> True
+            Dialect_Flag.Supports_Sort_Digits_As_Numbers -> False
 
     ## PRIVATE
        The default table types to use when listing tables.
@@ -555,7 +556,7 @@ make_order_descriptor internal_column sort_direction text_ordering =
             Order_Descriptor.Value internal_column.expression sort_direction nulls_order=nulls collation=Nothing
         _ ->
             ## In the future we can modify this error to suggest using a custom defined collation.
-            if text_ordering.sort_digits_as_numbers then Error.throw (Unsupported_Database_Operation.Error "Natural ordering") else
+            if text_ordering.sort_digits_as_numbers then Error.throw (Unsupported_Database_Operation.Error "sort_digits_as_numbers") else
                 case text_ordering.case_sensitivity of
                     Case_Sensitivity.Default ->
                         Order_Descriptor.Value internal_column.expression sort_direction nulls_order=nulls collation=Nothing
