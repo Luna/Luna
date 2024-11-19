@@ -26,6 +26,8 @@ const editing = computed(() => !readonly.value && focused.value)
 
 const awareness = new Awareness(new Y.Doc())
 const editorView = new EditorView()
+// Disable EditContext API because of https://github.com/codemirror/dev/issues/1458.
+;(EditorView as any).EDIT_CONTEXT = false
 const constantExtensions = [minimalSetup, highlightStyle(useCssModule()), EditorView.lineWrapping]
 watch([vueHost, toRef(props, 'content')], ([vueHost, content]) => {
   if (!vueHost) return
