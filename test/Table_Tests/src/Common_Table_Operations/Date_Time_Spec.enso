@@ -300,10 +300,6 @@ add_specs suite_builder setup =
             (t1.at "Y").date_diff (t1.at "X") Date_Period.Day . to_vector . should_equal [-32]
             (t1.at "X").date_diff (Date.new 2021 11 3) Date_Period.Day . to_vector . should_equal [0]
 
-            (t1.at "X").date_diff (t1.at "Y") Date_Period.Month . to_vector . should_equal [1]
-            (t1.at "X").date_diff (Date.new 2020 12 1) Date_Period.Month . to_vector . should_equal [-11]
-            (t1.at "X").date_diff (Date.new 2021 12 1) Date_Period.Month . to_vector . should_equal [0]
-
             (t1.at "X").date_diff (t1.at "Y") Date_Period.Quarter . to_vector . should_equal [0]
             (t1.at "X").date_diff (Date.new 2021 5 1) Date_Period.Quarter . to_vector . should_equal [-2]
             (t1.at "X").date_diff (Date.new 2023 7 1) Date_Period.Quarter . to_vector . should_equal [6]
@@ -382,6 +378,29 @@ add_specs suite_builder setup =
                 False ->
                     (t3.at "X").date_diff (t3.at "Y") Time_Period.Nanosecond . should_fail_with Unsupported_Database_Operation
                     (t3.at "X").date_diff (Time_Of_Day.new 10 15 12 34 56 78) Time_Period.Nanosecond . should_fail_with Unsupported_Database_Operation
+
+        ## dates = [["d_X", [Date.new 2021 11 3]], ["d_Y", [Date.new 2021 12 5]], ["X1", [Date.new 2021 01 02]]]
+        group_builder.specify "should allow computing a SQL-like month difference (date_diff)" <|
+            t1 = dates1.get.select_columns ["d_X", "d_Y", "X1"] reorder=True . rename_columns ["X", "Y", "X1"]
+
+            (t1.at "X").date_diff (t1.at "Y") Date_Period.Month . to_vector . should_equal [1]
+            ## same month always 0
+            (t1.at "X").date_diff (Date.new 2021 11 1) Date_Period.Month . to_vector . should_equal [0]
+            (t1.at "X").date_diff (Date.new 2021 11 3) Date_Period.Month . to_vector . should_equal [0]
+            (t1.at "X").date_diff (Date.new 2021 11 30) Date_Period.Month . to_vector . should_equal [0]
+
+            ## next month 1 if date equal or later
+            (t1.at "X").date_diff (Date.new 2021 12 1) Date_Period.Month . to_vector . should_equal [0]
+            (t1.at "X").date_diff (Date.new 2021 12 3) Date_Period.Month . to_vector . should_equal [1]
+            (t1.at "X").date_diff (Date.new 2021 12 31) Date_Period.Month . to_vector . should_equal [1]
+
+            ## previous month -1 if date equal or earlier
+            (t1.at "X").date_diff (Date.new 2021 10 1) Date_Period.Month . to_vector . should_equal [-1]
+            (t1.at "X").date_diff (Date.new 2021 10 3) Date_Period.Month . to_vector . should_equal [-1]
+            (t1.at "X").date_diff (Date.new 2021 10 31) Date_Period.Month . to_vector . should_equal [0]
+
+            (t1.at "X").date_diff (Date.new 2020 12 1) Date_Period.Month . to_vector . should_equal [-11]
+            (t1.at "X").date_diff (Date.new 2021 12 1) Date_Period.Month . to_vector . should_equal [0]
 
         group_builder.specify "date_diff should return integers" <|
             t = table_builder [["X", [Date.new 2021 01 31]], ["Y", [Time_Of_Day.new 12 30 20]], ["Z", [Date_Time.new 2021 12 5 12 30 20]]]
