@@ -65,9 +65,9 @@ const POINTER_BUTTON_FLAG = {
 
 /** Human-readable variants of pointer keys, for displaying to the user. Used in {@link BindingInfo} */
 const HUMAN_READABLE_POINTER = {
-  PointerMain: 'Mouse Left',
-  PointerSecondary: 'Mouse Right',
-  PointerAux: 'Mouse Middle',
+  PointerMain: 'Click',
+  PointerSecondary: 'Right click',
+  PointerAux: 'Middle click',
   PointerBack: 'Mouse Back',
   PointerForward: 'Mouse Forward',
 }
@@ -497,6 +497,8 @@ function humanReadableKey(key: string): string {
     return HUMAN_READABLE_POINTER[key]
   } else if (isKey(key)) {
     return HUMAN_READABLE_KEYS[key] ?? key
+  } else if (key === ' ') {
+    return 'Space'
   } else {
     return key
   }
