@@ -23,13 +23,16 @@ export function electronTest(
       executablePath: process.env.ENSO_TEST_EXEC_PATH ?? '',
       args: process.env.ENSO_TEST_APP_ARGS != null ? process.env.ENSO_TEST_APP_ARGS.split(',') : [],
       env: { ...process.env, ['ENSO_TEST']: name },
+      tracesDir: 'test-traces',
     })
     const page = await app.firstWindow()
+    await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true })
     // Wait until page will be finally loaded: we expect login screen.
     // There's bigger timeout, because the page may load longer on CI machines.
     await expect(page.getByText('Login to your account')).toBeVisible({ timeout: LOADING_TIMEOUT })
     const projectsDir = pathModule.join(os.tmpdir(), 'enso-test-projects', name)
     await body({ page, projectsDir })
+    await app.context().tracing.stop({ path: `${name}.zip` })
     await app.close()
   })
 }
