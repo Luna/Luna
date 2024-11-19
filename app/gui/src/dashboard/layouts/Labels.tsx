@@ -51,96 +51,98 @@ export default function Labels(props: LabelsProps) {
   return (
     <FocusArea direction="vertical">
       {(innerProps) => (
-        <div
-          data-testid="labels"
-          className="flex flex-1 flex-col items-start gap-4 overflow-auto"
-          {...innerProps}
-        >
-          <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
-            {getText('labels')}
-          </ariaComponents.Text>
+        <div className="flex flex-1 flex-col overflow-auto">
           <div
-            data-testid="labels-list"
-            aria-label={getText('labelsListLabel')}
-            className="flex flex-1 flex-col items-start gap-labels overflow-auto"
+            data-testid="labels"
+            className="flex flex-col items-start gap-4 overflow-auto"
+            {...innerProps}
           >
-            {labels.map((label) => {
-              const negated = currentNegativeLabels.some((term) =>
-                array.shallowEqual(term, [label.value]),
-              )
-              return (
-                <div key={label.id} className="group relative flex items-center gap-label-icons">
-                  <Label
-                    draggable={draggable}
-                    color={label.color}
-                    active={
-                      negated ||
-                      currentLabels.some((term) => array.shallowEqual(term, [label.value]))
-                    }
-                    negated={negated}
-                    onPress={(event) => {
-                      setQuery((oldQuery) =>
-                        oldQuery.withToggled(
-                          'labels',
-                          'negativeLabels',
-                          label.value,
-                          event.shiftKey,
-                        ),
-                      )
-                    }}
-                    onDragStart={(event) => {
-                      drag.setDragImageToBlank(event)
-                      const payload: drag.LabelsDragPayload = new Set([label.value])
-                      drag.LABELS.bind(event, payload)
-                      setModal(
-                        <DragModal
-                          event={event}
-                          onDragEnd={() => {
-                            drag.LABELS.unbind(payload)
+            <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
+              {getText('labels')}
+            </ariaComponents.Text>
+            <div
+              data-testid="labels-list"
+              aria-label={getText('labelsListLabel')}
+              className="flex flex-1 flex-col items-start gap-labels overflow-auto"
+            >
+              {labels.map((label) => {
+                const negated = currentNegativeLabels.some((term) =>
+                  array.shallowEqual(term, [label.value]),
+                )
+                return (
+                  <div key={label.id} className="group relative flex items-center gap-label-icons">
+                    <Label
+                      draggable={draggable}
+                      color={label.color}
+                      active={
+                        negated ||
+                        currentLabels.some((term) => array.shallowEqual(term, [label.value]))
+                      }
+                      negated={negated}
+                      onPress={(event) => {
+                        setQuery((oldQuery) =>
+                          oldQuery.withToggled(
+                            'labels',
+                            'negativeLabels',
+                            label.value,
+                            event.shiftKey,
+                          ),
+                        )
+                      }}
+                      onDragStart={(event) => {
+                        drag.setDragImageToBlank(event)
+                        const payload: drag.LabelsDragPayload = new Set([label.value])
+                        drag.LABELS.bind(event, payload)
+                        setModal(
+                          <DragModal
+                            event={event}
+                            onDragEnd={() => {
+                              drag.LABELS.unbind(payload)
+                            }}
+                          >
+                            <Label active color={label.color} onPress={() => {}}>
+                              {label.value}
+                            </Label>
+                          </DragModal>,
+                        )
+                      }}
+                    >
+                      {label.value}
+                    </Label>
+                    <FocusRing placement="after">
+                      <ariaComponents.DialogTrigger>
+                        <ariaComponents.Button
+                          variant="icon"
+                          icon={Trash2Icon}
+                          aria-label={getText('delete')}
+                          tooltipPlacement="right"
+                          className="relative flex size-4 text-delete opacity-0 transition-all after:absolute after:-inset-1 after:rounded-button-focus-ring group-has-[[data-focus-visible]]:active group-hover:active"
+                        />
+                        <ConfirmDeleteModal
+                          actionText={getText('deleteLabelActionText', label.value)}
+                          doDelete={() => {
+                            deleteTag([label.id, label.value])
                           }}
-                        >
-                          <Label active color={label.color} onPress={() => {}}>
-                            {label.value}
-                          </Label>
-                        </DragModal>,
-                      )
-                    }}
-                  >
-                    {label.value}
-                  </Label>
-                  <FocusRing placement="after">
-                    <ariaComponents.DialogTrigger>
-                      <ariaComponents.Button
-                        variant="icon"
-                        icon={Trash2Icon}
-                        aria-label={getText('delete')}
-                        tooltipPlacement="right"
-                        className="relative flex size-4 text-delete opacity-0 transition-all after:absolute after:-inset-1 after:rounded-button-focus-ring group-has-[[data-focus-visible]]:active group-hover:active"
-                      />
-                      <ConfirmDeleteModal
-                        actionText={getText('deleteLabelActionText', label.value)}
-                        doDelete={() => {
-                          deleteTag([label.id, label.value])
-                        }}
-                      />
-                    </ariaComponents.DialogTrigger>
-                  </FocusRing>
-                </div>
-              )
-            })}
-            <ariaComponents.DialogTrigger>
-              <ariaComponents.Button
-                size="xsmall"
-                variant="outline"
-                className="pl-1 pr-2"
-                /* eslint-disable-next-line no-restricted-syntax */
-                icon={<SvgMask src={PlusIcon} alt="" className="ml-auto size-[8px]" />}
-              >
-                {getText('newLabelButtonLabel')}
-              </ariaComponents.Button>
-              <NewLabelModal backend={backend} />
-            </ariaComponents.DialogTrigger>
+                        />
+                      </ariaComponents.DialogTrigger>
+                    </FocusRing>
+                  </div>
+                )
+              })}
+            </div>
           </div>
+          <ariaComponents.DialogTrigger>
+            <ariaComponents.Button
+              size="xsmall"
+              variant="outline"
+              className="mt-1 self-start pl-1 pr-2"
+              /* eslint-disable-next-line no-restricted-syntax */
+              icon={<SvgMask src={PlusIcon} alt="" className="ml-auto size-[8px]" />}
+            >
+              {getText('newLabelButtonLabel')}
+            </ariaComponents.Button>
+            <NewLabelModal backend={backend} />
+          </ariaComponents.DialogTrigger>
         </div>
       )}
     </FocusArea>
