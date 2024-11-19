@@ -745,7 +745,10 @@ make_date_diff arguments (metadata : Date_Period_Metadata) =
             _ -> SQL_Builder.code "DATEDIFF_BIG(" ++  interval ++ ", " ++ start ++ ", " ++  end ++ ")"
 
 private _make_month_datediff start end -> SQL_Builder =
-    SQL_Builder.code "IIF(DATEDIFF(month, " ++ start ++ ", " ++  end ++ ")=0, 0, DATEDIFF(month, " ++ start ++ ", " ++  end ++ ") - IIF(SIGN(DATEDIFF(month, " ++ start ++ ", " ++  end ++ "))!=SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ ")), 0, SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ "))))"
+    sqlserver_month_diff = SQL_Builder.code "DATEDIFF(month, " ++ start ++ ", " ++  end ++ ")"
+    day_of_month_diff = SQL_Builder.code "DAY(" ++ start ++ ") - DAY(" ++ end ++ ")"
+    adjustment_amount = SQL_Builder.code "IIF(SIGN(" ++ sqlserver_month_diff ++ ")!=SIGN(" ++ day_of_month_diff ++ "), 0, SIGN(" ++ day_of_month_diff ++ "))"
+    SQL_Builder.code "IIF(" ++ sqlserver_month_diff ++ "=0, 0," ++ sqlserver_month_diff ++ " - " ++ adjustment_amount ++ ")"
 
 ## PRIVATE
 make_date_trunc_to_day arguments =
