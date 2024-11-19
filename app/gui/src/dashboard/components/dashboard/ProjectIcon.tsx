@@ -19,7 +19,7 @@ import * as backendModule from '#/services/Backend'
 
 import { useBackendQuery } from '#/hooks/backendHooks'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
