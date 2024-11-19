@@ -240,7 +240,7 @@ add_filter_specs suite_builder setup =
             t.filter "X" (Filter_Condition.Ends_With '\n') . at "X" . to_vector . should_equal ['a\n\n\n', 'a\n']
             t.filter "X" (Filter_Condition.Starts_With 'c') . at "X" . to_vector . should_equal ['caa\nbb']
 
-        if test_selection.supports_unicode_normalization then
+        if setup.flagged ..Supports_Unicode_Normalization then
             t = table_builder [["X", ['śnieg', 's\u0301nieg', 'X', Nothing, 'połać', 'połac\u0301']]]
             group_builder.specify "text operations should support Unicode normalization" <|
                 t.filter "X" (Filter_Condition.Starts_With 'ś') . at "X" . to_vector . should_equal ['śnieg', 's\u0301nieg']
