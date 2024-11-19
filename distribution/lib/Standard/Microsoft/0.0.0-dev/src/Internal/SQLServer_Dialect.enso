@@ -707,23 +707,27 @@ make_extract_microsecond =
     Base_Generator.lift_unary_op "microsecond" arg->
         SQL_Builder.code "DATEPART(microsecond, " ++ arg ++ ")%1000"
 
+private _get_sqlserver_interval interval:Date_Period|Time_Period -> Text =
+    case interval of
+        Date_Period.Year -> "year"
+        Date_Period.Quarter -> "quarter"
+        Date_Period.Month -> "month"
+        Date_Period.Week _ -> "week"
+        Date_Period.Day -> "day"
+        Time_Period.Hour -> "hour"
+        Time_Period.Minute -> "minute"
+        Time_Period.Second -> "second"
+        Time_Period.Millisecond -> "millisecond"
+        Time_Period.Microsecond -> "microsecond"
+        Time_Period.Nanosecond -> "nanosecond"
+
 ## PRIVATE
 make_date_add arguments (metadata : Date_Period_Metadata) =
     if arguments.length != 2 then Error.throw (Illegal_State.Error "date_add expects exactly 2 sub expressions. This is a bug in Database library.") else
         expr = arguments.at 0
         amount = arguments.at 1
-        interval_arg = case metadata.period of
-            Date_Period.Year -> "year"
-            Date_Period.Quarter -> "quarter"
-            Date_Period.Month -> "month"
-            Date_Period.Week _ -> "week"
-            Date_Period.Day -> "day"
-            Time_Period.Hour -> "hour"
-            Time_Period.Minute -> "minute"
-            Time_Period.Second -> "second"
-            Time_Period.Millisecond -> "millisecond"
-            Time_Period.Microsecond -> "microsecond"
-        SQL_Builder.code "DATEADD(" ++ interval_arg ++ ", " ++ amount ++ ", " ++  expr ++ ")"
+        interval = _get_sqlserver_interval metadata.period
+        SQL_Builder.code "DATEADD(" ++  interval ++ ", " ++ amount ++ ", " ++  expr ++ ")"
 
 ## PRIVATE
 make_date_diff arguments (metadata : Date_Period_Metadata) =
