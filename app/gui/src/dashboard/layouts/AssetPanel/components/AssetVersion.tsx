@@ -1,28 +1,16 @@
 /** @file Displays information describing a specific version of an asset. */
-import * as React from 'react'
-
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'
 import RestoreIcon from '#/assets/restore.svg'
-
-import * as textProvider from '#/providers/TextProvider'
-
+import * as ariaComponents from '#/components/AriaComponents'
 import AssetListEventType from '#/events/AssetListEventType'
-
 import * as assetDiffView from '#/layouts/AssetDiffView'
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-
+import * as textProvider from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
-
 import * as dateTime from '#/utilities/dateTime'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ====================
-// === AssetVersion ===
-// ====================
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {
@@ -36,7 +24,7 @@ export interface AssetVersionProps {
 }
 
 /** Displays information describing a specific version of an asset. */
-export default function AssetVersion(props: AssetVersionProps) {
+export function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()

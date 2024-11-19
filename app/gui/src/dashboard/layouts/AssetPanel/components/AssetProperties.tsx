@@ -58,10 +58,8 @@ export interface AssetPropertiesProps {
   readonly spotlightOn?: AssetPropertiesSpotlight | null
 }
 
-/**
- * Display and modify the properties of an asset.
- */
-export default function AssetProperties(props: AssetPropertiesProps) {
+/** Display and modify the properties of an asset. */
+export function AssetProperties(props: AssetPropertiesProps) {
   const { item, isReadonly = false, backend, category, spotlightOn = null, path } = props
 
   const { getText } = useText()

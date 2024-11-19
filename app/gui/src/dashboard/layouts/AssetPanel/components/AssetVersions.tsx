@@ -5,7 +5,7 @@ import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as textProvider from '#/providers/TextProvider'
 
-import AssetVersion from '#/layouts/AssetVersions/AssetVersion'
+import { AssetVersion } from '#/layouts/AssetPanel/components/AssetVersion.tsx'
 
 import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
@@ -18,19 +18,11 @@ import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 import { assetVersionsQueryOptions } from './useAssetVersions.ts'
 
-// ==============================
-// === AddNewVersionVariables ===
-// ==============================
-
 /** Variables for the "add new version" mutation. */
 interface AddNewVersionVariables {
   readonly versionId: backendService.S3ObjectVersionId
   readonly placeholderId: backendService.S3ObjectVersionId
 }
-
-// =====================
-// === AssetVersions ===
-// =====================
 
 /** Props for a {@link AssetVersions}. */
 export interface AssetVersionsProps {
@@ -38,10 +30,8 @@ export interface AssetVersionsProps {
   readonly item: AnyAsset | null
 }
 
-/**
- * Display a list of previous versions of an asset.
- */
-export default function AssetVersions(props: AssetVersionsProps) {
+/** Display a list of previous versions of an asset. */
+export function AssetVersions(props: AssetVersionsProps) {
   const { item, backend } = props
 
   const { getText } = textProvider.useText()
@@ -63,16 +53,12 @@ export default function AssetVersions(props: AssetVersionsProps) {
   return <AssetVersionsInternal {...props} item={item} />
 }
 
-/**
- * Props for a {@link AssetVersionsInternal}.
- */
+/** Props for an {@link AssetVersionsInternal}. */
 interface AssetVersionsInternalProps extends AssetVersionsProps {
   readonly item: AnyAsset
 }
 
-/**
- * Internal implementation of {@link AssetVersions}.
- */
+/** Internal implementation of {@link AssetVersions}. */
 function AssetVersionsInternal(props: AssetVersionsInternalProps) {
   const { backend, item } = props
 

@@ -1,22 +1,20 @@
 /** @file A list of previous versions of an asset. */
 import * as reactQuery from '@tanstack/react-query'
 
-import AssetProjectSession from '#/layouts/AssetProjectSession'
-
-import type Backend from '#/services/Backend'
-
 import { Result } from '#/components/Result'
 import { useText } from '#/providers/TextProvider'
+import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
+import { ProjectSession } from './ProjectSession'
 
-/** Props for a {@link AssetProjectSessions}. */
-export interface AssetProjectSessionsProps {
+/** Props for a {@link ProjectSessions}. */
+export interface ProjectSessionsProps {
   readonly backend: Backend
   readonly item: AnyAsset | null
 }
 
 /** A list of previous versions of an asset. */
-export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
+export function ProjectSessions(props: ProjectSessionsProps) {
   const { backend, item } = props
 
   const { getText } = useText()
@@ -37,7 +35,7 @@ export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
 }
 
 /** Props for a {@link AssetProjectSessionsInternal}. */
-interface AssetProjectSessionsInternalProps extends AssetProjectSessionsProps {
+interface AssetProjectSessionsInternalProps extends ProjectSessionsProps {
   readonly item: ProjectAsset
 }
 
@@ -58,7 +56,7 @@ function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) 
       <Result status="info" centered title={getText('assetProjectSessions.noSessions')} />
     : <div className="flex w-full flex-col justify-start">
         {projectSessionsQuery.data.map((session, i) => (
-          <AssetProjectSession
+          <ProjectSession
             key={session.projectSessionId}
             backend={backend}
             project={item}

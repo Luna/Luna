@@ -8,8 +8,8 @@ import type Backend from '#/services/Backend'
 import type { ProjectSession as BackendProjectSession, ProjectAsset } from '#/services/Backend'
 import { formatDateTime } from '#/utilities/dateTime'
 
-/** Props for a {@link AssetProjectSession}. */
-export interface AssetProjectSessionProps {
+/** Props for a {@link ProjectSession}. */
+export interface ProjectSessionProps {
   readonly backend: Backend
   readonly project: ProjectAsset
   readonly projectSession: BackendProjectSession
@@ -17,7 +17,7 @@ export interface AssetProjectSessionProps {
 }
 
 /** Displays information describing a specific version of an asset. */
-export default function AssetProjectSession(props: AssetProjectSessionProps) {
+export function ProjectSession(props: ProjectSessionProps) {
   const { backend, project, projectSession, index } = props
 
   const { getText } = useText()

@@ -5,11 +5,11 @@ import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaCompo
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Result } from '#/components/Result'
 import { Suspense } from '#/components/Suspense'
-import ProjectExecution from '#/layouts/AssetProjectExecution'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
+import ProjectExecution from './ProjectExecution'
 
 /** Props for a {@link ProjectExecutions}. */
 export interface ProjectExecutionsProps {

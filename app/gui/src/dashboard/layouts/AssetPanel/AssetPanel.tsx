@@ -1,17 +1,28 @@
 /**
  * @file
- * @description
- * The asset panel is a sidebar that can be expanded or collapsed.
+ * A sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
+import type { Spring } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { memo, startTransition } from 'react'
+import { z } from 'zod'
+
+import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
+
 import DocsIcon from '#/assets/file_text.svg'
 import SessionsIcon from '#/assets/group.svg'
 import InspectIcon from '#/assets/inspect.svg'
 import RepeatIcon from '#/assets/repeat.svg'
 import VersionsIcon from '#/assets/versions.svg'
-
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { ProjectExecutions } from '#/layouts/AssetProjectExecutions'
+import { AssetDocs } from '#/layouts/AssetDocs'
+import {
+  AssetProperties,
+  type AssetPropertiesSpotlight,
+} from '#/layouts/AssetPanel/components/AssetProperties'
+import { AssetVersions } from '#/layouts/AssetPanel/components/AssetVersions'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import {
   useAssetPanelProps,
@@ -24,19 +35,10 @@ import {
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import LocalStorage from '#/utilities/LocalStorage'
-import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
-import type { Spring } from 'framer-motion'
-import { AnimatePresence, motion } from 'framer-motion'
-import { memo, startTransition } from 'react'
-import { z } from 'zod'
-import { AssetDocs } from '../AssetDocs'
-import AssetProjectSessions from '../AssetProjectSessions'
-import type { AssetPropertiesSpotlight } from '../AssetProperties'
-import AssetProperties from '../AssetProperties'
-import AssetVersions from '../AssetVersions/AssetVersions'
-import type { Category } from '../CategorySwitcher/Category'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
+import { ProjectExecutions } from './components/ProjectExecutions'
+import { ProjectSessions } from './components/ProjectSessions'
 
 const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
@@ -208,7 +210,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
               </AssetPanelTabs.TabPanel>
 
               <AssetPanelTabs.TabPanel id="sessions" resetKeys={[item?.id]}>
-                <AssetProjectSessions backend={backend} item={item} />
+                <ProjectSessions backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
 
               <AssetPanelTabs.TabPanel id="executions" resetKeys={[item?.id]}>
