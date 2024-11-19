@@ -734,33 +734,18 @@ make_date_diff arguments (metadata : Date_Period_Metadata) =
     if arguments.length != 2 then Error.throw (Illegal_State.Error "date_diff expects exactly 2 sub expressions. This is a bug in Database library.") else
         start = arguments.at 0
         end = arguments.at 1
-
-        extract_years = SQL_Builder.code "DATEDIFF(year, " ++ start ++ ", " ++  end ++ ")"
-        extract_months = SQL_Builder.code "IIF(DATEDIFF(month, " ++ start ++ ", " ++  end ++ ")=0, 0, DATEDIFF(month, " ++ start ++ ", " ++  end ++ ") - IIF(SIGN(DATEDIFF(month, " ++ start ++ ", " ++  end ++ "))!=SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ ")), 0, SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ "))))"
-        extract_days = SQL_Builder.code "DATEDIFF(day, " ++ start ++ ", " ++  end ++ ")"
-        extract_seconds = SQL_Builder.code "DATEDIFF(second, " ++ start ++ ", " ++  end ++ ")"
+        interval = _get_sqlserver_interval metadata.period
 
         case metadata.period of
-            Date_Period.Year    -> extract_years
-            Date_Period.Month   -> extract_months
-            Date_Period.Quarter -> (extract_months ++ " / 3").paren
-            Date_Period.Week _  -> (extract_days ++ " / 7").paren
-            Date_Period.Day     -> extract_days
-            ## EXTRACT HOURS/MINUTES would yield only a date part, but we need
-               the total which is easiest achieved by EPOCH
-            Time_Period.Hour    -> (extract_seconds ++ " / 3600").paren
-            Time_Period.Minute  -> (extract_seconds ++ " / 60").paren
-            Time_Period.Second  -> extract_seconds
-            ## The EPOCH gives back just the integer amount of seconds, without
-               the fractional part. So we get the fractional part using
-               MILLISECONDS - but that does not give the _total_ just the
-               'seconds of minute' part, expressed in milliseconds. So we need
-               to merge both - but then seconds of minute appear twice, so we %
-               the milliseconds to get just the fractional part from it and sum
-               both.
-            Time_Period.Millisecond -> SQL_Builder.code "DATEDIFF_BIG(millisecond, " ++ start ++ ", " ++  end ++ ")"
-            Time_Period.Microsecond -> SQL_Builder.code "DATEDIFF_BIG(microsecond, " ++ start ++ ", " ++  end ++ ")"
-            Time_Period.Nanosecond -> Error.throw (Unsupported_Database_Operation.Error "Nanosecond precision date/times")
+            ## SQLServer's DATEDIFF does not take the day of the month into account when
+               calculating the month or quarter difference between two dates. To match the 
+               in-memory version we have to do some extra calculations.
+            Date_Period.Month   -> _make_month_datediff start end
+            Date_Period.Quarter -> ((_make_month_datediff start end) ++ " / 3").paren
+            _ -> SQL_Builder.code "DATEDIFF_BIG(" ++  interval ++ ", " ++ start ++ ", " ++  end ++ ")"
+
+private _make_month_datediff start end -> SQL_Builder =
+    SQL_Builder.code "IIF(DATEDIFF(month, " ++ start ++ ", " ++  end ++ ")=0, 0, DATEDIFF(month, " ++ start ++ ", " ++  end ++ ") - IIF(SIGN(DATEDIFF(month, " ++ start ++ ", " ++  end ++ "))!=SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ ")), 0, SIGN(DAY(" ++ start ++ ") - DAY(" ++ end ++ "))))"
 
 ## PRIVATE
 make_date_trunc_to_day arguments =
