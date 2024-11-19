@@ -146,6 +146,8 @@ function parseLinkLike(node: SyntaxNode, doc: Text) {
   if (!textClose) return
   const urlNode = findNextSiblingNamed(textClose, 'URL')
   if (!urlNode) return
+  console.log('RANGE', urlNode.from, urlNode.to)
+  console.log(doc)
   return {
     textFrom: textOpen.to,
     textTo: textClose.from,
@@ -268,7 +270,7 @@ class ImageWidget extends WidgetType {
 function findNextSiblingNamed(node: SyntaxNode, name: string) {
   for (let sibling = node.nextSibling; sibling != null; sibling = sibling.nextSibling) {
     if (sibling.name === name) {
-      return node
+      return sibling
     }
   }
 }

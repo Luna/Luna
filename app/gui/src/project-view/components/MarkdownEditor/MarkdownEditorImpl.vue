@@ -50,9 +50,13 @@ onMounted(() => {
 
 const editing = ref(false)
 
-/** Replace text in given document range with `text`, putting text cursor after inserted text. */
+/**
+ * Replace text in given document range with `text`, putting text cursor after inserted text.
+ *
+ * If text contains multiple lines, it should use '\n', not '\r\n' for line endings.
+ */
 function putTextAt(text: string, from: number, to: number) {
-  const insert = Text.of([text])
+  const insert = Text.of(text.split('\n'))
   editorView.dispatch({
     changes: { from, to, insert },
     selection: { anchor: from + insert.length },
