@@ -267,7 +267,7 @@ add_order_specs suite_builder setup =
             t2.at "delta" . to_vector . should_equal ["a03", "a1", "a10", "a2"]
             t2.at "alpha" . to_vector . should_equal [0, 2, 3, 1]
 
-        group_builder.specify "should support case insensitive ordering" <|
+        if setup.flagged ..Case_Insensitive_Ordering then group_builder.specify "should support case insensitive ordering" <|
             t1 = data.table.sort [..Name "eta"] text_ordering=(..Case_Insensitive)
             expected = case setup.flagged ..Order_By_Unicode_Normalization_By_Default of
                 False -> ["Aleph", "alpha", "Beta", "bądź"]
