@@ -10,9 +10,11 @@ import type {
   CellClickedEvent,
   ColDef,
   ICellRendererParams,
+  ITooltipParams,
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
+import { TableVisualisationTooltip } from './TableVisualisationTooltip'
 
 export const name = 'Table'
 export const icon = 'table'
@@ -79,6 +81,12 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
+  data_quality_pairs?: DataQualityPairs
+}
+
+interface DataQualityPairs {
+  number_of_nothing: number[]
+  number_of_whitespace: number[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -308,34 +316,67 @@ function addRowIndex(data: object[]): object[] {
   return data.map((row, i) => ({ [INDEX_FIELD_NAME]: i, ...row }))
 }
 
-function toField(name: string, valueType?: ValueType | null | undefined): ColDef {
-  const valType = valueType ? valueType.constructor : null
-  const displayValue = valueType ? valueType.display_text : null
-  let icon
-  switch (valType) {
+function getValueTypeIcon(valueType: string) {
+  switch (valueType) {
     case 'Char':
-      icon = 'text3'
-      break
+      return 'text3'
     case 'Boolean':
-      icon = 'check'
-      break
+      return 'check'
     case 'Integer':
     case 'Float':
     case 'Decimal':
     case 'Byte':
-      icon = 'math'
-      break
+      return 'math'
     case 'Date':
     case 'Date_Time':
-      icon = 'calendar'
-      break
+      return 'calendar'
     case 'Time':
-      icon = 'time'
-      break
+      return 'time'
     case 'Mixed':
-      icon = 'mixed'
+      return 'mixed'
   }
-  const svgTemplate = `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+}
+
+/**
+ * Generates the column definition for the table vizulization, including displaying the data value type and
+ * data quality indicators.
+ * @param name - The name which will be displayed in the table header and used to idenfiy the column.
+ * @param [options.index] - The index of column the corresponds to the data in the `dataQuality` arrays
+ * (`number_of_nothing` and `number_of_whitespace`). This identifies the correct indicators for each column
+ * to be displayed in the toolip. If absent the data quality metrics will not be shown.
+ * @param [options.valueType] - The data type of the column, displayed as an icon
+ * and in text within the tooltip. If absent the value type icon and text will not be shown.
+ */
+function toField(
+  name: string,
+  options: { index?: number; valueType?: ValueType | null | undefined } = {},
+): ColDef {
+  const { index, valueType } = options
+
+  const displayValue = valueType ? valueType.display_text : null
+  const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
+
+  const dataQuality =
+    typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
+      props.data.data_quality_pairs
+      // eslint-disable-next-line camelcase
+    : { number_of_nothing: [], number_of_whitespace: [] }
+
+  const nothingIsNonZero =
+    index != null && dataQuality?.number_of_nothing ?
+      (dataQuality.number_of_nothing[index] ?? 0) > 0
+    : false
+
+  const whitespaceIsNonZero =
+    index != null && dataQuality?.number_of_nothing ?
+      (dataQuality.number_of_whitespace[index] ?? 0) > 0
+    : false
+
+  const showDataQuality = nothingIsNonZero || whitespaceIsNonZero
+
+  const getSvgTemplate = (icon: string) =>
+    `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
+  const svgTemplateWarning = showDataQuality ? getSvgTemplate('warning') : ''
   const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
   const sort = `
       <span ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
@@ -344,23 +385,33 @@ function toField(name: string, valueType?: ValueType | null | undefined): ColDef
       <span ref="eSortDesc" class="ag-header-icon ag-sort-descending-icon" aria-hidden="true"></span>
       <span ref="eSortNone" class="ag-header-icon ag-sort-none-icon" aria-hidden="true"></span>
     `
+
+  const styles = 'display:flex; flex-direction:row; justify-content:space-between; width:inherit;'
   const template =
     icon ?
-      `<span style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'> ${name} </span>  ${menu} ${sort} ${svgTemplate}</span>`
-    : `<span ref="eLabel" style='display:flex; flex-direction:row; justify-content:space-between; width:inherit;'>${name} ${menu} ${sort}</span>`
+      `<span style='${styles}'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='${styles}'> ${name} </span>${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
+    : `<span style='${styles}' ref="eLabel">${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
+
   return {
     field: name,
     headerComponentParams: {
       template,
       setAriaSort: () => {},
     },
+    tooltipComponent: TableVisualisationTooltip,
     headerTooltip: displayValue ? displayValue : '',
+    tooltipComponentParams: {
+      numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
+      numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
+      total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
+      showDataQuality,
+    },
   }
 }
 
-function toRowField(name: string, valueType?: ValueType | null | undefined) {
+function toRowField(name: string, index: number, valueType?: ValueType | null | undefined) {
   return {
-    ...toField(name, valueType),
+    ...toField(name, { index, valueType }),
     cellDataType: false,
   }
 }
@@ -404,10 +455,14 @@ function toLinkField(fieldName: string, getChildAction?: string, castValueTypes?
       newNodeSelectorValues.value.headerName ? newNodeSelectorValues.value.headerName : fieldName,
     field: fieldName,
     onCellDoubleClicked: (params) => createNode(params, fieldName, getChildAction, castValueTypes),
-    tooltipValueGetter: () => {
-      return `Double click to view this ${newNodeSelectorValues.value.tooltipValue} in a separate component`
-    },
-    cellRenderer: (params: any) => `<div class='link'> ${params.value} </div>`,
+    tooltipValueGetter: (params: ITooltipParams) =>
+      params.node?.rowPinned === 'top' ?
+        null
+      : `Double click to view this ${newNodeSelectorValues.value.tooltipValue} in a separate component`,
+    cellRenderer: (params: ICellRendererParams) =>
+      params.node.rowPinned === 'top' ?
+        `<div> ${params.value}</div>`
+      : `<div class='link'> ${params.value} </div>`,
   }
 }
 
@@ -459,7 +514,7 @@ watchEffect(() => {
     const keys = new Set<string>()
     for (const val of data_.json) {
       if (val != null) {
-        Object.keys(val).forEach((k) => {
+        Object.keys(val).forEach((k, i) => {
           if (!keys.has(k)) {
             keys.add(k)
             columnDefs.value.push(toField(k))
@@ -496,9 +551,9 @@ watchEffect(() => {
           return toLinkField(v, data_.get_child_node_action, data_.link_value_type)
         }
         if (config.nodeType === ROW_NODE_TYPE) {
-          return toRowField(v, valueType)
+          return toRowField(v, i, valueType)
         }
-        return toField(v, valueType)
+        return toField(v, { index: i, valueType })
       }) ?? []
 
     columnDefs.value =
@@ -685,5 +740,12 @@ config.setToolbar(
 .button-wrappers {
   display: flex;
   flex-direction: row;
+}
+
+.ag-header-cell .myclass {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: inherit;
 }
 </style>
