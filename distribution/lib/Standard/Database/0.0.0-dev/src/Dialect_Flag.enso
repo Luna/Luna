@@ -39,8 +39,6 @@ type Dialect_Flag
        Specifies if the backend supports unicode normalization in its default ordering.
     Order_By_Unicode_Normalization_By_Default
     ## PRIVATE
-    Case_Insensitive_Non_Ascii
-    ## PRIVATE
        Specifies if mixed operations comparing
        mixed types are allowed by a given backend. Some backends will allow
        such comparisons, when mixed type storage is allowed or by coercing to

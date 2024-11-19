@@ -55,7 +55,6 @@ add_specs suite_builder setup =
 add_order_specs suite_builder setup =
     prefix = setup.prefix
     create_connection_fn = setup.create_connection_func
-    test_selection = setup.test_selection
 
     suite_builder.group prefix+"Table.sort" group_builder->
         data = Data.setup create_connection_fn setup.table_builder
@@ -247,7 +246,7 @@ add_order_specs suite_builder setup =
 
         group_builder.specify "should behave as expected with Unicode normalization, depending on the defaults settings" <|
             t1 = data.table.sort [..Name "phi"]
-            case test_selection.order_by_unicode_normalization_by_default of
+            case setup.flagged ..Order_By_Unicode_Normalization_By_Default of
                 True ->
                     t1.at "phi" . to_vector . should_equal [Nothing, "śa", 's\u0301b', "śc"]
                     t1.at "alpha" . to_vector . should_equal [2, 0, 1, 3]
@@ -270,7 +269,7 @@ add_order_specs suite_builder setup =
 
         group_builder.specify "should support case insensitive ordering" <|
             t1 = data.table.sort [..Name "eta"] text_ordering=(..Case_Insensitive)
-            expected = case setup.flagged ..Case_Insensitive_Non_Ascii of
+            expected = case setup.flagged ..Order_By_Unicode_Normalization_By_Default of
                 False -> ["Aleph", "alpha", "Beta", "bądź"]
                 True -> ["Aleph", "alpha", "bądź", "Beta"]
             t1.at "eta" . to_vector . should_equal expected
