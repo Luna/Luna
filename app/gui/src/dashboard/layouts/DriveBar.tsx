@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -12,8 +12,6 @@ import AddKeyIcon from '#/assets/add_key.svg'
 import DataDownloadIcon from '#/assets/data_download.svg'
 import DataUploadIcon from '#/assets/data_upload.svg'
 import Plus2Icon from '#/assets/plus2.svg'
-import RightPanelIcon from '#/assets/right_panel.svg'
-import { Input as AriaInput } from '#/components/aria'
 import {
   Button,
   ButtonGroup,
@@ -54,8 +52,6 @@ import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import type { DirectoryId } from '#/services/Backend'
-import { ProjectState, type CreatedProject, type ProjectId } from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
