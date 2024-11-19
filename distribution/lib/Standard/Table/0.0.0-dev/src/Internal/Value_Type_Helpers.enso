@@ -111,7 +111,7 @@ reconcile_types current:Value_Type new:Value_Type -> Value_Type =
    Reconciles two size parameters. If either of them is `Nothing` (meaning
    unbounded), returns `Nothing`. If both are bounded, the larger one is
    returned.
-max_size (a : Integer | Nothing) (b : Integer | Nothing) -> Integer | Nothing =
+max_size a b =
     if a.is_nothing || b.is_nothing then Nothing else
         if a < b then b else a
 
