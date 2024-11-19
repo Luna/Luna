@@ -31,9 +31,12 @@ export function electronTest(
     // There's bigger timeout, because the page may load longer on CI machines.
     await expect(page.getByText('Login to your account')).toBeVisible({ timeout: LOADING_TIMEOUT })
     const projectsDir = pathModule.join(os.tmpdir(), 'enso-test-projects', name)
-    await body({ page, projectsDir })
-    await app.context().tracing.stop({ path: `${name}.zip` })
-    await app.close()
+    try {
+      await body({ page, projectsDir })
+    } finally {
+      await app.context().tracing.stop({ path: `${name}.zip` })
+      await app.close()
+    }
   })
 }
 
