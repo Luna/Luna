@@ -34,7 +34,7 @@ interface Error {
   all_rows_count?: undefined
 }
 
-export interface ValueType {
+interface ValueType {
   constructor: string
   display_text: string
 }

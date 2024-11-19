@@ -16,7 +16,7 @@ export type SortModel = {
 export interface SortFilterNodesButtonOptions {
   filterModel: ToValue<{
     [key: string]: {
-      values: string[]
+      values: any[]
       filterType: string
     }
   }>
@@ -127,7 +127,7 @@ function useSortFilterNodesButton({
     const sortModelValue = toValue(sortModel)
     if (Object.keys(filterModelValue).length) {
       for (const [columnName, columnFilter] of Object.entries(filterModelValue)) {
-        const items = columnFilter.values.map((item) => item)
+        const items = columnFilter.values
         const filterPatterns =
           sortModelValue.length ?
             getAstPatternFilterAndSort(columnName, items)
