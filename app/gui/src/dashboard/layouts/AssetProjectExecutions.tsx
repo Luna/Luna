@@ -66,7 +66,7 @@ function ProjectExecutionsInternal(props: ProjectExecutionsInternalProps) {
   const projectExecutions = projectExecutionsQuery.data
 
   return (
-    <div className="pointer-events-auto flex flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden">
+    <div className="pointer-events-auto flex w-full flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden">
       <ButtonGroup>
         <DialogTrigger>
           <Button variant="outline">{getText('newProjectExecution')}</Button>
