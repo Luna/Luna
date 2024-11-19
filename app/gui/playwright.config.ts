@@ -65,10 +65,11 @@ export default defineConfig({
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
   reporter: isCI ? 'blob' : 'html',
-  retries: isCI ? 5 : 0,
+  retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
     actionTimeout: 5000,
+
     trace: 'retain-on-failure',
     ...(DEBUG ?
       {}
