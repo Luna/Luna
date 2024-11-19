@@ -676,7 +676,7 @@
   "sunday3": "Sun",
   "pleaseSelectATime": "Please select a time.",
   "repeatsAtX": "Repeats at $0",
-  "maxDurationMinutesLabel": "Maximum duration (minutes)",
+  "maxDurationMinutesLabel": "Maximum duration",
   "xMinutes": "$0 minute(s)",
   "currentlyEnabledLabel": "Enabled (click to disable)",
   "currentlyDisabledLabel": "Disabled (click to enable)",

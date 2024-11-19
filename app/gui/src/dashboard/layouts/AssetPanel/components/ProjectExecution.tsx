@@ -19,7 +19,7 @@ import * as backendModule from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
 
 const PROJECT_EXECUTION_STYLES = tv({
-  base: 'flex flex-row gap-1 w-full items-center',
+  base: 'flex flex-row gap-1 w-full rounded-default items-center odd:bg-primary/5 p-2',
   variants: {
     isEnabled: { false: { time: 'opacity-50', optionContainer: 'opacity-50' } },
   },
@@ -27,7 +27,7 @@ const PROJECT_EXECUTION_STYLES = tv({
     timeContainer: 'group flex flex-row items-center gap-2 grow px-2 py-0.5',
     time: '',
     timeButtons: 'opacity-0 group-hover:opacity-100 transition-[opacity]',
-    optionContainer: 'grow-0',
+    optionContainer: 'flex flex-col grow-0 gap-1',
     maximumDuration: 'cursor-default hover:bg-transparent',
     repeatInterval: 'cursor-default',
     parallelMode: 'cursor-default',
@@ -127,6 +127,7 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
           variant="outline"
           icon={TimeIcon}
           tooltip={getText('maxDurationMinutesLabel')}
+          tooltipPlacement="left"
           className={styles.maximumDuration()}
         >
           {getText('xMinutes', projectExecution.maxDurationMinutes)}
@@ -136,6 +137,7 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
           variant="outline"
           icon={RepeatIcon}
           tooltip={getText('repeatIntervalLabel')}
+          tooltipPlacement="left"
           className={styles.repeatInterval()}
         >
           {getText(backendModule.REPEAT_INTERVAL_TO_TEXT_ID[projectExecution.repeatInterval])}
@@ -143,8 +145,9 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
         <Button
           size="xsmall"
           variant="outline"
-          tooltip={getText('parallelModeLabel')}
           icon={ParallelIcon}
+          tooltip={getText('parallelModeLabel')}
+          tooltipPlacement="left"
           className={styles.parallelMode()}
         >
           {getText(backendModule.PARALLEL_MODE_TO_TEXT_ID[projectExecution.parallelMode])}
