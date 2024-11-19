@@ -20,7 +20,7 @@ import org.enso.compiler.pass.analyse.BindingAnalysis
   */
 //noinspection DuplicatedCode
 class PassManager(
-  passes: List[PassGroup],
+  protected val passes: List[PassGroup],
   passConfiguration: PassConfiguration
 ) {
   private val logger = LoggerFactory.getLogger(classOf[PassManager])

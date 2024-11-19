@@ -791,7 +791,9 @@ final class TruffleCompilerContext implements CompilerContext {
           var meta = module.getIr().passData();
           var pass = meta.get(BindingAnalysis$.MODULE$);
           emitIOException();
-          return (BindingsMap) pass.get();
+          if (pass.isDefined()) {
+            return (BindingsMap) pass.get();
+          }
         } catch (IOException ex) {
           var logger =
               TruffleLogger.getLogger(LanguageInfo.ID, org.enso.interpreter.runtime.Module.class);
