@@ -625,18 +625,6 @@ const getColumnValueToEnso = (columnName: string) => {
   if (isNumber.indexOf(columnType) != -1) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
-  if (columnType === 'Date') {
-    const datePattern = Pattern.parseExpression('(Date.new __ __ __)')
-
-    return (item: string, module: Ast.MutableModule) => {
-      const [year, month, day] = item.split(/[-/]/).map(Number)
-      return datePattern.instantiateCopied([
-        Ast.tryNumberToEnso(Number(year), module)!,
-        Ast.tryNumberToEnso(Number(month), module)!,
-        Ast.tryNumberToEnso(Number(day), module)!,
-      ])
-    }
-  }
   return (item: string) => Ast.TextLiteral.new(item)
 }
 
