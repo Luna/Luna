@@ -72,18 +72,6 @@ public class JDBCUtils {
     stmt.setObject(columnIndex, localTime, Types.TIME);
   }
 
-  /**
-   * Sets a LocalTime in a PreparedStatement via TimeStamp.
-   *
-   * @param stmt
-   */
-  public static void setLocalTimeViaTimeStamp(
-      PreparedStatement stmt, int columnIndex, LocalTime localTime) throws SQLException {
-
-    Timestamp timestamp = Timestamp.valueOf(localTime.atDate(LocalDate.of(1970, 1, 1)));
-    stmt.setTimestamp(columnIndex, timestamp);
-  }
-
   /** Sets a LocalDate in a PreparedStatement. */
   public static void setLocalDate(PreparedStatement stmt, int columnIndex, LocalDate localDate)
       throws SQLException {
