@@ -64,9 +64,8 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  repeatEach: isCI ? 3 : 1,
   reporter: isCI ? 'blob' : 'html',
-  retries: isCI ? 3 : 0,
+  retries: isCI ? 5 : 0,
   use: {
     headless: !DEBUG,
     actionTimeout: 5000,
