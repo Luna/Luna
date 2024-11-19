@@ -82,7 +82,7 @@ defineExpose({
 </script>
 
 <template>
-  <EditorRoot ref="editorRoot" v-bind="$attrs" :class="{ editing }" @focusout="editing = false" />
+  <EditorRoot ref="editorRoot" v-bind="$attrs" :class="{ editing }" @focusout="focused = false" />
   <VueComponentHost ref="vueHost" />
 </template>
 
