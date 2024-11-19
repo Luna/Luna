@@ -1,27 +1,23 @@
 /** @file A list of previous versions of an asset. */
-import * as React from 'react'
-
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import { AssetVersion } from '#/layouts/AssetPanel/components/AssetVersion.tsx'
-
-import type Backend from '#/services/Backend'
-import * as backendService from '#/services/Backend'
+import { useState } from 'react'
 
 import { Text } from '#/components/AriaComponents'
 import { Result } from '#/components/Result'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useText } from '#/providers/TextProvider'
+import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
-import * as dateTime from '#/utilities/dateTime'
+import { AssetType, BackendType, type S3ObjectVersion, S3ObjectVersionId } from '#/services/Backend'
+import { toRfc3339 } from '#/utilities/dateTime'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import * as uniqueString from 'enso-common/src/utilities/uniqueString'
+import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+import { AssetVersion } from './AssetVersion'
 import { assetVersionsQueryOptions } from './useAssetVersions.ts'
 
 /** Variables for the "add new version" mutation. */
 interface AddNewVersionVariables {
-  readonly versionId: backendService.S3ObjectVersionId
-  readonly placeholderId: backendService.S3ObjectVersionId
+  readonly versionId: S3ObjectVersionId
+  readonly placeholderId: S3ObjectVersionId
 }
 
 /** Props for a {@link AssetVersions}. */
@@ -34,9 +30,9 @@ export interface AssetVersionsProps {
 export function AssetVersions(props: AssetVersionsProps) {
   const { item, backend } = props
 
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
 
-  if (backend.type === backendService.BackendType.local) {
+  if (backend.type === BackendType.local) {
     return (
       <Result
         status="info"
@@ -62,12 +58,10 @@ interface AssetVersionsInternalProps extends AssetVersionsProps {
 function AssetVersionsInternal(props: AssetVersionsInternalProps) {
   const { backend, item } = props
 
-  const { getText } = textProvider.useText()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
+  const { getText } = useText()
+  const toastAndLog = useToastAndLog()
 
-  const [placeholderVersions, setPlaceholderVersions] = React.useState<
-    readonly backendService.S3ObjectVersion[]
-  >([])
+  const [placeholderVersions, setPlaceholderVersions] = useState<readonly S3ObjectVersion[]>([])
 
   const versionsQuery = useSuspenseQuery(
     assetVersionsQueryOptions({
@@ -81,7 +75,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
 
   const restoreMutation = useMutation({
     mutationFn: async (variables: AddNewVersionVariables) => {
-      if (item.type === backendService.AssetType.project) {
+      if (item.type === AssetType.project) {
         await backend.restoreProject(item.id, variables.versionId, item.title)
       }
     },
@@ -89,8 +83,8 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
       setPlaceholderVersions((oldVersions) => [
         {
           isLatest: false,
-          key: uniqueString.uniqueString(),
-          lastModified: dateTime.toRfc3339(new Date()),
+          key: uniqueString(),
+          lastModified: toRfc3339(new Date()),
           versionId: variables.placeholderId,
         },
         ...oldVersions,
@@ -141,7 +135,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
               doRestore={() =>
                 restoreMutation.mutateAsync({
                   versionId: version.versionId,
-                  placeholderId: backendService.S3ObjectVersionId(uniqueString.uniqueString()),
+                  placeholderId: S3ObjectVersionId(uniqueString()),
                 })
               }
             />

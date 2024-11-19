@@ -1,4 +1,8 @@
 /** @file Tabs for the asset panel. Contains the visual state for the tabs and animations. */
+import { memo, useRef } from 'react'
+
+import { AnimatePresence, motion } from 'framer-motion'
+
 import { AnimatedBackground } from '#/components/AnimatedBackground'
 import type { TabListProps, TabPanelProps, TabProps } from '#/components/aria'
 import { Tab, TabList, TabPanel, Tabs, type TabsProps } from '#/components/aria'
@@ -6,8 +10,6 @@ import { useVisualTooltip } from '#/components/AriaComponents'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Suspense } from '#/components/Suspense'
 import SvgMask from '#/components/SvgMask'
-import { AnimatePresence, motion } from 'framer-motion'
-import { memo, useRef } from 'react'
 
 /** Display a set of tabs. */
 export function AssetPanelTabs(props: TabsProps) {

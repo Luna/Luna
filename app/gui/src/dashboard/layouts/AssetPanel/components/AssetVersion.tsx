@@ -2,23 +2,30 @@
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'
 import RestoreIcon from '#/assets/restore.svg'
-import * as ariaComponents from '#/components/AriaComponents'
+import {
+  Button,
+  ButtonGroup,
+  Dialog,
+  DialogTrigger,
+  Tooltip,
+  TooltipTrigger,
+} from '#/components/AriaComponents'
 import AssetListEventType from '#/events/AssetListEventType'
-import * as assetDiffView from '#/layouts/AssetDiffView'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-import * as textProvider from '#/providers/TextProvider'
+import { AssetDiffView } from '#/layouts/AssetDiffView'
+import { useDispatchAssetListEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import * as backendService from '#/services/Backend'
-import * as dateTime from '#/utilities/dateTime'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { AssetType, type AnyAsset, type S3ObjectVersion } from '#/services/Backend'
+import { formatDateTime } from '#/utilities/dateTime'
+import { twMerge } from '#/utilities/tailwindMerge'
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {
   readonly placeholder?: boolean
-  readonly item: backendService.AnyAsset
+  readonly item: AnyAsset
   readonly number: number
-  readonly version: backendService.S3ObjectVersion
-  readonly latestVersion: backendService.S3ObjectVersion
+  readonly version: S3ObjectVersion
+  readonly latestVersion: S3ObjectVersion
   readonly backend: Backend
   readonly doRestore: () => Promise<void> | void
 }
@@ -26,9 +33,9 @@ export interface AssetVersionProps {
 /** Displays information describing a specific version of an asset. */
 export function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
-  const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const isProject = item.type === backendService.AssetType.project
+  const { getText } = useText()
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
+  const isProject = item.type === AssetType.project
 
   const doDuplicate = () => {
     if (isProject) {
@@ -44,7 +51,7 @@ export function AssetVersion(props: AssetVersionProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
+      className={twMerge(
         'flex w-full shrink-0 basis-0 select-none flex-row gap-4 rounded-2xl p-2',
         placeholder && 'opacity-50',
       )}
@@ -55,32 +62,29 @@ export function AssetVersion(props: AssetVersionProps) {
         </div>
 
         <time className="text-xs text-not-selected">
-          {getText('onDateX', dateTime.formatDateTime(new Date(version.lastModified)))}
+          {getText('onDateX', formatDateTime(new Date(version.lastModified)))}
         </time>
       </div>
 
       <div className="flex items-center gap-1">
         {isProject && (
-          <ariaComponents.DialogTrigger>
-            <ariaComponents.TooltipTrigger>
-              <ariaComponents.Button
+          <DialogTrigger>
+            <TooltipTrigger>
+              <Button
                 size="medium"
                 variant="icon"
                 aria-label={getText('compareWithLatest')}
                 icon={CompareIcon}
                 isDisabled={version.isLatest || placeholder}
               />
-              <ariaComponents.Tooltip>{getText('compareWithLatest')}</ariaComponents.Tooltip>
-            </ariaComponents.TooltipTrigger>
-            <ariaComponents.Dialog
-              type="fullscreen"
-              title={getText('compareVersionXWithLatest', number)}
-            >
+              <Tooltip>{getText('compareWithLatest')}</Tooltip>
+            </TooltipTrigger>
+            <Dialog type="fullscreen" title={getText('compareVersionXWithLatest', number)}>
               {(opts) => (
                 <div className="flex h-full flex-col gap-3">
-                  <ariaComponents.ButtonGroup>
-                    <ariaComponents.TooltipTrigger>
-                      <ariaComponents.Button
+                  <ButtonGroup>
+                    <TooltipTrigger>
+                      <Button
                         size="medium"
                         variant="icon"
                         aria-label={getText('restoreThisVersion')}
@@ -91,12 +95,10 @@ export function AssetVersion(props: AssetVersionProps) {
                           opts.close()
                         }}
                       />
-                      <ariaComponents.Tooltip>
-                        {getText('restoreThisVersion')}
-                      </ariaComponents.Tooltip>
-                    </ariaComponents.TooltipTrigger>
-                    <ariaComponents.TooltipTrigger>
-                      <ariaComponents.Button
+                      <Tooltip>{getText('restoreThisVersion')}</Tooltip>
+                    </TooltipTrigger>
+                    <TooltipTrigger>
+                      <Button
                         size="medium"
                         variant="icon"
                         aria-label={getText('duplicateThisVersion')}
@@ -107,12 +109,10 @@ export function AssetVersion(props: AssetVersionProps) {
                           opts.close()
                         }}
                       />
-                      <ariaComponents.Tooltip>
-                        {getText('duplicateThisVersion')}
-                      </ariaComponents.Tooltip>
-                    </ariaComponents.TooltipTrigger>
-                  </ariaComponents.ButtonGroup>
-                  <assetDiffView.AssetDiffView
+                      <Tooltip>{getText('duplicateThisVersion')}</Tooltip>
+                    </TooltipTrigger>
+                  </ButtonGroup>
+                  <AssetDiffView
                     latestVersionId={latestVersion.versionId}
                     versionId={version.versionId}
                     project={item}
@@ -120,12 +120,12 @@ export function AssetVersion(props: AssetVersionProps) {
                   />
                 </div>
               )}
-            </ariaComponents.Dialog>
-          </ariaComponents.DialogTrigger>
+            </Dialog>
+          </DialogTrigger>
         )}
         {isProject && (
-          <ariaComponents.TooltipTrigger>
-            <ariaComponents.Button
+          <TooltipTrigger>
+            <Button
               size="medium"
               variant="icon"
               aria-label={getText('restoreThisVersion')}
@@ -133,12 +133,12 @@ export function AssetVersion(props: AssetVersionProps) {
               isDisabled={version.isLatest || placeholder}
               onPress={doRestore}
             />
-            <ariaComponents.Tooltip>{getText('restoreThisVersion')}</ariaComponents.Tooltip>
-          </ariaComponents.TooltipTrigger>
+            <Tooltip>{getText('restoreThisVersion')}</Tooltip>
+          </TooltipTrigger>
         )}
         {isProject && (
-          <ariaComponents.TooltipTrigger>
-            <ariaComponents.Button
+          <TooltipTrigger>
+            <Button
               size="medium"
               variant="icon"
               aria-label={getText('duplicateThisVersion')}
@@ -146,8 +146,8 @@ export function AssetVersion(props: AssetVersionProps) {
               isDisabled={placeholder}
               onPress={doDuplicate}
             />
-            <ariaComponents.Tooltip>{getText('duplicateThisVersion')}</ariaComponents.Tooltip>
-          </ariaComponents.TooltipTrigger>
+            <Tooltip>{getText('duplicateThisVersion')}</Tooltip>
+          </TooltipTrigger>
         )}
       </div>
     </div>
