@@ -295,7 +295,7 @@ type SQLite_Dialect
             Dialect_Flag.Char_Max_Size_After_Substring_Kept -> False
             Dialect_Flag.Different_Size_Integer_Types -> False
             Dialect_Flag.Supports_8bit_Integer -> False
-            Dialect_Flag.Supports_Decimal_Type -> True
+            Dialect_Flag.Supports_Decimal_Type -> False
             Dialect_Flag.Supports_Time_Duration -> False
             Dialect_Flag.Supports_Nanoseconds_In_Time -> False
             Dialect_Flag.Supports_Mixed_Columns -> False
