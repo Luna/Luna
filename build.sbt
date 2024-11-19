@@ -649,7 +649,7 @@ lazy val componentModulesIds =
     "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion,
     (`runtime-language-arrow` / projectID).value,
     (`syntax-rust-definition` / projectID).value,
-    //(`ydoc-server` / projectID).value,
+    (`ydoc-server` / projectID).value,
     (`profiling-utils` / projectID).value
   )
 }
@@ -721,6 +721,7 @@ lazy val componentModulesPaths =
     (`runtime-instrument-runtime-server` / Compile / exportedModuleBin).value,
     (`runtime-language-arrow` / Compile / exportedModuleBin).value,
     (`runtime-language-epb` / Compile / exportedModuleBin).value,
+    (`runtime-version-manager` / Compile / exportedModuleBin).value,
     (`persistance` / Compile / exportedModuleBin).value,
     (`cli` / Compile / exportedModuleBin).value,
     (`json-rpc-server` / Compile / exportedModuleBin).value,
@@ -737,7 +738,7 @@ lazy val componentModulesPaths =
     (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
     (`jna-wrapper` / Compile / exportedModuleBin).value,
-    //(`ydoc-server` / Compile / exportedModuleBin).value,
+    (`ydoc-server` / Compile / exportedModuleBin).value,
     (`library-manager` / Compile / exportedModuleBin).value,
     (`logging-config` / Compile / exportedModuleBin).value,
     (`logging-utils` / Compile / exportedModuleBin).value,
@@ -1613,7 +1614,8 @@ lazy val `version-output` = (project in file("lib/scala/version-output"))
           defaultDevEnsoVersion = defaultDevEnsoVersion,
           ensoVersion           = ensoVersion,
           scalacVersion         = scalacVersion,
-          graalVersion          = graalVersion,
+          graalVersion          = graalMavenPackagesVersion,
+          javaVersion           = graalVersion,
           currentEdition        = currentEdition
         )
     }.taskValue
@@ -1721,8 +1723,8 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     },
     Test / addModules := Seq(
       (`syntax-rust-definition` / javaModuleName).value,
-      (`profiling-utils` / javaModuleName).value
-      //(`ydoc-server` / javaModuleName).value
+      (`profiling-utils` / javaModuleName).value,
+      (`ydoc-server` / javaModuleName).value
     ),
     Test / moduleDependencies := {
       GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ Seq(
@@ -1732,8 +1734,8 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     },
     Test / internalModuleDependencies := Seq(
       (`profiling-utils` / Compile / exportedModule).value,
-      (`syntax-rust-definition` / Compile / exportedModule).value
-      //(`ydoc-server` / Compile / exportedModule).value
+      (`syntax-rust-definition` / Compile / exportedModule).value,
+      (`ydoc-server` / Compile / exportedModule).value
     ),
     Test / javaOptions ++= testLogProviderOptions,
     Test / test := (Test / test).dependsOn(buildEngineDistribution).value
@@ -1781,7 +1783,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
   .dependsOn(testkit % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
   .dependsOn(`logging-service-logback` % "test->test")
-  //.dependsOn(`ydoc-server` % Test)
+  .dependsOn(`ydoc-server` % Test)
   .dependsOn(`profiling-utils` % Test)
 
 lazy val `json-rpc-server` = project
@@ -2255,7 +2257,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`directory-watcher-wrapper` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
-      //(`ydoc-server` / Compile / exportedModule).value,
+      (`ydoc-server` / Compile / exportedModule).value,
       (`logging-utils` / Compile / exportedModule).value,
       (`logging-utils-akka` / Compile / exportedModule).value,
       (`logging-service` / Compile / exportedModule).value,
@@ -2340,7 +2342,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
       (`runtime-instrument-id-execution` / Compile / exportedModule).value,
       (`runtime-language-epb` / Compile / exportedModule).value,
-      //(`ydoc-server` / Compile / exportedModule).value,
+      (`ydoc-server` / Compile / exportedModule).value,
       (`syntax-rust-definition` / Compile / exportedModule).value,
       (`profiling-utils` / Compile / exportedModule).value,
       (`logging-service-logback` / Compile / exportedModule).value,
@@ -2392,7 +2394,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       javaModuleName.value,
       (`syntax-rust-definition` / javaModuleName).value,
       (`profiling-utils` / javaModuleName).value,
-      //(`ydoc-server` / javaModuleName).value,
+      (`ydoc-server` / javaModuleName).value,
       (`library-manager` / javaModuleName).value
     ),
     Test / addReads := {
@@ -2447,7 +2449,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
   .dependsOn(`logging-service-logback` % "test->test")
   .dependsOn(`library-manager-test` % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
-//.dependsOn(`ydoc-server`)
+  .dependsOn(`ydoc-server`)
 
 lazy val cleanInstruments = taskKey[Unit](
   "Cleans fragile class files to force a full recompilation and preserve" +
@@ -2864,7 +2866,7 @@ lazy val `runtime-integration-tests` =
         (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
-        //(`ydoc-server` / Compile / exportedModule).value,
+        (`ydoc-server` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
         (`logging-service-logback` / Compile / exportedModule).value,
@@ -2914,7 +2916,7 @@ lazy val `runtime-integration-tests` =
         "scala.library",
         (`runtime` / javaModuleName).value,
         (`runtime-test-instruments` / javaModuleName).value,
-        //(`ydoc-server` / javaModuleName).value,
+        (`ydoc-server` / javaModuleName).value,
         (`runtime-instrument-common` / javaModuleName).value,
         (`text-buffer` / javaModuleName).value,
         (`logging-service-logback` / Test / javaModuleName).value,
@@ -3029,7 +3031,7 @@ lazy val `runtime-benchmarks` =
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
         (`runtime-language-arrow` / Compile / exportedModule).value,
-        //(`ydoc-server` / Compile / exportedModule).value,
+        (`ydoc-server` / Compile / exportedModule).value,
         (`benchmarks-common` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
@@ -3525,6 +3527,7 @@ lazy val `engine-runner` = project
       (`pkg` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
       (`runtime-parser` / Compile / exportedModule).value,
+      (`runtime-version-manager` / Compile / exportedModule).value,
       (`version-output` / Compile / exportedModule).value,
       (`engine-common` / Compile / exportedModule).value,
       (`polyglot-api` / Compile / exportedModule).value,
@@ -3700,6 +3703,7 @@ lazy val `engine-runner` = project
   .dependsOn(`distribution-manager`)
   .dependsOn(`edition-updater`)
   .dependsOn(`runtime-parser`)
+  .dependsOn(`runtime-version-manager`)
   .dependsOn(`logging-service`)
   .dependsOn(`logging-service-logback` % Runtime)
   .dependsOn(`engine-runner-common`)
@@ -4051,7 +4055,7 @@ lazy val `std-benchmarks` = (project in file("std-bits/benchmarks"))
     }.evaluated
   )
   .dependsOn(`bench-processor`)
-  //.dependsOn(`ydoc-server`)
+  .dependsOn(`ydoc-server`)
   .dependsOn(`runtime-language-arrow`)
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`profiling-utils`)
@@ -4337,15 +4341,34 @@ lazy val `connected-lock-manager-server` = project
 
 lazy val `runtime-version-manager` = project
   .in(file("lib/scala/runtime-version-manager"))
+  .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
     frgaalJavaCompilerSetting,
+    scalaModuleDependencySetting,
+    mixedJavaScalaProjectSetting,
     resolvers += Resolver.bintrayRepo("gn0s1s", "releases"),
     libraryDependencies ++= Seq(
       "com.typesafe.scala-logging" %% "scala-logging"    % scalaLoggingVersion,
       "org.apache.commons"          % "commons-compress" % commonsCompressVersion,
-      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test,
-      akkaHttp
+      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test
+    ),
+    Compile / moduleDependencies ++= Seq(
+      "org.apache.commons" % "commons-compress" % commonsCompressVersion,
+      "org.slf4j"          % "slf4j-api"        % slf4jVersion
+    ),
+    Compile / internalModuleDependencies := Seq(
+      (`cli` / Compile / exportedModule).value,
+      (`distribution-manager` / Compile / exportedModule).value,
+      (`downloader` / Compile / exportedModule).value,
+      (`editions` / Compile / exportedModule).value,
+      (`edition-updater` / Compile / exportedModule).value,
+      (`logging-utils` / Compile / exportedModule).value,
+      (`pkg` / Compile / exportedModule).value,
+      (`semver` / Compile / exportedModule).value,
+      (`scala-libs-wrapper` / Compile / exportedModule).value,
+      (`scala-yaml` / Compile / exportedModule).value,
+      (`version-output` / Compile / exportedModule).value
     )
   )
   .dependsOn(pkg)

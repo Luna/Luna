@@ -1,5 +1,5 @@
 from Standard.Base import all
-from Standard.Base.Metadata import make_single_choice, Widget
+from Standard.Base.Metadata import Display, make_single_choice, Widget
 from Standard.Base.Metadata.Choice import Option
 from Standard.Base.Metadata.Widget import Text_Input, Vector_Editor
 
@@ -42,7 +42,8 @@ type Google_Analytics_Account
     to_display_text : Text
     to_display_text self = "GA Account {" + self.name + " (" + self.id + ")}"
 
-    ## ICON data_input
+    ## GROUP Standard.Base.Metadata
+       ICON data_input
        List of all properties of the account.
 
        Arguments:
@@ -53,11 +54,12 @@ type Google_Analytics_Account
     @credentials Google_Credential.default_widget
     @limit Rows_To_Read.default_widget
     properties : Google_Credential -> Rows_To_Read -> Boolean -> Vector
-    properties self credential:Google_Credential=..Default (limit : Rows_To_Read = ..First_With_Warning 1000) include_deleted:Boolean=False =
-        Google_Analytics.list_properties self credential limit include_deleted
+    properties self credentials:Google_Credential=..Default (limit : Rows_To_Read = ..First_With_Warning 1000) include_deleted:Boolean=False =
+        Google_Analytics.list_properties credentials self limit include_deleted
 
 ## Filter for Google Analytics accounts.
 type Google_Analytics_Account_Filter
+    ## Filter to all accounts.
     All_Accounts
 
     ## Filter to a single account
@@ -69,26 +71,25 @@ type Google_Analytics_Account_Filter
     Accounts accounts:Vector
 
     ## PRIVATE
-    default_widget : Any -> Any -> Widget
-    default_widget self_arg cache =
+    default_widget self_arg cache display:Display=..Always -> Widget =
         _ = self_arg
         default = [Option "<All>" "..All_Accounts", Option "<Account>" "..Account", Option "<Multiple Accounts>" "..Accounts"]
         Panic.catch Any handler=_->(make_single_choice default) <|
             credentials = cache.if_not_nothing <| cache "credentials"
             options = Google_Analytics.list_accounts credentials=(credentials.if_nothing Google_Credential.Default) limit=(..First 10) . map p->(Option (p.name + " (" + p.id + ")") "..Account "+p.id.pretty)
-            make_single_choice default+options display=..Always
+            make_single_choice default+options display=display
 
-   ## PRIVATE
-   private as_java self -> Array | Nothing = case self of
-       Google_Analytics_Account_Filter.All_Accounts -> Nothing
-       Google_Analytics_Account_Filter.Account acc -> case acc of
-           _ : Google_Analytics_Account -> [acc.java_record].to_array
-           _ : Text -> [_create_analytics_account_from_text acc].to_array
-       Google_Analytics_Account_Filter.Accounts accounts ->
-           vec = accounts.map acc-> case acc of
-               _ : Google_Analytics_Account -> acc.java_record
-               _ : Text -> _create_analytics_account_from_text acc
-           vec.to_array
+    ## PRIVATE
+    private as_java self -> Array | Nothing = case self of
+        Google_Analytics_Account_Filter.All_Accounts -> Nothing
+        Google_Analytics_Account_Filter.Account acc -> case acc of
+            _ : Google_Analytics_Account -> [acc.java_record].to_array
+            _ : Text -> [_create_analytics_account_from_text acc].to_array
+        Google_Analytics_Account_Filter.Accounts accounts ->
+            vec = accounts.map acc-> case acc of
+                _ : Google_Analytics_Account -> acc.java_record
+                _ : Text -> _create_analytics_account_from_text acc
+            vec.to_array
 
 ## PRIVATE
    Creates a Google Analytics account from a text ID.
