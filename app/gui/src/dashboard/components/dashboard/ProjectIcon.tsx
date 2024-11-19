@@ -109,8 +109,6 @@ export default function ProjectIcon(props: ProjectIconProps) {
     isCloud && itemProjectState.openedBy != null && itemProjectState.openedBy !== user.email
 
   const { data: users } = useBackendQuery(backend, 'listUsers', [], {
-    staleTime: Infinity,
-    gcTime: Infinity,
     enabled: isOtherUserUsingProject,
   })
 
@@ -151,7 +149,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   const spinnerState = ((): SpinnerState => {
     if (!isOpened) {
-      return 'initial'
+      return 'loading-slow'
     } else if (isError) {
       return 'initial'
     } else if (status == null) {
@@ -210,7 +208,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
           />
           <StatelessSpinner
             state={spinnerState}
-            className={tailwindMerge.twMerge(
+            className={tailwindMerge.twJoin(
               'pointer-events-none absolute inset-0',
               isRunningInBackground && 'text-green',
             )}

@@ -34,9 +34,9 @@ const DEFAULT_TRANSITION: Transition = {
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   damping: 20,
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  mass: 0.1,
+  mass: 0.5,
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  velocity: 12,
+  velocity: 8,
 }
 
 /** `<AnimatedBackground />` component visually highlights selected items by sliding a background into view when hovered over or clicked. */

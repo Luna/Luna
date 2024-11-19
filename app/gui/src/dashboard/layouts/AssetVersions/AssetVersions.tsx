@@ -13,9 +13,10 @@ import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 import * as dateTime from '#/utilities/dateTime'
-import { useStore } from '../../utilities/zustand.ts'
-import { assetPanelStore } from '../AssetPanel/AssetPanelState.ts'
-import { assetVersionsQueryOptions } from './useAssetVersions.ts'
+import { noop } from '#/utilities/functions'
+import { useStore } from '#/utilities/zustand'
+import { assetPanelStore } from '../AssetPanel/AssetPanelState'
+import { assetVersionsQueryOptions } from './useAssetVersions'
 
 // ==============================
 // === AddNewVersionVariables ===
@@ -137,7 +138,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
               item={item}
               backend={backend}
               latestVersion={latestVersion}
-              doRestore={() => {}}
+              doRestore={noop}
             />
           )),
           ...versionsQuery.data.map((version, i) => (

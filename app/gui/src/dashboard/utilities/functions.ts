@@ -4,5 +4,5 @@
  */
 
 /** A function that does nothing, except stable reference. */
-// eslint-disable-next-line no-restricted-syntax
-export const noop: (...args: unknown[]) => unknown = () => {}
+// eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-explicit-any
+export const noop: (...args: any[]) => void = () => {}

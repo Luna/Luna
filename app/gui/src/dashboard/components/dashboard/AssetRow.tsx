@@ -340,7 +340,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       backend,
     }),
     select: (data) => data.state.type,
-    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder,
+    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder && isOpened,
   })
 
   const toastAndLog = useToastAndLog()

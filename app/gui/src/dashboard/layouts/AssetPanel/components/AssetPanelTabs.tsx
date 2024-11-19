@@ -36,7 +36,7 @@ export interface AssetPanelTabProps extends TabProps {
 
 const UNDERLAY_ELEMENT = (
   <>
-    <div className="h-full w-full rounded-r-2xl bg-background-hex" />
+    <div className="bg-background-hex h-full w-full rounded-r-2xl" />
     <div className="absolute -top-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background-hex)_70%)]" />
     <div className="absolute -bottom-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background-hex)_70%)]" />
   </>
@@ -83,7 +83,7 @@ export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabPro
                   variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
                   initial="inactive"
                   animate={!isActive && isHovered ? 'active' : 'inactive'}
-                  className="absolute inset-x-1.5 inset-y-1.5 -z-1 rounded-full bg-invert transition-colors duration-300"
+                  className="absolute inset-x-1.5 inset-y-1.5 rounded-full bg-invert transition-colors duration-300"
                 />
 
                 <div

@@ -32,7 +32,7 @@ export interface SpinnerProps {
 export const Spinner = React.memo(function Spinner(props: SpinnerProps) {
   const { size, padding, className, state } = props
 
-  const cssClasses = twJoin('pointer-events-none contain-strict', className)
+  const cssClasses = twJoin('pointer-events-none', className)
 
   return (
     <svg
