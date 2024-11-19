@@ -19,12 +19,12 @@ import * as backendModule from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
 
 const PROJECT_EXECUTION_STYLES = tv({
-  base: 'flex flex-row gap-1 w-full rounded-default items-center odd:bg-primary/5 p-2',
+  base: 'group flex flex-row gap-1 w-full rounded-default items-center odd:bg-primary/5 p-2',
   variants: {
     isEnabled: { false: { time: 'opacity-50', optionContainer: 'opacity-50' } },
   },
   slots: {
-    timeContainer: 'group flex flex-row items-center gap-2 grow px-2 py-0.5',
+    timeContainer: 'flex flex-row items-center gap-2 grow px-2 py-0.5',
     time: '',
     timeButtons: 'opacity-0 group-hover:opacity-100 transition-[opacity]',
     optionContainer: 'flex flex-col grow-0 gap-1',
