@@ -796,7 +796,6 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                 backend_context.build().await?;
 
                 enso_build::release::deploy_ydoc_polyglot_to_ecr(&ctx, args.ecr_repository).await?;
-                // TODO: dispatch cloud workflow
             }
             Action::DeployYdocNodejs(args) => {
                 enso_build::web::install(&ctx.repo_root).await?;
@@ -807,7 +806,6 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                     .run_ok()
                     .await?;
                 enso_build::release::deploy_ydoc_nodejs_to_ecr(&ctx, args.ecr_repository).await?;
-                // TODO: dispatch cloud workflow
             }
             Action::Publish => {
                 enso_build::release::publish_release(&ctx).await?;

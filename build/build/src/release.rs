@@ -253,7 +253,7 @@ pub async fn generate_ydoc_polyglot_image(
     context: &BuildContext,
     tag: impl Into<String>,
 ) -> Result<ide_ci::programs::docker::ImageId> {
-    crate::aws::ecr::runtime::build_ydoc_polyglot_image(
+    crate::aws::ecr::ydoc::build_ydoc_polyglot_image(
         &context.repo_root.tools.ci.docker.ydoc_server_polyglot,
         &context.repo_root.lib.java.ydoc_server.target.native_image,
         tag.into(),
@@ -266,7 +266,7 @@ pub async fn generate_ydoc_nodejs_image(
     context: &BuildContext,
     tag: impl Into<String>,
 ) -> Result<ide_ci::programs::docker::ImageId> {
-    crate::aws::ecr::runtime::build_ydoc_nodejs_image(
+    crate::aws::ecr::ydoc::build_ydoc_nodejs_image(
         &context.repo_root.tools.ci.docker.ydoc_server_nodejs,
         &context.repo_root.app.ydoc_server_nodejs,
         tag.into(),
