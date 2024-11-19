@@ -12,6 +12,7 @@ import UpgradeIcon from '#/assets/upgrade.svg'
 import { DialogTrigger } from '#/components/aria'
 import { Button, ButtonGroup, CloseButton, Text } from '#/components/AriaComponents'
 import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useGetOrdinal } from '#/hooks/ordinalHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -45,13 +46,19 @@ export interface ProjectExecutionProps {
 export default function ProjectExecution(props: ProjectExecutionProps) {
   const { backend, item, projectExecution } = props
   const { getText } = useText()
+  const getOrdinal = useGetOrdinal()
   const time = projectExecution.time
+  const dateString =
+    time.dates?.[0] != null ?
+      getOrdinal(time.dates[0] + 1)
+    : getText(time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday' : 'everyDay')
   const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
   const timeString =
     time.hours?.[0] != null ?
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       getText(time.hours[0] > 11 ? 'xPm' : 'xAm', `${time.hours[0] % 12 || 12}${minuteString}`)
     : getText('everyHourXMinute', minuteString || ':00')
+  const dateTimeString = getText('dateXTimeX', dateString, timeString)
 
   const styles = PROJECT_EXECUTION_STYLES({
     isEnabled: projectExecution.enabled,
@@ -73,11 +80,7 @@ export default function ProjectExecution(props: ProjectExecutionProps) {
     <div className={styles.base()}>
       <div className={styles.timeContainer()}>
         <Text elementType="time" className={styles.time()}>
-          {time.dates?.[0] != null ?
-            time.dates[0] + 1
-          : getText(time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday' : 'everyDay')
-          }{' '}
-          {timeString}
+          {dateTimeString}
         </Text>
         <Button
           variant="icon"
