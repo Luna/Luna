@@ -26,7 +26,7 @@ function SvgMask(props: SvgMaskProps) {
   const mask = invert ? `${urlSrc}, linear-gradient(white 0 0)` : urlSrc
 
   const classes = React.useMemo(
-    () => tailwindMerge.twMerge('inline-block h-max w-max', className),
+    () => tailwindMerge.twMerge('inline-block h-max w-max flex-none', className),
     [className],
   )
 

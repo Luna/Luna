@@ -105,7 +105,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
         data-testid="asset-row-name"
         editable={rowState.isEditingName}
         className={tailwindMerge.twMerge(
-          'grow cursor-pointer bg-transparent font-naming',
+          'cursor-pointer bg-transparent font-naming',
           rowState.isEditingName ? 'cursor-text' : 'cursor-pointer',
         )}
         checkSubmittable={(newTitle) =>

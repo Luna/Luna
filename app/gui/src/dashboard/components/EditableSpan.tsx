@@ -110,16 +110,9 @@ export default function EditableSpan(props: EditableSpanProps) {
         }}
       >
         <aria.Input
+          ref={inputRef}
           data-testid={props['data-testid']}
-          className={tailwindMerge.twMerge('rounded-lg', className)}
-          ref={(element) => {
-            inputRef.current = element
-
-            if (element) {
-              element.style.width = '0'
-              element.style.width = `${element.scrollWidth}px`
-            }
-          }}
+          className={tailwindMerge.twMerge('flex-1 basis-full rounded-lg', className)}
           type="text"
           size={1}
           defaultValue={children}
@@ -129,10 +122,6 @@ export default function EditableSpan(props: EditableSpanProps) {
           onKeyDown={(event) => {
             if (event.key !== 'Escape') {
               event.stopPropagation()
-            }
-            if (event.target instanceof HTMLElement) {
-              event.target.style.width = '0'
-              event.target.style.width = `${event.target.scrollWidth}px`
             }
           }}
           {...(inputPattern == null ? {} : { pattern: inputPattern })}
@@ -145,7 +134,7 @@ export default function EditableSpan(props: EditableSpanProps) {
               },
             })}
         />
-        <ariaComponents.ButtonGroup gap="xsmall" className="grow-0 items-center">
+        <ariaComponents.ButtonGroup gap="xsmall" className="w-auto flex-none items-center">
           {isSubmittable && (
             <ariaComponents.Button
               size="medium"

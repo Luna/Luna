@@ -566,12 +566,18 @@ export default function AssetsTable(props: AssetsTableProps) {
             node.item.type !== AssetType.specialEmpty &&
             node.item.type !== AssetType.specialLoading,
         )
-    const allVisible = (negative = false) =>
-      allVisibleNodes().map((node) => nodeToSuggestion(node, negative ? 'negativeNames' : 'names'))
+
+    const allVisible = (negative = false) => {
+      return allVisibleNodes().map((node) =>
+        nodeToSuggestion(node, negative ? 'negativeNames' : 'names'),
+      )
+    }
+
     const terms = AssetQuery.terms(query.query)
     const term = terms.find((otherTerm) => otherTerm.values.length === 0) ?? terms[terms.length - 1]
     const termValues = term?.values ?? []
     const shouldOmitNames = terms.some((otherTerm) => otherTerm.tag === 'name')
+
     if (termValues.length !== 0) {
       setSuggestions(shouldOmitNames ? [] : allVisible())
     } else {

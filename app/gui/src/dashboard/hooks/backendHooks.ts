@@ -176,6 +176,8 @@ const INVALIDATION_MAP: Partial<
   createDirectory: ['listDirectory'],
   createSecret: ['listDirectory'],
   updateSecret: ['listDirectory'],
+  updateProject: ['listDirectory'],
+  updateDirectory: ['listDirectory'],
   createDatalink: ['listDirectory', 'getDatalink'],
   uploadFileEnd: ['listDirectory'],
   copyAsset: ['listDirectory', 'listAssetVersions'],
@@ -183,7 +185,6 @@ const INVALIDATION_MAP: Partial<
   undoDeleteAsset: ['listDirectory'],
   updateAsset: ['listDirectory', 'listAssetVersions'],
   closeProject: ['listDirectory', 'listAssetVersions'],
-  updateDirectory: ['listDirectory'],
 }
 
 /** The type of the corresponding mutation for the given backend method. */

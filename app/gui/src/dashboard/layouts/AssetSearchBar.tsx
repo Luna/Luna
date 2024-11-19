@@ -159,8 +159,10 @@ function AssetSearchBar(props: AssetSearchBarProps) {
   const rawSuggestions = useStore(searchbarSuggestionsStore, (state) => state.suggestions, {
     unsafeEnableTransition: true,
   })
-  const suggestionsRef = useSyncRef(rawSuggestions)
-  const suggestions = React.useDeferredValue(rawSuggestions)
+
+  const [suggestions, setSuggestions] = React.useState(rawSuggestions)
+
+  const suggestionsRef = useSyncRef(suggestions)
 
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [areSuggestionsVisible, privateSetAreSuggestionsVisible] = React.useState(false)
@@ -175,6 +177,13 @@ function AssetSearchBar(props: AssetSearchBarProps) {
       areSuggestionsVisibleRef.current = value
     })
   })
+
+  React.useEffect(() => {
+    if (querySource.current !== QuerySource.tabbing) {
+      setSuggestions(rawSuggestions)
+      unsafeWriteValue(suggestionsRef, 'current', rawSuggestions)
+    }
+  }, [rawSuggestions, suggestionsRef])
 
   React.useEffect(() => {
     if (querySource.current !== QuerySource.tabbing) {

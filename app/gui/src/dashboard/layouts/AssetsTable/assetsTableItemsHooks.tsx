@@ -139,6 +139,7 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
         }
         const isEmpty = (values: string[]) =>
           values.length === 0 || (values.length === 1 && values[0] === '')
+
         const filterTag = (
           positive: string[][],
           negative: string[][],
@@ -146,6 +147,7 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
         ) =>
           positive.every((values) => isEmpty(values) || values.some(predicate)) &&
           negative.every((values) => !values.some(predicate))
+
         return (
           filterTag(query.nos, query.negativeNos, (no) => isAbsent(no.toLowerCase())) &&
           filterTag(query.keywords, query.negativeKeywords, (keyword) =>
@@ -175,26 +177,34 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
 
   const visibilities = useMemo(() => {
     const map = new Map<AssetId, Visibility>()
+
     const processNode = (node: AnyAssetTreeNode) => {
       let displayState = Visibility.hidden
       const visible = filter?.(node) ?? true
+
       for (const child of node.children ?? []) {
         if (visible && child.item.type === AssetType.specialEmpty) {
           map.set(child.key, Visibility.visible)
         } else {
           processNode(child)
         }
+
         if (map.get(child.key) !== Visibility.hidden) {
           displayState = Visibility.faded
         }
       }
+
       if (visible) {
         displayState = Visibility.visible
       }
+
       map.set(node.key, displayState)
+
       return displayState
     }
+
     processNode(assetTree)
+
     return map
   }, [assetTree, filter])
 
@@ -237,12 +247,6 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
       return flatTree
     }
   }, [sortInfo, assetTree, expandedDirectoryIds, setAssetItems])
-
-  // useEffect(() => {
-  //   startTransition(() => {
-  //     setAssetItems(displayItems.map((item) => item.item))
-  //   })
-  // }, [displayItems, setAssetItems])
 
   const visibleItems = useMemo(
     () => displayItems.filter((item) => visibilities.get(item.key) !== Visibility.hidden),
