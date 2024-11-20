@@ -74,7 +74,7 @@ jobs:
   # This job is used to report success if the needed jobs were successful.
   # This is a workaround to make optional jobs required if they run
   report-success:
-    name: ✅ Job went well
+    name: ✅ Job success or skipped due to no changes
     runs-on: ubuntu-latest
     needs: [checks, storybook]
     if: needs.checks.result == 'skipped' && needs.storybook.result == 'skipped' || needs.checks.result == 'success' && needs.storybook.result == 'success'
