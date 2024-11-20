@@ -34,9 +34,10 @@ public final class Ref extends EnsoObject {
    * @param referenceType type of reference to use
    */
   @Builtin.Method(description = "Creates a new Ref", autoRegister = false)
-  public Ref(Object value, long referenceType) {
+  public Ref(Node node, Object value, long referenceType) {
+    var ctx = EnsoContext.get(node);
     this.type = (byte) (referenceType & 0x03);
-    this.value = wrapValue(value);
+    this.value = wrapValue(ctx, value);
   }
 
   /**
@@ -44,8 +45,9 @@ public final class Ref extends EnsoObject {
    */
   @Builtin.Method(name = "get", description = "Gets the value stored in the reference")
   @SuppressWarnings("generic-enso-builtin-type")
-  public Object getValue() {
-    return unwrapValue(value);
+  public Object getValue(Node node) {
+    var ctx = EnsoContext.get(node);
+    return unwrapValue(ctx, value);
   }
 
   /**
@@ -56,10 +58,11 @@ public final class Ref extends EnsoObject {
    */
   @Builtin.Method(name = "put", description = "Stores a new value in the reference")
   @SuppressWarnings("generic-enso-builtin-type")
-  public Object setValue(Object value) {
+  public Object setValue(Node node, Object value) {
+    var ctx = EnsoContext.get(node);
     Object old = this.value;
-    this.value = wrapValue(value);
-    return unwrapValue(old);
+    this.value = wrapValue(ctx, value);
+    return unwrapValue(ctx, old);
   }
 
   @ExportMessage
@@ -82,19 +85,18 @@ public final class Ref extends EnsoObject {
     return EnsoContext.get(node).getBuiltins().ref();
   }
 
-  private final Object wrapValue(Object v) {
+  private final Object wrapValue(EnsoContext ctx, Object v) {
     if (type == 0) {
       return v;
     }
     assert !(v instanceof Reference<?>) : "Ref[" + type + ", " + v + "]";
-    var ctx = EnsoContext.get(null);
     return ctx.getReferencesManager().create(v, type);
   }
 
-  private final Object unwrapValue(Object v) {
+  private final Object unwrapValue(EnsoContext ctx, Object v) {
     if (v instanceof Reference<?> ref) {
       var ret = ref.get();
-      return ret == null ? EnsoContext.get(null).getNothing() : ret;
+      return ret == null ? ctx.getNothing() : ret;
     } else {
       return v;
     }
