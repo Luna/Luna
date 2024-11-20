@@ -135,7 +135,9 @@ public class LRUCache<M> {
       return getResultForCacheEntry(cacheKey);
     } catch (IOException e) {
       logger.log(
-          Level.WARNING, "Failure storing cache entry; will re-execute without caching: {}", e.getMessage());
+          Level.WARNING,
+          "Failure storing cache entry; will re-execute without caching: {}",
+          e.getMessage());
       // Re-issue the request since we don't know if we've consumed any of the response.
       Item<M> rerequested = itemBuilder.buildItem();
       return new CacheResult<>(rerequested.stream(), rerequested.metadata());
@@ -255,7 +257,8 @@ public class LRUCache<M> {
       toRemove.add(mapEntry);
       totalSize -= mapEntry.getValue().size();
     }
-    assert totalSize <= maxTotalCacheSize : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")";
+    assert totalSize <= maxTotalCacheSize
+        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")";
     removeCacheEntries(toRemove);
   }
 
