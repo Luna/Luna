@@ -606,13 +606,13 @@ watchEffect(() => {
 })
 
 const colTypeMap = computed(() => {
-  const colMap: Record<string, string> = {}
+  const colMap: Map<string, string> = new Map()
   if (typeof props.data === 'object' && !('error' in props.data)) {
     const valueTypes = 'value_type' in props.data ? props.data.value_type : []
     const headers = 'header' in props.data ? props.data.header : []
     headers?.forEach((header, index) => {
       if (valueTypes[index]) {
-        colMap[header] = valueTypes[index].constructor
+        colMap.set(header, valueTypes[index].constructor)
       }
     })
   }
@@ -620,7 +620,7 @@ const colTypeMap = computed(() => {
 })
 
 const getColumnValueToEnso = (columnName: string) => {
-  const columnType = colTypeMap.value[columnName] ?? ''
+  const columnType = colTypeMap.value.get(columnName) ?? ''
   const isNumber = ['Integer', 'Float', 'Decimal', 'Byte']
   if (isNumber.indexOf(columnType) != -1) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
