@@ -33,7 +33,7 @@ export default function SettingsSection(props: SettingsSectionProps) {
                 {getText(nameId)}
               </Text.Heading>
             )}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 overflow-auto">
               {entries.map((entry, i) => (
                 <SettingsEntry key={i} context={context} data={entry} />
               ))}
