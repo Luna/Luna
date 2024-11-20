@@ -101,6 +101,8 @@ jobs:
 
   playwright:
     name: 🎭 Playwright Tests
+    env:
+      NODE_OPTIONS: --disable-warning=ExperimentalWarning
     runs-on:
       - self-hosted
       - Linux

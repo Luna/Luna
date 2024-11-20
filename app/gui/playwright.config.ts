@@ -64,7 +64,7 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  reporter: isCI ? ([['list', 'blob']] as const) : ([['list']] as const),
+  reporter: isCI ? ([['list'], ['blob']] as const) : ([['list']] as const),
   retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
