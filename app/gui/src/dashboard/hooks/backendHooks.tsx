@@ -41,10 +41,10 @@ import * as backendModule from '#/services/Backend'
 import {
   AssetType,
   BackendType,
-  DirectoryId,
   type AnyAsset,
   type AssetId,
   type DirectoryAsset,
+  type DirectoryId,
   type User,
   type UserGroupInfo,
 } from '#/services/Backend'
@@ -53,7 +53,6 @@ import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackend
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 
 // The number of bytes in 1 megabyte.
 const MB_BYTES = 1_000_000
@@ -660,26 +659,17 @@ export function useNewFolder(backend: Backend, category: Category) {
       .map((match) => match?.groups?.directoryIndex)
       .map((maybeIndex) => (maybeIndex != null ? parseInt(maybeIndex, 10) : 0))
     const title = `New Folder ${Math.max(0, ...directoryIndices) + 1}`
-    const placeholderItem: DirectoryAsset = {
-      type: AssetType.directory,
-      id: DirectoryId(uniqueString()),
+    const placeholderItem = backendModule.createPlaceholderDirectoryAsset(
       title,
-      modifiedAt: toRfc3339(new Date()),
       parentId,
-      permissions: tryCreateOwnerPermission(
+      tryCreateOwnerPermission(
         `${parentPath ?? ''}/${title}`,
         category,
         user,
         users ?? [],
         userGroups ?? [],
       ),
-      projectState: null,
-      extension: null,
-      labels: [],
-      description: null,
-      parentsPath: '',
-      virtualParentsPath: '',
-    }
+    )
 
     insertAssets([placeholderItem], parentId)
 
@@ -732,34 +722,21 @@ export function useNewProject(backend: Backend, category: Category) {
           .map((maybeIndex) => (maybeIndex != null ? parseInt(maybeIndex, 10) : 0))
         return `${prefix}${Math.max(0, ...projectIndices) + 1}`
       })()
-      const dummyId = backendModule.ProjectId(uniqueString())
       const path = backend instanceof LocalBackend ? backend.joinPath(parentId, projectName) : null
 
-      const placeholderItem: backendModule.ProjectAsset = {
-        type: AssetType.project,
-        id: dummyId,
-        title: projectName,
-        modifiedAt: toRfc3339(new Date()),
+      const placeholderItem = backendModule.createPlaceholderProjectAsset(
+        projectName,
         parentId,
-        permissions: tryCreateOwnerPermission(
+        tryCreateOwnerPermission(
           `${parentPath ?? ''}/${projectName}`,
           category,
           user,
           users ?? [],
           userGroups ?? [],
         ),
-        projectState: {
-          type: backendModule.ProjectState.placeholder,
-          volumeId: '',
-          openedBy: user.email,
-          ...(path != null ? { path } : {}),
-        },
-        extension: null,
-        labels: [],
-        description: null,
-        parentsPath: '',
-        virtualParentsPath: '',
-      }
+        user,
+        path,
+      )
 
       insertAssets([placeholderItem], parentId)
 
@@ -807,26 +784,17 @@ export function useNewSecret(backend: Backend, category: Category) {
       parentPath: string | null | undefined,
     ) => {
       toggleDirectoryExpansion(parentId, true)
-      const placeholderItem: backendModule.SecretAsset = {
-        type: AssetType.secret,
-        id: backendModule.SecretId(uniqueString()),
-        title: name,
-        modifiedAt: toRfc3339(new Date()),
+      const placeholderItem = backendModule.createPlaceholderSecretAsset(
+        name,
         parentId,
-        permissions: tryCreateOwnerPermission(
+        tryCreateOwnerPermission(
           `${parentPath ?? ''}/${name}`,
           category,
           user,
           users ?? [],
           userGroups ?? [],
         ),
-        projectState: null,
-        extension: null,
-        labels: [],
-        description: null,
-        parentsPath: '',
-        virtualParentsPath: '',
-      }
+      )
 
       insertAssets([placeholderItem], parentId)
 
@@ -858,26 +826,17 @@ export function useNewDatalink(backend: Backend, category: Category) {
       parentPath: string | null | undefined,
     ) => {
       toggleDirectoryExpansion(parentId, true)
-      const placeholderItem: backendModule.DatalinkAsset = {
-        type: AssetType.datalink,
-        id: backendModule.DatalinkId(uniqueString()),
-        title: name,
-        modifiedAt: toRfc3339(new Date()),
+      const placeholderItem = backendModule.createPlaceholderDatalinkAsset(
+        name,
         parentId,
-        permissions: tryCreateOwnerPermission(
+        tryCreateOwnerPermission(
           `${parentPath ?? ''}/${name}`,
           category,
           user,
           users ?? [],
           userGroups ?? [],
         ),
-        projectState: null,
-        extension: null,
-        labels: [],
-        description: null,
-        parentsPath: '',
-        virtualParentsPath: '',
-      }
+      )
 
       insertAssets([placeholderItem], parentId)
 
