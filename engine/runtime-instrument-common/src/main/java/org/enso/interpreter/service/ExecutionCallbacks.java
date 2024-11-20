@@ -15,7 +15,6 @@ import org.enso.interpreter.instrument.profiling.ExecutionTime;
 import org.enso.interpreter.instrument.profiling.ProfilingInfo;
 import org.enso.interpreter.node.callable.FunctionCallInstrumentationNode;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
-import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.enso.interpreter.runtime.type.Constants;
@@ -220,21 +219,17 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
       return new String[] {Constants.UNRESOLVED_SYMBOL};
     }
 
-    if (value instanceof EnsoMultiValue multiValue) {
-      var valueTypes = multiValue.allTypes();
-      var resultTypes = new String[valueTypes.length];
-
-      for (int i = 0; i < valueTypes.length; i++) {
-        resultTypes[i] = getTypeQualifiedName(valueTypes[i]);
-      }
-
-      return resultTypes;
-    }
-
     var typeOfNode = TypeOfNode.getUncached();
     Object typeResult = value == null ? null : typeOfNode.execute(value);
     if (typeResult instanceof Type t) {
       return new String[] {getTypeQualifiedName(t)};
+    }
+    if (typeResult instanceof Type[] types) {
+      var result = new String[types.length];
+      for (int i = 0; i < types.length; i++) {
+        result[i] = getTypeQualifiedName(types[i]);
+      }
+      return result;
     }
 
     return null;
