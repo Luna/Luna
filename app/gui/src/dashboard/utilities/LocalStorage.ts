@@ -86,6 +86,15 @@ export default class LocalStorage {
     return LocalStorage.instance
   }
 
+  /**
+   * Get all registered keys.
+   */
+  static getAllKeys() {
+    // This is SAFE because `LocalStorage.keyMetadata` is a statically known set of keys.
+    // eslint-disable-next-line no-restricted-syntax
+    return Object.keys(LocalStorage.keyMetadata) as LocalStorageKey[]
+  }
+
   /** Register runtime behavior associated with a {@link LocalStorageKey}. */
   static registerKey<K extends LocalStorageKey>(key: K, metadata: LocalStorageKeyMetadata<K>) {
     if (IS_DEV_MODE ? isSourceChanged(key) : true) {
