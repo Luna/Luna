@@ -10,6 +10,7 @@ import { z } from 'zod'
 
 import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
 
+import CalendarIcon from '#/assets/calendar.svg'
 import DocsIcon from '#/assets/file_text.svg'
 import SessionsIcon from '#/assets/group.svg'
 import InspectIcon from '#/assets/inspect.svg'
@@ -271,7 +272,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
           />
           <AssetPanelTabs.Tab
             id="executionsCalendar"
-            icon={RepeatIcon}
+            icon={CalendarIcon}
             label={getText('executionsCalendar')}
             isExpanded={isExpanded}
             onPress={expandTab}
