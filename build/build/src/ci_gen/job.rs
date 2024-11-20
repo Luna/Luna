@@ -499,6 +499,21 @@ impl JobArchetype for DeployYdoc {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct DispatchBuildImage;
+
+impl JobArchetype for DispatchBuildImage {
+    fn job(&self, target: Target) -> Job {
+        RunStepsBuilder::new("release dispatch-build-image")
+            .customize(|step| {
+                vec![step
+                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)]
+            })
+            .cleaning(RELEASE_CLEANING_POLICY)
+            .build_job("Dispatch Cloud build-image workflow", target)
+    }
+}
+
 pub fn expose_os_specific_signing_secret(os: OS, step: Step) -> Step {
     match os {
         OS::Windows => step

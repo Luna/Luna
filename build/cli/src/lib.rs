@@ -781,11 +781,6 @@ pub async fn main_internal(config: Option<Config>) -> Result {
             }
             Action::DeployRuntime(args) => {
                 enso_build::release::deploy_runtime_to_ecr(&ctx, args.ecr_repository).await?;
-                enso_build::repo::cloud::build_image_workflow_dispatch_input(
-                    &ctx.octocrab,
-                    &ctx.triple.versions.version,
-                )
-                .await?;
             }
             Action::DeployYdocPolyglot(args) => {
                 let config = enso_build::engine::BuildConfigurationFlags {
@@ -806,6 +801,13 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                     .run_ok()
                     .await?;
                 enso_build::release::deploy_ydoc_nodejs_to_ecr(&ctx, args.ecr_repository).await?;
+            }
+            Action::DispatchBuildImage => {
+                enso_build::repo::cloud::build_image_workflow_dispatch_input(
+                    &ctx.octocrab,
+                    &ctx.triple.versions.version,
+                )
+                .await?;
             }
             Action::Publish => {
                 enso_build::release::publish_release(&ctx).await?;

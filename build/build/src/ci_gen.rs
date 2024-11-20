@@ -523,10 +523,14 @@ fn add_release_steps(workflow: &mut Workflow) -> Result {
             let runtime_requirements = [&prepare_job_id, &backend_job_id];
             let upload_runtime_job_id =
                 workflow.add_dependent(target, job::DeployRuntime, runtime_requirements);
-            packaging_job_ids.push(upload_runtime_job_id);
             let upload_ydoc_job_id =
                 workflow.add_dependent(target, job::DeployYdoc, runtime_requirements);
-            packaging_job_ids.push(upload_ydoc_job_id);
+            let dispatch_build_image_job_id =
+                workflow.add_dependent(target, job::DispatchBuildImage, [
+                    &upload_runtime_job_id,
+                    &upload_ydoc_job_id,
+                ]);
+            packaging_job_ids.push(dispatch_build_image_job_id);
         }
     }
 

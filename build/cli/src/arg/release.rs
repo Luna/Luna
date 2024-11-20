@@ -41,6 +41,8 @@ pub enum Action {
     DeployYdocPolyglot(DeployYdocPolyglot),
     /// Build the Node.js Ydoc image and push it to ECR.
     DeployYdocNodejs(DeployYdocNodejs),
+    /// Dispatches the Cloud build-image workflow.
+    DispatchBuildImage,
     Publish,
     Promote(Promote),
 }
