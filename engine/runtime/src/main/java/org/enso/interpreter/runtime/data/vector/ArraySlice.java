@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.data.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -11,7 +12,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
-import org.enso.interpreter.node.expression.builtin.interop.syntax.HostValueToEnsoNode;
+import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
@@ -23,7 +24,7 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(WarningsLibrary.class)
-final class ArraySlice implements EnsoObject {
+final class ArraySlice extends EnsoObject {
   private final Object storage;
   private final long start;
   private final long end;
@@ -183,5 +184,12 @@ final class ArraySlice implements EnsoObject {
   Type getType(@Bind("$node") Node node) {
     var ctx = EnsoContext.get(node);
     return ctx.getBuiltins().array();
+  }
+
+  @Override
+  @ExportMessage
+  @TruffleBoundary
+  public Object toDisplayString(boolean allowSideEffects) {
+    return "ArraySlice{" + start + ", " + end + "}";
   }
 }
