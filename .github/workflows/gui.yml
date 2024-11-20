@@ -506,6 +506,13 @@ jobs:
           VITE_ENSO_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.MICROSOFT_CODE_SIGNING_CERT_PASSWORD }}
           WIN_CSC_LINK: ${{ secrets.MICROSOFT_CODE_SIGNING_CERT }}
+      - run: corepack pnpm -r --filter enso exec playwright test
+        env:
+          DEBUG: "pw:browser log:"
+          ENSO_TEST_USER: ${{ secrets.ENSO_CLOUD_TEST_ACCOUNT_USERNAME }}
+          ENSO_TEST_USER_PASSWORD: ${{ secrets.ENSO_CLOUD_TEST_ACCOUNT_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
       - run: rm $HOME/.enso/credentials
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
