@@ -88,5 +88,7 @@ export function useLocalStorageState<K extends LocalStorageKey>(
     },
   )
 
+  React.useEffect(() => localStorage.subscribe(key, privateSetValue), [key, localStorage])
+
   return [value, setValue]
 }
