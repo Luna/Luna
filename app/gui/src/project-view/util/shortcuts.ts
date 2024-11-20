@@ -145,6 +145,7 @@ const allKeys = [
   'PageDown',
   'Insert',
   'Space',
+  ' ',
   'A',
   'B',
   'C',
@@ -269,6 +270,7 @@ const HUMAN_READABLE_KEYS: Partial<Record<Key, string>> = {
   ArrowDown: 'Arrow down',
   PageUp: 'Page up',
   PageDown: 'Page down',
+  ' ': 'Space',
 }
 
 // `never extends T ? Result : InferenceSource` is a trick to unify `T` with the actual type of the
@@ -497,8 +499,6 @@ function humanReadableKey(key: string): string {
     return HUMAN_READABLE_POINTER[key]
   } else if (isKey(key)) {
     return HUMAN_READABLE_KEYS[key] ?? key
-  } else if (key === ' ') {
-    return 'Space'
   } else {
     return key
   }

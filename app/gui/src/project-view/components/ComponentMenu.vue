@@ -36,12 +36,13 @@ function closeDropdown() {
   isDropdownOpened.value = false
 }
 
-type Binding =
-  | keyof (typeof graphBindings)['bindings']
-  | keyof (typeof nodeEditBindings)['bindings']
-function readableBinding(binding: Binding) {
-  const bindings = { ...graphBindings.bindings, ...nodeEditBindings.bindings }
-  return bindings[binding].humanReadable
+type BindingSpace<T extends string> = { bindings: Record<T, { humanReadable: string }> }
+type Binding<T extends string> = keyof BindingSpace<T>['bindings']
+function readableBinding<T extends string, BS extends BindingSpace<T>>(
+  binding: Binding<T>,
+  bindingSpace: BS,
+) {
+  return bindingSpace.bindings[binding].humanReadable
 }
 </script>
 
@@ -81,12 +82,18 @@ function readableBinding(binding: Binding) {
           >
             <SvgIcon name="eye" class="rowIcon" />
             <span v-text="`${isVisualizationEnabled ? 'Hide' : 'Show'} Visualization`"></span>
-            <span class="shortcutHint" v-text="`${readableBinding('toggleVisualization')}`"></span>
+            <span
+              class="shortcutHint"
+              v-text="`${readableBinding('toggleVisualization', graphBindings)}`"
+            ></span>
           </MenuButton>
           <MenuButton @click.stop="closeDropdown(), emit('createNewNode')">
             <SvgIcon name="add" class="rowIcon" />
             <span>Add New Component</span>
-            <span class="shortcutHint" v-text="`${readableBinding('openComponentBrowser')}`"></span>
+            <span
+              class="shortcutHint"
+              v-text="`${readableBinding('openComponentBrowser', graphBindings)}`"
+            ></span>
           </MenuButton>
           <MenuButton @click.stop="closeDropdown(), emit('startEditingComment')">
             <SvgIcon name="comment" class="rowIcon" />
@@ -115,7 +122,10 @@ function readableBinding(binding: Binding) {
           <MenuButton data-testid="edit-button" @click.stop="closeDropdown(), emit('startEditing')">
             <SvgIcon name="edit" class="rowIcon" />
             <span>Code Edit</span>
-            <span class="shortcutHint" v-text="`${readableBinding('edit')}`"></span>
+            <span
+              class="shortcutHint"
+              v-text="`${readableBinding('edit', nodeEditBindings)}`"
+            ></span>
           </MenuButton>
           <MenuButton
             data-testid="removeNode"
@@ -124,7 +134,10 @@ function readableBinding(binding: Binding) {
           >
             <SvgIcon name="trash2" class="rowIcon" />
             <span>Remove Component</span>
-            <span class="shortcutHint" v-text="`${readableBinding('deleteSelected')}`"></span>
+            <span
+              class="shortcutHint"
+              v-text="`${readableBinding('deleteSelected', graphBindings)}`"
+            ></span>
           </MenuButton>
         </template>
       </DropdownMenu>
