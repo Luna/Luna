@@ -13,8 +13,9 @@ public class MiniPassTraverserTest {
     var expr = new MockExpression(false);
     var miniPass = new MockMiniPass(null);
     MiniIRPass.compile(MockExpression.class, expr, miniPass);
-    assertThat("Prepare is called only for trees with depth > 1", expr.isPrepared(), is(false));
-    assertThat(expr.isTransformed(), is(true));
+    assertThat(
+        "Prepare is called only for trees with depth > 1", expr.isPreparedByAny(), is(false));
+    assertThat(expr.isTransformedByAny(), is(true));
   }
 
   @Test
@@ -24,9 +25,10 @@ public class MiniPassTraverserTest {
     parentExpr.addChild(childExpr);
     var miniPass = new MockMiniPass(null);
     MiniIRPass.compile(MockExpression.class, parentExpr, miniPass);
-    assertThat("Prepare must be called on a child expression", childExpr.isPrepared(), is(true));
-    assertThat(childExpr.isTransformed(), is(true));
-    assertThat(parentExpr.isTransformed(), is(true));
+    assertThat(
+        "Prepare must be called on a child expression", childExpr.isPreparedByAny(), is(true));
+    assertThat(childExpr.isTransformedByAny(), is(true));
+    assertThat(parentExpr.isTransformedByAny(), is(true));
   }
 
   @Test
@@ -37,10 +39,10 @@ public class MiniPassTraverserTest {
     var miniPass = new MockMiniPass(null);
     MiniIRPass.compile(MockExpression.class, parentExpr, miniPass);
     for (var ch : children) {
-      assertThat("Prepare must be called on a child expression", ch.isPrepared(), is(true));
-      assertThat(ch.isTransformed(), is(true));
+      assertThat("Prepare must be called on a child expression", ch.isPreparedByAny(), is(true));
+      assertThat(ch.isTransformedByAny(), is(true));
     }
-    assertThat(parentExpr.isTransformed(), is(true));
+    assertThat(parentExpr.isTransformedByAny(), is(true));
   }
 
   @Test
@@ -54,9 +56,53 @@ public class MiniPassTraverserTest {
     // Should only process e1 and e2, not e3
     var miniPass = new MockMiniPass(e3);
     MiniIRPass.compile(MockExpression.class, e1, miniPass);
-    assertThat("e3 should not be processed", e3.isPrepared(), is(false));
-    assertThat("e3 should not be processed", e3.isTransformed(), is(false));
-    assertThat("e2 should still be processed", e2.isPrepared(), is(true));
-    assertThat("e2 should still be processed", e2.isTransformed(), is(true));
+    assertThat("e3 should not be processed", e3.isPreparedByAny(), is(false));
+    assertThat("e3 should not be processed", e3.isTransformedByAny(), is(false));
+    assertThat("e2 should still be processed", e2.isPreparedByAny(), is(true));
+    assertThat("e2 should still be processed", e2.isTransformedByAny(), is(true));
+  }
+
+  @Test
+  public void chainedMiniPass_TraversesSingleExpression() {
+    var parentExpr = new MockExpression(false);
+    var childExpr = new MockExpression(true);
+    parentExpr.addChild(childExpr);
+    var miniPass1 = new MockMiniPass(null);
+    var miniPass2 = new MockMiniPass(null);
+    var chainedPass = MiniIRPass.combine(miniPass1, miniPass2);
+    MiniIRPass.compile(MockExpression.class, parentExpr, chainedPass);
+    assertThat(
+        "Child expression is transformed by both passes",
+        childExpr.isTransformedBy(miniPass1),
+        is(true));
+    assertThat(
+        "Child expression is transformed by both passes",
+        childExpr.isTransformedBy(miniPass2),
+        is(true));
+    assertThat(
+        "Child expression is prepared by both passes", childExpr.isPreparedBy(miniPass1), is(true));
+    assertThat(
+        "Child expression is prepared by both passes", childExpr.isPreparedBy(miniPass2), is(true));
+  }
+
+  @Test
+  public void chainedMiniPass_StopsTraversingWhenPrepareReturnsNull() {
+    var e1 = new MockExpression(false);
+    var e2 = new MockExpression(true);
+    var e3 = new MockExpression(true);
+    e1.addChild(e2);
+    e2.addChild(e3);
+    // miniPass1 stops traversing on e2.
+    var miniPass1 = new MockMiniPass(e3);
+    // miniPass2 traverses everything.
+    var miniPass2 = new MockMiniPass(null);
+    var chainedPass = MiniIRPass.combine(miniPass1, miniPass2);
+    MiniIRPass.compile(MockExpression.class, e1, chainedPass);
+    assertThat("e3 should be prepared only by miniPass2", e3.isPreparedBy(miniPass2), is(true));
+    assertThat(
+        "e3 should be transformed only by miniPass2", e3.isTransformedBy(miniPass2), is(true));
+    assertThat("e3 must not be transformed by miniPass1", e3.isTransformedBy(miniPass1), is(false));
+    assertThat(
+        "e2 should still be transformed by miniPass1", e2.isTransformedBy(miniPass1), is(true));
   }
 }

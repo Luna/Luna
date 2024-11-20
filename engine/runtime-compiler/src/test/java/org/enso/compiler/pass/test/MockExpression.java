@@ -1,7 +1,9 @@
 package org.enso.compiler.pass.test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import org.enso.compiler.core.IR;
@@ -15,8 +17,8 @@ import scala.PartialFunction;
 import scala.jdk.javaapi.CollectionConverters;
 
 final class MockExpression implements Expression {
-  private boolean isTransformed;
-  private boolean isPrepared;
+  private final Set<MockMiniPass> transformedBy = new HashSet<>();
+  private final Set<MockMiniPass> preparedBy = new HashSet<>();
   private final boolean hasParent;
   private List<MockExpression> exprChildren = new ArrayList<>();
 
@@ -24,12 +26,24 @@ final class MockExpression implements Expression {
     this.hasParent = hasParent;
   }
 
-  boolean isTransformed() {
-    return isTransformed;
+  boolean isTransformedBy(MockMiniPass pass) {
+    return transformedBy.contains(pass);
   }
 
-  void setTransformed(boolean transformed) {
-    this.isTransformed = transformed;
+  boolean isTransformedByAny() {
+    return !transformedBy.isEmpty();
+  }
+
+  boolean isPreparedBy(MockMiniPass pass) {
+    return preparedBy.contains(pass);
+  }
+
+  boolean isPreparedByAny() {
+    return !preparedBy.isEmpty();
+  }
+
+  void setTransformedByPass(MockMiniPass pass) {
+    transformedBy.add(pass);
   }
 
   boolean hasParent() {
@@ -40,12 +54,8 @@ final class MockExpression implements Expression {
     exprChildren.add(child);
   }
 
-  boolean isPrepared() {
-    return isPrepared;
-  }
-
-  void setPrepared(boolean prepared) {
-    this.isPrepared = prepared;
+  void setPreparedBy(MockMiniPass pass) {
+    preparedBy.add(pass);
   }
 
   @Override

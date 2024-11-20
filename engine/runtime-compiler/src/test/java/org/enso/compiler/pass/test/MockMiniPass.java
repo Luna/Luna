@@ -24,11 +24,12 @@ final class MockMiniPass extends MiniIRPass {
       if (mockExpr.hasParent()) {
         assertThat(
             "Prepare must be called on an expression with a parent",
-            mockExpr.isPrepared(),
+            mockExpr.isPreparedBy(this),
             is(true));
       }
-      assertThat("Transform is called just once", mockExpr.isTransformed(), is(false));
-      mockExpr.setTransformed(true);
+      assertThat(
+          "Transform is called just once by one pass", mockExpr.isTransformedBy(this), is(false));
+      mockExpr.setTransformedByPass(this);
     }
     return expr;
   }
@@ -39,8 +40,8 @@ final class MockMiniPass extends MiniIRPass {
       return null;
     }
     if (child instanceof MockExpression mockExpr) {
-      assertThat("Prepare is called just once", mockExpr.isPrepared(), is(false));
-      mockExpr.setPrepared(true);
+      assertThat("Prepare is called just once by one pass", mockExpr.isPreparedBy(this), is(false));
+      mockExpr.setPreparedBy(this);
     }
     return this;
   }
