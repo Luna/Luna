@@ -42,7 +42,7 @@ defineExpose({
 
 const rootStyle = computed(() => {
   return {
-    '--node-color-primary': props.nodeColor,
+    '--color-node-primary': props.nodeColor,
     '--port-edge-width': `${4 * props.navigator.scale}px`,
   }
 })
@@ -72,7 +72,7 @@ const rootStyle = computed(() => {
 
 <style scoped>
 .ComponentEditor {
-  --node-color-port: color-mix(in oklab, var(--node-color-primary) 85%, white 15%);
+  --node-color-port: color-mix(in oklab, var(--color-node-primary) 85%, white 15%);
   --port-padding: 6px;
   --icon-height: 16px;
   --icon-text-gap: 6px;
@@ -103,17 +103,6 @@ const rootStyle = computed(() => {
   margin: 0 var(--icon-text-gap) 0 calc(0px - var(--port-padding));
   background-color: var(--node-color-port);
   isolation: isolate;
-}
-
-.iconPort::before {
-  content: '';
-  position: absolute;
-  top: calc(var(--port-padding) - var(--component-editor-padding));
-  width: var(--port-edge-width);
-  height: calc(var(--component-editor-padding) - var(--port-padding) + var(--icon-height) / 2);
-  transform: translate(-50%, 0);
-  background-color: var(--node-color-port);
-  z-index: -1;
 }
 
 .nodeIcon {
