@@ -152,6 +152,7 @@ interface PlaceholderOverrides {
   readonly xItemsCut: [count: number]
   readonly ordinalFallback: [number: number]
   readonly dateXTimeX: [date: string, time: string]
+  readonly projectSessionsOnX: [date: string]
 
   readonly arbitraryFieldTooLarge: [maxSize: string]
   readonly arbitraryFieldTooSmall: [minSize: string]

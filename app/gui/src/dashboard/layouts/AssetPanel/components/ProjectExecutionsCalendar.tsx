@@ -1,6 +1,16 @@
 /** @file A calendar showing executions of a project. */
 import { useSuspenseQuery } from '@tanstack/react-query'
 
+import ArrowIcon from '#/assets/folder_arrow.svg'
+import {
+  Calendar,
+  CalendarCell,
+  CalendarGrid,
+  CalendarGridBody,
+  CalendarGridHeader,
+  CalendarHeaderCell,
+  Heading,
+} from '#/components/aria'
 import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaComponents'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Result } from '#/components/Result'
@@ -9,7 +19,22 @@ import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
-import ProjectExecution from './ProjectExecution'
+import { tv } from '#/utilities/tailwindVariants'
+
+const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
+  base: '',
+  slots: {
+    calendarContainer: 'w-full',
+    calendarHeader: 'flex items-center mb-2',
+    calendarHeading: 'text-base grow text-center',
+    calendarGrid: 'w-full',
+    calendarGridHeader: 'flex',
+    calendarGridHeaderCell: '',
+    calendarGridBody: '',
+    calendarGridCell:
+      'text-center px-1 rounded border border-transparent hover:bg-primary/10 outside-visible-range:text-primary/30 disabled:text-primary/30 selected:border-primary/40 min-h-16',
+  },
+})
 
 /** Props for a {@link ProjectExecutionsCalendar}. */
 export interface ProjectExecutionsCalendarProps {
@@ -65,6 +90,8 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
   })
   const projectExecutions = projectExecutionsQuery.data
 
+  const styles = PROJECT_EXECUTIONS_CALENDAR_STYLES({})
+
   return (
     <div className="pointer-events-auto flex w-full flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden">
       <ButtonGroup>
@@ -73,17 +100,25 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
           <NewProjectExecutionModal backend={backend} item={item} />
         </DialogTrigger>
       </ButtonGroup>
-      {projectExecutions.length === 0 ?
+      <Calendar className={styles.calendarContainer()}>
+        <header className={styles.calendarHeader()}>
+          <Button variant="icon" slot="previous" icon={ArrowIcon} className="rotate-180" />
+          <Heading className={styles.calendarHeading()} />
+          <Button variant="icon" slot="next" icon={ArrowIcon} />
+        </header>
+        <CalendarGrid className={styles.calendarGrid()}>
+          <CalendarGridHeader className={styles.calendarGridHeader()}>
+            {() => <CalendarHeaderCell className={styles.calendarGridHeaderCell()} />}
+          </CalendarGridHeader>
+          <CalendarGridBody className={styles.calendarGridBody()}>
+            {(date) => <CalendarCell date={date} className={styles.calendarGridCell()} />}
+          </CalendarGridBody>
+        </CalendarGrid>
+      </Calendar>
+      <Text>{getText('projectSessionsOnX', Intl.DateTimeFormat().format(new Date()))}</Text>
+      {projectExecutions.length === 0 && (
         <Text color="disabled">{getText('noProjectExecutions')}</Text>
-      : projectExecutions.map((execution) => (
-          <ProjectExecution
-            key={execution.projectExecutionId}
-            item={item}
-            backend={backend}
-            projectExecution={execution}
-          />
-        ))
-      }
+      )}
     </div>
   )
 }
