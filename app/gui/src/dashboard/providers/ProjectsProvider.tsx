@@ -89,7 +89,7 @@ export default function ProjectsProvider(props: ProjectsProviderProps) {
 
   const [launchedProjects, setLaunchedProjects] = localStorageProvider.useLocalStorageState(
     'launchedProjects',
-    [],
+    array.EMPTY_ARRAY,
   )
   const [page, setPage] = searchParamsState.useSearchParamsState(
     'page',
