@@ -18,10 +18,11 @@ export interface VisualTooltipProps
   readonly children: React.ReactNode
   readonly className?: string
   readonly targetRef: React.RefObject<HTMLElement>
+  readonly triggerRef?: React.RefObject<HTMLElement> | undefined
   readonly isDisabled?: boolean
   readonly overlayPositionProps?: Pick<
     aria.AriaPositionProps,
-    'containerPadding' | 'offset' | 'placement'
+    'containerPadding' | 'crossOffset' | 'offset' | 'placement'
   >
   /**
    * Determines when the tooltip should be displayed.
@@ -56,6 +57,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   const {
     children,
     targetRef,
+    triggerRef = targetRef,
     className,
     isDisabled = false,
     overlayPositionProps = {},
@@ -122,6 +124,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
           testId={testId}
           state={state}
           targetRef={targetRef}
+          triggerRef={triggerRef}
           disabled={disabled}
           handleHoverChange={handleHoverChange}
         />
@@ -129,9 +132,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   } as const
 }
 
-/**
- * Props for {@link TooltipInner}.
- */
+/** Props for {@link TooltipInner}. */
 interface TooltipInnerProps
   extends Pick<ariaComponents.TooltipProps, 'maxWidth' | 'rounded' | 'size' | 'variant'> {
   readonly id: string
@@ -139,18 +140,17 @@ interface TooltipInnerProps
   readonly handleHoverChange: (isHovered: boolean) => void
   readonly state: aria.TooltipTriggerState
   readonly targetRef: React.RefObject<HTMLElement>
+  readonly triggerRef: React.RefObject<HTMLElement>
   readonly children: React.ReactNode
   readonly className?: string | undefined
   readonly testId?: string | undefined
   readonly overlayPositionProps: Pick<
     aria.AriaPositionProps,
-    'containerPadding' | 'offset' | 'placement'
+    'containerPadding' | 'crossOffset' | 'offset' | 'placement'
   >
 }
 
-/**
- * The inner component of the tooltip.
- */
+/** The inner component of the tooltip. */
 function TooltipInner(props: TooltipInnerProps) {
   const {
     id,
@@ -158,6 +158,7 @@ function TooltipInner(props: TooltipInnerProps) {
     handleHoverChange,
     state,
     targetRef,
+    triggerRef,
     className,
     variant,
     rounded,
@@ -171,6 +172,7 @@ function TooltipInner(props: TooltipInnerProps) {
   const {
     containerPadding = 0,
     offset = DEFAULT_OFFSET,
+    crossOffset = 0,
     placement = 'bottom',
   } = overlayPositionProps
 
@@ -187,8 +189,9 @@ function TooltipInner(props: TooltipInnerProps) {
   const { overlayProps, updatePosition } = aria.useOverlayPosition({
     isOpen: state.isOpen,
     overlayRef: popoverRef,
-    targetRef,
+    targetRef: triggerRef,
     offset,
+    crossOffset,
     placement,
     containerPadding,
   })
