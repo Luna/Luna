@@ -4,11 +4,12 @@
  * The asset panel is a sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
-import docsIcon from '#/assets/file_text.svg'
-import sessionsIcon from '#/assets/group.svg'
-import inspectIcon from '#/assets/inspect.svg'
-import versionsIcon from '#/assets/versions.svg'
+import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
 
+import InformationIcon from '#/assets/information.svg'
+import PlayHistoryIcon from '#/assets/play_history.svg'
+import TextIcon from '#/assets/text.svg'
+import TimeIcon from '#/assets/time.svg'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useBackend } from '#/providers/BackendProvider'
 import {
@@ -22,7 +23,6 @@ import {
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import LocalStorage from '#/utilities/LocalStorage'
-import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
@@ -233,14 +233,14 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
         <AssetPanelTabs.TabList>
           <AssetPanelTabs.Tab
             id="settings"
-            icon={inspectIcon}
+            icon={InformationIcon}
             label={getText('properties')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
-            icon={versionsIcon}
+            icon={TimeIcon}
             label={getText('versions')}
             isExpanded={isExpanded}
             isDisabled={isHidden}
@@ -248,14 +248,14 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
           />
           <AssetPanelTabs.Tab
             id="sessions"
-            icon={sessionsIcon}
+            icon={PlayHistoryIcon}
             label={getText('projectSessions')}
             isExpanded={isExpanded}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="docs"
-            icon={docsIcon}
+            icon={TextIcon}
             label={getText('docs')}
             isExpanded={isExpanded}
             onPress={expandTab}
