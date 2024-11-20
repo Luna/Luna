@@ -376,7 +376,8 @@ jobs:
         name: Upload Test Traces
         uses: actions/upload-artifact@v4
         with:
-          name: test-traces
+          compression-level: 0
+          name: test-traces-linux-amd64
           path: app/ide-desktop/client/test-traces
       - run: rm $HOME/.enso/credentials
         env:
@@ -454,7 +455,8 @@ jobs:
         name: Upload Test Traces
         uses: actions/upload-artifact@v4
         with:
-          name: test-traces
+          compression-level: 0
+          name: test-traces-macos-amd64
           path: app/ide-desktop/client/test-traces
       - run: rm $HOME/.enso/credentials
         env:
@@ -528,7 +530,8 @@ jobs:
         name: Upload Test Traces
         uses: actions/upload-artifact@v4
         with:
-          name: test-traces
+          compression-level: 0
+          name: test-traces-windows-amd64
           path: app/ide-desktop/client/test-traces
       - run: rm $HOME/.enso/credentials
         env:

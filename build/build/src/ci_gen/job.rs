@@ -551,8 +551,9 @@ impl JobArchetype for PackageIde {
                 name: Some("Upload Test Traces".into()),
                 uses: Some("actions/upload-artifact@v4".into()),
                 with: Some(Argument::Other(BTreeMap::from_iter([
-                    ("name".into(), "test-traces".into()),
+                    ("name".into(), format!("test-traces-{}-{}", target.0, target.1).into()),
                     ("path".into(), "app/ide-desktop/client/test-traces".into()),
+                    ("compression-level".into(), 0.into()), // The traces are in zip already.
                 ]))),
                 ..Default::default()
             };

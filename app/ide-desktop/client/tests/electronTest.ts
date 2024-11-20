@@ -23,7 +23,6 @@ export function electronTest(
       executablePath: process.env.ENSO_TEST_EXEC_PATH ?? '',
       args: process.env.ENSO_TEST_APP_ARGS != null ? process.env.ENSO_TEST_APP_ARGS.split(',') : [],
       env: { ...process.env, ['ENSO_TEST']: name },
-      tracesDir: 'test-traces',
     })
     const page = await app.firstWindow()
     await app.context().tracing.start({ screenshots: true, snapshots: true, sources: true })
@@ -34,7 +33,7 @@ export function electronTest(
     try {
       await body({ page, projectsDir })
     } finally {
-      await app.context().tracing.stop({ path: `${name}.zip` })
+      await app.context().tracing.stop({ path: `test-traces/${name}.zip` })
       await app.close()
     }
   })
