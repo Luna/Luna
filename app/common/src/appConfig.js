@@ -18,7 +18,9 @@ export async function readEnvironmentFromFile() {
   const filePath = path.join(url.fileURLToPath(new URL('../..', import.meta.url)), fileName)
   const buildInfo = await (async () => {
     try {
-      return await import('../../../build.json', { with: { type: 'json' } })
+      const build = await import('../../../build.json', { with: { type: 'json' } })
+      // Handle importing json file regardless of CommonJS/ESM integation settings.
+      return 'default' in build ? build.default : build
     } catch {
       return { commit: '', version: '', engineVersion: '', name: '' }
     }
