@@ -32,9 +32,7 @@ LocalStorage.register({
   isAssetPanelVisible: { schema: z.boolean() },
 })
 
-/**
- * The state of the asset panel.
- */
+/** The state of the asset panel. */
 export interface AssetPanelState {
   readonly selectedTab: AssetPanelTab
   readonly setSelectedTab: (tab: AssetPanelTab) => void
@@ -166,9 +164,7 @@ export function useIsAssetPanelVisible() {
   return isAssetPanelPermanentlyVisible || isAssetPanelTemporarilyVisible
 }
 
-/**
- * Whether the Asset Panel is expanded.
- */
+/** Whether the Asset Panel is expanded. */
 export function useIsAssetPanelExpanded() {
   return zustand.useStore(
     assetPanelStore,
@@ -193,9 +189,7 @@ export function useAssetPanelProps() {
   })
 }
 
-/**
- * The selected tab of the Asset Panel.
- */
+/** The selected tab of the Asset Panel. */
 export function useAssetPanelSelectedTab() {
   return zustand.useStore(assetPanelStore, (state) => state.assetPanelProps.selectedTab, {
     unsafeEnableTransition: true,
@@ -209,9 +203,7 @@ export function useSetAssetPanelProps() {
   })
 }
 
-/**
- * A function to reset the Asset Panel props to their default values.
- */
+/** A function to reset the Asset Panel props to their default values. */
 export function useResetAssetPanelProps() {
   return useEventCallback(() => {
     const current = assetPanelStore.getState().assetPanelProps
@@ -229,9 +221,7 @@ export function useResetAssetPanelProps() {
   })
 }
 
-/**
- * A function to set the selected tab of the Asset Panel.
- */
+/** A function to set the selected tab of the Asset Panel. */
 export function useSetAssetPanelSelectedTab() {
   return useEventCallback((selectedTab: AssetPanelContextProps['selectedTab']) => {
     startTransition(() => {

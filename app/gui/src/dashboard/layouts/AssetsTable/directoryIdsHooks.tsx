@@ -1,16 +1,15 @@
 /** @file A hook returning the root directory id and expanded directory ids. */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { useSuspenseQuery } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import type { DirectoryId } from 'enso-common/src/services/Backend'
 import { Path, createRootDirectoryAsset } from 'enso-common/src/services/Backend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
+import { useExpandedDirectoryIds, useSetExpandedDirectoryIds } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 
 /** Options for {@link useDirectoryIds}. */
@@ -34,8 +33,8 @@ export function useDirectoryIds(options: UseDirectoryIdsOptions) {
    * The root directory is not included as it might change when a user switches
    * between items in sidebar and we don't want to reset the expanded state using `useEffect`.
    */
-  const [privateExpandedDirectoryIds, setExpandedDirectoryIds] =
-    useState<readonly DirectoryId[]>(EMPTY_ARRAY)
+  const privateExpandedDirectoryIds = useExpandedDirectoryIds()
+  const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
   const [localRootDirectory] = useLocalStorageState('localRootDirectory')
   const rootDirectoryId = useMemo(() => {

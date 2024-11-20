@@ -10,7 +10,11 @@ import * as dragAndDropHooks from '#/hooks/dragAndDropHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
 import type { DrivePastePayload } from '#/providers/DriveProvider'
-import { useDriveStore, useSetSelectedKeys } from '#/providers/DriveProvider'
+import {
+  useDriveStore,
+  useSetSelectedKeys,
+  useToggleDirectoryExpansion,
+} from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
@@ -35,6 +39,7 @@ import {
   backendMutationOptions,
   backendQueryOptions,
   useBackendMutationState,
+  useUploadFiles,
 } from '#/hooks/backendHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -277,7 +282,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
   const { doRestore, doMove, category, rootDirectoryId, backend } = state
-  const { doToggleDirectoryExpansion } = state
 
   const driveStore = useDriveStore()
   const queryClient = useQueryClient()
@@ -306,6 +310,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     assetRowUtils.INITIAL_ROW_STATE,
   )
   const cutAndPaste = useCutAndPaste(category)
+  const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)
   const isEditingName = innerRowState.isEditingName || isNewlyCreated
@@ -345,6 +350,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const toastAndLog = useToastAndLog()
 
+  const uploadFiles = useUploadFiles(backend, category)
   const createPermissionMutation = useMutation(backendMutationOptions(backend, 'createPermission'))
   const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
@@ -688,7 +694,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     window.setTimeout(() => {
                       setSelected(false)
                     })
-                    doToggleDirectoryExpansion(asset.id, asset.id)
+                    toggleDirectoryExpansion(asset.id)
                   }
                 }}
                 onContextMenu={(event) => {
@@ -733,7 +739,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   }
                   if (asset.type === backendModule.AssetType.directory) {
                     dragOverTimeoutHandle.current = window.setTimeout(() => {
-                      doToggleDirectoryExpansion(asset.id, asset.id, true)
+                      toggleDirectoryExpansion(asset.id, true)
                     }, DRAG_EXPAND_DELAY_MS)
                   }
                   // Required because `dragover` does not fire on `mouseenter`.
@@ -781,7 +787,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                       event.preventDefault()
                       event.stopPropagation()
                       unsetModal()
-                      doToggleDirectoryExpansion(directoryId, directoryId, true)
+                      toggleDirectoryExpansion(directoryId, true)
                       const ids = payload
                         .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
                         .map((dragItem) => dragItem.key)
@@ -794,13 +800,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     } else if (event.dataTransfer.types.includes('Files')) {
                       event.preventDefault()
                       event.stopPropagation()
-                      doToggleDirectoryExpansion(directoryId, directoryId, true)
-                      dispatchAssetListEvent({
-                        type: AssetListEventType.uploadFiles,
-                        parentKey: directoryId,
-                        parentId: directoryId,
-                        files: Array.from(event.dataTransfer.files),
-                      })
+                      toggleDirectoryExpansion(directoryId, true)
+                      void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
                     }
                   }
                 }}
