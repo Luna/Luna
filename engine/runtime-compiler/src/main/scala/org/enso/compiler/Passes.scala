@@ -45,7 +45,7 @@ class Passes(config: CompilerConfig) {
       OperatorToFunction,
       LambdaShorthandToLambda,
       ImportSymbolAnalysis.INSTANCE,
-      AmbiguousImportsAnalysis
+      AmbiguousImportsAnalysis.INSTANCE
     ) ++ (if (config.privateCheckEnabled) {
             List(
               PrivateModuleAnalysis.INSTANCE,
