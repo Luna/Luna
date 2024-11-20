@@ -13,12 +13,10 @@ import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
-import LocalStorage from '#/utilities/LocalStorage'
 import { useStore } from '#/utilities/zustand'
 import type { BackendType } from 'enso-common/src/services/Backend'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
-import { z } from 'zod'
 import { AssetDocs } from '../AssetDocs'
 import AssetProjectSessions from '../AssetProjectSessions'
 import AssetProperties from '../AssetProperties'
@@ -31,30 +29,11 @@ import {
 } from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
-import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
+import { type AssetPanelTab } from './types'
 
 const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-    readonly isAssetPanelHidden: boolean
-    readonly assetPanelTab: AssetPanelTab
-    readonly assetPanelWidth: number
-  }
-}
-
-const ASSET_PANEL_TAB_SCHEMA = z.enum(ASSET_PANEL_TABS)
-
-LocalStorage.register({
-  assetPanelTab: { schema: ASSET_PANEL_TAB_SCHEMA },
-  assetPanelWidth: { schema: z.number().int() },
-  isAssetPanelHidden: { schema: z.boolean() },
-  isAssetPanelVisible: { schema: z.boolean() },
-})
 
 /**
  * Props for an {@link AssetPanel}.
@@ -99,7 +78,7 @@ export function AssetPanel(props: AssetPanelProps) {
             initial={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
-            className="absolute bottom-0 right-0 top-0 flex flex-col bg-background-hex"
+            className="bg-background-hex absolute bottom-0 right-0 top-0 flex flex-col"
             onClick={(event) => {
               // Prevent deselecting Assets Table rows.
               event.stopPropagation()
@@ -195,7 +174,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
             }}
           >
             {/* We use hex color here to avoid muliplying bg colors due to opacity. */}
-            <div className="flex h-full flex-col bg-background-hex">
+            <div className="bg-background-hex flex h-full flex-col">
               <ErrorBoundary resetKeys={[itemId]}>
                 <AssetPanelTabs.TabPanel id="settings">
                   <AssetProperties backend={backend} isReadonly={isReadonly} category={category} />

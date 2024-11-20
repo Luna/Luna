@@ -9,8 +9,28 @@ import type { AnyAsset } from '#/services/Backend'
 import LocalStorage from '#/utilities/LocalStorage'
 import * as zustand from '#/utilities/zustand'
 import { startTransition } from 'react'
+import { z } from 'zod'
 import type { AssetPropertiesSpotlight } from '../AssetProperties'
-import type { AssetPanelTab } from './types'
+import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
+
+declare module '#/utilities/LocalStorage' {
+  /** */
+  interface LocalStorageData {
+    readonly isAssetPanelVisible: boolean
+    readonly isAssetPanelHidden: boolean
+    readonly assetPanelTab: AssetPanelTab
+    readonly assetPanelWidth: number
+  }
+}
+
+const ASSET_PANEL_TAB_SCHEMA = z.enum(ASSET_PANEL_TABS)
+
+LocalStorage.register({
+  assetPanelTab: { schema: ASSET_PANEL_TAB_SCHEMA },
+  assetPanelWidth: { schema: z.number().int() },
+  isAssetPanelHidden: { schema: z.boolean() },
+  isAssetPanelVisible: { schema: z.boolean() },
+})
 
 /**
  * The state of the asset panel.
