@@ -345,7 +345,8 @@ export const PARALLEL_MODE_TO_DESCRIPTION_ID = {
   [K in ProjectParallelMode]: TextId & `${K}ParallelModeDescription`
 }
 
-/** The behavior when manually starting a new execution when the previous one is not yet complete.
+/**
+ * The behavior when manually starting a new execution when the previous one is not yet complete.
  * One of the following:
  * - `ignore` - do not start the new execution.
  * - `restart` - stop the old execution and start the new execution.
@@ -1505,8 +1506,8 @@ export interface GetProjectExecutionRepetitionsForDateRangeOptions {
   readonly includeHourlyRepeats?: boolean
 }
 
-/** The first execution date of the given {@link ProjectExecution} after the given date. */
-export function firstProjectExecutionAfter(
+/** The first execution date of the given {@link ProjectExecution} on or after the given date. */
+export function firstProjectExecutionOnOrAfter(
   projectExecution: ProjectExecution,
   startDate: Date,
 ): Date {
@@ -1518,15 +1519,17 @@ export function firstProjectExecutionAfter(
   nextDate.setMinutes(minute)
   switch (repeatInterval) {
     case 'hourly': {
-      nextDate.setHours(nextDate.getHours() + 1)
+      if (nextDate < startDate) {
+        nextDate.setHours(nextDate.getHours() + 1)
+      }
       break
     }
     case 'daily':
     case 'weekly':
     case 'monthly': {
-      const nextIndex = (hours.indexOf(nextDate.getHours()) + 1) % hours.length
-      const hour = hours[nextIndex] ?? 0
-      const goToNextDay = hour <= nextDate.getHours()
+      const currentHours = nextDate.getHours()
+      const hour = hours.find(hour => hour >= currentHours) ?? hours[0] ?? 0
+      const goToNextDay = hour < currentHours
       nextDate.setHours(hour)
       if (goToNextDay || hours.length <= 1) {
         switch (repeatInterval) {
@@ -1535,16 +1538,16 @@ export function firstProjectExecutionAfter(
             break
           }
           case 'weekly': {
-            const dayIndex = (days.indexOf(nextDate.getDay()) + 1) % days.length
-            const day = days[dayIndex] ?? 0
-            const dayOffset = (day - nextDate.getDay() + 7) % 7
+            const currentDay = nextDate.getDay()
+            const day = days.find(day => day >= currentDay) ?? days[0] ?? 0
+            const dayOffset = (day - currentDay + 7) % 7
             nextDate.setDate(nextDate.getDate() + dayOffset)
             break
           }
           case 'monthly': {
-            const dateIndex = (dates.indexOf(nextDate.getDate()) + 1) % dates.length
-            const date = dates[dateIndex] ?? 0
-            const goToNextMonth = date <= nextDate.getDate()
+            const currentDate = nextDate.getDate()
+            const date = dates.find(date => date >= currentDate) ?? dates[0] ?? 0
+            const goToNextMonth = date < currentDate
             nextDate.setDate(date)
             if (goToNextMonth) {
               nextDate.setMonth(nextDate.getMonth() + 1)
@@ -1625,7 +1628,7 @@ export function getProjectExecutionRepetitionsForDateRange(
   if (!includeHourlyRepeats && projectExecution.repeatInterval === 'hourly') {
     return array.EMPTY_ARRAY
   }
-  const firstDate = firstProjectExecutionAfter(projectExecution, startDate)
+  const firstDate = firstProjectExecutionOnOrAfter(projectExecution, startDate)
   if (firstDate > endDate) {
     return array.EMPTY_ARRAY
   }
