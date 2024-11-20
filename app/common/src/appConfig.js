@@ -24,6 +24,7 @@ export async function readEnvironmentFromFile() {
     }
   })()
   console.info('Build info: ' + JSON.stringify(buildInfo))
+  discardUndefinedEnv('ENSO_IDE_VERSION')
   discardUndefinedEnv('ENSO_CLOUD_DASHBOARD_VERSION')
   discardUndefinedEnv('ENSO_CLOUD_DASHBOARD_COMMIT_HASH')
 
