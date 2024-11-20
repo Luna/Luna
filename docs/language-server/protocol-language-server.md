@@ -366,7 +366,13 @@ An update about the computed expression.
 interface ExpressionUpdate {
   /** The id of updated expression. */
   expressionId: ExpressionId;
-  /** The updated type of the expression. */
+  /** The updated type of the expression.
+   *
+   *  Possible values:
+   *  - empty array indicates no type information for this expression
+   *  - array with a single value contains a value of this expression
+   *  - array with multiple values represents an intersetion type
+   */
   type: string[];
   /** The updated method call info. */
   methodCall?: MethodCall;
