@@ -6,7 +6,7 @@ import {
   tableNewCallMayBeHandled,
   useTableNewArgument,
   type RowData,
-} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableNewArgument'
+} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableInputArgument'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import AgGridTableView from '@/components/shared/AgGridTableView.vue'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
@@ -235,7 +235,7 @@ export const widgetDefinition = defineWidget(
   WidgetInputIsSpecificMethodCall({
     module: 'Standard.Table.Table',
     definedOnType: 'Standard.Table.Table.Table',
-    name: 'new',
+    name: 'input',
   }),
   {
     priority: 999,
