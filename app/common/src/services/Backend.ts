@@ -1546,7 +1546,7 @@ export function firstProjectExecutionOnOrAfter(
           }
           case 'monthly': {
             const currentDate = nextDate.getDate()
-            const date = dates.find(date => date >= currentDate) ?? dates[0] ?? 0
+            const date = dates.find(date => date >= currentDate) ?? dates[0] ?? 1
             const goToNextMonth = date < currentDate
             nextDate.setDate(date)
             if (goToNextMonth) {

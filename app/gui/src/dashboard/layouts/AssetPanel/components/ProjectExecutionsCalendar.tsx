@@ -18,8 +18,17 @@ import { Suspense } from '#/components/Suspense'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
+import {
+  AssetType,
+  BackendType,
+  getProjectExecutionRepetitionsForDateRange,
+  type AnyAsset,
+  type ProjectAsset,
+  type ProjectExecution,
+} from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
+import { parseDate } from '@internationalized/date'
+import { useMemo } from 'react'
 
 const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
   base: '',
@@ -89,6 +98,37 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
     },
   })
   const projectExecutions = projectExecutionsQuery.data
+  console.log('D', projectExecutions)
+  const projectExecutionsByDate = useMemo<
+    Readonly<
+      Record<
+        string,
+        readonly { readonly date: Date; readonly projectExecution: ProjectExecution }[]
+      >
+    >
+  >(() => {
+    const startDate = new Date()
+    startDate.setDate(1)
+    const endDate = new Date()
+    endDate.setMonth(endDate.getMonth() + 1)
+    endDate.setDate(0)
+    console.log(startDate, endDate)
+    const result: Record<
+      string,
+      { readonly date: Date; readonly projectExecution: ProjectExecution }[]
+    > = {}
+    for (const projectExecution of projectExecutions) {
+      for (const date of getProjectExecutionRepetitionsForDateRange(
+        projectExecution,
+        startDate,
+        endDate,
+      )) {
+        const dateString = parseDate(date.toString()).toString()
+        ;(result[dateString] ??= []).push({ date, projectExecution })
+      }
+    }
+    return result
+  }, [projectExecutions])
 
   const styles = PROJECT_EXECUTIONS_CALENDAR_STYLES({})
 
@@ -111,7 +151,13 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
             {() => <CalendarHeaderCell className={styles.calendarGridHeaderCell()} />}
           </CalendarGridHeader>
           <CalendarGridBody className={styles.calendarGridBody()}>
-            {(date) => <CalendarCell date={date} className={styles.calendarGridCell()} />}
+            {(date) => (
+              <CalendarCell date={date} className={styles.calendarGridCell()}>
+                {projectExecutionsByDate[date.toString()]?.map((data) => (
+                  <Text>{data.date.toString()}</Text>
+                ))}
+              </CalendarCell>
+            )}
           </CalendarGridBody>
         </CalendarGrid>
       </Calendar>
