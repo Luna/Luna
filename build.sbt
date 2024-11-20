@@ -3202,7 +3202,8 @@ lazy val `runtime-compiler` =
         "org.yaml"             % "snakeyaml"               % snakeyamlVersion          % Test,
         "org.jline"            % "jline"                   % jlineVersion              % Test,
         "com.typesafe"         % "config"                  % typesafeConfigVersion     % Test,
-        "org.graalvm.polyglot" % "polyglot"                % graalMavenPackagesVersion % Test
+        "org.graalvm.polyglot" % "polyglot"                % graalMavenPackagesVersion % Test,
+        "org.hamcrest"         % "hamcrest-all"            % hamcrestVersion           % Test
       ),
       Compile / moduleDependencies ++= Seq(
         "org.slf4j"        % "slf4j-api"               % slf4jVersion,
@@ -3241,9 +3242,14 @@ lazy val `runtime-compiler` =
         javaModuleName.value
       ),
       Test / patchModules := {
+        // Patch test-classes into the runtime module. This is standard way to deal with the
+        // split package problem in unit tests. For example, Maven's surefire plugin does this.
         val testClassDir = (Test / productDirectories).value.head
+        // Patching with sources is useful for compilation, patching with compiled classes for runtime.
+        val javaSrcDir = (Test / javaSource).value
         Map(
           javaModuleName.value -> Seq(
+            javaSrcDir,
             testClassDir
           )
         )
