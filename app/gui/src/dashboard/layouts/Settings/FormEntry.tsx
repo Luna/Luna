@@ -57,7 +57,7 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
           <SettingsInput key={input.name} context={context} data={input} />
         ))}
         <ButtonGroup>
-          <Form.Submit>{getText('save')}</Form.Submit>
+          <Form.Submit isDisabled={!form.formState.isDirty}>{getText('save')}</Form.Submit>
           <Form.Reset>{getText('cancel')}</Form.Reset>
         </ButtonGroup>
         <Form.FormError />
