@@ -78,7 +78,7 @@ export function AssetPanel(props: AssetPanelProps) {
             initial={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
-            className="bg-background-hex absolute bottom-0 right-0 top-0 flex flex-col"
+            className="absolute bottom-0 right-0 top-0 flex flex-col bg-background-hex"
             onClick={(event) => {
               // Prevent deselecting Assets Table rows.
               event.stopPropagation()
@@ -174,7 +174,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
             }}
           >
             {/* We use hex color here to avoid muliplying bg colors due to opacity. */}
-            <div className="bg-background-hex flex h-full flex-col">
+            <div className="flex h-full flex-col bg-background-hex">
               <ErrorBoundary resetKeys={[itemId]}>
                 <AssetPanelTabs.TabPanel id="settings">
                   <AssetProperties backend={backend} isReadonly={isReadonly} category={category} />
