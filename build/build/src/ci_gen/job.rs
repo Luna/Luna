@@ -542,7 +542,7 @@ impl JobArchetype for PackageIde {
             let test_step = if target.0 == OS::Linux {
                 shell(format!("xvfb-run {TEST_COMMAND}"))
                     // See https://askubuntu.com/questions/1512287/obsidian-appimage-the-suid-sandbox-helper-binary-was-found-but-is-not-configu
-                    .with_env("ENSO_TEST_APP_ARGS", "--no-sandbox")
+                    .with_env("ENSO_TEST_APP_ARGS", "--no-sandbox --disable-gpu --disable-software-rasterizer")
             } else {
                 shell(TEST_COMMAND)
             };
