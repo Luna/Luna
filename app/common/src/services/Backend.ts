@@ -1499,6 +1499,146 @@ export function userHasUserAndTeamSpaces(user: User | null) {
   }
 }
 
+/** Options for {@link getProjectExecutionRepetitionsForDateRange}. */
+export interface GetProjectExecutionRepetitionsForDateRangeOptions {
+  /** Defaults to `false`. */
+  readonly includeHourlyRepeats?: boolean
+}
+
+/** The first execution date of the given {@link ProjectExecution} after the given date. */
+export function firstProjectExecutionAfter(
+  projectExecution: ProjectExecution,
+  startDate: Date,
+): Date {
+  const nextDate = new Date(startDate)
+  const {
+    repeatInterval,
+    time: { minute, hours = [], dates = [], days = [] },
+  } = projectExecution
+  nextDate.setMinutes(minute)
+  switch (repeatInterval) {
+    case 'hourly': {
+      nextDate.setHours(nextDate.getHours() + 1)
+      break
+    }
+    case 'daily':
+    case 'weekly':
+    case 'monthly': {
+      const nextIndex = (hours.indexOf(nextDate.getHours()) + 1) % hours.length
+      const hour = hours[nextIndex] ?? 0
+      const goToNextDay = hour <= nextDate.getHours()
+      nextDate.setHours(hour)
+      if (goToNextDay || hours.length <= 1) {
+        switch (repeatInterval) {
+          case 'daily': {
+            nextDate.setDate(nextDate.getDate() + 1)
+            break
+          }
+          case 'weekly': {
+            const dayIndex = (days.indexOf(nextDate.getDay()) + 1) % days.length
+            const day = days[dayIndex] ?? 0
+            const dayOffset = (day - nextDate.getDay() + 7) % 7
+            nextDate.setDate(nextDate.getDate() + dayOffset)
+            break
+          }
+          case 'monthly': {
+            const dateIndex = (dates.indexOf(nextDate.getDate()) + 1) % dates.length
+            const date = dates[dateIndex] ?? 0
+            const goToNextMonth = date <= nextDate.getDate()
+            nextDate.setDate(date)
+            if (goToNextMonth) {
+              nextDate.setMonth(nextDate.getMonth() + 1)
+            }
+            break
+          }
+        }
+      }
+      break
+    }
+  }
+  return nextDate
+}
+
+/** The next scheduled execution date of given {@link ProjectExecution}. */
+export function nextProjectExecutionDate(projectExecution: ProjectExecution, date: Date): Date {
+  const nextDate = new Date(date)
+  const {
+    repeatInterval,
+    time: { minute, hours = [], dates = [], days = [] },
+  } = projectExecution
+  nextDate.setMinutes(minute)
+  switch (repeatInterval) {
+    case 'hourly': {
+      nextDate.setHours(nextDate.getHours() + 1)
+      break
+    }
+    case 'daily':
+    case 'weekly':
+    case 'monthly': {
+      const nextIndex = (hours.indexOf(nextDate.getHours()) + 1) % hours.length
+      const hour = hours[nextIndex] ?? 0
+      const goToNextDay = hour <= nextDate.getHours()
+      nextDate.setHours(hour)
+      if (goToNextDay || hours.length <= 1) {
+        switch (repeatInterval) {
+          case 'daily': {
+            nextDate.setDate(nextDate.getDate() + 1)
+            break
+          }
+          case 'weekly': {
+            const dayIndex = (days.indexOf(nextDate.getDay()) + 1) % days.length
+            const day = days[dayIndex] ?? 0
+            const dayOffset = (day - nextDate.getDay() + 7) % 7
+            nextDate.setDate(nextDate.getDate() + dayOffset)
+            break
+          }
+          case 'monthly': {
+            const dateIndex = (dates.indexOf(nextDate.getDate()) + 1) % dates.length
+            const date = dates[dateIndex] ?? 0
+            const goToNextMonth = date <= nextDate.getDate()
+            nextDate.setDate(date)
+            if (goToNextMonth) {
+              nextDate.setMonth(nextDate.getMonth() + 1)
+            }
+            break
+          }
+        }
+      }
+      break
+    }
+  }
+  return nextDate
+}
+
+/**
+ * All executions of the given {@link ProjectExecution} between the given dates.
+ * By default, return an empty array if the {@link ProjectExecution} repeats hourly.
+ * This is to prevent UI from being overly cluttered.
+ */
+export function getProjectExecutionRepetitionsForDateRange(
+  projectExecution: ProjectExecution,
+  startDate: Date,
+  endDate: Date,
+  options: GetProjectExecutionRepetitionsForDateRangeOptions = {},
+): readonly Date[] {
+  const { includeHourlyRepeats = false } = options
+  if (!includeHourlyRepeats && projectExecution.repeatInterval === 'hourly') {
+    return array.EMPTY_ARRAY
+  }
+  const firstDate = firstProjectExecutionAfter(projectExecution, startDate)
+  if (firstDate > endDate) {
+    return array.EMPTY_ARRAY
+  }
+  const repetitions: Date[] = [firstDate]
+  let currentDate = firstDate
+  currentDate = nextProjectExecutionDate(projectExecution, currentDate)
+  while (currentDate <= endDate) {
+    repetitions.push(currentDate)
+    currentDate = nextProjectExecutionDate(projectExecution, currentDate)
+  }
+  return repetitions
+}
+
 // =====================
 // === fileIsProject ===
 // =====================
