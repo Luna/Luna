@@ -44,7 +44,7 @@ final class AllOfTypesCheckNode extends AbstractTypeCheckNode {
       valueTypes[at] = types.getType(result);
       at++;
     }
-    return EnsoMultiValue.create(valueTypes, values);
+    return EnsoMultiValue.create(valueTypes, valueTypes.length, values);
   }
 
   @Override

@@ -115,7 +115,7 @@ non-sealed abstract class SingleTypeCheckNode extends AbstractTypeCheckNode {
         CompilerDirectives.transferToInterpreter();
         castTo = insert(EnsoMultiValue.CastToNode.create());
       }
-      var result = castTo.executeCast(expectedType, mv);
+      var result = castTo.executeCast(expectedType, mv, true);
       if (result != null) {
         return result;
       }

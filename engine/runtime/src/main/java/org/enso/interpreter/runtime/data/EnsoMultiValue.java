@@ -29,28 +29,33 @@ import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.function.Function;
+import org.enso.interpreter.runtime.data.atom.StructsLibrary;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.graalvm.collections.Pair;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(StructsLibrary.class)
 public final class EnsoMultiValue implements EnsoObject {
 
   @CompilationFinal(dimensions = 1)
   private final Type[] types;
 
+  @CompilationFinal private final int methodDispatchTypes;
+
   @CompilationFinal(dimensions = 1)
   private final Object[] values;
 
-  private EnsoMultiValue(Type[] types, Object[] values) {
+  private EnsoMultiValue(Type[] types, int dispatchTypes, Object[] values) {
     this.types = types;
+    this.methodDispatchTypes = dispatchTypes;
     assert types.length == values.length;
     this.values = values;
   }
 
-  public static EnsoObject create(Type[] types, Object[] values) {
-    return new EnsoMultiValue(types, values);
+  public static EnsoObject create(Type[] types, int dispatchTypes, Object[] values) {
+    return new EnsoMultiValue(types, dispatchTypes, values);
   }
 
   @ExportMessage
@@ -100,7 +105,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isString(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isString(values[i])) {
         return true;
       }
@@ -111,7 +116,8 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   String asString(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (Object value : values) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
+      var value = values[i];
       if (iop.isString(value)) {
         return iop.asString(value);
       }
@@ -121,7 +127,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isNumber(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isNumber(values[i])) {
         return true;
       }
@@ -131,7 +137,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInByte(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInByte(values[i])) {
         return true;
       }
@@ -141,7 +147,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInShort(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInShort(values[i])) {
         return true;
       }
@@ -151,7 +157,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInInt(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInShort(values[i])) {
         return true;
       }
@@ -161,7 +167,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInLong(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInLong(values[i])) {
         return true;
       }
@@ -171,7 +177,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInFloat(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInFloat(values[i])) {
         return true;
       }
@@ -181,7 +187,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInDouble(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInDouble(values[i])) {
         return true;
       }
@@ -192,7 +198,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   byte asByte(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInByte(values[i])) {
         return iop.asByte(values[i]);
       }
@@ -203,7 +209,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   short asShort(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInShort(values[i])) {
         return iop.asShort(values[i]);
       }
@@ -214,7 +220,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   int asInt(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInInt(values[i])) {
         return iop.asInt(values[i]);
       }
@@ -225,7 +231,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   long asLong(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInLong(values[i])) {
         return iop.asLong(values[i]);
       }
@@ -236,7 +242,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   float asFloat(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInFloat(values[i])) {
         return iop.asFloat(values[i]);
       }
@@ -247,7 +253,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   double asDouble(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInDouble(values[i])) {
         return iop.asDouble(values[i]);
       }
@@ -257,7 +263,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean fitsInBigInteger(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInBigInteger(values[i])) {
         return true;
       }
@@ -268,7 +274,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   BigInteger asBigInteger(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.fitsInBigInteger(values[i])) {
         return iop.asBigInteger(values[i]);
       }
@@ -278,7 +284,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isTime(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isTime(values[i])) {
         return true;
       }
@@ -289,7 +295,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   LocalTime asTime(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isTime(values[i])) {
         return iop.asTime(values[i]);
       }
@@ -299,7 +305,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isDate(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isDate(values[i])) {
         return true;
       }
@@ -310,7 +316,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   LocalDate asDate(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isDate(values[i])) {
         return iop.asDate(values[i]);
       }
@@ -320,7 +326,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isTimeZone(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isTimeZone(values[i])) {
         return true;
       }
@@ -331,7 +337,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   ZoneId asTimeZone(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isTimeZone(values[i])) {
         return iop.asTimeZone(values[i]);
       }
@@ -341,7 +347,7 @@ public final class EnsoMultiValue implements EnsoObject {
 
   @ExportMessage
   boolean isDuration(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isDuration(values[i])) {
         return true;
       }
@@ -352,7 +358,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   Duration asDuration(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isDuration(values[i])) {
         return iop.asDuration(values[i]);
       }
@@ -370,7 +376,7 @@ public final class EnsoMultiValue implements EnsoObject {
   Object getMembers(
       boolean includeInternal, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
     var names = new TreeSet<String>();
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       try {
         var members = iop.getMembers(values[i]);
         var len = iop.getArraySize(members);
@@ -387,7 +393,7 @@ public final class EnsoMultiValue implements EnsoObject {
   @ExportMessage
   boolean isMemberInvocable(
       String name, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return true;
       }
@@ -404,12 +410,31 @@ public final class EnsoMultiValue implements EnsoObject {
           ArityException,
           UnsupportedTypeException,
           UnknownIdentifierException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return iop.invokeMember(values[i], name, args);
       }
     }
     throw UnknownIdentifierException.create(name);
+  }
+
+  @ExportMessage
+  boolean isStruct(@Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
+    return methodDispatchTypes == 1 && structs.isStruct(values[0]);
+  }
+
+  @ExportMessage
+  Object getField(
+      int index, @Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
+    return structs.getField(values[0], index);
+  }
+
+  @ExportMessage
+  void setField(
+      int index,
+      Object value,
+      @Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
+    structs.setField(values[0], index, value);
   }
 
   @TruffleBoundary
@@ -428,7 +453,7 @@ public final class EnsoMultiValue implements EnsoObject {
      * @param mv a multi value
      * @return instance of the {@code t} or {@code null} if no suitable value was found
      */
-    public abstract Object executeCast(Type type, EnsoMultiValue mv);
+    public abstract Object executeCast(Type type, EnsoMultiValue mv, boolean reorderOnly);
 
     @NeverDefault
     public static CastToNode create() {
@@ -444,10 +469,21 @@ public final class EnsoMultiValue implements EnsoObject {
     Object castsToAType(
         Type type,
         EnsoMultiValue mv,
+        boolean reorderOnly,
         @Cached(value = "type", allowUncached = true, neverDefault = true) Type cachedType) {
       for (var i = 0; i < mv.types.length; i++) {
         if (mv.types[i] == cachedType) {
-          return mv.values[i];
+          if (reorderOnly) {
+            var copyTypes = mv.types.clone();
+            var copyValues = mv.values.clone();
+            copyTypes[i] = mv.types[0];
+            copyValues[i] = mv.values[0];
+            copyTypes[0] = mv.types[i];
+            copyValues[0] = mv.values[i];
+            return EnsoMultiValue.create(copyTypes, 1, copyValues);
+          } else {
+            return mv.values[i];
+          }
         }
       }
       return null;
@@ -465,10 +501,11 @@ public final class EnsoMultiValue implements EnsoObject {
       MethodResolverNode node, UnresolvedSymbol symbol) {
     var ctx = EnsoContext.get(node);
     Pair<Function, Type> foundAnyMethod = null;
-    for (Type t : types) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
+      var t = types[i];
       var fnAndType = node.execute(t, symbol);
       if (fnAndType != null) {
-        if (fnAndType.getRight() != ctx.getBuiltins().any()) {
+        if (methodDispatchTypes == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {
           return Pair.create(fnAndType.getLeft(), t);
         }
         foundAnyMethod = fnAndType;
