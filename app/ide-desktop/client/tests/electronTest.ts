@@ -9,6 +9,8 @@ import pathModule from 'node:path'
 const LOADING_TIMEOUT = 10000
 const TEXT = TEXTS.english
 
+const DEFAULT_APP_ARGS = ['--no-sandbox', '--disable-gpu', '--disable-software-rasterizer']
+
 /**
  * Tests run on electron executable.
  *
@@ -21,7 +23,10 @@ export function electronTest(
   test(name, async () => {
     const app = await _electron.launch({
       executablePath: process.env.ENSO_TEST_EXEC_PATH ?? '',
-      args: process.env.ENSO_TEST_APP_ARGS != null ? process.env.ENSO_TEST_APP_ARGS.split(',') : [],
+      args:
+        process.env.ENSO_TEST_APP_ARGS != null ?
+          process.env.ENSO_TEST_APP_ARGS.split(',').concat(DEFAULT_APP_ARGS)
+        : DEFAULT_APP_ARGS,
       env: { ...process.env, ['ENSO_TEST']: name },
     })
     const page = await app.firstWindow()
