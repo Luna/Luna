@@ -3,6 +3,7 @@ package org.enso.table.data.column.storage;
 import java.util.BitSet;
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
+import org.enso.table.data.column.operation.CountUntrimmed;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.MapOperationStorage;
@@ -20,6 +21,7 @@ import org.graalvm.polyglot.Context;
 public final class StringStorage extends SpecializedStorage<String> {
 
   private final TextType type;
+  private long _countLeadingTrailingWhitespace = -1;
 
   /**
    * @param data the underlying data
@@ -44,6 +46,20 @@ public final class StringStorage extends SpecializedStorage<String> {
   @Override
   public TextType getType() {
     return type;
+  }
+
+  /**
+   * Counts the number of cells in the columns with whitespace.
+   * Memoized into the storage for performance.
+   * @return the number of cells with whitespace
+   */
+  public Long countLeadingTrailingWhitespace() {
+    if (_countLeadingTrailingWhitespace >= 0) {
+      return _countLeadingTrailingWhitespace;
+    }
+
+    _countLeadingTrailingWhitespace = CountUntrimmed.compute(this);
+    return _countLeadingTrailingWhitespace;
   }
 
   private static MapOperationStorage<String, SpecializedStorage<String>> buildOps() {

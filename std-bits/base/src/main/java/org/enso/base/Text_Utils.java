@@ -36,6 +36,64 @@ public class Text_Utils {
   }
 
   /**
+   * Gets the first Grapheme cluster in the string.
+   *
+   * @param string the string to substring
+   * @return the first grapheme cluster in the string or null if the string is empty.
+   */
+  public static String first_cluster(String string) {
+    BreakIterator breakIterator = BreakIterator.getCharacterInstance();
+    breakIterator.setText(string);
+    int start = breakIterator.first();
+    if (start == -1) {
+      return null;
+    }
+    int end = breakIterator.next();
+    return string.substring(start, end);
+  }
+
+  /**
+   * Gets the last Grapheme cluster in the string.
+   *
+   * @param string the string to substring
+   * @return the last grapheme cluster in the string or null if the string is empty.
+   */
+  public static String last_cluster(String string) {
+    BreakIterator breakIterator = BreakIterator.getCharacterInstance();
+    breakIterator.setText(string);
+    int start = breakIterator.last();
+    if (start == -1) {
+      return null;
+    }
+    int end = breakIterator.previous();
+    return string.substring(end, start);
+  }
+
+  /**
+   * Checks if the string has leading or trailing whitespace.
+   *
+   * @param s the string to check
+   * @return whether the string has leading or trailing whitespace
+   */
+  public static boolean has_leading_trailing_whitespace(String s) {
+    if (s == null && s.isEmpty()) {
+      return false;
+    }
+
+    var leading = Text_Utils.first_cluster(s);
+    if (leading != null && is_all_whitespace(leading)) {
+      return true;
+    }
+
+    var trailing = Text_Utils.last_cluster(s);
+    if (trailing != null && is_all_whitespace(trailing)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Returns a new string containing characters starting at the given UTF-16 index.
    *
    * @param string the string to trim
