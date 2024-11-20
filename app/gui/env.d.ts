@@ -176,6 +176,13 @@ declare global {
     readonly fileBrowserApi?: FileBrowserApi
     readonly versionInfo?: VersionInfo
     toggleDevtools: () => void
+    /**
+     * If set to `true`, animations will be disabled.
+     * Used by playwright tests to speed up execution.
+     *
+     * ATM only affects the framer-motion animations.
+     */
+    readonly DISABLE_ANIMATIONS?: boolean
   }
 
   namespace NodeJS {
@@ -210,6 +217,8 @@ declare global {
       readonly ENSO_CLOUD_SENTRY_DSN?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_STRIPE_KEY?: string
+      // @ts-expect-error The index signature is intentional to disallow unknown env vars.
+      readonly ENSO_CLOUD_AUTH_ENDPOINT: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_COGNITO_USER_POOL_ID: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.

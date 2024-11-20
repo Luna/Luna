@@ -24,8 +24,11 @@
   component.][11452]
 - [New documentation editor provides improved Markdown editing experience, and
   paves the way for new documentation features.][11469]
+- [You can now add images to documentation panel][11547] by pasting them from
+  clipboard or by drag'n'dropping image files.
 - ["Write" button in component menu allows to evaluate it separately from the
   rest of the workflow][11523].
+- [The documentation editor can now display tables][11564]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -42,7 +45,9 @@
 [11448]: https://github.com/enso-org/enso/pull/11448
 [11452]: https://github.com/enso-org/enso/pull/11452
 [11469]: https://github.com/enso-org/enso/pull/11469
+[11547]: https://github.com/enso-org/enso/pull/11547
 [11523]: https://github.com/enso-org/enso/pull/11523
+[11564]: https://github.com/enso-org/enso/pull/11564
 
 #### Enso Standard Library
 
@@ -54,12 +59,15 @@
 - [Support for dates before 1900 in Excel and signed AWS requests.][11373]
 - [Added `Data.read_many` that allows to read a list of files in a single
   operation.][11490]
+- [Added `Table.input` allowing creation of typed tables from vectors of data,
+  including auto parsing text columns.][11562]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
 [11371]: https://github.com/enso-org/enso/pull/11371
 [11373]: https://github.com/enso-org/enso/pull/11373
 [11490]: https://github.com/enso-org/enso/pull/11490
+[11562]: https://github.com/enso-org/enso/pull/11562
 
 #### Enso Language & Runtime
 
