@@ -1,24 +1,17 @@
 import { TreeCursor } from '@lezer/common'
-import type {
-  BlockContext,
-  BlockParser,
-  DelimiterType,
-  InlineContext,
-  InlineDelimiter,
-  InlineParser,
-  Line,
-  MarkdownParser,
-  NodeSpec,
-} from '@lezer/markdown'
 import {
-  parser as baseParser,
+  type BlockContext,
+  type BlockParser,
+  type DelimiterType,
+  type InlineContext,
+  type InlineDelimiter,
+  type InlineParser,
+  type Line,
+  type MarkdownParser,
+  type NodeSpec,
+  parser as commonmarkParser,
   Element,
-  Emoji,
-  Strikethrough,
-  Subscript,
-  Superscript,
   Table,
-  TaskList,
 } from '@lezer/markdown'
 import { assertDefined } from 'ydoc-shared/util/assert'
 
@@ -460,12 +453,7 @@ const ensoMarkdownLanguageExtension = {
  * - Many of the parsers differ from the `@lezer/markdown` parsers in their treatment of whitespace, in order to support
  *   a rendering mode where markup (and some associated spacing) is hidden.
  */
-export const markdownParser: MarkdownParser = baseParser.configure([
-  Emoji,
-  Strikethrough,
-  Subscript,
-  Superscript,
+export const markdownParser: MarkdownParser = commonmarkParser.configure([
   Table,
-  TaskList,
   ensoMarkdownLanguageExtension,
 ])
