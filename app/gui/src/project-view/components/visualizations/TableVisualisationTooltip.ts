@@ -41,20 +41,33 @@ export class TableVisualisationTooltip implements ITooltipComp {
       return `<div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>`
     }
 
-    const dataQualityTemplate = `
-            <div style="display: ${getDisplay(params.numberOfNothing)};">
-                Nulls/Nothing: ${getPercentage(params.numberOfNothing)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
-            </div>
-            <div style="display: ${getDisplay(params.numberOfWhitespace)};">
-                Trailing/Leading Whitespace: ${getPercentage(params.numberOfWhitespace)}% ${createIndicator(+getPercentage(params.numberOfWhitespace))}
-            </div>
-        `
+    const dataQualityData = [
+      {
+        "Nulls/Nothing": params.numberOfNothing
+      },
+      {
+        "Trailing/Leading Whitespace": params.numberOfWhitespace
+      }
+
+    ]
+
+
+    const getDataQualityTemplate = () => {
+      let template = ''
+      dataQualityData.forEach((obj) => {
+        const key = Object.keys(obj)[0]
+        const metricTemplate = `<div style="display: ${getDisplay(obj[key])};">
+                ${key}: ${getPercentage(obj[key])}% ${createIndicator(+getPercentage(obj[key]))}
+            </div>`
+        template = template + metricTemplate
+      })
+      return template
+    }
 
     this.eGui.innerHTML = `
             <div><b>Column value type:</b> ${params.value}</div>
             <div style="display: ${params.showDataQuality ? 'block' : 'none'};"">
-                <b>Data Quality Indicators</b>
-                ${dataQualityTemplate}
+                ${getDataQualityTemplate()}
             </div>
         `
   }
