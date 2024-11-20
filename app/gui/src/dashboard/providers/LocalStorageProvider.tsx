@@ -2,11 +2,20 @@
  * @file The React provider for localStorage, along with hooks to use the provider
  * via the shared React context.
  */
-import * as React from 'react'
+import {
+  createContext,
+  type PropsWithChildren,
+  type SetStateAction,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
+import type { z } from 'zod'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-
-import LocalStorage, { type LocalStorageData, type LocalStorageKey } from '#/utilities/LocalStorage'
+import { LocalStorage } from '#/utilities/LocalStorage'
 
 // ===========================
 // === LocalStorageContext ===
@@ -19,10 +28,10 @@ export interface LocalStorageContextType {
 
 // @ts-expect-error The default value will never be exposed, as using this without a `Provider`
 // is a mistake.
-const LocalStorageContext = React.createContext<LocalStorageContextType>(null)
+const LocalStorageContext = createContext<LocalStorageContextType>(null)
 
 /** Props for a {@link LocalStorageProvider}. */
-export type LocalStorageProviderProps = Readonly<React.PropsWithChildren>
+export type LocalStorageProviderProps = Readonly<PropsWithChildren>
 
 // ============================
 // === LocalStorageProvider ===
@@ -32,7 +41,7 @@ export type LocalStorageProviderProps = Readonly<React.PropsWithChildren>
 export default function LocalStorageProvider(props: LocalStorageProviderProps) {
   const { children } = props
 
-  const localStorage = React.useMemo(() => LocalStorage.getInstance(), [])
+  const localStorage = useMemo(() => LocalStorage.getInstance(), [])
 
   return (
     <LocalStorageContext.Provider value={{ localStorage }}>{children}</LocalStorageContext.Provider>
@@ -41,61 +50,65 @@ export default function LocalStorageProvider(props: LocalStorageProviderProps) {
 
 /** Exposes a property to get the shortcut registry. */
 export function useLocalStorage() {
-  return React.useContext(LocalStorageContext)
+  return useContext(LocalStorageContext)
 }
 
-export function useLocalStorageState<K extends LocalStorageKey>(
-  key: K,
-): readonly [
-  value: LocalStorageData[K] | undefined,
-  setValue: (newValue: React.SetStateAction<LocalStorageData[K] | undefined>) => void,
-]
+/** Create a set of hooks for interacting with one specific local storage key. */
+export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, schema: Schema) {
+  /** The type of the value of this key. */
+  type Value = Exclude<z.infer<Schema>, (...args: never[]) => unknown>
 
-export function useLocalStorageState<K extends LocalStorageKey>(
-  key: K,
-  defaultValue: LocalStorageData[K],
-): readonly [
-  value: LocalStorageData[K],
-  setValue: (newValue: React.SetStateAction<LocalStorageData[K]>) => void,
-]
+  const useGet = () => {
+    const { localStorage } = useLocalStorage()
 
-/** Subscribe to Local Storage updates for a specific key. */
-export function useLocalStorageState<K extends LocalStorageKey>(
-  key: K,
-  defaultValue?: LocalStorageData[K],
-): readonly [
-  value: LocalStorageData[K] | undefined,
-  setValue: (newValue: LocalStorageData[K] | undefined) => void,
-] {
-  const { localStorage } = useLocalStorage()
+    useEffect(() => {
+      if (!('error' in schema.safeParse(localStorage.get(key)))) {
+        localStorage.delete(key)
+      }
+    }, [localStorage])
 
-  const [value, privateSetValue] = React.useState<LocalStorageData[K] | undefined>(
-    () => localStorage.get(key) ?? defaultValue,
-  )
+    return useEventCallback(() => localStorage.get(key))
+  }
 
-  const setValue = useEventCallback(
-    (newValue: React.SetStateAction<LocalStorageData[K] | undefined>) => {
+  const useSet = () => {
+    const { localStorage } = useLocalStorage()
+
+    return useEventCallback((value: Value) => {
+      localStorage.set(key, value)
+    })
+  }
+
+  function useLocalStorageState(): readonly [
+    value: Value | undefined,
+    setValue: (newValue: SetStateAction<Value | undefined>) => void,
+  ]
+  function useLocalStorageState(
+    defaultValue: Value,
+  ): readonly [value: Value, setValue: (newValue: SetStateAction<Value>) => void]
+  /** Subscribe to Local Storage updates for a specific key. */
+  // eslint-disable-next-line no-restricted-syntax
+  function useLocalStorageState(
+    defaultValue?: Value,
+  ): readonly [value: Value | undefined, setValue: (newValue: Value | undefined) => void] {
+    const { localStorage } = useLocalStorage()
+
+    const [value, privateSetValue] = useState<Value | undefined>(
+      () => localStorage.get(key) ?? defaultValue,
+    )
+
+    const setValue = useEventCallback((newValue: SetStateAction<Value | undefined>) => {
       privateSetValue((currentValue) => {
         const nextValue = typeof newValue === 'function' ? newValue(currentValue) : newValue
-
         if (nextValue === undefined) {
           localStorage.delete(key)
         } else {
           localStorage.set(key, nextValue)
         }
-
         return nextValue
       })
-    },
-  )
+    })
 
-  React.useEffect(
-    () =>
-      localStorage.subscribe(key, (newValue) => {
-        privateSetValue(newValue ?? defaultValue)
-      }),
-    [defaultValue, key, localStorage],
-  )
-
-  return [value, setValue]
+    return [value, setValue]
+  }
+  return { useGet, useSet, useState: useLocalStorageState }
 }

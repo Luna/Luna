@@ -1,73 +1,19 @@
 /** @file A LocalStorage data manager. */
-import type * as z from 'zod'
+import { PRODUCT_NAME } from 'enso-common'
 
-import * as common from 'enso-common'
+import { unsafeEntries } from '#/utilities/object'
 
-import * as object from '#/utilities/object'
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import invariant from 'tiny-invariant'
-
-const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
-
-/**
- * Whether the source location for `LocalStorage.register(key)` is different to the previous
- * known source location.
- */
-function isSourceChanged(key: string) {
-  const stack = (new Error().stack ?? '').replace(/[?]t=\d+:\d+:\d+/g, '')
-  const isChanged = stack !== KEY_DEFINITION_STACK_TRACES.get(key)
-  KEY_DEFINITION_STACK_TRACES.set(key, stack)
-  return isChanged
-}
-
-// ===============================
-// === LocalStorageKeyMetadata ===
-// ===============================
-
-/** Metadata describing runtime behavior associated with a {@link LocalStorageKey}. */
-export interface LocalStorageKeyMetadata<K extends LocalStorageKey> {
+/** Metadata describing runtime behavior associated with a local storage key. */
+export interface LocalStorageKeyMetadata {
   readonly isUserSpecific?: boolean
-  /**
-   * The Zod schema to validate the value.
-   * If this is provided, the value will be parsed using this schema.
-   * If this is not provided, the value will be parsed using the `tryParse` function.
-   */
-  readonly schema: z.ZodType<LocalStorageData[K]>
 }
-
-// ========================
-// === LocalStorageData ===
-// ========================
-
-/**
- * The data that can be stored in a {@link LocalStorage}.
- * Declaration merge into this interface to add a new key.
- */
-export interface LocalStorageData {}
-
-// =======================
-// === LocalStorageKey ===
-// =======================
-
-/** All possible keys of a {@link LocalStorage}. */
-export type LocalStorageKey = keyof LocalStorageData
-
-// ====================
-// === LocalStorage ===
-// ====================
 
 /** A LocalStorage data manager. */
-export default class LocalStorage {
-  // This is UNSAFE. It is assumed that `LocalStorage.register` is always called
-  // when `LocalStorageData` is declaration merged into.
-  // eslint-disable-next-line no-restricted-syntax
-  private static keyMetadata = {} as Record<
-    LocalStorageKey,
-    LocalStorageKeyMetadata<LocalStorageKey>
-  >
+export class LocalStorage {
+  static keyMetadata: Record<string, LocalStorageKeyMetadata> = {}
   private static instance: LocalStorage | null = null
-  localStorageKey = common.PRODUCT_NAME.toLowerCase()
-  protected values: Partial<LocalStorageData>
+  localStorageKey = PRODUCT_NAME.toLowerCase()
+  protected values: Record<string, unknown>
   private readonly eventTarget = new EventTarget()
 
   /** Create a {@link LocalStorage}. */
@@ -75,63 +21,21 @@ export default class LocalStorage {
     this.values = {}
   }
 
-  /**
-   * Gets the singleton instance of {@link LocalStorage}.
-   */
+  /** Get the singleton instance of {@link LocalStorage}. */
   static getInstance() {
     if (LocalStorage.instance == null) {
       LocalStorage.instance = new LocalStorage()
     }
-
     return LocalStorage.instance
   }
 
-  /**
-   * Get all registered keys.
-   */
-  static getAllKeys() {
-    // This is SAFE because `LocalStorage.keyMetadata` is a statically known set of keys.
-    // eslint-disable-next-line no-restricted-syntax
-    return Object.keys(LocalStorage.keyMetadata) as LocalStorageKey[]
-  }
-
-  /** Register runtime behavior associated with a {@link LocalStorageKey}. */
-  static registerKey<K extends LocalStorageKey>(key: K, metadata: LocalStorageKeyMetadata<K>) {
-    if (IS_DEV_MODE ? isSourceChanged(key) : true) {
-      invariant(
-        !(key in LocalStorage.keyMetadata),
-        `Local storage key '${key}' has already been registered.`,
-      )
-    }
-    LocalStorage.keyMetadata[key] = metadata
-  }
-
-  /** Register runtime behavior associated with a {@link LocalStorageKey}. */
-  static register<K extends LocalStorageKey>(metadata: { [K_ in K]: LocalStorageKeyMetadata<K_> }) {
-    for (const key in metadata) {
-      LocalStorage.registerKey(key, metadata[key])
-    }
-  }
-
   /** Retrieve an entry from the stored data. */
-  get<K extends LocalStorageKey>(key: K) {
-    this.assertRegisteredKey(key)
-
-    if (!(key in this.values)) {
-      const value = this.readValueFromLocalStorage(key)
-
-      if (value != null) {
-        this.values[key] = value
-      }
-    }
-
+  get(key: string) {
     return this.values[key]
   }
 
   /** Write an entry to the stored data, and save. */
-  set<K extends LocalStorageKey>(key: K, value: LocalStorageData[K]) {
-    this.assertRegisteredKey(key)
-
+  set(key: string, value: unknown) {
     this.values[key] = value
 
     this.eventTarget.dispatchEvent(new Event(key))
@@ -141,9 +45,7 @@ export default class LocalStorage {
   }
 
   /** Delete an entry from the stored data, and save. */
-  delete<K extends LocalStorageKey>(key: K) {
-    this.assertRegisteredKey(key)
-
+  delete(key: string) {
     const oldValue = this.values[key]
     // The key being deleted is one of a statically known set of keys.
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -157,7 +59,7 @@ export default class LocalStorage {
 
   /** Delete user-specific entries from the stored data, and save. */
   clearUserSpecificEntries() {
-    for (const [key, metadata] of object.unsafeEntries(LocalStorage.keyMetadata)) {
+    for (const [key, metadata] of unsafeEntries(LocalStorage.keyMetadata)) {
       if (metadata.isUserSpecific === true) {
         this.delete(key)
       }
@@ -165,10 +67,7 @@ export default class LocalStorage {
   }
 
   /** Add an event listener to a specific key. */
-  subscribe<K extends LocalStorageKey>(
-    key: K,
-    callback: (value: LocalStorageData[K] | undefined) => void,
-  ) {
+  subscribe(key: string, callback: (value: unknown) => void) {
     const onChange = () => {
       callback(this.get(key))
     }
