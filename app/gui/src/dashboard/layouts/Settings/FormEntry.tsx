@@ -1,7 +1,7 @@
 /** @file Rendering for an {@link SettingsFormEntryData}. */
 import { ButtonGroup, Form } from '#/components/AriaComponents'
 import { useText } from '#/providers/TextProvider'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import SettingsInput from './Input'
 import type { SettingsContext, SettingsFormEntryData } from './data'
 
@@ -24,7 +24,8 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
   const { getText } = useText()
   const visible = getVisible?.(context) ?? true
   const value = getValue(context)
-  const [valueString, setValueString] = useState(() => JSON.stringify(value))
+  const [initialValueString] = useState(() => JSON.stringify(value))
+  const valueStringRef = useRef(initialValueString)
   const schema = useMemo(
     () => (typeof schemaRaw === 'function' ? schemaRaw(context) : schemaRaw),
     [context, schemaRaw],
@@ -44,11 +45,11 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
 
   useEffect(() => {
     const newValueString = JSON.stringify(value)
-    if (newValueString !== valueString) {
+    if (newValueString !== valueStringRef.current) {
       form.reset(value)
-      setValueString(newValueString)
+      valueStringRef.current = newValueString
     }
-  }, [form, value, valueString])
+  }, [form, value])
 
   return !visible ? null : (
       <Form form={form} gap="none">
