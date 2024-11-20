@@ -35,14 +35,13 @@ final class MockMiniPass extends MiniIRPass {
 
   @Override
   public MiniIRPass prepare(IR parent, Expression child) {
+    if (stopExpr == child) {
+      return null;
+    }
     if (child instanceof MockExpression mockExpr) {
       assertThat("Prepare is called just once", mockExpr.isPrepared(), is(false));
       mockExpr.setPrepared(true);
     }
-    if (stopExpr == child) {
-      return null;
-    } else {
-      return this;
-    }
+    return this;
   }
 }
