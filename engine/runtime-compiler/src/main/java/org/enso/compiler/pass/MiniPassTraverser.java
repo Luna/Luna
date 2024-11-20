@@ -81,7 +81,9 @@ final class MiniPassTraverser {
         (ch) -> {
           var preparedMiniPass = miniPass.prepare(ir, ch);
           childExpressions.add(ch);
-          queue.add(new MiniPassTraverser(preparedMiniPass, childExpressions, i[0]++));
+          if (preparedMiniPass != null) {
+            queue.add(new MiniPassTraverser(preparedMiniPass, childExpressions, i[0]++));
+          }
           return ch;
         });
     return childExpressions;

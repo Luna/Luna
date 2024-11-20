@@ -8,6 +8,15 @@ import org.enso.compiler.core.ir.Expression;
 import org.enso.compiler.pass.MiniIRPass;
 
 final class MockMiniPass extends MiniIRPass {
+  private final MockExpression stopExpr;
+
+  /**
+   * @param stopExpr When encountered this expression, {@code prepare} method will return null to
+   *     signal that the traversal should stop. Can be null.
+   */
+  MockMiniPass(MockExpression stopExpr) {
+    this.stopExpr = stopExpr;
+  }
 
   @Override
   public Expression transformExpression(Expression expr) {
@@ -30,6 +39,10 @@ final class MockMiniPass extends MiniIRPass {
       assertThat("Prepare is called just once", mockExpr.isPrepared(), is(false));
       mockExpr.setPrepared(true);
     }
-    return this;
+    if (stopExpr == child) {
+      return null;
+    } else {
+      return this;
+    }
   }
 }
