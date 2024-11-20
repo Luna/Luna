@@ -99,6 +99,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
 
   const fallbackInputRef = useRef<HTMLFieldSetElement>(null)
   const inputRef = rawInputRef ?? fallbackInputRef
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // This type is a little too wide but it is unavoidable.
   /** Set values, while also changing the input text. */
@@ -175,6 +176,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
   return (
     <div className={twJoin('relative isolate h-6 w-full', isDropdownVisible && 'z-1')}>
       <div
+        ref={containerRef}
         onKeyDown={onKeyDown}
         className={twMerge(
           'absolute w-full grow transition-colors',
@@ -250,7 +252,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
               <div
                 key={itemToKey(item)}
                 className={twMerge(
-                  'text relative cursor-pointer whitespace-nowrap px-input-x last:rounded-b-xl hover:bg-hover-bg',
+                  'text relative min-w-max cursor-pointer whitespace-nowrap rounded-full px-input-x last:rounded-b-xl hover:bg-hover-bg',
                   valuesSet.has(item) && 'bg-hover-bg',
                   index === selectedIndex && 'bg-black/5',
                 )}
@@ -262,7 +264,12 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
                   toggleValue(item)
                 }}
               >
-                <Text truncate="1" className="w-full" tooltipPlacement="left">
+                <Text
+                  truncate="1"
+                  className="w-full"
+                  tooltipPlacement="top"
+                  tooltipTriggerRef={containerRef}
+                >
                   {children(item)}
                 </Text>
               </div>
