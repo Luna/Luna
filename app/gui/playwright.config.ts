@@ -64,7 +64,7 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  reporter: isCI ? 'blob' : 'html',
+  reporter: isCI ? ([['list', 'blob']] as const) : ([['list']] as const),
   retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
@@ -162,7 +162,7 @@ export default defineConfig({
       env: { E2E: 'true' },
       command:
         isCI || isProd ?
-          `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
+          `corepack pnpm build --silent && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
         : `corepack pnpm exec vite dev --port ${ports.projectView}`,
       // Build from scratch apparently can take a while on CI machines.
       timeout: 240 * 1000,
@@ -173,7 +173,7 @@ export default defineConfig({
     {
       command:
         isCI || isProd ?
-          `corepack pnpm exec vite -c vite.test.config.ts build && vite -c vite.test.config.ts preview --port ${ports.dashboard} --strictPort`
+          `corepack pnpm exec vite -c vite.test.config.ts build --silent && vite -c vite.test.config.ts preview --port ${ports.dashboard} --strictPort`
         : `corepack pnpm exec vite -c vite.test.config.ts --port ${ports.dashboard}`,
       timeout: 240 * 1000,
       port: ports.dashboard,
