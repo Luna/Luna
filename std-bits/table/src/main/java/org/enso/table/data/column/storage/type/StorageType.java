@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+
 import org.enso.base.polyglot.NumericConverter;
 
 /**
@@ -21,6 +22,7 @@ public sealed interface StorageType
         DateType,
         FloatType,
         IntegerType,
+        NullType,
         TextType,
         TimeOfDayType {
   /**
