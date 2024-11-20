@@ -5,6 +5,7 @@ import java.util.List;
 import org.enso.common.ScalaConversions;
 import org.enso.compiler.context.InlineContext;
 import org.enso.compiler.context.ModuleContext;
+import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.Expression;
 import org.enso.compiler.core.ir.MetadataStorage;
 import org.enso.compiler.core.ir.Module;
@@ -87,8 +88,15 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
     }
 
     @Override
+    public MiniIRPass prepare(IR parent, Expression child) {
+      // return null - do not traverse any children of the root - we just
+      // need to transform the module IR.
+      return null;
+    }
+
+    @Override
     public Expression transformExpression(Expression expr) {
-      return expr;
+      throw new IllegalStateException("Should not be called - prepare returns null");
     }
 
     /** Returns list of encountered errors, or null. */
