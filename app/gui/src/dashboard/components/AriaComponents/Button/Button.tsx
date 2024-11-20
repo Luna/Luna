@@ -68,8 +68,6 @@ export const BUTTON_STYLES = tv({
     'group',
     // we need to set the height to max-content to prevent the button from growing in flex containers
     'h-[max-content]',
-
-    'flex-none',
     // basic outline
     'outline-offset-[1px] outline-transparent',
     // buttons always have borders
@@ -268,6 +266,8 @@ export const BUTTON_STYLES = tv({
     { size: 'medium', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-4 h-4' } },
     { size: 'large', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-4.5 h-4.5' } },
     { size: 'hero', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-12 h-12' } },
+
+    { fullWidth: false, class: { icon: 'flex-none' } },
 
     { variant: 'link', isFocused: true, class: 'focus-visible:outline-offset-1' },
     { variant: 'link', size: 'xxsmall', class: 'font-medium' },
