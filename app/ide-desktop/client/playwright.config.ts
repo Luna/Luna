@@ -1,9 +1,12 @@
 /** @file Playwright browser testing configuration. */
 import { defineConfig } from '@playwright/test'
 
+const isCI = process.env.CI === 'true'
+
 export default defineConfig({
   testDir: './tests',
-  forbidOnly: !!process.env.CI,
+  forbidOnly: isCI,
+  retries: isCI ? 5 : 0,
   workers: 1,
   timeout: 120000,
   reportSlowTests: { max: 5, threshold: 60000 },
