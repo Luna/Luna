@@ -72,12 +72,12 @@ jobs:
         continue-on-error: true
         run: pnpm run ci:test
 
-      - uses: MeilCli/common-lint-reporter/transformer/eslint
+      - uses: MeilCli/common-lint-reporter/transformer/eslint@v1
         with:
           report_files: |
             eslint_report.json
-      - uses: MeilCli/common-lint-reporter/operator/filter-by-file-changed
-      - uses: MeilCli/common-lint-reporter
+      - uses: MeilCli/common-lint-reporter/operator/filter-by-file-changed@v1
+      - uses: MeilCli/common-lint-reporter@v1
         with:
           report_type: "check_run"
           report_to_same_check_run: "true"
@@ -85,7 +85,7 @@ jobs:
       # This is disabled because it's not working as expected
       # For example it doesn't print the report if changes are out of the scope of the PR
       - name: 📝 Annotate Code Linting Results
-        if: false
+        if: always()
         uses: ataylorme/eslint-annotate-action@v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
