@@ -43,6 +43,7 @@ jobs:
             .prettierrc.js
             .prettierignore
             vitest.workspace.ts
+            .github/workflows/gui*
           files_ignore: |
             app/ide-desktop/**
             app/gui/scripts/**
