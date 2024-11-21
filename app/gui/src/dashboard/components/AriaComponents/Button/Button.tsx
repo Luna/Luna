@@ -1,17 +1,24 @@
 /** @file A styled button. */
-import * as React from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ForwardedRef,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 
-import * as focusHooks from '#/hooks/focusHooks'
+import { useFocusChild } from '#/hooks/focusHooks'
 
 import * as aria from '#/components/aria'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
+import { TEXT_STYLE, useVisualTooltip } from '#/components/AriaComponents/Text'
+import { Tooltip, TooltipTrigger } from '#/components/AriaComponents/Tooltip'
 import { forwardRef } from '#/utilities/react'
 import type { ExtractFunction, VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
-import { TEXT_STYLE, useVisualTooltip } from '../Text'
-import { Tooltip, TooltipTrigger } from '../Tooltip'
 
 // ==============
 // === Button ===
@@ -36,14 +43,10 @@ interface PropsWithoutHref {
 export interface BaseButtonProps<Render>
   extends Omit<VariantProps<typeof BUTTON_STYLES>, 'iconOnly'> {
   /** Falls back to `aria-label`. Pass `false` to explicitly disable the tooltip. */
-  readonly tooltip?: React.ReactElement | string | false | null
+  readonly tooltip?: ReactElement | string | false | null
   readonly tooltipPlacement?: aria.Placement
   /** The icon to display in the button */
-  readonly icon?:
-    | React.ReactElement
-    | string
-    | ((render: Render) => React.ReactElement | string | null)
-    | null
+  readonly icon?: ReactElement | string | ((render: Render) => ReactElement | string | null) | null
   /** When `true`, icon will be shown only when hovered. */
   readonly showIconOnHover?: boolean
   /**
@@ -282,7 +285,7 @@ export const BUTTON_STYLES = tv({
 /** A button allows a user to perform an action, with mouse, touch, and keyboard interactions. */
 export const Button = forwardRef(function Button(
   props: ButtonProps,
-  ref: React.ForwardedRef<HTMLButtonElement>,
+  ref: ForwardedRef<HTMLButtonElement>,
 ) {
   const {
     className,
@@ -306,11 +309,11 @@ export const Button = forwardRef(function Button(
     variants = BUTTON_STYLES,
     ...ariaProps
   } = props
-  const focusChildProps = focusHooks.useFocusChild()
+  const focusChildProps = useFocusChild()
 
-  const [implicitlyLoading, setImplicitlyLoading] = React.useState(false)
-  const contentRef = React.useRef<HTMLSpanElement>(null)
-  const loaderRef = React.useRef<HTMLSpanElement>(null)
+  const [implicitlyLoading, setImplicitlyLoading] = useState(false)
+  const contentRef = useRef<HTMLSpanElement>(null)
+  const loaderRef = useRef<HTMLSpanElement>(null)
 
   const isLink = ariaProps.href != null
 
@@ -337,7 +340,7 @@ export const Button = forwardRef(function Button(
   const isDisabled = props.isDisabled ?? isLoading
   const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
 
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     const delay = 350
 
     if (isLoading) {
@@ -391,9 +394,7 @@ export const Button = forwardRef(function Button(
     iconOnly: isIconOnly,
   })
 
-  const childrenFactory = (
-    render: aria.ButtonRenderProps | aria.LinkRenderProps,
-  ): React.ReactNode => {
+  const childrenFactory = (render: aria.ButtonRenderProps | aria.LinkRenderProps): ReactNode => {
     const iconComponent = (() => {
       if (isLoading && loaderPosition === 'icon') {
         return (
