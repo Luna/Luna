@@ -4,10 +4,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.enso.interpreter.instrument.RuntimeCache;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.annotations.AuxCounters.Type;
 
 @BenchmarkMode(Mode.AverageTime)
 @Fork(1)
@@ -25,7 +22,7 @@ public class RuntimeCacheBenchmarks {
   public int items;
 
   @State(Scope.Thread)
-  @AuxCounters(AuxCounters.Type.EVENTS)
+  @AuxCounters(Type.EVENTS)
   public static class CacheCounters {
 
     private long hits = 0;
@@ -70,12 +67,5 @@ public class RuntimeCacheBenchmarks {
     } else {
       counters.putHit();
     }
-  }
-
-  public static void main(String[] args) throws RunnerException {
-    Options opt =
-        new OptionsBuilder().include(RuntimeCacheBenchmarks.class.getSimpleName()).build();
-
-    new Runner(opt).run();
   }
 }
