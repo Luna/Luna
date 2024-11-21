@@ -650,7 +650,7 @@ lazy val componentModulesIds =
     "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion,
     (`runtime-language-arrow` / projectID).value,
     (`syntax-rust-definition` / projectID).value,
-    (`ydoc-server` / projectID).value,
+    (`ydoc` / projectID).value,
     (`profiling-utils` / projectID).value
   )
 }
@@ -739,7 +739,7 @@ lazy val componentModulesPaths =
     (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
     (`jna-wrapper` / Compile / exportedModuleBin).value,
-    (`ydoc-server` / Compile / exportedModuleBin).value,
+    (`ydoc` / Compile / exportedModuleBin).value,
     (`library-manager` / Compile / exportedModuleBin).value,
     (`logging-config` / Compile / exportedModuleBin).value,
     (`logging-utils` / Compile / exportedModuleBin).value,
@@ -1725,7 +1725,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     Test / addModules := Seq(
       (`syntax-rust-definition` / javaModuleName).value,
       (`profiling-utils` / javaModuleName).value,
-      (`ydoc-server` / javaModuleName).value
+      (ydoc / javaModuleName).value
     ),
     Test / moduleDependencies := {
       GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ Seq(
@@ -1736,7 +1736,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     Test / internalModuleDependencies := Seq(
       (`profiling-utils` / Compile / exportedModule).value,
       (`syntax-rust-definition` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value
+      (`ydoc` / Compile / exportedModule).value
     ),
     Test / javaOptions ++= testLogProviderOptions,
     Test / test := (Test / test).dependsOn(buildEngineDistribution).value
@@ -1784,7 +1784,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
   .dependsOn(testkit % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
   .dependsOn(`logging-service-logback` % "test->test")
-  .dependsOn(`ydoc-server` % Test)
+  .dependsOn(`ydoc` % Test)
   .dependsOn(`profiling-utils` % Test)
 
 lazy val `json-rpc-server` = project
@@ -2903,7 +2903,7 @@ lazy val `runtime-integration-tests` =
         (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
-        (`ydoc-server` / Compile / exportedModule).value,
+        (`ydoc` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
         (`logging-service-logback` / Compile / exportedModule).value,
@@ -2953,7 +2953,7 @@ lazy val `runtime-integration-tests` =
         "scala.library",
         (`runtime` / javaModuleName).value,
         (`runtime-test-instruments` / javaModuleName).value,
-        (`ydoc-server` / javaModuleName).value,
+        (`ydoc` / javaModuleName).value,
         (`runtime-instrument-common` / javaModuleName).value,
         (`text-buffer` / javaModuleName).value,
         (`logging-service-logback` / Test / javaModuleName).value,
@@ -3068,7 +3068,7 @@ lazy val `runtime-benchmarks` =
         (`runtime-instrument-id-execution` / Compile / exportedModule).value,
         (`runtime-language-epb` / Compile / exportedModule).value,
         (`runtime-language-arrow` / Compile / exportedModule).value,
-        (`ydoc-server` / Compile / exportedModule).value,
+        (`ydoc` / Compile / exportedModule).value,
         (`benchmarks-common` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`profiling-utils` / Compile / exportedModule).value,
@@ -4092,7 +4092,7 @@ lazy val `std-benchmarks` = (project in file("std-bits/benchmarks"))
     }.evaluated
   )
   .dependsOn(`bench-processor`)
-  .dependsOn(`ydoc-server`)
+  .dependsOn(ydoc)
   .dependsOn(`runtime-language-arrow`)
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`profiling-utils`)
