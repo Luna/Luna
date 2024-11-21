@@ -15,39 +15,39 @@ final class ChainedMiniPass extends MiniIRPass {
   }
 
   static MiniIRPass chain(MiniIRPass firstPass, MiniIRPass secondPass) {
-    assert firstPass != null;
-    assert secondPass != null;
     return new ChainedMiniPass(firstPass, secondPass);
   }
 
   @Override
   public MiniIRPass prepare(IR parent, Expression current) {
-    var first = firstPass.prepare(parent, current);
-    var second = secondPass.prepare(parent, current);
-    if (first == firstPass && second == secondPass) {
+    var firstPrepared = firstPass == null ? null : firstPass.prepare(parent, current);
+    var secondPrepared = secondPass == null ? null : secondPass.prepare(parent, current);
+    if (firstPrepared == firstPass && secondPrepared == secondPass) {
       return this;
     } else {
-      return new ChainedMiniPass(first, second);
+      return new ChainedMiniPass(firstPrepared, secondPrepared);
     }
   }
 
   @Override
   public Expression transformExpression(Expression ir) {
-    var fstIr = firstPass.transformExpression(ir);
-    var sndIr = secondPass.transformExpression(fstIr);
+    var fstIr = firstPass == null ? ir : firstPass.transformExpression(ir);
+    var sndIr = secondPass == null ? fstIr : secondPass.transformExpression(fstIr);
     return sndIr;
   }
 
   @Override
   public Module transformModule(Module moduleIr) {
-    var first = firstPass.transformModule(moduleIr);
-    var second = secondPass.transformModule(first);
+    var first = firstPass == null ? moduleIr : firstPass.transformModule(moduleIr);
+    var second = secondPass == null ? first : secondPass.transformModule(first);
     return second;
   }
 
   @Override
   public boolean checkPostCondition(IR ir) {
-    return firstPass.checkPostCondition(ir) && secondPass.checkPostCondition(ir);
+    var firstCheck = firstPass == null || firstPass.checkPostCondition(ir);
+    var secondCheck = secondPass == null || secondPass.checkPostCondition(ir);
+    return firstCheck && secondCheck;
   }
 
   @Override
