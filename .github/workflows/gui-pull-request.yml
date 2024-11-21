@@ -78,7 +78,9 @@ jobs:
     if: always()
     steps:
       - name: Print checks result
-        run: echo "${{ needs.checks.result }} ${{ needs.storybook.result }}"
+        run: |
+          echo "Checks: ${{ needs.checks.result }}"
+          echo "Storybook: ${{ needs.storybook.result }}"
 
   # This job is used to report success if the needed jobs were successful.
   # This is a workaround to make optional jobs required if they run
@@ -89,4 +91,4 @@ jobs:
     if: always() && (needs.checks.result == 'skipped' && needs.storybook.result == 'skipped') || (needs.checks.result == 'success' && needs.storybook.result == 'success')
     steps:
       - name: Report success
-        run: echo "${{ needs.checks.result }} ${{ needs.storybook.result }}"
+        run: echo "Success!"
