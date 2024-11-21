@@ -385,6 +385,7 @@ lazy val enso = (project in file("."))
     `test-utils`,
     `text-buffer`,
     `version-output`,
+    ydoc,
     `ydoc-server`,
     `zio-wrapper`
   )
@@ -1885,8 +1886,8 @@ lazy val searcher = project
   .dependsOn(testkit % Test)
   .dependsOn(`polyglot-api`)
 
-lazy val `ydoc-server` = project
-  .in(file("lib/java/ydoc-server"))
+lazy val ydoc = project
+  .in(file("lib/java/ydoc"))
   .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
@@ -1898,13 +1899,49 @@ lazy val `ydoc-server` = project
     Test / fork := true,
     commands += WithDebugCommand.withDebug,
     Compile / moduleDependencies ++= {
+      GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon ++ Seq(
+        "org.slf4j" % "slf4j-api" % slf4jVersion
+      )
+    },
+    Compile / internalModuleDependencies := Seq(
+      (`syntax-rust-definition` / Compile / exportedModule).value
+    ),
+    libraryDependencies ++= Seq(
+      "org.graalvm.truffle"  % "truffle-api"                 % graalMavenPackagesVersion % "provided",
+      "org.graalvm.polyglot" % "inspect-community"           % graalMavenPackagesVersion % "runtime",
+      "org.graalvm.polyglot" % "js-community"                % graalMavenPackagesVersion % "runtime",
+      "org.slf4j"            % "slf4j-api"                   % slf4jVersion,
+      "io.helidon.webclient" % "helidon-webclient-websocket" % helidonVersion,
+      "io.helidon.webserver" % "helidon-webserver-websocket" % helidonVersion,
+      "junit"                % "junit"                       % junitVersion              % Test,
+      "com.github.sbt"       % "junit-interface"             % junitIfVersion            % Test
+    ),
+    libraryDependencies ++= {
+      GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon
+    }
+  )
+  .dependsOn(`syntax-rust-definition`)
+
+lazy val `ydoc-server` = project
+  .in(file("lib/java/ydoc-server"))
+  .enablePlugins(JPMSPlugin)
+  .configs(Test)
+  .settings(
+    customFrgaalJavaCompilerSettings("21"),
+    javaModuleName := "org.enso.ydoc.server",
+    Compile / exportJars := true,
+    crossPaths := false,
+    autoScalaLibrary := false,
+    Test / fork := true,
+    commands += WithDebugCommand.withDebug,
+    Compile / moduleDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon ++ logbackPkg ++ Seq(
         "org.slf4j" % "slf4j-api" % slf4jVersion
       )
     },
     Compile / internalModuleDependencies := Seq(
-      (`syntax-rust-definition` / Compile / exportedModule).value,
-      (`profiling-utils` / Compile / exportedModule).value
+      (ydoc / Compile / exportedModule).value,
+      (`syntax-rust-definition` / Compile / exportedModule).value
     ),
     libraryDependencies ++= Seq(
       "org.graalvm.truffle"        % "truffle-api"                 % graalMavenPackagesVersion % "provided",
@@ -1912,8 +1949,9 @@ lazy val `ydoc-server` = project
       "org.graalvm.polyglot"       % "inspect-community"           % graalMavenPackagesVersion % "runtime",
       "org.graalvm.polyglot"       % "js-community"                % graalMavenPackagesVersion % "runtime",
       "org.slf4j"                  % "slf4j-api"                   % slf4jVersion,
-      "io.helidon.webclient"       % "helidon-webclient-websocket" % helidonVersion,
-      "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion,
+      "io.helidon.common"          % "helidon-common"              % helidonVersion,
+      "io.helidon.webclient"       % "helidon-webclient-websocket" % helidonVersion            % Test,
+      "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion            % Test,
       "junit"                      % "junit"                       % junitVersion              % Test,
       "com.github.sbt"             % "junit-interface"             % junitIfVersion            % Test,
       "com.fasterxml.jackson.core" % "jackson-databind"            % jacksonVersion            % Test
@@ -1936,8 +1974,7 @@ lazy val `ydoc-server` = project
     // would result in an sbt caught in an infinite recursion.
     //
     Compile / run / javaOptions ++= {
-      val mp =
-        (Compile / modulePath).value ++ (`profiling-utils` / Compile / modulePath).value
+      val mp        = (Compile / modulePath).value
       val jar       = (Compile / exportedProductJars).value.head
       val modName   = javaModuleName.value
       val allMp     = mp ++ Seq(jar.data.absolutePath)
@@ -1969,7 +2006,7 @@ lazy val `ydoc-server` = project
       .buildNativeImage(
         "ydoc",
         staticOnLinux = false,
-        mainClass     = Some("org.enso.ydoc.Main")
+        mainClass     = Some("org.enso.ydoc.server.Main")
       )
       .value,
     buildNativeImage := NativeImage
@@ -1979,7 +2016,7 @@ lazy val `ydoc-server` = project
       )
       .value
   )
-  .dependsOn(`syntax-rust-definition`)
+  .dependsOn(ydoc)
   .dependsOn(`logging-service-logback`)
 
 lazy val `persistance` = (project in file("lib/java/persistance"))

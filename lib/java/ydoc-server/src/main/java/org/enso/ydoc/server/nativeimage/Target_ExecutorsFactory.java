@@ -1,4 +1,4 @@
-package org.enso.ydoc.polyfill.web;
+package org.enso.ydoc.server.nativeimage;
 
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;

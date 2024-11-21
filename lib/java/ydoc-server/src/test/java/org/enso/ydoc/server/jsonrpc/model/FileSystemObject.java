@@ -1,4 +1,4 @@
-package org.enso.ydoc.jsonrpc.model;
+package org.enso.ydoc.server.jsonrpc.model;
 
 public record FileSystemObject(String type, String name, FilePath path) {
 

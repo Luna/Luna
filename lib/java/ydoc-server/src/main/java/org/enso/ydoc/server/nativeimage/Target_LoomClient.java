@@ -1,4 +1,4 @@
-package org.enso.ydoc.polyfill.web;
+package org.enso.ydoc.server.nativeimage;
 
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.RecomputeFieldValue;

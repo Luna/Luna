@@ -1,6 +1,6 @@
-package org.enso.ydoc.jsonrpc;
+package org.enso.ydoc.server.jsonrpc;
 
-import org.enso.ydoc.jsonrpc.model.result.Result;
+import org.enso.ydoc.server.jsonrpc.model.result.Result;
 
 public record JsonRpcResponse(String jsonrpc, String id, Result result) {
 

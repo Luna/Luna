@@ -1,4 +1,4 @@
-package org.enso.ydoc.jsonrpc.model;
+package org.enso.ydoc.server.jsonrpc.model;
 
 import java.util.UUID;
 

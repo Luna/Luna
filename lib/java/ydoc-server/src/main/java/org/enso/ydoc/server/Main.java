@@ -1,4 +1,4 @@
-package org.enso.ydoc;
+package org.enso.ydoc.server;
 
 import java.util.concurrent.Semaphore;
 

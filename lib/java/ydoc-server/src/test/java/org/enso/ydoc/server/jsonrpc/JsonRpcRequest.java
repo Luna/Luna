@@ -1,4 +1,4 @@
-package org.enso.ydoc.jsonrpc;
+package org.enso.ydoc.server.jsonrpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
