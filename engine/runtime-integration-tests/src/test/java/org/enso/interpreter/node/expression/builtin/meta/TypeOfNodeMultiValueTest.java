@@ -117,7 +117,7 @@ public class TypeOfNodeMultiValueTest {
                   (frame) -> {
                     var arg = frame.getArguments()[0];
                     var t = node.findTypeOrError(arg);
-                    var all = node.findAllTypes(arg);
+                    var all = node.findAllTypesOrNull(arg);
                     if (t instanceof DataflowError) {
                       assertNull("No types for errors", all);
                       return t;

@@ -76,7 +76,7 @@ public abstract class TypeOfNode extends Node {
    * @param value the value to check
    * @return either types associated with the value or {@code null} if there is no such type
    */
-  public final Type[] findAllTypes(Object value) {
+  public final Type[] findAllTypesOrNull(Object value) {
     try {
       var types = executeTypes(value);
       assert types != null && types.length > 0;
