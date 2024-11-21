@@ -354,13 +354,15 @@ function toField(
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs.map(obj => {
+        console.log(obj)
         const key = Object.keys(obj)[0]
-        return {key: obj[key][index]}
+        return {[key]: obj[key][index]}
       })
       // eslint-disable-next-line camelcase
       : [{ number_of_nothing: 0 }, {number_of_whitespace: 0 }]
 
 
+  console.log({dataQualityMetrics})
   const showDataQuality = true;
 
   const getSvgTemplate = (icon: string) =>
