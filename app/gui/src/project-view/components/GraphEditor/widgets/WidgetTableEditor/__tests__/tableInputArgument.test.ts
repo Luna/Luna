@@ -176,10 +176,10 @@ test.each([
 test.each([
   'Table.input 14',
   'Table.input array1',
-  "Table.input ['a', [123]]",
+  "Table.input ['a', ['123']]",
   "Table.input [['a', [123]]]",
-  "Table.input [['a', [123]], ['b', [124], []]]",
-  "Table.input [['a', [123]], ['a'.repeat 170, [123]]]",
+  "Table.input [['a', ['123']], ['b', ['124'], []]]",
+  "Table.input [['a', ['123']], ['a'.repeat 170, ['123']]]",
   "Table.input [['a', ['1', '2', '3', 3 + 1]]]",
 ])('"%s" is not valid input for Table Editor Widget', (code) => {
   const ast = Ast.parseExpression(code)
