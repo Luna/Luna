@@ -36,7 +36,7 @@ trait CompilerRunner {
     * be too complex. Let's just hack it via reflection here.
     * @return
     */
-  private def getPassesViaReflection(
+  protected def getPassesViaReflection(
     passManager: PassManager
   ): List[PassGroup] = {
     val passesField = passManager.getClass.getDeclaredField("passes")
