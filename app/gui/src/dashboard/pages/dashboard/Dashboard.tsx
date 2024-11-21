@@ -18,13 +18,13 @@ import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
 import * as localStorageProvider from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import ProjectsProvider, {
-  TabType,
   useClearLaunchedProjects,
   useLaunchedProjects,
   usePage,
   useProjectsStore,
   useSetPage,
   type LaunchedProject,
+  type TabType,
 } from '#/providers/ProjectsProvider'
 
 import AssetListEventType from '#/events/AssetListEventType'
@@ -138,8 +138,6 @@ function DashboardInner(props: DashboardProps) {
   const projectsStore = useProjectsStore()
   const page = usePage()
   const launchedProjects = useLaunchedProjects()
-  // There is no shared enum type, but the other union member is the same type.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
   const selectedProject = launchedProjects.find((p) => p.id === page) ?? null
 
   const setPage = useSetPage()

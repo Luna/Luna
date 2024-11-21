@@ -757,8 +757,10 @@ export default class RemoteBackend extends Backend {
     }
   }
 
-  /** Create a project execution.
-   * @throws An error if a non-successful status code (not 200-299) was received. */
+  /**
+   * Create a project execution.
+   * @throws An error if a non-successful status code (not 200-299) was received.
+   */
   override async createProjectExecution(
     body: backend.CreateProjectExecutionRequestBody,
     // title: string,
