@@ -25,6 +25,7 @@ import {
   ButtonGroup,
   DatePicker,
   Dialog,
+  DialogDismiss,
   Form,
   Input,
   MultiSelector,
@@ -345,7 +346,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       <Form.FormError />
       <ButtonGroup>
         <Form.Submit />
-        <Form.Submit action="cancel" />
+        <DialogDismiss />
       </ButtonGroup>
     </Form>
   )

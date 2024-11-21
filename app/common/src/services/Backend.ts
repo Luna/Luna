@@ -1586,10 +1586,10 @@ export function firstProjectExecutionOnOrAfter(
     case 'weekly':
     case 'monthly': {
       const currentHours = nextDate.getHours()
-      const hour = hours.find(hour => hour >= currentHours) ?? hours[0] ?? 0
-      const goToNextDay = hour < currentHours
-      nextDate.setHours(hour)
-      if (goToNextDay || hours.length <= 1) {
+      const hour = hours.find(hour => hour >= currentHours) ?? hours[0]
+      const goToNextDay = hour == null || hour < currentHours
+      nextDate.setHours(hour ?? 0)
+      if (goToNextDay) {
         switch (repeatInterval) {
           case 'daily': {
             nextDate.setDate(nextDate.getDate() + 1)
@@ -1637,10 +1637,10 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecution, dat
     case 'weekly':
     case 'monthly': {
       const nextIndex = (hours.indexOf(nextDate.getHours()) + 1) % hours.length
-      const hour = hours[nextIndex] ?? 0
-      const goToNextDay = hour <= nextDate.getHours()
-      nextDate.setHours(hour)
-      if (goToNextDay || hours.length <= 1) {
+      const hour = hours[nextIndex]
+      const goToNextDay = hour == null || hour <= nextDate.getHours()
+      nextDate.setHours(hour ?? 0)
+      if (goToNextDay) {
         switch (repeatInterval) {
           case 'daily': {
             nextDate.setDate(nextDate.getDate() + 1)
@@ -1649,7 +1649,8 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecution, dat
           case 'weekly': {
             const dayIndex = (days.indexOf(nextDate.getDay()) + 1) % days.length
             const day = days[dayIndex] ?? 0
-            const dayOffset = (day - nextDate.getDay() + 7) % 7
+            // Wrap to 1-7 range instead of 0-6.
+            const dayOffset = ((day - nextDate.getDay() + 6) % 7) + 1
             nextDate.setDate(nextDate.getDate() + dayOffset)
             break
           }

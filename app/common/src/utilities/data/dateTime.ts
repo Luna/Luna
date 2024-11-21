@@ -2,10 +2,6 @@
 import type { TextId } from '../../text'
 import { type Newtype, newtypeConstructor } from './newtype'
 
-// =================
-// === Constants ===
-// =================
-
 /** The number of hours in half a day. This is used to get the number of hours for AM/PM time. */
 const HALF_DAY_HOURS = 12
 
@@ -44,10 +40,6 @@ export const DAY_TEXT_IDS = [
   'saturday',
   'sunday',
 ] satisfies TextId[]
-
-// ================
-// === DateTime ===
-// ================
 
 /** A string with date and time, following the RFC3339 specification. */
 export type Rfc3339DateTime = Newtype<string, 'Rfc3339DateTime'>

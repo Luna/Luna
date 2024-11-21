@@ -1,4 +1,14 @@
 /** @file A calendar showing executions of a project. */
+import { useMemo } from 'react'
+
+import {
+  endOfMonth,
+  getLocalTimeZone,
+  parseDateTime,
+  startOfMonth,
+  toCalendarDate,
+  today,
+} from '@internationalized/date'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 import ArrowIcon from '#/assets/folder_arrow.svg'
@@ -27,8 +37,6 @@ import {
   type ProjectExecution,
 } from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
-import { parseDate } from '@internationalized/date'
-import { useMemo } from 'react'
 
 const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
   base: '',
@@ -98,7 +106,6 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
     },
   })
   const projectExecutions = projectExecutionsQuery.data
-  console.log('D', projectExecutions)
   const projectExecutionsByDate = useMemo<
     Readonly<
       Record<
@@ -107,12 +114,12 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       >
     >
   >(() => {
-    const startDate = new Date()
-    startDate.setDate(1)
-    const endDate = new Date()
-    endDate.setMonth(endDate.getMonth() + 1)
-    endDate.setDate(0)
-    console.log(startDate, endDate)
+    const timeZone = getLocalTimeZone()
+    const todayDate = today(timeZone)
+    const start = startOfMonth(todayDate)
+    const startDate = start.toDate(timeZone)
+    const end = endOfMonth(todayDate)
+    const endDate = end.toDate(timeZone)
     const result: Record<
       string,
       { readonly date: Date; readonly projectExecution: ProjectExecution }[]
@@ -123,7 +130,9 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
         startDate,
         endDate,
       )) {
-        const dateString = parseDate(date.toString()).toString()
+        const dateString = toCalendarDate(
+          parseDateTime(date.toISOString().replace(/Z$/, '')),
+        ).toString()
         ;(result[dateString] ??= []).push({ date, projectExecution })
       }
     }
@@ -153,9 +162,12 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
           <CalendarGridBody className={styles.calendarGridBody()}>
             {(date) => (
               <CalendarCell date={date} className={styles.calendarGridCell()}>
-                {projectExecutionsByDate[date.toString()]?.map((data) => (
-                  <Text>{data.date.toString()}</Text>
-                ))}
+                <div className="flex flex-col items-center">
+                  <Text color="custom">{date.day}</Text>
+                  {projectExecutionsByDate[date.toString()]?.map((data) => (
+                    <Text color="disabled">{`${data.date.getHours().toString().padStart(2, '0')}:${data.date.getMinutes().toString().padStart(2, '0')}`}</Text>
+                  ))}
+                </div>
               </CalendarCell>
             )}
           </CalendarGridBody>
