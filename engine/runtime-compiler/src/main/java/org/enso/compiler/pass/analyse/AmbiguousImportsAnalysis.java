@@ -208,7 +208,6 @@ public final class AmbiguousImportsAnalysis implements MiniPassFactory {
             throw new IllegalStateException("Unsupported polyglot entity: " + polyglotImp.entity());
           }
           tryAddEncounteredSymbol(polyglotImp, symbolName, symbolPath, null, errorsForImport);
-          return List.of();
         }
 
         default -> {}
