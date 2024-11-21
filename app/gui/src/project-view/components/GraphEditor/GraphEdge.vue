@@ -531,7 +531,7 @@ const sourceHoverAnimationStyle = computed(() => {
 
 <template>
   <template v-if="basePath">
-    <g v-bind="{ mask: `url('#${sourceMaskId}')` }">
+    <g v-bind="{ 'clip-path': `url('#${sourceMaskId}')` }">
       <path
         ref="base"
         :d="basePath"

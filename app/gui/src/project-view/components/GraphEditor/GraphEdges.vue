@@ -124,7 +124,12 @@ const masks = computed(() => {
     const rect = nodeRect.expand(padding)
     const radius = 16 + padding
     const id = `mask_for_edge_from-${nodeId}`
-    return { id, rect, radius }
+    const viewport = props.navigator.viewport
+    const outerPath = `M ${viewport.left},${viewport.top} L ${viewport.right},${viewport.top} L ${viewport.right},${viewport.bottom} L ${viewport.left},${viewport.bottom} z`
+    const innerPath = `M ${rect.left},${rect.top} L ${rect.left},${rect.bottom} L ${rect.right},${rect.bottom} L ${rect.right},${rect.top} z`
+    // d="M 30,30 L 30,90 L90,90 L90,30 z M0,0 L124,0 L124,124 L0,124 z"
+    const path = `${innerPath} ${outerPath}`
+    return { id, rect, radius, path }
   })
 })
 </script>
@@ -133,32 +138,9 @@ const masks = computed(() => {
   <div>
     <svg :viewBox="props.navigator.viewBox" class="overlay behindNodes">
       <template v-for="mask in masks" :key="mask.id">
-        <mask
-          v-if="mask && navigator"
-          :id="mask.id"
-          :x="navigator.viewport.left"
-          :y="navigator.viewport.top"
-          width="100%"
-          height="100%"
-          maskUnits="userSpaceOnUse"
-        >
-          <rect
-            :x="navigator.viewport.left"
-            :y="navigator.viewport.top"
-            width="100%"
-            height="100%"
-            fill="white"
-          />
-          <rect
-            :x="mask.rect.left"
-            :y="mask.rect.top"
-            :width="mask.rect.width"
-            :height="mask.rect.height"
-            :rx="mask.radius"
-            :ry="mask.radius"
-            fill="black"
-          />
-        </mask>
+        <clipPath v-if="mask && navigator" :id="mask.id" clipPathUnits="userSpaceOnUse">
+          <path :d="mask.path" />
+        </clipPath>
       </template>
       <GraphEdge v-for="edge in graph.connectedEdges" :key="edge.target" :edge="edge" />
       <GraphEdge v-if="graph.cbEditedEdge" :edge="graph.cbEditedEdge" />
