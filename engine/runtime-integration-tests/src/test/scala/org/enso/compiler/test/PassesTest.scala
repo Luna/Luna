@@ -65,7 +65,7 @@ class PassesTest extends CompilerTest {
           OperatorToFunction,
           LambdaShorthandToLambda,
           ImportSymbolAnalysis.INSTANCE,
-          AmbiguousImportsAnalysis,
+          AmbiguousImportsAnalysis.INSTANCE,
           PrivateModuleAnalysis.INSTANCE,
           PrivateConstructorAnalysis.INSTANCE,
           ShadowedPatternFields,
