@@ -29,7 +29,6 @@ const supportedImageTypes: Record<string, { extension: string }> = {
   'image/png': { extension: 'png' },
   'image/svg+xml': { extension: 'svg' },
   'image/webp': { extension: 'webp' },
-  // Question: do we want to have BMP and ICO here?
 }
 
 function pathUniqueId(path: Path) {
