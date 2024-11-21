@@ -11,7 +11,7 @@ on:
         description: What kind of Ydoc image to build.
         required: false
         type: choice
-        default: polyglot
+        default: nodejs
         options:
           - nodejs
           - polyglot

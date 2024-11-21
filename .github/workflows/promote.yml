@@ -18,7 +18,7 @@ on:
         description: What kind of Ydoc image to build.
         required: false
         type: choice
-        default: polyglot
+        default: nodejs
         options:
           - nodejs
           - polyglot
@@ -32,7 +32,7 @@ on:
         description: What kind of Ydoc image to build.
         required: false
         type: string
-        default: polyglot
+        default: nodejs
 jobs:
   enso-build-ci-gen-promote-release-job-linux-amd64:
     name: Promote release (linux, amd64)

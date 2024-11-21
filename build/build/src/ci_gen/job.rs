@@ -509,7 +509,6 @@ impl JobArchetype for DispatchBuildImage {
                 vec![step
                     .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)]
             })
-            .cleaning(RELEASE_CLEANING_POLICY)
             .build_job("Dispatch Cloud build-image workflow", target)
     }
 }

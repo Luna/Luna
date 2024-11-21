@@ -13,7 +13,7 @@ on:
         description: What kind of Ydoc image to build.
         required: false
         type: choice
-        default: polyglot
+        default: nodejs
         options:
           - nodejs
           - polyglot
@@ -27,7 +27,7 @@ on:
         description: What kind of Ydoc image to build.
         required: false
         type: string
-        default: polyglot
+        default: nodejs
 jobs:
   enso-build-ci-gen-draft-release-linux-amd64:
     name: Create a release draft.
@@ -193,7 +193,7 @@ jobs:
         run: ./run --help || (git clean -ffdx && ./run --help)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: (always())
+      - if: "(contains(github.event.pull_request.labels.*.name, 'CI: Clean build required') || inputs.clean_build_required)"
         name: Clean before
         run: ./run git-clean
         env:
@@ -207,7 +207,7 @@ jobs:
       - if: failure() && runner.os != 'Windows'
         name: List files if failed (non-Windows)
         run: ls -lAR
-      - if: (always())
+      - if: "(always()) && (contains(github.event.pull_request.labels.*.name, 'CI: Clean build required') || inputs.clean_build_required)"
         name: Clean after
         run: ./run git-clean
         env:
