@@ -1,4 +1,4 @@
-package org.enso.compiler.pass.test;
+package org.enso.compiler.test.mini.passes;
 
 import java.util.ArrayList;
 import java.util.HashSet;

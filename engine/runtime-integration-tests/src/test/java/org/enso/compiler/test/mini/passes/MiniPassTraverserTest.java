@@ -1,4 +1,4 @@
-package org.enso.compiler.pass.test;
+package org.enso.compiler.test.mini.passes;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
