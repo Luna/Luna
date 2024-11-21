@@ -121,20 +121,8 @@ type NodeMask = {
 }
 
 const startsInPort = computed(() => currentJunctionPoints.value?.startsInPort)
-const sourceMask = computed<NodeMask | undefined>(() => {
-  if (!props.maskSource && !startsInPort.value) return
-  const nodeRect = sourceNodeRect.value
-  if (!nodeRect) return
-  const animProgress =
-    startsInPort.value ?
-      (sourceNode.value && graph.nodeHoverAnimations.get(sourceNode.value)) ?? 0
-    : 0
-  const padding = animProgress * VISIBLE_PORT_MASK_PADDING
-  if (!props.maskSource && padding === 0) return
-  const rect = nodeRect.expand(padding)
-  const radius = 16 + padding
-  const id = `mask_for_edge_to-${props.edge.target ?? 'unconnected'}`
-  return { id, rect, radius }
+const sourceMaskId = computed(() => {
+  return `mask_for_edge_from-${connectedSourceNode.value ?? 'unconnected'}`
 })
 
 const edgeColor = computed(() =>
@@ -543,33 +531,7 @@ const sourceHoverAnimationStyle = computed(() => {
 
 <template>
   <template v-if="basePath">
-    <mask
-      v-if="sourceMask && navigator"
-      :id="sourceMask.id"
-      :x="navigator.viewport.left"
-      :y="navigator.viewport.top"
-      width="100%"
-      height="100%"
-      maskUnits="userSpaceOnUse"
-    >
-      <rect
-        :x="navigator.viewport.left"
-        :y="navigator.viewport.top"
-        width="100%"
-        height="100%"
-        fill="white"
-      />
-      <rect
-        :x="sourceMask.rect.left"
-        :y="sourceMask.rect.top"
-        :width="sourceMask.rect.width"
-        :height="sourceMask.rect.height"
-        :rx="sourceMask.radius"
-        :ry="sourceMask.radius"
-        fill="black"
-      />
-    </mask>
-    <g v-bind="sourceMask && { mask: `url('#${sourceMask.id}')` }">
+    <g v-bind="{ mask: `url('#${sourceMaskId}')` }">
       <path
         ref="base"
         :d="basePath"

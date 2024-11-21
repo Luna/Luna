@@ -9,6 +9,7 @@ import { Ast } from '@/util/ast'
 import { isAstId, type AstId } from '@/util/ast/abstract'
 import { Vec2 } from '@/util/data/vec2'
 import { toast } from 'react-toastify'
+import { computed } from 'vue'
 
 const graph = useGraphStore()
 const selection = injectGraphSelection(true)
@@ -113,11 +114,52 @@ function createEdge(source: AstId, target: PortId) {
     }
   }
 }
+
+const VISIBLE_PORT_MASK_PADDING = 6
+const masks = computed(() => {
+  const nodes = graph.nodeRects.entries()
+  return Array.from(nodes, ([nodeId, nodeRect]) => {
+    const animProgress = graph.nodeHoverAnimations.get(nodeId) ?? 0
+    const padding = animProgress * VISIBLE_PORT_MASK_PADDING
+    const rect = nodeRect.expand(padding)
+    const radius = 16 + padding
+    const id = `mask_for_edge_from-${nodeId}`
+    return { id, rect, radius }
+  })
+})
 </script>
 
 <template>
   <div>
     <svg :viewBox="props.navigator.viewBox" class="overlay behindNodes">
+      <template v-for="mask in masks" :key="mask.id">
+        <mask
+          v-if="mask && navigator"
+          :id="mask.id"
+          :x="navigator.viewport.left"
+          :y="navigator.viewport.top"
+          width="100%"
+          height="100%"
+          maskUnits="userSpaceOnUse"
+        >
+          <rect
+            :x="navigator.viewport.left"
+            :y="navigator.viewport.top"
+            width="100%"
+            height="100%"
+            fill="white"
+          />
+          <rect
+            :x="mask.rect.left"
+            :y="mask.rect.top"
+            :width="mask.rect.width"
+            :height="mask.rect.height"
+            :rx="mask.radius"
+            :ry="mask.radius"
+            fill="black"
+          />
+        </mask>
+      </template>
       <GraphEdge v-for="edge in graph.connectedEdges" :key="edge.target" :edge="edge" />
       <GraphEdge v-if="graph.cbEditedEdge" :edge="graph.cbEditedEdge" />
       <GraphEdge
