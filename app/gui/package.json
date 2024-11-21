@@ -32,6 +32,8 @@
     "test-dev-dashboard:e2e": "cross-env NODE_ENV=production playwright test ./e2e/dashboard/ --ui",
     "preinstall": "corepack pnpm run generate-metadata",
     "generate-metadata": "node scripts/generateIconMetadata.js",
+    "storybook:react": "cross-env FRAMEWORK=react storybook dev",
+    "storybook:vue": "cross-env FRAMEWORK=vue storybook dev",
     "build-storybook:react": "cross-env FRAMEWORK=react storybook build",
     "build-storybook:vue": "cross-env FRAMEWORK=vue storybook build",
     "chromatic:react": "cross-env FRAMEWORK=react chromatic deploy",
