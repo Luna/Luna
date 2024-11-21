@@ -56,7 +56,10 @@ export default defineConfig({
       babel: {
         plugins: [
           '@babel/plugin-syntax-import-attributes',
-          ['babel-plugin-react-compiler', { target: '18' }],
+          [
+            'babel-plugin-react-compiler',
+            { target: '18', enablePreserveExistingMemoizationGuarantees: true },
+          ],
         ],
       },
     }),
