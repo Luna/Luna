@@ -72,17 +72,20 @@ jobs:
         continue-on-error: true
         run: pnpm run ci:test
 
-      - name: 💾 Save cache
-        uses: actions/cache/save@v4
-        if: always() && steps.cache.outputs.cache-hit != 'true'
-        id: save-cache
+      - uses: MeilCli/common-lint-reporter/transformer/eslint@1
         with:
-          key: ${{ steps.cache.outputs.cache-primary-key }}
-          path: |
-            **/.eslintcache
-            node_modules/.cache/prettier
+          report_files: |
+            eslint_report.json
+      - uses: MeilCli/common-lint-reporter/operator/filter-by-file-changed@v1
+      - uses: MeilCli/common-lint-reporter@v1
+        with:
+          report_type: "check_run"
+          report_to_same_check_run: "true"
 
+      # This is disabled because it's not working as expected
+      # For example it doesn't print the report if changes are out of the scope of the PR
       - name: 📝 Annotate Code Linting Results
+        if: false
         uses: ataylorme/eslint-annotate-action@v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,6 +102,16 @@ jobs:
           echo "Typecheck outcome: ${{ steps.typecheck.outcome }}"
           echo "Unit tests outcome: ${{ steps.unit-tests.outcome }}"
           exit 1
+
+      - name: 💾 Save cache
+        uses: actions/cache/save@v4
+        if: always() && steps.cache.outputs.cache-hit != 'true'
+        id: save-cache
+        with:
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+          path: |
+            **/.eslintcache
+            node_modules/.cache/prettier
 
   playwright:
     name: 🎭 Playwright Tests
