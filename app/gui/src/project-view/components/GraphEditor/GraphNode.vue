@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nodeEditBindings } from '@/bindings'
-import CircularMenu from '@/components/CircularMenu.vue'
+import ComponentMenu from '@/components/ComponentMenu.vue'
 import ComponentWidgetTree, {
   GRAB_HANDLE_X_MARGIN_L,
   GRAB_HANDLE_X_MARGIN_R,
@@ -372,6 +372,16 @@ const dataSource = computed(
   () => ({ type: 'node', nodeId: props.node.rootExpr.externalId }) as const,
 )
 
+const pending = computed(() => {
+  switch (executionState.value) {
+    case 'Unknown':
+    case 'Pending':
+      return true
+    default:
+      return false
+  }
+})
+
 // === Recompute node expression ===
 
 // The node is considered to be recomputing for at least this time.
@@ -405,7 +415,7 @@ function recomputeOnce() {
     :class="{
       selected,
       selectionVisible,
-      ['executionState-' + executionState]: true,
+      pending,
       inputNode: props.node.type === 'input',
       outputNode: props.node.type === 'output',
       menuVisible,
@@ -422,7 +432,6 @@ function recomputeOnce() {
         :nodePosition="nodePosition"
         :nodeSize="graphSelectionSize"
         :class="{ draggable: true, dragged: isDragged }"
-        :selected
         :color
         :externalHovered="nodeHovered"
         @visible="selectionVisible = $event"
@@ -442,7 +451,7 @@ function recomputeOnce() {
     >
       <SvgIcon name="record" />
     </button>
-    <CircularMenu
+    <ComponentMenu
       v-if="menuVisible"
       v-model:isVisualizationEnabled="isVisualizationEnabled"
       :isRecordingEnabledGlobally="projectStore.isRecordingEnabled"
@@ -564,8 +573,19 @@ function recomputeOnce() {
   height: var(--node-size-y);
   rx: var(--node-border-radius);
 
-  fill: var(--node-color-primary);
+  fill: var(--color-node-background);
   transition: fill 0.2s ease;
+}
+
+.GraphNode {
+  --color-node-text: white;
+  --color-node-primary: var(--node-group-color);
+  --color-node-background: var(--node-group-color);
+}
+
+.GraphNode.selected {
+  --color-node-background: color-mix(in oklab, var(--color-node-primary) 30%, white 70%);
+  --color-node-text: color-mix(in oklab, var(--color-node-primary) 70%, black 30%);
 }
 
 .GraphNode {
@@ -573,11 +593,6 @@ function recomputeOnce() {
   border-radius: var(--node-border-radius);
   transition: box-shadow 0.2s ease-in-out;
   box-sizing: border-box;
-
-  &.executionState-Unknown,
-  &.executionState-Pending {
-    --node-color-primary: var(--node-color-pending);
-  }
 }
 
 .content {

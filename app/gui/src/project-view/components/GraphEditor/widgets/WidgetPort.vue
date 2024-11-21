@@ -207,6 +207,7 @@ export const widgetDefinition = defineWidget(
 
 .WidgetPort.connected {
   background-color: var(--node-color-port);
+  color: white;
 }
 
 .GraphEditor.draggingEdge .WidgetPort {

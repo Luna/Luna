@@ -17,6 +17,7 @@ import type { Spring } from '#/utilities/motion'
 import { motion } from '#/utilities/motion'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
+import { Close } from './Close'
 import * as dialogProvider from './DialogProvider'
 import * as dialogStackProvider from './DialogStackProvider'
 import type * as types from './types'
@@ -60,10 +61,12 @@ const DIALOG_STYLES = tv({
       modal: {
         base: 'w-full min-h-[100px] max-h-[90vh]',
         header: 'px-3.5 pt-[3px] pb-0.5 min-h-[42px]',
+        measuredContent: 'max-h-[90vh]',
       },
       fullscreen: {
         base: 'w-full h-full max-w-full max-h-full bg-clip-border',
         header: 'px-4 pt-[5px] pb-1.5 min-h-12',
+        measuredContent: 'max-h-[100vh]',
       },
     },
     fitContent: {
@@ -109,11 +112,11 @@ const DIALOG_STYLES = tv({
     padding: {
       none: { content: 'p-0' },
       small: { content: 'px-1 pt-3.5 pb-3.5' },
-      medium: { content: 'px-3.5 pt-3.5 pb-3.5' },
-      large: { content: 'px-8 pt-3.5 pb-5' },
-      xlarge: { content: 'p-12 pt-3.5 pb-8' },
-      xxlarge: { content: 'p-16 pt-3.5 pb-12' },
-      xxxlarge: { content: 'p-20 pt-3.5 pb-16' },
+      medium: { content: 'px-4 pt-3 pb-4' },
+      large: { content: 'px-8 pt-5 pb-5' },
+      xlarge: { content: 'p-12 pt-6 pb-8' },
+      xxlarge: { content: 'p-16 pt-8 pb-12' },
+      xxxlarge: { content: 'p-20 pt-10 pb-16' },
     },
     scrolledToTop: { true: { header: 'border-transparent' } },
   },
@@ -123,7 +126,7 @@ const DIALOG_STYLES = tv({
     closeButton: 'col-start-1 col-end-1 mr-auto',
     heading: 'col-start-2 col-end-2 my-0 text-center',
     content: 'relative flex-auto overflow-y-auto max-h-[inherit]',
-    measuredContent: 'flex flex-col max-h-[90vh]',
+    measuredContent: 'flex flex-col',
   },
   compoundVariants: [
     { type: 'modal', size: 'small', class: 'max-w-sm' },
@@ -140,7 +143,7 @@ const DIALOG_STYLES = tv({
     hideCloseButton: false,
     size: 'medium',
     padding: 'medium',
-    rounded: 'xxlarge',
+    rounded: 'xxxlarge',
   },
 })
 
@@ -181,11 +184,13 @@ export function Dialog(props: DialogProps) {
     testId = 'dialog',
     size,
     rounded,
-    padding = type === 'modal' ? 'medium' : 'xlarge',
+    padding: paddingRaw,
     fitContent,
     variants = DIALOG_STYLES,
     ...ariaDialogProps
   } = props
+
+  const padding = paddingRaw ?? (type === 'modal' ? 'medium' : 'xlarge')
 
   const [isScrolledToTop, setIsScrolledToTop] = React.useState(true)
 
@@ -204,7 +209,9 @@ export function Dialog(props: DialogProps) {
   const dialogLayoutId = `dialog-${dialogId}`
   const titleId = `${dialogId}-title`
 
-  const [contentDimensionsRef, { width: dialogWidth, height: dialogHeight }] = useDimensions()
+  const [contentDimensionsRef, dimensions] = useDimensions()
+  const dialogWidth = dimensions.width || '100%'
+  const dialogHeight = dimensions.height || '100%'
   const dialogRef = React.useRef<HTMLDivElement>(null)
   const overlayState = React.useRef<aria.OverlayTriggerState | null>(null)
   const root = portal.useStrictPortalContext()
@@ -351,3 +358,5 @@ const TYPE_TO_DIALOG_TYPE: Record<
   modal: 'dialog',
   fullscreen: 'dialog-fullscreen',
 }
+
+Dialog.Close = Close

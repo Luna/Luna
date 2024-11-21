@@ -64,7 +64,7 @@ export const ICON_WIDTH = 16
 
 <style scoped>
 .WidgetTreeRoot {
-  color: white;
+  color: var(--color-node-text);
 
   outline: none;
   min-height: var(--node-port-height);
