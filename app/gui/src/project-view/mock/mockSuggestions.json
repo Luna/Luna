@@ -1050,6 +1050,17 @@
   {
     "type": "method",
     "module": "Standard.Table.Table",
+    "name": "input",
+    "arguments": [],
+    "selfType": "Standard.Table.Table.Table",
+    "returnType": "Standard.Table.Table.Table",
+    "isStatic": true,
+    "documentation": "",
+    "annotations": []
+  },
+  {
+    "type": "method",
+    "module": "Standard.Table.Table",
     "name": "aggregate",
     "arguments": [
       {

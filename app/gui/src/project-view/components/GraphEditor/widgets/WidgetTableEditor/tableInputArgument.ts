@@ -40,7 +40,7 @@ export type RowData = {
  */
 export interface ColumnDef extends ColDef<RowData> {
   valueGetter: ({ data }: { data: RowData | undefined }) => any
-  valueSetter?: ({ data, newValue }: { data: RowData; newValue: any }) => boolean
+  valueSetter?: ({ data, newValue }: { data: RowData; newValue: string }) => boolean
   mainMenuItems: (string | MenuItem<RowData>)[]
   contextMenuItems: (string | MenuItem<RowData>)[]
   rowDrag?: ({ data }: { data: RowData | undefined }) => boolean
