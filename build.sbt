@@ -3299,13 +3299,12 @@ lazy val `runtime-instrument-common` =
       ),
       bench := (Benchmark / test).tag(Exclusive).value,
       Benchmark / parallelExecution := false,
-      (Benchmark / javaOptions) :=
-        (LocalProject("std-benchmarks") / Compile / javaOptions).value,
+      Benchmark / fork := true,
       Test / fork := true,
       Test / envVars ++= distributionEnvironmentOverrides ++ Map(
         "ENSO_TEST_DISABLE_IR_CACHE" -> "false"
       ),
-      libraryDependencies ++= Seq(
+      libraryDependencies ++= jmh ++ Seq(
         "junit"          % "junit"           % junitVersion     % Test,
         "com.github.sbt" % "junit-interface" % junitIfVersion   % Test,
         "org.scalatest" %% "scalatest"       % scalatestVersion % Test
