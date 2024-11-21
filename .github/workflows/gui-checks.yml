@@ -88,6 +88,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           report-json: "./**/eslint_report.json"
           markdown-report-on-step-summary: true
+          only-pr-files: false
           check-name: 🧹 GUI Lint Results
 
       - name: ❌ Fail if any check failed
