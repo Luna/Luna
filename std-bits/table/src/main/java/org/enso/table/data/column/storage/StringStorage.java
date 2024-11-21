@@ -1,6 +1,12 @@
 package org.enso.table.data.column.storage;
 
 import java.util.BitSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
@@ -16,9 +22,12 @@ import org.enso.table.data.column.operation.map.text.StringStringOp;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
+import org.slf4j.LoggerFactory;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
+  private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(StringStorage.class);
 
   private final TextType type;
   private long _countLeadingTrailingWhitespace = -1;
@@ -31,6 +40,10 @@ public final class StringStorage extends SpecializedStorage<String> {
   public StringStorage(String[] data, int size, TextType type) {
     super(data, size, buildOps());
     this.type = type;
+
+    CompletableFuture.runAsync(
+        this::countLeadingTrailingWhitespace,
+        EXECUTOR);
   }
 
   @Override
@@ -55,10 +68,12 @@ public final class StringStorage extends SpecializedStorage<String> {
    */
   public Long countLeadingTrailingWhitespace() {
     if (_countLeadingTrailingWhitespace >= 0) {
+      LOGGER.warn("Using memoized implementation for StringStorage");
       return _countLeadingTrailingWhitespace;
     }
 
     _countLeadingTrailingWhitespace = CountUntrimmed.compute(this);
+    LOGGER.warn("Counted leading and trailing whitespace in the column " + this.size);
     return _countLeadingTrailingWhitespace;
   }
 
