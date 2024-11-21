@@ -26,7 +26,7 @@ public interface MiniPassFactory extends IRProcessingPass {
    * an inline compilation.
    *
    * @param inlineContext A mini pass can optionally save reference to this inline context.
-   * @return Must not return {@code null}. Inline compilation should always be supported.
+   * @return May return {@code null} if the inline compilation is not supported.
    */
   MiniIRPass createForInlineCompilation(InlineContext inlineContext);
 }

@@ -106,14 +106,15 @@ public abstract class MiniIRPass {
    *
    * @param first first mini pass (can be {@code null})
    * @param second second mini pass (can be {@code null})
-   * @return a combined pass that calls both non-{@code null} of the provided passes
+   * @return a combined pass that calls both non-{@code null} of the provided passes. {@code null}
+   *     if both provided passes are {@code null}.
    */
   public static MiniIRPass combine(MiniIRPass first, MiniIRPass second) {
-    if (first == null && second == null) {
-      return null;
-    }
     if (first == null) {
       return second;
+    }
+    if (second == null) {
+      return first;
     }
     return ChainedMiniPass.chain(first, second);
   }

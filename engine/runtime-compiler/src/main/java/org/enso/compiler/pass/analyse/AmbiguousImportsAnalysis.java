@@ -73,7 +73,7 @@ public final class AmbiguousImportsAnalysis implements MiniPassFactory {
 
   @Override
   public MiniIRPass createForInlineCompilation(InlineContext inlineContext) {
-    throw new UnsupportedOperationException("unimplemented");
+    return null;
   }
 
 
