@@ -31,6 +31,9 @@
 - [The documentation editor can now display tables][11564]
 - [The documentation editor supports the Markdown URL syntax, and uses it to
   render pasted URLs as links][11597]
+- [Table Input Widget is now matched for Table.input method instead of
+  Table.new. Values must be string literals, and their content is parsed to the
+  suitable type][11612].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -51,6 +54,7 @@
 [11523]: https://github.com/enso-org/enso/pull/11523
 [11564]: https://github.com/enso-org/enso/pull/11564
 [11597]: https://github.com/enso-org/enso/pull/11597
+[11612]: https://github.com/enso-org/enso/pull/11612
 
 #### Enso Standard Library
 

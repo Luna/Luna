@@ -13,7 +13,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.List;
 import org.enso.common.LanguageInfo;
 import org.enso.common.MethodNames;
-import org.enso.interpreter.node.expression.builtin.interop.syntax.HostValueToEnsoNode;
+import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
 import org.enso.interpreter.runtime.data.hash.HashMapGetNode;
@@ -147,6 +147,33 @@ public class WarningsTest {
         continue;
       }
       assertWarningsForAType(v);
+    }
+  }
+
+  @Test
+  public void toDisplayText() throws Exception {
+    var code =
+        """
+    from Standard.Base import Integer, Warning, Error, Text
+
+    type My_Warning
+        private Value msg
+
+        to_display_text self -> Text = Error.throw "Don't call me!"
+        to_text self -> Text = "My_Warning to_text: "+self.msg
+
+    fn =
+        Warning.attach (My_Warning.Value "ONE") 1
+    """;
+
+    var module = ctx.eval(LanguageInfo.ID, code);
+    var ownWarning = module.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "fn");
+
+    assertTrue("Warning is seen as exception", ownWarning.isException());
+    try {
+      throw ownWarning.throwException();
+    } catch (PolyglotException ex) {
+      assertEquals("My_Warning to_text: ONE", ex.getMessage());
     }
   }
 
