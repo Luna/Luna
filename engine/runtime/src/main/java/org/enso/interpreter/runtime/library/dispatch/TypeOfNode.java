@@ -50,7 +50,12 @@ public abstract class TypeOfNode extends Node {
    * @return either {@link Type} of the value or {@link DataflowError} if there is no such type
    */
   public final Object findTypeOrError(Object value) {
-    return executeSingleType(value);
+    try {
+      var types = executeTypes(value);
+      return types[0];
+    } catch (NonTypeResult plain) {
+      return plain.result;
+    }
   }
 
   /**
@@ -64,58 +69,90 @@ public abstract class TypeOfNode extends Node {
     return findTypeOrError(value) instanceof Type type ? type : null;
   }
 
-  abstract Object executeSingleType(Object value);
+  /**
+   * Finds all types associated with a given {@code value} or returns {@code null}. It is guaranteed
+   * that the returned array is going to have at least one element, if it is non-{@code null}.
+   *
+   * @param value the value to check
+   * @return either types associated with the value or {@code null} if there is no such type
+   */
+  public final Type[] findAllTypes(Object value) {
+    try {
+      var types = executeTypes(value);
+      assert types != null && types.length > 0;
+      return types;
+    } catch (NonTypeResult ex) {
+      return null;
+    }
+  }
 
-  /** Creates new optimizing instance of this node. */
+  /**
+   * Internal implementation call to delegate to various {@link Specialization} methods.
+   *
+   * @param value the value to find type for
+   * @return array of types with at least one element, but possibly more
+   * @throws NonTypeResult when there is a <em>interop value</em> result, but it is not a {@link
+   *     Type}
+   */
+  abstract Type[] executeTypes(Object value) throws NonTypeResult;
+
+  /**
+   * Creates new optimizing instance of this node.
+   *
+   * @return new instance of this node ready to be <em>specialized</em>
+   */
   @NeverDefault
   public static TypeOfNode create() {
     return TypeOfNodeGen.create();
   }
 
-  /** Returns default, non-optimizing implementation of this node. */
+  /**
+   * Returns default, non-optimizing implementation of this node.
+   *
+   * @return shared singleton instance of this node
+   */
   @NeverDefault
   public static TypeOfNode getUncached() {
     return TypeOfNodeGen.getUncached();
   }
 
-  @Specialization
-  Object doUnresolvedSymbol(UnresolvedSymbol value) {
-    return EnsoContext.get(this).getBuiltins().function();
+  private static Type[] fromType(Type single) {
+    return new Type[] {single};
   }
 
   @Specialization
-  Object doDouble(double value) {
-    return EnsoContext.get(this).getBuiltins().number().getFloat();
+  Type[] doUnresolvedSymbol(UnresolvedSymbol value) {
+    return fromType(EnsoContext.get(this).getBuiltins().function());
   }
 
   @Specialization
-  Object doLong(long value) {
-    return EnsoContext.get(this).getBuiltins().number().getInteger();
+  Type[] doDouble(double value) {
+    return fromType(EnsoContext.get(this).getBuiltins().number().getFloat());
   }
 
   @Specialization
-  Object doBigInteger(EnsoBigInteger value) {
-    return EnsoContext.get(this).getBuiltins().number().getInteger();
+  Type[] doLong(long value) {
+    return fromType(EnsoContext.get(this).getBuiltins().number().getInteger());
   }
 
   @Specialization
-  Object doPanicException(PanicException value) {
-    return EnsoContext.get(this).getBuiltins().panic();
+  Type[] doBigInteger(EnsoBigInteger value) {
+    return fromType(EnsoContext.get(this).getBuiltins().number().getInteger());
   }
 
   @Specialization
-  Object doPanicSentinel(PanicSentinel value) {
-    return EnsoContext.get(this).getBuiltins().panic();
+  Type[] doPanicException(PanicException value) {
+    return fromType(EnsoContext.get(this).getBuiltins().panic());
   }
 
   @Specialization
-  Object doWarning(WithWarnings value, @Cached TypeOfNode withoutWarning) {
-    return withoutWarning.executeSingleType(value.getValue());
+  Type[] doPanicSentinel(PanicSentinel value) {
+    return fromType(EnsoContext.get(this).getBuiltins().panic());
   }
 
   @Specialization
-  Object doEnsoMultiValue(EnsoMultiValue value) {
-    return value.allTypes()[0];
+  Type[] doWarning(WithWarnings value, @Cached TypeOfNode withoutWarning) throws NonTypeResult {
+    return withoutWarning.executeTypes(value.getValue());
   }
 
   static boolean isWithType(Object value, TypesLibrary types, InteropLibrary iop) {
@@ -139,32 +176,40 @@ public abstract class TypeOfNode extends Node {
   }
 
   @Specialization(guards = {"isWithoutType(value, types)"})
-  Object withoutType(
+  Type[] withoutType(
       Object value,
       @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
       @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types,
-      @Cached WithoutType delegate) {
-    var type = WithoutType.Interop.resolve(value, interop);
-    return delegate.execute(type, value);
+      @Cached WithoutType delegate)
+      throws NonTypeResult {
+    var kind = WithoutType.Interop.resolve(value, interop);
+    var typeOrPlain = delegate.execute(kind, value);
+    if (typeOrPlain instanceof Type type) {
+      return fromType(type);
+    } else {
+      throw new NonTypeResult(typeOrPlain);
+    }
   }
 
   @Specialization(guards = {"isWithType(value, types, interop)"})
-  Object doType(
+  Type[] doType(
       Object value,
       @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
       @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types) {
-    return types.getType(value);
+    return types.allTypes(value);
   }
 
   @Fallback
   @CompilerDirectives.TruffleBoundary
-  Object doAny(Object value) {
-    return DataflowError.withDefaultTrace(
-        EnsoContext.get(this)
-            .getBuiltins()
-            .error()
-            .makeCompileError("unknown type_of for " + value),
-        this);
+  Type[] doAny(Object value) throws NonTypeResult {
+    var err =
+        DataflowError.withDefaultTrace(
+            EnsoContext.get(this)
+                .getBuiltins()
+                .error()
+                .makeCompileError("unknown type_of for " + value),
+            this);
+    throw new NonTypeResult(err);
   }
 
   @GenerateUncached
@@ -350,6 +395,19 @@ public abstract class TypeOfNode extends Node {
       boolean isNone() {
         return this == NONE;
       }
+    }
+  }
+
+  static final class NonTypeResult extends Exception {
+    final Object result;
+
+    NonTypeResult(Object result) {
+      this.result = result;
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
     }
   }
 }
