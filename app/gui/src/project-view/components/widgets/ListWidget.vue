@@ -79,13 +79,13 @@ const draggedIndex = ref<number>()
 
 interface BaseItem {
   key: string | number
-  hintDeletable: Ref<boolean>
 }
 
 interface NonPlaceholderItem extends BaseItem {
   type: 'item'
   index: number
   item: T
+  hintDeletable: Ref<boolean>
 }
 
 interface PlaceholderItem extends BaseItem {
@@ -131,7 +131,6 @@ const displayedChildren = computed(() => {
       type: 'placeholder',
       width: meta.width,
       key,
-      hintDeletable: ref(false),
     } as const)
   }
   return items.filter((item) => item.type !== 'item' || item.index !== draggedIndex.value)
