@@ -1,10 +1,18 @@
 /** @file A styled button. */
-import * as React from 'react'
+import {
+  type ForwardedRef,
+  memo,
+  type ReactElement,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 
-import * as focusHooks from '#/hooks/focusHooks'
+import { useFocusChild } from '#/hooks/focusHooks'
 
 import * as aria from '#/components/aria'
-import * as ariaComponents from '#/components/AriaComponents'
+import { Tooltip, TooltipTrigger, useVisualTooltip } from '#/components/AriaComponents'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
@@ -36,14 +44,10 @@ interface PropsWithoutHref {
 export interface BaseButtonProps<Render>
   extends Omit<VariantProps<typeof BUTTON_STYLES>, 'iconOnly'> {
   /** Falls back to `aria-label`. Pass `false` to explicitly disable the tooltip. */
-  readonly tooltip?: React.ReactElement | string | false | null
+  readonly tooltip?: ReactElement | string | false | null
   readonly tooltipPlacement?: aria.Placement
   /** The icon to display in the button */
-  readonly icon?:
-    | React.ReactElement
-    | string
-    | ((render: Render) => React.ReactElement | string | null)
-    | null
+  readonly icon?: ReactElement | string | ((render: Render) => ReactElement | string | null) | null
   /** When `true`, icon will be shown only when hovered. */
   readonly showIconOnHover?: boolean
   /**
@@ -280,8 +284,8 @@ export const BUTTON_STYLES = tv({
 })
 
 /** A button allows a user to perform an action, with mouse, touch, and keyboard interactions. */
-export const Button = React.memo(
-  forwardRef(function Button(props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) {
+export const Button = memo(
+  forwardRef(function Button(props: ButtonProps, ref: ForwardedRef<HTMLButtonElement>) {
     const {
       className,
       contentClassName,
@@ -304,11 +308,11 @@ export const Button = React.memo(
       variants = BUTTON_STYLES,
       ...ariaProps
     } = props
-    const focusChildProps = focusHooks.useFocusChild()
+    const focusChildProps = useFocusChild()
 
-    const [implicitlyLoading, setImplicitlyLoading] = React.useState(false)
-    const contentRef = React.useRef<HTMLSpanElement>(null)
-    const loaderRef = React.useRef<HTMLSpanElement>(null)
+    const [implicitlyLoading, setImplicitlyLoading] = useState(false)
+    const contentRef = useRef<HTMLSpanElement>(null)
+    const loaderRef = useRef<HTMLSpanElement>(null)
 
     const isLink = ariaProps.href != null
 
@@ -335,7 +339,7 @@ export const Button = React.memo(
     const isDisabled = props.isDisabled ?? isLoading
     const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
 
-    React.useLayoutEffect(() => {
+    useLayoutEffect(() => {
       const delay = 350
 
       if (isLoading) {
@@ -389,9 +393,7 @@ export const Button = React.memo(
       iconOnly: isIconOnly,
     })
 
-    const childrenFactory = (
-      render: aria.ButtonRenderProps | aria.LinkRenderProps,
-    ): React.ReactNode => {
+    const childrenFactory = (render: aria.ButtonRenderProps | aria.LinkRenderProps): ReactNode => {
       const iconComponent = (() => {
         if (icon == null) {
           return null
@@ -429,7 +431,7 @@ export const Button = React.memo(
       }
     }
 
-    const { tooltip: visualTooltip, targetProps } = ariaComponents.useVisualTooltip({
+    const { tooltip: visualTooltip, targetProps } = useVisualTooltip({
       targetRef: contentRef,
       children: tooltipElement,
       isDisabled: !shouldUseVisualTooltip,
@@ -483,15 +485,13 @@ export const Button = React.memo(
           {button}
           {visualTooltip}
         </>
-      : <ariaComponents.TooltipTrigger delay={0} closeDelay={0}>
+      : <TooltipTrigger delay={0} closeDelay={0}>
           {button}
 
-          <ariaComponents.Tooltip
-            {...(tooltipPlacement != null ? { placement: tooltipPlacement } : {})}
-          >
+          <Tooltip {...(tooltipPlacement != null ? { placement: tooltipPlacement } : {})}>
             {tooltipElement}
-          </ariaComponents.Tooltip>
-        </ariaComponents.TooltipTrigger>
+          </Tooltip>
+        </TooltipTrigger>
     )
   }),
 )
