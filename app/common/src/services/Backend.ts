@@ -1586,32 +1586,28 @@ export function firstProjectExecutionOnOrAfter(
     case 'weekly':
     case 'monthly': {
       const currentHours = nextDate.getHours()
-      const hour = hours.find(hour => hour >= currentHours) ?? hours[0]
-      const goToNextDay = hour == null || hour < currentHours
-      nextDate.setHours(hour ?? 0)
-      if (goToNextDay) {
-        switch (repeatInterval) {
-          case 'daily': {
-            nextDate.setDate(nextDate.getDate() + 1)
-            break
+      const hour = hours.find(hour => hour >= currentHours) ?? hours[0] ?? 0
+      nextDate.setHours(hour)
+      switch (repeatInterval) {
+        case 'daily': {
+          break
+        }
+        case 'weekly': {
+          const currentDay = nextDate.getDay()
+          const day = days.find(day => day >= currentDay) ?? days[0] ?? 0
+          const dayOffset = (day - currentDay + 7) % 7
+          nextDate.setDate(nextDate.getDate() + dayOffset)
+          break
+        }
+        case 'monthly': {
+          const currentDate = nextDate.getDate()
+          const date = dates.find(date => date >= currentDate) ?? dates[0] ?? 1
+          const goToNextMonth = date < currentDate
+          nextDate.setDate(date)
+          if (goToNextMonth) {
+            nextDate.setMonth(nextDate.getMonth() + 1)
           }
-          case 'weekly': {
-            const currentDay = nextDate.getDay()
-            const day = days.find(day => day >= currentDay) ?? days[0] ?? 0
-            const dayOffset = (day - currentDay + 7) % 7
-            nextDate.setDate(nextDate.getDate() + dayOffset)
-            break
-          }
-          case 'monthly': {
-            const currentDate = nextDate.getDate()
-            const date = dates.find(date => date >= currentDate) ?? dates[0] ?? 1
-            const goToNextMonth = date < currentDate
-            nextDate.setDate(date)
-            if (goToNextMonth) {
-              nextDate.setMonth(nextDate.getMonth() + 1)
-            }
-            break
-          }
+          break
         }
       }
       break

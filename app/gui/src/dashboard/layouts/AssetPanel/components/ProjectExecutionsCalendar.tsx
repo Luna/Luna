@@ -1,11 +1,12 @@
 /** @file A calendar showing executions of a project. */
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
 import {
   CalendarDate,
   endOfMonth,
   getLocalTimeZone,
   parseDateTime,
+  parseDuration,
   startOfMonth,
   toCalendarDate,
   today,
@@ -39,7 +40,6 @@ import {
   type ProjectAsset,
 } from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
   base: '',
@@ -103,13 +103,13 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
 
   const form = Form.useForm({ schema: (z) => z.object({ date: z.instanceof(CalendarDate) }) })
   const timeZone = getLocalTimeZone()
+  const [focusedMonth, setFocusedMonth] = useState(() => startOfMonth(today(timeZone)))
   const todayDate = today(timeZone)
   const selectedDate = Form.useWatch({
     control: form.control,
     name: 'date',
     defaultValue: todayDate,
   })
-  const selectedDateString = selectedDate.toString()
 
   const projectExecutionsQuery = useSuspenseQuery({
     queryKey: [backend.type, 'listProjectExecutions', item.id, item.title],
@@ -127,10 +127,9 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       >
     >
   >(() => {
-    const todayDateInner = today(timeZone)
-    const start = startOfMonth(todayDateInner)
+    const start = startOfMonth(focusedMonth)
     const startDate = start.toDate(timeZone)
-    const end = endOfMonth(todayDateInner)
+    const end = endOfMonth(focusedMonth)
     const endDate = end.toDate(timeZone)
     const result: Record<
       string,
@@ -149,9 +148,20 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       }
     }
     return result
-  }, [projectExecutions, timeZone])
-
-  const displayedProjectExecutions = projectExecutionsByDate[selectedDateString] ?? EMPTY_ARRAY
+  }, [focusedMonth, projectExecutions, timeZone])
+  const projectExecutionsForToday = useMemo<
+    readonly { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
+  >(
+    () =>
+      projectExecutions.flatMap((projectExecution) =>
+        getProjectExecutionRepetitionsForDateRange(
+          projectExecution,
+          selectedDate.toDate(timeZone),
+          selectedDate.add(parseDuration('P1D')).toDate(timeZone),
+        ).flatMap((date) => ({ date, projectExecution })),
+      ),
+    [projectExecutions, selectedDate, timeZone],
+  )
 
   const styles = PROJECT_EXECUTIONS_CALENDAR_STYLES({})
 
@@ -170,7 +180,12 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
         control={form.control}
         name="date"
         render={(renderProps) => (
-          <Calendar className={styles.calendarContainer()} {...renderProps.field}>
+          <Calendar
+            focusedValue={focusedMonth}
+            onFocusChange={setFocusedMonth}
+            className={styles.calendarContainer()}
+            {...renderProps.field}
+          >
             <header className={styles.calendarHeader()}>
               <Button variant="icon" slot="previous" icon={ArrowIcon} className="rotate-180" />
               <Heading className={styles.calendarHeading()} />
@@ -199,9 +214,9 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       <Text>
         {getText('projectSessionsOnX', Intl.DateTimeFormat().format(selectedDate.toDate(timeZone)))}
       </Text>
-      {displayedProjectExecutions.length === 0 ?
+      {projectExecutionsForToday.length === 0 ?
         <Text color="disabled">{getText('noProjectExecutions')}</Text>
-      : displayedProjectExecutions.map(({ projectExecution }) => (
+      : projectExecutionsForToday.map(({ projectExecution }) => (
           <ProjectExecution backend={backend} item={item} projectExecution={projectExecution} />
         ))
       }
