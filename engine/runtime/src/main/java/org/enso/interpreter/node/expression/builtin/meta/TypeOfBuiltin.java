@@ -18,7 +18,7 @@ public final class TypeOfBuiltin extends Node {
   private TypeOfBuiltin() {}
 
   public Object execute(@AcceptsError Object value) {
-    return typeOf.execute(value);
+    return typeOf.findTypeOrError(value);
   }
 
   public static TypeOfBuiltin build() {

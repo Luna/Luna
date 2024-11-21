@@ -85,7 +85,7 @@ public class TypeOfNodeTest {
         ctx(),
         () -> {
           var node = TypeOfNode.create();
-          var root = new TestRootNode((frame) -> node.execute(frame.getArguments()[0]));
+          var root = new TestRootNode((frame) -> node.findTypeOrError(frame.getArguments()[0]));
           root.insertChildren(node);
           var call = root.getCallTarget();
 

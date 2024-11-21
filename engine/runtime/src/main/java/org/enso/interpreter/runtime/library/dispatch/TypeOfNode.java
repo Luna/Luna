@@ -24,17 +24,55 @@ import org.enso.interpreter.runtime.error.PanicSentinel;
 import org.enso.interpreter.runtime.number.EnsoBigInteger;
 import org.enso.interpreter.runtime.warning.WithWarnings;
 
+/**
+ * Provides API (in form of {@code public} methods) for querying type information about a value.
+ * Contains non-{@code public} methods with implementation to handle such queries.
+ */
 @GenerateUncached
 public abstract class TypeOfNode extends Node {
   TypeOfNode() {}
 
-  public abstract Object execute(Object value);
+  /**
+   * Check whether given value has an Enso {@link Type}.
+   *
+   * @param value the value to check
+   * @return {@code true} if there is (at least one) type associated with the value
+   */
+  public final boolean hasType(Object value) {
+    return findTypeOrError(value) instanceof Type;
+  }
 
+  /**
+   * Finds (a primary) type associated with a given {@code value}. If no such type exists, an error
+   * value is returned that can normally flow thru the Enso interpreter without any conversions.
+   *
+   * @param value the value to check
+   * @return either {@link Type} of the value or {@link DataflowError} if there is no such type
+   */
+  public final Object findTypeOrError(Object value) {
+    return executeSingleType(value);
+  }
+
+  /**
+   * Finds (a primary) type associated with a given {@code value} or returns {@code null}. Useful
+   * for internal checks in the Enso interpreter.
+   *
+   * @param value the value to check
+   * @return either Type of the value or {@code null} if there is no such type
+   */
+  public final Type findTypeOrNull(Object value) {
+    return findTypeOrError(value) instanceof Type type ? type : null;
+  }
+
+  abstract Object executeSingleType(Object value);
+
+  /** Creates new optimizing instance of this node. */
   @NeverDefault
   public static TypeOfNode create() {
     return TypeOfNodeGen.create();
   }
 
+  /** Returns default, non-optimizing implementation of this node. */
   @NeverDefault
   public static TypeOfNode getUncached() {
     return TypeOfNodeGen.getUncached();
@@ -72,7 +110,12 @@ public abstract class TypeOfNode extends Node {
 
   @Specialization
   Object doWarning(WithWarnings value, @Cached TypeOfNode withoutWarning) {
-    return withoutWarning.execute(value.getValue());
+    return withoutWarning.executeSingleType(value.getValue());
+  }
+
+  @Specialization
+  Object doEnsoMultiValue(EnsoMultiValue value) {
+    return value.allTypes()[0];
   }
 
   static boolean isWithType(Object value, TypesLibrary types, InteropLibrary iop) {

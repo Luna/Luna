@@ -580,7 +580,7 @@ object ProgramExecutionSupport {
         Array[Object](
           visualization.id,
           expressionId,
-          Try(TypeOfNode.getUncached.execute(expressionValue))
+          Try(TypeOfNode.getUncached.findTypeOrError(expressionValue))
             .getOrElse(expressionValue.getClass)
         )
       )
@@ -640,7 +640,7 @@ object ProgramExecutionSupport {
           Option(error.getMessage).getOrElse(error.getClass.getSimpleName)
         if (!TypesGen.isPanicSentinel(expressionValue)) {
           val typeOfNode =
-            Option(TypeOfNode.getUncached.execute(expressionValue))
+            Option(TypeOfNode.getUncached.findTypeOrError(expressionValue))
               .getOrElse(expressionValue.getClass)
           ctx.executionService.getLogger.log(
             Level.WARNING,
