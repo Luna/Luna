@@ -102,8 +102,8 @@ public final class AmbiguousImportsAnalysis implements MiniPassFactory {
     public Module transformModule(Module moduleIr) {
       var newImports = new ArrayList<Import>();
       moduleIr.imports().foreach(imp -> {
-        if (imp instanceof Import.Module impMod) {
-          var errs = analyseAmbiguousSymbols(impMod);
+        var errs = analyseAmbiguousSymbols(imp);
+        if (!errs.isEmpty()) {
           newImports.addAll(errs);
         } else {
           newImports.add(imp);
