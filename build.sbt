@@ -2294,7 +2294,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`directory-watcher-wrapper` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value,
+      (`ydoc` / Compile / exportedModule).value,
       (`logging-utils` / Compile / exportedModule).value,
       (`logging-utils-akka` / Compile / exportedModule).value,
       (`logging-service` / Compile / exportedModule).value,
@@ -2379,7 +2379,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`runtime-instrument-repl-debugger` / Compile / exportedModule).value,
       (`runtime-instrument-id-execution` / Compile / exportedModule).value,
       (`runtime-language-epb` / Compile / exportedModule).value,
-      (`ydoc-server` / Compile / exportedModule).value,
+      (`ydoc` / Compile / exportedModule).value,
       (`syntax-rust-definition` / Compile / exportedModule).value,
       (`profiling-utils` / Compile / exportedModule).value,
       (`logging-service-logback` / Compile / exportedModule).value,
@@ -2431,7 +2431,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       javaModuleName.value,
       (`syntax-rust-definition` / javaModuleName).value,
       (`profiling-utils` / javaModuleName).value,
-      (`ydoc-server` / javaModuleName).value,
+      (`ydoc` / javaModuleName).value,
       (`library-manager` / javaModuleName).value
     ),
     Test / addReads := {
@@ -2486,7 +2486,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
   .dependsOn(`logging-service-logback` % "test->test")
   .dependsOn(`library-manager-test` % Test)
   .dependsOn(`runtime-version-manager-test` % Test)
-  .dependsOn(`ydoc-server`)
+  .dependsOn(ydoc)
 
 lazy val cleanInstruments = taskKey[Unit](
   "Cleans fragile class files to force a full recompilation and preserve" +
