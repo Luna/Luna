@@ -663,6 +663,7 @@
   "restartParallelModeDescription": "Stop the old execution before starting the new execution.",
   "parallelParallelModeDescription": "Run the new execution as well as the old execution.",
   "everyDay": "Every day",
+  "everyHour": "Every hour",
   "monday": "Monday",
   "tuesday": "Tuesday",
   "wednesday": "Wednesday",

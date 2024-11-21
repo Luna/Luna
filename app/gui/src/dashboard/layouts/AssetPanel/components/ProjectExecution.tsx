@@ -51,8 +51,12 @@ export function ProjectExecution(props: ProjectExecutionProps) {
   const dateString =
     time.dates?.[0] != null ?
       getOrdinal(time.dates[0] + 1)
-    : getText(time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday' : 'everyDay')
-  const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
+    : getText(
+        time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday'
+        : projectExecution.repeatInterval === 'hourly' ? 'everyHour'
+        : 'everyDay',
+      )
+  const minuteString = time.minute === 0 ? '' : `${String(time.minute).padStart(2, '0')}`
   const timeString =
     time.hours?.[0] != null ?
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
