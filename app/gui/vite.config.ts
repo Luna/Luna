@@ -31,12 +31,15 @@ const entrypoint =
 process.env.ENSO_IDE_VERSION ??= process.env.ENSO_CLOUD_DASHBOARD_VERSION
 console.info(`Building IDE version: ${process.env.ENSO_IDE_VERSION}`)
 
+const isCI = process.env.CI === 'true'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   cacheDir: fileURLToPath(new URL('../../node_modules/.cache/vite', import.meta.url)),
   publicDir: fileURLToPath(new URL('./public', import.meta.url)),
   envDir: fileURLToPath(new URL('.', import.meta.url)),
+  logLevel: isCI ? 'error' : 'info',
   plugins: [
     wasm(),
     ...(process.env.NODE_ENV === 'development' ? [await VueDevTools()] : []),
