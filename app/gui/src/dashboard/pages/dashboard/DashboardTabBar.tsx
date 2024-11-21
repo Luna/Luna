@@ -1,7 +1,4 @@
-/**
- * @file
- * The tab bar for the dashboard page.
- */
+/** @file The tab bar for the dashboard page. */
 import DriveIcon from '#/assets/drive.svg'
 import SettingsIcon from '#/assets/settings.svg'
 import WorkspaceIcon from '#/assets/workspace.svg'
