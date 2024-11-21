@@ -11,7 +11,7 @@ public class MiniPassTraverserTest {
   @Test
   public void traversesOneExpression() {
     var expr = new MockExpression(false);
-    var miniPass = new MockMiniPass(null);
+    var miniPass = MockMiniPass.builder().build();
     MiniIRPass.compile(MockExpression.class, expr, miniPass);
     assertThat(
         "Prepare is called only for trees with depth > 1", expr.isPreparedByAny(), is(false));
@@ -23,7 +23,7 @@ public class MiniPassTraverserTest {
     var parentExpr = new MockExpression(false);
     var childExpr = new MockExpression(true);
     parentExpr.addChild(childExpr);
-    var miniPass = new MockMiniPass(null);
+    var miniPass = MockMiniPass.builder().build();
     MiniIRPass.compile(MockExpression.class, parentExpr, miniPass);
     assertThat(
         "Prepare must be called on a child expression", childExpr.isPreparedByAny(), is(true));
@@ -36,7 +36,7 @@ public class MiniPassTraverserTest {
     var parentExpr = new MockExpression(false);
     var children = List.of(new MockExpression(true), new MockExpression(true));
     children.forEach(parentExpr::addChild);
-    var miniPass = new MockMiniPass(null);
+    var miniPass = MockMiniPass.builder().build();
     MiniIRPass.compile(MockExpression.class, parentExpr, miniPass);
     for (var ch : children) {
       assertThat("Prepare must be called on a child expression", ch.isPreparedByAny(), is(true));
@@ -54,7 +54,7 @@ public class MiniPassTraverserTest {
     e2.addChild(e3);
     // Should stop traversing when e3 is encountered.
     // Should only process e1 and e2, not e3
-    var miniPass = new MockMiniPass(e3);
+    var miniPass = MockMiniPass.builder().stopExpr(e3).build();
     MiniIRPass.compile(MockExpression.class, e1, miniPass);
     assertThat("e3 should not be processed", e3.isPreparedByAny(), is(false));
     assertThat("e3 should not be processed", e3.isTransformedByAny(), is(false));
@@ -67,8 +67,8 @@ public class MiniPassTraverserTest {
     var parentExpr = new MockExpression(false);
     var childExpr = new MockExpression(true);
     parentExpr.addChild(childExpr);
-    var miniPass1 = new MockMiniPass(null);
-    var miniPass2 = new MockMiniPass(null);
+    var miniPass1 = MockMiniPass.builder().build();
+    var miniPass2 = MockMiniPass.builder().build();
     var chainedPass = MiniIRPass.combine(miniPass1, miniPass2);
     MiniIRPass.compile(MockExpression.class, parentExpr, chainedPass);
     assertThat(
@@ -93,9 +93,9 @@ public class MiniPassTraverserTest {
     e1.addChild(e2);
     e2.addChild(e3);
     // miniPass1 stops traversing on e2.
-    var miniPass1 = new MockMiniPass(e3);
+    var miniPass1 = MockMiniPass.builder().stopExpr(e3).build();
     // miniPass2 traverses everything.
-    var miniPass2 = new MockMiniPass(null);
+    var miniPass2 = MockMiniPass.builder().build();
     var chainedPass = MiniIRPass.combine(miniPass1, miniPass2);
     MiniIRPass.compile(MockExpression.class, e1, chainedPass);
     assertThat("e3 should be prepared only by miniPass2", e3.isPreparedBy(miniPass2), is(true));
