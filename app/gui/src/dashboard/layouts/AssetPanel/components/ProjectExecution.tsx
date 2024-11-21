@@ -43,7 +43,7 @@ export interface ProjectExecutionProps {
 }
 
 /** Displays information describing a specific version of an asset. */
-export default function ProjectExecution(props: ProjectExecutionProps) {
+export function ProjectExecution(props: ProjectExecutionProps) {
   const { backend, item, projectExecution } = props
   const { getText } = useText()
   const getOrdinal = useGetOrdinal()

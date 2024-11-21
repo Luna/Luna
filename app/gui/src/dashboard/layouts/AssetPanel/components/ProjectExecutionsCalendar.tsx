@@ -2,6 +2,7 @@
 import { useMemo } from 'react'
 
 import {
+  CalendarDate,
   endOfMonth,
   getLocalTimeZone,
   parseDateTime,
@@ -21,10 +22,11 @@ import {
   CalendarHeaderCell,
   Heading,
 } from '#/components/aria'
-import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaComponents'
+import { Button, ButtonGroup, DialogTrigger, Form, Text } from '#/components/AriaComponents'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Result } from '#/components/Result'
 import { Suspense } from '#/components/Suspense'
+import { ProjectExecution } from '#/layouts/AssetPanel/components/ProjectExecution'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -33,10 +35,11 @@ import {
   BackendType,
   getProjectExecutionRepetitionsForDateRange,
   type AnyAsset,
+  type ProjectExecution as BackendProjectExecution,
   type ProjectAsset,
-  type ProjectExecution,
 } from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
   base: '',
@@ -49,7 +52,7 @@ const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
     calendarGridHeaderCell: '',
     calendarGridBody: '',
     calendarGridCell:
-      'text-center px-1 rounded border border-transparent hover:bg-primary/10 outside-visible-range:text-primary/30 disabled:text-primary/30 selected:border-primary/40 min-h-16',
+      'text-center px-1 rounded border border-transparent hover:bg-primary/10 outside-visible-range:text-primary/30 disabled:text-primary/30 selected:border-primary/40 h-16 overflow-clip',
   },
 })
 
@@ -98,6 +101,16 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
   const { backend, item } = props
   const { getText } = useText()
 
+  const form = Form.useForm({ schema: (z) => z.object({ date: z.instanceof(CalendarDate) }) })
+  const timeZone = getLocalTimeZone()
+  const todayDate = today(timeZone)
+  const selectedDate = Form.useWatch({
+    control: form.control,
+    name: 'date',
+    defaultValue: todayDate,
+  })
+  const selectedDateString = selectedDate.toString()
+
   const projectExecutionsQuery = useSuspenseQuery({
     queryKey: [backend.type, 'listProjectExecutions', item.id, item.title],
     queryFn: async () => {
@@ -110,19 +123,18 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
     Readonly<
       Record<
         string,
-        readonly { readonly date: Date; readonly projectExecution: ProjectExecution }[]
+        readonly { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
       >
     >
   >(() => {
-    const timeZone = getLocalTimeZone()
-    const todayDate = today(timeZone)
-    const start = startOfMonth(todayDate)
+    const todayDateInner = today(timeZone)
+    const start = startOfMonth(todayDateInner)
     const startDate = start.toDate(timeZone)
-    const end = endOfMonth(todayDate)
+    const end = endOfMonth(todayDateInner)
     const endDate = end.toDate(timeZone)
     const result: Record<
       string,
-      { readonly date: Date; readonly projectExecution: ProjectExecution }[]
+      { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
     > = {}
     for (const projectExecution of projectExecutions) {
       for (const date of getProjectExecutionRepetitionsForDateRange(
@@ -137,46 +149,62 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       }
     }
     return result
-  }, [projectExecutions])
+  }, [projectExecutions, timeZone])
+
+  const displayedProjectExecutions = projectExecutionsByDate[selectedDateString] ?? EMPTY_ARRAY
 
   const styles = PROJECT_EXECUTIONS_CALENDAR_STYLES({})
 
   return (
-    <div className="pointer-events-auto flex w-full flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden">
+    <Form
+      form={form}
+      className="pointer-events-auto flex w-full flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden"
+    >
       <ButtonGroup>
         <DialogTrigger>
           <Button variant="outline">{getText('newProjectExecution')}</Button>
           <NewProjectExecutionModal backend={backend} item={item} />
         </DialogTrigger>
       </ButtonGroup>
-      <Calendar className={styles.calendarContainer()}>
-        <header className={styles.calendarHeader()}>
-          <Button variant="icon" slot="previous" icon={ArrowIcon} className="rotate-180" />
-          <Heading className={styles.calendarHeading()} />
-          <Button variant="icon" slot="next" icon={ArrowIcon} />
-        </header>
-        <CalendarGrid className={styles.calendarGrid()}>
-          <CalendarGridHeader className={styles.calendarGridHeader()}>
-            {() => <CalendarHeaderCell className={styles.calendarGridHeaderCell()} />}
-          </CalendarGridHeader>
-          <CalendarGridBody className={styles.calendarGridBody()}>
-            {(date) => (
-              <CalendarCell date={date} className={styles.calendarGridCell()}>
-                <div className="flex flex-col items-center">
-                  <Text color="custom">{date.day}</Text>
-                  {projectExecutionsByDate[date.toString()]?.map((data) => (
-                    <Text color="disabled">{`${data.date.getHours().toString().padStart(2, '0')}:${data.date.getMinutes().toString().padStart(2, '0')}`}</Text>
-                  ))}
-                </div>
-              </CalendarCell>
-            )}
-          </CalendarGridBody>
-        </CalendarGrid>
-      </Calendar>
-      <Text>{getText('projectSessionsOnX', Intl.DateTimeFormat().format(new Date()))}</Text>
-      {projectExecutions.length === 0 && (
+      <Form.Controller
+        control={form.control}
+        name="date"
+        render={(renderProps) => (
+          <Calendar className={styles.calendarContainer()} {...renderProps.field}>
+            <header className={styles.calendarHeader()}>
+              <Button variant="icon" slot="previous" icon={ArrowIcon} className="rotate-180" />
+              <Heading className={styles.calendarHeading()} />
+              <Button variant="icon" slot="next" icon={ArrowIcon} />
+            </header>
+            <CalendarGrid className={styles.calendarGrid()}>
+              <CalendarGridHeader className={styles.calendarGridHeader()}>
+                {() => <CalendarHeaderCell className={styles.calendarGridHeaderCell()} />}
+              </CalendarGridHeader>
+              <CalendarGridBody className={styles.calendarGridBody()}>
+                {(date) => (
+                  <CalendarCell date={date} className={styles.calendarGridCell()}>
+                    <div className="flex flex-col items-center">
+                      <Text color="custom">{date.day}</Text>
+                      {projectExecutionsByDate[date.toString()]?.map((data) => (
+                        <Text color="disabled">{`${data.date.getHours().toString().padStart(2, '0')}:${data.date.getMinutes().toString().padStart(2, '0')}`}</Text>
+                      ))}
+                    </div>
+                  </CalendarCell>
+                )}
+              </CalendarGridBody>
+            </CalendarGrid>
+          </Calendar>
+        )}
+      />
+      <Text>
+        {getText('projectSessionsOnX', Intl.DateTimeFormat().format(selectedDate.toDate(timeZone)))}
+      </Text>
+      {displayedProjectExecutions.length === 0 ?
         <Text color="disabled">{getText('noProjectExecutions')}</Text>
-      )}
-    </div>
+      : displayedProjectExecutions.map(({ projectExecution }) => (
+          <ProjectExecution backend={backend} item={item} projectExecution={projectExecution} />
+        ))
+      }
+    </Form>
   )
 }
