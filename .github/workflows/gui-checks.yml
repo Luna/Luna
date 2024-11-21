@@ -75,7 +75,7 @@ jobs:
       - uses: MeilCli/common-lint-reporter/transformer/eslint@v1
         with:
           report_files: |
-            eslint_report.json
+            ./**/eslint_report.json
       - uses: MeilCli/common-lint-reporter/operator/filter-by-file-changed@v1
       - uses: MeilCli/common-lint-reporter@v1
         with:
@@ -93,6 +93,8 @@ jobs:
           markdown-report-on-step-summary: true
           check-name: 🧹 GUI Lint Results
           only-pr-files: false
+          fail-on-error: false
+          fail-on-warning: false
 
       - name: ❌ Fail if any check failed
         if: always() && (steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
