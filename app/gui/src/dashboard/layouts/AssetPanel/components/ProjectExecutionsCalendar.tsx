@@ -217,7 +217,12 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       {projectExecutionsForToday.length === 0 ?
         <Text color="disabled">{getText('noProjectExecutions')}</Text>
       : projectExecutionsForToday.map(({ projectExecution }) => (
-          <ProjectExecution backend={backend} item={item} projectExecution={projectExecution} />
+          <ProjectExecution
+            hideDay
+            backend={backend}
+            item={item}
+            projectExecution={projectExecution}
+          />
         ))
       }
     </Form>

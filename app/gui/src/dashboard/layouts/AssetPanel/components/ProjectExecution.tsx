@@ -40,11 +40,13 @@ export interface ProjectExecutionProps {
   readonly backend: Backend
   readonly item: backendModule.ProjectAsset
   readonly projectExecution: backendModule.ProjectExecution
+  /** Defaults to `false`. */
+  readonly hideDay?: boolean
 }
 
 /** Displays information describing a specific version of an asset. */
 export function ProjectExecution(props: ProjectExecutionProps) {
-  const { backend, item, projectExecution } = props
+  const { backend, item, projectExecution, hideDay = false } = props
   const { getText } = useText()
   const getOrdinal = useGetOrdinal()
   const time = projectExecution.time
@@ -56,13 +58,16 @@ export function ProjectExecution(props: ProjectExecutionProps) {
         : projectExecution.repeatInterval === 'hourly' ? 'everyHour'
         : 'everyDay',
       )
-  const minuteString = time.minute === 0 ? '' : `${String(time.minute).padStart(2, '0')}`
+  const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
   const timeString =
     time.hours?.[0] != null ?
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       getText(time.hours[0] > 11 ? 'xPm' : 'xAm', `${time.hours[0] % 12 || 12}${minuteString}`)
-    : getText('everyHourXMinute', minuteString || ':00')
-  const dateTimeString = getText('dateXTimeX', dateString, timeString)
+    : getText('everyHourXMinute', minuteString.replace(/^:/, '') || '00')
+  const dateTimeString =
+    hideDay && projectExecution.repeatInterval !== 'hourly' ?
+      timeString
+    : getText('dateXTimeX', dateString, timeString)
 
   const styles = PROJECT_EXECUTION_STYLES({
     isEnabled: projectExecution.enabled,
