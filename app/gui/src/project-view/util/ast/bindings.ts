@@ -33,7 +33,6 @@ export function analyzeBindings(
   const rawFunc = toRaw.get(sourceRangeKey(methodSpan))
   const getSpan = (id: Ast.AstId) => moduleSource.getSpan(id)
   const moduleCode = moduleSource.text
-  const bindings = new Map<Ast.AstId, BindingInfo>()
 
   // TODO[ao]: Rename 'alias' to 'binding' in AliasAnalyzer and it's more accurate term.
   const analyzer = new AliasAnalyzer(moduleCode, rawFunc)
@@ -41,7 +40,7 @@ export function analyzeBindings(
 
   const bindingRangeToTree = rangeMappings(func, analyzer, getSpan)
 
-  // Add or update bindings.
+  const bindings = new Map<Ast.AstId, BindingInfo>()
   for (const [bindingRange, usagesRanges] of analyzer.aliases) {
     const aliasAst = bindingRangeToTree.get(bindingRange)
     if (aliasAst == null) {
