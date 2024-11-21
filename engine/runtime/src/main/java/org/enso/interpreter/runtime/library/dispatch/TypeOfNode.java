@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
@@ -47,9 +48,10 @@ public abstract class TypeOfNode extends Node {
    * value is returned that can normally flow thru the Enso interpreter without any conversions.
    *
    * @param value the value to check
-   * @return either {@link Type} of the value or {@link DataflowError} if there is no such type
+   * @return either {@link Type} of the value, or meta object of the value, or {@link DataflowError}
+   *     if there is no such type
    */
-  public final Object findTypeOrError(Object value) {
+  public final TruffleObject findTypeOrError(Object value) {
     try {
       var types = executeTypes(value);
       return types[0];
@@ -186,8 +188,13 @@ public abstract class TypeOfNode extends Node {
     var typeOrPlain = delegate.execute(kind, value);
     if (typeOrPlain instanceof Type type) {
       return fromType(type);
+    } else if (typeOrPlain instanceof TruffleObject metaObject) {
+      throw new NonTypeResult(metaObject);
     } else {
-      throw new NonTypeResult(typeOrPlain);
+      CompilerDirectives.transferToInterpreter();
+      var ctx = EnsoContext.get(this);
+      throw ctx.raiseAssertionPanic(
+          this, "MetaObject should be a TruffleObject: " + typeOrPlain, null);
     }
   }
 
@@ -399,9 +406,9 @@ public abstract class TypeOfNode extends Node {
   }
 
   static final class NonTypeResult extends Exception {
-    final Object result;
+    final TruffleObject result;
 
-    NonTypeResult(Object result) {
+    NonTypeResult(TruffleObject result) {
       this.result = result;
     }
 
