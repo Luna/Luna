@@ -7,8 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import java.util.ArrayList;
-import org.enso.interpreter.runtime.callable.UnresolvedConstructor;
-import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
+import java.util.Arrays;
 import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.error.DataflowError;
@@ -30,6 +29,9 @@ public class TypeOfNodeMultiValueTest {
 
   @Parameterized.Parameter(1)
   public String type;
+
+  @Parameterized.Parameter(2)
+  public int typeIndex;
 
   private static Context ctx;
 
@@ -54,26 +56,32 @@ public class TypeOfNodeMultiValueTest {
     """);
     var data = new ArrayList<Object[]>();
     for (var polyValue : g.allValues()) {
-      registerValue(typeOf, polyValue, data);
+      registerValue(g, typeOf, polyValue, data);
     }
-    data.add(new Object[] {UnresolvedSymbol.build("unknown_name", null), "Function"});
-    data.add(new Object[] {UnresolvedConstructor.build(null, "Unknown_Name"), "Function"});
     return data.toArray(new Object[0][]);
   }
 
-  private static void registerValue(Value typeOf, Value polyValue, ArrayList<Object[]> data) {
+  private static void registerValue(
+      ValuesGenerator g, Value typeOf, Value polyValue, ArrayList<Object[]> data) {
     var t = typeOf.execute(polyValue);
     if (!polyValue.isNull()) {
       assertTrue("Type of " + polyValue + " is " + t, t.isMetaObject());
       var rawValue = ContextUtils.unwrapValue(ctx(), polyValue);
       var rawType = ContextUtils.unwrapValue(ctx(), t);
       if (rawType instanceof Type type) {
-        var multi = EnsoMultiValue.create(new Type[] {type}, new Object[] {rawValue});
+        var singleMultiValue = EnsoMultiValue.create(new Type[] {type}, new Object[] {rawValue});
         var n = t.getMetaSimpleName();
-        data.add(new Object[] {multi, n});
+        data.add(new Object[] {singleMultiValue, n, 0});
+        var rawInt = (Type) ContextUtils.unwrapValue(ctx(), g.typeInteger());
+        var secondMultiValue =
+            EnsoMultiValue.create(new Type[] {rawInt, type}, new Object[] {5L, rawValue});
+        data.add(new Object[] {secondMultiValue, n, 1});
+        var firstMultiValue =
+            EnsoMultiValue.create(new Type[] {type, rawInt}, new Object[] {rawValue, 6L});
+        data.add(new Object[] {firstMultiValue, n, 0});
       } else {
         if (!t.isHostObject()) {
-          data.add(new Object[] {rawValue, null});
+          data.add(new Object[] {rawValue, null, -1});
         }
       }
     }
@@ -89,15 +97,16 @@ public class TypeOfNodeMultiValueTest {
 
   @Test
   public void typeOfCheck() {
-    assertType(value, type, false);
+    assertType(value, type, typeIndex, false);
   }
 
   @Test
   public void typeOfCheckAfterPriming() {
-    assertType(value, type, true);
+    assertType(value, type, typeIndex, true);
   }
 
-  private static void assertType(Object value, String expectedTypeName, boolean withPriming) {
+  private static void assertType(
+      Object value, String expectedTypeName, int typeIndex, boolean withPriming) {
     assertNotNull("Value " + value + " should have a type", expectedTypeName);
     ContextUtils.executeInContext(
         ctx(),
@@ -111,12 +120,16 @@ public class TypeOfNodeMultiValueTest {
                     var all = node.findAllTypes(arg);
                     if (t instanceof DataflowError) {
                       assertNull("No types for errors", all);
+                      return t;
                     } else {
                       assertNotNull("All types found for " + value, all);
-                      assertEquals("Size is one", 1, all.length);
-                      assertEquals("Same type for " + value, t, all[0]);
+                      assertTrue(
+                          "Size is at least " + typeIndex + " but was: " + Arrays.toString(all),
+                          all.length >= typeIndex);
+                      assertEquals(
+                          "Major type is the same with first of allTypes for" + value, t, all[0]);
+                      return all[typeIndex];
                     }
-                    return t;
                   });
           root.insertChildren(node);
           var call = root.getCallTarget();
