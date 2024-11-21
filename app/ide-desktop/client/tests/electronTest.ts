@@ -9,8 +9,15 @@ import pathModule from 'node:path'
 const LOADING_TIMEOUT = 10000
 const TEXT = TEXTS.english
 
-const DEFAULT_APP_ARGS = ['--no-sandbox', '--disable-gpu', '--disable-software-rasterizer']
+const platform = os.platform()
+const isCI = process.env.CI === 'true'
+const isWindows = platform === 'win32'
 
+const DEFAULT_APP_ARGS = ['--no-sandbox']
+
+if (isWindows && isCI) {
+  DEFAULT_APP_ARGS.push('--disable-gpu', '--disable-software-rasterizer')
+}
 /**
  * Tests run on electron executable.
  *
