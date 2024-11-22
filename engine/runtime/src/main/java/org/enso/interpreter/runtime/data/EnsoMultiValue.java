@@ -35,7 +35,7 @@ import org.graalvm.collections.Pair;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-public final class EnsoMultiValue implements EnsoObject {
+public final class EnsoMultiValue extends EnsoObject {
 
   @CompilationFinal(dimensions = 1)
   private final Type[] types;
@@ -68,12 +68,15 @@ public final class EnsoMultiValue implements EnsoObject {
     return types[0];
   }
 
+  @ExportMessage
   public final Type[] allTypes() {
     return types.clone();
   }
 
   @ExportMessage
-  String toDisplayString(boolean ignore) {
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean ignore) {
     return toString();
   }
 
