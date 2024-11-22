@@ -1,15 +1,16 @@
 /** @file A LocalStorage data manager. */
+import invariant from 'tiny-invariant'
+
 import { PRODUCT_NAME } from 'enso-common'
+import { IS_DEV_MODE } from 'enso-common/src/detect'
 
 import { unsafeEntries } from '#/utilities/object'
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import invariant from 'tiny-invariant'
 
 const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
 
 /**
- * Whether the source location for `LocalStorage.register(key)` is different to the previous
- * known source location.
+ * Whether the source location for `LocalStorage.defineKey(key, metadata)`
+ * is different to the previous known source location.
  */
 function isSourceChanged(key: string) {
   const stack = (new Error().stack ?? '').replace(/[?]t=\d+:\d+:\d+/g, '')

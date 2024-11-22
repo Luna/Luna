@@ -4,9 +4,15 @@
  * selected tab, and other properties from outside the component.
  */
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import {
+  getAssetPanelTab,
+  getIsAssetPanelHidden,
+  setAssetPanelTab,
+  setIsAssetPanelHidden,
+  setIsAssetPanelVisible,
+} from '#/layouts/AssetPanel/assetPanelLocalStorage'
 import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
-import LocalStorage from '#/utilities/LocalStorage'
 import * as zustand from '#/utilities/zustand'
 import { startTransition } from 'react'
 import { z } from 'zod'
@@ -50,12 +56,11 @@ export interface AssetPanelState {
 }
 
 export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) => {
-  const localStorage = LocalStorage.getInstance()
   return {
-    selectedTab: localStorage.get('assetPanelTab') ?? 'settings',
+    selectedTab: getAssetPanelTab() ?? 'settings',
     setSelectedTab: (tab) => {
       set({ selectedTab: tab })
-      localStorage.set('assetPanelTab', tab)
+      setAssetPanelTab(tab)
     },
     isAssetPanelPermanentlyVisible: false,
     toggleIsAssetPanelPermanentlyVisible: () => {
@@ -67,7 +72,7 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
     setIsAssetPanelPermanentlyVisible: (isAssetPanelPermanentlyVisible) => {
       if (get().isAssetPanelPermanentlyVisible !== isAssetPanelPermanentlyVisible) {
         set({ isAssetPanelPermanentlyVisible })
-        localStorage.set('isAssetPanelVisible', isAssetPanelPermanentlyVisible)
+        setIsAssetPanelVisible(isAssetPanelPermanentlyVisible)
       }
     },
     isAssetPanelExpanded: false,
@@ -96,7 +101,7 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
       }
     },
     assetPanelProps: {
-      selectedTab: localStorage.get('assetPanelTab') ?? 'settings',
+      selectedTab: getAssetPanelTab() ?? 'settings',
       backend: null,
       item: null,
       spotlightOn: null,
@@ -108,13 +113,13 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
         set({ assetPanelProps: { ...current, ...assetPanelProps } })
       }
     },
-    isAssetPanelHidden: localStorage.get('isAssetPanelHidden') ?? false,
+    isAssetPanelHidden: getIsAssetPanelHidden() ?? false,
     setIsAssetPanelHidden: (isAssetPanelHidden) => {
       const state = get()
 
       if (state.isAssetPanelHidden !== isAssetPanelHidden) {
         set({ isAssetPanelHidden })
-        localStorage.set('isAssetPanelHidden', isAssetPanelHidden)
+        setIsAssetPanelHidden(isAssetPanelHidden)
       }
     },
   }

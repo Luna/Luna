@@ -1,27 +1,28 @@
 /**
  * @file
- * @description
  * The asset panel is a sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
+import { memo, startTransition } from 'react'
+
+import { AnimatePresence, motion } from 'framer-motion'
+
+import type { BackendType } from 'enso-common/src/services/Backend'
+
 import docsIcon from '#/assets/file_text.svg'
 import sessionsIcon from '#/assets/group.svg'
 import inspectIcon from '#/assets/inspect.svg'
 import versionsIcon from '#/assets/versions.svg'
-
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { AssetDocs } from '#/layouts/AssetDocs'
+import AssetProjectSessions from '#/layouts/AssetProjectSessions'
+import AssetProperties from '#/layouts/AssetProperties'
+import AssetVersions from '#/layouts/AssetVersions/AssetVersions'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useStore } from '#/utilities/zustand'
-import type { BackendType } from 'enso-common/src/services/Backend'
-import { AnimatePresence, motion } from 'framer-motion'
-import { memo, startTransition } from 'react'
-import { AssetDocs } from '../AssetDocs'
-import AssetProjectSessions from '../AssetProjectSessions'
-import AssetProperties from '../AssetProperties'
-import AssetVersions from '../AssetVersions/AssetVersions'
-import type { Category } from '../CategorySwitcher/Category'
 import {
   assetPanelStore,
   useIsAssetPanelExpanded,
@@ -35,16 +36,14 @@ const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
 
-/**
- * Props for an {@link AssetPanel}.
- */
+/** Props for an {@link AssetPanel}. */
 export interface AssetPanelProps {
   readonly backendType: BackendType
   readonly category: Category
 }
 
 /**
- * The asset panel is a sidebar that can be expanded or collapsed.
+ * A sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
 export function AssetPanel(props: AssetPanelProps) {
@@ -59,7 +58,7 @@ export function AssetPanel(props: AssetPanelProps) {
   const compensationWidth = isVisible ? panelWidth : 0
 
   return (
-    // We use hex color here to avoid muliplying bg colors due to opacity.
+    // We use a hex color here to avoid muliplying bg colors due to opacity.
     <div className="relative flex h-full flex-col">
       <div style={{ width: compensationWidth, height: 0 }} />
 
@@ -84,7 +83,7 @@ export function AssetPanel(props: AssetPanelProps) {
               event.stopPropagation()
             }}
           >
-            <InternalAssetPanelTabs panelWidth={panelWidth} {...props} />
+            <AssetPanelTabsInternal panelWidth={panelWidth} {...props} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -92,10 +91,8 @@ export function AssetPanel(props: AssetPanelProps) {
   )
 }
 
-/**
- * The internal implementation of the Asset Panel Tabs.
- */
-const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
+/** Tabs for an {@link AssetPanel}. */
+const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
   props: AssetPanelProps & { panelWidth: number },
 ) {
   const { category, panelWidth } = props
