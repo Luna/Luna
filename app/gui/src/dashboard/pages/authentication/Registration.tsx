@@ -1,9 +1,13 @@
 /** @file Registration container responsible for rendering and interactions in sign up flow. */
 import { useEffect, useState } from 'react'
+
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { useLocation } from 'react-router-dom'
 
-import * as z from 'zod'
-
+import {
+  useGetAcceptedPrivacyPolicyVersion,
+  useGetAcceptedTermsOfServiceVersion,
+} from '#/appLocalStorage'
 import { LOGIN_PATH } from '#/appUtils'
 import AtIcon from '#/assets/at.svg'
 import CreateAccountIcon from '#/assets/create_account.svg'
@@ -23,30 +27,8 @@ import { useAuth } from '#/providers/AuthProvider'
 import { useLocalBackend } from '#/providers/BackendProvider'
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import LocalStorage from '#/utilities/LocalStorage'
-import { useSuspenseQuery } from '@tanstack/react-query'
-
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly loginRedirect: string
-  }
-}
-
-LocalStorage.registerKey('loginRedirect', {
-  isUserSpecific: true,
-  schema: z.string(),
-})
 
 const CONFIRM_SIGN_IN_INTERVAL = 5_000
-
-// ====================
-// === Registration ===
-// ====================
 
 /** A form for users to register an account. */
 export default function Registration() {
@@ -101,7 +83,8 @@ export default function Registration() {
 
   const { stepperState } = useStepperState({ steps: 2, defaultStep: 0 })
 
-  const cachedTosHash = localStorage.get('termsOfService')?.versionHash
+  const getTosVersion = useGetAcceptedTermsOfServiceVersion()
+  const cachedTosHash = getTosVersion()?.versionHash
   const { data: tosHash } = useSuspenseQuery({
     ...latestTermsOfServiceQueryOptions,
     // If the user has already accepted the EULA, we don't need to
@@ -113,7 +96,8 @@ export default function Registration() {
     }),
     select: (data) => data.hash,
   })
-  const cachedPrivacyPolicyHash = localStorage.get('privacyPolicy')?.versionHash
+  const getPrivacyPolicyVersion = useGetAcceptedPrivacyPolicyVersion()
+  const cachedPrivacyPolicyHash = getPrivacyPolicyVersion()?.versionHash
   const { data: privacyPolicyHash } = useSuspenseQuery({
     ...latestPrivacyPolicyQueryOptions,
     ...(cachedPrivacyPolicyHash != null && {
