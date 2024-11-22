@@ -78,8 +78,7 @@ public class MethodDefinitions implements IRPass {
                     Option<Name> resolvedTypeRef =
                         methodRef
                             .typePointer()
-                            .map(tp -> resolveType(tp, availableSymbolsMap))
-                            .orElse(null);
+                            .map(tp -> resolveType(tp, availableSymbolsMap));
                     var resolvedMethodRef = methodRef.copyWithTypePointer(resolvedTypeRef);
 
                     return switch (method) {
