@@ -6,7 +6,6 @@ import {
   endOfMonth,
   getLocalTimeZone,
   parseDateTime,
-  parseDuration,
   startOfMonth,
   toCalendarDate,
   today,
@@ -150,7 +149,7 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
           getProjectExecutionRepetitionsForDateRange(
             projectExecution,
             selectedDate.toDate(timeZone),
-            selectedDate.add(parseDuration('P1D')).toDate(timeZone),
+            selectedDate.add({ days: 1 }).toDate(timeZone),
           ).flatMap((date) => ({ date, projectExecution })),
         )
         .sort((a, b) => Number(a.date) - Number(b.date)),

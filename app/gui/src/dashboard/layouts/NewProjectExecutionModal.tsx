@@ -120,7 +120,7 @@ function createUpsertExecutionSchema(getText: GetText) {
               ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
               ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
               ...(repeatInterval !== 'hourly' && { hours: [utcDate.hour] }),
-              minute: utcDate.minute,
+              minute: repeatInterval !== 'hourly' ? utcDate.minute : minute,
             },
           }
         }
@@ -244,29 +244,27 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
             </Selector>
             <Text>{getText(PARALLEL_MODE_TO_DESCRIPTION_ID[parallelMode])}</Text>
           </div>
-          {repeatInterval !== 'hourly' && (
-            <div className="flex flex-col">
-              <DatePicker
-                form={form}
-                isRequired
-                name="date"
-                label={getText('firstOccurrenceLabel')}
-                noCalendarHeader
-                minValue={minFirstOccurrence}
-                maxValue={maxFirstOccurrence}
-              />
-              <Text>
-                {getText(
-                  'repeatsAtX',
-                  repeatTimes
-                    .map((time) =>
-                      toCalendarDate(time).toDate(getLocalTimeZone()).toLocaleDateString(),
-                    )
-                    .join(', '),
-                )}
-              </Text>
-            </div>
-          )}
+          <div className="flex flex-col">
+            <DatePicker
+              form={form}
+              isRequired
+              name="date"
+              label={getText('firstOccurrenceLabel')}
+              noCalendarHeader
+              minValue={minFirstOccurrence}
+              maxValue={maxFirstOccurrence}
+            />
+            <Text>
+              {getText(
+                'repeatsAtX',
+                repeatTimes
+                  .map((time) =>
+                    toCalendarDate(time).toDate(getLocalTimeZone()).toLocaleDateString(),
+                  )
+                  .join(', '),
+              )}
+            </Text>
+          </div>
           <Input
             form={form}
             name="maxDurationMinutes"
