@@ -223,11 +223,19 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         <DatePicker
           form={form}
           isRequired
-          name="date"
-          label={getText('firstOccurrenceLabel')}
           noCalendarHeader
+          name="date"
+          granularity="minute"
+          label={getText('firstOccurrenceLabel')}
           minValue={minFirstOccurrence}
           maxValue={maxFirstOccurrence}
+        />
+        <DatePicker
+          form={form}
+          noCalendarHeader
+          name="endDate"
+          granularity="minute"
+          label={getText('endAtLabel')}
         />
         <Text>
           {getText(

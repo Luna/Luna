@@ -78,7 +78,8 @@ const DATE_PICKER_STYLES = tv({
 export interface DatePickerProps<
   Schema extends TSchema,
   TFieldName extends FieldPath<Schema, DateValue>,
-> extends FieldStateProps<
+> extends Pick<AriaDatePickerProps<DateValue>, 'granularity'>,
+    FieldStateProps<
       Omit<
         AriaDatePickerProps<Extract<FieldValues<Schema>[TFieldName], DateValue>>,
         'children' | 'className' | 'style'
@@ -105,7 +106,8 @@ export const DatePicker = forwardRef(function DatePicker<
   TFieldName extends FieldPath<Schema, DateValue>,
 >(props: DatePickerProps<Schema, TFieldName>, ref: ForwardedRef<HTMLFieldSetElement>) {
   const {
-    noResetButton = false,
+    isRequired = false,
+    noResetButton = isRequired,
     noCalendarHeader = false,
     segments = {},
     name,
@@ -113,10 +115,10 @@ export const DatePicker = forwardRef(function DatePicker<
     form,
     defaultValue,
     label,
-    isRequired,
     className,
     size,
     variants = DATE_PICKER_STYLES,
+    granularity,
   } = props
 
   const { fieldState, formInstance } = useDateValueField({
@@ -148,7 +150,11 @@ export const DatePicker = forwardRef(function DatePicker<
         name={name}
         render={(renderProps) => {
           return (
-            <AriaDatePicker className={styles.base({ className })} {...renderProps.field}>
+            <AriaDatePicker
+              className={styles.base({ className })}
+              {...(granularity != null ? { granularity } : {})}
+              {...renderProps.field}
+            >
               <Label />
               <Group className={styles.inputGroup()}>
                 <Button variant="icon" icon={ArrowIcon} className="rotate-90" />

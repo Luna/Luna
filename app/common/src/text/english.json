@@ -646,6 +646,7 @@
   "newProjectExecution": "New Schedule",
   "repeatIntervalLabel": "Repeat",
   "firstOccurrenceLabel": "First occurrence",
+  "endAtLabel": "End at",
   "parallelModeLabel": "Parallel mode",
   "datesLabel": "Dates",
   "daysLabel": "Days",
