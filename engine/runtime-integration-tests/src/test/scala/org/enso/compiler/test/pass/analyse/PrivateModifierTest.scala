@@ -31,9 +31,10 @@ class PrivateModifierTest extends CompilerTest {
   implicit class AnalyseModule(ir: Module) {
 
     def analyse: Module = {
-      val miniPass = PrivateConstructorAnalysis.INSTANCE.createForModuleCompilation(
-        buildModuleContext(passConfiguration = Some(passConfig))
-      )
+      val miniPass =
+        PrivateConstructorAnalysis.INSTANCE.createForModuleCompilation(
+          buildModuleContext(passConfiguration = Some(passConfig))
+        )
       miniPass.transformModule(ir)
     }
   }
