@@ -355,7 +355,7 @@ function toField(
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs.map((obj: Record<string, number[]>) => {
         const key = Object.keys(obj)[0] as string
-        return { [key]: obj[key]?.[index!] ?? 0 };
+        return { [key]: obj[key]?.[index!] ?? 0 }
       })
       // eslint-disable-next-line camelcase
     : [{ number_of_nothing: 0 }, { number_of_whitespace: 0 }]
