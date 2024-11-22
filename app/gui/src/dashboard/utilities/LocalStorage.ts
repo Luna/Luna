@@ -106,7 +106,7 @@ export class LocalStorage {
   }
 
   /** Add an event listener to all keys. */
-  subscribeAll(callback: (value: Partial<LocalStorageData>) => void) {
+  subscribeAll(callback: (value: Record<string, unknown>) => void) {
     const onChange = () => {
       callback(this.values)
     }

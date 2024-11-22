@@ -4,12 +4,13 @@ import { useEffect, type ReactNode } from 'react'
 import { createStore, useStore } from 'zustand'
 
 import { useMount } from '#/hooks/mountHooks'
+import { unsafeEntries } from '#/utilities/object'
 import {
   useGetFeatureFlags,
   useSetLocalStorageFeatureFlags,
-} from '#/providers/FeatureFlagsProvider/featureFlagsLocalStorage'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
-import { unsafeEntries } from '#/utilities/object'
+} from './FeatureFlagsProvider/featureFlagsLocalStorage'
+import { useLocalStorage } from './LocalStorageProvider'
+export { FEATURE_FLAGS_SCHEMA } from './FeatureFlagsProvider/featureFlagsLocalStorage'
 
 /** Feature flags store. */
 export interface FeatureFlags {

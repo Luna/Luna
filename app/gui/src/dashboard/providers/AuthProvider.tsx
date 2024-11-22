@@ -37,6 +37,10 @@ import * as errorModule from '#/utilities/error'
 
 import * as cognitoModule from '#/authentication/cognito'
 import type * as authServiceModule from '#/authentication/service'
+import {
+  useDeleteLoginRedirect,
+  useGetLoginRedirect,
+} from '#/pages/authentication/Registration/registrationLocalStorage'
 import { unsafeWriteValue } from '#/utilities/write'
 
 // ===================
@@ -621,14 +625,15 @@ export function SemiProtectedLayout() {
  */
 export function GuestLayout() {
   const { session } = useAuth()
-  const { localStorage } = localStorageProvider.useLocalStorage()
+  const getLoginRedirect = useGetLoginRedirect()
+  const deleteLoginRedirect = useDeleteLoginRedirect()
 
   if (session?.type === UserSessionType.partial) {
     return <router.Navigate to={appUtils.SETUP_PATH} />
   } else if (session?.type === UserSessionType.full) {
-    const redirectTo = localStorage.get('loginRedirect')
+    const redirectTo = getLoginRedirect()
     if (redirectTo != null) {
-      localStorage.delete('loginRedirect')
+      deleteLoginRedirect()
       location.href = redirectTo
       return
     } else {

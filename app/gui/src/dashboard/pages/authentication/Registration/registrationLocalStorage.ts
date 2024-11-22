@@ -4,6 +4,7 @@ import { defineLocalStorageKey } from '#/providers/LocalStorageProvider'
 export const {
   useGet: useGetLoginRedirect,
   useSet: useSetLoginRedirect,
+  useDelete: useDeleteLoginRedirect,
   useState: useLoginRedirectState,
 } = defineLocalStorageKey('loginRedirect', {
   isUserSpecific: true,

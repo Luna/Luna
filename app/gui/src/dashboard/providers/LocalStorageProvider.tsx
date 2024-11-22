@@ -74,6 +74,10 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
     localStorage.set(key, value)
   }
 
+  const deleteKey = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
+    localStorage.delete(key)
+  }
+
   const useGet = () => {
     const { localStorage } = useLocalStorage()
 
@@ -90,9 +94,15 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
 
   const useSet = () => {
     const { localStorage } = useLocalStorage()
-
     return useEventCallback((value: Value) => {
       set(value, localStorage)
+    })
+  }
+
+  const useDelete = () => {
+    const { localStorage } = useLocalStorage()
+    return useEventCallback(() => {
+      deleteKey(localStorage)
     })
   }
 
@@ -131,5 +141,5 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
 
     return [value, setValue]
   }
-  return { get, set, useGet, useSet, useState: useLocalStorageState }
+  return { get, set, delete: deleteKey, useGet, useSet, useDelete, useState: useLocalStorageState }
 }

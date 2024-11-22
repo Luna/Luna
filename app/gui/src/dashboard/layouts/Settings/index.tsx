@@ -3,6 +3,7 @@ import * as React from 'react'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { useLocalRootDirectoryState } from '#/appLocalStorage'
 import BurgerMenuIcon from '#/assets/burger_menu.svg'
 import { Heading, MenuTrigger } from '#/components/aria'
 import { Button, Popover, Text } from '#/components/AriaComponents'
@@ -14,7 +15,6 @@ import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import SearchBar from '#/layouts/SearchBar'
 import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { Path } from '#/services/ProjectManager'
@@ -67,7 +67,7 @@ export default function Settings() {
     backendMutationOptions(backend, 'updateOrganization'),
   ).mutateAsync
 
-  const [localRootDirectory, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [, setLocalRootDirectory] = useLocalRootDirectoryState()
   const updateLocalRootPath = useEventCallback((value: string) => {
     setLocalRootDirectory(value)
     if (localBackend) {
