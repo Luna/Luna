@@ -4,7 +4,7 @@ import invariant from 'tiny-invariant'
 import { PRODUCT_NAME } from 'enso-common'
 import { IS_DEV_MODE } from 'enso-common/src/detect'
 
-import { unsafeEntries } from '#/utilities/object'
+import { unsafeEntries, unsafeKeys } from '#/utilities/object'
 
 const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
 
@@ -54,6 +54,11 @@ export class LocalStorage {
       )
     }
     LocalStorage.keyMetadata[key] = metadata
+  }
+
+  /** Get all registered keys. */
+  static getAllKeys() {
+    return unsafeKeys(LocalStorage.keyMetadata)
   }
 
   /** Retrieve an entry from the stored data. */
@@ -120,51 +125,5 @@ export class LocalStorage {
   /** Save the current value of the stored data.. */
   protected save() {
     localStorage.setItem(this.localStorageKey, JSON.stringify(this.values))
-  }
-
-  /**
-   * Whether the key has been registered.
-   * @throws {Error} If the key has not been registered yet.
-   */
-  private assertRegisteredKey(key: LocalStorageKey): asserts key is LocalStorageKey {
-    if (key in LocalStorage.keyMetadata) {
-      return
-    }
-
-    throw new Error(
-      `Local storage key '${key}' has not been registered yet. Please register it first.`,
-    )
-  }
-
-  /** Read a value from the stored data. */
-  private readValueFromLocalStorage<
-    Key extends LocalStorageKey,
-    Value extends LocalStorageData[Key],
-  >(key: Key): Value | null {
-    this.assertRegisteredKey(key)
-
-    const storedValues = localStorage.getItem(this.localStorageKey)
-    const savedValues: unknown = JSON.parse(storedValues ?? '{}')
-
-    if (typeof savedValues === 'object' && savedValues != null && key in savedValues) {
-      // @ts-expect-error This is SAFE, as it is guarded by the `key in savedValues` check.
-      const savedValue: unknown = savedValues[key]
-      const parsedValue = LocalStorage.keyMetadata[key].schema.safeParse(savedValue)
-
-      if (parsedValue.success) {
-        // This is safe because the schema is validated before this code is reached.
-        // eslint-disable-next-line no-restricted-syntax
-        return parsedValue.data as Value
-      }
-
-      // eslint-disable-next-line no-restricted-properties
-      console.warn('LocalStorage failed to parse value', {
-        key,
-        savedValue,
-        error: parsedValue.error,
-      })
-    }
-
-    return null
   }
 }

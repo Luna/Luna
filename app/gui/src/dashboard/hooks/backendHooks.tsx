@@ -22,6 +22,7 @@ import {
   type BackendMethods,
 } from 'enso-common/src/backendQuery'
 
+import { useLocalRootDirectoryState } from '#/appLocalStorage'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
 import { useToastAndLog, useToastAndLogWithId } from '#/hooks/toastAndLogHooks'
@@ -33,7 +34,6 @@ import {
   useSetSelectedKeys,
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -559,7 +559,7 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
     queryKey: [backend.type, 'getOrganization'],
     queryFn: () => backend.getOrganization(),
   })
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [localRootDirectory] = useLocalRootDirectoryState()
 
   return useMemo(() => {
     const localRootPath = localRootDirectory != null ? backendModule.Path(localRootDirectory) : null
