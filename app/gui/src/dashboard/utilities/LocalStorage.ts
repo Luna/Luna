@@ -2,6 +2,21 @@
 import { PRODUCT_NAME } from 'enso-common'
 
 import { unsafeEntries } from '#/utilities/object'
+import { IS_DEV_MODE } from 'enso-common/src/detect'
+import invariant from 'tiny-invariant'
+
+const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
+
+/**
+ * Whether the source location for `LocalStorage.register(key)` is different to the previous
+ * known source location.
+ */
+function isSourceChanged(key: string) {
+  const stack = (new Error().stack ?? '').replace(/[?]t=\d+:\d+:\d+/g, '')
+  const isChanged = stack !== KEY_DEFINITION_STACK_TRACES.get(key)
+  KEY_DEFINITION_STACK_TRACES.set(key, stack)
+  return isChanged
+}
 
 /** Metadata describing runtime behavior associated with a local storage key. */
 export interface LocalStorageKeyMetadata {
@@ -27,6 +42,17 @@ export class LocalStorage {
       LocalStorage.instance = new LocalStorage()
     }
     return LocalStorage.instance
+  }
+
+  /** Register metadata associated with a key. */
+  static defineKey(key: string, metadata: LocalStorageKeyMetadata) {
+    if (IS_DEV_MODE ? isSourceChanged(key) : true) {
+      invariant(
+        !(key in LocalStorage.keyMetadata),
+        `Local storage key '${key}' has already been registered.`,
+      )
+    }
+    LocalStorage.keyMetadata[key] = metadata
   }
 
   /** Retrieve an entry from the stored data. */

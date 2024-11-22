@@ -1,8 +1,4 @@
-/**
- * @file
- *
- * A component that provides a UI for toggling paywall features.
- */
+/** @file A component that provides a UI for toggling internal shared state. */
 import * as React from 'react'
 
 import * as reactQuery from '@tanstack/react-query'
@@ -46,7 +42,8 @@ import {
 } from '#/providers/FeatureFlagsProvider'
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import * as backend from '#/services/Backend'
-import LocalStorage, { type LocalStorageData } from '#/utilities/LocalStorage'
+import { LocalStorage } from '#/utilities/LocalStorage'
+import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 
 /** A component that provides a UI for toggling paywall features. */
 export function EnsoDevtools() {
@@ -61,7 +58,7 @@ export function EnsoDevtools() {
   const enableVersionChecker = useEnableVersionChecker()
   const setEnableVersionChecker = useSetEnableVersionChecker()
   const { localStorage } = useLocalStorage()
-  const [localStorageState, setLocalStorageState] = React.useState<Partial<LocalStorageData>>({})
+  const [localStorageState, setLocalStorageState] = React.useState<Record<string, unknown>>({})
 
   // Re-render when localStorage changes.
   React.useEffect(() => localStorage.subscribeAll(setLocalStorageState), [localStorage])

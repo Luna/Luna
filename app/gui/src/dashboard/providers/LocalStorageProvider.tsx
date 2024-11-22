@@ -15,7 +15,7 @@ import {
 import { z } from 'zod'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { LocalStorage } from '#/utilities/LocalStorage'
+import { LocalStorage, type LocalStorageKeyMetadata } from '#/utilities/LocalStorage'
 import { isFunction, type NonFunction } from '#/utilities/type'
 
 // ===========================
@@ -55,7 +55,8 @@ export function useLocalStorage() {
 }
 
 /** Options for {@link defineLocalStorageKey}. */
-export interface DefineLocalStorageKeyOptions<Schema extends z.ZodSchema> {
+export interface DefineLocalStorageKeyOptions<Schema extends z.ZodSchema>
+  extends LocalStorageKeyMetadata {
   readonly schema: (zod: typeof z) => Schema
 }
 
@@ -67,7 +68,9 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
   /** The type of the value corresponding to this {@link LocalStorage} key. */
   type Value = NonFunction & z.infer<Schema>
 
-  const schema = options.schema(z)
+  const { schema: makeSchema, ...metadata } = options
+  const schema = makeSchema(z)
+  LocalStorage.defineKey(key, metadata)
 
   if ('error' in schema.safeParse(LocalStorage.getInstance().get(key))) {
     LocalStorage.getInstance().delete(key)
