@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.RootCallTarget;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.enso.interpreter.runtime.data.EnsoMultiValue;
@@ -24,6 +24,9 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class TypeOfNodeMultiValueTest {
+
+  private static RootCallTarget testTypesCall;
+
   @Parameterized.Parameter(0)
   public Object value;
 
@@ -38,7 +41,24 @@ public class TypeOfNodeMultiValueTest {
   private static Context ctx() {
     if (ctx == null) {
       ctx = ContextUtils.defaultContextBuilder().build();
+      ContextUtils.executeInContext(
+          ctx,
+          () -> {
+            var node = TypeOfNode.create();
+            var root =
+                new TestRootNode(
+                    (frame) -> {
+                      var arg = frame.getArguments()[0];
+                      var t = node.findTypeOrError(arg);
+                      var all = node.findAllTypesOrNull(arg);
+                      return new Object[] {t, all};
+                    });
+            root.insertChildren(node);
+            testTypesCall = root.getCallTarget();
+            return null;
+          });
     }
+    assertNotNull("Test types call initialized", testTypesCall);
     return ctx;
   }
 
@@ -97,50 +117,31 @@ public class TypeOfNodeMultiValueTest {
 
   @Test
   public void typeOfCheck() {
-    assertType(value, type, typeIndex, false);
+    assertType(value, type, typeIndex);
   }
 
-  @Test
-  public void typeOfCheckAfterPriming() {
-    assertType(value, type, typeIndex, true);
-  }
-
-  private static void assertType(
-      Object value, String expectedTypeName, int typeIndex, boolean withPriming) {
+  private static void assertType(Object value, String expectedTypeName, int typeIndex) {
     assertNotNull("Value " + value + " should have a type", expectedTypeName);
     ContextUtils.executeInContext(
         ctx(),
         () -> {
-          var node = TypeOfNode.create();
-          var root =
-              new TestRootNode(
-                  (frame) -> {
-                    var arg = frame.getArguments()[0];
-                    var t = node.findTypeOrError(arg);
-                    var all = node.findAllTypesOrNull(arg);
-                    if (t instanceof DataflowError) {
-                      assertNull("No types for errors", all);
-                      return t;
-                    } else {
-                      assertNotNull("All types found for " + value, all);
-                      assertTrue(
-                          "Size is at least " + typeIndex + " but was: " + Arrays.toString(all),
-                          all.length >= typeIndex);
-                      assertEquals(
-                          "Major type is the same with first of allTypes for" + value, t, all[0]);
-                      return all[typeIndex];
-                    }
-                  });
-          root.insertChildren(node);
-          var call = root.getCallTarget();
+          var pairResult = (Object[]) testTypesCall.call(value);
+          var t = pairResult[0];
+          var all = (Object[]) pairResult[1];
 
-          if (withPriming) {
-            class ForeignObject implements TruffleObject {}
-            var foreignType = call.call(new ForeignObject());
+          Object symbolType;
+          if (t instanceof DataflowError) {
+            assertNull("No types for errors", all);
+            symbolType = t;
+          } else {
+            assertNotNull("All types found for " + value, all);
             assertTrue(
-                "Empty foreign is unknown: " + foreignType, foreignType instanceof DataflowError);
+                "Size is at least " + typeIndex + " but was: " + Arrays.toString(all),
+                all.length >= typeIndex);
+            assertEquals("Major type is the same with first of allTypes for" + value, t, all[0]);
+            symbolType = all[typeIndex];
           }
-          var symbolType = call.call(value);
+
           var symbolTypeValue = ctx.asValue(symbolType);
           assertTrue("It is meta object: " + symbolTypeValue, symbolTypeValue.isMetaObject());
           assertEquals(expectedTypeName, symbolTypeValue.getMetaSimpleName());
