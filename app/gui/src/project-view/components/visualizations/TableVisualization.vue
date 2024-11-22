@@ -361,8 +361,7 @@ function toField(
       : [{ number_of_nothing: 0 }, {number_of_whitespace: 0 }]
 
 
-  console.log({dataQualityMetrics})
-  const showDataQuality = true;
+  const showDataQuality = dataQualityMetrics.filter(obj => Object.values(obj)[0] as number > 0).length > 0;
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
