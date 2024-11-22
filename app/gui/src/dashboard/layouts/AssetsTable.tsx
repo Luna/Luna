@@ -61,7 +61,7 @@ import {
   assetPanelStore,
   useResetAssetPanelProps,
   useSetAssetPanelProps,
-  useSetIsAssetPanelTemporarilyVisible,
+  useSetIsAssetPanelTemporarilyOpen,
 } from '#/layouts/AssetPanel'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import { useSetSuggestions } from '#/layouts/AssetSearchBar'
@@ -316,7 +316,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const didLoadingProjectManagerFail = useDidLoadingProjectManagerFail()
   const reconnectToProjectManager = useReconnectToProjectManager()
   const [enabledColumns, setEnabledColumns] = useEnabledColumnsState(DEFAULT_ENABLED_COLUMNS)
-  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
+  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyOpen()
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
 

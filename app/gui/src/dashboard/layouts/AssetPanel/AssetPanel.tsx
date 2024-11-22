@@ -23,11 +23,7 @@ import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useStore } from '#/utilities/zustand'
-import {
-  assetPanelStore,
-  useIsAssetPanelExpanded,
-  useSetIsAssetPanelExpanded,
-} from './AssetPanelState'
+import { assetPanelStore, useIsAssetPanelOpen, useSetIsAssetPanelOpen } from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
 import { type AssetPanelTab } from './types'
@@ -50,9 +46,8 @@ export function AssetPanel(props: AssetPanelProps) {
   const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
     unsafeEnableTransition: true,
   })
-  const isExpanded = useIsAssetPanelExpanded()
-
-  const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
+  const isOpen = useIsAssetPanelOpen()
+  const panelWidth = isOpen ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
   const isVisible = !isHidden
 
   const compensationWidth = isVisible ? panelWidth : 0
@@ -115,11 +110,11 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
 
   const { getText } = useText()
 
-  const isExpanded = useIsAssetPanelExpanded()
-  const setIsExpanded = useSetIsAssetPanelExpanded()
+  const isOpen = useIsAssetPanelOpen()
+  const setIsOpen = useSetIsAssetPanelOpen()
 
   const expandTab = useEventCallback(() => {
-    setIsExpanded(true)
+    setIsOpen(true)
   })
 
   const backend = useBackend(category)
@@ -139,19 +134,19 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
         }
 
         startTransition(() => {
-          if (key === selectedTab && isExpanded) {
-            setIsExpanded(false)
+          if (key === selectedTab && isOpen) {
+            setIsOpen(false)
           } else {
             // This is safe because we know the key is a valid AssetPanelTab.
             // eslint-disable-next-line no-restricted-syntax
             setSelectedTab(key as AssetPanelTab)
-            setIsExpanded(true)
+            setIsOpen(true)
           }
         })
       }}
     >
-      <AnimatePresence initial={!isExpanded} mode="sync">
-        {isExpanded && (
+      <AnimatePresence initial={!isOpen} mode="sync">
+        {isOpen && (
           <motion.div
             custom={ASSET_PANEL_WIDTH}
             initial="initial"
@@ -209,14 +204,14 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
             id="settings"
             icon={inspectIcon}
             label={getText('properties')}
-            isExpanded={isExpanded}
+            isExpanded={isOpen}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
             icon={versionsIcon}
             label={getText('versions')}
-            isExpanded={isExpanded}
+            isExpanded={isOpen}
             isDisabled={isHidden}
             onPress={expandTab}
           />
@@ -224,14 +219,14 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
             id="sessions"
             icon={sessionsIcon}
             label={getText('projectSessions')}
-            isExpanded={isExpanded}
+            isExpanded={isOpen}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="docs"
             icon={docsIcon}
             label={getText('docs')}
-            isExpanded={isExpanded}
+            isExpanded={isOpen}
             onPress={expandTab}
           />
         </AssetPanelTabs.TabList>

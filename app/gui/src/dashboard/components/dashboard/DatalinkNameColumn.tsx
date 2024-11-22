@@ -6,7 +6,7 @@ import EditableSpan from '#/components/EditableSpan'
 
 import type * as backendModule from '#/services/Backend'
 
-import { useSetIsAssetPanelTemporarilyVisible } from '#/layouts/AssetPanel'
+import { useSetIsAssetPanelTemporarilyOpen } from '#/layouts/AssetPanel'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
@@ -28,7 +28,7 @@ export interface DatalinkNameColumnProps extends column.AssetColumnProps {
  */
 export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
   const { item, selected, rowState, setRowState, isEditable, depth } = props
-  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
+  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyOpen()
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {

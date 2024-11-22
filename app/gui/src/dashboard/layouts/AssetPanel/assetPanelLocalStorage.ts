@@ -17,7 +17,7 @@ export const { get: getIsAssetPanelHidden, set: setIsAssetPanelHidden } = define
   { schema: (z) => z.boolean() },
 )
 
-export const { get: getIsAssetPanelVisible, set: setIsAssetPanelVisible } = defineLocalStorageKey(
-  'isAssetPanelVisible',
+export const { get: getIsAssetPanelOpen, set: setIsAssetPanelOpen } = defineLocalStorageKey(
+  'isAssetPanelOpen',
   { schema: (z) => z.boolean() },
 )
