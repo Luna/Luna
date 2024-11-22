@@ -41,7 +41,7 @@ case object BindingAnalysis extends IRPass {
 
   /** The passes that are invalidated by running this pass. */
   override lazy val invalidatedPasses: Seq[IRPass] =
-    Seq(MethodDefinitions, Patterns)
+    Seq(MethodDefinitions.INSTANCE, Patterns)
 
   /** Executes the pass on the provided `ir`, and returns a possibly transformed
     * or annotated version of `ir`.

@@ -40,7 +40,7 @@ class Passes(config: CompilerConfig) {
 
   val globalTypingPasses = new PassGroup(
     List(
-      MethodDefinitions,
+      MethodDefinitions.INSTANCE,
       SectionsToBinOp.INSTANCE,
       OperatorToFunction,
       LambdaShorthandToLambda,

@@ -1,6 +1,7 @@
 package org.enso.compiler;
 
 import org.enso.compiler.core.IR;
+import org.enso.compiler.core.ir.MetadataStorage.MetadataPair;
 import org.enso.compiler.core.ir.ProcessingPass;
 import org.enso.compiler.pass.IRPass;
 import scala.Option;
@@ -37,6 +38,12 @@ public final class MetadataInteropHelpers {
     }
 
     return metadataOrNull;
+  }
+
+  public static <T extends ProcessingPass> void updateMetadata(
+      IR ir, T pass, ProcessingPass.Metadata metadata) {
+    var metaPair = new MetadataPair<>(pass, metadata);
+    ir.passData().update(metaPair);
   }
 
   private MetadataInteropHelpers() {}
