@@ -75,6 +75,16 @@ trait CompilerRunner {
     }
   }
 
+  /** Wrapper for the implicit method. Callable from Java.
+    */
+  protected def runPassesOnModule(
+    ir: Module,
+    passManager: PassManager,
+    moduleContext: ModuleContext
+  ): Module = {
+    ir.runPasses(passManager, moduleContext)
+  }
+
   /** Provides an extensions to work with diagnostic information attached to IR.
     *
     * @param ir the IR node
