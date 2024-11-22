@@ -236,6 +236,8 @@ public class LRUCache<M> {
   private void makeRoomFor(long newFileSize) {
     removeStaleEntries();
 
+    var beforeLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
+
     // Size of files on disk.
     long currentCacheSize = getTotalCacheSize();
     // Upper limit to cache size.
@@ -257,9 +259,10 @@ public class LRUCache<M> {
       toRemove.add(mapEntry);
       totalSize -= mapEntry.getValue().size();
     }
-    assert totalSize <= maxTotalCacheSize
-        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")";
     removeCacheEntries(toRemove);
+    var afterLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
+    assert totalSize <= maxTotalCacheSize
+        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")"+beforeLens+afterLens;
   }
 
   private SortedSet<Map.Entry<String, CacheEntry<M>>> getSortedEntries() {
