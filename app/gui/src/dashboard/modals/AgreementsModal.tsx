@@ -1,21 +1,17 @@
-/** @file Modal for accepting the terms of service. */
+/** @file Modal for accepting the terms of service and privacy policy. */
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query'
 import { Outlet } from 'react-router'
 import * as z from 'zod'
 
+import {
+  useAcceptedPrivacyPolicyVersionState,
+  useAcceptedTermsOfServiceVersionState,
+} from '#/appLocalStorage'
 import { Button, Checkbox, Dialog, Form, Text } from '#/components/AriaComponents'
 import { useAuth } from '#/providers/AuthProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import LocalStorage from '#/utilities/LocalStorage'
-
-// =================
-// === Constants ===
-// =================
 
 const TEN_MINUTES_MS = 600_000
-const TOS_SCHEMA = z.object({ versionHash: z.string() })
-const PRIVACY_POLICY_SCHEMA = z.object({ versionHash: z.string() })
 const TOS_ENDPOINT_SCHEMA = z.object({ hash: z.string() })
 const PRIVACY_POLICY_ENDPOINT_SCHEMA = z.object({ hash: z.string() })
 
@@ -49,33 +45,14 @@ export const latestPrivacyPolicyQueryOptions = queryOptions({
   refetchInterval: TEN_MINUTES_MS,
 })
 
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** Metadata containing the version hash of the terms of service that the user has accepted. */
-  interface LocalStorageData {
-    readonly termsOfService: z.infer<typeof TOS_SCHEMA>
-    readonly privacyPolicy: z.infer<typeof PRIVACY_POLICY_SCHEMA>
-  }
-}
-
-LocalStorage.registerKey('termsOfService', { schema: TOS_SCHEMA })
-LocalStorage.registerKey('privacyPolicy', { schema: PRIVACY_POLICY_SCHEMA })
-
-// =======================
-// === AgreementsModal ===
-// =======================
-
 /** Modal for accepting the terms of service. */
 export function AgreementsModal() {
   const { getText } = useText()
   const { session } = useAuth()
 
-  const [cachedTosHash, setCachedTosHash] = useLocalStorageState('termsOfService')
+  const [cachedTosHash, setCachedTosHash] = useAcceptedTermsOfServiceVersionState()
   const [cachedPrivacyPolicyHash, setCachedPrivacyPolicyHash] =
-    useLocalStorageState('privacyPolicy')
+    useAcceptedPrivacyPolicyVersionState()
 
   const { data: tosHash } = useSuspenseQuery({
     ...latestTermsOfServiceQueryOptions,

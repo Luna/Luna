@@ -40,7 +40,6 @@ import * as React from 'react'
 import * as reactQuery from '@tanstack/react-query'
 import * as router from 'react-router-dom'
 import * as toastify from 'react-toastify'
-import * as z from 'zod'
 
 import * as detect from 'enso-common/src/detect'
 
@@ -93,17 +92,18 @@ import RemoteBackend from '#/services/RemoteBackend'
 import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
-import LocalStorage from '#/utilities/LocalStorage'
 import * as object from '#/utilities/object'
 import { Path } from '#/utilities/path'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
+import {
+  useAcceptedPrivacyPolicyVersionState,
+  useAcceptedTermsOfServiceVersionState,
+  useGetInputBindings,
+  useLocalRootDirectoryState,
+} from '#/appLocalStorage'
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
-
-// ============================
-// === Global configuration ===
-// ============================
 
 const DEFAULT_TRANSITION_OPTIONS: Spring = {
   type: 'spring',
@@ -115,43 +115,12 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
   velocity: 0,
 }
 
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly inputBindings: Readonly<Record<string, readonly string[]>>
-    readonly localRootDirectory: string
-  }
-}
-
-LocalStorage.registerKey('inputBindings', {
-  schema: z.record(z.string().array().readonly()).transform((value) =>
-    Object.fromEntries(
-      Object.entries<unknown>({ ...value }).flatMap((kv) => {
-        const [k, v] = kv
-        return Array.isArray(v) && v.every((item): item is string => typeof item === 'string') ?
-            [[k, v]]
-          : []
-      }),
-    ),
-  ),
-})
-
-LocalStorage.registerKey('localRootDirectory', { schema: z.string() })
-
-// ======================
-// === getMainPageUrl ===
-// ======================
-
 /** Returns the URL to the main page. This is the current URL, with the current route removed. */
 function getMainPageUrl() {
   const mainPageUrl = new URL(window.location.href)
   mainPageUrl.pathname = mainPageUrl.pathname.replace(appUtils.ALL_PATHS_REGEX, '')
   return mainPageUrl
 }
-
-// ===========
-// === App ===
-// ===========
 
 /** Global configuration for the `App` component. */
 export interface AppProps {
@@ -277,10 +246,6 @@ export default function App(props: AppProps) {
   )
 }
 
-// =================
-// === AppRouter ===
-// =================
-
 /** Props for an {@link AppRouter}. */
 export interface AppRouterProps extends AppProps {
   readonly projectManagerRootDirectory: projectManager.Path | null
@@ -324,8 +289,10 @@ function AppRouter(props: AppRouterProps) {
 
   const [inputBindingsRaw] = React.useState(() => inputBindingsModule.createBindings())
 
+  const getInputBindings = useGetInputBindings()
+
   React.useEffect(() => {
-    const savedInputBindings = localStorage.get('inputBindings')
+    const savedInputBindings = getInputBindings()
     if (savedInputBindings != null) {
       const filteredInputBindings = object.mapEntries(
         inputBindingsRaw.metadata,
@@ -340,7 +307,7 @@ function AppRouter(props: AppRouterProps) {
         }
       }
     }
-  }, [localStorage, inputBindingsRaw])
+  }, [localStorage, inputBindingsRaw, getInputBindings])
 
   const inputBindings = React.useMemo(() => {
     const updateLocalStorage = () => {
@@ -392,10 +359,10 @@ function AppRouter(props: AppRouterProps) {
 
   const mainPageUrl = getMainPageUrl()
 
-  // Subscribe to `localStorage` updates to trigger a rerender when the terms of service
-  // or privacy policy have been accepted.
-  localStorageProvider.useLocalStorageState('termsOfService')
-  localStorageProvider.useLocalStorageState('privacyPolicy')
+  // Subscribe to `localStorage` updates (and ignore the value)
+  // to trigger a rerender when the terms of service or privacy policy have been accepted.
+  useAcceptedTermsOfServiceVersionState()
+  useAcceptedPrivacyPolicyVersionState()
 
   const authService = useInitAuthService(props)
 
@@ -572,13 +539,9 @@ function AppRouter(props: AppRouterProps) {
   )
 }
 
-// ====================================
-// === LocalBackendPathSynchronizer ===
-// ====================================
-
 /** Keep `localBackend.rootPath` in sync with the saved root path state. */
 function LocalBackendPathSynchronizer() {
-  const [localRootDirectory] = localStorageProvider.useLocalStorageState('localRootDirectory')
+  const [localRootDirectory] = useLocalRootDirectoryState()
   const localBackend = useLocalBackend()
   if (localBackend) {
     if (localRootDirectory != null) {

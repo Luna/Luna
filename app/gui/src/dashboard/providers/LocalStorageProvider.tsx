@@ -12,7 +12,7 @@ import {
   useState,
 } from 'react'
 
-import type { z } from 'zod'
+import { z } from 'zod'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { LocalStorage } from '#/utilities/LocalStorage'
@@ -54,10 +54,20 @@ export function useLocalStorage() {
   return useContext(LocalStorageContext)
 }
 
+/** Options for {@link defineLocalStorageKey}. */
+export interface DefineLocalStorageKeyOptions<Schema extends z.ZodSchema> {
+  readonly schema: (zod: typeof z) => Schema
+}
+
 /** Create a set of hooks for interacting with one specific local storage key. */
-export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, schema: Schema) {
-  /** The type of the value of this key. */
+export function defineLocalStorageKey<Schema extends z.ZodSchema>(
+  key: string,
+  options: DefineLocalStorageKeyOptions<Schema>,
+) {
+  /** The type of the value corresponding to this {@link LocalStorage} key. */
   type Value = NonFunction & z.infer<Schema>
+
+  const schema = options.schema(z)
 
   if ('error' in schema.safeParse(LocalStorage.getInstance().get(key))) {
     LocalStorage.getInstance().delete(key)
@@ -66,6 +76,10 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, s
   const get = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-unsafe-return
     return localStorage.get(key) as Value | undefined
+  }
+
+  const set = (value: Value, localStorage: LocalStorage = LocalStorage.getInstance()) => {
+    localStorage.set(key, value)
   }
 
   const useGet = () => {
@@ -86,7 +100,7 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, s
     const { localStorage } = useLocalStorage()
 
     return useEventCallback((value: Value) => {
-      localStorage.set(key, value)
+      set(value, localStorage)
     })
   }
 
@@ -125,5 +139,5 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, s
 
     return [value, setValue]
   }
-  return { useGet, useSet, useState: useLocalStorageState }
+  return { get, set, useGet, useSet, useState: useLocalStorageState }
 }
