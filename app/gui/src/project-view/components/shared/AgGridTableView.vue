@@ -219,7 +219,8 @@ function supressCopy(event: KeyboardEvent) {
 // === Loading AGGrid and its license ===
 
 const { LicenseManager } = await import('ag-grid-enterprise')
-if (typeof import.meta.env.VITE_ENSO_AG_GRID_LICENSE_KEY !== 'string') {
+
+if (typeof import.meta.env.ENSO_IDE_AG_GRID_LICENSE_KEY !== 'string') {
   console.warn('The AG_GRID_LICENSE_KEY is not defined.')
   if (import.meta.env.DEV) {
     // Hide annoying license validation errors in dev mode when the license is not defined. The
@@ -239,7 +240,7 @@ if (typeof import.meta.env.VITE_ENSO_AG_GRID_LICENSE_KEY !== 'string') {
     }
   }
 } else {
-  const agGridLicenseKey = import.meta.env.VITE_ENSO_AG_GRID_LICENSE_KEY
+  const agGridLicenseKey = import.meta.env.ENSO_IDE_AG_GRID_LICENSE_KEY
   LicenseManager.setLicenseKey(agGridLicenseKey)
 }
 
