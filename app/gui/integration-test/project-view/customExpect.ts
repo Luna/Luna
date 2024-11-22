@@ -15,7 +15,7 @@ export const expect = baseExpect.extend({
       pass = true
     } catch {
       pass = false
-
+    }
 
     const message = () =>
       this.utils.matcherHint(assertionName, locator, '', {
