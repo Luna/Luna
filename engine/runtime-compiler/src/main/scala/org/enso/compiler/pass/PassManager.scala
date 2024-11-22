@@ -61,24 +61,6 @@ class PassManager(
     passes
   }
 
-  /** Executes all pass groups on the [[Module]].
-    *
-    * @param ir the module to execute the compiler passes on
-    * @param moduleContext the module context in which the passes are executed
-    * @return the result of executing `passGroup` on `ir`
-    */
-  // TODO: Remove this method
-  def runPassesOnModule(
-    ir: Module,
-    moduleContext: ModuleContext
-  ): Module = {
-    Asserts.assertInJvm(validateConsistency(ir, moduleContext))
-
-    passes.foldLeft(ir)((ir, group) =>
-      runPassesOnModule(ir, moduleContext, group)
-    )
-  }
-
   /** Executes the provided `passGroup` on the [[Module]].
     *
     * @param ir the module to execute the compiler passes on
