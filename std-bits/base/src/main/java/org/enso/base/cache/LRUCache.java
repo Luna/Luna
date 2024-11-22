@@ -131,7 +131,7 @@ public class LRUCache<M> {
       // Create a cache entry.
       var cacheEntry = new CacheEntry<>(responseData, metadata, size, expiry);
       System.out.println("AAAAA adding " + cacheEntry);
-      System.out.println("AAAAA total size " + getTotalCacheSize());
+    System.out.println("AAAAA total size " + getTotalCacheSize() + settings + " " + Arrays.deepToString(cache.values().stream().map(e -> e.size()).toArray(Long[]::new)));
       cache.put(cacheKey, cacheEntry);
       markCacheEntryUsed(cacheKey);
 
@@ -221,7 +221,7 @@ public class LRUCache<M> {
   /** Remove a cache entry: from `cache`, `lastUsed`, and the filesystem. */
   private void removeCacheEntry(Map.Entry<String, CacheEntry<M>> toRemove) {
     System.out.println("AAAAA removing " + toRemove);
-    System.out.println("AAAAA total size " + getTotalCacheSize());
+    System.out.println("AAAAA total size " + getTotalCacheSize() + settings + " " + Arrays.deepToString(cache.values().stream().map(e -> e.size()).toArray(Long[]::new)));
     var key = toRemove.getKey();
     var value = toRemove.getValue();
     cache.remove(key);
@@ -266,7 +266,7 @@ public class LRUCache<M> {
     }
     removeCacheEntries(toRemove);
     var afterLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
-    System.out.println("AAAAA makeRoomFor " + totalSize + " " + maxTotalCacheSize + " " + beforeLens + " " + afterLens);
+    System.out.println("AAAAA makeRoomFor " + totalSize + " " + maxTotalCacheSize + " " + Arrays.deepToString(beforeLens)+Arrays.deepToString(afterLens));
     assert totalSize <= maxTotalCacheSize
         : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")"+Arrays.deepToString(beforeLens)+Arrays.deepToString(afterLens);
   }
