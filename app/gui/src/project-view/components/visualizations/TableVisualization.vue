@@ -625,6 +625,48 @@ const getColumnValueToEnso = (columnName: string) => {
   if (isNumber.indexOf(columnType) != -1) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
+  if (columnType === 'Date') {
+    const datePattern = Pattern.parseExpression('(Date.new __ __ __)')
+    return (item: string, module: Ast.MutableModule) => {
+      const [year, month, day] = item.match(/\d+/g)!.map(Number);
+      return datePattern.instantiateCopied([
+        Ast.tryNumberToEnso(Number(year ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(month ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(day ?? 0), module)!,
+      ])
+    }
+  }
+  if (columnType === 'Date_Time') {
+    const dateTimePattern = Pattern.parseExpression('(Date_Time.new __ __ __ __ __ __ __ __ __)')
+    return (item: string, module: Ast.MutableModule) => {
+      const [year, month, day, hour, minute, second, milisecond, microsecond, nanosecond] = item.match(/\d+/g)!.map(Number);
+      return dateTimePattern.instantiateCopied([
+        Ast.tryNumberToEnso(Number(year ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(month ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(day ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(hour ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(minute ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(second ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(milisecond ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(microsecond ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(nanosecond ?? 0), module)!,
+      ])
+    }
+  }
+  if (columnType === 'Time') {
+    const timePattern = Pattern.parseExpression('(Time_Of_Day.new __ __ __ __ __ __)')
+    return (item: string, module: Ast.MutableModule) => {
+      const [hour, minute, second, milisecond, microsecond, nanosecond] = item.match(/\d+/g)!.map(Number);
+      return timePattern.instantiateCopied([
+        Ast.tryNumberToEnso(Number(hour ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(minute ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(second ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(milisecond ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(microsecond ?? 0), module)!,
+        Ast.tryNumberToEnso(Number(nanosecond ?? 0), module)!,
+      ])
+    }
+  }
   return (item: string) => Ast.TextLiteral.new(item)
 }
 
