@@ -32,7 +32,7 @@ import { keyboardBusy, keyboardBusyExceptIn, unrefElement, useEvent } from '@/co
 import { groupColorVar } from '@/composables/nodeColors'
 import type { PlacementStrategy } from '@/composables/nodeCreation'
 import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
-import { provideFullscreenContext } from '@/providers/fullscreenContext'
+import { provideGraphEditorLayers } from '@/providers/graphEditorLayers'
 import type { GraphNavigator } from '@/providers/graphNavigator'
 import { provideGraphNavigator } from '@/providers/graphNavigator'
 import { provideNodeColors } from '@/providers/graphNodeColors'
@@ -41,10 +41,12 @@ import { provideGraphSelection } from '@/providers/graphSelection'
 import { provideStackNavigator } from '@/providers/graphStackNavigator'
 import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
+import { provideSelectionActions, useSelectedNodes } from '@/providers/selectionActions'
 import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
-import type { NodeId } from '@/stores/graph'
+import type { Node, NodeId } from '@/stores/graph'
 import { provideGraphStore } from '@/stores/graph'
+import { nodeId } from '@/stores/graph/graphDatabase'
 import type { RequiredImport } from '@/stores/graph/imports'
 import { useProjectStore } from '@/stores/project'
 import { provideNodeExecution } from '@/stores/project/nodeExecution'
@@ -87,7 +89,6 @@ const graphStore = provideGraphStore(projectStore, suggestionDb)
 const widgetRegistry = provideWidgetRegistry(graphStore.db)
 const _visualizationStore = provideVisualizationStore(projectStore)
 const visible = injectVisibility()
-provideFullscreenContext(rootNode)
 provideNodeExecution(projectStore)
 ;(window as any)._mockSuggestion = suggestionDb.mockSuggestion
 
@@ -107,6 +108,14 @@ const viewportNode = ref<HTMLElement>()
 onMounted(() => viewportNode.value?.focus())
 const graphNavigator: GraphNavigator = provideGraphNavigator(viewportNode, keyboard, {
   predicate: (e) => (e instanceof KeyboardEvent ? nodeSelection.selected.size === 0 : true),
+})
+
+// === Exposed layers ===
+
+const floatingLayer = ref<HTMLElement>()
+provideGraphEditorLayers({
+  fullscreen: rootNode,
+  floating: floatingLayer,
 })
 
 // === Client saved state ===
@@ -261,11 +270,20 @@ const { scheduleCreateNode, createNodes, placeNode } = provideNodeCreation(
 
 // === Clipboard Copy/Paste ===
 
-const { copySelectionToClipboard, createNodesFromClipboard } = useGraphEditorClipboard(
-  graphStore,
+const { copyNodesToClipboard, createNodesFromClipboard } = useGraphEditorClipboard(createNodes)
+
+// === Selection Actions ===
+
+const { selectedNodes } = useSelectedNodes(
   toRef(nodeSelection, 'selected'),
-  createNodes,
+  graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode),
+  graphStore.pickInCodeOrder,
 )
+const { actions: selectionActions } = provideSelectionActions(selectedNodes, {
+  collapseNodes,
+  copyNodesToClipboard,
+  deleteNodes: (nodes) => graphStore.deleteNodes(nodes.map(nodeId)),
+})
 
 // === Interactions ===
 
@@ -317,7 +335,7 @@ const graphBindingsHandler = graphBindings.handler({
       createWithComponentBrowser(fromSelection() ?? { placement: { type: 'mouse' } })
     }
   },
-  deleteSelected,
+  deleteSelected: selectionActions.deleteSelected.action!,
   zoomToSelected() {
     zoomToSelected()
   },
@@ -341,15 +359,11 @@ const graphBindingsHandler = graphBindings.handler({
       }
     })
   },
-  copyNode() {
-    copySelectionToClipboard()
-  },
+  copyNode: selectionActions.copy.action!,
   pasteNode() {
     createNodesFromClipboard()
   },
-  collapse() {
-    collapseNodes()
-  },
+  collapse: selectionActions.collapse.action!,
   enterNode() {
     const selectedNode = set.first(nodeSelection.selected)
     if (selectedNode) {
@@ -360,7 +374,7 @@ const graphBindingsHandler = graphBindings.handler({
     stackNavigator.exitNode()
   },
   changeColorSelectedNodes() {
-    showColorPicker.value = true
+    selectionActions.pickColorMulti.state = true
   },
   openDocumentation() {
     const result = tryGetSelectionDocUrl()
@@ -391,10 +405,6 @@ const { handleClick } = useDoubleClick(
     stackNavigator.exitNode()
   },
 )
-
-function deleteSelected() {
-  graphStore.deleteNodes(nodeSelection.selected)
-}
 
 // === Code Editor ===
 
@@ -610,11 +620,11 @@ function handleEdgeDrop(source: Ast.AstId, position: Vec2) {
 
 // === Node Collapsing ===
 
-function collapseNodes() {
+function collapseNodes(nodes: Node[]) {
   const selected = new Set(
-    iter.filter(
-      nodeSelection.selected,
-      (id) => graphStore.db.nodeIdToNode.get(id)?.type === 'component',
+    iter.map(
+      iter.filter(nodes, ({ type }) => type === 'component'),
+      nodeId,
     ),
   )
   if (selected.size == 0) return
@@ -698,8 +708,6 @@ provideNodeColors(graphStore, (variable) =>
   viewportNode.value ? getComputedStyle(viewportNode.value).getPropertyValue(variable) : '',
 )
 
-const showColorPicker = ref(false)
-
 const groupColors = computed(() => {
   const styles: { [key: string]: string } = {}
   for (const group of suggestionDb.groups) {
@@ -747,23 +755,24 @@ const documentationEditorFullscreen = ref(false)
         </template>
         <TopBar
           v-model:recordMode="projectStore.recordMode"
-          v-model:showColorPicker="showColorPicker"
           v-model:showCodeEditor="showCodeEditor"
           v-model:showDocumentationEditor="rightDockVisible"
           :zoomLevel="100.0 * graphNavigator.targetScale"
-          :componentsSelected="nodeSelection.selected.size"
           :class="{ extraRightSpace: !rightDockVisible }"
           @fitToAllClicked="zoomToSelected"
           @zoomIn="graphNavigator.stepZoom(+1)"
           @zoomOut="graphNavigator.stepZoom(-1)"
-          @collapseNodes="collapseNodes"
-          @removeNodes="deleteSelected"
         />
         <SceneScroller
           :navigator="graphNavigator"
           :scrollableArea="Rect.Bounding(...graphStore.visibleNodeAreas)"
         />
         <GraphMouse />
+        <div
+          ref="floatingLayer"
+          class="floatingLayer"
+          :style="{ transform: graphNavigator.transform }"
+        />
       </div>
       <BottomPanel v-model:show="showCodeEditor">
         <Suspense>
@@ -836,5 +845,20 @@ const documentationEditorFullscreen = ref(false)
   --group-color-fallback: #006b8a;
   --node-color-no-type: #596b81;
   --output-node-color: #006b8a;
+}
+
+.floatingLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* The size isn't important, except it must be non-zero for `floating-ui` to calculate the scale factor. */
+  width: 1px;
+  height: 1px;
+  contain: layout size style;
+  will-change: transform;
+  pointer-events: none;
+  > * {
+    pointer-events: auto;
+  }
 }
 </style>
