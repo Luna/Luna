@@ -2,6 +2,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 import { Result } from '#/components/Result'
+import { AssetPanelPlaceholder } from '#/layouts/AssetPanel/components/AssetPanelPlaceholder'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, BackendType, type ProjectAsset } from '#/services/Backend'
@@ -23,17 +24,14 @@ export function ProjectSessions(props: ProjectSessionsProps) {
   })
 
   if (backend.type === BackendType.local) {
-    return <Result status="info" centered title={getText('assetProjectSessions.localBackend')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectSessions.localBackend')} />
   }
-
   if (item == null) {
-    return <Result status="info" centered title={getText('assetProjectSessions.notSelected')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectSessions.notSelected')} />
   }
-
   if (item.type !== AssetType.project) {
-    return <Result status="info" centered title={getText('assetProjectSessions.notProjectAsset')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectSessions.notProjectAsset')} />
   }
-
   return <AssetProjectSessionsInternal {...props} item={item} />
 }
 

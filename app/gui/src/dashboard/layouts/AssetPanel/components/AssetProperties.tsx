@@ -88,18 +88,14 @@ export function AssetProperties(props: AssetPropertiesProps) {
   )
 }
 
-/**
- * Props for {@link AssetPropertiesInternal}.
- */
+/** Props for an {@link AssetPropertiesInternal}. */
 export interface AssetPropertiesInternalProps extends AssetPropertiesProps {
   readonly item: AnyAsset
   readonly path: string | null
   readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
-/**
- * Internal implementation of {@link AssetProperties}.
- */
+/** Display and modify the properties of an asset. */
 function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   const { backend, item, category, spotlightOn, isReadonly = false, path: pathRaw } = props
   const styles = ASSET_PROPERTIES_VARIANTS({})

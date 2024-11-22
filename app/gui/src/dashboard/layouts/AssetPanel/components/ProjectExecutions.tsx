@@ -2,15 +2,13 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaComponents'
-import { ErrorBoundary } from '#/components/ErrorBoundary'
-import { Result } from '#/components/Result'
-import { Suspense } from '#/components/Suspense'
 import { useStore } from '#/hooks/storeHooks'
 import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
+import { AssetPanelPlaceholder } from '#/layouts/AssetPanel/components/AssetPanelPlaceholder'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
+import { AssetType, BackendType, type ProjectAsset } from '#/services/Backend'
 import { ProjectExecution } from './ProjectExecution'
 
 /** Props for a {@link ProjectExecutions}. */
@@ -27,26 +25,15 @@ export function ProjectExecutions(props: ProjectExecutionsProps) {
   })
 
   if (backend.type === BackendType.local) {
-    return <Result status="info" centered title={getText('assetProjectExecutions.localBackend')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.localBackend')} />
   }
-
   if (item == null) {
-    return <Result status="info" centered title={getText('assetProjectExecutions.notSelected')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.notSelected')} />
   }
-
   if (item.type !== AssetType.project) {
-    return (
-      <Result status="info" centered title={getText('assetProjectExecutions.notProjectAsset')} />
-    )
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.notProjectAsset')} />
   }
-
-  return (
-    <ErrorBoundary>
-      <Suspense>
-        <ProjectExecutionsInternal {...props} item={item} />
-      </Suspense>
-    </ErrorBoundary>
-  )
+  return <ProjectExecutionsInternal {...props} item={item} />
 }
 
 /** Props for a {@link ProjectExecutionsInternal}. */

@@ -48,11 +48,9 @@ export function AssetVersions(props: AssetVersionsProps) {
       />
     )
   }
-
   if (item == null) {
     return <Result status="info" centered title={getText('assetVersions.notSelected')} />
   }
-
   return <AssetVersionsInternal {...props} item={item} />
 }
 

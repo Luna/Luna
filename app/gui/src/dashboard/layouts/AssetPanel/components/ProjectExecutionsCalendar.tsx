@@ -24,11 +24,9 @@ import {
   Heading,
 } from '#/components/aria'
 import { Button, ButtonGroup, DialogTrigger, Form, Text } from '#/components/AriaComponents'
-import { ErrorBoundary } from '#/components/ErrorBoundary'
-import { Result } from '#/components/Result'
-import { Suspense } from '#/components/Suspense'
 import { useStore } from '#/hooks/storeHooks'
 import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
+import { AssetPanelPlaceholder } from '#/layouts/AssetPanel/components/AssetPanelPlaceholder'
 import { ProjectExecution } from '#/layouts/AssetPanel/components/ProjectExecution'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
@@ -37,7 +35,6 @@ import {
   AssetType,
   BackendType,
   getProjectExecutionRepetitionsForDateRange,
-  type AnyAsset,
   type ProjectExecution as BackendProjectExecution,
   type ProjectAsset,
 } from '#/services/Backend'
@@ -72,26 +69,15 @@ export function ProjectExecutionsCalendar(props: ProjectExecutionsCalendarProps)
   })
 
   if (backend.type === BackendType.local) {
-    return <Result status="info" centered title={getText('assetProjectExecutions.localBackend')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.localBackend')} />
   }
-
   if (item == null) {
-    return <Result status="info" centered title={getText('assetProjectExecutions.notSelected')} />
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.notSelected')} />
   }
-
   if (item.type !== AssetType.project) {
-    return (
-      <Result status="info" centered title={getText('assetProjectExecutions.notProjectAsset')} />
-    )
+    return <AssetPanelPlaceholder title={getText('assetProjectExecutions.notProjectAsset')} />
   }
-
-  return (
-    <ErrorBoundary>
-      <Suspense>
-        <ProjectExecutionsCalendarInternal {...props} item={item} />
-      </Suspense>
-    </ErrorBoundary>
-  )
+  return <ProjectExecutionsCalendarInternal {...props} item={item} />
 }
 
 /** Props for a {@link ProjectExecutionsCalendarInternal}. */

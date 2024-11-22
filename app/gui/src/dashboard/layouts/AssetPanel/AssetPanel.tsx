@@ -5,9 +5,8 @@
  */
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
-import { z } from 'zod'
 
-import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
+import type { BackendType } from 'enso-common/src/services/Backend'
 
 import CalendarIcon from '#/assets/calendar.svg'
 import DocsIcon from '#/assets/file_text.svg'
@@ -21,8 +20,6 @@ import { AssetDocs } from '#/layouts/AssetDocs'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import LocalStorage from '#/utilities/LocalStorage'
 import { useStore } from '#/utilities/zustand'
 import {
   assetPanelStore,
@@ -31,48 +28,18 @@ import {
 } from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
-import { AssetProperties, type AssetPropertiesSpotlight } from './components/AssetProperties'
+import { AssetProperties } from './components/AssetProperties'
 import { AssetVersions } from './components/AssetVersions'
 import { ProjectExecutions } from './components/ProjectExecutions'
 import { ProjectExecutionsCalendar } from './components/ProjectExecutionsCalendar'
 import { ProjectSessions } from './components/ProjectSessions'
-import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
+import type { AssetPanelTab } from './types'
 
 const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
 
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-    readonly isAssetPanelHidden: boolean
-    readonly assetPanelTab: AssetPanelTab
-    readonly assetPanelWidth: number
-  }
-}
-
-const ASSET_PANEL_TAB_SCHEMA = z.enum(ASSET_PANEL_TABS)
-
-LocalStorage.register({
-  assetPanelTab: { schema: ASSET_PANEL_TAB_SCHEMA },
-  assetPanelWidth: { schema: z.number().int() },
-  isAssetPanelHidden: { schema: z.boolean() },
-  isAssetPanelVisible: { schema: z.boolean() },
-})
-
-/** Props supplied by the row. */
-export interface AssetPanelContextProps {
-  readonly backend: Backend | null
-  readonly selectedTab: AssetPanelTab
-  readonly item: AnyAsset | null
-  readonly path: string | null
-  readonly spotlightOn: AssetPropertiesSpotlight | null
-}
-
-/**
- * Props for an {@link AssetPanel}.
- */
+/** Props for an {@link AssetPanel}. */
 export interface AssetPanelProps {
   readonly backendType: BackendType
   readonly category: Category
