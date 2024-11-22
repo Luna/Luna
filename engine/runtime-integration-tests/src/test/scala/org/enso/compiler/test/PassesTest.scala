@@ -60,7 +60,7 @@ class PassesTest extends CompilerTest {
           GenerateMethodBodies,
           BindingAnalysis,
           ModuleNameConflicts,
-          MethodDefinitions,
+          MethodDefinitions.INSTANCE,
           SectionsToBinOp.INSTANCE,
           OperatorToFunction,
           LambdaShorthandToLambda,
