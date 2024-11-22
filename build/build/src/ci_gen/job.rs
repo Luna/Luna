@@ -539,7 +539,7 @@ impl JobArchetype for PackageIde {
             } else {
                 shell(TEST_COMMAND)
             };
-            let mut test_step = test_step
+            let test_step = test_step
                 .with_env("DEBUG", "pw:browser log:")
                 .with_secret_exposed_as(secret::ENSO_CLOUD_TEST_ACCOUNT_USERNAME, "ENSO_TEST_USER")
                 .with_secret_exposed_as(
