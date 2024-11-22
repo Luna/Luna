@@ -1,7 +1,6 @@
 /**
  * @file
- *
- * `<AnimatedBackground />` component visually highlights selected items by sliding a background into view when hovered over or clicked.
+ * Visually highlight selected items by sliding a background into view when hovered over or clicked.
  */
 import type { Transition, Variants } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -57,9 +56,7 @@ export function AnimatedBackground(props: AnimatedBackgroundProps) {
   )
 }
 
-/**
- * Props for {@link AnimatedBackground.Item}.
- */
+/** Props for {@link AnimatedBackground.Item}. */
 type AnimatedBackgroundItemProps = PropsWithChildren<
   AnimatedBackgroundItemPropsWithSelected | AnimatedBackgroundItemPropsWithValue
 > & {
@@ -68,17 +65,13 @@ type AnimatedBackgroundItemProps = PropsWithChildren<
   readonly underlayElement?: React.ReactNode
 }
 
-/**
- * Props for {@link AnimatedBackground.Item} with a `value` prop.
- */
+/** Props for {@link AnimatedBackground.Item} with a `value` prop. */
 interface AnimatedBackgroundItemPropsWithValue {
   readonly value: string
   readonly isSelected?: never
 }
 
-/**
- * Props for {@link AnimatedBackground.Item} with a `isSelected` prop.
- */
+/** Props for {@link AnimatedBackground.Item} with a `isSelected` prop. */
 interface AnimatedBackgroundItemPropsWithSelected {
   readonly isSelected: boolean
   readonly value?: never
