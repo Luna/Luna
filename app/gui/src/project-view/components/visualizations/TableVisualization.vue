@@ -628,7 +628,7 @@ const getColumnValueToEnso = (columnName: string) => {
   if (columnType === 'Date') {
     const datePattern = Pattern.parseExpression('(Date.new __ __ __)')
     return (item: string, module: Ast.MutableModule) => {
-      const [year, month, day] = item.match(/\d+/g)!.map(Number);
+      const [year, month, day] = item.match(/\d+/g)!.map(Number)
       return datePattern.instantiateCopied([
         Ast.tryNumberToEnso(Number(year ?? 0), module)!,
         Ast.tryNumberToEnso(Number(month ?? 0), module)!,
@@ -639,7 +639,9 @@ const getColumnValueToEnso = (columnName: string) => {
   if (columnType === 'Date_Time') {
     const dateTimePattern = Pattern.parseExpression('(Date_Time.new __ __ __ __ __ __ __ __ __)')
     return (item: string, module: Ast.MutableModule) => {
-      const [year, month, day, hour, minute, second, milisecond, microsecond, nanosecond] = item.match(/\d+/g)!.map(Number);
+      const [year, month, day, hour, minute, second, milisecond, microsecond, nanosecond] = item
+        .match(/\d+/g)!
+        .map(Number)
       return dateTimePattern.instantiateCopied([
         Ast.tryNumberToEnso(Number(year ?? 0), module)!,
         Ast.tryNumberToEnso(Number(month ?? 0), module)!,
@@ -656,7 +658,9 @@ const getColumnValueToEnso = (columnName: string) => {
   if (columnType === 'Time') {
     const timePattern = Pattern.parseExpression('(Time_Of_Day.new __ __ __ __ __ __)')
     return (item: string, module: Ast.MutableModule) => {
-      const [hour, minute, second, milisecond, microsecond, nanosecond] = item.match(/\d+/g)!.map(Number);
+      const [hour, minute, second, milisecond, microsecond, nanosecond] = item
+        .match(/\d+/g)!
+        .map(Number)
       return timePattern.instantiateCopied([
         Ast.tryNumberToEnso(Number(hour ?? 0), module)!,
         Ast.tryNumberToEnso(Number(minute ?? 0), module)!,
