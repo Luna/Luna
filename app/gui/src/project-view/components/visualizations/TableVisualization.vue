@@ -81,7 +81,7 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
-  data_quality_pairs?: Map<string, number[]>[]
+  data_quality_pairs?: Record<string, number[]>[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -353,15 +353,15 @@ function toField(
 
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
-      props.data.data_quality_pairs.map(obj => {
+      props.data.data_quality_pairs.map((obj: Record<string, number[]>) => {
         const key = Object.keys(obj)[0] as string
-        return {[key]: obj[key][index]}
+        return { [key]: obj[key]?.[index!] ?? 0 };
       })
       // eslint-disable-next-line camelcase
-      : [{ number_of_nothing: 0 }, {number_of_whitespace: 0 }]
+    : [{ number_of_nothing: 0 }, { number_of_whitespace: 0 }]
 
-
-  const showDataQuality = dataQualityMetrics.filter(obj => Object.values(obj)[0] as number > 0).length > 0;
+  const showDataQuality =
+    dataQualityMetrics.filter((obj) => (Object.values(obj)[0] as number) > 0).length > 0
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`

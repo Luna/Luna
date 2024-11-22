@@ -13,7 +13,7 @@ export class TableVisualisationTooltip implements ITooltipComp {
    */
   init(
     params: ITooltipParams & {
-      dataQualityMetrics: Map<string, number>[]
+      dataQualityMetrics: Record<string, number>[]
       total: number
       showDataQuality: boolean
     },
