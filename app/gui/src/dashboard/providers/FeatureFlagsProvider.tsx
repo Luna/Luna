@@ -1,28 +1,15 @@
 /** @file Provider for enabling or disabling certain features. */
-import { useMount } from '#/hooks/mountHooks'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
-import LocalStorage from '#/utilities/LocalStorage'
-import { unsafeEntries } from '#/utilities/object'
-import type { ReactNode } from 'react'
-import { useEffect } from 'react'
-import { z } from 'zod'
+import { useEffect, type ReactNode } from 'react'
+
 import { createStore, useStore } from 'zustand'
 
-declare module '#/utilities/LocalStorage' {
-  /** Local storage data structure. */
-  interface LocalStorageData {
-    readonly featureFlags: z.infer<typeof FEATURE_FLAGS_SCHEMA>
-  }
-}
-
-export const FEATURE_FLAGS_SCHEMA = z.object({
-  enableMultitabs: z.boolean(),
-  enableAssetsTableBackgroundRefresh: z.boolean(),
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  assetsTableBackgroundRefreshInterval: z.number().min(100),
-})
-
-LocalStorage.registerKey('featureFlags', { schema: FEATURE_FLAGS_SCHEMA })
+import { useMount } from '#/hooks/mountHooks'
+import {
+  useGetFeatureFlags,
+  useSetLocalStorageFeatureFlags,
+} from '#/providers/FeatureFlagsProvider/featureFlagsLocalStorage'
+import { useLocalStorage } from '#/providers/LocalStorageProvider'
+import { unsafeEntries } from '#/utilities/object'
 
 /** Feature flags store. */
 export interface FeatureFlags {
@@ -45,7 +32,10 @@ const flagsStore = createStore<FeatureFlags>((set) => ({
     assetsTableBackgroundRefreshInterval: 3_000,
   },
   setFeatureFlags: (key, value) => {
-    set(({ featureFlags }) => ({ featureFlags: { ...featureFlags, [key]: value } }))
+    set(({ featureFlags }) => {
+      const newFlags = { ...featureFlags, [key]: value }
+      return { featureFlags: newFlags }
+    })
   },
 }))
 
@@ -73,12 +63,14 @@ export function useSetFeatureFlags() {
  */
 export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
   const { localStorage } = useLocalStorage()
+  const getFeatureFlags = useGetFeatureFlags()
   const setFeatureFlags = useSetFeatureFlags()
+  const setLocalStorageFeatureFlags = useSetLocalStorageFeatureFlags()
 
   useMount(() => {
-    const storedFeatureFlags = localStorage.get('featureFlags')
+    const storedFeatureFlags = getFeatureFlags()
 
-    if (storedFeatureFlags) {
+    if (storedFeatureFlags != null) {
       for (const [key, value] of unsafeEntries(storedFeatureFlags)) {
         setFeatureFlags(key, value)
       }
@@ -89,10 +81,10 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
     () =>
       flagsStore.subscribe((state, prevState) => {
         if (state.featureFlags !== prevState.featureFlags) {
-          localStorage.set('featureFlags', state.featureFlags)
+          setLocalStorageFeatureFlags(state.featureFlags)
         }
       }),
-    [localStorage],
+    [localStorage, setLocalStorageFeatureFlags],
   )
 
   return <>{children}</>
