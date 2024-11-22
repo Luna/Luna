@@ -18,7 +18,6 @@ import scala.Option;
 @Persistable(id = 398)
 public final class MetadataStorage {
   private Map<ProcessingPass, ProcessingPass.Metadata> metadata;
-  public static final MetadataStorage EMPTY = new MetadataStorage();
 
   /** Constructs empty, ready to be populated metadata. */
   public MetadataStorage() {

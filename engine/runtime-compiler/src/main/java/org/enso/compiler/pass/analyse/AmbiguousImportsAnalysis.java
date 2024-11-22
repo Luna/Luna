@@ -287,7 +287,7 @@ public final class AmbiguousImportsAnalysis implements MiniPassFactory {
               ambiguousSymbol,
               ambiguousSymbolPath
           ),
-          MetadataStorage.EMPTY
+          new MetadataStorage()
       );
     }
 

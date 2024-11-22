@@ -105,7 +105,7 @@ public class MethodDefinitions implements IRPass {
                               default -> new Conversion(
                                   sourceTypeExpr,
                                   UnsupportedSourceType$.MODULE$,
-                                  MetadataStorage.EMPTY);
+                                  new MetadataStorage());
                             };
                         var resolvedMethod =
                             conversionMethod.copy(
@@ -166,12 +166,12 @@ public class MethodDefinitions implements IRPass {
       // added to avoid modifying the dispatch mechanism.
       var syntheticModuleSelfArg =
           new DefinitionArgument.Specified(
-              new Name.Self(null, true, MetadataStorage.EMPTY),
+              new Name.Self(null, true, new MetadataStorage()),
               Option.empty(),
               Option.empty(),
               false,
               null,
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
       var newBody =
           new Function.Lambda(
               // This is the synthetic Self argument that gets the static module
@@ -181,7 +181,7 @@ public class MethodDefinitions implements IRPass {
               addTypeAscriptionToSelfArgument(dup.body()),
               null,
               true,
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
       // The actual `self` argument that is referenced inside of method body is the second one in
       // the lambda.
       // This is the argument that will hold the actual instance of the object we are calling on,
@@ -213,7 +213,7 @@ public class MethodDefinitions implements IRPass {
       var firstArg = lambda.arguments().head();
       if (firstArg instanceof DefinitionArgument.Specified selfArg
           && selfArg.name() instanceof Name.Self) {
-        var selfType = new Name.SelfType(selfArg.identifiedLocation(), MetadataStorage.EMPTY);
+        var selfType = new Name.SelfType(selfArg.identifiedLocation(), new MetadataStorage());
         var newSelfArg = selfArg.copyWithAscribedType(selfType);
         return lambdaWithNewSelfArg(lambda, newSelfArg);
       } else {
@@ -259,7 +259,7 @@ public class MethodDefinitions implements IRPass {
         return new org.enso.compiler.core.ir.expression.errors.Resolution(
             typePointer,
             new org.enso.compiler.core.ir.expression.errors.Resolution.ResolverError(err),
-            MetadataStorage.EMPTY);
+            new MetadataStorage());
       }
       var resolvedItems = resolvedItemsOpt.toOption().get();
       assert resolvedItems.size() == 1 : "Expected a single resolution";
@@ -269,7 +269,7 @@ public class MethodDefinitions implements IRPass {
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedConstructor(
                   "a method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         case ResolvedModule resMod -> {
           MetadataInteropHelpers.updateMetadata(typePointer, this, new Resolution(resMod));
@@ -284,35 +284,35 @@ public class MethodDefinitions implements IRPass {
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedPolyglot(
                   "a method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         case ResolvedPolyglotField ignored -> {
           return new org.enso.compiler.core.ir.expression.errors.Resolution(
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedPolyglot(
                   "a method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         case ResolvedModuleMethod ignored -> {
           return new org.enso.compiler.core.ir.expression.errors.Resolution(
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedMethod(
                   "a method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         case ResolvedExtensionMethod ignored -> {
           return new org.enso.compiler.core.ir.expression.errors.Resolution(
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedMethod(
                   "a static method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         case ResolvedConversionMethod ignored -> {
           return new org.enso.compiler.core.ir.expression.errors.Resolution(
               typePointer,
               new org.enso.compiler.core.ir.expression.errors.Resolution.UnexpectedMethod(
                   "a conversion method definition target"),
-              MetadataStorage.EMPTY);
+              new MetadataStorage());
         }
         default -> throw new IllegalStateException("Unexpected value: " + resolvedItems.head());
       }

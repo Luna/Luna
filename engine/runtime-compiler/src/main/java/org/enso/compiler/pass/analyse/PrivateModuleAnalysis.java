@@ -118,7 +118,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
                             ImportExport.apply(
                                 resolvedImp.importDef(),
                                 new ImportExport.ImportPrivateModule(importedModuleName),
-                                MetadataStorage.EMPTY));
+                                new MetadataStorage()));
                       }
                       return null;
                     });
@@ -131,7 +131,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
             ImportExport.apply(
                 moduleIr.exports().apply(0),
                 new ImportExport.ExportSymbolsFromPrivateModule(moduleName),
-                MetadataStorage.EMPTY));
+                new MetadataStorage()));
       }
 
       // Ensure that private modules are not exported
@@ -147,7 +147,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
                       ImportExport.apply(
                           associatedExportIR.get(),
                           new ImportExport.ExportPrivateModule(expModuleRef.getName().toString()),
-                          MetadataStorage.EMPTY));
+                          new MetadataStorage()));
                 }
                 return null;
               });

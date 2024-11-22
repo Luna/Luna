@@ -196,7 +196,7 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
                 convMethod.conversionMethod().sourceTpName());
             default -> throw new IllegalStateException("Unexpected value: " + importTarget);
           };
-      return new ImportExport(imp, errorReason, MetadataStorage.EMPTY);
+      return new ImportExport(imp, errorReason, new MetadataStorage());
     }
 
     private static ImportExport createImportFromMethodError(
@@ -204,7 +204,7 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
       return new ImportExport(
           imp,
           new ImportExport.IllegalImportFromMethod(moduleName, methodName),
-          MetadataStorage.EMPTY);
+          new MetadataStorage());
     }
   }
 }
