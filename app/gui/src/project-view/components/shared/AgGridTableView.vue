@@ -1,5 +1,6 @@
 <script lang="ts">
 import { gridBindings } from '@/bindings'
+import { modKey } from '@/composables/events'
 import type { MenuItemDef } from 'ag-grid-enterprise'
 /**
  * A more specialized version of AGGrid's `MenuItemDef` to simplify testing (the tests need to provide
@@ -207,7 +208,7 @@ function supressCopy(event: KeyboardEvent) {
   // and AgGrid API does not allow copy suppression.
   if (
     (event.code === 'KeyX' || event.code === 'KeyC' || event.code === 'KeyV') &&
-    event.ctrlKey &&
+    modKey(event) &&
     wrapper.value != null &&
     event.target != wrapper.value
   ) {
