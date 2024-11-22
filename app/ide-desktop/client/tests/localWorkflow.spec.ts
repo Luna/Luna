@@ -70,7 +70,7 @@ electronTest('Local Workflow', async ({ page, app, projectsDir }) => {
     await expect(writeNode.locator('.TableVisualization')).toContainText(OUTPUT_FILE)
   } catch {
     // TODO[ao]
-    // The above check is flaky, because sometimes the additional egine run overrides node output back to "dry run".
+    // The above check is flaky, because sometimes the additional engine run overrides node output back to "dry run".
     // To confirm if this should be expected.
     console.error(
       'Didn\'t see the visualization update after "Write once" action; assuming it\'s already done',
