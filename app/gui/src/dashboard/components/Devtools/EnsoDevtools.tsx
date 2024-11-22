@@ -1,21 +1,39 @@
 /** @file A component that provides a UI for toggling internal shared state. */
-import * as React from 'react'
+import { useEffect, useState } from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { IS_DEV_MODE } from 'enso-common/src/detect'
+import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 
+import { SETUP_PATH } from '#/appUtils'
 import CrossIcon from '#/assets/cross.svg'
 import DevtoolsLogo from '#/assets/enso_logo.svg'
 import TrashIcon from '#/assets/trash.svg'
-
-import { SETUP_PATH } from '#/appUtils'
-
-import * as billing from '#/hooks/billing'
-
-import * as authProvider from '#/providers/AuthProvider'
-import { UserSessionType } from '#/providers/AuthProvider'
-import * as textProvider from '#/providers/TextProvider'
+import {
+  Button,
+  DialogTrigger,
+  Form,
+  Input,
+  Popover,
+  Radio,
+  RadioGroup,
+  Separator,
+  Switch,
+  Text,
+} from '#/components/AriaComponents'
+import Portal from '#/components/Portal'
+import { usePaywallFeatures, type PaywallFeatureName } from '#/hooks/billing'
+import { useAuth, UserSessionType } from '#/providers/AuthProvider'
+import {
+  FEATURE_FLAGS_SCHEMA,
+  useFeatureFlags,
+  useSetFeatureFlags,
+} from '#/providers/FeatureFlagsProvider'
+import { useLocalStorage } from '#/providers/LocalStorageProvider'
+import { useText } from '#/providers/TextProvider'
+import { Plan } from '#/services/Backend'
+import { LocalStorage } from '#/utilities/LocalStorage'
 import {
   useEnableVersionChecker,
   usePaywallDevtools,
@@ -23,34 +41,12 @@ import {
   useShowDevtools,
 } from './EnsoDevtoolsProvider'
 
-import * as ariaComponents from '#/components/AriaComponents'
-import Portal from '#/components/Portal'
-
-import {
-  Button,
-  Form,
-  Popover,
-  Radio,
-  RadioGroup,
-  Separator,
-  Text,
-} from '#/components/AriaComponents'
-import {
-  FEATURE_FLAGS_SCHEMA,
-  useFeatureFlags,
-  useSetFeatureFlags,
-} from '#/providers/FeatureFlagsProvider'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
-import * as backend from '#/services/Backend'
-import { LocalStorage } from '#/utilities/LocalStorage'
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
-
 /** A component that provides a UI for toggling paywall features. */
 export function EnsoDevtools() {
-  const { getText } = textProvider.useText()
-  const { authQueryKey, session } = authProvider.useAuth()
-  const queryClient = reactQuery.useQueryClient()
-  const { getFeature } = billing.usePaywallFeatures()
+  const { getText } = useText()
+  const { authQueryKey, session } = useAuth()
+  const queryClient = useQueryClient()
+  const { getFeature } = usePaywallFeatures()
 
   const showDevtools = useShowDevtools()
 
@@ -58,10 +54,10 @@ export function EnsoDevtools() {
   const enableVersionChecker = useEnableVersionChecker()
   const setEnableVersionChecker = useSetEnableVersionChecker()
   const { localStorage } = useLocalStorage()
-  const [localStorageState, setLocalStorageState] = React.useState<Record<string, unknown>>({})
+  const [localStorageState, setLocalStorageState] = useState<Record<string, unknown>>({})
 
   // Re-render when localStorage changes.
-  React.useEffect(() => localStorage.subscribeAll(setLocalStorageState), [localStorage])
+  useEffect(() => localStorage.subscribeAll(setLocalStorageState), [localStorage])
 
   const featureFlags = useFeatureFlags()
   const setFeatureFlags = useSetFeatureFlags()
@@ -72,8 +68,8 @@ export function EnsoDevtools() {
 
   return (
     <Portal>
-      <ariaComponents.DialogTrigger>
-        <ariaComponents.Button
+      <DialogTrigger>
+        <Button
           icon={DevtoolsLogo}
           aria-label={getText('ensoDevtoolsButtonLabel')}
           variant="icon"
@@ -96,8 +92,8 @@ export function EnsoDevtools() {
 
               <Form
                 gap="small"
-                schema={(schema) => schema.object({ plan: schema.nativeEnum(backend.Plan) })}
-                defaultValues={{ plan: session.user.plan ?? backend.Plan.free }}
+                schema={(schema) => schema.object({ plan: schema.nativeEnum(Plan) })}
+                defaultValues={{ plan: session.user.plan ?? Plan.free }}
               >
                 {({ form }) => (
                   <>
@@ -110,10 +106,10 @@ export function EnsoDevtools() {
                         })
                       }}
                     >
-                      <Radio label={getText('free')} value={backend.Plan.free} />
-                      <Radio label={getText('solo')} value={backend.Plan.solo} />
-                      <Radio label={getText('team')} value={backend.Plan.team} />
-                      <Radio label={getText('enterprise')} value={backend.Plan.enterprise} />
+                      <Radio label={getText('free')} value={Plan.free} />
+                      <Radio label={getText('solo')} value={Plan.solo} />
+                      <Radio label={getText('team')} value={Plan.team} />
+                      <Radio label={getText('enterprise')} value={Plan.enterprise} />
                     </RadioGroup>
 
                     <Button
@@ -142,16 +138,16 @@ export function EnsoDevtools() {
             </>
           )}
 
-          <ariaComponents.Text variant="subtitle" className="mb-2">
+          <Text variant="subtitle" className="mb-2">
             {getText('productionOnlyFeatures')}
-          </ariaComponents.Text>
+          </Text>
 
-          <ariaComponents.Form
+          <Form
             schema={(z) => z.object({ enableVersionChecker: z.boolean() })}
             defaultValues={{ enableVersionChecker: enableVersionChecker ?? !IS_DEV_MODE }}
           >
             {({ form }) => (
-              <ariaComponents.Switch
+              <Switch
                 form={form}
                 name="enableVersionChecker"
                 label={getText('enableVersionChecker')}
@@ -161,14 +157,14 @@ export function EnsoDevtools() {
                 }}
               />
             )}
-          </ariaComponents.Form>
+          </Form>
 
-          <ariaComponents.Separator orientation="horizontal" className="my-3" />
+          <Separator orientation="horizontal" className="my-3" />
 
-          <ariaComponents.Text variant="subtitle" className="mb-2">
+          <Text variant="subtitle" className="mb-2">
             {getText('ensoDevtoolsFeatureFlags')}
 
-            <ariaComponents.Form
+            <Form
               gap="small"
               schema={FEATURE_FLAGS_SCHEMA}
               formOptions={{ mode: 'onChange' }}
@@ -181,7 +177,7 @@ export function EnsoDevtools() {
             >
               {(form) => (
                 <>
-                  <ariaComponents.Switch
+                  <Switch
                     form={form}
                     name="enableMultitabs"
                     label={getText('ensoDevtoolsFeatureFlags.enableMultitabs')}
@@ -192,7 +188,7 @@ export function EnsoDevtools() {
                   />
 
                   <div>
-                    <ariaComponents.Switch
+                    <Switch
                       form={form}
                       name="enableAssetsTableBackgroundRefresh"
                       label={getText('ensoDevtoolsFeatureFlags.enableAssetsTableBackgroundRefresh')}
@@ -203,7 +199,7 @@ export function EnsoDevtools() {
                         setFeatureFlags('enableAssetsTableBackgroundRefresh', value)
                       }}
                     />
-                    <ariaComponents.Input
+                    <Input
                       form={form}
                       type="number"
                       inputMode="numeric"
@@ -224,16 +220,16 @@ export function EnsoDevtools() {
                   </div>
                 </>
               )}
-            </ariaComponents.Form>
-          </ariaComponents.Text>
+            </Form>
+          </Text>
 
-          <ariaComponents.Separator orientation="horizontal" className="my-3" />
+          <Separator orientation="horizontal" className="my-3" />
 
-          <ariaComponents.Text variant="subtitle" className="mb-2">
+          <Text variant="subtitle" className="mb-2">
             {getText('ensoDevtoolsPaywallFeaturesToggles')}
-          </ariaComponents.Text>
+          </Text>
 
-          <ariaComponents.Form
+          <Form
             gap="small"
             schema={(z) =>
               z.object(Object.fromEntries(Object.keys(features).map((key) => [key, z.boolean()])))
@@ -241,18 +237,18 @@ export function EnsoDevtools() {
             defaultValues={Object.fromEntries(
               Object.keys(features).map((feature) => {
                 // eslint-disable-next-line no-restricted-syntax
-                const featureName = feature as billing.PaywallFeatureName
+                const featureName = feature as PaywallFeatureName
                 return [featureName, features[featureName].isForceEnabled ?? true]
               }),
             )}
           >
             {Object.keys(features).map((feature) => {
               // eslint-disable-next-line no-restricted-syntax
-              const featureName = feature as billing.PaywallFeatureName
+              const featureName = feature as PaywallFeatureName
               const { label, descriptionTextId } = getFeature(featureName)
 
               return (
-                <ariaComponents.Switch
+                <Switch
                   key={feature}
                   name={featureName}
                   label={getText(label)}
@@ -263,7 +259,7 @@ export function EnsoDevtools() {
                 />
               )
             })}
-          </ariaComponents.Form>
+          </Form>
 
           <Separator orientation="horizontal" className="my-3" />
 
@@ -306,7 +302,7 @@ export function EnsoDevtools() {
             ))}
           </div>
         </Popover>
-      </ariaComponents.DialogTrigger>
+      </DialogTrigger>
     </Portal>
   )
 }
