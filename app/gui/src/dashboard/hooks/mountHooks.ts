@@ -34,15 +34,16 @@ export function useMounted(callback: () => void) {
   }, [stableCallback])
 }
 
-/**
- * Returns a function that returns `true` if the component renders for the first time.
- */
+/** Returns a function that returns `true` if the component renders for the first time. */
 export function useIsFirstRender() {
-  const isFirstMount = useRef(true)
+  // We use `null` here instead of `true` to make react-compiler happy
+  // by utilizing a `lazy ref initialization` pattern.
+  // see:https://github.com/facebook/react/pull/31188
+  const isFirstMount = useRef<false | null>(null)
   const stableCallbackTrue = useEventCallback(() => true)
   const stableCallbackFalse = useEventCallback(() => false)
 
-  if (isFirstMount.current) {
+  if (isFirstMount.current == null) {
     isFirstMount.current = false
     return stableCallbackTrue
   } else {

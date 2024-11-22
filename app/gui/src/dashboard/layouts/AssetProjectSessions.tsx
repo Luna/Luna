@@ -1,61 +1,75 @@
 /** @file A list of previous versions of an asset. */
-import * as React from 'react'
-
 import * as reactQuery from '@tanstack/react-query'
 
 import AssetProjectSession from '#/layouts/AssetProjectSession'
 
-import * as errorBoundary from '#/components/ErrorBoundary'
-import * as loader from '#/components/Loader'
-
-import type * as backendModule from '#/services/Backend'
 import type Backend from '#/services/Backend'
 
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
-
-// ============================
-// === AssetProjectSessions ===
-// ============================
+import { Result } from '#/components/Result'
+import { useText } from '#/providers/TextProvider'
+import { AssetType, BackendType, type ProjectAsset } from '#/services/Backend'
+import { useStore } from '#/utilities/zustand'
+import { assetPanelStore } from './AssetPanel'
 
 /** Props for a {@link AssetProjectSessions}. */
 export interface AssetProjectSessionsProps {
   readonly backend: Backend
-  readonly item: AssetTreeNode<backendModule.ProjectAsset>
 }
 
 /** A list of previous versions of an asset. */
 export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
-  return (
-    <errorBoundary.ErrorBoundary>
-      <React.Suspense fallback={<loader.Loader />}>
-        <AssetProjectSessionsInternal {...props} />
-      </React.Suspense>
-    </errorBoundary.ErrorBoundary>
-  )
+  const { backend } = props
+
+  const { getText } = useText()
+
+  const { item } = useStore(assetPanelStore, (state) => ({ item: state.assetPanelProps.item }), {
+    unsafeEnableTransition: true,
+  })
+
+  if (backend.type === BackendType.local) {
+    return <Result status="info" centered title={getText('assetProjectSessions.localBackend')} />
+  }
+
+  if (item == null) {
+    return <Result status="info" centered title={getText('assetProjectSessions.notSelected')} />
+  }
+
+  if (item.type !== AssetType.project) {
+    return <Result status="info" centered title={getText('assetProjectSessions.notProjectAsset')} />
+  }
+
+  return <AssetProjectSessionsInternal {...props} item={item} />
+}
+
+/** Props for a {@link AssetProjectSessionsInternal}. */
+interface AssetProjectSessionsInternalProps extends AssetProjectSessionsProps {
+  readonly item: ProjectAsset
 }
 
 /** A list of previous versions of an asset. */
-function AssetProjectSessionsInternal(props: AssetProjectSessionsProps) {
+function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) {
   const { backend, item } = props
+  const { getText } = useText()
 
   const projectSessionsQuery = reactQuery.useSuspenseQuery({
-    queryKey: ['getProjectSessions', item.item.id, item.item.title],
+    queryKey: ['getProjectSessions', item.id, item.title],
     queryFn: async () => {
-      const sessions = await backend.listProjectSessions(item.item.id, item.item.title)
+      const sessions = await backend.listProjectSessions(item.id, item.title)
       return [...sessions].reverse()
     },
   })
 
-  return (
-    <div className="pointer-events-auto flex flex-col items-center overflow-y-auto overflow-x-hidden">
-      {projectSessionsQuery.data.map((session) => (
-        <AssetProjectSession
-          key={session.projectSessionId}
-          backend={backend}
-          project={item.item}
-          projectSession={session}
-        />
-      ))}
-    </div>
-  )
+  return projectSessionsQuery.data.length === 0 ?
+      <Result status="info" centered title={getText('assetProjectSessions.noSessions')} />
+    : <div className="flex w-full flex-col justify-start">
+        {projectSessionsQuery.data.map((session, i) => (
+          <AssetProjectSession
+            key={session.projectSessionId}
+            backend={backend}
+            project={item}
+            projectSession={session}
+            index={projectSessionsQuery.data.length - i}
+          />
+        ))}
+      </div>
 }

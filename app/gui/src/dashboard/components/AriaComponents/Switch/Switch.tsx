@@ -16,9 +16,7 @@ import { tv, type VariantProps } from '#/utilities/tailwindVariants'
 import { Form, type FieldPath, type FieldProps, type FieldStateProps, type TSchema } from '../Form'
 import { TEXT_STYLE } from '../Text'
 
-/**
- * Props for the {@Switch} component.
- */
+/** Props for the {@Switch} component. */
 export interface SwitchProps<Schema extends TSchema, TFieldName extends FieldPath<Schema>>
   extends FieldStateProps<
       Omit<AriaSwitchProps, 'children' | 'size' | 'value'> & { value: boolean },
@@ -59,10 +57,7 @@ export const SWITCH_STYLES = tv({
   },
 })
 
-/**
- * A switch allows a user to turn a setting on or off.
- */
-// eslint-disable-next-line no-restricted-syntax
+/** A switch allows a user to turn a setting on or off. */
 export const Switch = forwardRef(function Switch<
   Schema extends TSchema,
   TFieldName extends FieldPath<Schema>,
@@ -125,7 +120,9 @@ export const Switch = forwardRef(function Switch<
       style={props.style}
     >
       <AriaSwitch
-        ref={mergeRefs(switchRef, fieldRef)}
+        ref={(el) => {
+          mergeRefs(switchRef, fieldRef)(el)
+        }}
         {...mergeProps<AriaSwitchProps>()(ariaSwitchProps, fieldProps, {
           defaultSelected: field.value,
           className: switchStyles(),

@@ -11,14 +11,12 @@ import { forwardRef } from '#/utilities/react'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
 import type { CSSProperties, ForwardedRef, ReactElement } from 'react'
-import type { FieldVariantProps, FormInstance } from '../Form'
+import type { FieldVariantProps } from '../Form'
 import { Form, type FieldPath, type FieldProps, type FieldStateProps, type TSchema } from '../Form'
 import type { TestIdProps } from '../types'
 import { CheckboxGroupProvider } from './CheckboxContext'
 
-/**
- * Props for the {@link CheckboxGroupProps} component.
- */
+/** Props for the {@link CheckboxGroupProps} component. */
 export interface CheckboxGroupProps<Schema extends TSchema, TFieldName extends FieldPath<Schema>>
   extends FieldStateProps<AriaCheckboxGroupProps, Schema, TFieldName>,
     FieldProps,
@@ -36,10 +34,7 @@ const CHECKBOX_GROUP_STYLES = tv({
   variants: { fullWidth: { true: 'w-full' } },
 })
 
-/**
- * A CheckboxGroup allows users to select one or more items from a list of choices.
- */
-// eslint-disable-next-line no-restricted-syntax
+/** A CheckboxGroup allows users to select one or more items from a list of choices. */
 export const CheckboxGroup = forwardRef(
   <Schema extends TSchema, TFieldName extends FieldPath<Schema>>(
     props: CheckboxGroupProps<Schema, TFieldName>,
@@ -63,8 +58,7 @@ export const CheckboxGroup = forwardRef(
       ...checkboxGroupProps
     } = props
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks,no-restricted-syntax
-    const formInstance = (form ?? Form.useFormContext()) as FormInstance<Schema>
+    const formInstance = Form.useFormContext(form)
 
     const styles = variants({ fullWidth, className })
     const testId = props['data-testid'] ?? props.testId

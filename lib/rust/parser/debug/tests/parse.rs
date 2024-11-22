@@ -20,6 +20,7 @@
 mod metadata;
 
 use enso_parser_debug::to_s_expr;
+use lexpr::sexp;
 
 
 
@@ -30,7 +31,7 @@ use enso_parser_debug::to_s_expr;
 /// Parses input as a sequence of S-expressions, and wraps it in a `BodyBlock`.
 macro_rules! block {
     ( $($statements:tt)* ) => {
-        lexpr::sexp![(BodyBlock #( $( $statements )* ) )]
+        sexp![(BodyBlock #( $( $statements )* ) )]
     }
 }
 
@@ -148,34 +149,49 @@ fn if_then_else_chained_block() {
 #[test]
 fn plain_comments() {
     test!("# a b c", ()());
-    test!("main = # define main\n 4",
-        (Function (Ident main) #() () (BodyBlock #(() (Number () "4" ())))));
+    test(
+        "main = # define main\n 4",
+        block!(,(Function::new("main", block![() (Number () "4" ())]))),
+    );
 }
 
 #[test]
-fn doc_comments() {
-    let lines = [
-        "## The Identity Function",
-        "",
-        "   Arguments:",
-        "   - x: value to do nothing to",
-        "id x = x",
-    ];
-    test!(lines.join("\n"),
-        (Documented
-         (#((Section " The Identity Function") (Newline)
-           (Newline)
-           (Section "Arguments:") (Newline)
-           (Section "- x: value to do nothing to"))
-         #(()))
-         (Function (Ident id) #((() (Ident x) () ())) () (Ident x))));
-    let lines = ["type Foo", " ## Test indent handling", "  ", " foo bar = foo"];
-    test!(&lines.join("\n"),
+fn function_documentation() {
+    test!([
+            "## The Identity Function",
+            "",
+            "   Arguments:",
+            "   - x: value to do nothing to",
+            "id x = x",
+        ].join("\n"),
+        ,(Function::new("id", sexp![(Ident x)])
+          .with_docs(sexp![
+           ((#((Section " The Identity Function") (Newline) (Newline)
+               (Section "Arguments:") (Newline)
+               (Section "- x: value to do nothing to")))
+            #(()))])
+          .with_arg("x")));
+    test!(&["type Foo", " ## Test indent handling", "  ", " foo bar = foo"].join("\n"),
         (TypeDef Foo #() #(
-         (Documented
-          (#((Section " Test indent handling")) #(() ()))
-          (Function (Ident foo) #((() (Ident bar) () ())) () (Ident foo))))));
+         ,(Function::new("foo", sexp![(Ident foo)])
+           .with_docs(sexp![((#((Section " Test indent handling"))) #(() ()))])
+           .with_arg("bar")))));
     expect_invalid_node("expression ## unexpected doc comment on same line");
+}
+
+#[test]
+fn expression_documentation() {
+    test_block!("## The value of x\nx",
+        (ExpressionStatement ((#((Section " The value of x"))) #(())) (Ident x)));
+}
+
+#[test]
+fn unused_documentation() {
+    test!("## First docs\n## More docs\n\n## More docs after a gap",
+        (Documentation (#((Section " First docs"))))
+        (Documentation (#((Section " More docs"))))
+        ()
+        (Documentation (#((Section " More docs after a gap")))));
 }
 
 
@@ -196,107 +212,79 @@ fn type_definition_no_body() {
 
 #[test]
 fn type_constructors() {
-    let code = [
-        "type Geo",
-        "    Circle",
-        "        radius",
-        "        x",
-        "    Rectangle width height",
-        "    Point",
-    ];
-    test!(code.join("\n"),
+    test!([
+            "type Geo",
+            "    Circle",
+            "        radius",
+            "        x",
+            "    Rectangle width height",
+            "    Point",
+        ].join("\n"),
         (TypeDef Geo #()
-         #((ConstructorDefinition
-             Circle #() #(((() (Ident radius) () ())) ((() (Ident x) () ()))))
-           (ConstructorDefinition
-             Rectangle #((() (Ident width) () ()) (() (Ident height) () ())) #())
-           (ConstructorDefinition Point #() #()))));
+         #(,(Constructor::new("Circle").with_arg_line("radius").with_arg_line("x"))
+           ,(Constructor::new("Rectangle").with_arg("width").with_arg("height"))
+           ,(Constructor::new("Point")))));
     test!("type Foo\n Bar (a : B = C.D)", (TypeDef Foo #() #(
-        (ConstructorDefinition
-         Bar
-         #((() (Ident a) (":" (Ident B)) ((OprApp (Ident C) (Ok ".") (Ident D)))))
-         #()))));
+        ,(Constructor::new("Bar")
+         .with_arg(sexp![(() (Ident a) (":" (Ident B)) ((OprApp (Ident C) (Ok ".") (Ident D))))]))
+    )));
+    test!(["type A", "    Foo (a : Integer, b : Integer)"].join("\n"),
+        (TypeDef A #()
+         #(,(Constructor::new("Foo").with_arg(sexp![(() (Ident a) (":" (Invalid)) ())])))));
+}
+
+#[test]
+fn type_constructor_documentation() {
     test!("type Foo\n ## Bar\n Baz", (TypeDef Foo #() #(
-        (Documented (#((Section " Bar")) #(())) (ConstructorDefinition Baz #() #())))));
-    let code = ["type A", "    Foo (a : Integer, b : Integer)"];
-    test!(code.join("\n"), (TypeDef A #()
-        #((ConstructorDefinition Foo #((() (Ident a) (":" (Invalid)) ())) #()))));
+        ,(Constructor::new("Baz").with_docs(sexp![((#((Section " Bar"))) #(()))])))));
 }
 
 #[test]
 fn type_constructor_private() {
-    #[rustfmt::skip]
-    let code = [
-        "type Foo",
-        "    private Bar"
-    ];
-    test!(code.join("\n"), (TypeDef Foo #() #((Private (ConstructorDefinition Bar #() #())))));
-
-    #[rustfmt::skip]
-    let code = [
-        "type Foo",
-        "    private Bar",
-        "    Foo"
-    ];
-    test!(code.join("\n"), (TypeDef Foo #()
-        #((Private (ConstructorDefinition Bar #() #()))
-        (ConstructorDefinition Foo #() #()))));
-
-    #[rustfmt::skip]
-    let code = [
-        "type Geo",
-        "    private Circle",
-        "        radius",
-        "        x",
-        "    Rectangle width height",
-        "    Point",
-    ];
-    test!(code.join("\n"),
+    test!(["type Foo", "    private Bar"].join("\n"),
+        (TypeDef Foo #() #(,(Constructor::new("Bar").private()))));
+    test!(["type Foo", "    private Bar", "    Foo"].join("\n"),
+        (TypeDef Foo #()
+         #(,(Constructor::new("Bar").private())
+           ,(Constructor::new("Foo")))));
+    test!([ "type Geo",
+            "    private Circle",
+            "        radius",
+            "        x",
+            "    Rectangle width height",
+            "    Point",
+        ].join("\n"),
         (TypeDef Geo #()
-         #((Private(ConstructorDefinition
-             Circle #() #(((() (Ident radius) () ())) ((() (Ident x) () ())))))
-           (ConstructorDefinition
-             Rectangle #((() (Ident width) () ()) (() (Ident height) () ())) #())
-           (ConstructorDefinition Point #() #()))));
-
-    #[rustfmt::skip]
-    let code = [
-        "type My_Type",
-        "    private Value a b c"
-    ];
-    test!(code.join("\n"), (TypeDef My_Type #()
-          #((Private
-             (ConstructorDefinition Value
-              #((() (Ident a) () ()) (() (Ident b) () ()) (() (Ident c) () ())) #())))));
+         #(,(Constructor::new("Circle")
+             .private()
+             .with_arg_line("radius")
+             .with_arg_line("x"))
+           ,(Constructor::new("Rectangle").with_arg("width").with_arg("height"))
+           ,(Constructor::new("Point")))));
+    test!(["type My_Type", "    private Value a b c"].join("\n"),
+        (TypeDef My_Type #()
+         #(,(Constructor::new("Value").private().with_arg("a").with_arg("b").with_arg("c")))));
 }
 
 #[test]
 fn type_methods() {
-    let code = ["type Geo", "    number =", "        x", "    area self = x + x"];
-    #[rustfmt::skip]
-    let expected = block![
+    test!(["type Geo", "    number =", "        x", "    area self = x + x"].join("\n"),
         (TypeDef Geo #()
-         #((Function (Ident number) #() () (BodyBlock #((Ident x))))
-           (Function (Ident area) #((() (Ident self) () ())) ()
-                     (OprApp (Ident x) (Ok "+") (Ident x)))))];
-    test(code.join("\n"), expected);
-    let code = [
-        "type Problem_Builder",
-        "    ## Returns a vector containing all reported problems, aggregated.",
-        "    build_problemset : Vector",
-        "    build_problemset self =",
-        "        self",
-    ];
-    #[rustfmt::skip]
-    let expected = block![
+         #(,(Function::new("number", block![(Ident x)]))
+           ,(Function::new("area", sexp![(OprApp (Ident x) (Ok "+") (Ident x))])
+             .with_arg("self")))));
+    test!([
+            "type Problem_Builder",
+            "    ## Returns a vector containing all reported problems, aggregated.",
+            "    build_problemset : Vector",
+            "    build_problemset self =",
+            "        self",
+        ].join("\n"),
         (TypeDef Problem_Builder #() #(
-         (Documented
-          (#((Section " Returns a vector containing all reported problems, aggregated.")) #(()))
-          (TypeSignature (Ident build_problemset) ":" (Ident Vector)))
-         (Function (Ident build_problemset) #((() (Ident self) () ())) ()
-                   (BodyBlock #((Ident self))))))
-    ];
-    test(code.join("\n"), expected);
+         ,(Function::new("build_problemset", block![(Ident self)])
+           .with_docs(sexp![((#((Section " Returns a vector containing all reported problems, aggregated."))) #(()))])
+           .with_sig(sexp![(Ident Vector)])
+           .with_arg("self")))));
     test!("[foo., bar.]",
         (Array (OprSectionBoundary 1 (OprApp (Ident foo) (Ok ".") ()))
                #(("," (OprSectionBoundary 1 (OprApp (Ident bar) (Ok ".") ()))))));
@@ -304,22 +292,22 @@ fn type_methods() {
 
 #[test]
 fn type_operator_methods() {
-    #[rustfmt::skip]
-    let code = [
-        "type Foo",
-        "    + : Foo -> Foo -> Foo",
-        "    + self b = b",
-        "    Foo.+ : Foo",
-        "    Foo.+ self b = b",
-    ];
-    test!(code.join("\n"),
+    test!([ "type Foo",
+            "    + : Foo -> Foo -> Foo",
+            "    + self b = b",
+            "    Foo.+ : Foo",
+            "    Foo.+ self b = b",
+        ].join("\n"),
         (TypeDef Foo #()
-         #((TypeSignature (Ident #"+") ":"
-            (OprApp (Ident Foo) (Ok "->") (OprApp (Ident Foo) (Ok "->") (Ident Foo))))
-           (Function (Ident #"+") #((() (Ident self) () ()) (() (Ident b) () ())) () (Ident b))
-           (TypeSignature (OprApp (Ident Foo) (Ok ".") (Ident #"+")) ":" (Ident Foo))
-           (Function (OprApp (Ident Foo) (Ok ".") (Ident #"+"))
-                     #((() (Ident self) () ()) (() (Ident b) () ())) () (Ident b)))));
+         #(,(Function::new("+", sexp![(Ident b)])
+             .with_sig(sexp![
+              (OprApp (Ident Foo) (Ok "->") (OprApp (Ident Foo) (Ok "->") (Ident Foo)))])
+             .with_arg("self")
+             .with_arg("b"))
+           ,(Function::named(sexp![(OprApp (Ident Foo) (Ok ".") (Ident #"+"))], sexp![(Ident b)])
+             .with_sig(sexp![(Ident Foo)])
+             .with_arg("self")
+             .with_arg("b")))));
     test!("Any.==", (OprApp (Ident Any) (Ok ".") (Ident #"==")));
     expect_invalid_node("x.-y");
     expect_invalid_node("x.-1");
@@ -333,32 +321,27 @@ fn type_operator_methods() {
 
 #[test]
 fn type_def_full() {
-    let code = [
-        "type Geo",
-        "    Circle",
-        "        radius : float",
-        "        x",
-        "    Rectangle width height",
-        "    Point",
-        "",
-        "    number =",
-        "        x",
-        "    area self = x + x",
-    ];
-    #[rustfmt::skip]
-    let expected = block![
+    test!([ "type Geo",
+            "    Circle",
+            "        radius : float",
+            "        x",
+            "    Rectangle width height",
+            "    Point",
+            "",
+            "    number =",
+            "        x",
+            "    area self = x + x",
+        ].join("\n"),
         (TypeDef Geo #()
-         #((ConstructorDefinition Circle #() #(
-             ((() (Ident radius) (":" (Ident float)) ()))
-             ((() (Ident x) () ()))))
-           (ConstructorDefinition
-             Rectangle #((() (Ident width) () ()) (() (Ident height) () ())) #())
-           (ConstructorDefinition Point #() #())
+         #(,(Constructor::new("Circle")
+             .with_arg_line(sexp![(() (Ident radius) (":" (Ident float)) ())])
+             .with_arg_line("x"))
+           ,(Constructor::new("Rectangle").with_arg("width").with_arg("height"))
+           ,(Constructor::new("Point"))
            ()
-           (Function (Ident number) #() () (BodyBlock #((Ident x))))
-           (Function (Ident area) #((() (Ident self) () ())) ()
-                      (OprApp (Ident x) (Ok "+") (Ident x)))))];
-    test(code.join("\n"), expected);
+           ,(Function::new("number", block![(Ident x)]))
+           ,(Function::new("area", sexp![(OprApp (Ident x) (Ok "+") (Ident x))])
+             .with_arg("self")))));
 }
 
 #[test]
@@ -367,8 +350,8 @@ fn type_def_defaults() {
     test!(code.join("\n"),
         (TypeDef Result #((() (Ident error) () ())
                                (() (Ident ok) () ((Ident Nothing))))
-         #((ConstructorDefinition Ok
-            #((() (Ident value) (":" (Ident ok)) ((Ident Nothing)))) #()))));
+         #(,(Constructor::new("Ok")
+             .with_arg(sexp![(() (Ident value) (":" (Ident ok)) ((Ident Nothing)))])))));
 }
 
 #[test]
@@ -386,14 +369,20 @@ fn type_def_nested() {
 #[test]
 fn assignment_simple() {
     // At the top level of a module, this defines a function with no arguments.
-    test!("foo = x", (Function (Ident foo) #() () (Ident x)));
+    test!("foo = x", ,(Function::new("foo", sexp![(Ident x)])));
     // In a body block, this is a variable binding.
     test_block!("main =\n    foo = x",
-        (Function (Ident main) #() () (BodyBlock #(
-         (Assignment (Ident foo) (Ident x))))));
-    test_block!("foo=x", (Assignment (Ident foo) (Ident x)));
-    test_block!("foo= x", (Assignment (Ident foo) (Ident x)));
+        ,(Function::new("main", block![,(Assignment::new("foo", sexp![(Ident x)]))])));
+    test_block!("foo=x", ,(Assignment::new("foo", sexp![(Ident x)])));
+    test_block!("foo= x", ,(Assignment::new("foo", sexp![(Ident x)])));
     expect_invalid_node("foo =x");
+}
+
+#[test]
+fn assignment_documentation() {
+    test_block!("## The Foo\nfoo = x",
+        ,(Assignment::new("foo", sexp![(Ident x)])
+          .with_docs(sexp![((#((Section " The Foo"))) #(()))])));
 }
 
 
@@ -401,60 +390,57 @@ fn assignment_simple() {
 
 #[test]
 fn function_inline_simple_args() {
-    test!("foo a = x", (Function (Ident foo) #((() (Ident a) () ())) () (Ident x)));
+    test!("foo a = x",
+        ,(Function::new("foo", sexp![(Ident x)]).with_arg("a")));
     test!("foo a b = x",
-        (Function (Ident foo) #((() (Ident a) () ()) (() (Ident b) () ())) () (Ident x)));
-    test!(
-        "foo a b c = x",
-            (Function (Ident foo)
-             #((() (Ident a) () ()) (() (Ident b) () ()) (() (Ident c) () ()))
-             () (Ident x))
-    );
-    test!("foo _ = x", (Function (Ident foo) #((() (Wildcard -1) () ())) () (Ident x)));
+        ,(Function::new("foo", sexp![(Ident x)]).with_arg("a").with_arg("b")));
+    test!("foo a b c = x",
+        ,(Function::new("foo", sexp![(Ident x)]).with_arg("a").with_arg("b").with_arg("c")));
+    test!("foo _ = x",
+        ,(Function::new("foo", sexp![(Ident x)]).with_arg(sexp![(() (Wildcard -1) () ())])));
     expect_invalid_node("foo a =x");
 }
 
 #[test]
-fn function_block_noargs() {
-    test("foo =", block![(Function (Ident foo) #() () ())]);
+fn function_noargs_nobody() {
+    test!("foo =", ,(Function::new("foo", sexp![()])));
 }
 
 #[test]
 fn function_no_body() {
-    test!("foo a =", (Function (Ident foo) #((() (Ident a) () ())) () ()));
-    test!("foo a b =", (Function (Ident foo) #((() (Ident a) () ())
-                                               (() (Ident b) () ())) () ()));
+    test!("foo a =",
+        ,(Function::new("foo", sexp![()]).with_arg("a")));
+    test!("foo a b =",
+        ,(Function::new("foo", sexp![()]).with_arg("a").with_arg("b")));
     test!("foo a b c =",
-        (Function (Ident foo)
-                  #((() (Ident a) () ()) (() (Ident b) () ()) (() (Ident c) () ()))
-                  ()
-                  ()));
+        ,(Function::new("foo", sexp![()]).with_arg("a").with_arg("b").with_arg("c")));
+    test!("foo _ =",
+        ,(Function::new("foo", sexp![()]).with_arg(sexp![(() (Wildcard -1) () ())])));
 }
 
 #[test]
 fn function_block_body() {
     test!("foo a =\n    a",
-        (Function (Ident foo) #((() (Ident a) () ())) () (BodyBlock #((Ident a)))));
+        ,(Function::new("foo", block![(Ident a)]).with_arg("a")));
     test!("foo a b =\n    a",
-        (Function (Ident foo) #((() (Ident a) () ()) (() (Ident b) () ())) ()
-         (BodyBlock #((Ident a)))));
+        ,(Function::new("foo", block![(Ident a)]).with_arg("a").with_arg("b")));
     test!("foo a b c =\n    a",
-        (Function (Ident foo) #((() (Ident a) () ()) (() (Ident b) () ()) (() (Ident c) () ())) ()
-         (BodyBlock #((Ident a)))));
+        ,(Function::new("foo", block![(Ident a)]).with_arg("a").with_arg("b").with_arg("c")));
 }
 
 #[test]
 fn function_qualified() {
     test!("Id.id x = x",
-        (Function (OprApp (Ident Id) (Ok ".") (Ident id))
-                  #((() (Ident x) () ()))
-                  () (Ident x)));
+        ,(Function::named(sexp![(OprApp (Ident Id) (Ok ".") (Ident id))], sexp![(Ident x)])
+          .with_arg("x")));
 }
 
 #[test]
 fn ignored_arguments() {
-    test!("f _ = x", (Function (Ident f) #((() (Wildcard -1) () ())) () (Ident x)));
-    test!("f ~_ = x", (Function (Ident f) #(("~" (Wildcard -1) () ())) () (Ident x)));
+    test!("f _ = x",
+        ,(Function::new("f", sexp![(Ident x)]).with_arg(sexp![(() (Wildcard -1) () ())])));
+    test!("f ~_ = x",
+        ,(Function::new("f", sexp![(Ident x)]).with_arg(sexp![("~" (Wildcard -1) () ())])));
 }
 
 #[test]
@@ -472,15 +458,14 @@ fn foreign_functions() {
 fn function_inline_return_specification() {
     // Typical usage
     test!("id self that:Integer -> Integer = that",
-        (Function (Ident id)
-                  #((() (Ident self) () ()) (() (Ident that) (":" (Ident Integer)) ()))
-                  ("->" (Ident Integer))
-                  (Ident that)));
+        ,(Function::new("id", sexp![(Ident that)])
+          .with_arg("self")
+          .with_arg(sexp![(() (Ident that) (":" (Ident Integer)) ())])
+          .with_return(sexp![(Ident Integer)])));
     // Edge case
     test!("number -> Integer = 23",
-        (Function (Ident number) #()
-                  ("->" (Ident Integer))
-                  (Number () "23" ())));
+        ,(Function::new("number", sexp![(Number () "23" ())])
+          .with_return(sexp![(Ident Integer)])));
     expect_invalid_node("f x : Integer -> Integer = 23");
 }
 
@@ -531,68 +516,49 @@ fn default_app() {
 #[test]
 fn argument_named_default() {
     test!("f default x = x",
-        (Function (Ident f) #((() (Ident default) () ()) (() (Ident x) () ())) () (Ident x)));
+        ,(Function::new("f", sexp![(Ident x)]).with_arg("default").with_arg("x")));
     test!("f x default = x",
-        (Function (Ident f) #((() (Ident x) () ()) (() (Ident default) () ())) () (Ident x)));
+        ,(Function::new("f", sexp![(Ident x)]).with_arg("x").with_arg("default")));
 }
 
 #[test]
 fn complex_arguments() {
-    test!("f x=1 = x",
-        (Function (Ident f) #((() (Ident x) () ((Number () "1" ())))) () (Ident x)));
-    test!("f (x : Number) = x",
-        (Function (Ident f) #((() (Ident x) (":" (Ident Number)) ())) () (Ident x)));
-    test!("f (x = 1) = x",
-        (Function (Ident f) #((() (Ident x) () ((Number () "1" ())))) () (Ident x)));
-    test!("f ((x = 1) : Number) = x",
-        (Function (Ident f) #((() (Invalid) (":" (Ident Number)) ())) () (Ident x)));
-    test!("f (x=1 : Number) = x",
-        (Function (Ident f) #((() (Invalid) (":" (Ident Number)) ())) () (Ident x)));
-    test!("f (x : Number = 1) = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f (x y) = x", (Function (Ident f) #((() (Invalid) () ())) () (Ident x)));
-    test!("f ((x : Number) = 1) = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f ((x : Array Number) = 1) = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (App (Ident Array) (Ident Number))) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f (x):Number=1 = x",
-        (Function (Ident f)
-         #((() (Invalid) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f ((x:Number=1)) = x", (Function (Ident f) #((() (Invalid) () ())) () (Ident x)));
-    test!("f (x : Number)=1 = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f (x:Number = 1) = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f (x:Number=1) = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
-    test!("f x:Number=1 = x",
-        (Function (Ident f)
-         #((() (Ident x) (":" (Ident Number)) ((Number () "1" ()))))
-         () (Ident x)));
+    test!("f x=1 = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) () ((Number () "1" ())))])));
+    test!("f (x : Number) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ())])));
+    test!("f (x = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) () ((Number () "1" ())))])));
+    test!("f ((x = 1) : Number) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Invalid) (":" (Ident Number)) ())])));
+    test!("f (x=1 : Number) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Invalid) (":" (Ident Number)) ())])));
+    test!("f (x : Number = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f (x y) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Invalid) () ())])));
+    test!("f ((x : Number) = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f ((x : Array Number) = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![
+           (() (Ident x) (":" (App (Ident Array) (Ident Number))) ((Number () "1" ())))])));
+    test!("f (x):Number=1 = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Invalid) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f ((x:Number=1)) = x",
+        ,(Function::new("f", sexp![(Ident x)]).with_arg(sexp![(() (Invalid) () ())])));
+    test!("f (x : Number)=1 = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f (x:Number = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f (x:Number=1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
+    test!("f x:Number=1 = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![(() (Ident x) (":" (Ident Number)) ((Number () "1" ())))])));
     // Pattern in LHS:
-    test!("f ~x=1 = x",
-        (Function (Ident f)
-         #(("~" (Ident x) () ((Number () "1" ()))))
-         ()
-         (Ident x)));
-    test!("f (~x = 1) = x",
-        (Function (Ident f)
-         #(("~" (Ident x) () ((Number () "1" ()))))
-         ()
-         (Ident x)));
+    test!("f ~x=1 = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![("~" (Ident x) () ((Number () "1" ())))])));
+    test!("f (~x = 1) = x", ,(Function::new("f", sexp![(Ident x)])
+        .with_arg(sexp![("~" (Ident x) () ((Number () "1" ())))])));
 }
 
 
@@ -600,41 +566,31 @@ fn complex_arguments() {
 
 #[test]
 fn code_block_body() {
-    let code = ["main =", "    x"];
-    test!(code.join("\n"), (Function (Ident main) #() () (BodyBlock #((Ident x)))));
-    let code = ["main =", "      ", "    x"];
-    test!(code.join("\n"), (Function (Ident main) #() () (BodyBlock #(() (Ident x)))));
-    let code = ["main =", "    ", "    x"];
-    test!(code.join("\n"), (Function (Ident main) #() () (BodyBlock #(() (Ident x)))));
-    let code = ["main =", "  ", "    x"];
-    test!(code.join("\n"), (Function (Ident main) #() () (BodyBlock #(() (Ident x)))));
-    let code = ["main =", "", "    x"];
-    test!(code.join("\n"), (Function (Ident main) #() () (BodyBlock #(() (Ident x)))));
-
-    #[rustfmt::skip]
-    let code = [
-        "main =",
-        "    +x",
-        "    print x",
-    ];
-    #[rustfmt::skip]
-    let expect = block![
-        (Function (Ident main) #() () (BodyBlock #(
-         (OprSectionBoundary 1 (OprApp () (Ok "+") (Ident x)))
-         (App (Ident print) (Ident x)))))
-    ];
-    test(code.join("\n"), expect);
+    test!(["main =", "    x"].join("\n"),
+        ,(Function::new("main", block![(Ident x)])));
+    test!(["main =", "      ", "    x"].join("\n"),
+        ,(Function::new("main", block![() (Ident x)])));
+    test!(["main =", "    ", "    x"].join("\n"),
+        ,(Function::new("main", block![() (Ident x)])));
+    test!(["main =", "  ", "    x"].join("\n"),
+        ,(Function::new("main", block![() (Ident x)])));
+    test!(["main =", "", "    x"].join("\n"),
+        ,(Function::new("main", block![() (Ident x)])));
+    test!(["main =", "    +x", "    print x"].join("\n"),
+        ,(Function::new("main", block![
+          (OprSectionBoundary 1 (OprApp () (Ok "+") (Ident x)))
+          (App (Ident print) (Ident x))])));
 }
 
 #[test]
 fn code_block_operator() {
-    let code = ["value = nums", "    * each random", "    + constant"];
-    test_block!(code.join("\n"),
-        (Assignment (Ident value)
-         (OperatorBlockApplication (Ident nums)
-          #(((Ok "*") (App (Ident each) (Ident random)))
-            ((Ok "+") (Ident constant)))
-          #())));
+    test_block!(["value = nums", "    * each random", "    + constant"].join("\n"),
+    ,(Assignment::new("value", sexp![
+     (OperatorBlockApplication (Ident nums)
+      #(((Ok "*") (App (Ident each) (Ident random)))
+        ((Ok "+") (Ident constant)))
+      #())
+    ])));
 }
 
 #[test]
@@ -653,14 +609,14 @@ fn code_block_argument_list() {
     test!("foo\n    bar", (ArgumentBlockApplication (Ident foo) #((Ident bar))));
 
     test_block!("value = foo\n    bar",
-        (Assignment (Ident value) (ArgumentBlockApplication (Ident foo) #((Ident bar)))));
+        ,(Assignment::new("value", sexp![(ArgumentBlockApplication (Ident foo) #((Ident bar)))])));
 
     let code = ["value = foo", "    +x", "    bar"];
     test_block!(code.join("\n"),
-        (Assignment (Ident value)
-         (ArgumentBlockApplication (Ident foo) #(
-          (OprSectionBoundary 1 (OprApp () (Ok "+") (Ident x)))
-          (Ident bar)))));
+        ,(Assignment::new("value", sexp![
+          (ArgumentBlockApplication (Ident foo) #(
+           (OprSectionBoundary 1 (OprApp () (Ok "+") (Ident x)))
+           (Ident bar)))])));
 }
 
 #[test]
@@ -668,38 +624,30 @@ fn code_block_empty() {
     // The first line here should parse as a function with no body expression (which is an error).
     // No input would parse as an empty `ArgumentBlock` or `OperatorBlock`, because those types are
     // distinguished from a body continuation by the presence of non-empty indented lines.
-    let code = ["foo =", "bar"];
-    test(code.join("\n"), block![(Function (Ident foo) #() () ()) (Ident bar)]);
+    test!(["foo =", "bar"].join("\n"), ,(Function::new("foo", sexp![()])) (Ident bar));
     // This parses similarly to above; a line with no non-whitespace content does not create a code
     // block.
-    let code = ["foo =", "    ", "bar"];
-    test(code.join("\n"), block![(Function (Ident foo) #() () ()) () (Ident bar)]);
+    test!(["foo =", "    ", "bar"].join("\n"), ,(Function::new("foo", sexp![()])) () (Ident bar));
 }
 
 #[test]
 fn code_block_bad_indents1() {
     test!(["main =", "  foo", " bar", "  baz"].join("\n"),
-        (Function (Ident main) #() () (BodyBlock #((Ident foo) (Ident bar) (Ident baz)))));
+        ,(Function::new("main", block![(Ident foo) (Ident bar) (Ident baz)])));
 }
 
 #[test]
 fn code_block_bad_indents2() {
-    let code = ["main =", "  foo", " bar", "baz"];
-    let expected = block![
-        (Function (Ident main) #() () (BodyBlock #((Ident foo) (Ident bar))))
-        (Ident baz)
-    ];
-    test(code.join("\n"), expected);
+    test!(["main =", "  foo", " bar", "baz"].join("\n"),
+        ,(Function::new("main", block![(Ident foo) (Ident bar)]))
+        (Ident baz));
 }
 
 #[test]
 fn code_block_with_following_statement() {
-    let code = ["main =", "    foo", "bar"];
-    let expected = block![
-        (Function (Ident main) #() () (BodyBlock #((Ident foo))))
-        (Ident bar)
-    ];
-    test(code.join("\n"), expected);
+    test!(["main =", "    foo", "bar"].join("\n"),
+        ,(Function::new("main", block![(Ident foo)]))
+        (Ident bar));
 }
 
 #[test]
@@ -806,8 +754,8 @@ fn operator_sections() {
         (OprSectionBoundary 1 (OprApp (OprApp () (Ok "+") (Number () "1" ()))
                                (Ok "+") (Ident x))));
     test_block!("increment = 1 +",
-        (Assignment (Ident increment)
-         (OprSectionBoundary 1 (OprApp (Number () "1" ()) (Ok "+") ()))));
+        ,(Assignment::new("increment", sexp![
+          (OprSectionBoundary 1 (OprApp (Number () "1" ()) (Ok "+") ()))])));
     test!("1+ << 2*",
         (OprSectionBoundary 1
          (OprApp (OprApp (Number () "1" ()) (Ok "+") ())
@@ -860,11 +808,8 @@ fn template_functions() {
 
 #[test]
 fn unevaluated_argument() {
-    let code = ["main ~foo = x"];
-    let expected = block![
-        (Function (Ident main) #(("~" (Ident foo) () ())) () (Ident x))
-    ];
-    test(code.join("\n"), expected);
+    test!("main ~foo = x",
+        ,(Function::new("main", sexp![(Ident x)]).with_arg(sexp![("~" (Ident foo) () ())])));
 }
 
 #[test]
@@ -881,17 +826,18 @@ fn unary_operator_at_end_of_expression() {
 fn unspaced_operator_sequence() {
     // Add a negated value.
     test_block!("x = y+-z",
-        (Assignment (Ident x) (OprApp (Ident y) (Ok "+") (UnaryOprApp "-" (Ident z)))));
+        ,(Assignment::new("x", sexp![(OprApp (Ident y) (Ok "+") (UnaryOprApp "-" (Ident z)))])));
     // Create an operator section that adds a negated value to its input.
     test_block!("x = +-z",
-        (Assignment (Ident x) (OprSectionBoundary 1
-            (OprApp () (Ok "+") (UnaryOprApp "-" (Ident z))))));
+        ,(Assignment::new("x", sexp![
+          (OprSectionBoundary 1
+           (OprApp () (Ok "+") (UnaryOprApp "-" (Ident z))))])));
     // The `-` can only be lexed as a unary operator, and unary operators cannot form sections.
     expect_invalid_node("main =\n    x = y+-");
     // Assign a negative number to x.
-    test_block!("x=-1", (Assignment (Ident x) (UnaryOprApp "-" (Number () "1" ()))));
+    test_block!("x=-1", ,(Assignment::new("x", sexp![(UnaryOprApp "-" (Number () "1" ()))])));
     // Assign a negated value to x.
-    test_block!("x=-y", (Assignment (Ident x) (UnaryOprApp "-" (Ident y))));
+    test_block!("x=-y", ,(Assignment::new("x", sexp![(UnaryOprApp "-" (Ident y))])));
 }
 
 #[test]
@@ -920,7 +866,7 @@ fn minus_unary() {
     test!("-x", (UnaryOprApp "-" (Ident x)));
     test!("(-x)", (Group (UnaryOprApp "-" (Ident x))));
     test!("-(x * x)", (UnaryOprApp "-" (Group (OprApp (Ident x) (Ok "*") (Ident x)))));
-    test_block!("x=-x", (Assignment (Ident x) (UnaryOprApp "-" (Ident x))));
+    test_block!("x=-x", ,(Assignment::new("x", sexp![(UnaryOprApp "-" (Ident x))])));
     test!("-x+x", (OprApp (UnaryOprApp "-" (Ident x)) (Ok "+") (Ident x)));
     test!("-x*x", (OprApp (UnaryOprApp "-" (Ident x)) (Ok "*") (Ident x)));
 }
@@ -946,10 +892,10 @@ fn method_app_in_minus_unary() {
 
 #[test]
 fn autoscope_operator() {
-    test_block!("x : ..True", (TypeSignature (Ident x) ":" (AutoscopedIdentifier ".." True)));
-    test_block!("x = ..True", (Assignment (Ident x) (AutoscopedIdentifier ".." True)));
+    test!("x : ..True", (TypeSignatureDeclaration ((Ident x) ":" (AutoscopedIdentifier ".." True))));
+    test_block!("x = ..True", ,(Assignment::new("x", sexp![(AutoscopedIdentifier ".." True)])));
     test_block!("x = f ..True",
-        (Assignment (Ident x) (App (Ident f) (AutoscopedIdentifier ".." True))));
+        ,(Assignment::new("x", sexp![(App (Ident f) (AutoscopedIdentifier ".." True))])));
     expect_invalid_node("x = ..not_a_constructor");
     expect_invalid_node("x = case a of ..True -> True");
     expect_invalid_node("x = ..4");
@@ -1072,13 +1018,27 @@ fn metadata_parsing() {
 
 #[test]
 fn type_signatures() {
-    test!("val : Bool", (TypeSignature (Ident val) ":" (Ident Bool)));
-    test!("val : List Int", (TypeSignature (Ident val) ":" (App (Ident List) (Ident Int))));
+    test!("val : Bool", (TypeSignatureDeclaration ((Ident val) ":" (Ident Bool))));
+    test_block!("val : Bool\nval", (TypeSignatureDeclaration ((Ident val) ":" (Ident Bool))) (Ident val));
+    test_block!("val : Bool", (TypeAnnotated (Ident val) ":" (Ident Bool)));
+    test!("val : Bool\nval = True",
+        ,(Function::new("val", sexp![(Ident True)])
+          .with_sig(sexp![(Ident Bool)])));
+    test!("val : Bool\n\nval = True",
+        ,(Function::new("val", sexp![(Ident True)])
+          .with_sig(sexp![(Ident Bool)])));
+    test!("val : Bool\n\n\nval = True",
+        ,(Function::new("val", sexp![(Ident True)])
+          .with_sig(sexp![(Ident Bool)])));
+    test!("val : Bool\ndifferent_name = True",
+        (TypeSignatureDeclaration ((Ident val) ":" (Ident Bool)))
+        ,(Function::new("different_name", sexp![(Ident True)])));
+    test!("val : List Int", (TypeSignatureDeclaration ((Ident val) ":" (App (Ident List) (Ident Int)))));
     test!("foo : [Integer | Text] -> (Integer | Text)",
-        (TypeSignature (Ident foo) ":"
+        (TypeSignatureDeclaration ((Ident foo) ":"
          (OprApp (Array (OprApp (Ident Integer) (Ok "|") (Ident Text)) #())
                  (Ok "->")
-                 (Group (OprApp (Ident Integer) (Ok "|") (Ident Text))))));
+                 (Group (OprApp (Ident Integer) (Ok "|") (Ident Text)))))));
     test!("f a (b : Int) : Double",
         (TypeAnnotated
          (App (App (Ident f) (Ident a)) (Group (TypeAnnotated (Ident b) ":" (Ident Int))))
@@ -1092,19 +1052,19 @@ fn type_signatures() {
 #[test]
 fn type_annotations() {
     test_block!("val = x : Int",
-        (Assignment (Ident val) (TypeAnnotated (Ident x) ":" (Ident Int))));
+        ,(Assignment::new("val", sexp![(TypeAnnotated (Ident x) ":" (Ident Int))])));
     test_block!("val = foo (x : Int)",
-        (Assignment (Ident val)
-         (App (Ident foo)
-          (Group (TypeAnnotated (Ident x) ":" (Ident Int))))));
+        ,(Assignment::new("val", sexp![
+          (App (Ident foo)
+           (Group (TypeAnnotated (Ident x) ":" (Ident Int))))])));
     test!("(x : My_Type _)",
         (Group
          (TypeAnnotated (Ident x)
                         ":"
                         (App (Ident My_Type) (TemplateFunction 1 (Wildcard 0))))));
     test!("x : List Int -> Int",
-        (TypeSignature (Ident x) ":"
-         (OprApp (App (Ident List) (Ident Int)) (Ok "->") (Ident Int))));
+        (TypeSignatureDeclaration ((Ident x) ":"
+         (OprApp (App (Ident List) (Ident Int)) (Ok "->") (Ident Int)))));
     test!("p:Plus + m:Plus",
         (OprApp (TypeAnnotated (Ident p) ":" (Ident Plus))
          (Ok "+") (TypeAnnotated (Ident m) ":" (Ident Plus))));
@@ -1116,10 +1076,11 @@ fn type_annotations() {
 #[test]
 fn inline_text_literals() {
     test!(r#""I'm an inline raw text!""#, (TextLiteral #((Section "I'm an inline raw text!"))));
-    test_block!(r#"zero_length = """#, (Assignment (Ident zero_length) (TextLiteral #())));
+    test_block!(r#"zero_length = """#, ,(Assignment::new("zero_length", sexp![(TextLiteral #())])));
     test!(r#""type""#, (TextLiteral #((Section "type"))));
-    test_block!(r#"unclosed = ""#, (Assignment (Ident unclosed) (TextLiteral #())));
-    test_block!(r#"unclosed = "a"#, (Assignment (Ident unclosed) (TextLiteral #((Section "a")))));
+    test_block!(r#"unclosed = ""#, ,(Assignment::new("unclosed", sexp![(TextLiteral #())])));
+    test_block!(r#"unclosed = "a"#,
+        ,(Assignment::new("unclosed", sexp![(TextLiteral #((Section "a")))])));
     test!(r#"'Other quote type'"#, (TextLiteral #((Section "Other quote type"))));
     test!(r#""Non-escape: \n""#, (TextLiteral #((Section "Non-escape: \\n"))));
     test!(r#""Non-escape: \""#, (TextLiteral #((Section "Non-escape: \\"))));
@@ -1161,16 +1122,16 @@ x"#,
         (TextLiteral #((Section "multiline string that doesn't end in a newline")))
         (Ident x));
     test_block!("x = \"\"\"\n    Indented multiline\nx",
-        (Assignment (Ident x) (TextLiteral #((Section "Indented multiline"))))
+        ,(Assignment::new("x", sexp![(TextLiteral #((Section "Indented multiline")))]))
         (Ident x));
     test!("'''\n    \\nEscape at start\n",
         (TextLiteral #((Escape 0x0A) (Section "Escape at start"))) ());
     test!("x =\n x = '''\n  x\nx",
-        (Function (Ident x) #() ()
-         (BodyBlock #((Assignment (Ident x) (TextLiteral #((Section "x")))))))
+        ,(Function::new("x", block![
+          ,(Assignment::new("x", sexp![(TextLiteral #((Section "x")))]))]))
         (Ident x));
     test_block!("foo = bar '''\n baz",
-        (Assignment (Ident foo) (App (Ident bar) (TextLiteral #((Section "baz"))))));
+        ,(Assignment::new("foo", sexp![(App (Ident bar) (TextLiteral #((Section "baz"))))])));
     test!("'''\n \\t'", (TextLiteral #((Escape 0x09) (Section "'"))));
     test!("'''\n x\n \\t'", (TextLiteral #((Section "x") (Newline) (Escape 0x09) (Section "'"))));
 }
@@ -1257,10 +1218,10 @@ fn old_lambdas() {
         (App (Ident f) (OprApp (Ident x) (Ok "->") (BodyBlock #((Ident y))))));
     test!("x->y-> z", (OprApp (Ident x) (Ok "->") (OprApp (Ident y) (Ok "->") (Ident z))));
     test_block!("foo = x -> (y = bar x) -> x + y",
-        (Assignment (Ident foo)
-         (OprApp (Ident x) (Ok "->")
-          (OprApp (Group (OprApp (Ident y) (Ok "=") (App (Ident bar) (Ident x)))) (Ok "->")
-           (OprApp (Ident x) (Ok "+") (Ident y))))));
+        ,(Assignment::new("foo", sexp![
+          (OprApp (Ident x) (Ok "->")
+           (OprApp (Group (OprApp (Ident y) (Ok "=") (App (Ident bar) (Ident x)))) (Ok "->")
+            (OprApp (Ident x) (Ok "+") (Ident y))))])));
 }
 
 
@@ -1269,9 +1230,12 @@ fn old_lambdas() {
 #[test]
 fn pattern_irrefutable() {
     test_block!("Point x_val = my_point",
-        (Assignment (App (Ident Point) (Ident x_val)) (Ident my_point)));
-    test_block!("Vector _ = x", (Assignment (App (Ident Vector) (Wildcard -1)) (Ident x)));
-    test_block!("X.y = z", (Function (OprApp (Ident X) (Ok ".") (Ident y)) #() () (Ident z)));
+        ,(Assignment::pattern(sexp![(App (Ident Point) (Ident x_val))],
+           sexp![(Ident my_point)])));
+    test_block!("Vector _ = x",
+        ,(Assignment::pattern(sexp![(App (Ident Vector) (Wildcard -1))], sexp![(Ident x)])));
+    test_block!("X.y = z",
+        ,(Function::named(sexp![(OprApp (Ident X) (Ok ".") (Ident y))], sexp![(Ident z)])));
 }
 
 #[test]
@@ -1329,23 +1293,18 @@ fn case_expression() {
 
 #[test]
 fn case_documentation() {
-    #[rustfmt::skip]
-    let code = [
-        "case a of",
-        "    ## The Some case",
-        "    Some -> x",
-        "    ## The Int case",
-        "    Int -> x",
-    ];
-    #[rustfmt::skip]
-    let expected = block![
+    test!([
+            "case a of",
+            "    ## The Some case",
+            "    Some -> x",
+            "    ## The Int case",
+            "    Int -> x",
+        ].join("\n"),
         (CaseOf (Ident a) #(
-            (((#((Section " The Some case")) #()) () () ()))
+            ((((#((Section " The Some case"))) #()) () () ()))
             ((() (Ident Some) "->" (Ident x)))
-            (((#((Section " The Int case")) #()) () () ()))
-            ((() (Ident Int) "->" (Ident x)))))
-    ];
-    test(code.join("\n"), expected);
+            ((((#((Section " The Int case"))) #()) () () ()))
+            ((() (Ident Int) "->" (Ident x))))));
 }
 
 #[test]
@@ -1381,21 +1340,23 @@ fn suspended_default_arguments_in_pattern() {
 #[test]
 fn suspended_default_arguments_in_expression() {
     test_block!("c = self.value ...",
-        (Assignment (Ident c)
-         (App (OprApp (Ident self) (Ok ".") (Ident value)) (SuspendedDefaultArguments))));
+        ,(Assignment::new("c", sexp![
+          (App (OprApp (Ident self) (Ok ".") (Ident value)) (SuspendedDefaultArguments))])));
     test_block!("c = self.value...",
-        (Assignment (Ident c)
-         (App (OprApp (Ident self) (Ok ".") (Ident value)) (SuspendedDefaultArguments))));
+        ,(Assignment::new("c", sexp![
+          (App (OprApp (Ident self) (Ok ".") (Ident value)) (SuspendedDefaultArguments))])));
 }
 
 // === Private (project-private) keyword ===
 
 #[test]
 fn private_keyword() {
-    test!("private", (Private()));
+    test!("private", (Private private));
     expect_invalid_node("private func");
     // Private binding is not supported.
     expect_invalid_node("main =\n    private var = 42");
+    // Private function is not allowed in body block.
+    expect_invalid_node("main =\n    private func x = 42");
     expect_invalid_node("private ConstructorOutsideType");
     expect_invalid_node("type My_Type\n    private");
     expect_invalid_node("private type My_Type\n    Ctor");
@@ -1404,14 +1365,12 @@ fn private_keyword() {
 #[test]
 fn private_methods() {
     test!("private method x = x",
-        (Private (Function (Ident method) #((() (Ident x) () ())) () (Ident x))));
+        ,(Function::new("method", sexp![(Ident x)]).private().with_arg("x")));
     test!("private method =\n    42",
-        (Private (Function (Ident method) #() ()
-         (BodyBlock #((Number () "42" ()))))));
+        ,(Function::new("method", block![(Number () "42" ())]).private()));
     test!("type T\n    private method x = x",
          (TypeDef T #() #(
-          (Private
-           (Function (Ident method) #((() (Ident x) () ())) () (Ident x))))));
+          ,(Function::new("method", sexp![(Ident x)]).private().with_arg("x")))));
 }
 
 
@@ -1471,7 +1430,7 @@ mod numbers {
 
     #[test]
     fn with_decimal() {
-        test_block!("pi = 3.14", (Assignment (Ident pi) (Number () "3" ("." "14"))));
+        test_block!("pi = 3.14", ,(Assignment::new("pi", sexp![(Number () "3" ("." "14"))])));
     }
 
     #[test]
@@ -1531,9 +1490,9 @@ mod numbers {
 
 #[test]
 fn trailing_whitespace() {
-    test("a ", block![(Ident a) ()]);
-    test("a \n", block![(Ident a) ()]);
-    test("a = \n x", block![(Function (Ident a) #() () (BodyBlock #((Ident x))))]);
+    test!("a ", (Ident a) ());
+    test!("a \n", (Ident a) ());
+    test!("a = \n x", ,(Function::new("a", block![(Ident x)])));
 }
 
 
@@ -1546,25 +1505,37 @@ fn at_operator() {
 }
 
 #[test]
-fn attributes() {
-    test!("@on_problems P.g\nTable.select_columns : Text -> Table",
-        (Annotated on_problems
-         (OprApp (Ident P) (Ok ".") (Ident g))
-         #(())
-         (TypeSignature (OprApp (Ident Table) (Ok ".") (Ident select_columns))
-                        ":"
-                        (OprApp (Ident Text) (Ok "->") (Ident Table)))));
-    test!("@a z\n@b\nx", (Annotated a (Ident z) #(()) (Annotated b () #(()) (Ident x))));
-    test!("@a\n@b\nx", (Annotated a () #(()) (Annotated b () #(()) (Ident x))));
+fn annotations() {
+    test!("@on_problems P.g\nselect_columns : Text -> Table\nselect_columns text = to_table text",
+        ,(Function::new("select_columns", sexp![(App (Ident to_table) (Ident text))])
+          .with_annotation("on_problems", sexp![(OprApp (Ident P) (Ok ".") (Ident g))])
+          .with_sig(sexp![(OprApp (Ident Text) (Ok "->") (Ident Table))])
+          .with_arg("text")));
+    test!("@a\n@b 1 + 1\nf x = x",
+        ,(Function::new("f", sexp![(Ident x)])
+          .with_annotation("a", sexp![()])
+          .with_annotation("b", sexp![(OprApp (Number () "1" ()) (Ok "+") (Number () "1" ()))])
+          .with_arg("x")));
 }
 
 #[test]
-fn attributes_in_types() {
+fn annotations_on_type_methods() {
     test!("type A\n @a z\n @b\n x y = x",
         (TypeDef A #() #(
-         (Annotated a (Ident z) #(())
-          (Annotated b () #(())
-           (Function (Ident x) #((() (Ident y) () ())) () (Ident x)))))));
+         ,(Function::new("x", sexp![(Ident x)])
+           .with_annotation("a", sexp![(Ident z)])
+           .with_annotation("b", sexp![()])
+           .with_arg("y")))));
+}
+
+#[test]
+fn annotations_on_type_constructors() {
+    test!("type A\n @a z\n @b\n Baz x",
+        (TypeDef A #() #(
+         ,(Constructor::new("Baz")
+           .with_annotation("a", sexp![(Ident z)])
+           .with_annotation("b", sexp![()])
+           .with_arg("x")))));
 }
 
 #[test]
@@ -1613,11 +1584,11 @@ fn skip() {
 
 #[test]
 fn statement_in_expression_context() {
-    test_block!("x = y = z", (Assignment (Ident x) (Invalid)));
+    test_block!("x = y = z", ,(Assignment::new("x", sexp![(Invalid)])));
     test!("(y = z)", (Group(Invalid)));
     test!("(y = z) x", (App (Group (Invalid)) (Ident x)));
     test_block!("(f x = x)", (Group(Invalid)));
-    test_block!("y = f x = x", (Assignment (Ident y) (Invalid)));
+    test_block!("y = f x = x", ,(Assignment::new("y", sexp![(Invalid)])));
 }
 
 
@@ -1903,4 +1874,192 @@ fn expect_valid(code: &str) {
     expect_tree_representing_code(code, &ast);
     let errors = Errors::collect(&ast, code);
     assert!(!errors.invalid_node);
+}
+
+// =========================
+// === Test case helpers ===
+// =========================
+
+// === Functions ===
+
+/// Builder for function definitions.
+struct Function {
+    docs:        lexpr::Value,
+    annotations: Vec<lexpr::Value>,
+    signature:   lexpr::Value,
+    private:     lexpr::Value,
+    name:        lexpr::Value,
+    args:        Vec<lexpr::Value>,
+    body:        lexpr::Value,
+    ret:         lexpr::Value,
+}
+
+impl Function {
+    fn new(name: &str, body: lexpr::Value) -> Self {
+        let name = lexpr::Value::symbol(name);
+        Self::named(sexp![(Ident, name)], body)
+    }
+
+    fn named(name: lexpr::Value, body: lexpr::Value) -> Self {
+        Self {
+            docs: sexp![()],
+            annotations: vec![],
+            signature: sexp![()],
+            private: sexp![()],
+            name,
+            args: vec![],
+            body,
+            ret: sexp![()],
+        }
+    }
+
+    #[rustfmt::skip]
+    fn with_docs(self, docs: lexpr::Value) -> Self {
+        Self { docs, ..self }
+    }
+
+    #[rustfmt::skip]
+    fn with_annotation(mut self, annotation: &str, arg: lexpr::Value) -> Self {
+        let annotation = lexpr::Value::symbol(annotation);
+        self.annotations.push(sexp![((,annotation ,arg) #(()))]);
+        self
+    }
+
+    #[rustfmt::skip]
+    fn with_sig(self, signature: lexpr::Value) -> Self {
+        let name = self.name.clone();
+        Self { signature: sexp![(,name ":" ,signature)], ..self }
+    }
+
+    fn with_arg(mut self, arg: impl Into<Arg>) -> Self {
+        self.args.push(arg.into().into());
+        self
+    }
+
+    fn with_return(self, ret: lexpr::Value) -> Self {
+        Self { ret: sexp![("->", ret)], ..self }
+    }
+
+    fn private(self) -> Self {
+        Self { private: sexp![private], ..self }
+    }
+}
+
+impl From<Function> for lexpr::Value {
+    #[rustfmt::skip]
+    fn from(Function { docs, annotations, signature, private, name, args, ret, body }: Function) -> Self {
+        sexp![(Function ,docs ,annotations ,signature ,private ,name ,args ,ret ,body)]
+    }
+}
+
+struct Arg(lexpr::Value);
+
+impl From<&str> for Arg {
+    fn from(name: &str) -> Self {
+        let name = lexpr::Value::symbol(name);
+        Self(sexp![(()(Ident, name)()())])
+    }
+}
+
+impl From<lexpr::Value> for Arg {
+    fn from(arg: lexpr::Value) -> Self {
+        Self(arg)
+    }
+}
+
+impl From<Arg> for lexpr::Value {
+    fn from(Arg(arg): Arg) -> Self {
+        arg
+    }
+}
+
+// === Constructors ===
+
+/// Builder for type constructor definitions.
+struct Constructor {
+    docs:        lexpr::Value,
+    annotations: Vec<lexpr::Value>,
+    private:     lexpr::Value,
+    name:        lexpr::Value,
+    args:        Vec<lexpr::Value>,
+    arg_lines:   Vec<lexpr::Value>,
+}
+
+impl Constructor {
+    fn new(name: &str) -> Self {
+        Self {
+            docs:        sexp![()],
+            annotations: vec![],
+            private:     sexp![()],
+            name:        lexpr::Value::symbol(name),
+            args:        vec![],
+            arg_lines:   vec![],
+        }
+    }
+
+    #[rustfmt::skip]
+    fn with_docs(self, docs: lexpr::Value) -> Self {
+        Self { docs, ..self }
+    }
+
+    #[rustfmt::skip]
+    fn with_annotation(mut self, annotation: &str, arg: lexpr::Value) -> Self {
+        let annotation = lexpr::Value::symbol(annotation);
+        self.annotations.push(sexp![((,annotation ,arg) #(()))]);
+        self
+    }
+
+    fn with_arg(mut self, arg: impl Into<Arg>) -> Self {
+        self.args.push(arg.into().into());
+        self
+    }
+
+    fn with_arg_line(mut self, arg: impl Into<Arg>) -> Self {
+        let arg = arg.into();
+        self.arg_lines.push(sexp![(,arg)]);
+        self
+    }
+
+    fn private(self) -> Self {
+        Self { private: sexp![private], ..self }
+    }
+}
+
+impl From<Constructor> for lexpr::Value {
+    #[rustfmt::skip]
+    fn from(Constructor { docs, annotations, private, name, args, arg_lines }: Constructor) -> Self {
+        sexp![(ConstructorDefinition ,docs ,annotations ,private ,name ,args, arg_lines)]
+    }
+}
+
+// === Assignments ===
+
+/// Builder for variable assignments.
+struct Assignment {
+    docs:    lexpr::Value,
+    pattern: lexpr::Value,
+    value:   lexpr::Value,
+}
+
+impl Assignment {
+    fn new(name: &str, body: lexpr::Value) -> Self {
+        let name = lexpr::Value::symbol(name);
+        Self::pattern(sexp![(Ident, name)], body)
+    }
+
+    fn pattern(pattern: lexpr::Value, value: lexpr::Value) -> Self {
+        Self { docs: sexp![()], pattern, value }
+    }
+
+    #[rustfmt::skip]
+    fn with_docs(self, docs: lexpr::Value) -> Self {
+        Self { docs, ..self }
+    }
+}
+
+impl From<Assignment> for lexpr::Value {
+    #[rustfmt::skip]
+    fn from(Assignment { docs, pattern, value }: Assignment) -> Self {
+        sexp![(Assignment ,docs ,pattern ,value)]
+    }
 }

@@ -9,7 +9,7 @@ import {
 import BottomPanel from '@/components/BottomPanel.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import ComponentBrowser from '@/components/ComponentBrowser.vue'
-import { type Usage } from '@/components/ComponentBrowser/input'
+import type { Usage } from '@/components/ComponentBrowser/input'
 import { usePlacement } from '@/components/ComponentBrowser/placement'
 import ComponentDocumentation from '@/components/ComponentDocumentation.vue'
 import DockPanel from '@/components/DockPanel.vue'
@@ -20,20 +20,21 @@ import { useGraphEditorClipboard } from '@/components/GraphEditor/clipboard'
 import { performCollapse, prepareCollapsedInfo } from '@/components/GraphEditor/collapsing'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import { useGraphEditorToasts } from '@/components/GraphEditor/toasts'
-import { Uploader, uploadedExpression } from '@/components/GraphEditor/upload'
+import { uploadedExpression, Uploader } from '@/components/GraphEditor/upload'
+import GraphMissingView from '@/components/GraphMissingView.vue'
 import GraphMouse from '@/components/GraphMouse.vue'
 import PlusButton from '@/components/PlusButton.vue'
 import SceneScroller from '@/components/SceneScroller.vue'
 import TopBar from '@/components/TopBar.vue'
 import { builtinWidgets } from '@/components/widgets'
-import { useAstDocumentation } from '@/composables/astDocumentation'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { keyboardBusy, keyboardBusyExceptIn, unrefElement, useEvent } from '@/composables/events'
 import { groupColorVar } from '@/composables/nodeColors'
 import type { PlacementStrategy } from '@/composables/nodeCreation'
 import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
 import { provideFullscreenContext } from '@/providers/fullscreenContext'
-import { provideGraphNavigator, type GraphNavigator } from '@/providers/graphNavigator'
+import type { GraphNavigator } from '@/providers/graphNavigator'
+import { provideGraphNavigator } from '@/providers/graphNavigator'
 import { provideNodeColors } from '@/providers/graphNodeColors'
 import { provideNodeCreation } from '@/providers/graphNodeCreation'
 import { provideGraphSelection } from '@/providers/graphSelection'
@@ -42,24 +43,26 @@ import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
 import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
-import { provideGraphStore, type NodeId } from '@/stores/graph'
+import type { NodeId } from '@/stores/graph'
+import { provideGraphStore } from '@/stores/graph'
 import type { RequiredImport } from '@/stores/graph/imports'
 import { useProjectStore } from '@/stores/project'
+import { provideNodeExecution } from '@/stores/project/nodeExecution'
 import { useSettings } from '@/stores/settings'
 import { provideSuggestionDbStore } from '@/stores/suggestionDatabase'
-import type { SuggestionId } from '@/stores/suggestionDatabase/entry'
-import { suggestionDocumentationUrl, type Typename } from '@/stores/suggestionDatabase/entry'
+import type { SuggestionId, Typename } from '@/stores/suggestionDatabase/entry'
+import { suggestionDocumentationUrl } from '@/stores/suggestionDatabase/entry'
 import { provideVisualizationStore } from '@/stores/visualization'
 import { bail } from '@/util/assert'
-import type { AstId } from '@/util/ast/abstract'
+import { Ast } from '@/util/ast'
 import { colorFromString } from '@/util/colors'
 import { partition } from '@/util/data/array'
-import { every, filterDefined } from '@/util/data/iterable'
 import { Rect } from '@/util/data/rect'
-import { Err, Ok, unwrapOr } from '@/util/data/result'
+import { Err, Ok } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { computedFallback, useSelectRef } from '@/util/reactivity'
 import { until } from '@vueuse/core'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { encoding, set } from 'lib0'
 import {
   computed,
@@ -73,7 +76,6 @@ import {
   type ComponentInstance,
 } from 'vue'
 import { encodeMethodPointer } from 'ydoc-shared/languageServerTypes'
-import * as iterable from 'ydoc-shared/util/data/iterable'
 import { isDevMode } from 'ydoc-shared/util/detect'
 
 const rootNode = ref<HTMLElement>()
@@ -86,6 +88,7 @@ const widgetRegistry = provideWidgetRegistry(graphStore.db)
 const _visualizationStore = provideVisualizationStore(projectStore)
 const visible = injectVisibility()
 provideFullscreenContext(rootNode)
+provideNodeExecution(projectStore)
 ;(window as any)._mockSuggestion = suggestionDb.mockSuggestion
 
 onMounted(() => {
@@ -214,6 +217,7 @@ function panToSelected() {
 // == Breadcrumbs ==
 
 const stackNavigator = provideStackNavigator(projectStore, graphStore)
+const graphMissing = computed(() => graphStore.moduleRoot != null && !graphStore.methodAst.ok)
 
 // === Toasts ===
 
@@ -327,7 +331,7 @@ const graphBindingsHandler = graphBindings.handler({
   },
   toggleVisualization() {
     const selected = nodeSelection.selected
-    const allVisible = every(
+    const allVisible = iter.every(
       selected,
       (id) => graphStore.db.nodeIdToNode.get(id)?.vis?.visible === true,
     )
@@ -413,7 +417,7 @@ const documentationEditorArea = computed(() => unrefElement(docEditor))
 const showRightDock = computedFallback(
   storedShowRightDock,
   // Show documentation editor when documentation exists on first graph visit.
-  () => !!documentation.state.value,
+  () => (markdownDocs.value?.length ?? 0) > 0,
 )
 const rightDockTab = computedFallback(storedRightDockTab, () => 'docs')
 
@@ -427,9 +431,11 @@ const documentationEditorHandler = documentationEditorBindings.handler({
   },
 })
 
-const { documentation } = useAstDocumentation(graphStore, () =>
-  unwrapOr(graphStore.methodAst, undefined),
-)
+const markdownDocs = computed(() => {
+  const currentMethod = graphStore.methodAst
+  if (!currentMethod.ok) return
+  return currentMethod.value.mutableDocumentationMarkdown()
+})
 
 // === Component Browser ===
 
@@ -482,6 +488,12 @@ const rightDockVisible = useSelectRef(
   }),
   showRightDock,
 )
+
+/** Show help panel if it is not visible. If it is visible, close the right dock. */
+function toggleRightDockHelpPanel() {
+  rightDockVisible.value = !rightDockVisible.value || rightDockDisplayedTab.value !== 'help'
+  rightDockDisplayedTab.value = 'help'
+}
 
 function editWithComponentBrowser(node: NodeId, cursorPos: number) {
   openComponentBrowser(
@@ -541,7 +553,7 @@ const componentBrowserElements = computed(() => [
 
 interface NewNodeOptions {
   placement: PlacementStrategy
-  sourcePort?: AstId | undefined
+  sourcePort?: Ast.AstId | undefined
 }
 
 function addNodeDisconnected() {
@@ -571,7 +583,7 @@ function clearFocus() {
 function createNodesFromSource(sourceNode: NodeId, options: NodeCreationOptions[]) {
   const sourcePort = graphStore.db.getNodeFirstOutputPort(sourceNode)
   if (sourcePort == null) return
-  const sourcePortAst = graphStore.viewModule.get(sourcePort)
+  const sourcePortAst = graphStore.viewModule.get(sourcePort) as Ast.Expression
   const [toCommit, toEdit] = partition(options, (opts) => opts.commit)
   createNodes(
     toCommit.map((options: NodeCreationOptions) => ({
@@ -583,7 +595,7 @@ function createNodesFromSource(sourceNode: NodeId, options: NodeCreationOptions[
     createWithComponentBrowser({ placement: { type: 'source', node: sourceNode }, sourcePort })
 }
 
-function handleNodeOutputPortDoubleClick(id: AstId) {
+function handleNodeOutputPortDoubleClick(id: Ast.AstId) {
   const srcNode = graphStore.db.getPatternExpressionNodeId(id)
   if (srcNode == null) {
     console.error('Impossible happened: Double click on port not belonging to any node: ', id)
@@ -592,7 +604,7 @@ function handleNodeOutputPortDoubleClick(id: AstId) {
   createWithComponentBrowser({ placement: { type: 'source', node: srcNode }, sourcePort: id })
 }
 
-function handleEdgeDrop(source: AstId, position: Vec2) {
+function handleEdgeDrop(source: Ast.AstId, position: Vec2) {
   createWithComponentBrowser({ placement: { type: 'fixed', position }, sourcePort: source })
 }
 
@@ -600,7 +612,7 @@ function handleEdgeDrop(source: AstId, position: Vec2) {
 
 function collapseNodes() {
   const selected = new Set(
-    iterable.filter(
+    iter.filter(
       nodeSelection.selected,
       (id) => graphStore.db.nodeIdToNode.get(id)?.type === 'component',
     ),
@@ -621,19 +633,19 @@ function collapseNodes() {
     if (!topLevel) {
       bail('BUG: no top level, collapsing not possible.')
     }
-    const selectedNodeRects = filterDefined(Array.from(selected, graphStore.visibleArea))
+    const selectedNodeRects = iter.filterDefined(iter.map(selected, graphStore.visibleArea))
     graphStore.edit((edit) => {
-      const { refactoredExpressionAstId, collapsedNodeIds, outputAstId } = performCollapse(
+      const { collapsedCallRoot, collapsedNodeIds, outputAstId } = performCollapse(
         info.value,
         edit.getVersion(topLevel),
         graphStore.db,
         currentMethodName,
       )
       const position = collapsedNodePlacement(selectedNodeRects)
-      edit.get(refactoredExpressionAstId).mutableNodeMetadata().set('position', position.xy())
+      edit.get(collapsedCallRoot).mutableNodeMetadata().set('position', position.xy())
       if (outputAstId != null) {
-        const collapsedNodeRects = filterDefined(
-          Array.from(collapsedNodeIds, graphStore.visibleArea),
+        const collapsedNodeRects = iter.filterDefined(
+          iter.map(collapsedNodeIds, graphStore.visibleArea),
         )
         const { place } = usePlacement(collapsedNodeRects, graphNavigator.viewport)
         const position = place(collapsedNodeRects)
@@ -652,11 +664,6 @@ async function handleFileDrop(event: DragEvent) {
   const MULTIPLE_FILES_GAP = 50
 
   if (!event.dataTransfer?.items) return
-  const projectRootId = await projectStore.projectRootId
-  if (projectRootId == null) {
-    toasts.userActionFailed.show(`Unable to upload file(s): Could not identify project root.`)
-    return
-  }
   ;[...event.dataTransfer.items].forEach(async (item, index) => {
     if (item.kind === 'file') {
       const file = item.getAsFile()
@@ -665,10 +672,7 @@ async function handleFileDrop(event: DragEvent) {
       const offset = new Vec2(0, index * -MULTIPLE_FILES_GAP)
       const pos = graphNavigator.clientToScenePos(clientPos).add(offset)
       const uploader = Uploader.Create(
-        projectStore.lsRpcConnection,
-        projectStore.dataConnection,
-        projectRootId,
-        projectStore.awareness,
+        projectStore,
         file,
         pos,
         projectStore.isOnLocalBackend,
@@ -718,24 +722,29 @@ const documentationEditorFullscreen = ref(false)
   >
     <div class="vertical">
       <div ref="viewportNode" class="viewport" @click="handleClick">
-        <GraphNodes
-          @nodeOutputPortDoubleClick="handleNodeOutputPortDoubleClick"
-          @nodeDoubleClick="(id) => stackNavigator.enterNode(id)"
-          @createNodes="createNodesFromSource"
-        />
-        <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
-        <ComponentBrowser
-          v-if="componentBrowserVisible"
-          ref="componentBrowser"
-          :navigator="graphNavigator"
-          :nodePosition="componentBrowserNodePosition"
-          :usage="componentBrowserUsage"
-          :associatedElements="componentBrowserElements"
-          @accepted="commitComponentBrowser"
-          @canceled="hideComponentBrowser"
-          @selectedSuggestionId="displayedDocs = $event"
-          @isAiPrompt="aiMode = $event"
-        />
+        <GraphMissingView v-if="graphMissing" />
+        <template v-else>
+          <GraphNodes
+            @nodeOutputPortDoubleClick="handleNodeOutputPortDoubleClick"
+            @enterNode="(id) => stackNavigator.enterNode(id)"
+            @createNodes="createNodesFromSource"
+            @toggleDocPanel="toggleRightDockHelpPanel"
+          />
+          <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
+          <ComponentBrowser
+            v-if="componentBrowserVisible"
+            ref="componentBrowser"
+            :navigator="graphNavigator"
+            :nodePosition="componentBrowserNodePosition"
+            :usage="componentBrowserUsage"
+            :associatedElements="componentBrowserElements"
+            @accepted="commitComponentBrowser"
+            @canceled="hideComponentBrowser"
+            @selectedSuggestionId="displayedDocs = $event"
+            @isAiPrompt="aiMode = $event"
+          />
+          <PlusButton title="Add Component" @click.stop="addNodeDisconnected()" />
+        </template>
         <TopBar
           v-model:recordMode="projectStore.recordMode"
           v-model:showColorPicker="showColorPicker"
@@ -750,7 +759,6 @@ const documentationEditorFullscreen = ref(false)
           @collapseNodes="collapseNodes"
           @removeNodes="deleteSelected"
         />
-        <PlusButton title="Add Component" @click.stop="addNodeDisconnected()" />
         <SceneScroller
           :navigator="graphNavigator"
           :scrollableArea="Rect.Bounding(...graphStore.visibleNodeAreas)"
@@ -772,18 +780,14 @@ const documentationEditorFullscreen = ref(false)
     >
       <template #docs>
         <DocumentationEditor
+          v-if="markdownDocs"
           ref="docEditor"
-          :modelValue="documentation.state.value"
-          @update:modelValue="documentation.set"
+          :yText="markdownDocs"
           @update:fullscreen="documentationEditorFullscreen = $event"
         />
       </template>
       <template #help>
-        <ComponentDocumentation
-          :displayedSuggestionId="displayedDocs"
-          :aiMode="aiMode"
-          @update:displayedSuggestionId="displayedDocs = $event"
-        />
+        <ComponentDocumentation v-model="displayedDocs" :aiMode="aiMode" />
       </template>
     </DockPanel>
   </div>
@@ -803,7 +807,7 @@ const documentationEditorFullscreen = ref(false)
 
   display: flex;
   flex-direction: row;
-  & :deep(.DockPanel) {
+  & .DockPanel {
     flex: none;
   }
   & .vertical {
@@ -815,7 +819,7 @@ const documentationEditorFullscreen = ref(false)
 .vertical {
   display: flex;
   flex-direction: column;
-  & :deep(.BottomPanel) {
+  & .BottomPanel {
     flex: none;
   }
   & .viewport {

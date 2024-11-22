@@ -25,7 +25,7 @@ import org.enso.polyglot.common_utils.Core_Text_Utils;
 /** The main runtime type for Enso's Text. */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class Text implements EnsoObject {
+public final class Text extends EnsoObject {
   private static final Lock LOCK = new ReentrantLock();
   private static final Text EMPTY = new Text("");
   private volatile Object contents;
@@ -197,6 +197,12 @@ public final class Text implements EnsoObject {
     return Core_Text_Utils.computeGraphemeLength(toString());
   }
 
+  @Override
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(allowSideEffects, ToJavaStringNode.getUncached());
+  }
+
   @CompilerDirectives.TruffleBoundary
   @ExportMessage
   String toDisplayString(
@@ -284,5 +290,22 @@ public final class Text implements EnsoObject {
       LOCK.unlock();
     }
     return result;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 7 * toString().hashCode();
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj instanceof Text other) {
+      return this.toString().equals(other.toString());
+    }
+    return false;
   }
 }

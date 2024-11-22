@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
@@ -53,7 +54,7 @@ import org.enso.text.buffer.Rope;
 
 /** Represents a source module with a known location. */
 @ExportLibrary(InteropLibrary.class)
-public final class Module implements EnsoObject {
+public final class Module extends EnsoObject {
   private ModuleSources sources;
   private QualifiedName name;
   private ModuleScope.Builder scopeBuilder;
@@ -87,6 +88,7 @@ public final class Module implements EnsoObject {
    * @param sourceFile the module's source file.
    */
   public Module(QualifiedName name, Package<TruffleFile> pkg, TruffleFile sourceFile) {
+    ensureConsistentName(name, pkg);
     this.sources = ModuleSources.NONE.newWith(sourceFile);
     this.name = name;
     this.scopeBuilder = new ModuleScope.Builder(this);
@@ -105,6 +107,7 @@ public final class Module implements EnsoObject {
    * @param literalSource the module's source.
    */
   public Module(QualifiedName name, Package<TruffleFile> pkg, String literalSource) {
+    ensureConsistentName(name, pkg);
     this.sources = ModuleSources.NONE.newWith(Rope.apply(literalSource));
     this.name = name;
     this.scopeBuilder = new ModuleScope.Builder(this);
@@ -124,6 +127,7 @@ public final class Module implements EnsoObject {
    * @param literalSource the module's source.
    */
   public Module(QualifiedName name, Package<TruffleFile> pkg, Rope literalSource) {
+    ensureConsistentName(name, pkg);
     this.sources = ModuleSources.NONE.newWith(literalSource);
     this.name = name;
     this.scopeBuilder = new ModuleScope.Builder(this);
@@ -143,6 +147,7 @@ public final class Module implements EnsoObject {
    */
   private Module(
       QualifiedName name, Package<TruffleFile> pkg, boolean synthetic, Rope literalSource) {
+    ensureConsistentName(name, pkg);
     this.sources =
         literalSource == null ? ModuleSources.NONE : ModuleSources.NONE.newWith(literalSource);
     this.name = name;
@@ -156,6 +161,27 @@ public final class Module implements EnsoObject {
       scopeBuilder.build();
     } else {
       this.compilationStage = CompilationStage.AFTER_CODEGEN;
+    }
+  }
+
+  private void ensureConsistentName(QualifiedName name, Package<TruffleFile> pkg) {
+    if (name.toString().equals(Builtins.MODULE_NAME)) {
+      return;
+    }
+    if (pkg != null && name.isSimple()) {
+      throw new IllegalArgumentException(
+          "Simple module name must not be in a package, i.e., trying to initialize a module in a"
+              + " package '"
+              + pkg.libraryName().toString()
+              + "' with a simple name '"
+              + name
+              + "'");
+    } else if (pkg == null && !name.isSimple()) {
+      throw new IllegalArgumentException(
+          "Qualified module name must be in a package, i.e., trying to initialize "
+              + "a module with a qualified name '"
+              + name
+              + "' without a package");
     }
   }
 
@@ -747,6 +773,10 @@ public final class Module implements EnsoObject {
   boolean isMemberInvocable(String member) {
     return member.equals(MethodNames.Module.GET_METHOD)
         || member.equals(MethodNames.Module.REPARSE)
+        || member.equals(MethodNames.Module.GATHER_IMPORT_STATEMENTS)
+        || member.equals(MethodNames.Module.GENERATE_DOCS)
+        || member.equals(MethodNames.Module.GET_NAME)
+        || member.equals(MethodNames.Module.GET_TYPE)
         || member.equals(MethodNames.Module.SET_SOURCE)
         || member.equals(MethodNames.Module.SET_SOURCE_FILE)
         || member.equals(MethodNames.Module.GET_ASSOCIATED_TYPE)
@@ -770,8 +800,15 @@ public final class Module implements EnsoObject {
         MethodNames.Module.EVAL_EXPRESSION);
   }
 
+  @ExportMessage
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    return "Module[" + name + ']';
+  }
+
   @Override
   public String toString() {
-    return "Module[" + name + ']';
+    return toDisplayString(false);
   }
 }

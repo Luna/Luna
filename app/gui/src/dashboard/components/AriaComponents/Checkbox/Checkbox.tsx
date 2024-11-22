@@ -20,22 +20,14 @@ import type {
 } from 'react'
 import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
-import type {
-  FieldPath,
-  FieldStateProps,
-  FormInstance,
-  TSchema,
-  UseFormRegisterReturn,
-} from '../Form'
+import type { FieldPath, FieldStateProps, TSchema, UseFormRegisterReturn } from '../Form'
 import { Form } from '../Form'
 import { Text } from '../Text'
 import type { TestIdProps } from '../types'
 import { useCheckboxContext } from './CheckboxContext'
 import { CheckboxGroup } from './CheckboxGroup'
 
-/**
- * Props for the {@link Checkbox} component.
- */
+/** Props for the {@link Checkbox} component. */
 export type CheckboxProps<Schema extends TSchema, TFieldName extends FieldPath<Schema>> = Omit<
   VariantProps<typeof CHECKBOX_STYLES>,
   'isDisabled' | 'isInvalid'
@@ -46,18 +38,14 @@ export type CheckboxProps<Schema extends TSchema, TFieldName extends FieldPath<S
     readonly checkboxRef?: MutableRefObject<HTMLInputElement>
   } & (CheckboxGroupCheckboxProps | StandaloneCheckboxProps<Schema, TFieldName>)
 
-/**
- * Props for the {@link Checkbox} component when used inside a {@link CheckboxGroup}.
- */
+/** Props for the {@link Checkbox} component when used inside a {@link CheckboxGroup}. */
 interface CheckboxGroupCheckboxProps extends AriaCheckboxProps {
   readonly value: string
   readonly form?: never
   readonly name?: never
 }
 
-/**
- * Props for the {@link Checkbox} component when used outside of a {@link CheckboxGroup}.
- */
+/** Props for the {@link Checkbox} component when used outside of a {@link CheckboxGroup}. */
 type StandaloneCheckboxProps<
   Schema extends TSchema,
   TFieldName extends FieldPath<Schema>,
@@ -123,9 +111,7 @@ export const TICK_VARIANTS: Variants = {
   },
 }
 
-/**
- * Checkboxes allow users to select multiple items from a list of individual items, or to mark one individual item as selected.
- */
+/** Checkboxes allow users to select multiple items from a list of individual items, or to mark one individual item as selected. */
 // eslint-disable-next-line no-restricted-syntax
 export const Checkbox = forwardRef(function Checkbox<
   Schema extends TSchema,
@@ -146,8 +132,7 @@ export const Checkbox = forwardRef(function Checkbox<
 
   const { store, removeSelected, addSelected } = useCheckboxContext()
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks, no-restricted-syntax
-  const formInstance = (form ?? Form.useFormContext()) as unknown as FormInstance<Schema>
+  const formInstance = Form.useFormContext(form)
 
   const { isSelected, field, onChange, name } = useStore(store, (state) => {
     const { insideGroup } = state
@@ -207,7 +192,9 @@ export const Checkbox = forwardRef(function Checkbox<
 
   return (
     <AriaCheckbox
-      ref={mergeRefs(ref, field.ref)}
+      ref={(el) => {
+        mergeRefs(ref, field.ref)(el)
+      }}
       {...props}
       inputRef={useMergedRef(checkboxRef, (input) => {
         // Hack to remove the `data-testid` attribute from the input element

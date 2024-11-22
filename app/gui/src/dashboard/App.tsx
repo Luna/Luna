@@ -59,6 +59,8 @@ import ModalProvider, * as modalProvider from '#/providers/ModalProvider'
 import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 import SessionProvider from '#/providers/SessionProvider'
 import * as textProvider from '#/providers/TextProvider'
+import type { Spring } from 'framer-motion'
+import { MotionConfig } from 'framer-motion'
 
 import ConfirmRegistration from '#/pages/authentication/ConfirmRegistration'
 import ForgotPassword from '#/pages/authentication/ForgotPassword'
@@ -102,6 +104,16 @@ import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
 // ============================
 // === Global configuration ===
 // ============================
+
+const DEFAULT_TRANSITION_OPTIONS: Spring = {
+  type: 'spring',
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  stiffness: 200,
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  damping: 30,
+  mass: 1,
+  velocity: 0,
+}
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -215,6 +227,27 @@ export default function App(props: AppProps) {
     },
   })
 
+  const queryClient = props.queryClient
+
+  // Force all queries to be stale
+  // We don't use the `staleTime` option because it's not performant
+  // and triggers unnecessary setTimeouts.
+  reactQuery.useQuery({
+    queryKey: ['refresh'],
+    queryFn: () => {
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .forEach((query) => {
+          query.isStale = () => true
+        })
+
+      return null
+    },
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    refetchInterval: 2 * 60 * 1000,
+  })
+
   // Both `BackendProvider` and `InputBindingsProvider` depend on `LocalStorageProvider`.
   // Note that the `Router` must be the parent of the `AuthProvider`, because the `AuthProvider`
   // will redirect the user between the login/register pages and the dashboard.
@@ -267,9 +300,11 @@ function AppRouter(props: AppRouterProps) {
   const httpClient = useHttpClient()
   const logger = useLogger()
   const navigate = router.useNavigate()
+
   const { getText } = textProvider.useText()
   const { localStorage } = localStorageProvider.useLocalStorage()
   const { setModal } = modalProvider.useSetModal()
+
   const navigator2D = navigator2DProvider.useNavigator2D()
 
   const localBackend = React.useMemo(
@@ -497,42 +532,42 @@ function AppRouter(props: AppRouterProps) {
 
   return (
     <FeatureFlagsProvider>
-      <RouterProvider navigate={navigate}>
-        <SessionProvider
-          saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
-          mainPageUrl={mainPageUrl}
-          userSession={userSession}
-          registerAuthEventListener={registerAuthEventListener}
-          refreshUserSession={refreshUserSession}
-        >
-          <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
-            <AuthProvider
-              shouldStartInOfflineMode={isAuthenticationDisabled}
-              authService={authService}
-              onAuthenticated={onAuthenticated}
-            >
-              <InputBindingsProvider inputBindings={inputBindings}>
-                {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
-                 * due to modals being in `TheModal`. */}
-                <DriveProvider>
-                  <errorBoundary.ErrorBoundary>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    {detect.IS_DEV_MODE && (
+      <MotionConfig reducedMotion="user" transition={DEFAULT_TRANSITION_OPTIONS}>
+        <RouterProvider navigate={navigate}>
+          <SessionProvider
+            saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
+            mainPageUrl={mainPageUrl}
+            userSession={userSession}
+            registerAuthEventListener={registerAuthEventListener}
+            refreshUserSession={refreshUserSession}
+          >
+            <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
+              <AuthProvider
+                shouldStartInOfflineMode={isAuthenticationDisabled}
+                authService={authService}
+                onAuthenticated={onAuthenticated}
+              >
+                <InputBindingsProvider inputBindings={inputBindings}>
+                  {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+                   * due to modals being in `TheModal`. */}
+                  <DriveProvider>
+                    <errorBoundary.ErrorBoundary>
+                      <LocalBackendPathSynchronizer />
+                      <VersionChecker />
+                      {routes}
                       <suspense.Suspense>
                         <errorBoundary.ErrorBoundary>
                           <devtools.EnsoDevtools />
                         </errorBoundary.ErrorBoundary>
                       </suspense.Suspense>
-                    )}
-                  </errorBoundary.ErrorBoundary>
-                </DriveProvider>
-              </InputBindingsProvider>
-            </AuthProvider>
-          </BackendProvider>
-        </SessionProvider>
-      </RouterProvider>
+                    </errorBoundary.ErrorBoundary>
+                  </DriveProvider>
+                </InputBindingsProvider>
+              </AuthProvider>
+            </BackendProvider>
+          </SessionProvider>
+        </RouterProvider>
+      </MotionConfig>
     </FeatureFlagsProvider>
   )
 }

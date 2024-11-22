@@ -1,21 +1,23 @@
 /** @file ESLint configuration file. */
-/** NOTE: The "Experimental: Use Flat Config" option must be enabled.
- * Flat config is still not quite mature, so is disabled by default. */
+/**
+ * NOTE: The "Experimental: Use Flat Config" option must be enabled.
+ * Flat config is still not quite mature, so is disabled by default.
+ */
 import * as path from 'node:path'
 import * as url from 'node:url'
 
 // The preferred syntax is `import * as name`, however these modules do not support it.
 // This is specialcased in other files, but these modules shouldn't be used in other files anyway.
-/* eslint-disable no-restricted-syntax */
+
 import eslintJs from '@eslint/js'
 import tsEslint from '@typescript-eslint/eslint-plugin'
 import vueTsEslintConfig from '@vue/eslint-config-typescript'
 import jsdoc from 'eslint-plugin-jsdoc'
 import react from 'eslint-plugin-react'
+import reactCompiler from 'eslint-plugin-react-compiler'
 import reactHooks from 'eslint-plugin-react-hooks'
 import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
-/* eslint-enable no-restricted-syntax */
 
 // =================
 // === Constants ===
@@ -24,13 +26,15 @@ import globals from 'globals'
 const DEBUG_STATEMENTS_MESSAGE = 'Avoid leaving debugging statements when committing code'
 const DIR_NAME = path.dirname(url.fileURLToPath(import.meta.url))
 const NAME = 'enso'
-/** An explicit whitelist of CommonJS modules, which do not support namespace imports.
+/**
+ * An explicit whitelist of CommonJS modules, which do not support namespace imports.
  * Many of these have incorrect types, so no type error may not mean they support ESM,
  * and conversely type errors may not mean they don't support ESM -
  * but we add those to the whitelist anyway otherwise we get type errors.
  * In particular, `string-length` supports ESM but its type definitions don't.
  * `yargs` is a modules we explicitly want the default imports of.
- * `node:process` is here because `process.on` does not exist on the namespace import. */
+ * `node:process` is here because `process.on` does not exist on the namespace import.
+ */
 const DEFAULT_IMPORT_ONLY_MODULES =
   '@vitejs\\u002Fplugin-react|node:process|chalk|string-length|yargs|yargs\\u002Fyargs|sharp|to-ico|connect|morgan|serve-static|tiny-invariant|clsx|create-servers|electron-is-dev|fast-glob|esbuild-plugin-.+|opener|tailwindcss.*|@modyfi\\u002Fvite-plugin-yaml|build-info|is-network-error|validator.+|.*[.]json$'
 const RELATIVE_MODULES =
@@ -48,7 +52,6 @@ const NOT_CONSTANT_CASE = `/^(?!${WHITELISTED_CONSTANTS}$|_?[A-Z][A-Z0-9]*(_[A-Z
 // Extracted to a variable because it needs to be used twice:
 // - once as-is for `.d.ts`
 // - once explicitly disallowing `declare`s in regular `.ts`.
-/** @type {{ selector: string; message: string; }[]} */
 const RESTRICTED_SYNTAXES = [
   {
     selector: `ImportDeclaration[source.value=/^(?!(${ALLOWED_DEFAULT_IMPORT_MODULES})$)[^.]/] > ImportDefaultSpecifier`,
@@ -183,7 +186,6 @@ const RESTRICTED_SYNTAXES = [
 // === ESLint configuration ===
 // ============================
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export default [
   {
     // Playwright build cache and Vite build directory.
@@ -195,6 +197,8 @@ export default [
       '**/build.mjs',
       '**/*.timestamp-*.mjs',
       '**/node_modules',
+      '**/generated',
+      'app/rust-ffi/pkg/',
     ],
   },
   eslintJs.configs.recommended,
@@ -207,7 +211,12 @@ export default [
         tsconfigRootDir: DIR_NAME,
         ecmaVersion: 'latest',
         extraFileExtensions: ['.vue'],
-        projectService: true,
+        projectService: {
+          allowDefaultProject: [
+            'app/ydoc-server/vitest.config.ts',
+            'app/ydoc-shared/vitest.config.ts',
+          ],
+        },
       },
     },
     rules: {
@@ -224,7 +233,9 @@ export default [
         },
       ],
       '@typescript-eslint/no-namespace': 'off',
-      '@typescript-eslint/no-empty-object-type': ['error'],
+      // Empty interfaces have valid uses; e.g. although an empty interface extending a class is semantically equivalent
+      // to a type alias, it is not resolved by IDEs to the base type (which may be internal).
+      '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
       'no-unused-labels': 'off',
       // Taken care of by prettier
       'vue/max-attributes-per-line': 'off',
@@ -291,6 +302,7 @@ export default [
       '@typescript-eslint': tsEslint,
       react: react,
       'react-hooks': reactHooks,
+      'react-compiler': reactCompiler,
     },
     languageOptions: {
       parserOptions: {
@@ -371,8 +383,13 @@ export default [
       'react/prop-types': 'off',
       'react/self-closing-comp': 'error',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll' }],
+      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll|useLazyMemoHooks' }],
       'react/jsx-pascal-case': ['error', { allowNamespace: true }],
+
+      // We use warnings instead of errors because we want to gradually migrate the codebase to the new compiler.
+      // see: https://github.com/reactwg/react-compiler/discussions/8
+      'react-compiler/react-compiler': 'warn',
+
       // Prefer `interface` over `type`.
       '@typescript-eslint/consistent-type-definitions': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
@@ -537,6 +554,17 @@ export default [
       ],
       // This rule does not work with TypeScript, and TypeScript already does this.
       'no-undef': 'off',
+    },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 ]

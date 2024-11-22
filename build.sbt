@@ -106,6 +106,11 @@ ThisBuild / publish / skip := true
 val simpleLibraryServerTag = Tags.Tag("simple-library-server")
 Global / concurrentRestrictions += Tags.limit(simpleLibraryServerTag, 1)
 
+/** Tag limiting the concurrent spawning of `native-image` subprocess.
+  */
+val nativeImageBuildTag = NativeImage.nativeImageBuildTag
+Global / concurrentRestrictions += Tags.limit(nativeImageBuildTag, 1)
+
 lazy val gatherLicenses =
   taskKey[Unit](
     "Gathers licensing information for relevant dependencies of all distributions"
@@ -473,7 +478,7 @@ val commons = Seq(
 
 // === Helidon ================================================================
 val jakartaVersion = "2.0.1"
-val helidonVersion = "4.0.8"
+val helidonVersion = "4.1.2"
 val helidon = Seq(
   "io.helidon"                 % "helidon"                     % helidonVersion,
   "io.helidon.builder"         % "helidon-builder-api"         % helidonVersion,
@@ -586,7 +591,8 @@ val bouncyCastle = Seq(
 // === Google =================================================================
 val googleApiClientVersion         = "2.2.0"
 val googleApiServicesSheetsVersion = "v4-rev612-1.25.0"
-val googleAnalyticsDataVersion     = "0.44.0"
+val googleAnalyticsAdminVersion    = "0.62.0"
+val googleAnalyticsDataVersion     = "0.63.0"
 
 // === Other ==================================================================
 
@@ -715,6 +721,7 @@ lazy val componentModulesPaths =
     (`runtime-instrument-runtime-server` / Compile / exportedModuleBin).value,
     (`runtime-language-arrow` / Compile / exportedModuleBin).value,
     (`runtime-language-epb` / Compile / exportedModuleBin).value,
+    (`runtime-version-manager` / Compile / exportedModuleBin).value,
     (`persistance` / Compile / exportedModuleBin).value,
     (`cli` / Compile / exportedModuleBin).value,
     (`json-rpc-server` / Compile / exportedModuleBin).value,
@@ -1092,11 +1099,14 @@ lazy val `logging-service-logback` = project
       "org.slf4j"        % "slf4j-api"               % slf4jVersion,
       "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion % "provided"
     ),
+    Compile / javaModuleName := "org.enso.logging.service.logback",
     Compile / shouldCompileModuleInfoManually := true,
     Compile / internalModuleDependencies := Seq(
       (`logging-service` / Compile / exportedModule).value,
       (`logging-config` / Compile / exportedModule).value
     ),
+    Test / shouldCompileModuleInfoManually := true,
+    Test / javaModuleName := "org.enso.logging.service.logback.test.provider",
     Test / moduleDependencies ++= scalaLibrary,
     Test / internalModuleDependencies := Seq(
       (Compile / exportedModule).value
@@ -1713,7 +1723,8 @@ lazy val `version-output` = (project in file("lib/scala/version-output"))
           defaultDevEnsoVersion = defaultDevEnsoVersion,
           ensoVersion           = ensoVersion,
           scalacVersion         = scalacVersion,
-          graalVersion          = graalVersion,
+          graalVersion          = graalMavenPackagesVersion,
+          javaVersion           = graalVersion,
           currentEdition        = currentEdition
         )
     }.taskValue
@@ -1988,7 +1999,7 @@ lazy val `ydoc-server` = project
   .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
-    frgaalJavaCompilerSetting,
+    customFrgaalJavaCompilerSettings("21"),
     javaModuleName := "org.enso.ydoc",
     Compile / exportJars := true,
     crossPaths := false,
@@ -2006,8 +2017,9 @@ lazy val `ydoc-server` = project
     ),
     libraryDependencies ++= Seq(
       "org.graalvm.truffle"        % "truffle-api"                 % graalMavenPackagesVersion % "provided",
-      "org.graalvm.polyglot"       % "inspect"                     % graalMavenPackagesVersion % "runtime",
-      "org.graalvm.polyglot"       % "js"                          % graalMavenPackagesVersion % "runtime",
+      "org.graalvm.sdk"            % "nativeimage"                 % graalMavenPackagesVersion % "provided",
+      "org.graalvm.polyglot"       % "inspect-community"           % graalMavenPackagesVersion % "runtime",
+      "org.graalvm.polyglot"       % "js-community"                % graalMavenPackagesVersion % "runtime",
       "org.slf4j"                  % "slf4j-api"                   % slf4jVersion,
       "io.helidon.webclient"       % "helidon-webclient-websocket" % helidonVersion,
       "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion,
@@ -2059,9 +2071,25 @@ lazy val `ydoc-server` = project
         )
         .taskValue
   )
+  .settings(
+    NativeImage.smallJdk := None,
+    NativeImage.additionalCp := Seq.empty,
+    rebuildNativeImage := NativeImage
+      .buildNativeImage(
+        "ydoc",
+        staticOnLinux = false,
+        mainClass     = Some("org.enso.ydoc.Main")
+      )
+      .value,
+    buildNativeImage := NativeImage
+      .incrementalNativeImageBuild(
+        rebuildNativeImage,
+        "ydoc"
+      )
+      .value
+  )
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`logging-service-logback`)
-  .dependsOn(`profiling-utils`)
 
 lazy val `persistance` = (project in file("lib/java/persistance"))
   .enablePlugins(JPMSPlugin)
@@ -3000,6 +3028,8 @@ lazy val `runtime-integration-tests` =
         (`ydoc-server` / javaModuleName).value,
         (`runtime-instrument-common` / javaModuleName).value,
         (`text-buffer` / javaModuleName).value,
+        (`logging-service-logback` / Test / javaModuleName).value,
+        "ch.qos.logback.classic",
         "truffle.tck.tests"
       ),
       Test / addReads := {
@@ -3016,7 +3046,10 @@ lazy val `runtime-integration-tests` =
             (`text-buffer` / javaModuleName).value,
             (`semver` / javaModuleName).value,
             "truffle.tck.tests",
-            "org.openide.util.lookup.RELEASE180"
+            "org.openide.util.lookup.RELEASE180",
+            "ch.qos.logback.classic",
+            (`logging-service-logback` / Compile / javaModuleName).value,
+            (`logging-service-logback` / Test / javaModuleName).value
           ),
           testInstrumentsModName -> Seq(runtimeModName)
         )
@@ -3362,21 +3395,15 @@ lazy val `runtime-suggestions` =
 lazy val `runtime-instrument-common` =
   (project in file("engine/runtime-instrument-common"))
     .enablePlugins(JPMSPlugin)
-    .configs(Benchmark)
     .settings(
       frgaalJavaCompilerSetting,
       scalaModuleDependencySetting,
       mixedJavaScalaProjectSetting,
       inConfig(Compile)(truffleRunOptionsSettings),
-      inConfig(Benchmark)(Defaults.testSettings),
       instrumentationSettings,
       Test / javaOptions ++= Seq(
         "-Dpolyglotimpl.DisableClassPathIsolation=true"
       ),
-      bench := (Benchmark / test).tag(Exclusive).value,
-      Benchmark / parallelExecution := false,
-      (Benchmark / javaOptions) :=
-        (LocalProject("std-benchmarks") / Compile / javaOptions).value,
       Test / fork := true,
       Test / envVars ++= distributionEnvironmentOverrides ++ Map(
         "ENSO_TEST_DISABLE_IR_CACHE" -> "false"
@@ -3414,7 +3441,7 @@ lazy val `runtime-instrument-common` =
       )
     )
     .dependsOn(`refactoring-utils`)
-    .dependsOn(`runtime` % "compile->compile;runtime->runtime;bench->bench")
+    .dependsOn(`runtime` % "compile->compile;runtime->runtime")
 
 lazy val `runtime-instrument-id-execution` =
   (project in file("engine/runtime-instrument-id-execution"))
@@ -3603,6 +3630,7 @@ lazy val `engine-runner` = project
       (`pkg` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
       (`runtime-parser` / Compile / exportedModule).value,
+      (`runtime-version-manager` / Compile / exportedModule).value,
       (`version-output` / Compile / exportedModule).value,
       (`engine-common` / Compile / exportedModule).value,
       (`polyglot-api` / Compile / exportedModule).value,
@@ -3644,7 +3672,8 @@ lazy val `engine-runner` = project
           epbLang
       ).distinct
       val stdLibsJars =
-        `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
+        `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
+        `table-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
       core ++ stdLibsJars
     },
     buildSmallJdk := {
@@ -3734,19 +3763,23 @@ lazy val `engine-runner` = project
             ),
             mainClass = Some("org.enso.runner.Main"),
             initializeAtRuntime = Seq(
-              "org.jline.nativ.JLineLibrary",
-              "org.jline.terminal.impl.jna",
-              "io.methvin.watchservice.jna.CarbonAPI",
-              "zio.internal.ZScheduler$$anon$4",
-              "org.enso.runner.Main$",
+              "org.apache",
+              "org.openxmlformats",
+              "org.jline",
+              "io.methvin.watchservice",
+              "zio.internal",
+              "org.enso.runner",
               "sun.awt",
               "sun.java2d",
               "sun.font",
               "java.awt",
               "com.sun.imageio",
-              "com.sun.jna.internal.Cleaner",
-              "com.sun.jna.Structure$FFIType",
-              "akka.http"
+              "com.sun.jna",
+              "com.microsoft",
+              "akka.http",
+              "org.enso.base",
+              "org.enso.image",
+              "org.enso.table"
             )
           )
       }
@@ -3770,8 +3803,10 @@ lazy val `engine-runner` = project
   .dependsOn(cli)
   .dependsOn(`profiling-utils`)
   .dependsOn(`library-manager`)
+  .dependsOn(`distribution-manager`)
   .dependsOn(`edition-updater`)
   .dependsOn(`runtime-parser`)
+  .dependsOn(`runtime-version-manager`)
   .dependsOn(`logging-service`)
   .dependsOn(`logging-service-logback` % Runtime)
   .dependsOn(`engine-runner-common`)
@@ -4409,15 +4444,34 @@ lazy val `connected-lock-manager-server` = project
 
 lazy val `runtime-version-manager` = project
   .in(file("lib/scala/runtime-version-manager"))
+  .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
     frgaalJavaCompilerSetting,
+    scalaModuleDependencySetting,
+    mixedJavaScalaProjectSetting,
     resolvers += Resolver.bintrayRepo("gn0s1s", "releases"),
     libraryDependencies ++= Seq(
       "com.typesafe.scala-logging" %% "scala-logging"    % scalaLoggingVersion,
       "org.apache.commons"          % "commons-compress" % commonsCompressVersion,
-      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test,
-      akkaHttp
+      "org.scalatest"              %% "scalatest"        % scalatestVersion % Test
+    ),
+    Compile / moduleDependencies ++= Seq(
+      "org.apache.commons" % "commons-compress" % commonsCompressVersion,
+      "org.slf4j"          % "slf4j-api"        % slf4jVersion
+    ),
+    Compile / internalModuleDependencies := Seq(
+      (`cli` / Compile / exportedModule).value,
+      (`distribution-manager` / Compile / exportedModule).value,
+      (`downloader` / Compile / exportedModule).value,
+      (`editions` / Compile / exportedModule).value,
+      (`edition-updater` / Compile / exportedModule).value,
+      (`logging-utils` / Compile / exportedModule).value,
+      (`pkg` / Compile / exportedModule).value,
+      (`semver` / Compile / exportedModule).value,
+      (`scala-libs-wrapper` / Compile / exportedModule).value,
+      (`scala-yaml` / Compile / exportedModule).value,
+      (`version-output` / Compile / exportedModule).value
     )
   )
   .dependsOn(pkg)
@@ -4727,6 +4781,7 @@ lazy val `std-google-api` = project
     libraryDependencies ++= Seq(
       "com.google.api-client" % "google-api-client"          % googleApiClientVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.apis"       % "google-api-services-sheets" % googleApiServicesSheetsVersion exclude ("com.google.code.findbugs", "jsr305"),
+      "com.google.analytics"  % "google-analytics-admin"     % googleAnalyticsAdminVersion exclude ("com.google.code.findbugs", "jsr305"),
       "com.google.analytics"  % "google-analytics-data"      % googleAnalyticsDataVersion exclude ("com.google.code.findbugs", "jsr305")
     ),
     Compile / packageBin := Def.task {
@@ -4741,6 +4796,7 @@ lazy val `std-google-api` = project
       result
     }.value
   )
+  .dependsOn(`std-table` % "provided")
 
 lazy val `std-database` = project
   .in(file("std-bits") / "database")

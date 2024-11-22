@@ -12,6 +12,7 @@ import * as suspense from '#/components/Suspense'
 
 import * as twv from '#/utilities/tailwindVariants'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as dialogProvider from './DialogProvider'
 import * as dialogStackProvider from './DialogStackProvider'
 import * as utlities from './utilities'
@@ -23,7 +24,6 @@ export interface PopoverProps
     twv.VariantProps<typeof POPOVER_STYLES> {
   readonly children:
     | React.ReactNode
-    // eslint-disable-next-line no-restricted-syntax
     | ((opts: aria.PopoverRenderProps & { readonly close: () => void }) => React.ReactNode)
 }
 
@@ -64,6 +64,8 @@ export const POPOVER_STYLES = twv.tv({
   defaultVariants: { rounded: 'xxlarge', size: 'small' },
 })
 
+const SUSPENSE_LOADER_PROPS = { minHeight: 'h32' } as const
+
 /**
  * A popover is an overlay element positioned relative to a trigger.
  * It can be used to display additional content or actions.*
@@ -79,22 +81,34 @@ export function Popover(props: PopoverProps) {
   } = props
 
   const dialogRef = React.useRef<HTMLDivElement>(null)
-  const closeRef = React.useRef<(() => void) | null>(null)
+  // We use as here to make the types more accurate
+  // eslint-disable-next-line no-restricted-syntax
+  const contextState = React.useContext(
+    aria.OverlayTriggerStateContext,
+  ) as aria.OverlayTriggerState | null
 
   const root = portal.useStrictPortalContext()
   const dialogId = aria.useId()
 
+  const close = useEventCallback(() => {
+    contextState?.close()
+  })
+
   utlities.useInteractOutside({
     ref: dialogRef,
     id: dialogId,
-    onInteractOutside: closeRef.current,
+    onInteractOutside: close,
   })
+
+  const dialogContextValue = React.useMemo(() => ({ close, dialogId }), [close, dialogId])
+  const popoverStyle = React.useMemo(() => ({ zIndex: '' }), [])
 
   return (
     <aria.Popover
       className={(values) =>
         POPOVER_STYLES({
-          ...values,
+          isEntering: values.isEntering,
+          isExiting: values.isExiting,
           size,
           rounded,
           className: typeof className === 'function' ? className(values) : className,
@@ -102,34 +116,25 @@ export function Popover(props: PopoverProps) {
       }
       UNSTABLE_portalContainer={root}
       placement={placement}
-      style={{
-        // Unset the default z-index set by react-aria-components.
-        zIndex: '',
-      }}
+      style={popoverStyle}
       shouldCloseOnInteractOutside={() => false}
       {...ariaPopoverProps}
     >
       {(opts) => (
         <dialogStackProvider.DialogStackRegistrar id={dialogId} type="popover">
-          <aria.Dialog
+          <div
             id={dialogId}
             ref={dialogRef}
             className={POPOVER_STYLES({ ...opts, size, rounded }).dialog()}
           >
-            {({ close }) => {
-              closeRef.current = close
-
-              return (
-                <dialogProvider.DialogProvider value={{ close, dialogId }}>
-                  <errorBoundary.ErrorBoundary>
-                    <suspense.Suspense loaderProps={{ minHeight: 'h32' }}>
-                      {typeof children === 'function' ? children({ ...opts, close }) : children}
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
-                </dialogProvider.DialogProvider>
-              )
-            }}
-          </aria.Dialog>
+            <dialogProvider.DialogProvider value={dialogContextValue}>
+              <errorBoundary.ErrorBoundary>
+                <suspense.Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
+                  {typeof children === 'function' ? children({ ...opts, close }) : children}
+                </suspense.Suspense>
+              </errorBoundary.ErrorBoundary>
+            </dialogProvider.DialogProvider>
+          </div>
         </dialogStackProvider.DialogStackRegistrar>
       )}
     </aria.Popover>

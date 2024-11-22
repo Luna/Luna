@@ -6,14 +6,12 @@
  */
 import type { JSX } from 'react'
 
-import { Button, useDialogContext, type ButtonProps } from '#/components/AriaComponents'
+import { Button, type ButtonProps } from '#/components/AriaComponents'
 import { useText } from '#/providers/TextProvider'
 import { useFormContext } from './FormProvider'
 import type { FormInstance } from './types'
 
-/**
- * Additional props for the Submit component.
- */
+/** Additional props for the Submit component. */
 interface SubmitButtonBaseProps {
   readonly variant?: ButtonProps['variant']
   /**
@@ -25,13 +23,10 @@ interface SubmitButtonBaseProps {
   // We do not need to know the form fields.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly form?: FormInstance<any>
-  /** Defaults to `submit`. */
-  readonly action?: 'cancel' | 'submit' | 'update'
+  readonly cancel?: boolean
 }
 
-/**
- * Props for the Submit component.
- */
+/** Props for the Submit component. */
 export type SubmitProps = Omit<ButtonProps, 'formnovalidate' | 'href' | 'variant'> &
   SubmitButtonBaseProps
 
@@ -45,38 +40,26 @@ export function Submit(props: SubmitProps): JSX.Element {
 
   const {
     size = 'medium',
-    action = 'submit',
     loading = false,
-    children = action === 'cancel' ? getText('cancel')
-    : action === 'update' ? getText('update')
-    : getText('submit'),
-    variant = action === 'cancel' ? 'outline' : 'submit',
-    testId = action === 'cancel' ? 'form-cancel-button' : 'form-submit-button',
+    children = getText('submit'),
+    variant = 'submit',
+    testId = 'form-submit-button',
     ...buttonProps
   } = props
 
-  const dialogContext = useDialogContext()
   const form = useFormContext(props.form)
   const { formState } = form
 
-  const isLoading = action === 'cancel' ? false : loading || formState.isSubmitting
-  const type = action === 'cancel' || isLoading ? 'button' : 'submit'
-
   return (
     <Button
+      type="submit"
+      variant={variant}
+      size={size}
+      loading={loading || formState.isSubmitting}
+      testId={testId}
       /* This is safe because we are passing all props to the button */
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax */
       {...(buttonProps as any)}
-      type={type}
-      variant={variant}
-      size={size}
-      loading={isLoading}
-      testId={testId}
-      onPress={() => {
-        if (action === 'cancel') {
-          dialogContext?.close()
-        }
-      }}
     >
       {children}
     </Button>

@@ -4,13 +4,9 @@
  */
 import * as React from 'react'
 
-import * as z from 'zod'
-
 import * as detect from 'enso-common/src/detect'
 
-import DriveIcon from '#/assets/drive.svg'
-import SettingsIcon from '#/assets/settings.svg'
-import WorkspaceIcon from '#/assets/workspace.svg'
+import { DashboardTabBar } from './DashboardTabBar'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as projectHooks from '#/hooks/projectHooks'
@@ -19,10 +15,8 @@ import * as searchParamsState from '#/hooks/searchParamsStateHooks'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
 import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
-import * as localStorageProvider from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import ProjectsProvider, {
-  PAGES_SCHEMA,
   TabType,
   useClearLaunchedProjects,
   useLaunchedProjects,
@@ -31,9 +25,7 @@ import ProjectsProvider, {
   useSetPage,
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
-import * as textProvider from '#/providers/TextProvider'
 
-import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 
 import type * as assetTable from '#/layouts/AssetsTable'
@@ -41,11 +33,7 @@ import EventListProvider, * as eventListProvider from '#/layouts/AssetsTable/Eve
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
-import Drive from '#/layouts/Drive'
 import type * as editor from '#/layouts/Editor'
-import Editor from '#/layouts/Editor'
-import Settings from '#/layouts/Settings'
-import TabBar, * as tabBar from '#/layouts/TabBar'
 import UserBar from '#/layouts/UserBar'
 
 import * as aria from '#/components/aria'
@@ -59,25 +47,11 @@ import * as projectManager from '#/services/ProjectManager'
 
 import { useSetCategory } from '#/providers/DriveProvider'
 import { baseName } from '#/utilities/fileInfo'
-import LocalStorage from '#/utilities/LocalStorage'
-import * as object from '#/utilities/object'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery } from '@tanstack/react-query'
-
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-  }
-}
-
-LocalStorage.registerKey('isAssetPanelVisible', { schema: z.boolean() })
+import { DashboardTabPanels } from './DashboardTabPanels'
 
 // =================
 // === Dashboard ===
@@ -103,9 +77,7 @@ export default function Dashboard(props: DashboardProps) {
   )
 }
 
-/**
- * Extract proper path from `file://` URL.
- */
+/** Extract proper path from `file://` URL. */
 function fileURLToPath(url: string): string | null {
   if (URL.canParse(url)) {
     const parsed = new URL(url)
@@ -129,14 +101,11 @@ function DashboardInner(props: DashboardProps) {
   const { appRunner, initialProjectName: initialProjectNameRaw, ydocUrl } = props
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
-  const { getText } = textProvider.useText()
   const { modalRef } = modalProvider.useModalRef()
   const { updateModal, unsetModal, setModal } = modalProvider.useSetModal()
-  const { localStorage } = localStorageProvider.useLocalStorage()
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const assetManagementApiRef = React.useRef<assetTable.AssetManagementApi | null>(null)
 
@@ -162,6 +131,7 @@ function DashboardInner(props: DashboardProps) {
     setCategoryRaw(newCategory)
     setStoreCategory(newCategory)
   })
+  const backend = backendProvider.useBackend(category)
 
   const projectsStore = useProjectsStore()
   const page = usePage()
@@ -176,8 +146,6 @@ function DashboardInner(props: DashboardProps) {
   const closeProject = projectHooks.useCloseProject()
   const closeAllProjects = projectHooks.useCloseAllProjects()
   const clearLaunchedProjects = useClearLaunchedProjects()
-  const openProjectMutation = projectHooks.useOpenProjectMutation()
-  const renameProjectMutation = projectHooks.useRenameProjectMutation()
 
   usePrefetchQuery({
     queryKey: ['loadInitialLocalProject'],
@@ -233,18 +201,16 @@ function DashboardInner(props: DashboardProps) {
             return null
           })
           if (modalRef.current == null) {
-            // eslint-disable-next-line no-restricted-syntax
             return false
           }
         },
       }),
-    [inputBindings, modalRef, localStorage, updateModal, setPage, projectsStore],
+    [inputBindings, modalRef, updateModal, setPage, projectsStore],
   )
 
   React.useEffect(() => {
     if (detect.isOnElectron()) {
       // We want to handle the back and forward buttons in electron the same way as in the browser.
-      // eslint-disable-next-line no-restricted-syntax
       return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
         goBack: () => {
           window.navigationApi.goBack()
@@ -275,11 +241,9 @@ function DashboardInner(props: DashboardProps) {
       if (asset != null && self != null) {
         setModal(
           <ManagePermissionsModal
+            backend={backend}
+            category={category}
             item={asset}
-            setItem={(updater) => {
-              const nextAsset = updater instanceof Function ? updater(asset) : updater
-              assetManagementApiRef.current?.setAsset(asset.id, nextAsset)
-            }}
             self={self}
             doRemoveSelf={() => {
               doRemoveSelf(selectedProject)
@@ -289,6 +253,10 @@ function DashboardInner(props: DashboardProps) {
         )
       }
     }
+  })
+
+  const goToSettings = eventCallbacks.useEventCallback(() => {
+    setPage(TabType.settings)
   })
 
   return (
@@ -304,124 +272,32 @@ function DashboardInner(props: DashboardProps) {
           className="relative flex min-h-full grow select-none flex-col container-size"
           selectedKey={page}
           onSelectionChange={(newPage) => {
-            const validated = PAGES_SCHEMA.safeParse(newPage)
-            if (validated.success) {
-              setPage(validated.data)
-            }
+            // This is safe as we render only valid pages.
+            // eslint-disable-next-line no-restricted-syntax
+            setPage(newPage as TabType)
           }}
         >
           <div className="flex">
-            <TabBar>
-              <tabBar.Tab
-                id={TabType.drive}
-                isActive={page === TabType.drive}
-                icon={DriveIcon}
-                labelId="drivePageName"
-              >
-                {getText('drivePageName')}
-              </tabBar.Tab>
-
-              {launchedProjects.map((project) => (
-                <tabBar.Tab
-                  data-testid="editor-tab-button"
-                  id={project.id}
-                  project={project}
-                  key={project.id}
-                  // There is no shared enum type, but the other union member is the same type.
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-                  isActive={page === project.id}
-                  icon={WorkspaceIcon}
-                  labelId="editorPageName"
-                  onClose={() => {
-                    closeProject(project)
-                  }}
-                  onLoadEnd={() => {
-                    openEditor(project.id)
-                  }}
-                >
-                  {project.title}
-                </tabBar.Tab>
-              ))}
-
-              <tabBar.Tab
-                isActive
-                id={TabType.settings}
-                isHidden={page !== TabType.settings}
-                icon={SettingsIcon}
-                labelId="settingsPageName"
-                onClose={() => {
-                  setPage(TabType.drive)
-                }}
-              >
-                {getText('settingsPageName')}
-              </tabBar.Tab>
-            </TabBar>
+            <DashboardTabBar onCloseProject={closeProject} onOpenEditor={openEditor} />
 
             <UserBar
               onShareClick={selectedProject ? doOpenShareModal : undefined}
               setIsHelpChatOpen={setIsHelpChatOpen}
-              goToSettingsPage={() => {
-                setPage(TabType.settings)
-              }}
+              goToSettingsPage={goToSettings}
               onSignOut={onSignOut}
             />
           </div>
-          <aria.TabPanel
-            shouldForceMount
-            id={TabType.drive}
-            className="flex min-h-0 grow [&[data-inert]]:hidden"
-          >
-            <Drive
-              assetsManagementApiRef={assetManagementApiRef}
-              category={category}
-              setCategory={setCategory}
-              hidden={page !== TabType.drive}
-              initialProjectName={initialProjectName}
-            />
-          </aria.TabPanel>
-          {appRunner != null &&
-            launchedProjects.map((project) => (
-              <aria.TabPanel
-                key={project.id}
-                shouldForceMount
-                id={project.id}
-                className="flex min-h-0 grow [&[data-inert]]:hidden"
-              >
-                <Editor
-                  // There is no shared enum type, but the other union member is the same type.
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-                  hidden={page !== project.id}
-                  ydocUrl={ydocUrl}
-                  project={project}
-                  projectId={project.id}
-                  appRunner={appRunner}
-                  isOpening={openProjectMutation.isPending}
-                  isOpeningFailed={openProjectMutation.isError}
-                  openingError={openProjectMutation.error}
-                  startProject={openProjectMutation.mutate}
-                  renameProject={async (newName) => {
-                    try {
-                      await renameProjectMutation.mutateAsync({ newName, project })
-                      dispatchAssetEvent({
-                        type: AssetEventType.setItem,
-                        id: project.id,
-                        valueOrUpdater: object.merger({ title: newName }),
-                      })
-                    } catch {
-                      dispatchAssetEvent({
-                        type: AssetEventType.setItem,
-                        id: project.id,
-                        valueOrUpdater: object.merger({ title: project.title }),
-                      })
-                    }
-                  }}
-                />
-              </aria.TabPanel>
-            ))}
-          <aria.TabPanel id={TabType.settings} className="flex min-h-0 grow">
-            <Settings />
-          </aria.TabPanel>
+
+          <DashboardTabPanels
+            appRunner={appRunner}
+            initialProjectName={initialProjectName}
+            ydocUrl={ydocUrl}
+            assetManagementApiRef={assetManagementApiRef}
+            category={category}
+            setCategory={setCategory}
+          />
         </aria.Tabs>
+
         {process.env.ENSO_CLOUD_CHAT_URL != null ?
           <Chat
             isOpen={isHelpChatOpen}

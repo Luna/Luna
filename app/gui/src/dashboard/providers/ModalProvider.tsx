@@ -65,6 +65,7 @@ export default function ModalProvider(props: ModalProviderProps) {
     ),
     [children, modalRef, setModalStableCallback],
   )
+
   return <ModalContext.Provider value={{ modal, key }}>{setModalProvider}</ModalContext.Provider>
 }
 
@@ -99,9 +100,7 @@ export function useModal() {
 // === useModalRef ===
 // ===================
 
-/**
- * A React context hook exposing the currently active modal (if one is currently visible) as a ref.
- */
+/** A React context hook exposing the currently active modal (if one is currently visible) as a ref. */
 export function useModalRef() {
   const { modalRef } = React.useContext(ModalStaticContext)
   return { modalRef } as const
@@ -114,10 +113,13 @@ export function useModalRef() {
 /** A React context hook exposing functions to set and unset the currently active modal. */
 export function useSetModal() {
   const { setModal: setModalRaw } = React.useContext(ModalStaticContext)
-  const setModal: (modal: Modal) => void = setModalRaw
-  const updateModal: (updater: (modal: Modal | null) => Modal | null) => void = setModalRaw
-  const unsetModal = React.useCallback(() => {
+
+  const setModal = useEventCallback(setModalRaw)
+  const updateModal = useEventCallback(setModalRaw)
+
+  const unsetModal = useEventCallback(() => {
     setModalRaw(null)
-  }, [setModalRaw])
+  })
+
   return { setModal, updateModal, unsetModal } as const
 }

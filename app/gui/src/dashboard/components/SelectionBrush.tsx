@@ -1,12 +1,10 @@
 /** @file A selection brush to indicate the area being selected by the mouse drag action. */
 import * as React from 'react'
 
-import * as animationHooks from '#/hooks/animationHooks'
-
-import * as modalProvider from '#/providers/ModalProvider'
-
 import Portal from '#/components/Portal'
-
+import * as animationHooks from '#/hooks/animationHooks'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import * as modalProvider from '#/providers/ModalProvider'
 import * as eventModule from '#/utilities/event'
 import type * as geometry from '#/utilities/geometry'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
@@ -36,16 +34,13 @@ export interface SelectionBrushProps {
 
 /** A selection brush to indicate the area being selected by the mouse drag action. */
 export default function SelectionBrush(props: SelectionBrushProps) {
-  const { targetRef, margin = 0, onDrag, onDragEnd, onDragCancel } = props
+  const { targetRef, margin = 0 } = props
   const { modalRef } = modalProvider.useModalRef()
   const isMouseDownRef = React.useRef(false)
   const didMoveWhileDraggingRef = React.useRef(false)
-  const onDragRef = React.useRef(onDrag)
-  onDragRef.current = onDrag
-  const onDragEndRef = React.useRef(onDragEnd)
-  onDragEndRef.current = onDragEnd
-  const onDragCancelRef = React.useRef(onDragCancel)
-  onDragCancelRef.current = onDragCancel
+  const onDrag = useEventCallback(props.onDrag)
+  const onDragEnd = useEventCallback(props.onDragEnd)
+  const onDragCancel = useEventCallback(props.onDragCancel)
   const lastMouseEvent = React.useRef<MouseEvent | null>(null)
   const parentBounds = React.useRef<DOMRect | null>(null)
   const anchorRef = React.useRef<geometry.Coordinate2D | null>(null)
@@ -68,7 +63,6 @@ export default function SelectionBrush(props: SelectionBrushProps) {
   }, [anchorAnimFactor, anchor])
 
   React.useEffect(() => {
-    const target = targetRef.current ?? document.body
     const isEventInBounds = (event: MouseEvent, parent?: HTMLElement | null) => {
       if (parent == null) {
         return true
@@ -95,14 +89,15 @@ export default function SelectionBrush(props: SelectionBrushProps) {
         didMoveWhileDraggingRef.current = false
         lastMouseEvent.current = event
         const newAnchor = { left: event.pageX, top: event.pageY }
-        anchorRef.current = null
+        anchorRef.current = newAnchor
+        setAnchor(newAnchor)
         setLastSetAnchor(newAnchor)
         setPosition(newAnchor)
       }
     }
     const onMouseUp = (event: MouseEvent) => {
       if (didMoveWhileDraggingRef.current) {
-        onDragEndRef.current(event)
+        onDragEnd(event)
       }
       // The `setTimeout` is required, otherwise the values are changed before the `onClick` handler
       // is executed.
@@ -145,24 +140,24 @@ export default function SelectionBrush(props: SelectionBrushProps) {
     const onDragStart = () => {
       if (isMouseDownRef.current) {
         isMouseDownRef.current = false
-        onDragCancelRef.current()
+        onDragCancel()
         unsetAnchor()
       }
     }
 
-    target.addEventListener('mousedown', onMouseDown)
+    document.addEventListener('mousedown', onMouseDown)
     document.addEventListener('mouseup', onMouseUp)
     document.addEventListener('dragstart', onDragStart, { capture: true })
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('click', onClick, { capture: true })
     return () => {
-      target.removeEventListener('mousedown', onMouseDown)
+      document.removeEventListener('mousedown', onMouseDown)
       document.removeEventListener('mouseup', onMouseUp)
       document.removeEventListener('dragstart', onDragStart, { capture: true })
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('click', onClick, { capture: true })
     }
-  }, [margin, targetRef, modalRef])
+  }, [margin, targetRef, modalRef, onDragEnd, onDragCancel])
 
   const rectangle = React.useMemo(() => {
     if (position != null && lastSetAnchor != null) {
@@ -192,9 +187,9 @@ export default function SelectionBrush(props: SelectionBrushProps) {
 
   React.useEffect(() => {
     if (selectionRectangle != null && lastMouseEvent.current != null) {
-      onDragRef.current(selectionRectangle, lastMouseEvent.current)
+      onDrag(selectionRectangle, lastMouseEvent.current)
     }
-  }, [selectionRectangle])
+  }, [onDrag, selectionRectangle])
 
   const brushStyle =
     rectangle == null ?

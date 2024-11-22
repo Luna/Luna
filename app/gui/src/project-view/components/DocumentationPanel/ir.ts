@@ -3,13 +3,12 @@ import type { SuggestionEntry, SuggestionId } from '@/stores/suggestionDatabase/
 import { SuggestionKind, entryQn } from '@/stores/suggestionDatabase/entry'
 import type { Doc } from '@/util/docParser'
 import type { QualifiedName } from '@/util/qualifiedName'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import type { SuggestionEntryArgument } from 'ydoc-shared/languageServerTypes/suggestions'
 
 // === Types ===
 
-/**
- * Intermediate representation of the entries documentation.
- */
+/** Intermediate representation of the entries documentation. */
 
 export type Docs = FunctionDocs | TypeDocs | ModuleDocs | LocalDocs | Placeholder
 
@@ -59,9 +58,7 @@ export interface Example {
   body: Doc.HtmlString
 }
 
-/**
- * Placeholder constructor.
- */
+/** Placeholder constructor. */
 export function placeholder(text: string): Placeholder {
   return { kind: 'Placeholder', text }
 }
@@ -99,9 +96,7 @@ function filterSections(sections: Iterable<Doc.Section>): Sections {
 
 // === Lookup ===
 
-/**
- * The main function for getting documentation page for given entry.
- */
+/** The main function for getting documentation page for given entry. */
 export function lookupDocumentation(db: SuggestionDb, id: SuggestionId): Docs {
   const entry = db.get(id)
   if (!entry)
@@ -114,15 +109,15 @@ export function lookupDocumentation(db: SuggestionDb, id: SuggestionId): Docs {
 
 function getChildren(db: SuggestionDb, id: SuggestionId, kind: SuggestionKind): Docs[] {
   if (!id) return []
-  const children = Array.from(db.childIdToParentId.reverseLookup(id))
-  return children.reduce((acc: Docs[], id: SuggestionId) => {
-    const entry = db.get(id)
-    if (entry?.kind === kind && !entry?.isPrivate) {
-      const docs = lookupDocumentation(db, id)
-      acc.push(docs)
-    }
-    return acc
-  }, [])
+  const children = db.childIdToParentId.reverseLookup(id)
+  return [
+    ...iter.filterDefined(
+      iter.map(children, (id: SuggestionId) => {
+        const entry = db.get(id)
+        return entry?.kind === kind && !entry?.isPrivate ? lookupDocumentation(db, id) : undefined
+      }),
+    ),
+  ]
 }
 
 function asFunctionDocs(docs: Docs[]): FunctionDocs[] {

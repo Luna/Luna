@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::prelude::*;
 
 use crate::ci_gen::not_default_branch;
@@ -10,8 +12,8 @@ use crate::ci_gen::RunStepsBuilder;
 use crate::ci_gen::RunnerType;
 use crate::ci_gen::RELEASE_CLEANING_POLICY;
 use crate::engine::env;
-use crate::ide::web::env::VITE_ENSO_AG_GRID_LICENSE_KEY;
-use crate::ide::web::env::VITE_ENSO_MAPBOX_API_TOKEN;
+use crate::ide::web::env::ENSO_IDE_AG_GRID_LICENSE_KEY;
+use crate::ide::web::env::ENSO_IDE_MAPBOX_API_TOKEN;
 
 use ide_ci::actions::workflow::definition::cancel_workflow_action;
 use ide_ci::actions::workflow::definition::shell;
@@ -143,8 +145,8 @@ pub fn expose_cloud_vars(step: Step) -> Step {
 /// Expose variables for the GUI build.
 pub fn expose_gui_vars(step: Step) -> Step {
     let step = step
-        .with_variable_exposed_as(ENSO_AG_GRID_LICENSE_KEY, VITE_ENSO_AG_GRID_LICENSE_KEY)
-        .with_variable_exposed_as(ENSO_MAPBOX_API_TOKEN, VITE_ENSO_MAPBOX_API_TOKEN);
+        .with_variable_exposed_as(ENSO_AG_GRID_LICENSE_KEY, ENSO_IDE_AG_GRID_LICENSE_KEY)
+        .with_variable_exposed_as(ENSO_MAPBOX_API_TOKEN, ENSO_IDE_MAPBOX_API_TOKEN);
 
     // GUI includes the cloud-delivered dashboard.
     expose_cloud_vars(step)
@@ -307,6 +309,10 @@ fn build_job_ensuring_cloud_tests_run_on_github(
     cloud_tests_enabled: bool,
 ) -> Job {
     if cloud_tests_enabled {
+        if target.0 != OS::Linux {
+            panic!("If the Cloud tests are enabled, they require GitHub hosted runner for Cloud auth, so they only run on Linux.");
+        }
+
         run_steps_builder.build_job(job_name, RunnerLabel::LinuxLatest)
     } else {
         run_steps_builder.build_job(job_name, target)
@@ -320,6 +326,9 @@ const GRAAL_EDITION_FOR_EXTRA_TESTS: graalvm::Edition = graalvm::Edition::Commun
 
 impl JobArchetype for SnowflakeTests {
     fn job(&self, target: Target) -> Job {
+        if target.0 != OS::Linux {
+            panic!("Snowflake tests currently require GitHub hosted runner for Cloud auth, so they only run on Linux.");
+        }
         let job_name = "Snowflake Tests";
         let mut job = RunStepsBuilder::new("backend test std-snowflake")
             .customize(move |step| {
@@ -349,17 +358,16 @@ impl JobArchetype for SnowflakeTests {
                         crate::libraries_tests::snowflake::env::ENSO_SNOWFLAKE_WAREHOUSE,
                     );
 
-                // Temporarily disabled until we can get the Cloud auth fixed.
-                // Snowflake does not rely on cloud anyway, so it can be disabled.
-                // But it will rely once we add datalink tests, so this should be fixed soon.
-                // let updated_main_step = enable_cloud_tests(main_step);
+                // Snowflake tests are run only in the 'Extra' job, so it is okay to run it with
+                // Enso Cloud as well. They need it to test data link integration.
+                let updated_main_step = enable_cloud_tests(main_step);
 
                 vec![
-                    main_step,
+                    updated_main_step,
                     step::extra_stdlib_test_reporter(target, GRAAL_EDITION_FOR_EXTRA_TESTS),
                 ]
             })
-            .build_job(job_name, target)
+            .build_job(job_name, RunnerLabel::LinuxLatest)
             .with_permission(Permission::Checks, Access::Write);
         job.env(env::GRAAL_EDITION, GRAAL_EDITION_FOR_EXTRA_TESTS);
         job
@@ -387,16 +395,6 @@ impl JobArchetype for NativeTest {
         plain_job(target, "Native Rust tests", "wasm test --no-wasm")
     }
 }
-
-#[derive(Clone, Copy, Debug)]
-pub struct GuiCheck;
-
-impl JobArchetype for GuiCheck {
-    fn job(&self, target: Target) -> Job {
-        plain_job(target, "GUI tests", "gui check")
-    }
-}
-
 
 #[derive(Clone, Copy, Debug)]
 pub struct GuiBuild;
@@ -538,13 +536,18 @@ impl JobArchetype for PackageIde {
             } else {
                 shell(TEST_COMMAND)
             };
-            let test_step = test_step
+            let mut test_step = test_step
                 .with_env("DEBUG", "pw:browser log:")
                 .with_secret_exposed_as(secret::ENSO_CLOUD_TEST_ACCOUNT_USERNAME, "ENSO_TEST_USER")
                 .with_secret_exposed_as(
                     secret::ENSO_CLOUD_TEST_ACCOUNT_PASSWORD,
                     "ENSO_TEST_USER_PASSWORD",
                 );
+            // Make E2E tests optional on Windows, as we have an ongoing issue with the runner.
+            // TODO[ib]: remove once the issue is resolved.
+            if target.0 == OS::Windows {
+                test_step.continue_on_error = Some(true);
+            }
             steps.push(test_step);
 
             // After the E2E tests run, they create a credentials file in user home directory.

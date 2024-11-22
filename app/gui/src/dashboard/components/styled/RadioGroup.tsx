@@ -41,11 +41,8 @@ function useRenderProps<T>(props: RenderPropsHookOptions<T>) {
   const { className, style, children, defaultClassName, defaultChildren, values } = props
 
   return React.useMemo(() => {
-    // eslint-disable-next-line no-restricted-syntax
     let computedClassName: string | undefined
-    // eslint-disable-next-line no-restricted-syntax
     let computedStyle: React.CSSProperties | undefined
-    // eslint-disable-next-line no-restricted-syntax
     let computedChildren: React.ReactNode | undefined
 
     if (typeof className === 'function') {
@@ -101,7 +98,6 @@ function useSlot(): [React.RefCallback<Element>, boolean] {
   return [ref, hasSlot]
 }
 
-// eslint-disable-next-line no-restricted-syntax
 const UNDEFINED = undefined
 
 /** A radio group allows a user to select a single item from a list of mutually exclusive options. */
@@ -116,17 +112,23 @@ function RadioGroup(props: aria.RadioGroupProps, ref: React.ForwardedRef<HTMLDiv
   })
 
   const [labelRef, label] = useSlot()
-  const { radioGroupProps, labelProps, descriptionProps, errorMessageProps, ...validation } =
-    aria.useRadioGroup(
-      {
-        ...props,
-        label,
-        validationBehavior: props.validationBehavior ?? 'native',
-      },
-      state,
-    )
-  // This single line is the reason this file exists!
-  delete radioGroupProps.onKeyDown
+  const {
+    // This single line is the reason this file exists!
+    // Omit the default `onKeyDown` handler from the return value of this hook.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    radioGroupProps: { onKeyDown, ...radioGroupProps },
+    labelProps,
+    descriptionProps,
+    errorMessageProps,
+    ...validation
+  } = aria.useRadioGroup(
+    {
+      ...props,
+      label,
+      validationBehavior: props.validationBehavior ?? 'native',
+    },
+    state,
+  )
 
   const renderProps = useRenderProps({
     ...props,

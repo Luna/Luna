@@ -12,6 +12,8 @@ export const codeEditorBindings = defineKeybinds('code-editor', {
 export const documentationEditorBindings = defineKeybinds('documentation-editor', {
   toggle: ['Mod+D'],
   openLink: ['Mod+PointerMain'],
+  paste: ['Mod+V'],
+  pasteRaw: ['Mod+Shift+V'],
 })
 
 export const interactionBindings = defineKeybinds('current-interaction', {
@@ -63,4 +65,10 @@ export const selectionMouseBindings = defineKeybinds('selection', {
 export const nodeEditBindings = defineKeybinds('node-edit', {
   cancel: ['Escape'],
   edit: ['Mod+PointerMain'],
+})
+
+export const gridBindings = defineKeybinds('grid', {
+  cutCells: ['Mod+X'],
+  copyCells: ['Mod+C'],
+  pasteCells: ['Mod+V'],
 })

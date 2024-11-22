@@ -99,7 +99,7 @@ export const widgetDefinition = defineWidget(
   <label ref="widgetRoot" class="WidgetText widgetRounded">
     <NodeWidget v-if="shownLiteral.open" :input="WidgetInput.FromAst(shownLiteral.open)" />
     <!-- Do not finish edit on blur here!
-  
+
     It is tempting, but it breaks the cooperation with possible drop-down widget. Blur may be done on
     pointerdown, and if it would end the interaction, the drop down would also be hidden, making 
     any `click` event on it impossible.
@@ -128,6 +128,18 @@ export const widgetDefinition = defineWidget(
   align-items: center;
   min-width: var(--node-port-height);
 
+  &:has(> :focus) {
+    outline: none;
+    background: var(--color-widget-focus);
+  }
+
+  &:deep(::selection) {
+    background: var(--color-widget-selection);
+  }
+}
+
+.selected .WidgetText {
+  background: var(--color-widget-unfocus);
   &:has(> :focus) {
     outline: none;
     background: var(--color-widget-focus);

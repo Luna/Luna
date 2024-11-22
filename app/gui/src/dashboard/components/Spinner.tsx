@@ -3,28 +3,20 @@
  * classes.
  */
 import * as React from 'react'
+import { twJoin } from 'tailwind-merge'
 
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ===============
-// === Spinner ===
-// ===============
-
-/** The state of the spinner. It should go from initial, to loading, to done. */
-export enum SpinnerState {
-  initial = 'initial',
-  loadingSlow = 'loading-slow',
-  loadingMedium = 'loading-medium',
-  loadingFast = 'loading-fast',
-  done = 'done',
-}
+/** The state of the spinner. It should go from `initial`, to `loading`, to `done`. */
+export type SpinnerState = 'done' | 'initial' | 'loading-fast' | 'loading-medium' | 'loading-slow'
 
 export const SPINNER_CSS_CLASSES: Readonly<Record<SpinnerState, string>> = {
-  [SpinnerState.initial]: 'dasharray-5 ease-linear',
-  [SpinnerState.loadingSlow]: 'dasharray-75 duration-spinner-slow ease-linear',
-  [SpinnerState.loadingMedium]: 'dasharray-75 duration-spinner-medium ease-linear',
-  [SpinnerState.loadingFast]: 'dasharray-75 duration-spinner-fast ease-linear',
-  [SpinnerState.done]: 'dasharray-100 duration-spinner-fast ease-in',
+  initial: 'dasharray-5 ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-slow': 'dasharray-75 duration-spinner-slow ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-medium': 'dasharray-75 duration-spinner-medium ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-fast': 'dasharray-75 duration-spinner-fast ease-linear',
+  done: 'dasharray-100 duration-spinner-fast ease-in',
 }
 
 /** Props for a {@link Spinner}. */
@@ -36,18 +28,23 @@ export interface SpinnerProps {
 }
 
 /** A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind classes. */
-export default function Spinner(props: SpinnerProps) {
+// eslint-disable-next-line no-restricted-syntax
+export const Spinner = React.memo(function Spinner(props: SpinnerProps) {
   const { size, padding, className, state } = props
+
+  const cssClasses = twJoin('pointer-events-none', className)
+
   return (
     <svg
       width={size}
       height={size}
-      className={className}
+      className={cssClasses}
       style={{ padding }}
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
+      data-testid="spinner"
     >
       <rect
         x={1.5}
@@ -58,11 +55,30 @@ export default function Spinner(props: SpinnerProps) {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth={3}
-        className={tailwindMerge.twMerge(
+        className={twJoin(
           'pointer-events-none origin-center !animate-spin-ease transition-stroke-dasharray [transition-duration:var(--spinner-slow-transition-duration)]',
           SPINNER_CSS_CLASSES[state],
         )}
       />
     </svg>
   )
+})
+
+/**
+ * Props for a {@link IndefiniteSpinner}.
+ */
+export interface IndefiniteSpinnerProps extends Omit<SpinnerProps, 'state'> {}
+
+/**
+ * A spinning arc that animates indefinitely.
+ */
+export function IndefiniteSpinner(props: IndefiniteSpinnerProps) {
+  const { size, padding, className } = props
+
+  const cssClasses = twJoin(
+    'pointer-events-none flex-none contain-strict h-10 w-10 animate-spin ease-in-out rounded-full border-4 border-primary/10 border-l-primary',
+    className,
+  )
+
+  return <div className={cssClasses} style={{ padding, width: size, height: size }} />
 }

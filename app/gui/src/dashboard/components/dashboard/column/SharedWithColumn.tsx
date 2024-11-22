@@ -2,83 +2,61 @@
 import * as React from 'react'
 
 import Plus2Icon from '#/assets/plus2.svg'
-
-import * as billingHooks from '#/hooks/billing'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as modalProvider from '#/providers/ModalProvider'
-
-import AssetEventType from '#/events/AssetEventType'
-
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import type * as column from '#/components/dashboard/column'
+import { Button } from '#/components/AriaComponents'
+import type { AssetColumnProps } from '#/components/dashboard/column'
 import PermissionDisplay from '#/components/dashboard/PermissionDisplay'
-import * as paywall from '#/components/Paywall'
-
+import { PaywallDialogButton } from '#/components/Paywall'
+import AssetEventType from '#/events/AssetEventType'
+import { usePaywall } from '#/hooks/billing'
+import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
-
-import * as backendModule from '#/services/Backend'
-
-import * as permissions from '#/utilities/permissions'
-import * as uniqueString from '#/utilities/uniqueString'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { getAssetPermissionId, getAssetPermissionName } from '#/services/Backend'
+import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
 
 // ========================
 // === SharedWithColumn ===
 // ========================
 
 /** The type of the `state` prop of a {@link SharedWithColumn}. */
-interface SharedWithColumnStateProp extends Pick<column.AssetColumnProps['state'], 'category'> {
-  readonly setQuery: column.AssetColumnProps['state']['setQuery'] | null
+interface SharedWithColumnStateProp
+  extends Pick<AssetColumnProps['state'], 'backend' | 'category'> {
+  readonly setQuery: AssetColumnProps['state']['setQuery'] | null
 }
 
 /** Props for a {@link SharedWithColumn}. */
-interface SharedWithColumnPropsInternal extends Pick<column.AssetColumnProps, 'item' | 'setItem'> {
+interface SharedWithColumnPropsInternal extends Pick<AssetColumnProps, 'item'> {
   readonly isReadonly?: boolean
   readonly state: SharedWithColumnStateProp
 }
 
 /** A column listing the users with which this asset is shared. */
 export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
-  const { item, setItem, state, isReadonly = false } = props
-  const { category, setQuery } = state
-  const asset = item.item
-  const { user } = authProvider.useFullUserSession()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
+  const { item, state, isReadonly = false } = props
+  const { backend, category, setQuery } = state
+
+  const { user } = useFullUserSession()
+  const dispatchAssetEvent = useDispatchAssetEvent()
+  const { isFeatureUnderPaywall } = usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
-  const assetPermissions = asset.permissions ?? []
-  const { setModal } = modalProvider.useSetModal()
-  const self = permissions.tryFindSelfPermission(user, asset.permissions)
+  const assetPermissions = item.permissions ?? []
+  const { setModal } = useSetModal()
+  const self = tryFindSelfPermission(user, item.permissions)
   const plusButtonRef = React.useRef<HTMLButtonElement>(null)
   const managesThisAsset =
     !isReadonly &&
     category.type !== 'trash' &&
-    (self?.permission === permissions.PermissionAction.own ||
-      self?.permission === permissions.PermissionAction.admin)
-  const setAsset = React.useCallback(
-    (valueOrUpdater: React.SetStateAction<backendModule.AnyAsset>) => {
-      setItem((oldItem) =>
-        oldItem.with({
-          item:
-            typeof valueOrUpdater !== 'function' ? valueOrUpdater : valueOrUpdater(oldItem.item),
-        }),
-      )
-    },
-    [setItem],
-  )
+    (self?.permission === PermissionAction.own || self?.permission === PermissionAction.admin)
 
   return (
-    <div className="group flex items-center gap-column-items">
+    <div className="group flex items-center gap-column-items contain-strict [contain-intrinsic-size:37px] [content-visibility:auto]">
       {(category.type === 'trash' ?
-        assetPermissions.filter(
-          (permission) => permission.permission === permissions.PermissionAction.own,
-        )
+        assetPermissions.filter((permission) => permission.permission === PermissionAction.own)
       : assetPermissions
       ).map((other, idx) => (
         <PermissionDisplay
-          key={backendModule.getAssetPermissionId(other) + idx}
+          key={getAssetPermissionId(other) + idx}
           action={other.permission}
           onPress={
             setQuery == null ? null : (
@@ -87,7 +65,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
                   oldQuery.withToggled(
                     'owners',
                     'negativeOwners',
-                    backendModule.getAssetPermissionName(other),
+                    getAssetPermissionName(other),
                     event.shiftKey,
                   ),
                 )
@@ -95,11 +73,11 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
             )
           }
         >
-          {backendModule.getAssetPermissionName(other)}
+          {getAssetPermissionName(other)}
         </PermissionDisplay>
       ))}
       {isUnderPaywall && (
-        <paywall.PaywallDialogButton
+        <PaywallDialogButton
           feature="share"
           variant="icon"
           size="medium"
@@ -108,7 +86,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
         />
       )}
       {managesThisAsset && !isUnderPaywall && (
-        <ariaComponents.Button
+        <Button
           ref={plusButtonRef}
           size="medium"
           variant="ghost"
@@ -117,13 +95,13 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
           onPress={() => {
             setModal(
               <ManagePermissionsModal
-                key={uniqueString.uniqueString()}
-                item={asset}
-                setItem={setAsset}
+                backend={backend}
+                category={category}
+                item={item}
                 self={self}
                 eventTarget={plusButtonRef.current}
                 doRemoveSelf={() => {
-                  dispatchAssetEvent({ type: AssetEventType.removeSelf, id: asset.id })
+                  dispatchAssetEvent({ type: AssetEventType.removeSelf, id: item.id })
                 }}
               />,
             )

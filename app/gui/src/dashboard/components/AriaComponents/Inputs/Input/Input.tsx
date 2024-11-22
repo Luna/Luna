@@ -32,9 +32,7 @@ import type { ExtractFunction, VariantProps } from '#/utilities/tailwindVariants
 import { omit } from 'enso-common/src/utilities/data/object'
 import { INPUT_STYLES } from '../variants'
 
-/**
- * Props for the Input component.
- */
+/** Props for the Input component. */
 export interface InputProps<Schema extends TSchema, TFieldName extends FieldPath<Schema>>
   extends FieldStateProps<Omit<aria.InputProps, 'children' | 'size'>, Schema, TFieldName>,
     FieldProps,
@@ -53,9 +51,7 @@ export interface InputProps<Schema extends TSchema, TFieldName extends FieldPath
   readonly fieldVariants?: FieldComponentProps<Schema>['variants']
 }
 
-/**
- * Basic input component. Input component is a component that is used to get user input in a text field.
- */
+/** Basic input component. Input component is a component that is used to get user input in a text field. */
 export const Input = forwardRef(function Input<
   Schema extends TSchema,
   TFieldName extends FieldPath<Schema>,
@@ -73,13 +69,12 @@ export const Input = forwardRef(function Input<
     variant,
     variants = INPUT_STYLES,
     fieldVariants,
-    form,
+    form: formRaw,
     autoFocus = false,
     ...inputProps
   } = props
-
+  const form = Form.useFormContext(formRaw)
   const testId = props.testId ?? props['data-testid']
-
   const privateInputRef = useRef<HTMLInputElement>(null)
 
   const { fieldProps, formInstance } = Form.useFieldRegister<
@@ -99,7 +94,6 @@ export const Input = forwardRef(function Input<
           return value
         }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value
       }
     },
@@ -118,7 +112,7 @@ export const Input = forwardRef(function Input<
 
   return (
     <Form.Field
-      {...aria.mergeProps<FieldComponentProps<Schema>>()(inputProps, omit(fieldProps), {
+      {...aria.mergeProps<FieldComponentProps<Schema>>()(inputProps, fieldProps, {
         isHidden: props.hidden,
         fullWidth: true,
         variants: fieldVariants,
@@ -140,11 +134,13 @@ export const Input = forwardRef(function Input<
           <div className={classes.inputContainer()}>
             <aria.Input
               {...aria.mergeProps<aria.InputProps>()(
-                inputProps,
                 { className: classes.textArea(), type, name },
+                omit(inputProps, 'isInvalid', 'isRequired', 'isDisabled'),
                 omit(fieldProps, 'isInvalid', 'isRequired', 'isDisabled', 'invalid'),
               )}
-              ref={mergeRefs(inputRef, privateInputRef, fieldProps.ref)}
+              ref={(el) => {
+                mergeRefs(inputRef, privateInputRef, fieldProps.ref)(el)
+              }}
             />
           </div>
 

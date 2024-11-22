@@ -3,9 +3,11 @@ package org.enso.ydoc.polyfill.web;
 import io.helidon.common.buffers.BufferData;
 import io.helidon.http.Headers;
 import io.helidon.http.HttpPrologue;
+import io.helidon.http.Method;
 import io.helidon.webclient.websocket.WsClient;
 import io.helidon.webclient.websocket.WsClientProtocolConfig;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.http.HttpRouting;
 import io.helidon.webserver.websocket.WsRouting;
 import io.helidon.websocket.WsListener;
 import io.helidon.websocket.WsSession;
@@ -15,8 +17,10 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import org.enso.ydoc.Polyfill;
 import org.enso.ydoc.polyfill.Arguments;
-import org.enso.ydoc.polyfill.PolyfillBase;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.ByteSequence;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
@@ -27,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * Implements the WebSocket and WebSocketServer interfaces of the <a
  * href="https://www.npmjs.com/package/ws">ws</a> NPM package.
  */
-final class WebSocket extends PolyfillBase implements ProxyExecutable {
+final class WebSocket implements Polyfill, ProxyExecutable {
 
   private static final Logger log = LoggerFactory.getLogger(WebSocket.class);
 
@@ -47,8 +51,14 @@ final class WebSocket extends PolyfillBase implements ProxyExecutable {
   private final ExecutorService executor;
 
   WebSocket(ExecutorService executor) {
-    super(WEBSOCKET_JS);
     this.executor = executor;
+  }
+
+  @Override
+  public void initialize(Context ctx) {
+    Source jsSource = Source.newBuilder("js", getClass().getResource(WEBSOCKET_JS)).buildLiteral();
+
+    ctx.eval(jsSource).execute(this);
   }
 
   @Override
@@ -122,7 +132,7 @@ final class WebSocket extends PolyfillBase implements ProxyExecutable {
         var port = arguments[2].asInt();
         var handleConnect = arguments[3];
 
-        var routing =
+        var webSocketRouting =
             WsRouting.builder()
                 .endpoint(
                     "*",
@@ -142,7 +152,14 @@ final class WebSocket extends PolyfillBase implements ProxyExecutable {
                       return connection;
                     });
 
-        yield WebServer.builder().host(host).port(port).addRouting(routing).build();
+        var httpRouting = HttpRouting.builder().route(Method.GET, "_health", () -> "OK");
+
+        yield WebServer.builder()
+            .host(host)
+            .port(port)
+            .addRouting(webSocketRouting)
+            .addRouting(httpRouting)
+            .build();
       }
 
       case WEB_SOCKET_SERVER_START -> {

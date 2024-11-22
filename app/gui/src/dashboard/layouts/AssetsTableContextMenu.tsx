@@ -4,20 +4,18 @@
  */
 import * as React from 'react'
 
-import * as authProvider from '#/providers/AuthProvider'
+import { useStore } from 'zustand'
+
 import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
 
 import AssetEventType from '#/events/AssetEventType'
 
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import {
   canTransferBetweenCategories,
   type Category,
   isCloudCategory,
 } from '#/layouts/CategorySwitcher/Category'
-import GlobalContextMenu from '#/layouts/GlobalContextMenu'
+import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -28,11 +26,13 @@ import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
+import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import * as permissions from '#/utilities/permissions'
 import { EMPTY_SET } from '#/utilities/set'
-import * as uniqueString from '#/utilities/uniqueString'
-import { useStore } from 'zustand'
 
 // =================
 // === Constants ===
@@ -62,17 +62,22 @@ export interface AssetsTableContextMenuProps {
  * are selected.
  */
 export default function AssetsTableContextMenu(props: AssetsTableContextMenuProps) {
+  // eslint-disable-next-line react-compiler/react-compiler
+  'use no memo'
   const { hidden = false, backend, category } = props
   const { nodeMapRef, event, rootDirectoryId } = props
   const { doCopy, doCut, doPaste, doDelete } = props
-  const { user } = authProvider.useFullUserSession()
-  const { setModal, unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
+
+  const { user } = useFullUserSession()
+  const { setModal, unsetModal } = useSetModal()
+  const { getText } = useText()
+
   const isCloud = isCloudCategory(category)
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
+  const dispatchAssetEvent = useDispatchAssetEvent()
   const selectedKeys = useSelectedKeys()
   const setSelectedKeys = useSetSelectedKeys()
   const driveStore = useDriveStore()
+
   const hasPasteData = useStore(driveStore, ({ pasteData }) => {
     const effectivePasteData =
       (
@@ -83,6 +88,8 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
       : null
     return (effectivePasteData?.data.ids.size ?? 0) > 0
   })
+
+  const id = React.useId()
 
   // This works because all items are mutated, ensuring their value stays
   // up to date.
@@ -95,7 +102,6 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     )
 
   // This is not a React component even though it contains JSX.
-  // eslint-disable-next-line no-restricted-syntax
   const doDeleteAll = () => {
     const deleteAll = () => {
       unsetModal()
@@ -139,6 +145,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         const [firstKey] = selectedKeys
         const selectedNode =
           selectedKeys.size === 1 && firstKey != null ? nodeMapRef.current.get(firstKey) : null
+
         if (selectedNode?.type === backendModule.AssetType.directory) {
           doPaste(selectedNode.key, selectedNode.item.id)
         } else {
@@ -149,9 +156,9 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   )
 
   if (category.type === 'trash') {
-    return selectedKeys.size === 0 ?
-        null
-      : <ContextMenus key={uniqueString.uniqueString()} hidden={hidden} event={event}>
+    return (
+      selectedKeys.size !== 0 && (
+        <ContextMenus key={id} hidden={hidden} event={event}>
           <ContextMenu aria-label={getText('assetsTableContextMenuLabel')} hidden={hidden}>
             <ContextMenuEntry
               hidden={hidden}
@@ -196,11 +203,13 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
             {pasteAllMenuEntry}
           </ContextMenu>
         </ContextMenus>
+      )
+    )
   } else if (category.type === 'recent') {
     return null
   } else {
     return (
-      <ContextMenus key={uniqueString.uniqueString()} hidden={hidden} event={event}>
+      <ContextMenus key={id} hidden={hidden} event={event}>
         {(selectedKeys.size !== 0 || pasteAllMenuEntry !== false) && (
           <ContextMenu aria-label={getText('assetsTableContextMenuLabel')} hidden={hidden}>
             {selectedKeys.size !== 0 && ownsAllSelectedAssets && (
@@ -236,9 +245,11 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
           <GlobalContextMenu
             hidden={hidden}
             backend={backend}
+            category={category}
             rootDirectoryId={rootDirectoryId}
             directoryKey={null}
             directoryId={null}
+            path={null}
             doPaste={doPaste}
           />
         )}

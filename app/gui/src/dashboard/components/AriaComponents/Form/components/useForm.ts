@@ -18,9 +18,7 @@ import { useMutation } from '@tanstack/react-query'
 import * as schemaModule from './schema'
 import type * as types from './types'
 
-/**
- * Maps the value to the event object.
- */
+/** Maps the value to the event object. */
 function mapValueOnEvent(value: unknown) {
   if (typeof value === 'object' && value != null && 'target' in value && 'type' in value) {
     return value
@@ -45,7 +43,7 @@ function mapValueOnEvent(value: unknown) {
  * Otherwise you'll be fired
  */
 export function useForm<Schema extends types.TSchema, SubmitResult = void>(
-  optionsOrFormInstance: types.UseFormProps<Schema, SubmitResult> | types.UseFormReturn<Schema>,
+  optionsOrFormInstance: types.UseFormOptions<Schema, SubmitResult> | types.UseFormReturn<Schema>,
 ): types.UseFormReturn<Schema> {
   const { getText } = useText()
   const [initialTypePassed] = React.useState(() => getArgsType(optionsOrFormInstance))
@@ -87,7 +85,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
           errorMap: (issue) => {
             switch (issue.code) {
               case 'too_small':
-                if (issue.minimum === 0) {
+                if (issue.minimum === 1 && issue.type === 'string') {
                   return {
                     message: getText('arbitraryFieldRequired'),
                   }
@@ -139,7 +137,11 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       return result
     }
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // We need to disable the eslint rules here, because we call hooks conditionally
+    // but it's safe to do so, because we don't switch between the two types of arguments
+    // and if we do, we throw an error.
+    /* eslint-disable react-compiler/react-compiler */
+    /* eslint-disable react-hooks/rules-of-hooks */
     const formMutation = useMutation({
       // We use template literals to make the mutation key more readable in the devtools
       // This mutation exists only for debug purposes - React Query dev tools record the mutation,
@@ -174,7 +176,6 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
           setFormError(message)
           // We need to throw the error to make the mutation fail
-          // eslint-disable-next-line no-restricted-syntax
           throw error
         }
       },
@@ -187,10 +188,8 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax,@typescript-eslint/no-unsafe-argument
     const formOnSubmit = formInstance.handleSubmit(formMutation.mutateAsync as any)
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isOffline } = useOffline()
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useOfflineChange(
       (offline) => {
         if (offline) {
@@ -202,7 +201,6 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       { isDisabled: canSubmitOffline },
     )
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const submit = useEventCallback(
       (event: React.FormEvent<HTMLFormElement> | null | undefined) => {
         event?.preventDefault()
@@ -221,7 +219,6 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       },
     )
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const setFormError = useEventCallback((error: string) => {
       formInstance.setError('root.submit', { message: error })
     })
@@ -239,13 +236,13 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
     return form
   }
+  /* eslint-enable react-compiler/react-compiler */
+  /* eslint-enable react-hooks/rules-of-hooks */
 }
 
-/**
- * Get the type of arguments passed to the useForm hook
- */
+/** Get the type of arguments passed to the useForm hook */
 function getArgsType<Schema extends types.TSchema, SubmitResult = void>(
-  args: types.UseFormProps<Schema, SubmitResult>,
+  args: types.UseFormOptions<Schema, SubmitResult>,
 ) {
   return 'formState' in args ? ('formInstance' as const) : ('formOptions' as const)
 }

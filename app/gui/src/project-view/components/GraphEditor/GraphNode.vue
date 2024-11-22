@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nodeEditBindings } from '@/bindings'
-import CircularMenu from '@/components/CircularMenu.vue'
+import ComponentMenu from '@/components/ComponentMenu.vue'
 import GraphNodeComment from '@/components/GraphEditor/GraphNodeComment.vue'
 import GraphNodeMessage, {
   colorForMessageType,
@@ -27,6 +27,7 @@ import { injectKeyboard } from '@/providers/keyboard'
 import { useGraphStore, type Node } from '@/stores/graph'
 import { asNodeId } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
+import { useNodeExecution } from '@/stores/project/nodeExecution'
 import { suggestionDocumentationUrl } from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
 import type { AstId } from '@/util/ast/abstract'
@@ -61,9 +62,10 @@ const emit = defineEmits<{
   replaceSelection: []
   outputPortClick: [event: PointerEvent, portId: AstId]
   outputPortDoubleClick: [event: PointerEvent, portId: AstId]
-  doubleClick: []
+  enterNode: []
   createNodes: [options: NodeCreationOptions[]]
   setNodeColor: [color: string | undefined]
+  toggleDocPanel: []
   'update:edited': [cursorPosition: number]
   'update:rect': [rect: Rect]
   'update:hoverAnim': [progress: number]
@@ -78,6 +80,7 @@ const nodeSelection = injectGraphSelection(true)
 const projectStore = useProjectStore()
 const graph = useGraphStore()
 const navigator = injectGraphNavigator(true)
+const nodeExecution = useNodeExecution()
 
 const nodeId = computed(() => asNodeId(props.node.rootExpr.externalId))
 const potentialSelfArgumentId = computed(() => props.node.primarySubject)
@@ -226,7 +229,12 @@ const outputHovered = ref(false)
 const keyboard = injectKeyboard()
 const visualizationWidth = computed(() => props.node.vis?.width ?? null)
 const visualizationHeight = computed(() => props.node.vis?.height ?? null)
-const isVisualizationEnabled = computed(() => props.node.vis?.visible ?? false)
+const isVisualizationEnabled = computed({
+  get: () => props.node.vis?.visible ?? false,
+  set: (enabled) => {
+    emit('update:visualizationEnabled', enabled)
+  },
+})
 const isVisualizationPreviewed = computed(
   () => keyboard.mod && outputHovered.value && !isVisualizationEnabled.value,
 )
@@ -371,7 +379,7 @@ const handleNodeClick = useDoubleClick(
     }
   },
   () => {
-    if (!significantMove.value) emit('doubleClick')
+    if (!significantMove.value) emit('enterNode')
   },
 ).handleClick
 
@@ -399,6 +407,25 @@ watchEffect(() => {
     emit('update:rect', nodeOuterRect.value)
   }
 })
+
+const dataSource = computed(
+  () => ({ type: 'node', nodeId: props.node.rootExpr.externalId }) as const,
+)
+
+// === Recompute node expression ===
+
+// The node is considered to be recomputing for at least this time.
+const MINIMAL_EXECUTION_TIMEOUT_MS = 500
+const recomputationTimeout = ref(false)
+const actualRecomputationStatus = nodeExecution.isBeingRecomputed(nodeId.value)
+const isBeingRecomputed = computed(
+  () => recomputationTimeout.value || actualRecomputationStatus.value,
+)
+function recomputeOnce() {
+  nodeExecution.recomputeOnce(nodeId.value, 'Live')
+  recomputationTimeout.value = true
+  setTimeout(() => (recomputationTimeout.value = false), MINIMAL_EXECUTION_TIMEOUT_MS)
+}
 </script>
 
 <template>
@@ -435,7 +462,6 @@ watchEffect(() => {
         :nodePosition="nodePosition"
         :nodeSize="graphSelectionSize"
         :class="{ draggable: true, dragged: isDragged }"
-        :selected
         :color
         :externalHovered="nodeHovered"
         @visible="selectionVisible = $event"
@@ -455,17 +481,17 @@ watchEffect(() => {
     >
       <SvgIcon name="record" />
     </button>
-    <CircularMenu
+    <ComponentMenu
       v-if="menuVisible"
-      v-model:isRecordingOverridden="isRecordingOverridden"
+      v-model:isVisualizationEnabled="isVisualizationEnabled"
       :isRecordingEnabledGlobally="projectStore.isRecordingEnabled"
-      :isVisualizationEnabled="isVisualizationEnabled"
-      :isFullMenuVisible="menuVisible && menuFull"
       :nodeColor="getNodeColor(nodeId)"
       :matchableNodeColors="matchableNodeColors"
       :documentationUrl="documentationUrl"
       :isRemovable="props.node.type === 'component'"
-      @update:isVisualizationEnabled="emit('update:visualizationEnabled', $event)"
+      :isEnterable="graph.nodeCanBeEntered(nodeId)"
+      :isBeingRecomputed="isBeingRecomputed"
+      @enterNode="emit('enterNode')"
       @startEditing="startEditingNode"
       @startEditingComment="editingComment = true"
       @openFullMenu="openFullMenu"
@@ -473,7 +499,10 @@ watchEffect(() => {
       @pointerenter="menuHovered = true"
       @pointerleave="menuHovered = false"
       @update:nodeColor="emit('setNodeColor', $event)"
+      @createNewNode="setSelected(), emit('createNodes', [{ commit: false, content: undefined }])"
+      @toggleDocPanel="emit('toggleDocPanel')"
       @click.capture="setSelected"
+      @recompute="recomputeOnce"
     />
     <GraphVisualization
       v-if="isVisualizationVisible"
@@ -482,7 +511,7 @@ watchEffect(() => {
       :nodePosition="nodePosition"
       :isCircularMenuVisible="menuVisible"
       :currentType="props.node.vis?.identifier"
-      :dataSource="{ type: 'node', nodeId: props.node.rootExpr.externalId }"
+      :dataSource="dataSource"
       :typename="expressionInfo?.typename"
       :width="visualizationWidth"
       :height="visualizationHeight"
@@ -575,8 +604,19 @@ watchEffect(() => {
   height: var(--node-size-y);
   rx: var(--node-border-radius);
 
-  fill: var(--node-color-primary);
+  fill: var(--color-node-background);
   transition: fill 0.2s ease;
+}
+
+.GraphNode {
+  --color-node-text: white;
+  --color-node-primary: var(--node-group-color);
+  --color-node-background: var(--node-group-color);
+}
+
+.GraphNode.selected {
+  --color-node-background: color-mix(in oklab, var(--color-node-primary) 30%, white 70%);
+  --color-node-text: color-mix(in oklab, var(--color-node-primary) 70%, black 30%);
 }
 
 .GraphNode {
@@ -587,17 +627,13 @@ watchEffect(() => {
   /** Space between node and component above and below, such as comments and errors. */
   --node-vertical-gap: 4px;
 
-  --node-color-primary: color-mix(
-    in oklab,
-    var(--node-group-color) 100%,
-    var(--node-group-color) 0%
-  );
-  --node-color-port: color-mix(in oklab, var(--node-color-primary) 85%, white 15%);
+  --color-node-primary: var(--node-group-color);
+  --node-color-port: color-mix(in oklab, var(--color-node-primary) 85%, white 15%);
   --node-color-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
 
   &.executionState-Unknown,
   &.executionState-Pending {
-    --node-color-primary: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
+    --color-node-primary: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
   }
 }
 

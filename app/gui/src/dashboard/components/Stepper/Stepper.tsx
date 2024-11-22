@@ -19,9 +19,7 @@ import * as stepperProvider from './StepperProvider'
 import type { BaseRenderProps, RenderChildrenProps, RenderStepProps } from './types'
 import * as stepperState from './useStepperState'
 
-/**
- * Props for {@link Stepper} component.
- */
+/** Props for {@link Stepper} component. */
 export interface StepperProps {
   readonly state: stepperState.StepperState
   readonly children: React.ReactNode | ((props: RenderChildrenProps) => React.ReactNode)
@@ -30,7 +28,7 @@ export interface StepperProps {
     | ((props: BaseRenderProps) => string | null | undefined)
     | null
     | undefined
-  readonly renderStep: (props: RenderStepProps) => React.ReactNode
+  readonly renderStep?: ((props: RenderStepProps) => React.ReactNode) | null
   readonly style?:
     | React.CSSProperties
     | ((props: BaseRenderProps) => React.CSSProperties | undefined)
@@ -48,9 +46,7 @@ const STEPPER_STYLES = tv({
 
 const ANIMATION_OFFSET = 15
 
-/**
- * A stepper component is used to indicate progress through a multi-step process.
- */
+/** A stepper component is used to indicate progress through a multi-step process. */
 export function Stepper(props: StepperProps) {
   const { renderStep, children, state } = props
 
@@ -77,9 +73,7 @@ export function Stepper(props: StepperProps) {
 
   const style = typeof props.style === 'function' ? props.style(baseRenderProps) : props.style
 
-  /**
-   * Render children of the stepper component.
-   */
+  /** Render children of the stepper component. */
   const renderChildren = () => {
     const renderProps = {
       currentStep,
@@ -107,29 +101,37 @@ export function Stepper(props: StepperProps) {
       <stepperProvider.StepperProvider
         value={{ totalSteps, currentStep, goToStep, nextStep, previousStep, state }}
       >
-        <div className={styles.steps()}>
-          {Array.from({ length: totalSteps }).map((_, index) => {
-            const renderStepProps = {
-              index,
-              currentStep,
-              totalSteps,
-              isFirst: index === 0,
-              isLast: index === totalSteps - 1,
-              nextStep,
-              previousStep,
-              goToStep,
-              isCompleted: index < currentStep,
-              isCurrent: index === currentStep,
-              isDisabled: index > currentStep,
-            } satisfies RenderStepProps
+        {renderStep == null ? null : (
+          <div className={styles.steps()}>
+            {Array.from({ length: totalSteps }).map((_, index) => {
+              const renderStepProps = {
+                index,
+                currentStep,
+                totalSteps,
+                isFirst: index === 0,
+                isLast: index === totalSteps - 1,
+                nextStep,
+                previousStep,
+                goToStep,
+                isCompleted: index < currentStep,
+                isCurrent: index === currentStep,
+                isDisabled: index > currentStep,
+              } satisfies RenderStepProps
 
-            return (
-              <div key={index} className={styles.step({})}>
-                {renderStep(renderStepProps)}
-              </div>
-            )
-          })}
-        </div>
+              const nextRenderStep = renderStep(renderStepProps)
+
+              if (nextRenderStep == null) {
+                return null
+              }
+
+              return (
+                <div key={index} className={styles.step({})}>
+                  {nextRenderStep}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         <div className={styles.content()}>
           <AnimatePresence initial={false} mode="sync" custom={direction}>

@@ -16,9 +16,7 @@ import type { FieldVariantProps } from '../Form'
 import * as formComponent from '../Form'
 import * as radioGroupContext from './RadioGroupContext'
 
-/**
- * Props for {@link RadioGroup}.
- */
+/** Props for {@link RadioGroup}. */
 export interface RadioGroupProps<
   Schema extends formComponent.TSchema,
   TFieldName extends formComponent.FieldPath<Schema>,
@@ -39,10 +37,8 @@ export const RADIO_GROUP_STYLES = twv.tv({
   variants: { fullWidth: { true: 'w-full' } },
 })
 
-/**
- * A radio group component.
- */
-// eslint-disable-next-line no-restricted-syntax
+/** A radio group component. */
+
 export const RadioGroup = forwardRef(function RadioGroup<
   Schema extends formComponent.TSchema,
   TFieldName extends formComponent.FieldPath<Schema>,
@@ -78,7 +74,9 @@ export const RadioGroup = forwardRef(function RadioGroup<
 
   return (
     <aria.RadioGroup
-      ref={mergeRefs.mergeRefs(ref, field.ref)}
+      ref={(el) => {
+        mergeRefs.mergeRefs(ref, field.ref)(el)
+      }}
       {...aria.mergeProps<aria.RadioGroupProps>()(omit(radioGroupProps, 'validate'), {
         name: field.name,
         value: field.value,

@@ -1,6 +1,8 @@
 /** @file A horizontal selector supporting multiple input. */
 import { useRef, type CSSProperties, type ForwardedRef, type Ref } from 'react'
 
+import { omit, unsafeRemoveUndefined } from 'enso-common/src/utilities/data/object'
+
 import {
   FieldError,
   ListBox,
@@ -19,7 +21,6 @@ import {
 import { mergeRefs } from '#/utilities/mergeRefs'
 import { forwardRef } from '#/utilities/react'
 import { tv, type VariantProps } from '#/utilities/tailwindVariants'
-import { omit, unsafeRemoveUndefined } from 'enso-common/src/utilities/data/object'
 import { MultiSelectorOption } from './MultiSelectorOption'
 
 /** * Props for the MultiSelector component. */
@@ -79,9 +80,7 @@ export const MULTI_SELECTOR_STYLES = tv({
   },
 })
 
-/**
- * A horizontal multi-selector.
- */
+/** A horizontal multi-selector. */
 export const MultiSelector = forwardRef(function MultiSelector<
   Schema extends TSchema,
   TFieldName extends FieldPath<Schema>,
