@@ -34,7 +34,9 @@ export class LocalStorage {
 
   /** Create a {@link LocalStorage}. */
   private constructor() {
-    this.values = {}
+    const value: unknown = JSON.parse(localStorage.getItem(this.localStorageKey) ?? '{}')
+    // eslint-disable-next-line no-restricted-syntax
+    this.values = typeof value === 'object' ? ((value ?? {}) as typeof this.values) : {}
   }
 
   /** Get the singleton instance of {@link LocalStorage}. */
@@ -69,10 +71,8 @@ export class LocalStorage {
   /** Write an entry to the stored data, and save. */
   set(key: string, value: unknown) {
     this.values[key] = value
-
     this.eventTarget.dispatchEvent(new Event(key))
     this.eventTarget.dispatchEvent(new Event('_change'))
-
     this.save()
   }
 
@@ -85,7 +85,6 @@ export class LocalStorage {
     this.eventTarget.dispatchEvent(new Event(key))
     this.eventTarget.dispatchEvent(new Event('_change'))
     this.save()
-
     return oldValue
   }
 

@@ -7,16 +7,18 @@ export const {
   useState: useInputBindingsState,
 } = defineLocalStorageKey('inputBindings', {
   schema: (z) =>
-    z.record(z.string().array().readonly()).transform((value) =>
-      Object.fromEntries(
-        Object.entries<unknown>({ ...value }).flatMap((kv) => {
-          const [k, v] = kv
-          return Array.isArray(v) && v.every((item): item is string => typeof item === 'string') ?
-              [[k, v]]
-            : []
-        }),
+    z
+      .record(z.string().array().readonly())
+      .transform((value): { readonly [k: string]: readonly string[] } =>
+        Object.fromEntries(
+          Object.entries<unknown>({ ...value }).flatMap((kv) => {
+            const [k, v] = kv
+            return Array.isArray(v) && v.every((item): item is string => typeof item === 'string') ?
+                [[k, v]]
+              : []
+          }),
+        ),
       ),
-    ),
 })
 
 export const {

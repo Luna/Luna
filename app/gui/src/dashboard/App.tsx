@@ -52,7 +52,7 @@ import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import DriveProvider from '#/providers/DriveProvider'
 import { useHttpClient } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
-import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
+import LocalStorageProvider from '#/providers/LocalStorageProvider'
 import { useLogger } from '#/providers/LoggerProvider'
 import ModalProvider, * as modalProvider from '#/providers/ModalProvider'
 import * as navigator2DProvider from '#/providers/Navigator2DProvider'
@@ -101,6 +101,7 @@ import {
   useAcceptedTermsOfServiceVersionState,
   useGetInputBindings,
   useLocalRootDirectoryState,
+  useSetInputBindings,
 } from '#/appLocalStorage'
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
@@ -267,7 +268,6 @@ function AppRouter(props: AppRouterProps) {
   const navigate = router.useNavigate()
 
   const { getText } = textProvider.useText()
-  const { localStorage } = localStorageProvider.useLocalStorage()
   const { setModal } = modalProvider.useSetModal()
 
   const navigator2D = navigator2DProvider.useNavigator2D()
@@ -307,12 +307,12 @@ function AppRouter(props: AppRouterProps) {
         }
       }
     }
-  }, [localStorage, inputBindingsRaw, getInputBindings])
+  }, [inputBindingsRaw, getInputBindings])
 
+  const setInputBindings = useSetInputBindings()
   const inputBindings = React.useMemo(() => {
     const updateLocalStorage = () => {
-      localStorage.set(
-        'inputBindings',
+      setInputBindings(
         Object.fromEntries(
           Object.entries(inputBindingsRaw.metadata).map((kv) => {
             const [k, v] = kv
@@ -355,7 +355,7 @@ function AppRouter(props: AppRouterProps) {
         return inputBindingsRaw.unregister.bind(inputBindingsRaw)
       },
     }
-  }, [localStorage, inputBindingsRaw])
+  }, [inputBindingsRaw, setInputBindings])
 
   const mainPageUrl = getMainPageUrl()
 
