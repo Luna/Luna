@@ -136,19 +136,24 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
         ;(result[dateString] ??= []).push({ date, projectExecution })
       }
     }
+    for (const key in result) {
+      result[key]?.sort((a, b) => Number(a.date) - Number(b.date))
+    }
     return result
   }, [focusedMonth, projectExecutions, timeZone])
   const projectExecutionsForToday = useMemo<
     readonly { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
   >(
     () =>
-      projectExecutions.flatMap((projectExecution) =>
-        getProjectExecutionRepetitionsForDateRange(
-          projectExecution,
-          selectedDate.toDate(timeZone),
-          selectedDate.add(parseDuration('P1D')).toDate(timeZone),
-        ).flatMap((date) => ({ date, projectExecution })),
-      ),
+      projectExecutions
+        .flatMap((projectExecution) =>
+          getProjectExecutionRepetitionsForDateRange(
+            projectExecution,
+            selectedDate.toDate(timeZone),
+            selectedDate.add(parseDuration('P1D')).toDate(timeZone),
+          ).flatMap((date) => ({ date, projectExecution })),
+        )
+        .sort((a, b) => Number(a.date) - Number(b.date)),
     [projectExecutions, selectedDate, timeZone],
   )
 
