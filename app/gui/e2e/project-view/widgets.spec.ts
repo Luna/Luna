@@ -579,7 +579,7 @@ test('Autoscoped constructors', async ({ page }) => {
   await node.click()
   await expect(topLevelArgs).toHaveCount(3)
 
-  const groupBy = node.getByTestId('list-item-content').first()
+  const groupBy = node.getByTestId('list-item-content')
   await expect(groupBy).toBeVisible()
   await expect(groupBy.locator('.WidgetArgumentName')).toContainText(['column', 'new_name'])
 })
