@@ -33,17 +33,35 @@ export const SELECTOR_OPTION_STYLES = tv({
       medium: { radio: 'px-[9px] py-[3.5px]' },
       small: { radio: 'px-[7px] py-[1.5px]' },
     },
+    isSelected: {
+      // specified in compoundVariants
+      true: { radio: '' },
+      false: { radio: '' },
+    },
+    isFocusVisible: {
+      // specified in compoundVariants
+      true: { radio: '' },
+      false: { radio: '' },
+    },
+
+    isPressed: {
+      // specified in compoundVariants
+      true: { radio: '' },
+      false: { radio: '' },
+    },
+
     variant: {
-      primary: {
+      outline: {
         radio:
-          'overflow-clip outline outline-2 outline-transparent outline-offset-[-2px] [&:not(:selected)]:bg-primary/5 selected:text-white pressed:bg-primary/10 focus-visible:outline-primary focus-visible:outline-offset-0',
+          'overflow-clip outline outline-2 outline-transparent outline-offset-[-2px] pressed:bg-primary/10 focus-visible:outline-primary focus-visible:outline-offset-0',
       },
     },
   },
   slots: {
     animation: 'bg-primary',
     radio: TEXT_STYLE({
-      className: 'flex flex-1 w-full items-center justify-center transition-colors duration-200',
+      className:
+        'flex flex-1 w-full items-center justify-center transition-colors duration-200 isolate',
       variant: 'body',
     }),
   },
@@ -89,10 +107,32 @@ export const SELECTOR_OPTION_STYLES = tv({
       class: 'rounded-full',
     },
   ],
+  compoundVariants: [
+    {
+      variant: 'outline',
+      isSelected: true,
+      class: {
+        radio: TEXT_STYLE({
+          variant: 'body',
+          color: 'invert',
+        }),
+      },
+    },
+    {
+      variant: 'outline',
+      isSelected: false,
+      class: {
+        radio: TEXT_STYLE({
+          variant: 'body',
+          color: 'primary',
+        }),
+      },
+    },
+  ],
   defaultVariants: {
     size: 'medium',
     rounded: 'xxxlarge',
-    variant: 'primary',
+    variant: 'outline',
   },
 })
 
@@ -124,11 +164,12 @@ export const SelectorOption = memo(
           ref={ref}
           {...radioProps}
           value={value}
-          className={(renderProps) =>
-            styles.radio({
+          className={(renderProps) => {
+            return styles.radio({
               className: typeof className === 'function' ? className(renderProps) : className,
+              ...renderProps,
             })
-          }
+          }}
         >
           {label}
         </Radio>
