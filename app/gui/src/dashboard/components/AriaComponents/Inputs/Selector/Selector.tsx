@@ -49,6 +49,7 @@ export const SELECTOR_STYLES = tv({
     readOnly: { true: 'cursor-default' },
     size: {
       medium: { base: '' },
+      small: { base: '' },
     },
     rounded: {
       none: 'rounded-none',
