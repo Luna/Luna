@@ -637,15 +637,12 @@ const createDateTimePattern = (pattern: string, numberOfParts: number) => {
   };
 }
   if (columnType === 'Date') {
-  console.log(1)
   return createDateTimePattern('(Date.new __ __ __)', 3);
 }
   if (columnType === 'Date_Time') {
-  console.log(2)
   return createDateTimePattern('(Date_Time.new __ __ __ __ __ __ __ __ __)', 9);
 }
   if (columnType === 'Time') {
-  console.log(3)
   return createDateTimePattern('(Time_Of_Day.new __ __ __ __ __ __)', 6);
 }
   return (item: string) => Ast.TextLiteral.new(item)
