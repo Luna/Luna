@@ -218,9 +218,7 @@ function supressCopy(event: KeyboardEvent) {
 
 // === Loading AGGrid and its license ===
 
-console.log('About to import license')
 const { LicenseManager } = await import('ag-grid-enterprise')
-console.log('About to check license')
 if (typeof import.meta.env.VITE_ENSO_AG_GRID_LICENSE_KEY !== 'string') {
   console.warn('The AG_GRID_LICENSE_KEY is not defined.')
   if (import.meta.env.DEV) {
@@ -245,7 +243,6 @@ if (typeof import.meta.env.VITE_ENSO_AG_GRID_LICENSE_KEY !== 'string') {
   LicenseManager.setLicenseKey(agGridLicenseKey)
 }
 
-console.log('About to load mighty AgGrid')
 const { AgGridVue } = await import('ag-grid-vue3')
 </script>
 
