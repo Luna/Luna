@@ -490,7 +490,7 @@
   "addLocalDirectory": "Add Folder",
   "browseForNewLocalRootDirectory": "Browse for new Root Folder",
   "resetLocalRootDirectory": "Reset Root Folder",
-  "removeDirectoryFromFavorites": "Remove folder from favorites",
+  "removeDirectoryFromFavorites": "Remove from Sidebar",
   "organizationInviteTitle": "You have been invited!",
   "organizationInvitePrefix": "The organization '",
   "organizationInviteSuffix": "' is inviting you. Would you like to accept? All your assets will be moved with you to your personal space.",
