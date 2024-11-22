@@ -1,7 +1,4 @@
-/**
- * @file The React provider for localStorage, along with hooks to use the provider
- * via the shared React context.
- */
+/** @file Provider for type-safely storing state in `localStorage`. */
 import {
   createContext,
   type PropsWithChildren,
@@ -18,10 +15,6 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { LocalStorage, type LocalStorageKeyMetadata } from '#/utilities/LocalStorage'
 import { isFunction, type NonFunction } from '#/utilities/type'
 
-// ===========================
-// === LocalStorageContext ===
-// ===========================
-
 /** State contained in a `LocalStorageContext`. */
 export interface LocalStorageContextType {
   readonly localStorage: LocalStorage
@@ -33,10 +26,6 @@ const LocalStorageContext = createContext<LocalStorageContextType>(null)
 
 /** Props for a {@link LocalStorageProvider}. */
 export type LocalStorageProviderProps = Readonly<PropsWithChildren>
-
-// ============================
-// === LocalStorageProvider ===
-// ============================
 
 /** A React Provider that lets components get the shortcut registry. */
 export default function LocalStorageProvider(props: LocalStorageProviderProps) {

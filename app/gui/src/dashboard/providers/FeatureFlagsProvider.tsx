@@ -1,9 +1,4 @@
-/**
- * @file
- *
- * Feature flags provider.
- * Feature flags are used to enable or disable certain features in the application.
- */
+/** @file Provider for enabling or disabling certain features. */
 import { useMount } from '#/hooks/mountHooks'
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import LocalStorage from '#/utilities/LocalStorage'

@@ -1,4 +1,4 @@
-/** @file The React provider (and associated hooks) for providing reactive events. */
+/** @file Provider for the list of opened projects. */
 import * as React from 'react'
 
 import invariant from 'tiny-invariant'
@@ -161,9 +161,7 @@ export function useProjectsStore() {
 /** The page context. */
 export function usePage() {
   const context = React.useContext(PageContext)
-
   invariant(context != null, 'Page context can only be used inside an `ProjectsProvider`.')
-
   return context
 }
 
