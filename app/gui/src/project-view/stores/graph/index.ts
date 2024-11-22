@@ -19,18 +19,17 @@ import { assert, bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import type { AstId, Identifier, MutableModule } from '@/util/ast/abstract'
 import { isAstId, isIdentifier } from '@/util/ast/abstract'
-import { RawAst, visitRecursive } from '@/util/ast/raw'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
-import { Events, stringUnionToArray } from '@/util/data/observable'
+import { stringUnionToArray, type Events } from '@/util/data/observable'
 import { Rect } from '@/util/data/rect'
 import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { normalizeQualifiedName, qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { map, set } from 'lib0'
-import { iteratorFilter } from 'lib0/iterator'
 import {
   computed,
   markRaw,
@@ -52,13 +51,8 @@ import type {
   MethodPointer,
 } from 'ydoc-shared/languageServerTypes'
 import { reachable } from 'ydoc-shared/util/data/graph'
-import type {
-  LocalUserActionOrigin,
-  Origin,
-  SourceRangeKey,
-  VisualizationMetadata,
-} from 'ydoc-shared/yjsModel'
-import { defaultLocalOrigin, sourceRangeKey, visMetadataEquals } from 'ydoc-shared/yjsModel'
+import type { LocalUserActionOrigin, Origin, VisualizationMetadata } from 'ydoc-shared/yjsModel'
+import { defaultLocalOrigin, visMetadataEquals } from 'ydoc-shared/yjsModel'
 import { UndoManager } from 'yjs'
 
 const FALLBACK_BINDING_PREFIX = 'node'
@@ -98,7 +92,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     const vizRects = reactive(new Map<NodeId, Rect>())
     // The currently visible nodes' areas (including visualization).
     const visibleNodeAreas = computed(() => {
-      const existing = iteratorFilter(nodeRects.entries(), ([id]) => db.isNodeId(id))
+      const existing = iter.filter(nodeRects.entries(), ([id]) => db.isNodeId(id))
       return Array.from(existing, ([id, rect]) => vizRects.get(id) ?? rect)
     })
     function visibleArea(nodeId: NodeId): Rect | undefined {
@@ -114,7 +108,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     const portInstances = shallowReactive(new Map<PortId, Set<PortViewInstance>>())
     const editedNodeInfo = ref<NodeEditInfo>()
 
-    const moduleSource = reactive(SourceDocument.Empty())
+    const moduleSource = SourceDocument.Empty(reactive)
     const moduleRoot = ref<Ast.BodyBlock>()
     const syncModule = computed(() => moduleRoot.value?.module as Ast.MutableModule | undefined)
 
@@ -146,7 +140,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       },
     )
 
-    const methodAst = computed<Result<Ast.Function>>(() =>
+    const methodAst = computed<Result<Ast.FunctionDef>>(() =>
       syncModule.value ? getExecutedMethodAst(syncModule.value) : Err('AST not yet initialized'),
     )
 
@@ -169,26 +163,11 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     })
 
     watchEffect(() => {
-      if (!methodAst.value.ok || !moduleSource.text) return
-      const method = methodAst.value.value
-      const toRaw = new Map<SourceRangeKey, RawAst.Tree.Function>()
-      visitRecursive(Ast.rawParseModule(moduleSource.text), (node) => {
-        if (node.type === RawAst.Tree.Type.Function) {
-          const start = node.whitespaceStartInCodeParsed + node.whitespaceLengthInCodeParsed
-          const end = start + node.childrenLengthInCodeParsed
-          toRaw.set(sourceRangeKey([start, end]), node)
-          return false
-        }
-        return true
-      })
-      const methodSpan = moduleSource.getSpan(method.id)
-      assert(methodSpan != null)
-      const rawFunc = toRaw.get(sourceRangeKey(methodSpan))
-      const getSpan = (id: AstId) => moduleSource.getSpan(id)
-      db.updateBindings(method, rawFunc, moduleSource.text, getSpan)
+      if (methodAst.value.ok && moduleSource.text)
+        db.updateBindings(methodAst.value.value, moduleSource)
     })
 
-    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.Function> {
+    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
       const executionStackTop = proj.executionContext.getStackTop()
       switch (executionStackTop.type) {
         case 'ExplicitCall': {
@@ -204,7 +183,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       }
     }
 
-    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.Function> {
+    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.FunctionDef> {
       const topLevel = (edit ?? syncModule.value)?.root()
       if (!topLevel) return Err('Module unavailable')
       assert(topLevel instanceof Ast.BodyBlock)

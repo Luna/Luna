@@ -176,6 +176,13 @@ declare global {
     readonly fileBrowserApi?: FileBrowserApi
     readonly versionInfo?: VersionInfo
     toggleDevtools: () => void
+    /**
+     * If set to `true`, animations will be disabled.
+     * Used by playwright tests to speed up execution.
+     *
+     * ATM only affects the framer-motion animations.
+     */
+    readonly DISABLE_ANIMATIONS?: boolean
   }
 
   namespace NodeJS {
@@ -211,6 +218,8 @@ declare global {
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_STRIPE_KEY?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
+      readonly ENSO_CLOUD_AUTH_ENDPOINT: string
+      // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_COGNITO_USER_POOL_ID: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: string
@@ -220,8 +229,6 @@ declare global {
       readonly ENSO_CLOUD_COGNITO_REGION: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_GOOGLE_ANALYTICS_TAG?: string
-      // @ts-expect-error The index signature is intentional to disallow unknown env vars.
-      readonly ENSO_CLOUD_DASHBOARD_VERSION?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_DASHBOARD_COMMIT_HASH?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.

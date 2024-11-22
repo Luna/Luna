@@ -41,7 +41,7 @@ import org.enso.pkg.QualifiedName;
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class AtomConstructor implements EnsoObject {
+public final class AtomConstructor extends EnsoObject {
 
   private final String name;
   private final Module definitionModule;
@@ -107,7 +107,7 @@ public final class AtomConstructor implements EnsoObject {
       EnsoLanguage language, ModuleScope.Builder scopeBuilder, ArgumentDefinition... args) {
     ExpressionNode[] reads = new ExpressionNode[args.length];
     for (int i = 0; i < args.length; i++) {
-      reads[i] = ReadArgumentNode.build(i, null, null);
+      reads[i] = ReadArgumentNode.build(i, null);
     }
     return initializeFields(
         language,
@@ -414,7 +414,8 @@ public final class AtomConstructor implements EnsoObject {
 
   @ExportMessage
   @TruffleBoundary
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     var sb = new StringBuilder();
     sb.append("Constructor<").append(getDisplayName()).append(">");
     for (var f : getFields()) {

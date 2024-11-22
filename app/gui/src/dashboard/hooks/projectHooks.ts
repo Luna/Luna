@@ -1,6 +1,4 @@
 /** @file Mutations related to project management. */
-import * as React from 'react'
-
 import * as reactQuery from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
@@ -22,9 +20,8 @@ import {
 } from '#/providers/ProjectsProvider'
 
 import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
+import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
-import type LocalBackend from '#/services/LocalBackend'
-import type RemoteBackend from '#/services/RemoteBackend'
 
 // ====================================
 // === createGetProjectDetailsQuery ===
@@ -42,14 +39,13 @@ const CLOUD_OPENING_INTERVAL_MS = 5_000
  */
 const ACTIVE_SYNC_INTERVAL_MS = 100
 
+const DEFAULT_INTERVAL_MS = 120_000
+
 /** Options for {@link createGetProjectDetailsQuery}. */
 export interface CreateOpenedProjectQueryOptions {
-  readonly type: backendModule.BackendType
   readonly assetId: backendModule.Asset<backendModule.AssetType.project>['id']
   readonly parentId: backendModule.Asset<backendModule.AssetType.project>['parentId']
-  readonly title: backendModule.Asset<backendModule.AssetType.project>['title']
-  readonly remoteBackend: RemoteBackend
-  readonly localBackend: LocalBackend | null
+  readonly backend: Backend
 }
 
 /** Return a function to update a project asset in the TanStack Query cache. */
@@ -84,53 +80,55 @@ function useSetProjectAsset() {
 
 /** Project status query.  */
 export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOptions) {
-  const { assetId, parentId, title, remoteBackend, localBackend, type } = options
+  const { assetId, parentId, backend } = options
 
-  const backend = type === backendModule.BackendType.remote ? remoteBackend : localBackend
-  const isLocal = type === backendModule.BackendType.local
+  const isLocal = backend.type === backendModule.BackendType.local
 
   return reactQuery.queryOptions({
     queryKey: createGetProjectDetailsQuery.getQueryKey(assetId),
+    queryFn: () => backend.getProjectDetails(assetId, parentId),
     meta: { persist: false },
-    gcTime: 0,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    networkMode: backend.type === backendModule.BackendType.remote ? 'online' : 'always',
     refetchInterval: ({ state }) => {
       const states = [backendModule.ProjectState.opened, backendModule.ProjectState.closed]
+      const openingStates = [
+        backendModule.ProjectState.openInProgress,
+        backendModule.ProjectState.closing,
+      ]
 
       if (state.status === 'error') {
         return false
       }
+
+      if (state.data == null) {
+        return false
+      }
+
       if (isLocal) {
-        if (state.data?.state.type === backendModule.ProjectState.opened) {
+        if (states.includes(state.data.state.type)) {
           return OPENED_INTERVAL_MS
-        } else {
+        } else if (openingStates.includes(state.data.state.type)) {
           return ACTIVE_SYNC_INTERVAL_MS
-        }
-      } else {
-        if (state.data == null) {
-          return ACTIVE_SYNC_INTERVAL_MS
-        } else if (states.includes(state.data.state.type)) {
-          return OPENED_INTERVAL_MS
         } else {
-          return CLOUD_OPENING_INTERVAL_MS
+          return DEFAULT_INTERVAL_MS
         }
       }
-    },
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    queryFn: async () => {
-      invariant(backend != null, 'Backend is null')
 
-      return await backend.getProjectDetails(assetId, parentId, title)
+      // Cloud project
+      if (states.includes(state.data.state.type)) {
+        return OPENED_INTERVAL_MS
+      } else if (openingStates.includes(state.data.state.type)) {
+        return CLOUD_OPENING_INTERVAL_MS
+      } else {
+        return DEFAULT_INTERVAL_MS
+      }
     },
   })
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const
-createGetProjectDetailsQuery.createPassiveListener = (id: LaunchedProjectId) =>
-  reactQuery.queryOptions<backendModule.Project | null>({
-    queryKey: createGetProjectDetailsQuery.getQueryKey(id),
-    initialData: null,
-  })
 
 // ==============================
 // === useOpenProjectMutation ===
@@ -302,6 +300,7 @@ export function useOpenProject() {
       predicate: (mutation) => mutation.options.scope?.id === project.id,
     })
     const isOpeningTheSameProject = existingMutation?.state.status === 'pending'
+
     if (!isOpeningTheSameProject) {
       openProjectMutation.mutate(project)
       const openingProjectMutation = client.getMutationCache().find({
@@ -314,6 +313,7 @@ export function useOpenProject() {
         ...openingProjectMutation.options,
         scope: { id: project.id },
       })
+
       addLaunchedProject(project)
     }
   })
@@ -327,9 +327,7 @@ export function useOpenProject() {
 export function useOpenEditor() {
   const setPage = useSetPage()
   return eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
-    React.startTransition(() => {
-      setPage(projectId)
-    })
+    setPage(projectId)
   })
 }
 
@@ -342,7 +340,6 @@ export function useCloseProject() {
   const client = reactQuery.useQueryClient()
   const closeProjectMutation = useCloseProjectMutation()
   const removeLaunchedProject = useRemoveLaunchedProject()
-  const projectsStore = useProjectsStore()
   const setPage = useSetPage()
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
@@ -356,7 +353,9 @@ export function useCloseProject() {
         mutation.setOptions({ ...mutation.options, retry: false })
         mutation.destroy()
       })
+
     closeProjectMutation.mutate(project)
+
     client
       .getMutationCache()
       .findAll({
@@ -368,13 +367,10 @@ export function useCloseProject() {
       .forEach((mutation) => {
         mutation.setOptions({ ...mutation.options, scope: { id: project.id } })
       })
+
     removeLaunchedProject(project.id)
 
-    // There is no shared enum type, but the other union member is the same type.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-    if (projectsStore.getState().page === project.id) {
-      setPage(TabType.drive)
-    }
+    setPage(TabType.drive)
   })
 }
 
@@ -384,10 +380,13 @@ export function useCloseProject() {
 
 /** A function to close all projects. */
 export function useCloseAllProjects() {
-  const projectsStore = useProjectsStore()
   const closeProject = useCloseProject()
+  const projectsStore = useProjectsStore()
+
   return eventCallbacks.useEventCallback(() => {
-    for (const launchedProject of projectsStore.getState().launchedProjects) {
+    const launchedProjects = projectsStore.getState().launchedProjects
+
+    for (const launchedProject of launchedProjects) {
       closeProject(launchedProject)
     }
   })

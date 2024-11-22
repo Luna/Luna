@@ -1,70 +1,98 @@
-import type { LexicalPlugin } from '@/components/lexical'
-import { useLexicalStringSync } from '@/components/lexical/sync'
-import { CodeHighlightNode, CodeNode } from '@lexical/code'
-import { AutoLinkNode, LinkNode } from '@lexical/link'
-import { ListItemNode, ListNode } from '@lexical/list'
+import { markdownDecorators } from '@/components/MarkdownEditor/markdown/decoration'
+import type { VueHost } from '@/components/VueComponentHost.vue'
+import { markdown as markdownExtension } from '@codemirror/lang-markdown'
 import {
-  $convertFromMarkdownString,
-  $convertToMarkdownString,
-  TRANSFORMERS,
-  registerMarkdownShortcuts,
-  type Transformer,
-} from '@lexical/markdown'
-import { HeadingNode, QuoteNode, registerRichText } from '@lexical/rich-text'
-import { TableCellNode, TableNode, TableRowNode } from '@lexical/table'
-import { $setSelection } from 'lexical'
-import { watch, type Ref } from 'vue'
+  defineLanguageFacet,
+  foldNodeProp,
+  foldService,
+  indentNodeProp,
+  Language,
+  languageDataProp,
+  syntaxTree,
+} from '@codemirror/language'
+import type { Extension } from '@codemirror/state'
+import { NodeProp, type NodeType, type Parser, type SyntaxNode } from '@lezer/common'
+import { markdownParser } from 'ydoc-shared/ast/ensoMarkdown'
 
-export interface LexicalMarkdownPlugin extends LexicalPlugin {
-  transformers?: Transformer[]
+/** CodeMirror Extension for the Enso Markdown dialect. */
+export function ensoMarkdown({ vueHost }: { vueHost: VueHost }): Extension {
+  return [
+    markdownExtension({
+      base: mkLang(
+        markdownParser.configure([
+          commonmarkCodemirrorLanguageExtension,
+          tableCodemirrorLanguageExtension,
+        ]),
+      ),
+    }),
+    markdownDecorators({ vueHost }),
+  ]
 }
 
-/** TODO: Add docs */
-export function markdownPlugin(
-  model: Ref<string>,
-  extensions: LexicalMarkdownPlugin[],
-): LexicalPlugin[] {
-  const transformers = new Array<Transformer>()
-  for (const extension of extensions) {
-    if (extension?.transformers) transformers.push(...extension.transformers)
+function mkLang(parser: Parser) {
+  return new Language(data, parser, [headerIndent], 'markdown')
+}
+
+const data = defineLanguageFacet({ commentTokens: { block: { open: '<!--', close: '-->' } } })
+
+const headingProp = new NodeProp<number>()
+
+const commonmarkCodemirrorLanguageExtension = {
+  props: [
+    foldNodeProp.add((type) => {
+      return !type.is('Block') || type.is('Document') || isHeading(type) != null || isList(type) ?
+          undefined
+        : (tree, state) => ({ from: state.doc.lineAt(tree.from).to, to: tree.to })
+    }),
+    headingProp.add(isHeading),
+    indentNodeProp.add({
+      Document: () => null,
+    }),
+    languageDataProp.add({
+      Document: data,
+    }),
+  ],
+}
+
+function isHeading(type: NodeType) {
+  const match = /^(?:ATX|Setext)Heading(\d)$/.exec(type.name)
+  return match ? +match[1]! : undefined
+}
+
+function isList(type: NodeType) {
+  return type.name == 'OrderedList' || type.name == 'BulletList'
+}
+
+function findSectionEnd(headerNode: SyntaxNode, level: number) {
+  let last = headerNode
+  for (;;) {
+    const next = last.nextSibling
+    let heading
+    if (!next || ((heading = isHeading(next.type)) != null && heading <= level)) break
+    last = next
   }
-  transformers.push(...TRANSFORMERS)
-  return [...extensions, baseMarkdownPlugin(transformers), markdownSyncPlugin(model, transformers)]
+  return last.to
 }
 
-function baseMarkdownPlugin(transformers: Transformer[]): LexicalPlugin {
-  return {
-    nodes: [
-      HeadingNode,
-      QuoteNode,
-      ListItemNode,
-      ListNode,
-      AutoLinkNode,
-      LinkNode,
-      CodeHighlightNode,
-      CodeNode,
-      TableCellNode,
-      TableNode,
-      TableRowNode,
-    ],
-    register: (editor) => {
-      registerRichText(editor)
-      registerMarkdownShortcuts(editor, transformers)
-    },
+const headerIndent = foldService.of((state, start, end) => {
+  for (
+    let node: SyntaxNode | null = syntaxTree(state).resolveInner(end, -1);
+    node;
+    node = node.parent
+  ) {
+    if (node.from < start) break
+    const heading = node.type.prop(headingProp)
+    if (heading == null) continue
+    const upto = findSectionEnd(node, heading)
+    if (upto > end) return { from: end, to: upto }
   }
-}
-
-const markdownSyncPlugin = (model: Ref<string>, transformers: Transformer[]): LexicalPlugin => ({
-  register: (editor) => {
-    const { content } = useLexicalStringSync(
-      editor,
-      () => $convertToMarkdownString(transformers),
-      (value) => {
-        $convertFromMarkdownString(value, transformers)
-        $setSelection(null)
-      },
-    )
-    watch(model, (newContent) => content.set(newContent), { immediate: true })
-    watch(content.editedContent, (newContent) => (model.value = newContent))
-  },
+  return null
 })
+
+const tableCodemirrorLanguageExtension = {
+  props: [
+    foldNodeProp.add({
+      Table: (tree, state) => ({ from: state.doc.lineAt(tree.from).to, to: tree.to }),
+    }),
+  ],
+}

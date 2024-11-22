@@ -68,7 +68,7 @@ import org.enso.compiler.pass.resolve.{
   TypeSignatures
 }
 import org.enso.interpreter.node.callable.argument.ReadArgumentNode
-import org.enso.interpreter.node.callable.argument.ReadArgumentCheckNode
+import org.enso.interpreter.node.typecheck.TypeCheckValueNode
 import org.enso.interpreter.node.callable.function.{
   BlockNode,
   CreateFunctionNode
@@ -81,7 +81,7 @@ import org.enso.interpreter.node.callable.{
 }
 import org.enso.interpreter.node.controlflow.IfThenElseNode
 import org.enso.interpreter.node.controlflow.caseexpr._
-import org.enso.interpreter.node.expression.builtin.interop.syntax.HostValueToEnsoNode
+import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode
 import org.enso.interpreter.node.expression.builtin.BuiltinRootNode
 import org.enso.interpreter.node.expression.constant._
 import org.enso.interpreter.node.expression.foreign.ForeignMethodCallNode
@@ -308,12 +308,12 @@ class IrToTruffle(
         .asInstanceOf[FramePointer]
       val slotIdx = fp.frameSlotIdx()
       argDefs(idx) = arg
-      val readArg =
+      val readArgNoCheck =
         ReadArgumentNode.build(
           idx,
-          arg.getDefaultValue.orElse(null),
-          checkNode
+          arg.getDefaultValue.orElse(null)
         )
+      val readArg       = TypeCheckValueNode.wrap(readArgNoCheck, checkNode)
       val assignmentArg = AssignmentNode.build(readArg, slotIdx)
       val argRead =
         ReadLocalVariableNode.build(new FramePointer(0, slotIdx))
@@ -808,7 +808,7 @@ class IrToTruffle(
                 methodDef.methodName.name,
                 fn.arguments,
                 fn.body,
-                ReadArgumentCheckNode.build(context, "conversion", toType),
+                TypeCheckValueNode.single("conversion", toType),
                 None,
                 true
               )
@@ -849,27 +849,24 @@ class IrToTruffle(
   private def extractAscribedType(
     comment: String,
     t: Expression
-  ): ReadArgumentCheckNode = t match {
+  ): TypeCheckValueNode = t match {
     case u: `type`.Set.Union =>
       val oneOf = u.operands.map(extractAscribedType(comment, _))
       if (oneOf.contains(null)) {
         null
       } else {
-        ReadArgumentCheckNode.oneOf(
-          comment,
-          oneOf.asJava
-        )
+        val arr: Array[TypeCheckValueNode] = oneOf.toArray
+        TypeCheckValueNode.oneOf(comment, arr: _*)
       }
     case i: `type`.Set.Intersection =>
-      ReadArgumentCheckNode.allOf(
+      TypeCheckValueNode.allOf(
         comment,
         extractAscribedType(comment, i.left),
         extractAscribedType(comment, i.right)
       )
     case p: Application.Prefix => extractAscribedType(comment, p.function)
     case _: Tpe.Function =>
-      ReadArgumentCheckNode.build(
-        context,
+      TypeCheckValueNode.single(
         comment,
         context.getTopScope().getBuiltins().function()
       )
@@ -890,13 +887,13 @@ class IrToTruffle(
           if (context.getBuiltins().any() == typeOrAny) {
             null
           } else {
-            ReadArgumentCheckNode.build(context, comment, typeOrAny)
+            TypeCheckValueNode.single(comment, typeOrAny)
           }
         case Some(
               BindingsMap
                 .Resolution(BindingsMap.ResolvedPolyglotSymbol(mod, symbol))
             ) =>
-          ReadArgumentCheckNode.meta(
+          TypeCheckValueNode.meta(
             comment,
             asScope(
               mod.unsafeAsModule().asInstanceOf[TruffleCompilerContext.Module]
@@ -909,7 +906,7 @@ class IrToTruffle(
 
   private def checkAsTypes(
     arg: DefinitionArgument
-  ): ReadArgumentCheckNode = {
+  ): TypeCheckValueNode = {
     val comment = "`" + arg.name.name + "`"
     arg.ascribedType.map(extractAscribedType(comment, _)).getOrElse(null)
   }
@@ -1316,7 +1313,7 @@ class IrToTruffle(
             extractAscribedType(asc.comment.orNull, asc.signature)
           if (checkNode != null) {
             val body = run(asc.typed, binding, subjectToInstrumentation)
-            ReadArgumentCheckNode.wrap(body, checkNode)
+            TypeCheckValueNode.wrap(body, checkNode)
           } else {
             processType(asc)
           }
@@ -1345,7 +1342,7 @@ class IrToTruffle(
               extractAscribedType(tpe.comment.orNull, tpe.signature)
             if (checkNode != null) {
               runtimeExpression =
-                ReadArgumentCheckNode.wrap(runtimeExpression, checkNode)
+                TypeCheckValueNode.wrap(runtimeExpression, checkNode)
             }
           }
       }
@@ -2211,7 +2208,7 @@ class IrToTruffle(
       val initialName: String,
       val arguments: List[DefinitionArgument],
       val body: Expression,
-      val typeCheck: ReadArgumentCheckNode,
+      val typeCheck: TypeCheckValueNode,
       val effectContext: Option[String],
       val subjectToInstrumentation: Boolean
     ) {
@@ -2248,7 +2245,7 @@ class IrToTruffle(
         if (typeCheck == null) {
           (argExpressions.toArray, bodyExpr)
         } else {
-          val bodyWithCheck = ReadArgumentCheckNode.wrap(bodyExpr, typeCheck)
+          val bodyWithCheck = TypeCheckValueNode.wrap(bodyExpr, typeCheck)
           (argExpressions.toArray, bodyWithCheck)
         }
       }
@@ -2274,12 +2271,12 @@ class IrToTruffle(
               )
               .asInstanceOf[FramePointer]
             val slotIdx = fp.frameSlotIdx()
-            val readArg =
+            val readArgNoCheck =
               ReadArgumentNode.build(
                 idx,
-                arg.getDefaultValue.orElse(null),
-                checkNode
+                arg.getDefaultValue.orElse(null)
               )
+            val readArg   = TypeCheckValueNode.wrap(readArgNoCheck, checkNode)
             val assignArg = AssignmentNode.build(readArg, slotIdx)
 
             argExpressions.append(assignArg)
@@ -2491,7 +2488,7 @@ class IrToTruffle(
       subjectToInstrumentation: Boolean
     ): callable.argument.CallArgument =
       arg match {
-        case CallArgument.Specified(name, value, _, _) =>
+        case CallArgument.Specified(name, value, _, _, _) =>
           val scopeInfo = childScopeInfo("call argument", arg)
 
           def valueHasSomeTypeCheck() =
@@ -2608,7 +2605,7 @@ class IrToTruffle(
     def run(
       inputArg: DefinitionArgument,
       position: Int,
-      types: ReadArgumentCheckNode
+      types: TypeCheckValueNode
     ): ArgumentDefinition =
       inputArg match {
         case arg: DefinitionArgument.Specified =>
