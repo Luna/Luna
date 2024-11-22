@@ -216,27 +216,12 @@ final class ExecutionCallbacks implements IdExecutionService.Callbacks {
 
   private String[] typeOf(Object value) {
     if (value instanceof UnresolvedSymbol) {
-      return new String[] {Constants.UNRESOLVED_SYMBOL};
-    }
-
-    var typeOfNode = TypeOfNode.getUncached();
-    Object typeResult = value == null ? null : typeOfNode.execute(value);
-    if (typeResult instanceof Type t) {
-      return new String[] {getTypeQualifiedName(t)};
-    }
-    if (typeResult instanceof Type[] types) {
-      var result = new String[types.length];
-      for (int i = 0; i < types.length; i++) {
-        result[i] = getTypeQualifiedName(types[i]);
-      }
-      return result;
-    }
-
-    return null;
-  }
-
-  @CompilerDirectives.TruffleBoundary
-  private static String getTypeQualifiedName(Type t) {
-    return t.getQualifiedName().toString();
-  }
+      resultType = Constants.UNRESOLVED_SYMBOL;
+    } else {
+      var typeOfNode = TypeOfNode.getUncached();
+      Object typeResult = value == null ? null : typeOfNode.findTypeOrError(value);
+      if (typeResult instanceof Type t) {
+        resultType = getTypeQualifiedName(t);
+      } else {
+        resultType = null;
 }
