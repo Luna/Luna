@@ -106,6 +106,12 @@ final case class Module(
     copy(imports, exports)
   }
 
+  def copyWithBindings(
+    bindings: List[Definition]
+  ) = {
+    copy(bindings = bindings)
+  }
+
   /** @inheritdoc */
   override def duplicate(
     keepLocations: Boolean   = true,
