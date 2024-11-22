@@ -78,7 +78,10 @@ class MethodDefinitionsTest extends CompilerTest {
         .methodReference
         .typePointer
         .get
-        .getMetadata(MethodDefinitions.INSTANCE, classOf[BindingsMap.Resolution]) shouldEqual Some(
+        .getMetadata(
+          MethodDefinitions.INSTANCE,
+          classOf[BindingsMap.Resolution]
+        ) shouldEqual Some(
         BindingsMap.Resolution(
           BindingsMap.ResolvedType(
             ctx.moduleReference(),
@@ -96,7 +99,10 @@ class MethodDefinitionsTest extends CompilerTest {
         .methodReference
         .typePointer
         .get
-        .getMetadata(MethodDefinitions.INSTANCE, classOf[BindingsMap.Resolution]) shouldEqual Some(
+        .getMetadata(
+          MethodDefinitions.INSTANCE,
+          classOf[BindingsMap.Resolution]
+        ) shouldEqual Some(
         BindingsMap.Resolution(
           BindingsMap.ResolvedModule(ctx.moduleReference())
         )
@@ -122,7 +128,10 @@ class MethodDefinitionsTest extends CompilerTest {
           )
         )
       )
-      conv1.sourceTypeName.getMetadata(MethodDefinitions.INSTANCE, classOf[BindingsMap.Resolution]) shouldEqual Some(
+      conv1.sourceTypeName.getMetadata(
+        MethodDefinitions.INSTANCE,
+        classOf[BindingsMap.Resolution]
+      ) shouldEqual Some(
         BindingsMap.Resolution(
           BindingsMap.ResolvedType(
             ctx.moduleReference(),
@@ -151,7 +160,10 @@ class MethodDefinitionsTest extends CompilerTest {
         .bindings(8)
         .asInstanceOf[definition.Method.Conversion]
       conv3.methodReference.typePointer.get shouldBe an[errors.Resolution]
-      conv3.sourceTypeName.getMetadata(MethodDefinitions.INSTANCE, classOf[BindingsMap.Resolution]) shouldEqual Some(
+      conv3.sourceTypeName.getMetadata(
+        MethodDefinitions.INSTANCE,
+        classOf[BindingsMap.Resolution]
+      ) shouldEqual Some(
         BindingsMap.Resolution(
           BindingsMap.ResolvedType(
             ctx.moduleReference(),
