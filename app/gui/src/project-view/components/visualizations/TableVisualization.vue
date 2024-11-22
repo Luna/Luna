@@ -354,8 +354,7 @@ function toField(
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
       props.data.data_quality_pairs.map(obj => {
-        console.log(obj)
-        const key = Object.keys(obj)[0]
+        const key = Object.keys(obj)[0] as string
         return {[key]: obj[key][index]}
       })
       // eslint-disable-next-line camelcase

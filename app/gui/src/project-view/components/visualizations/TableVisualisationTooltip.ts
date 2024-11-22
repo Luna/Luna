@@ -40,15 +40,17 @@ export class TableVisualisationTooltip implements ITooltipComp {
       return `<div style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color}; margin-left: 5px;"></div>`
     }
 
-
     const getDataQualityTemplate = () => {
       let template = ''
       params.dataQualityMetrics.forEach((obj) => {
         const key = Object.keys(obj)[0]
-        const metricTemplate = `<div style="display: ${getDisplay(obj[key])};">
-                ${key}: ${getPercentage(obj[key])}% ${createIndicator(+getPercentage(obj[key]))}
-            </div>`
-        template = template + metricTemplate
+        const value = key ? obj[key] : null
+        if (key && value) {
+          const metricTemplate = `<div style="display: ${getDisplay(value)};">
+          ${key}: ${getPercentage(value)}% ${createIndicator(+getPercentage(value))}
+      </div>`
+          template = template + metricTemplate
+        }
       })
       return template
     }
