@@ -2,61 +2,21 @@
 import * as React from 'react'
 
 import invariant from 'tiny-invariant'
-import * as z from 'zod'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as searchParamsState from '#/hooks/searchParamsStateHooks'
-import * as localStorageProvider from '#/providers/LocalStorageProvider'
-import * as backendModule from '#/services/Backend'
 import * as array from '#/utilities/array'
-import LocalStorage from '#/utilities/LocalStorage'
-
-/** Main content of the screen. Only one should be visible at a time. */
-export enum TabType {
-  drive = 'drive',
-  settings = 'settings',
-}
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-    readonly page: z.infer<typeof PAGES_SCHEMA>
-    readonly launchedProjects: z.infer<typeof LAUNCHED_PROJECT_SCHEMA>
-  }
-}
-
-const PROJECT_SCHEMA = z
-  .object({
-    id: z.custom<backendModule.ProjectId>((x) => typeof x === 'string' && x.startsWith('project-')),
-    parentId: z.custom<backendModule.DirectoryId>(
-      (x) => typeof x === 'string' && x.startsWith('directory-'),
-    ),
-    title: z.string(),
-    type: z.nativeEnum(backendModule.BackendType),
-  })
-  .readonly()
-const LAUNCHED_PROJECT_SCHEMA = z.array(PROJECT_SCHEMA).readonly()
-
-/** Launched project information. */
-export type LaunchedProject = z.infer<typeof PROJECT_SCHEMA>
-/** Launched project ID. */
-export type LaunchedProjectId = backendModule.ProjectId
-
-LocalStorage.registerKey('launchedProjects', {
-  isUserSpecific: true,
-  schema: LAUNCHED_PROJECT_SCHEMA,
-})
-
-export const PAGES_SCHEMA = z
-  .nativeEnum(TabType)
-  .or(
-    z.custom<LaunchedProjectId>(
-      (value) => typeof value === 'string' && value.startsWith('project-'),
-    ),
-  )
-
-LocalStorage.registerKey('page', { schema: PAGES_SCHEMA })
+import {
+  TabType,
+  useLaunchedProjectsState,
+  type LaunchedProject,
+  type LaunchedProjectId,
+} from './ProjectsProvider/projectsLocalStorage'
+export {
+  TabType,
+  type LaunchedProject,
+  type LaunchedProjectId,
+} from './ProjectsProvider/projectsLocalStorage'
 
 /** State contained in a `ProjectsContext`. */
 export interface ProjectsContextType {
@@ -80,17 +40,11 @@ const LaunchedProjectsContext = React.createContext<readonly LaunchedProject[] |
 /** Props for a {@link ProjectsProvider}. */
 export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
 
-/**
- * A React provider (and associated hooks) for determining whether the current area
- * containing the current element is focused.
- */
+/** Provider for the list of opened projects. */
 export default function ProjectsProvider(props: ProjectsProviderProps) {
   const { children } = props
 
-  const [launchedProjects, setLaunchedProjects] = localStorageProvider.useLocalStorageState(
-    'launchedProjects',
-    array.EMPTY_ARRAY,
-  )
+  const [launchedProjects, setLaunchedProjects] = useLaunchedProjectsState(array.EMPTY_ARRAY)
   const [page, setPage] = searchParamsState.useSearchParamsState(
     'page',
     () => TabType.drive,
