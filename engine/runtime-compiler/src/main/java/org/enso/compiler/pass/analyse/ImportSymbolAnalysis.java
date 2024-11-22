@@ -52,8 +52,8 @@ public class ImportSymbolAnalysis implements MiniPassFactory {
 
   @Override
   public MiniIRPass createForInlineCompilation(InlineContext inlineContext) {
-    var bindingsMap = inlineContext.bindingsAnalysis();
-    return new Mini(bindingsMap);
+    // Does not make sense for inline compilation.
+    return null;
   }
 
   private static final class Mini extends MiniIRPass {
