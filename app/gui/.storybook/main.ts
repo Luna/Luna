@@ -22,6 +22,15 @@ const sharedConfig: Partial<ReactStorybookConfig> = {
 
   previewHead: (head) => {
     return /*html*/ `
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@300;400;500;600;700&display=swap"
+      rel="preload"
+      as="style"
+      crossorigin
+    />
+
     <script>
       window.global = window;
 
