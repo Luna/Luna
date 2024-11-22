@@ -126,7 +126,7 @@ export function addItemButton(page: Locator | Page) {
   return page.getByRole('button', { name: 'new item' })
 }
 
-/** Button to delete a specific item to a vector */
+/** Button to delete a specific item from a vector */
 export function deleteItemButton(page: Locator | Page) {
   return page.getByRole('button', { name: 'Remove item' })
 }
