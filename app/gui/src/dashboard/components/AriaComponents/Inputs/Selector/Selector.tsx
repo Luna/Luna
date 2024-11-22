@@ -92,6 +92,7 @@ export const Selector = forwardRef(function Selector<
     label,
     size,
     rounded,
+    variant,
     isRequired = false,
     isInvalid = false,
     fieldVariants,
@@ -108,6 +109,7 @@ export const Selector = forwardRef(function Selector<
     rounded,
     readOnly: inputProps.readOnly,
     disabled: isDisabled || formInstance.formState.isSubmitting,
+    variant,
   })
 
   return (
@@ -157,7 +159,14 @@ export const Selector = forwardRef(function Selector<
               >
                 <AnimatedBackground value={String(items.indexOf(value))}>
                   {items.map((item, i) => (
-                    <SelectorOption key={i} value={String(i)} label={children(item)} />
+                    <SelectorOption
+                      key={i}
+                      value={String(i)}
+                      label={children(item)}
+                      rounded={rounded}
+                      size={size}
+                      variant={variant}
+                    />
                   ))}
                 </AnimatedBackground>
               </RadioGroup>

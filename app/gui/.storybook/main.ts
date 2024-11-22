@@ -21,11 +21,20 @@ const sharedConfig: Partial<ReactStorybookConfig> = {
   env: { FRAMEWORK: framework },
 
   previewHead: (head) => {
-    return `
+    return /*html*/ `
     <script>
       window.global = window;
+
+      // Pass environment variables to the storybook
       window.ENV = {
+        // The framework used to render the story
+        // Used by the preview to determine which framework to use
         FRAMEWORK: '${framework}',
+      }
+
+      // Allow React DevTools to work in Storybook
+      if (window.parent !== window) {
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__
       }
     </script>
     ${head}
