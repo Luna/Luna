@@ -2,7 +2,6 @@
 import * as React from 'react'
 
 import { useSearchParams } from 'react-router-dom'
-import * as z from 'zod'
 
 import CloudIcon from '#/assets/cloud.svg'
 import ComputerIcon from '#/assets/computer.svg'
@@ -28,10 +27,10 @@ import {
   useTransferBetweenCategories,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
+import { useLocalRootDirectoriesState } from '#/layouts/CategorySwitcher/categorySwitcherLocalStorage'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import { TabType, useSetPage } from '#/providers/ProjectsProvider'
 import * as textProvider from '#/providers/TextProvider'
@@ -39,26 +38,8 @@ import * as backend from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { getFileName } from '#/utilities/fileInfo'
-import LocalStorage from '#/utilities/LocalStorage'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { twMerge } from 'tailwind-merge'
-
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly localRootDirectories: readonly string[]
-  }
-}
-
-LocalStorage.registerKey('localRootDirectories', { schema: z.string().array().readonly() })
-
-// ========================
-// === CategoryMetadata ===
-// ========================
 
 /** Metadata for a categoryModule.categoryType. */
 interface CategoryMetadata {
@@ -71,10 +52,6 @@ interface CategoryMetadata {
   readonly className?: string
   readonly iconClassName?: string
 }
-
-// ============================
-// === CategorySwitcherItem ===
-// ============================
 
 /** Props for a {@link CategorySwitcherItem}. */
 interface InternalCategorySwitcherItemProps extends CategoryMetadata {
@@ -214,10 +191,6 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
     : element
 }
 
-// ========================
-// === CategorySwitcher ===
-// ========================
-
 /** Props for a {@link CategorySwitcher}. */
 export interface CategorySwitcherProps {
   readonly category: Category
@@ -233,8 +206,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const setPage = useSetPage()
   const [, setSearchParams] = useSearchParams()
-  const [localRootDirectories, setLocalRootDirectories] =
-    useLocalStorageState('localRootDirectories')
+  const [localRootDirectories, setLocalRootDirectories] = useLocalRootDirectoriesState()
   const hasUserAndTeamSpaces = backend.userHasUserAndTeamSpaces(user)
 
   const localBackend = backendProvider.useLocalBackend()
