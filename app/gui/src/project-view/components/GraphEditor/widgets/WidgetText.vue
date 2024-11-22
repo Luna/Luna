@@ -67,7 +67,14 @@ function makeLiteralFromUserInput(value: string): Ast.Owned<Ast.MutableTextLiter
 const shownLiteral = computed(() => inputTextLiteral.value ?? emptyTextLiteral.value)
 const closeToken = computed(() => shownLiteral.value.close ?? shownLiteral.value.open)
 
-const textContents = computed(() => shownLiteral.value.rawTextContent)
+const textContents = computed(() =>
+  WidgetInput.isPlaceholder(props.input) ? '' : shownLiteral.value.rawTextContent,
+)
+const placeholder = computed(() =>
+  WidgetInput.isPlaceholder(props.input) ?
+    shownLiteral.value.rawTextContent ?? WidgetInput.valueRepr(props.input)
+  : '',
+)
 const editedContents = ref(textContents.value)
 watch(textContents, (value) => (editedContents.value = value))
 </script>
@@ -107,6 +114,7 @@ export const widgetDefinition = defineWidget(
     <AutoSizedInput
       ref="input"
       v-model="editedContents"
+      :placeholder="placeholder"
       autoSelect
       @keydown.enter.stop="accepted"
       @keydown.tab.stop="accepted"
