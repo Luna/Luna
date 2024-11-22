@@ -1,5 +1,5 @@
 /** @file Settings screen. */
-import * as React from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
@@ -33,10 +33,6 @@ import SettingsSidebar from './Sidebar'
 import SettingsTab from './Tab'
 import SettingsTabType from './TabType'
 
-// ================
-// === Settings ===
-// ================
-
 /** Props for a {@link Settings}. */
 export interface SettingsProps {
   readonly backend: Backend | null
@@ -56,9 +52,9 @@ export default function Settings() {
   const { changePassword } = useAuth()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
-  const [query, setQuery] = React.useState('')
+  const [query, setQuery] = useState('')
   const root = useStrictPortalContext()
-  const [isSidebarPopoverOpen, setIsSidebarPopoverOpen] = React.useState(false)
+  const [isSidebarPopoverOpen, setIsSidebarPopoverOpen] = useState(false)
   const { data: organization = null } = useBackendQuery(backend, 'getOrganization', [])
   const isQueryBlank = !/\S/.test(query)
 
@@ -67,7 +63,7 @@ export default function Settings() {
     backendMutationOptions(backend, 'updateOrganization'),
   ).mutateAsync
 
-  const [, setLocalRootDirectory] = useLocalRootDirectoryState()
+  const [localRootDirectory, setLocalRootDirectory] = useLocalRootDirectoryState()
   const updateLocalRootPath = useEventCallback((value: string) => {
     setLocalRootDirectory(value)
     if (localBackend) {
@@ -79,12 +75,12 @@ export default function Settings() {
     localBackend?.resetRootPath()
   })
 
-  const isMatch = React.useMemo(() => {
+  const isMatch = useMemo(() => {
     const regex = new RegExp(regexEscape(query.trim()).replace(/\s+/g, '.+'), 'i')
     return (name: string) => regex.test(name)
   }, [query])
 
-  const context = React.useMemo<SettingsContext>(
+  const context = useMemo<SettingsContext>(
     () => ({
       accessToken,
       user,
@@ -121,7 +117,7 @@ export default function Settings() {
     ],
   )
 
-  const doesEntryMatchQuery = React.useCallback(
+  const doesEntryMatchQuery = useCallback(
     (entry: SettingsEntryData) => {
       switch (entry.type) {
         case 'form': {
@@ -143,7 +139,7 @@ export default function Settings() {
     [context, getText, isMatch],
   )
 
-  const tabsToShow = React.useMemo<readonly SettingsTabType[]>(() => {
+  const tabsToShow = useMemo<readonly SettingsTabType[]>(() => {
     if (isQueryBlank) {
       return ALL_SETTINGS_TABS
     } else {
@@ -162,7 +158,7 @@ export default function Settings() {
   }, [isQueryBlank, doesEntryMatchQuery, getText, isMatch])
   const effectiveTab = tabsToShow.includes(tab) ? tab : tabsToShow[0] ?? SettingsTabType.account
 
-  const data = React.useMemo<SettingsTabData>(() => {
+  const data = useMemo<SettingsTabData>(() => {
     const tabData = SETTINGS_TAB_DATA[effectiveTab]
     if (isQueryBlank) {
       return tabData

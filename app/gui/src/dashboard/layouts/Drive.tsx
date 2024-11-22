@@ -1,60 +1,49 @@
 /** @file The directory header bar and directory item listing. */
-import * as React from 'react'
+import { useCallback, useState, type Ref } from 'react'
 
-import * as appUtils from '#/appUtils'
-
-import * as offlineHooks from '#/hooks/offlineHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as textProvider from '#/providers/TextProvider'
-
+import { SUBSCRIBE_PATH } from '#/appUtils'
+import { Button, ButtonGroup } from '#/components/AriaComponents'
+import { Result } from '#/components/Result'
 import AssetListEventType from '#/events/AssetListEventType'
-
+import { useOffline } from '#/hooks/offlineHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { AssetPanel } from '#/layouts/AssetPanel'
-import type * as assetsTable from '#/layouts/AssetsTable'
-import AssetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
+import AssetsTable, { type AssetManagementApi } from '#/layouts/AssetsTable'
+import { useDispatchAssetListEvent } from '#/layouts/AssetsTable/EventListProvider'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
-import * as categoryModule from '#/layouts/CategorySwitcher/Category'
+import { isCloudCategory, type Category } from '#/layouts/CategorySwitcher/Category'
 import DriveBar from '#/layouts/DriveBar'
 import Labels from '#/layouts/Labels'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as result from '#/components/Result'
-
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useBackend, useLocalBackend } from '#/providers/BackendProvider'
+import { useText } from '#/providers/TextProvider'
 import AssetQuery from '#/utilities/AssetQuery'
-import * as download from '#/utilities/download'
-import * as github from '#/utilities/github'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// =============
-// === Drive ===
-// =============
+import { download } from '#/utilities/download'
+import { getDownloadUrl } from '#/utilities/github'
+import { twMerge } from '#/utilities/tailwindMerge'
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
-  readonly category: categoryModule.Category
-  readonly setCategory: (category: categoryModule.Category) => void
+  readonly category: Category
+  readonly setCategory: (category: Category) => void
   readonly hidden: boolean
   readonly initialProjectName: string | null
-  readonly assetsManagementApiRef: React.Ref<assetsTable.AssetManagementApi>
+  readonly assetsManagementApiRef: Ref<AssetManagementApi>
 }
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 export default function Drive(props: DriveProps) {
   const { category, setCategory, hidden, initialProjectName, assetsManagementApiRef } = props
 
-  const { isOffline } = offlineHooks.useOffline()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const backend = backendProvider.useBackend(category)
-  const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const [query, setQuery] = React.useState(() => AssetQuery.fromString(''))
-  const isCloud = categoryModule.isCloudCategory(category)
+  const { isOffline } = useOffline()
+  const toastAndLog = useToastAndLog()
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const backend = useBackend(category)
+  const { getText } = useText()
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
+  const [query, setQuery] = useState(() => AssetQuery.fromString(''))
+  const isCloud = isCloudCategory(category)
   const supportLocalBackend = localBackend != null
 
   const status =
@@ -62,49 +51,49 @@ export default function Drive(props: DriveProps) {
     : isCloud && !user.isEnabled ? 'not-enabled'
     : 'ok'
 
-  const doEmptyTrash = React.useCallback(() => {
+  const doEmptyTrash = useCallback(() => {
     dispatchAssetListEvent({ type: AssetListEventType.emptyTrash })
   }, [dispatchAssetListEvent])
 
   switch (status) {
     case 'not-enabled': {
       return (
-        <result.Result
+        <Result
           status="error"
           title={getText('notEnabledTitle')}
           testId="not-enabled-stub"
           subtitle={`${getText('notEnabledSubtitle')}${localBackend == null ? ' ' + getText('downloadFreeEditionMessage') : ''}`}
         >
-          <ariaComponents.ButtonGroup align="center">
-            <ariaComponents.Button variant="primary" size="medium" href={appUtils.SUBSCRIBE_PATH}>
+          <ButtonGroup align="center">
+            <Button variant="primary" size="medium" href={SUBSCRIBE_PATH}>
               {getText('upgrade')}
-            </ariaComponents.Button>
+            </Button>
 
             {!supportLocalBackend && (
-              <ariaComponents.Button
+              <Button
                 data-testid="download-free-edition"
                 size="medium"
                 variant="accent"
                 onPress={async () => {
-                  const downloadUrl = await github.getDownloadUrl()
+                  const downloadUrl = await getDownloadUrl()
                   if (downloadUrl == null) {
                     toastAndLog('noAppDownloadError')
                   } else {
-                    download.download(downloadUrl)
+                    download(downloadUrl)
                   }
                 }}
               >
                 {getText('downloadFreeEdition')}
-              </ariaComponents.Button>
+              </Button>
             )}
-          </ariaComponents.ButtonGroup>
-        </result.Result>
+          </ButtonGroup>
+        </Result>
       )
     }
     case 'offline':
     case 'ok': {
       return (
-        <div className={tailwindMerge.twMerge('relative flex grow', hidden && 'hidden')}>
+        <div className={twMerge('relative flex grow', hidden && 'hidden')}>
           <div
             data-testid="drive-view"
             className="mt-4 flex flex-1 flex-col gap-4 overflow-visible px-page-x"
@@ -130,7 +119,7 @@ export default function Drive(props: DriveProps) {
                 )}
               </div>
               {status === 'offline' ?
-                <result.Result
+                <Result
                   status="info"
                   className="my-12"
                   centered="horizontal"
@@ -138,7 +127,7 @@ export default function Drive(props: DriveProps) {
                   subtitle={`${getText('cloudUnavailableOfflineDescription')} ${supportLocalBackend ? getText('cloudUnavailableOfflineDescriptionOfferLocal') : ''}`}
                 >
                   {supportLocalBackend && (
-                    <ariaComponents.Button
+                    <Button
                       variant="primary"
                       size="small"
                       className="mx-auto"
@@ -147,9 +136,9 @@ export default function Drive(props: DriveProps) {
                       }}
                     >
                       {getText('switchToLocal')}
-                    </ariaComponents.Button>
+                    </Button>
                   )}
-                </result.Result>
+                </Result>
               : <AssetsTable
                   assetManagementApiRef={assetsManagementApiRef}
                   hidden={hidden}

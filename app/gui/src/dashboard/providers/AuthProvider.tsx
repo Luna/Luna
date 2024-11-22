@@ -5,47 +5,58 @@
  * can be used from any React component to access the currently logged-in user's session data. The
  * hook also provides methods for registering a user, logging in, logging out, etc.
  */
-import * as React from 'react'
+import { createContext, useCallback, useContext, useEffect, useId, type ReactNode } from 'react'
 
-import * as sentry from '@sentry/react'
-import * as reactQuery from '@tanstack/react-query'
-import * as router from 'react-router-dom'
-import * as toast from 'react-toastify'
+import { setUser as sentrySetUser } from '@sentry/react'
+import {
+  queryOptions,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+  type QueryKey,
+  type QueryObserverResult,
+  type RefetchOptions,
+} from '@tanstack/react-query'
+import { Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 
-import * as detect from 'enso-common/src/detect'
-import * as gtag from 'enso-common/src/gtag'
+import { architecture, platform } from 'enso-common/src/detect'
+import { event, gtag } from 'enso-common/src/gtag'
 
-import * as appUtils from '#/appUtils'
-
+import { DASHBOARD_PATH, LOGIN_PATH, RESTORE_USER_PATH, SETUP_PATH } from '#/appUtils'
+import {
+  CognitoErrorType,
+  type Cognito,
+  type CognitoUser,
+  type UserSession as CognitoUserSession,
+  type UserSessionChallenge,
+} from '#/authentication/cognito'
+import type { AuthService } from '#/authentication/service'
+import { Dialog } from '#/components/AriaComponents'
+import { Result } from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as gtagHooks from '#/hooks/gtagHooks'
-
-import * as backendProvider from '#/providers/BackendProvider'
-import * as localStorageProvider from '#/providers/LocalStorageProvider'
-import * as modalProvider from '#/providers/ModalProvider'
-import * as sessionProvider from '#/providers/SessionProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as resultComponent from '#/components/Result'
-
-import * as backendModule from '#/services/Backend'
-import type RemoteBackend from '#/services/RemoteBackend'
-
-import * as errorModule from '#/utilities/error'
-
-import * as cognitoModule from '#/authentication/cognito'
-import type * as authServiceModule from '#/authentication/service'
+import { gtagOpenCloseCallback } from '#/hooks/gtagHooks'
 import {
   useDeleteLoginRedirect,
   useGetLoginRedirect,
 } from '#/pages/authentication/Registration/registrationLocalStorage'
+import { useRemoteBackend } from '#/providers/BackendProvider'
+import { useLocalStorage } from '#/providers/LocalStorageProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useSession } from '#/providers/SessionProvider'
+import { useText } from '#/providers/TextProvider'
+import {
+  EmailAddress,
+  NotAuthorizedError,
+  OrganizationId,
+  type CreateUserRequestBody,
+  type UpdateUserRequestBody,
+  type User,
+} from '#/services/Backend'
+import type RemoteBackend from '#/services/RemoteBackend'
+import { UnreachableCaseError } from '#/utilities/error'
 import { unsafeWriteValue } from '#/utilities/write'
-
-// ===================
-// === UserSession ===
-// ===================
 
 /** Possible types of {@link BaseUserSession}. */
 export enum UserSessionType {
@@ -55,7 +66,7 @@ export enum UserSessionType {
 }
 
 /** Properties common to all {@link UserSession}s. */
-interface BaseUserSession extends cognitoModule.UserSession {
+interface BaseUserSession extends CognitoUserSession {
   /** A discriminator for TypeScript to be able to disambiguate between `UserSession` variants. */
   readonly type: UserSessionType
 }
@@ -76,7 +87,7 @@ export interface PartialUserSession extends BaseUserSession {
 export interface FullUserSession extends BaseUserSession {
   /** User's organization information. */
   readonly type: UserSessionType.full
-  readonly user: backendModule.User
+  readonly user: User
 }
 
 /**
@@ -84,10 +95,6 @@ export interface FullUserSession extends BaseUserSession {
  * or in the process of registering.
  */
 export type UserSession = FullUserSession | PartialUserSession
-
-// ===================
-// === AuthContext ===
-// ===================
 
 /**
  * Interface returned by the `useAuth` hook.
@@ -100,7 +107,7 @@ export type UserSession = FullUserSession | PartialUserSession
  */
 interface AuthContextType {
   readonly signUp: (email: string, password: string, organizationId: string | null) => Promise<void>
-  readonly authQueryKey: reactQuery.QueryKey
+  readonly authQueryKey: QueryKey
   readonly confirmSignUp: (email: string, code: string) => Promise<void>
   readonly setUsername: (username: string) => Promise<boolean>
   readonly signInWithGoogle: () => Promise<boolean>
@@ -109,20 +116,20 @@ interface AuthContextType {
     email: string,
     password: string,
   ) => Promise<{
-    readonly challenge: cognitoModule.UserSessionChallenge
-    readonly user: cognitoModule.CognitoUser
+    readonly challenge: UserSessionChallenge
+    readonly user: CognitoUser
   }>
   readonly forgotPassword: (email: string) => Promise<void>
   readonly changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
   readonly resetPassword: (email: string, code: string, password: string) => Promise<void>
   readonly signOut: () => Promise<void>
   /** @deprecated Never use this function. Prefer particular functions like `setUsername` or `deleteUser`. */
-  readonly setUser: (user: Partial<backendModule.User>) => void
+  readonly setUser: (user: Partial<User>) => void
   readonly deleteUser: () => Promise<boolean>
   readonly restoreUser: () => Promise<boolean>
   readonly refetchSession: (
-    options?: reactQuery.RefetchOptions,
-  ) => Promise<reactQuery.QueryObserverResult<UserSession | null>>
+    options?: RefetchOptions,
+  ) => Promise<QueryObserverResult<UserSession | null>>
   /**
    * Session containing the currently authenticated user's authentication information.
    *
@@ -135,10 +142,10 @@ interface AuthContextType {
   readonly isUserDeleted: () => boolean
   /** Return `true` if the user is soft deleted. */
   readonly isUserSoftDeleted: () => boolean
-  readonly cognito: cognitoModule.Cognito
+  readonly cognito: Cognito
 }
 
-const AuthContext = React.createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null)
 
 // ====================
 // === AuthProvider ===
@@ -146,11 +153,11 @@ const AuthContext = React.createContext<AuthContextType | null>(null)
 
 /** Query to fetch the user's session data from the backend. */
 function createUsersMeQuery(
-  session: cognitoModule.UserSession | null,
+  session: CognitoUserSession | null,
   remoteBackend: RemoteBackend,
   performLogout: () => Promise<void>,
 ) {
-  return reactQuery.queryOptions({
+  return queryOptions({
     queryKey: [remoteBackend.type, 'usersMe', session?.clientId] as const,
     queryFn: async () => {
       if (session == null) {
@@ -165,7 +172,7 @@ function createUsersMeQuery(
             : ({ type: UserSessionType.full, user, ...session } satisfies FullUserSession)
         })
         .catch((error) => {
-          if (error instanceof backendModule.NotAuthorizedError) {
+          if (error instanceof NotAuthorizedError) {
             return performLogout().then(() => null)
           }
 
@@ -178,31 +185,31 @@ function createUsersMeQuery(
 /** Props for an {@link AuthProvider}. */
 export interface AuthProviderProps {
   readonly shouldStartInOfflineMode: boolean
-  readonly authService: authServiceModule.AuthService
+  readonly authService: AuthService
   /** Callback to execute once the user has authenticated successfully. */
   readonly onAuthenticated: (accessToken: string | null) => void
-  readonly children: React.ReactNode
+  readonly children: ReactNode
 }
 
 /** A React provider for the Cognito API. */
 export default function AuthProvider(props: AuthProviderProps) {
   const { authService, onAuthenticated } = props
   const { children } = props
-  const remoteBackend = backendProvider.useRemoteBackend()
+  const remoteBackend = useRemoteBackend()
   const { cognito } = authService
-  const { session, sessionQueryKey } = sessionProvider.useSession()
-  const { localStorage } = localStorageProvider.useLocalStorage()
-  const { getText } = textProvider.useText()
-  const { unsetModal } = modalProvider.useSetModal()
-  const navigate = router.useNavigate()
-  const toastId = React.useId()
+  const { session, sessionQueryKey } = useSession()
+  const { localStorage } = useLocalStorage()
+  const { getText } = useText()
+  const { unsetModal } = useSetModal()
+  const navigate = useNavigate()
+  const toastId = useId()
 
-  const queryClient = reactQuery.useQueryClient()
+  const queryClient = useQueryClient()
 
   // This component cannot use `useGtagEvent` because `useGtagEvent` depends on the React Context
   // defined by this component.
-  const gtagEvent = React.useCallback((name: string, params?: object) => {
-    gtag.event(name, params)
+  const gtagEvent = useCallback((name: string, params?: object) => {
+    event(name, params)
   }, [])
 
   const performLogout = useEventCallback(async () => {
@@ -213,7 +220,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     gtagEvent('cloud_sign_out')
     cognito.saveAccessToken(null)
     localStorage.clearUserSpecificEntries()
-    sentry.setUser(null)
+    sentrySetUser(null)
 
     await queryClient.invalidateQueries({ queryKey: sessionQueryKey })
     await queryClient.clearWithPersister()
@@ -221,41 +228,41 @@ export default function AuthProvider(props: AuthProviderProps) {
     return Promise.resolve()
   })
 
-  const logoutMutation = reactQuery.useMutation({
+  const logoutMutation = useMutation({
     mutationKey: [remoteBackend.type, 'usersMe', 'logout', session?.clientId] as const,
     mutationFn: performLogout,
     // If the User Menu is still visible, it breaks when `userSession` is set to `null`.
     onMutate: unsetModal,
-    onSuccess: () => toast.toast.success(getText('signOutSuccess')),
-    onError: () => toast.toast.error(getText('signOutError')),
+    onSuccess: () => toast.success(getText('signOutSuccess')),
+    onError: () => toast.error(getText('signOutError')),
     meta: { invalidates: [sessionQueryKey], awaitInvalidates: true },
   })
 
   const usersMeQueryOptions = createUsersMeQuery(session, remoteBackend, async () => {
     await performLogout()
-    toast.toast.info(getText('userNotAuthorizedError'))
+    toast.info(getText('userNotAuthorizedError'))
   })
 
-  const usersMeQuery = reactQuery.useSuspenseQuery(usersMeQueryOptions)
+  const usersMeQuery = useSuspenseQuery(usersMeQueryOptions)
   const userData = usersMeQuery.data
 
-  const createUserMutation = reactQuery.useMutation({
-    mutationFn: (user: backendModule.CreateUserRequestBody) => remoteBackend.createUser(user),
+  const createUserMutation = useMutation({
+    mutationFn: (user: CreateUserRequestBody) => remoteBackend.createUser(user),
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
-  const deleteUserMutation = reactQuery.useMutation({
+  const deleteUserMutation = useMutation({
     mutationFn: () => remoteBackend.deleteUser(),
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
-  const restoreUserMutation = reactQuery.useMutation({
+  const restoreUserMutation = useMutation({
     mutationFn: () => remoteBackend.restoreUser(),
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
-  const updateUserMutation = reactQuery.useMutation({
-    mutationFn: (user: backendModule.UpdateUserRequestBody) => remoteBackend.updateUser(user),
+  const updateUserMutation = useMutation({
+    mutationFn: (user: UpdateUserRequestBody) => remoteBackend.updateUser(user),
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
@@ -266,30 +273,30 @@ export default function AuthProvider(props: AuthProviderProps) {
   const withLoadingToast =
     <T extends unknown[], R>(action: (...args: T) => Promise<R>) =>
     async (...args: T) => {
-      toast.toast.loading(getText('pleaseWait'), { toastId })
+      toast.loading(getText('pleaseWait'), { toastId })
       return await action(...args)
     }
 
   const toastSuccess = (message: string) => {
-    toast.toast.update(toastId, {
+    toast.update(toastId, {
       isLoading: null,
       autoClose: null,
       closeOnClick: null,
       closeButton: null,
       draggable: null,
-      type: toast.toast.TYPE.SUCCESS,
+      type: toast.TYPE.SUCCESS,
       render: message,
     })
   }
 
   const toastError = (message: string) => {
-    toast.toast.update(toastId, {
+    toast.update(toastId, {
       isLoading: null,
       autoClose: null,
       closeOnClick: null,
       closeButton: null,
       draggable: null,
-      type: toast.toast.TYPE.ERROR,
+      type: toast.TYPE.ERROR,
       render: message,
     })
   }
@@ -313,12 +320,12 @@ export default function AuthProvider(props: AuthProviderProps) {
 
     if (result.err) {
       switch (result.val.type) {
-        case cognitoModule.CognitoErrorType.userAlreadyConfirmed:
-        case cognitoModule.CognitoErrorType.userNotFound: {
+        case CognitoErrorType.userAlreadyConfirmed:
+        case CognitoErrorType.userNotFound: {
           return
         }
         default: {
-          throw new errorModule.UnreachableCaseError(result.val.type)
+          throw new UnreachableCaseError(result.val.type)
         }
       }
     }
@@ -359,9 +366,8 @@ export default function AuthProvider(props: AuthProviderProps) {
 
       await createUserMutation.mutateAsync({
         userName: username,
-        userEmail: backendModule.EmailAddress(email),
-        organizationId:
-          organizationId != null ? backendModule.OrganizationId(organizationId) : null,
+        userEmail: EmailAddress(email),
+        organizationId: organizationId != null ? OrganizationId(organizationId) : null,
       })
     }
     // Wait until the backend returns a value from `users/me`,
@@ -395,12 +401,12 @@ export default function AuthProvider(props: AuthProviderProps) {
    * This only works for full user sessions.
    * @deprecated Never use this function. Prefer particular functions like `setUsername` or `deleteUser`.
    */
-  const setUser = useEventCallback((user: Partial<backendModule.User>) => {
+  const setUser = useEventCallback((user: Partial<User>) => {
     const currentUser = queryClient.getQueryData(usersMeQueryOptions.queryKey)
 
     if (currentUser != null && currentUser.type === UserSessionType.full) {
       const currentUserData = currentUser.user
-      const nextUserData: backendModule.User = Object.assign(currentUserData, user)
+      const nextUserData: User = Object.assign(currentUserData, user)
 
       queryClient.setQueryData(usersMeQueryOptions.queryKey, { ...currentUser, user: nextUserData })
     }
@@ -409,7 +415,7 @@ export default function AuthProvider(props: AuthProviderProps) {
   const forgotPassword = useEventCallback(async (email: string) => {
     const result = await cognito.forgotPassword(email)
     if (result.ok) {
-      navigate(appUtils.LOGIN_PATH)
+      navigate(LOGIN_PATH)
       return
     } else {
       throw new Error(result.val.message)
@@ -420,7 +426,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     const result = await cognito.forgotPasswordSubmit(email, code, password)
 
     if (result.ok) {
-      navigate(appUtils.LOGIN_PATH)
+      navigate(LOGIN_PATH)
       return
     } else {
       throw new Error(result.val.message)
@@ -465,9 +471,9 @@ export default function AuthProvider(props: AuthProviderProps) {
     }
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (userData?.type === UserSessionType.full) {
-      sentry.setUser({
+      sentrySetUser({
         id: userData.user.userId,
         email: userData.email,
         username: userData.user.name,
@@ -477,18 +483,18 @@ export default function AuthProvider(props: AuthProviderProps) {
     }
   }, [userData])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (userData?.type === UserSessionType.partial) {
-      sentry.setUser({ email: userData.email })
+      sentrySetUser({ email: userData.email })
     }
   }, [userData])
 
-  React.useEffect(() => {
-    gtag.gtag('set', { platform: detect.platform(), architecture: detect.architecture() })
-    return gtagHooks.gtagOpenCloseCallback(gtagEvent, 'open_app', 'close_app')
+  useEffect(() => {
+    gtag('set', { platform: platform(), architecture: architecture() })
+    return gtagOpenCloseCallback(gtagEvent, 'open_app', 'close_app')
   }, [gtagEvent])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (userData?.type === UserSessionType.full) {
       onAuthenticated(userData.accessToken)
     }
@@ -541,15 +547,15 @@ export default function AuthProvider(props: AuthProviderProps) {
     <AuthContext.Provider value={value}>
       {children}
 
-      <ariaComponents.Dialog
+      <Dialog
         aria-label={getText('loggingOut')}
         isDismissable={false}
         isKeyboardDismissDisabled
         hideCloseButton
         modalProps={{ isOpen: logoutMutation.isPending }}
       >
-        <resultComponent.Result status="loading" title={getText('loggingOut')} />
-      </ariaComponents.Dialog>
+        <Result status="loading" title={getText('loggingOut')} />
+      </Dialog>
     </AuthContext.Provider>
   )
 }
@@ -566,33 +572,25 @@ export default function AuthProvider(props: AuthProviderProps) {
  * @throws {Error} when used outside a {@link AuthProvider}.
  */
 export function useAuth() {
-  const context = React.useContext(AuthContext)
+  const context = useContext(AuthContext)
 
   invariant(context != null, '`useAuth` must be used within an `<AuthProvider />`.')
 
   return context
 }
 
-// =======================
-// === ProtectedLayout ===
-// =======================
-
 /** A React Router layout route containing routes only accessible by users that are logged in. */
 export function ProtectedLayout() {
   const { session } = useAuth()
 
   if (session == null) {
-    return <router.Navigate to={appUtils.LOGIN_PATH} />
+    return <Navigate to={LOGIN_PATH} />
   } else if (session.type === UserSessionType.partial) {
-    return <router.Navigate to={appUtils.SETUP_PATH} />
+    return <Navigate to={SETUP_PATH} />
   } else {
-    return <router.Outlet context={session} />
+    return <Outlet context={session} />
   }
 }
-
-// ===========================
-// === SemiProtectedLayout ===
-// ===========================
 
 /**
  * A React Router layout route containing routes only accessible by users that are
@@ -600,24 +598,20 @@ export function ProtectedLayout() {
  */
 export function SemiProtectedLayout() {
   const { session } = useAuth()
-  const { localStorage } = localStorageProvider.useLocalStorage()
+  const { localStorage } = useLocalStorage()
 
   // The user is not logged in - redirect to the login page.
   if (session == null) {
-    return <router.Navigate to={appUtils.LOGIN_PATH} replace />
+    return <Navigate to={LOGIN_PATH} replace />
     // User is registered, redirect to dashboard or to the redirect path specified during the registration / login.
   } else if (session.type === UserSessionType.full) {
-    const redirectTo = localStorage.delete('loginRedirect') ?? appUtils.DASHBOARD_PATH
-    return <router.Navigate to={redirectTo} replace />
+    const redirectTo = localStorage.delete('loginRedirect') ?? DASHBOARD_PATH
+    return <Navigate to={redirectTo} replace />
     // User is in the process of registration, allow them to complete the registration.
   } else {
-    return <router.Outlet context={session} />
+    return <Outlet context={session} />
   }
 }
-
-// ===================
-// === GuestLayout ===
-// ===================
 
 /**
  * A React Router layout route containing routes only accessible by users that are
@@ -629,7 +623,7 @@ export function GuestLayout() {
   const deleteLoginRedirect = useDeleteLoginRedirect()
 
   if (session?.type === UserSessionType.partial) {
-    return <router.Navigate to={appUtils.SETUP_PATH} />
+    return <Navigate to={SETUP_PATH} />
   } else if (session?.type === UserSessionType.full) {
     const redirectTo = getLoginRedirect()
     if (redirectTo != null) {
@@ -637,10 +631,10 @@ export function GuestLayout() {
       location.href = redirectTo
       return
     } else {
-      return <router.Navigate to={appUtils.DASHBOARD_PATH} />
+      return <Navigate to={DASHBOARD_PATH} />
     }
   } else {
-    return <router.Outlet />
+    return <Outlet />
   }
 }
 
@@ -649,9 +643,9 @@ export function NotDeletedUserLayout() {
   const { session, isUserMarkedForDeletion } = useAuth()
 
   if (isUserMarkedForDeletion()) {
-    return <router.Navigate to={appUtils.RESTORE_USER_PATH} />
+    return <Navigate to={RESTORE_USER_PATH} />
   } else {
-    return <router.Outlet context={session} />
+    return <Outlet context={session} />
   }
 }
 
@@ -663,18 +657,14 @@ export function SoftDeletedUserLayout() {
     const isSoftDeleted = isUserSoftDeleted()
     const isDeleted = isUserDeleted()
     if (isSoftDeleted) {
-      return <router.Outlet context={session} />
+      return <Outlet context={session} />
     } else if (isDeleted) {
-      return <router.Navigate to={appUtils.LOGIN_PATH} />
+      return <Navigate to={LOGIN_PATH} />
     } else {
-      return <router.Navigate to={appUtils.DASHBOARD_PATH} />
+      return <Navigate to={DASHBOARD_PATH} />
     }
   }
 }
-
-// =============================
-// === usePartialUserSession ===
-// =============================
 
 /**
  * A React context hook returning the user session
@@ -682,30 +672,18 @@ export function SoftDeletedUserLayout() {
  */
 export function usePartialUserSession() {
   const { session } = useAuth()
-
   invariant(session?.type === UserSessionType.partial, 'Expected a partial user session.')
-
   return session
 }
-
-// ======================
-// === useUserSession ===
-// ======================
 
 /** A React context hook returning the user session for a user that may or may not be logged in. */
 export function useUserSession() {
   return useAuth().session
 }
 
-// ==========================
-// === useFullUserSession ===
-// ==========================
-
 /** A React context hook returning the user session for a user that is fully logged in. */
 export function useFullUserSession(): FullUserSession {
   const { session } = useAuth()
-
   invariant(session?.type === UserSessionType.full, 'Expected a full user session.')
-
   return session
 }
