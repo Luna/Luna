@@ -99,6 +99,13 @@ final case class Module(
     } else this
   }
 
+  def copyWithImportsAndExports(
+    imports: List[Import],
+    exports: List[Export]
+  ) = {
+    copy(imports, exports)
+  }
+
   /** @inheritdoc */
   override def duplicate(
     keepLocations: Boolean   = true,

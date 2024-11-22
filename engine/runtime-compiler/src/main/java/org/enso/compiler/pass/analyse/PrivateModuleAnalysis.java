@@ -6,6 +6,7 @@ import org.enso.compiler.context.InlineContext;
 import org.enso.compiler.context.ModuleContext;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.Expression;
+import org.enso.compiler.core.ir.MetadataStorage;
 import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.expression.errors.ImportExport;
 import org.enso.compiler.core.ir.module.scope.Export;
@@ -117,7 +118,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
                             ImportExport.apply(
                                 resolvedImp.importDef(),
                                 new ImportExport.ImportPrivateModule(importedModuleName),
-                                ImportExport.apply$default$3()));
+                                MetadataStorage.EMPTY));
                       }
                       return null;
                     });
@@ -130,7 +131,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
             ImportExport.apply(
                 moduleIr.exports().apply(0),
                 new ImportExport.ExportSymbolsFromPrivateModule(moduleName),
-                ImportExport.apply$default$3()));
+                MetadataStorage.EMPTY));
       }
 
       // Ensure that private modules are not exported
@@ -146,7 +147,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
                       ImportExport.apply(
                           associatedExportIR.get(),
                           new ImportExport.ExportPrivateModule(expModuleRef.getName().toString()),
-                          ImportExport.apply$default$3()));
+                          MetadataStorage.EMPTY));
                 }
                 return null;
               });
@@ -160,15 +161,7 @@ public final class PrivateModuleAnalysis implements MiniPassFactory {
               ? moduleIr.exports()
               : CollectionConverters.asScala(exportErrors).toList();
 
-      return moduleIr.copy(
-          convertedImports,
-          convertedExports,
-          moduleIr.copy$default$3(),
-          moduleIr.copy$default$4(),
-          moduleIr.copy$default$5(),
-          moduleIr.copy$default$6(),
-          moduleIr.copy$default$7(),
-          moduleIr.copy$default$8());
+      return moduleIr.copyWithImportsAndExports(convertedImports, convertedExports);
     }
   }
 
