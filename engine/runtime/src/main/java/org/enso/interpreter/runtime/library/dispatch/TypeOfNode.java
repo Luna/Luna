@@ -157,11 +157,6 @@ public abstract class TypeOfNode extends Node {
     return withoutWarning.executeTypes(value.getValue());
   }
 
-  @Specialization
-  Object doEnsoMultiValue(EnsoMultiValue value) {
-    return value.allTypes();
-  }
-
   static boolean isWithType(Object value, TypesLibrary types, InteropLibrary iop) {
     if (value instanceof EnsoMultiValue) {
       return true;
