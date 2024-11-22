@@ -10,6 +10,7 @@ module org.enso.std.aws {
   requires org.enso.std.database;
   requires java.logging;
   requires org.enso.aws.wrapper;
+  requires java.net.http;
 
   exports org.enso.aws;
 

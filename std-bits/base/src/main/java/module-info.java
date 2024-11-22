@@ -8,6 +8,8 @@ import org.enso.base.file_format.TextFormatSPI;
 import org.enso.base.file_format.XMLFormatSPI;
 import org.enso.base.file_system.FileSystemSPI;
 import org.enso.base.net.http.HTTPFetchDataLinkSPI;
+import org.enso.base.read.BaseReadManyReturnSPI;
+import org.enso.base.read.ReadManyReturnSPI;
 
 module org.enso.std.base {
   requires java.logging;
@@ -23,6 +25,7 @@ module org.enso.std.base {
   uses FileSystemSPI;
   uses FileFormatSPI;
   uses DataLinkSPI;
+  uses ReadManyReturnSPI;
 
   // following packages are accessed by Java code in other Enso modules
   exports org.enso.base;
@@ -32,6 +35,7 @@ module org.enso.std.base {
   exports org.enso.base.enso_cloud.audit;
   exports org.enso.base.lookup;
   exports org.enso.base.numeric;
+  exports org.enso.base.parser;
   exports org.enso.base.polyglot;
   exports org.enso.base.time;
   exports org.enso.base.text;
@@ -62,4 +66,6 @@ module org.enso.std.base {
   provides DataLinkSPI with
       EnsoFileDataLinkSPI,
       HTTPFetchDataLinkSPI;
+  provides ReadManyReturnSPI with
+      BaseReadManyReturnSPI;
 }
