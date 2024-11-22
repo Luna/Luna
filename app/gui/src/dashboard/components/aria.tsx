@@ -10,7 +10,11 @@ export * from 'react-aria'
 export * from 'react-aria-components'
 // Resolve ambigouous star exports (`react-aria` and `react-aria-components`)
 export { I18nProvider, RouterProvider } from 'react-aria-components'
-export { useTooltipTriggerState, type OverlayTriggerState } from 'react-stately'
+export {
+  useTooltipTriggerState,
+  type OverlayTriggerState,
+  type TooltipTriggerState,
+} from 'react-stately'
 
 // ==================
 // === mergeProps ===

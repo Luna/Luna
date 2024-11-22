@@ -5,6 +5,8 @@ import { Button, ButtonGroup, DialogTrigger, Text } from '#/components/AriaCompo
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Result } from '#/components/Result'
 import { Suspense } from '#/components/Suspense'
+import { useStore } from '#/hooks/storeHooks'
+import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -14,14 +16,15 @@ import { ProjectExecution } from './ProjectExecution'
 /** Props for a {@link ProjectExecutions}. */
 export interface ProjectExecutionsProps {
   readonly backend: Backend
-  readonly item: AnyAsset | null
 }
 
 /** A list of exeuctions of a project. */
 export function ProjectExecutions(props: ProjectExecutionsProps) {
-  const { backend, item } = props
-
+  const { backend } = props
   const { getText } = useText()
+  const { item } = useStore(assetPanelStore, (state) => ({ item: state.assetPanelProps.item }), {
+    unsafeEnableTransition: true,
+  })
 
   if (backend.type === BackendType.local) {
     return <Result status="info" centered title={getText('assetProjectExecutions.localBackend')} />

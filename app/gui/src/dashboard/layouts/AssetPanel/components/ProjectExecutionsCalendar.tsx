@@ -27,6 +27,8 @@ import { Button, ButtonGroup, DialogTrigger, Form, Text } from '#/components/Ari
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Result } from '#/components/Result'
 import { Suspense } from '#/components/Suspense'
+import { useStore } from '#/hooks/storeHooks'
+import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
 import { ProjectExecution } from '#/layouts/AssetPanel/components/ProjectExecution'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
 import { useText } from '#/providers/TextProvider'
@@ -59,14 +61,15 @@ const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
 /** Props for a {@link ProjectExecutionsCalendar}. */
 export interface ProjectExecutionsCalendarProps {
   readonly backend: Backend
-  readonly item: AnyAsset | null
 }
 
 /** A calendar showing executions of a project. */
 export function ProjectExecutionsCalendar(props: ProjectExecutionsCalendarProps) {
-  const { backend, item } = props
-
+  const { backend } = props
   const { getText } = useText()
+  const { item } = useStore(assetPanelStore, (state) => ({ item: state.assetPanelProps.item }), {
+    unsafeEnableTransition: true,
+  })
 
   if (backend.type === BackendType.local) {
     return <Result status="info" centered title={getText('assetProjectExecutions.localBackend')} />

@@ -3,7 +3,6 @@
  * A sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
-import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
 import { z } from 'zod'
@@ -16,41 +15,32 @@ import SessionsIcon from '#/assets/group.svg'
 import InspectIcon from '#/assets/inspect.svg'
 import RepeatIcon from '#/assets/repeat.svg'
 import VersionsIcon from '#/assets/versions.svg'
+import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { AssetDocs } from '#/layouts/AssetDocs'
-import {
-  AssetProperties,
-  type AssetPropertiesSpotlight,
-} from '#/layouts/AssetPanel/components/AssetProperties'
-import { AssetVersions } from '#/layouts/AssetPanel/components/AssetVersions'
-import { ProjectExecutionsCalendar } from '#/layouts/AssetPanel/components/ProjectExecutionsCalendar'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
-import {
-  useAssetPanelProps,
-  useAssetPanelSelectedTab,
-  useIsAssetPanelExpanded,
-  useIsAssetPanelHidden,
-  useSetAssetPanelSelectedTab,
-  useSetIsAssetPanelExpanded,
-} from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import LocalStorage from '#/utilities/LocalStorage'
+import { useStore } from '#/utilities/zustand'
+import {
+  assetPanelStore,
+  useIsAssetPanelExpanded,
+  useSetIsAssetPanelExpanded,
+} from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
+import { AssetProperties, type AssetPropertiesSpotlight } from './components/AssetProperties'
+import { AssetVersions } from './components/AssetVersions'
 import { ProjectExecutions } from './components/ProjectExecutions'
+import { ProjectExecutionsCalendar } from './components/ProjectExecutionsCalendar'
 import { ProjectSessions } from './components/ProjectSessions'
+import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
 
 const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
-
-/** Determines the content of the {@link AssetPanel}. */
-const ASSET_PANEL_TABS = ['settings', 'versions', 'sessions', 'schedules', 'docs'] as const
-
-/** Determines the content of the {@link AssetPanel}. */
-type AssetPanelTab = (typeof ASSET_PANEL_TABS)[number]
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -80,20 +70,12 @@ export interface AssetPanelContextProps {
   readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
-/** Props for an {@link AssetPanel}. */
+/**
+ * Props for an {@link AssetPanel}.
+ */
 export interface AssetPanelProps {
   readonly backendType: BackendType
   readonly category: Category
-}
-
-const DEFAULT_TRANSITION_OPTIONS: Spring = {
-  type: 'spring',
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  stiffness: 200,
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  damping: 30,
-  mass: 1,
-  velocity: 0,
 }
 
 /**
@@ -101,49 +83,69 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
  * It is used to view and interact with assets in the drive.
  */
 export function AssetPanel(props: AssetPanelProps) {
-  const isHidden = useIsAssetPanelHidden()
+  const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
   const isExpanded = useIsAssetPanelExpanded()
 
   const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
   const isVisible = !isHidden
 
+  const compensationWidth = isVisible ? panelWidth : 0
+
   return (
-    <AnimatePresence initial={!isVisible} mode="sync">
+    // We use hex color here to avoid muliplying bg colors due to opacity.
+    <div className="relative flex h-full flex-col">
+      <div style={{ width: compensationWidth, height: 0 }} />
+
       {isVisible && (
-        <motion.div
-          data-testid="asset-panel"
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          custom={panelWidth}
-          variants={{
-            initial: { opacity: 0, width: 0 },
-            animate: (width: number) => ({ opacity: 1, width }),
-            exit: { opacity: 0, width: 0 },
-          }}
-          transition={DEFAULT_TRANSITION_OPTIONS}
-          className="relative flex h-full flex-col shadow-softer clip-path-left-shadow"
-          onClick={(event) => {
-            // Prevent deselecting Assets Table rows.
-            event.stopPropagation()
-          }}
-        >
-          <InternalAssetPanelTabs {...props} />
-        </motion.div>
+        <div
+          className="absolute bottom-0 right-0 top-0 bg-dashboard shadow-softer clip-path-left-shadow"
+          style={{ width: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
+        />
       )}
-    </AnimatePresence>
+
+      <AnimatePresence initial={!isVisible}>
+        {isVisible && (
+          <motion.div
+            style={{ width: panelWidth }}
+            data-testid="asset-panel"
+            initial={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
+            className="bg-background-hex absolute bottom-0 right-0 top-0 flex flex-col"
+            onClick={(event) => {
+              // Prevent deselecting Assets Table rows.
+              event.stopPropagation()
+            }}
+          >
+            <InternalAssetPanelTabs panelWidth={panelWidth} {...props} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
 /** The internal implementation of the Asset Panel Tabs. */
-const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
-  const { category } = props
+const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
+  props: AssetPanelProps & { panelWidth: number },
+) {
+  const { category, panelWidth } = props
 
-  const { item, spotlightOn, path } = useAssetPanelProps()
+  const itemId = useStore(assetPanelStore, (state) => state.assetPanelProps.item?.id, {
+    unsafeEnableTransition: true,
+  })
 
-  const selectedTab = useAssetPanelSelectedTab()
-  const setSelectedTab = useSetAssetPanelSelectedTab()
-  const isHidden = useIsAssetPanelHidden()
+  const selectedTab = useStore(assetPanelStore, (state) => state.selectedTab, {
+    unsafeEnableTransition: true,
+  })
+  const setSelectedTab = useStore(assetPanelStore, (state) => state.setSelectedTab, {
+    unsafeEnableTransition: true,
+  })
+  const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
+    unsafeEnableTransition: true,
+  })
 
   const isReadonly = category.type === 'trash'
 
@@ -158,9 +160,12 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
 
   const backend = useBackend(category)
 
+  const getTranslation = useEventCallback(() => ASSET_SIDEBAR_COLLAPSED_WIDTH)
+
   return (
     <AssetPanelTabs
       className="h-full"
+      style={{ width: panelWidth }}
       orientation="vertical"
       selectedKey={selectedTab}
       defaultSelectedKey={selectedTab}
@@ -183,64 +188,67 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
     >
       <AnimatePresence initial={!isExpanded} mode="sync">
         {isExpanded && (
-          <div
-            className="min-h-full"
-            // We use clipPath to prevent the sidebar from being visible under tabs while expanding.
-            style={{ clipPath: `inset(0 ${ASSET_SIDEBAR_COLLAPSED_WIDTH}px 0 0)` }}
+          <motion.div
+            custom={ASSET_PANEL_WIDTH}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={{
+              initial: { filter: 'blur(8px)', x: ASSET_PANEL_WIDTH },
+              animate: { filter: 'blur(0px)', x: 0 },
+              exit: { filter: 'blur(8px)', x: ASSET_PANEL_WIDTH },
+            }}
+            className="absolute bottom-0 top-0 h-full"
+            style={{
+              // to avoid blurry edges
+              clipPath: `inset(0 0 0 0)`,
+              width: ASSET_PANEL_WIDTH,
+              right: ASSET_SIDEBAR_COLLAPSED_WIDTH,
+            }}
           >
-            <motion.div
-              initial={{ filter: 'blur(8px)' }}
-              animate={{ filter: 'blur(0px)' }}
-              exit={{ filter: 'blur(8px)' }}
-              transition={DEFAULT_TRANSITION_OPTIONS}
-              className="absolute left-0 top-0 h-full w-full bg-background"
-              style={{ width: ASSET_PANEL_WIDTH }}
-            >
-              <AssetPanelTabs.TabPanel id="settings" resetKeys={[item?.id]}>
-                <AssetProperties
-                  backend={backend}
-                  item={item}
-                  isReadonly={isReadonly}
-                  category={category}
-                  spotlightOn={spotlightOn}
-                  path={path}
-                />
-              </AssetPanelTabs.TabPanel>
+            {/* We use hex color here to avoid muliplying bg colors due to opacity. */}
+            <div className="bg-background-hex flex h-full flex-col">
+              <ErrorBoundary resetKeys={[itemId]}>
+                <AssetPanelTabs.TabPanel id="settings">
+                  <AssetProperties backend={backend} isReadonly={isReadonly} category={category} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="versions" resetKeys={[item?.id]}>
-                <AssetVersions backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="versions">
+                  <AssetVersions backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="sessions" resetKeys={[item?.id]}>
-                <ProjectSessions backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="sessions">
+                  <ProjectSessions backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="executions" resetKeys={[item?.id]}>
-                <ProjectExecutions backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="executions">
+                  <ProjectExecutions backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="executionsCalendar" resetKeys={[item?.id]}>
-                <ProjectExecutionsCalendar backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
+                <AssetPanelTabs.TabPanel id="executionsCalendar">
+                  <ProjectExecutionsCalendar backend={backend} />
+                </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="docs" resetKeys={[item?.id]}>
-                <AssetDocs backend={backend} item={item} />
-              </AssetPanelTabs.TabPanel>
-            </motion.div>
-          </div>
+                <AssetPanelTabs.TabPanel id="docs">
+                  <AssetDocs backend={backend} />
+                </AssetPanelTabs.TabPanel>
+              </ErrorBoundary>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
       <div
-        className="absolute bottom-0 right-0 top-0 pt-2.5"
+        className="absolute bottom-0 right-0 top-0 bg-dashboard pt-2.5"
         style={{ width: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
       >
         <AssetPanelToggle
           showWhen="expanded"
           className="flex aspect-square w-full items-center justify-center"
+          getTranslation={getTranslation}
         />
 
-        <AssetPanelTabs.TabList>
+        <AssetPanelTabs.TabList className="">
           <AssetPanelTabs.Tab
             id="settings"
             icon={InspectIcon}

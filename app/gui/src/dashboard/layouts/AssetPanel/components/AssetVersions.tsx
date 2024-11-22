@@ -1,5 +1,10 @@
 /** @file A list of previous versions of an asset. */
+import * as React from 'react'
 import { useState } from 'react'
+
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
+
+import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 
 import { Text } from '#/components/AriaComponents'
 import { Result } from '#/components/Result'
@@ -9,10 +14,11 @@ import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
 import { AssetType, BackendType, type S3ObjectVersion, S3ObjectVersionId } from '#/services/Backend'
 import { toRfc3339 } from '#/utilities/dateTime'
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+import { noop } from '#/utilities/functions'
+import { useStore } from '#/utilities/zustand'
+import { assetPanelStore } from '../AssetPanelState'
 import { AssetVersion } from './AssetVersion'
-import { assetVersionsQueryOptions } from './useAssetVersions.ts'
+import { assetVersionsQueryOptions } from './useAssetVersions'
 
 /** Variables for the "add new version" mutation. */
 interface AddNewVersionVariables {
@@ -20,17 +26,18 @@ interface AddNewVersionVariables {
   readonly placeholderId: S3ObjectVersionId
 }
 
-/** Props for a {@link AssetVersions}. */
+/** Props for an {@link AssetVersions}. */
 export interface AssetVersionsProps {
   readonly backend: Backend
-  readonly item: AnyAsset | null
 }
 
 /** Display a list of previous versions of an asset. */
 export function AssetVersions(props: AssetVersionsProps) {
-  const { item, backend } = props
-
+  const { backend } = props
   const { getText } = useText()
+  const { item } = useStore(assetPanelStore, (state) => ({ item: state.assetPanelProps.item }), {
+    unsafeEnableTransition: true,
+  })
 
   if (backend.type === BackendType.local) {
     return (
@@ -63,13 +70,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
 
   const [placeholderVersions, setPlaceholderVersions] = useState<readonly S3ObjectVersion[]>([])
 
-  const versionsQuery = useSuspenseQuery(
-    assetVersionsQueryOptions({
-      assetId: item.id,
-      backend,
-      onError: (backendError) => toastAndLog('listVersionsError', backendError),
-    }),
-  )
+  const versionsQuery = useSuspenseQuery(assetVersionsQueryOptions({ assetId: item.id, backend }))
 
   const latestVersion = versionsQuery.data.find((version) => version.isLatest)
 
@@ -121,7 +122,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
               item={item}
               backend={backend}
               latestVersion={latestVersion}
-              doRestore={() => {}}
+              doRestore={noop}
             />
           )),
           ...versionsQuery.data.map((version, i) => (
