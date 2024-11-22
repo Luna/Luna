@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 
 import { SETUP_PATH } from '#/appUtils'
 import CrossIcon from '#/assets/cross.svg'
