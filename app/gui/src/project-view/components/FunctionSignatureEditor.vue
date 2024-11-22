@@ -41,7 +41,7 @@ function handleWidgetUpdates() {
 
   border-radius: var(--node-border-radius);
   transition: background-color 0.2s ease;
-  background-color: var(--node-color-primary);
+  background-color: var(--color-node-background);
   box-sizing: border-box;
 }
 </style>

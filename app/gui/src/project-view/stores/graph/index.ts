@@ -25,7 +25,7 @@ import { stringUnionToArray, type Events } from '@/util/data/observable'
 import { Rect } from '@/util/data/rect'
 import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
-import { normalizeQualifiedName, qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
+import { normalizeQualifiedName, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
 import * as iter from 'enso-common/src/utilities/data/iter'
@@ -752,11 +752,6 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
         // TODO: Support entering nodes in other modules within the same project.
         return false
       }
-      console.log(
-        'definedOnType',
-        definedOnType.ok ? definedOnType.value : null,
-        proj.modulePath.value,
-      )
       return true
     }
 

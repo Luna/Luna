@@ -10,7 +10,7 @@ import { DisplayIcon } from './WidgetIcon.vue'
 const props = defineProps(widgetProps(widgetDefinition))
 
 const funcIcon = computed(() => {
-  return getDocsIcon(props.input.value.documentationText()) ?? 'enso_logo'
+  return getDocsIcon(props.input.value.mutableDocumentationMarkdown().toJSON()) ?? 'enso_logo'
 })
 
 const funcNameInput = computed(() => {

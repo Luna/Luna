@@ -37,11 +37,28 @@ function newNameAccepted(newName: string | undefined) {
 
 async function renameFunction(newName: string): Promise<Result> {
   if (!project.modulePath?.ok) return project.modulePath ?? Err('Unknown module Path')
-  const refactorResult = await project.lsRpcConnection.renameSymbol(
-    project.modulePath.value,
-    props.input[FunctionName].editableName,
-    newName,
-  )
+  const modPath = project.modulePath.value
+  const editedName = props.input[FunctionName].editableName
+  const refactorResult = await project.lsRpcConnection.renameSymbol(modPath, editedName, newName)
+  console.log('refactorResult', refactorResult)
+  if (refactorResult.ok) {
+    project.executionContext.desiredStack = project.executionContext.desiredStack.map((item) => {
+      if (
+        item.type == 'ExplicitCall' &&
+        item.methodPointer.module == modPath &&
+        item.methodPointer.name == editedName
+      ) {
+        return {
+          ...item,
+          methodPointer: {
+            ...item.methodPointer,
+            name: newName,
+          },
+        }
+      }
+      return item
+    })
+  }
   if (!refactorResult.ok) return refactorResult
   return Ok()
 }
