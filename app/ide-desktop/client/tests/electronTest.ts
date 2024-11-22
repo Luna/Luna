@@ -26,6 +26,7 @@ export function electronTest(
   test(name, async () => {
     const uuid = random.uuidv4()
     const projectsDir = pathModule.join(os.tmpdir(), 'enso-test-projects', `${name}-${uuid}`)
+    console.log('Running Application; projects dir is', projectsDir)
     const app = await _electron.launch({
       executablePath: process.env.ENSO_TEST_EXEC_PATH ?? '',
       args: process.env.ENSO_TEST_APP_ARGS != null ? process.env.ENSO_TEST_APP_ARGS.split(',') : [],
