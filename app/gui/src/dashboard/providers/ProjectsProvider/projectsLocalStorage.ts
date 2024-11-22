@@ -1,7 +1,9 @@
 /** @file Local storage keys for the list of opened projects. */
-import { defineLocalStorageKey } from '#/providers/LocalStorageProvider'
-import { BackendType, type DirectoryId, type ProjectId } from 'enso-common/src/services/Backend'
 import * as z from 'zod'
+
+import { BackendType, type DirectoryId, type ProjectId } from 'enso-common/src/services/Backend'
+
+import { defineLocalStorageKey } from '#/providers/LocalStorageProvider'
 
 /** Main content of the screen. Only one should be visible at a time. */
 export enum TabType {

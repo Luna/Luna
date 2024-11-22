@@ -1,11 +1,11 @@
 /** @file Provider for the list of opened projects. */
-import * as React from 'react'
+import { createContext, useContext, useMemo, type PropsWithChildren } from 'react'
 
 import invariant from 'tiny-invariant'
 
-import * as eventCallbacks from '#/hooks/eventCallbackHooks'
-import * as searchParamsState from '#/hooks/searchParamsStateHooks'
-import * as array from '#/utilities/array'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
+import { EMPTY_ARRAY, includes } from '#/utilities/array'
 import {
   TabType,
   useLaunchedProjectsState,
@@ -33,47 +33,44 @@ export interface ProjectsContextType {
   readonly setPage: (page: LaunchedProjectId | TabType) => void
 }
 
-const ProjectsContext = React.createContext<ProjectsContextType | null>(null)
-const PageContext = React.createContext<LaunchedProjectId | TabType | null>(null)
-const LaunchedProjectsContext = React.createContext<readonly LaunchedProject[] | null>(null)
+const ProjectsContext = createContext<ProjectsContextType | null>(null)
+const PageContext = createContext<LaunchedProjectId | TabType | null>(null)
+const LaunchedProjectsContext = createContext<readonly LaunchedProject[] | null>(null)
 
 /** Props for a {@link ProjectsProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
+export type ProjectsProviderProps = Readonly<PropsWithChildren>
 
 /** Provider for the list of opened projects. */
 export default function ProjectsProvider(props: ProjectsProviderProps) {
   const { children } = props
 
-  const [launchedProjects, setLaunchedProjects] = useLaunchedProjectsState(array.EMPTY_ARRAY)
-  const [page, setPage] = searchParamsState.useSearchParamsState(
+  const [launchedProjects, setLaunchedProjects] = useLaunchedProjectsState(EMPTY_ARRAY)
+  const [page, setPage] = useSearchParamsState(
     'page',
     () => TabType.drive,
     (value: unknown): value is LaunchedProjectId | TabType => {
-      return (
-        array.includes(Object.values(TabType), value) ||
-        launchedProjects.some((p) => p.id === value)
-      )
+      return includes(Object.values(TabType), value) || launchedProjects.some((p) => p.id === value)
     },
   )
 
-  const addLaunchedProject = eventCallbacks.useEventCallback((project: LaunchedProject) => {
+  const addLaunchedProject = useEventCallback((project: LaunchedProject) => {
     setLaunchedProjects((current) => [...current, project])
   })
-  const removeLaunchedProject = eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
+  const removeLaunchedProject = useEventCallback((projectId: LaunchedProjectId) => {
     setLaunchedProjects((current) => current.filter(({ id }) => id !== projectId))
   })
-  const updateLaunchedProjects = eventCallbacks.useEventCallback(
+  const updateLaunchedProjects = useEventCallback(
     (update: (projects: readonly LaunchedProject[]) => readonly LaunchedProject[]) => {
       setLaunchedProjects((current) => update(current))
     },
   )
 
-  const getState = eventCallbacks.useEventCallback(() => ({
+  const getState = useEventCallback(() => ({
     launchedProjects,
     page,
   }))
 
-  const projectsContextValue = React.useMemo(
+  const projectsContextValue = useMemo(
     () => ({
       updateLaunchedProjects,
       addLaunchedProject,
@@ -105,16 +102,14 @@ export default function ProjectsProvider(props: ProjectsProviderProps) {
 
 /** The projects store. */
 export function useProjectsStore() {
-  const context = React.useContext(ProjectsContext)
-
+  const context = useContext(ProjectsContext)
   invariant(context != null, 'Projects store can only be used inside an `ProjectsProvider`.')
-
   return context
 }
 
 /** The page context. */
 export function usePage() {
-  const context = React.useContext(PageContext)
+  const context = useContext(PageContext)
   invariant(context != null, 'Page context can only be used inside an `ProjectsProvider`.')
   return context
 }
@@ -122,20 +117,18 @@ export function usePage() {
 /** A function to set the current page. */
 export function useSetPage() {
   const { setPage } = useProjectsStore()
-  return eventCallbacks.useEventCallback((page: LaunchedProjectId | TabType) => {
+  return useEventCallback((page: LaunchedProjectId | TabType) => {
     setPage(page)
   })
 }
 
 /** Returns the launched projects context. */
 export function useLaunchedProjects() {
-  const context = React.useContext(LaunchedProjectsContext)
-
+  const context = useContext(LaunchedProjectsContext)
   invariant(
     context != null,
     'Launched projects context can only be used inside an `ProjectsProvider`.',
   )
-
   return context
 }
 
@@ -160,8 +153,7 @@ export function useRemoveLaunchedProject() {
 /** A function to remove all launched projects. */
 export function useClearLaunchedProjects() {
   const { setLaunchedProjects } = useProjectsStore()
-
-  return eventCallbacks.useEventCallback(() => {
-    setLaunchedProjects([])
+  return useEventCallback(() => {
+    setLaunchedProjects(EMPTY_ARRAY)
   })
 }
