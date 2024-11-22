@@ -16,6 +16,7 @@ import type { z } from 'zod'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { LocalStorage } from '#/utilities/LocalStorage'
+import { isFunction, type NonFunction } from '#/utilities/type'
 
 // ===========================
 // === LocalStorageContext ===
@@ -56,18 +57,29 @@ export function useLocalStorage() {
 /** Create a set of hooks for interacting with one specific local storage key. */
 export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, schema: Schema) {
   /** The type of the value of this key. */
-  type Value = Exclude<z.infer<Schema>, (...args: never[]) => unknown>
+  type Value = NonFunction & z.infer<Schema>
+
+  if ('error' in schema.safeParse(LocalStorage.getInstance().get(key))) {
+    LocalStorage.getInstance().delete(key)
+  }
+
+  const get = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
+    // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-unsafe-return
+    return localStorage.get(key) as Value | undefined
+  }
 
   const useGet = () => {
     const { localStorage } = useLocalStorage()
 
     useEffect(() => {
-      if (!('error' in schema.safeParse(localStorage.get(key)))) {
+      if ('error' in schema.safeParse(localStorage.get(key))) {
         localStorage.delete(key)
       }
     }, [localStorage])
 
-    return useEventCallback(() => localStorage.get(key))
+    // The return type is not `any`, this is a bug in ESLint.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return useEventCallback(() => get(localStorage))
   }
 
   const useSet = () => {
@@ -89,16 +101,19 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(key: string, s
   // eslint-disable-next-line no-restricted-syntax
   function useLocalStorageState(
     defaultValue?: Value,
-  ): readonly [value: Value | undefined, setValue: (newValue: Value | undefined) => void] {
+  ): readonly [
+    value: Value | undefined,
+    setValue: (newValue: SetStateAction<Value | undefined>) => void,
+  ] {
     const { localStorage } = useLocalStorage()
 
     const [value, privateSetValue] = useState<Value | undefined>(
-      () => localStorage.get(key) ?? defaultValue,
+      () => get(localStorage) ?? defaultValue,
     )
 
     const setValue = useEventCallback((newValue: SetStateAction<Value | undefined>) => {
       privateSetValue((currentValue) => {
-        const nextValue = typeof newValue === 'function' ? newValue(currentValue) : newValue
+        const nextValue = isFunction(newValue) ? newValue(currentValue) : newValue
         if (nextValue === undefined) {
           localStorage.delete(key)
         } else {
