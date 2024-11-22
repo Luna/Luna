@@ -49,7 +49,7 @@ const activity = shallowRef<VNode>()
 
 // How much wider a dropdown can be than a port it is attached to, when a long text is present.
 // Any text beyond that limit will receive an ellipsis and sliding animation on hover.
-const MAX_DROPDOWN_OVERSIZE_PX = 150
+const MAX_DROPDOWN_OVERSIZE_PX = 390
 
 const floatReference = computed(
   () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
@@ -471,7 +471,8 @@ declare module '@/providers/widgetRegistry' {
         <SizeTransition height :duration="100">
           <DropdownWidget
             v-if="dropDownInteraction.isActive() && activity == null"
-            color="var(--node-color-primary)"
+            color="var(--color-node-text)"
+            backgroundColor="var(--color-node-background)"
             :entries="entries"
             @clickEntry="onClick"
           />
@@ -517,7 +518,7 @@ svg.arrow {
 }
 
 .activityElement {
-  --background-color: var(--node-color-primary);
+  --background-color: var(--color-node-primary);
   /* Above the circular menu. */
   z-index: 26;
 }
