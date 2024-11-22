@@ -76,9 +76,7 @@ public class MethodDefinitions implements IRPass {
                   if (def instanceof Method method) {
                     var methodRef = method.methodReference();
                     Option<Name> resolvedTypeRef =
-                        methodRef
-                            .typePointer()
-                            .map(tp -> resolveType(tp, availableSymbolsMap));
+                        methodRef.typePointer().map(tp -> resolveType(tp, availableSymbolsMap));
                     var resolvedMethodRef = methodRef.copyWithTypePointer(resolvedTypeRef);
 
                     return switch (method) {
@@ -228,7 +226,7 @@ public class MethodDefinitions implements IRPass {
 
   private static Function.Lambda lambdaWithNewSelfArg(
       Function.Lambda lambda, DefinitionArgument newSelfArg) {
-    var args = CollectionConverters.asJava(lambda.arguments());
+    var args = new ArrayList<>(CollectionConverters.asJava(lambda.arguments()));
     assert !args.isEmpty();
     args.set(0, newSelfArg);
     var newArgs = CollectionConverters.asScala(args).toList();
