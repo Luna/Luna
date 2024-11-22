@@ -79,6 +79,7 @@ function createUpsertExecutionSchema(getText: GetText) {
         .readonly(),
       minute: z.number(),
       date: z.instanceof(ZonedDateTime, { message: getText('pleaseSelectATime') }),
+      endDate: z.instanceof(ZonedDateTime).optional(),
       maxDurationMinutes: z
         .number()
         .int()
@@ -216,6 +217,30 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     }
   })
 
+  const startAndEndDatesElement = (
+    <>
+      <div className="flex flex-col">
+        <DatePicker
+          form={form}
+          isRequired
+          name="date"
+          label={getText('firstOccurrenceLabel')}
+          noCalendarHeader
+          minValue={minFirstOccurrence}
+          maxValue={maxFirstOccurrence}
+        />
+        <Text>
+          {getText(
+            'repeatsAtX',
+            repeatTimes
+              .map((time) => toCalendarDate(time).toDate(getLocalTimeZone()).toLocaleDateString())
+              .join(', '),
+          )}
+        </Text>
+      </div>
+    </>
+  )
+
   return (
     <Form form={form} className="w-full">
       <div className="self-end">
@@ -244,27 +269,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
             </Selector>
             <Text>{getText(PARALLEL_MODE_TO_DESCRIPTION_ID[parallelMode])}</Text>
           </div>
-          <div className="flex flex-col">
-            <DatePicker
-              form={form}
-              isRequired
-              name="date"
-              label={getText('firstOccurrenceLabel')}
-              noCalendarHeader
-              minValue={minFirstOccurrence}
-              maxValue={maxFirstOccurrence}
-            />
-            <Text>
-              {getText(
-                'repeatsAtX',
-                repeatTimes
-                  .map((time) =>
-                    toCalendarDate(time).toDate(getLocalTimeZone()).toLocaleDateString(),
-                  )
-                  .join(', '),
-              )}
-            </Text>
-          </div>
+          {startAndEndDatesElement}
           <Input
             form={form}
             name="maxDurationMinutes"
@@ -329,6 +334,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
             min={0}
             max={59}
           />
+          {startAndEndDatesElement}
           <Selector
             form={form}
             isRequired
