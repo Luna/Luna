@@ -50,6 +50,12 @@ export const VisualVariants: Story = {
         </div>
 
         <div className="w-full space-y-2">
+          {(['medium', 'small'] as const).map((size) => (
+            <Selector {...args} key={size} label={size} size={size} />
+          ))}
+        </div>
+
+        <div className="w-full space-y-2">
           {(
             ['medium', 'xxxlarge', 'none', 'small', 'large', 'xlarge', 'xxlarge', 'full'] as const
           ).map((rounded) => (
