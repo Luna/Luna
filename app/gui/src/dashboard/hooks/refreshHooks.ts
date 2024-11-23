@@ -13,5 +13,6 @@ export interface RefreshState {}
 export function useRefresh() {
   // Uses an empty object literal because every distinct literal
   // is a new reference and therefore is not equal to any other object literal.
-  return React.useReducer((): RefreshState => ({}), {})
+  const [, forceRefresh] = React.useReducer((): RefreshState => ({}), {})
+  return forceRefresh
 }

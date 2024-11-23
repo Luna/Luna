@@ -5,7 +5,6 @@
 import type { PaywallFeatureName } from '#/hooks/billing'
 import * as zustand from '#/utilities/zustand'
 import { IS_DEV_MODE } from 'enso-common/src/detect'
-import * as React from 'react'
 
 /** Configuration for a paywall feature. */
 export interface PaywallDevtoolsFeatureConfiguration {
@@ -95,17 +94,6 @@ export function useShowDevtools() {
   })
 }
 
-// =================================
-// === DevtoolsProvider ===
-// =================================
-
-/**
- * Provide the Enso devtools to the app.
- */
-export function DevtoolsProvider(props: { children: React.ReactNode }) {
-  React.useEffect(() => {
-    window.toggleDevtools = ensoDevtoolsStore.getState().toggleDevtools
-  }, [])
-
-  return <>{props.children}</>
+if (typeof window !== 'undefined') {
+  window.toggleDevtools = ensoDevtoolsStore.getState().toggleDevtools
 }
