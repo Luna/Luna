@@ -49,7 +49,7 @@ const activity = shallowRef<VNode>()
 
 // How much wider a dropdown can be than a port it is attached to, when a long text is present.
 // Any text beyond that limit will receive an ellipsis and sliding animation on hover.
-const MAX_DROPDOWN_OVERSIZE_PX = 150
+const MAX_DROPDOWN_OVERSIZE_PX = 390
 
 const floatReference = computed(
   () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
@@ -238,7 +238,7 @@ const innerWidgetInput = computed<WidgetInput>(() => {
 
 const parentSelectionArrow = injectSelectionArrow(true)
 const arrowSuppressed = ref(false)
-const showArrow = computed(() => isHovered.value && !arrowSuppressed.value)
+const showArrow = computed(() => !arrowSuppressed.value && (tree.extended || isHovered.value))
 provideSelectionArrow(
   proxyRefs({
     id: computed(() => {
@@ -464,14 +464,19 @@ declare module '@/providers/widgetRegistry' {
   >
     <NodeWidget :input="innerWidgetInput" />
     <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
-      <SvgIcon name="arrow_right_head_only" class="arrow widgetOutOfLayout" />
+      <SvgIcon
+        name="arrow_right_head_only"
+        class="arrow widgetOutOfLayout"
+        :class="{ hovered: isHovered }"
+      />
     </Teleport>
     <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
         <SizeTransition height :duration="100">
           <DropdownWidget
             v-if="dropDownInteraction.isActive() && activity == null"
-            color="var(--node-color-primary)"
+            color="var(--color-node-text)"
+            backgroundColor="var(--color-node-background)"
             :entries="entries"
             @clickEntry="onClick"
           />
@@ -514,10 +519,13 @@ svg.arrow {
   opacity: 0.5;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
+  &.hovered {
+    opacity: 0.9;
+  }
 }
 
 .activityElement {
-  --background-color: var(--node-color-primary);
+  --background-color: var(--color-node-primary);
   /* Above the circular menu. */
   z-index: 26;
 }

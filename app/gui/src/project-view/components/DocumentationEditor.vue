@@ -1,14 +1,14 @@
 <script setup lang="ts">
+import { documentationEditorBindings } from '@/bindings'
+import { useDocumentationImages } from '@/components/DocumentationEditor/images'
+import { transformPastedText } from '@/components/DocumentationEditor/textPaste'
 import FullscreenButton from '@/components/FullscreenButton.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
-import { fetcherUrlTransformer } from '@/components/MarkdownEditor/imageUrlTransformer'
 import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
-import type { ToValue } from '@/util/reactivity'
-import { ref, toRef, toValue, watch } from 'vue'
-import type { Path } from 'ydoc-shared/languageServerTypes'
-import { Err, Ok, mapOk, withContext, type Result } from 'ydoc-shared/util/data/result'
+import { useProjectFiles } from '@/stores/projectFiles'
+import { ComponentInstance, ref, toRef, watch } from 'vue'
 import * as Y from 'yjs'
 
 const { yText } = defineProps<{
@@ -19,60 +19,15 @@ const emit = defineEmits<{
 }>()
 
 const toolbarElement = ref<HTMLElement>()
+const markdownEditor = ref<ComponentInstance<typeof MarkdownEditor>>()
 
 const graphStore = useGraphStore()
 const projectStore = useProjectStore()
-const { transformImageUrl } = useDocumentationImages(
+const { transformImageUrl, tryUploadPastedImage, tryUploadDroppedImage } = useDocumentationImages(
+  () => (markdownEditor.value?.loaded ? markdownEditor.value : undefined),
   toRef(graphStore, 'modulePath'),
-  projectStore.readFileBinary,
+  useProjectFiles(projectStore),
 )
-
-function useDocumentationImages(
-  modulePath: ToValue<Path | undefined>,
-  readFileBinary: (path: Path) => Promise<Result<Blob>>,
-) {
-  async function urlToPath(url: string): Promise<Result<Path> | undefined> {
-    const modulePathValue = toValue(modulePath)
-    if (!modulePathValue) {
-      return Err('Current module path is unknown.')
-    }
-    const appliedUrl = new URL(url, `file:///${modulePathValue.segments.join('/')}`)
-    if (appliedUrl.protocol === 'file:') {
-      const segments = appliedUrl.pathname.split('/')
-      return Ok({ rootId: modulePathValue.rootId, segments })
-    } else {
-      // Not a relative URL, custom fetching not needed.
-      return undefined
-    }
-  }
-
-  function pathUniqueId(path: Path) {
-    return path.rootId + ':' + path.segments.join('/')
-  }
-
-  function pathDebugRepr(path: Path) {
-    return pathUniqueId(path)
-  }
-
-  const transformImageUrl = fetcherUrlTransformer(
-    async (url: string) => {
-      const path = await urlToPath(url)
-      if (!path) return
-      return withContext(
-        () => `Locating documentation image (${url})`,
-        () => mapOk(path, (path) => ({ location: path, uniqueId: pathUniqueId(path) })),
-      )
-    },
-    async (path) => {
-      return withContext(
-        () => `Loading documentation image (${pathDebugRepr(path)})`,
-        async () => await readFileBinary(path),
-      )
-    },
-  )
-
-  return { transformImageUrl }
-}
 
 const fullscreen = ref(false)
 const fullscreenAnimating = ref(false)
@@ -81,6 +36,27 @@ watch(
   () => fullscreen.value || fullscreenAnimating.value,
   (fullscreenOrAnimating) => emit('update:fullscreen', fullscreenOrAnimating),
 )
+
+function handlePaste(raw: boolean) {
+  window.navigator.clipboard.read().then(async (items) => {
+    if (!markdownEditor.value) return
+    for (const item of items) {
+      const textType = item.types.find((type) => type === 'text/plain')
+      if (textType) {
+        const blob = await item.getType(textType)
+        const rawText = await blob.text()
+        markdownEditor.value.putText(raw ? rawText : transformPastedText(rawText))
+        break
+      }
+      if (tryUploadPastedImage(item)) break
+    }
+  })
+}
+
+const handler = documentationEditorBindings.handler({
+  paste: () => handlePaste(false),
+  pasteRaw: () => handlePaste(true),
+})
 </script>
 
 <template>
@@ -89,9 +65,15 @@ watch(
       <div ref="toolbarElement" class="toolbar">
         <FullscreenButton v-model="fullscreen" />
       </div>
-      <div class="scrollArea">
+      <div
+        class="scrollArea"
+        @keydown="handler"
+        @dragover.prevent
+        @drop.prevent="tryUploadDroppedImage($event)"
+      >
         <MarkdownEditor
-          :yText="yText"
+          ref="markdownEditor"
+          :content="yText"
           :transformImageUrl="transformImageUrl"
           :toolbarContainer="toolbarElement"
         />

@@ -1,4 +1,5 @@
 import DocumentationImage from '@/components/MarkdownEditor/DocumentationImage.vue'
+import TableEditor from '@/components/MarkdownEditor/TableEditor.vue'
 import type { VueHost } from '@/components/VueComponentHost.vue'
 import { syntaxTree } from '@codemirror/language'
 import { type EditorSelection, type Extension, RangeSetBuilder, type Text } from '@codemirror/state'
@@ -19,6 +20,7 @@ export function markdownDecorators({ vueHost }: { vueHost: VueHost }): Extension
   const stateDecorator = new TreeStateDecorator(vueHost, [
     decorateImageWithClass,
     decorateImageWithRendered,
+    decorateTable,
   ])
   const stateDecoratorExt = EditorView.decorations.compute(['doc'], (state) =>
     stateDecorator.decorate(syntaxTree(state), state.doc),
@@ -139,21 +141,32 @@ class TreeViewDecorator implements PluginValue {
 // === Links ===
 
 /** Parse a link or image */
-function parseLinkLike(node: SyntaxNode, doc: Text) {
-  const textOpen = node.firstChild // [ or ![
-  if (!textOpen) return
-  const textClose = textOpen.nextSibling // ]
-  if (!textClose) return
-  const urlOpen = textClose.nextSibling // (
-  // The parser accepts partial links such as `[Missing url]`.
-  if (!urlOpen) return
-  const urlNode = urlOpen.nextSibling
-  // If the URL is empty, this will be the closing 'LinkMark'.
-  if (urlNode?.name !== 'URL') return
+function parseLinkLike(nodeRef: SyntaxNodeRef, doc: Text) {
+  const cursor = nodeRef.node.cursor()
+  if (!cursor.firstChild()) return
+  const textFrom = cursor.to // [ or ![
+  if (!cursor.nextSibling()) return
+  const textTo = cursor.from // ]
+  do {
+    if (!cursor.nextSibling()) return
+  } while (cursor.name !== 'URL')
+  const url = doc.sliceString(cursor.from, cursor.to)
   return {
-    textFrom: textOpen.to,
-    textTo: textClose.from,
-    url: doc.sliceString(urlNode.from, urlNode.to),
+    textFrom,
+    textTo,
+    url,
+  }
+}
+
+function parseAutolink(nodeRef: SyntaxNodeRef, doc: Text) {
+  const cursor = nodeRef.node.cursor()
+  if (!cursor.firstChild()) return // <
+  if (!cursor.nextSibling()) return
+  if (cursor.name !== 'URL') return
+  return {
+    textFrom: cursor.from,
+    textTo: cursor.to,
+    url: doc.sliceString(cursor.from, cursor.to),
   }
 }
 
@@ -162,20 +175,21 @@ function decorateLink(
   doc: Text,
   emitDecoration: (from: number, to: number, deco: Decoration) => void,
 ) {
-  if (nodeRef.name === 'Link') {
-    const parsed = parseLinkLike(nodeRef.node, doc)
-    if (!parsed) return
-    const { textFrom, textTo, url } = parsed
-    if (textFrom === textTo) return
-    emitDecoration(
-      textFrom,
-      textTo,
-      Decoration.mark({
-        tagName: 'a',
-        attributes: { href: url },
-      }),
-    )
-  }
+  const parsed =
+    nodeRef.name === 'Link' ? parseLinkLike(nodeRef, doc)
+    : nodeRef.name === 'Autolink' ? parseAutolink(nodeRef, doc)
+    : undefined
+  if (!parsed) return
+  const { textFrom, textTo, url } = parsed
+  if (textFrom === textTo) return
+  emitDecoration(
+    textFrom,
+    textTo,
+    Decoration.mark({
+      tagName: 'a',
+      attributes: { href: url },
+    }),
+  )
 }
 
 // === Images ===
@@ -203,7 +217,7 @@ function decorateImageWithRendered(
   vueHost: VueHost,
 ) {
   if (nodeRef.name === 'Image') {
-    const parsed = parseLinkLike(nodeRef.node, doc)
+    const parsed = parseLinkLike(nodeRef, doc)
     if (!parsed) return
     const { textFrom, textTo, url } = parsed
     const text = doc.sliceString(textFrom, textTo)
@@ -256,6 +270,71 @@ class ImageWidget extends WidgetType {
           src: this.props.src,
           alt: this.props.alt,
         }),
+        container,
+      )
+      this.container = container
+    }
+    return this.container
+  }
+
+  override destroy() {
+    this.vueHostRegistration?.unregister()
+    this.container = undefined
+  }
+}
+
+// === Tables ===
+
+function decorateTable(
+  nodeRef: SyntaxNodeRef,
+  doc: Text,
+  emitDecoration: (from: number, to: number, deco: Decoration) => void,
+  vueHost: VueHost,
+) {
+  if (nodeRef.name === 'Table') {
+    const source = doc //.slice(nodeRef.from, nodeRef.to)
+    const parsed = nodeRef.node
+    const widget = new TableWidget({ source, parsed }, vueHost)
+    emitDecoration(
+      nodeRef.from,
+      nodeRef.to,
+      Decoration.replace({
+        widget,
+        // Ensure the cursor is drawn relative to the content before the widget.
+        // If it is drawn relative to the widget, it will be hidden when the widget is hidden (i.e. during editing).
+        side: 1,
+        block: true,
+      }),
+    )
+  }
+}
+
+class TableWidget extends WidgetType {
+  private container: HTMLElement | undefined
+  private vueHostRegistration: { unregister: () => void } | undefined
+
+  constructor(
+    private readonly props: { source: Text; parsed: SyntaxNode },
+    private readonly vueHost: VueHost,
+  ) {
+    super()
+  }
+
+  override get estimatedHeight() {
+    return -1
+  }
+
+  override toDOM(): HTMLElement {
+    if (!this.container) {
+      const container = markRaw(document.createElement('div'))
+      container.className = 'cm-table-editor'
+      this.vueHostRegistration = this.vueHost.register(
+        () =>
+          h(TableEditor, {
+            source: this.props.source,
+            parsed: this.props.parsed,
+            onEdit: () => console.log('onEdit'),
+          }),
         container,
       )
       this.container = container
