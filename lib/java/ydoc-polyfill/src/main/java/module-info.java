@@ -1,4 +1,4 @@
-module org.enso.ydoc {
+module org.enso.ydoc.polyfill {
   requires io.helidon.webclient;
   requires io.helidon.webclient.websocket;
   requires io.helidon.webserver;
