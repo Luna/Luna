@@ -27,7 +27,7 @@ const allWidgets = computed(() =>
 </script>
 
 <template>
-  <div class="ArgumentRow widgetResetPadding">
+  <div class="ArgumentRow widgetResetPadding widgetRounded">
     <SvgIcon name="sort" />
     <NodeWidget v-for="[key, widget] of allWidgets" :key="key" :input="widget" />
   </div>
