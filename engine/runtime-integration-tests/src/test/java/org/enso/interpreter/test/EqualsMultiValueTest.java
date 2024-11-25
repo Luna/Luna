@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import org.enso.common.MethodNames;
 import org.enso.interpreter.node.expression.builtin.meta.EqualsNode;
 import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode;
 import org.enso.interpreter.runtime.data.EnsoMultiValue;
@@ -14,6 +15,7 @@ import org.enso.interpreter.runtime.data.text.Text;
 import org.enso.test.utils.ContextUtils;
 import org.enso.test.utils.TestRootNode;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -123,6 +125,92 @@ public class EqualsMultiValueTest {
           assertFalse("5 != 4t", equalityCheck(5L, fourExtraText));
           assertTrue("4t == 4", equalityCheck(fourExtraText, 4L));
           assertFalse("4t != 5", equalityCheck(fourExtraText, 5L));
+
+          return null;
+        });
+  }
+
+  @Test
+  public void testEqualityIntegerNoMultiValueWithConversion() throws Exception {
+    assertEqualityIntegerWithConversion("c:Complex");
+  }
+
+  @Test
+  public void testEqualityIntegerAndMultiValueWithConversion() throws Exception {
+    assertEqualityIntegerWithConversion("c.as_complex_and_float");
+  }
+
+  private void assertEqualityIntegerWithConversion(String complexNew) throws Exception {
+    var code =
+        """
+    import Standard.Base.Data.Numbers.Float
+    import Standard.Base.Data.Numbers.Number
+    import Standard.Base.Data.Ordering.Comparable
+    import Standard.Base.Data.Ordering.Ordering
+    import Standard.Base.Nothing
+    import Standard.Base.Error.Error
+    import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+
+    ## Sample definition of a complex number with conversions
+      from Number and implementation of a comparator.
+    type Complex
+        private Value re:Float im:Float
+
+        new re=0:Float im=0:Float -> Complex =
+            c = Complex.Value re 0
+            if im != 0 then c:Complex else
+                ${complexNew}
+
+        + self (that:Complex) = Complex.new self.re+that.re self.im+that.im
+
+        < self (that:Complex) = Complex_Comparator.compare self that == Ordering.Less
+        > self (that:Complex) = Complex_Comparator.compare self that == Ordering.Greater
+        >= self (that:Complex) =
+            ordering = Complex_Comparator.compare self that
+            ordering == Ordering.Greater || ordering == Ordering.Equal
+        <= self (that:Complex) =
+            ordering = Complex_Comparator.compare self that
+            ordering == Ordering.Less || ordering == Ordering.Equal
+
+    Complex.from (that:Number) = Complex.new that
+
+
+    Comparable.from (that:Complex) = Comparable.new that Complex_Comparator
+    Comparable.from (that:Number) = Comparable.new that Complex_Comparator
+
+    type Complex_Comparator
+        compare x:Complex y:Complex = if x.re==y.re && x.im==y.im then Ordering.Equal else
+            if x.im==0 && y.im==0 then Ordering.compare x.re y.re else
+                Nothing
+        hash x:Complex = if x.im == 0 then Ordering.hash x.re else
+            7*x.re + 11*x.im
+
+    ## uses the explicit conversion defined in this private module
+    Complex.as_complex_and_float self =
+        self : Complex&Float
+
+    ## explicit "conversion" of `Complex` to `Float` in a private module
+       used in `as_complex_and_float`
+    Float.from (that:Complex) =
+        if that.im == 0 then that.re else
+            Error.throw <| Illegal_Argument.Error "Cannot convert Complex with imaginary part to Float"
+    """
+            .replace("${complexNew}", complexNew);
+
+    var src = Source.newBuilder("enso", code, "complex.enso").build();
+    var complexModule = context.eval(src);
+    var complexFourValue =
+        complexModule.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "Complex.new 4");
+
+    executeInContext(
+        context,
+        () -> {
+          var complexFour = ContextUtils.unwrapValue(context, complexFourValue);
+
+          assertTrue("4 == 4t", equalityCheck(4L, complexFour));
+          assertFalse("5 != 4t", equalityCheck(5L, complexFour));
+          assertTrue("4t == 4", equalityCheck(complexFour, 4L));
+          assertFalse("4t != 5", equalityCheck(complexFour, 5L));
 
           return null;
         });
