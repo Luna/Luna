@@ -356,17 +356,12 @@ function toField(
   const displayValue = valueType ? valueType.display_text : null
   const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
 
-  console.log(props.data)
-
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_metrics' in props.data ?
       props.data.data_quality_metrics.map((metric: DataQualityMetric) => {
-        console.log({ metric })
         return { [metric.name]: metric.percentage_value[index!] ?? 0 }
       })
     : []
-
-  console.log(dataQualityMetrics)
 
   const showDataQuality =
     dataQualityMetrics.filter((obj) => (Object.values(obj)[0] as number) > 0).length > 0
