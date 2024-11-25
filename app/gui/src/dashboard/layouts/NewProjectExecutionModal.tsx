@@ -35,7 +35,7 @@ import {
 } from '#/components/AriaComponents'
 import { backendMutationOptions } from '#/hooks/backendHooks'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
-import { useText, type GetText } from '#/providers/TextProvider'
+import { useText } from '#/providers/TextProvider'
 import { DAY_3_LETTER_TEXT_IDS } from 'enso-common/src/utilities/data/dateTime'
 
 const MAX_DURATION_DEFAULT_MINUTES = 60
@@ -53,7 +53,7 @@ const DAYS: readonly number[] = [...Array(DAYS_PER_WEEK).keys()]
 const HOURS: readonly number[] = [...Array(HOURS_PER_DAY).keys()]
 
 /** Create the form schema for this page. */
-function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefined) {
+function createUpsertExecutionSchema(timeZone: string | undefined) {
   return z
     .object({
       multiSelect: z.boolean(),
@@ -83,8 +83,8 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
       minute: z.number(),
-      date: z.instanceof(ZonedDateTime, { message: getText('pleaseSelectATime') }),
-      endDate: z.instanceof(ZonedDateTime).optional(),
+      startDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
+      endDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
       maxDurationMinutes: z
         .number()
         .int()
@@ -94,7 +94,8 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
     })
     .transform(
       ({
-        date,
+        startDate = null,
+        endDate = null,
         repeatInterval,
         multiSelect,
         maxDurationMinutes,
@@ -104,6 +105,7 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         hours,
         minute,
       }) => {
+        const date = startDate ?? now('UTC')
         const utcDate = toTimeZone(date, 'UTC')
         if (multiSelect) {
           const timeZoneOffsetMs = toTimeZone(date, timeZone ?? getLocalTimeZone()).offset
@@ -124,6 +126,8 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
             repeatInterval,
             maxDurationMinutes,
             parallelMode,
+            startDate,
+            endDate,
             time: {
               ...(repeatInterval === 'monthly' && { dates }),
               ...(repeatInterval === 'weekly' && { days }),
@@ -140,6 +144,8 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
             repeatInterval,
             maxDurationMinutes,
             parallelMode,
+            startDate,
+            endDate,
             time: {
               ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
               ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
@@ -182,12 +188,13 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   const minFirstOccurrence = nowZonedDateTime
   const form = Form.useForm({
     method: 'dialog',
-    schema: createUpsertExecutionSchema(getText, preferredTimeZone),
+    schema: createUpsertExecutionSchema(preferredTimeZone),
     defaultValues: {
       multiSelect: false,
       repeatInterval: 'weekly',
       parallelMode: 'restart',
-      date: defaultDate ?? minFirstOccurrence,
+      startDate: defaultDate ?? minFirstOccurrence,
+      endDate: null,
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
       dates: [],
       days: [],
@@ -200,7 +207,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   })
   const repeatInterval = form.watch('repeatInterval', 'weekly')
   const parallelMode = form.watch('parallelMode', 'restart')
-  const date = form.watch('date', nowZonedDateTime)
+  const date = form.watch('startDate', nowZonedDateTime)
   const multiSelect = form.watch('multiSelect', false)
 
   const createProjectExecution = useMutation(

@@ -383,6 +383,8 @@ export interface ProjectExecutionInfo {
   readonly time: ProjectScheduleTime
   readonly parallelMode: ProjectParallelMode
   readonly maxDurationMinutes: number
+  readonly startDate: dateTime.Rfc3339DateTime | null
+  readonly endDate: dateTime.Rfc3339DateTime | null
 }
 
 /** A specific execution schedule of a project. */
