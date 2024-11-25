@@ -90,7 +90,7 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isBoolean(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isBoolean(values[i])) {
         return true;
       }
@@ -101,7 +101,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   boolean asBoolean(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < methodDispatchTypes; i++) {
       if (iop.isBoolean(values[i])) {
         return iop.asBoolean(values[i]);
       }
