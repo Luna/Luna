@@ -391,8 +391,8 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
           // We need to compare the desired stack state against current state on every loop iteration.
 
           const firstDifferent = findDifferenceIndex(
-            state.stack,
             this._desiredStack,
+            state.stack,
             stackItemsEqual,
           )
 

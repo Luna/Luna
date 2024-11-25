@@ -101,6 +101,6 @@ export function findDifferenceIndex<T>(
     findIndexOpt(lhs, (item, index) => {
       const rhsItem = rhs[index]
       return rhsItem == null || !equals(item, rhsItem)
-    }) ?? rhs.length
+    }) ?? Math.min(lhs.length, rhs.length)
   )
 }
