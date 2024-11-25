@@ -25,6 +25,7 @@ import org.graalvm.polyglot.Value;
 /** Makes HTTP requests with secrets in either header or query string. */
 public final class EnsoSecretHelper extends SecretValueResolver {
   private static Value cache;
+  private static Value triggerReference;
 
   /** Gets a JDBC connection resolving EnsoKeyValuePair into the properties. */
   public static Connection getJDBCConnection(
@@ -189,11 +190,14 @@ public final class EnsoSecretHelper extends SecretValueResolver {
                   """
       import Standard.Base.Runtime.Ref.Ref
       import Standard.Base.Data.Boolean.Boolean
+      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
+      polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
 
       type Cache
           private Value ref:Ref
 
           new obj -> Cache =
+            #EnsoSecretHelper.hello 10
             ref = Ref.new obj Boolean.True
             Cache.Value ref
 
@@ -206,6 +210,10 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     }
   }
 
+  public static void hello(long x) {
+    System.out.println("HELLO " + x);
+  }
+
   public static EnsoHTTPResponseCache getCache() {
     var c = cache instanceof Value v ? v.invokeMember("get") : null;
     if (c != null
@@ -215,6 +223,36 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     } else {
       return null;
     }
+  }
+
+  public static void installTriggerReference() {
+      var module =
+          Context.getCurrent()
+              .eval(
+                  "enso",
+                  """
+      import Standard.Base.IO
+      import Standard.Base.Runtime.Ref.Ref
+      import Standard.Base.Data.Boolean.Boolean
+      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
+      polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
+
+      type Cache2
+          private Value ref:Ref
+
+          new -> Cache2 =
+            do_clear _ =
+              IO.println "Hi from clearer"
+              EnsoSecretHelper.hello 11
+            mr = Managed_Resource.register 0 do_clear
+            ref = Ref.new mr Boolean.True
+            IO.println "Hi from TR"
+            Cache2.Value ref
+
+          fin self = self.ref.get.finalize
+          get self = self.ref.get
+      """);
+      triggerReference = module.invokeMember("eval_expression", "Cache2.new");
   }
 
   private static final Comparator<Pair<String, String>> headerNameComparator =
