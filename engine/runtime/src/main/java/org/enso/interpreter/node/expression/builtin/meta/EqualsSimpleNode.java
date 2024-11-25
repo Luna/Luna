@@ -118,7 +118,7 @@ abstract class EqualsSimpleNode extends Node {
     }
   }
 
-  @Specialization
+  @Specialization(guards = "isNotMulti(other)")
   EqualsAndInfo equalsLongInterop(
       long self,
       Object other,
@@ -227,7 +227,8 @@ abstract class EqualsSimpleNode extends Node {
   }
 
   @TruffleBoundary
-  @Specialization(guards = {"isBigInteger(iop, self)", "!isPrimitiveValue(other)"})
+  @Specialization(
+      guards = {"isBigInteger(iop, self)", "!isPrimitiveValue(other)", "isNotMulti(other)"})
   EqualsAndInfo equalsBigIntInterop(
       Object self,
       Object other,
@@ -266,7 +267,7 @@ abstract class EqualsSimpleNode extends Node {
    * lexicographical order, handling Unicode normalization. See {@code Text_Utils.compare_to}.
    */
   @Specialization(
-      guards = {"selfInterop.isString(selfString)"},
+      guards = {"selfInterop.isString(selfString)", "isNotMulti(selfString)"},
       limit = "3")
   EqualsAndInfo equalsStrings(
       Object selfString,
@@ -416,6 +417,10 @@ abstract class EqualsSimpleNode extends Node {
 
   static boolean isPrimitiveValue(Object object) {
     return object instanceof Boolean || object instanceof Long || object instanceof Double;
+  }
+
+  static boolean isNotMulti(Object v) {
+    return !(v instanceof EnsoMultiValue);
   }
 
   static boolean isBigInteger(InteropLibrary iop, Object v) {
