@@ -131,6 +131,33 @@ public class EqualsMultiValueTest {
   }
 
   @Test
+  public void twoMultiValues() {
+    executeInContext(
+        context,
+        () -> {
+          var builtins = ContextUtils.leakContext(context).getBuiltins();
+          var intType = builtins.number().getInteger();
+          var textText = builtins.text();
+          var fourExtraText =
+              EnsoMultiValue.create(
+                  new Type[] {intType, textText}, 1, new Object[] {4L, Text.create("Hi")});
+          var fourExtraText2 =
+              EnsoMultiValue.create(
+                  new Type[] {intType, textText}, 1, new Object[] {4L, Text.create("Hi")});
+          var fiveExtraText =
+              EnsoMultiValue.create(
+                  new Type[] {intType, textText}, 1, new Object[] {5L, Text.create("Hi")});
+
+          assertFalse("!= for sure #1", equalityCheck(fiveExtraText, fourExtraText));
+          assertFalse("!= for sure #2", equalityCheck(fourExtraText, fiveExtraText));
+          assertTrue("equals #1", equalityCheck(fourExtraText, fourExtraText2));
+          assertTrue("equals #2", equalityCheck(fourExtraText2, fourExtraText));
+
+          return null;
+        });
+  }
+
+  @Test
   public void testEqualityIntegerNoMultiValueWithConversion() throws Exception {
     assertEqualityIntegerWithConversion("c:Complex");
   }

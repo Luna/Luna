@@ -18,6 +18,7 @@ import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedConversion;
 import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.callable.function.Function;
+import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.atom.Atom;
 import org.enso.interpreter.runtime.data.atom.StructsLibrary;
@@ -240,6 +241,9 @@ public final class EqualsNode extends Node {
       var state = State.create(ctx);
       try {
         var thatAsSelf = convertNode.execute(convert, state, new Object[] {selfType, that});
+        if (thatAsSelf instanceof EnsoMultiValue emv) {
+          thatAsSelf = EnsoMultiValue.CastToNode.getUncached().executeCast(selfType, emv, false);
+        }
         var withInfo = equalityNode.execute(frame, self, thatAsSelf);
         var result = withInfo.isTrue();
         assert !result || assertHashCodeIsTheSame(that, thatAsSelf);

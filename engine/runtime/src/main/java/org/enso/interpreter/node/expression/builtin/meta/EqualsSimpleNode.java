@@ -318,6 +318,24 @@ abstract class EqualsSimpleNode extends Node {
   }
 
   @Specialization
+  EqualsAndInfo equalsMultiValue(
+      VirtualFrame frame,
+      EnsoMultiValue self,
+      Object other,
+      @Cached EnsoMultiValue.EqualsNode equalsMultiNode) {
+    return equalsMultiNode.executeEquals(frame, self, other);
+  }
+
+  @Specialization
+  EqualsAndInfo equalsMultiValueReversed(
+      VirtualFrame frame,
+      Object self,
+      EnsoMultiValue other,
+      @Cached EnsoMultiValue.EqualsNode equalsMultiNode) {
+    return equalsMultiNode.executeEquals(frame, other, self);
+  }
+
+  @Specialization
   EqualsAndInfo equalsReverseLong(
       VirtualFrame frame,
       TruffleObject self,
@@ -375,7 +393,7 @@ abstract class EqualsSimpleNode extends Node {
       return true;
     }
     if (a instanceof EnsoMultiValue || b instanceof EnsoMultiValue) {
-      return true;
+      return false;
     }
     return !isPrimitive(a, interop) && !isPrimitive(b, interop);
   }
