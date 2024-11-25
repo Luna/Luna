@@ -363,6 +363,7 @@ function DialogContent(props: DialogContentProps) {
               transition={{ duration: 0 }}
             >
               <div className={styles.measurerWrapper()}>
+                {/* eslint-disable jsdoc/check-alignment */}
                 {/**
                  * This div is used to measure the content dimensions.
                  * It's takes the same grid area as the content, thus
@@ -374,8 +375,8 @@ function DialogContent(props: DialogContentProps) {
                  * It's set to `pointer-events-none` so that it doesn't
                  * interfere with the layout.
                  */}
+                {/* eslint-enable jsdoc/check-alignment */}
                 <div ref={contentDimensionsRef} className={styles.measurer()} />
-
                 <div className={styles.content()}>
                   <errorBoundary.ErrorBoundary>
                     <suspense.Suspense
