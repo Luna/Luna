@@ -65,6 +65,28 @@ test.each([
     ],
   },
   {
+    markdown: '[Link text](<https://www.example.com/index.html>)',
+    expectedLinks: [
+      {
+        text: 'Link text',
+        href: 'https://www.example.com/index.html',
+      },
+    ],
+  },
+  {
+    markdown: '[Link text](<https://www.example.com/Url with spaces.html>)',
+    expectedLinks: [
+      {
+        text: 'Link text',
+        href: 'https://www.example.com/Url with spaces.html',
+      },
+    ],
+  },
+  {
+    markdown: '[Link text](https://www.example.com/Spaces not allowed without angle brackets.html)',
+    expectedLinks: [],
+  },
+  {
     markdown: '[Unclosed url](https://www.example.com/index.html',
     expectedLinks: [],
   },
@@ -82,6 +104,19 @@ test.each([
   },
   {
     markdown: '[Unclosed',
+    expectedLinks: [],
+  },
+  {
+    markdown: '<https://example.com>',
+    expectedLinks: [
+      {
+        text: 'https://example.com',
+        href: 'https://example.com',
+      },
+    ],
+  },
+  {
+    markdown: '<example.com>',
     expectedLinks: [],
   },
 ])('Link decoration: $markdown', ({ markdown, expectedLinks }) => {

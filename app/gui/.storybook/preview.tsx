@@ -3,12 +3,22 @@
  */
 import type { Preview as ReactPreview } from '@storybook/react'
 import type { Preview as VuePreview } from '@storybook/vue3'
-import React, { useLayoutEffect, useState } from 'react'
+import isChromatic from 'chromatic/isChromatic'
+import { useLayoutEffect, useState } from 'react'
+
 import invariant from 'tiny-invariant'
 import UIProviders from '../src/dashboard/components/UIProviders'
 
+import { QueryClientProvider } from '@tanstack/react-query'
+import { createQueryClient } from 'enso-common/src/queryClient'
+import { MotionGlobalConfig } from 'framer-motion'
 import z from 'zod'
 import '../src/dashboard/tailwind.css'
+
+if (isChromatic()) {
+  MotionGlobalConfig.skipAnimations = true
+  document.documentElement.classList.add('disable-animations')
+}
 
 const framework = z.enum(['vue', 'react']).parse(window.ENV.FRAMEWORK)
 
@@ -32,7 +42,6 @@ const reactPreview: ReactPreview = {
       },
     },
   },
-
   // Decorators for all stories
   // Decorators are applied in the reverse order they are defined
   decorators: [
@@ -61,6 +70,11 @@ const reactPreview: ReactPreview = {
         <div id="enso-portal-root" className="enso-portal-root" />
       </>
     ),
+
+    (Story, context) => {
+      const [queryClient] = useState(() => createQueryClient())
+      return <QueryClientProvider client={queryClient}>{Story(context)}</QueryClientProvider>
+    },
   ],
 }
 
