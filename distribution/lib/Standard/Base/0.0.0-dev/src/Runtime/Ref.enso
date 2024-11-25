@@ -1,4 +1,5 @@
 import project.Any.Any
+import project.Data.Boolean.Boolean
 
 ## PRIVATE
    ADVANCED
@@ -8,16 +9,27 @@ type Ref
     ## PRIVATE
        ADVANCED
        Creates a new reference containing the provided value.
+       If `allow_gc` is set to `True` than the management
+       of the reference is controlled by the runtime which
+       may _set the reference to `Nothing` any time_. The
+       definition of _"any time"_ is intentionally vague, but
+       the known implementations reset the value when running
+       out of memory or when a user asks for _"clean re-execution"_
+       of a project.
 
        Arguments:
        - value: The value to be contained in the ref.
+       - allow_gc: Is the value eligible for being cleared by the system at any time?
 
        > Example
          Creating a new reference containing the value 7.
 
-             Ref.new 7
-    new : Any -> Ref
-    new value = @Builtin_Method "Ref.new"
+       > Example
+         Cache a value, but allow the system to reclaim it.
+             Ref.new huge_data_downloaded_from_internet True
+    new value:Any allow_gc:Boolean=Boolean.False -> Ref = Ref.new_impl value (if allow_gc then 2 else 0)
+
+    private new_impl value typ = @Builtin_Method "Ref.new"
 
     ## GROUP Metadata
        ICON metadata

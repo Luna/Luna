@@ -7,6 +7,9 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
@@ -16,16 +19,25 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "mutable", stdlibName = "Standard.Base.Runtime.Ref.Ref")
 public final class Ref extends EnsoObject {
+  /**
+   * {@code 0} - regular reference to an object {@code 1} - reference via {@link SoftReference}
+   * {@code 2} - reference via {@link WeakReference}
+   */
+  private final byte type;
+
   private volatile Object value;
 
   /**
    * Creates a new reference.
    *
    * @param value the initial value to store in the reference.
+   * @param referenceType type of reference to use
    */
   @Builtin.Method(description = "Creates a new Ref", autoRegister = false)
-  public Ref(Object value) {
-    this.value = value;
+  public Ref(Node node, Object value, long referenceType) {
+    var ctx = EnsoContext.get(node);
+    this.type = (byte) (referenceType & 0x03);
+    this.value = wrapValue(ctx, value);
   }
 
   /**
@@ -33,8 +45,9 @@ public final class Ref extends EnsoObject {
    */
   @Builtin.Method(name = "get", description = "Gets the value stored in the reference")
   @SuppressWarnings("generic-enso-builtin-type")
-  public Object getValue() {
-    return value;
+  public Object getValue(Node node) {
+    var ctx = EnsoContext.get(node);
+    return unwrapValue(ctx, value);
   }
 
   /**
@@ -45,10 +58,11 @@ public final class Ref extends EnsoObject {
    */
   @Builtin.Method(name = "put", description = "Stores a new value in the reference")
   @SuppressWarnings("generic-enso-builtin-type")
-  public Object setValue(Object value) {
+  public Object setValue(Node node, Object value) {
+    var ctx = EnsoContext.get(node);
     Object old = this.value;
-    this.value = value;
-    return old;
+    this.value = wrapValue(ctx, value);
+    return unwrapValue(ctx, old);
   }
 
   @ExportMessage
@@ -69,6 +83,23 @@ public final class Ref extends EnsoObject {
   @ExportMessage
   Type getType(@Bind("$node") Node node) {
     return EnsoContext.get(node).getBuiltins().ref();
+  }
+
+  private final Object wrapValue(EnsoContext ctx, Object v) {
+    if (type == 0) {
+      return v;
+    }
+    assert !(v instanceof Reference<?>) : "Ref[" + type + ", " + v + "]";
+    return ctx.getReferencesManager().create(v, type);
+  }
+
+  private final Object unwrapValue(EnsoContext ctx, Object v) {
+    if (v instanceof Reference<?> ref) {
+      var ret = ref.get();
+      return ret == null ? ctx.getNothing() : ret;
+    } else {
+      return v;
+    }
   }
 
   @ExportMessage
