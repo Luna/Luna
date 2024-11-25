@@ -42,11 +42,15 @@ const MAX_DURATION_DEFAULT_MINUTES = 60
 const MAX_DURATION_MINIMUM_MINUTES = 1
 const MAX_DURATION_MAXIMUM_MINUTES = 180
 const REPEAT_TIMES_COUNT = 5
+const MAX_DAYS_PER_MONTH = 31
+const DAYS_PER_WEEK = 7
+const HOURS_PER_DAY = 24
+const MINUTE_MS = 60_000
+const HOUR_MINUTE = 60
 
-/* eslint-disable @typescript-eslint/no-magic-numbers */
-const DATES: readonly number[] = [...Array(31).keys()]
-const DAYS: readonly number[] = [...Array(7).keys()]
-const HOURS: readonly number[] = [...Array(24).keys()]
+const DATES: readonly number[] = [...Array(MAX_DAYS_PER_MONTH).keys()]
+const DAYS: readonly number[] = [...Array(DAYS_PER_WEEK).keys()]
+const HOURS: readonly number[] = [...Array(HOURS_PER_DAY).keys()]
 
 /** Create the form schema for this page. */
 function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefined) {
@@ -58,7 +62,7 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         .number()
         .int()
         .min(0)
-        .max(30)
+        .max(MAX_DAYS_PER_MONTH - 1)
         .array()
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
@@ -66,7 +70,7 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         .number()
         .int()
         .min(0)
-        .max(6)
+        .max(DAYS_PER_WEEK - 1)
         .array()
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
@@ -74,7 +78,7 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         .number()
         .int()
         .min(0)
-        .max(23)
+        .max(HOURS_PER_DAY - 1)
         .array()
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
@@ -100,9 +104,22 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
         hours,
         minute,
       }) => {
-        const zonedDate = toTimeZone(date, timeZone ?? getLocalTimeZone())
         const utcDate = toTimeZone(date, 'UTC')
         if (multiSelect) {
+          const timeZoneOffsetMs = toTimeZone(date, timeZone ?? getLocalTimeZone()).offset
+          const timeZoneOffsetMinutesTotal = Math.trunc(timeZoneOffsetMs / MINUTE_MS)
+          let timeZoneOffsetHours = Math.floor(timeZoneOffsetMinutesTotal / HOUR_MINUTE)
+          const timeZoneOffsetMinutes =
+            timeZoneOffsetMinutesTotal - timeZoneOffsetHours * HOUR_MINUTE
+          minute += timeZoneOffsetMinutes
+          while (minute < 0) {
+            minute += HOUR_MINUTE
+            timeZoneOffsetHours += 1
+          }
+          while (minute > HOUR_MINUTE) {
+            minute -= HOUR_MINUTE
+            timeZoneOffsetHours -= 1
+          }
           return {
             repeatInterval,
             maxDurationMinutes,
@@ -110,7 +127,11 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
             time: {
               ...(repeatInterval === 'monthly' && { dates }),
               ...(repeatInterval === 'weekly' && { days }),
-              ...(repeatInterval !== 'hourly' && { hours }),
+              ...(repeatInterval !== 'hourly' && {
+                hours: hours.map(
+                  (hour) => (hour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY,
+                ),
+              }),
               minute,
             },
           }
@@ -130,7 +151,6 @@ function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefi
       },
     )
 }
-/* eslint-enable @typescript-eslint/no-magic-numbers */
 
 /** Props for a {@link NewProjectExecutionModal}. */
 export interface NewProjectExecutionModalProps {
