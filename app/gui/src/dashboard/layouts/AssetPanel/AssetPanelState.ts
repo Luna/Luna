@@ -4,18 +4,18 @@
  * selected tab, and other properties from outside the component.
  */
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import type { AssetPropertiesSpotlight } from '#/layouts/AssetProperties'
+import type Backend from '#/services/Backend'
+import type { AnyAsset } from '#/services/Backend'
+import * as zustand from '#/utilities/zustand'
+import { startTransition } from 'react'
 import {
   getAssetPanelTab,
   getIsAssetPanelHidden,
   setAssetPanelTab,
   setIsAssetPanelHidden,
   setIsAssetPanelOpen,
-} from '#/layouts/AssetPanel/assetPanelLocalStorage'
-import type Backend from '#/services/Backend'
-import type { AnyAsset } from '#/services/Backend'
-import * as zustand from '#/utilities/zustand'
-import { startTransition } from 'react'
-import type { AssetPropertiesSpotlight } from '../AssetProperties'
+} from './assetPanelLocalStorage'
 import { type AssetPanelTab } from './types'
 
 /** The state of the asset panel. */
