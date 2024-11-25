@@ -979,13 +979,14 @@ class CollaborativeBuffer(
       runtimeConnector ! Api.Request(
         Api.CloseFileNotification(buffer.fileWithMetadata.file)
       )
+      logger.trace("No clients connected while in shutdown mode. Stopping...")
       stop(Map.empty)
     case OpenFile(client, path) =>
       shutdownTimeout.cancel()
       unstashAll()
       context.system.eventStream.publish(BufferOpened(path))
       logger.debug(
-        "Buffer re-opened for [path:{}, client:{}].",
+        "Shutdown interrupted. Buffer re-opened for [path:{}, client:{}].",
         path,
         client.clientId
       )
@@ -996,7 +997,7 @@ class CollaborativeBuffer(
       unstashAll()
       context.system.eventStream.publish(BufferOpened(path))
       logger.debug(
-        "Buffer re-opened in-memory for [path:{}, client:{}].",
+        "Shutdown interrupted. Buffer re-opened in-memory for [path:{}, client:{}].",
         path,
         client.clientId
       )

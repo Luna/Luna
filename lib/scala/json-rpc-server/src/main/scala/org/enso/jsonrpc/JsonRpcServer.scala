@@ -95,12 +95,13 @@ class JsonRpcServer(
           OverflowStrategy.fail
         )
         .mapMaterializedValue { outActor =>
+          logger.trace("JSON connection initialized @ {}", port)
           messageHandler ! MessageHandler.Connected(outActor, port)
           NotUsed
         }
         .map((outMsg: MessageHandler.WebMessage) => TextMessage(outMsg.message))
         .wireTap { textMessage =>
-          logger.trace(s"Sent text message ${textMessage.text}.")
+          logger.trace("Sent text message {}", textMessage.text)
         }
 
     Flow.fromSinkAndSourceCoupled(incomingMessages, outgoingMessages)

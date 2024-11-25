@@ -131,6 +131,7 @@ class LanguageServerComponent(config: LanguageServerConfig, logLevel: Level)
         Future.successful(ComponentStopped)
 
       case Some(serverContext) =>
+        logger.trace("Language Server is terminating")
         for {
           _ <- stopSampling(serverContext)
           _ <- terminateTruffle(serverContext)

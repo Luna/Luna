@@ -123,9 +123,10 @@ class BinaryConnectionController(
   ): Receive = {
     case ConnectionClosed =>
       logger.info("Connection closed [{}].", clientIp)
-      maybeDataSession.foreach(session =>
+      maybeDataSession.foreach { session =>
+        logger.trace("Sending binary session termination for {}", session)
         context.system.eventStream.publish(BinarySessionTerminated(session))
-      )
+      }
       context.stop(self)
 
     case ConnectionFailed(th) =>
@@ -134,9 +135,10 @@ class BinaryConnectionController(
         clientIp,
         th
       )
-      maybeDataSession.foreach(session =>
+      maybeDataSession.foreach { session =>
+        logger.trace("Sending binary session termination for {}")
         context.system.eventStream.publish(BinarySessionTerminated(session))
-      )
+      }
       context.stop(self)
   }
 

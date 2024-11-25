@@ -365,6 +365,9 @@ final class ContextRegistry(
         store.contexts.getOrElse(session.clientId, Set()).map { contextId =>
           self ! DestroyContextRequest(session, contextId)
         }
+
+      case DestroyContextResponse(_) =>
+      // Initiated by this registry. Ignore.
     }
 
   private def getRuntimeStackItem(

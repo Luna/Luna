@@ -357,7 +357,11 @@ class JsonConnectionController(
       }
 
     case MessageHandler.Disconnected(_) =>
-      logger.info("Session terminated [{}].", rpcSession.clientId)
+      logger.info(
+        "Session terminated [client: {}] [connection:{}].",
+        rpcSession.clientId,
+        connectionId
+      )
       context.system.eventStream.publish(JsonSessionTerminated(rpcSession))
       context.stop(self)
 

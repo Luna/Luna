@@ -216,7 +216,12 @@ class LanguageServerController(
         scheduledShutdown.foreach(_._1.cancel())
         logger.debug("Bootloader for {} terminated", project)
 
-      case StopServer(clientId, _) =>
+      case StopServer(clientId, projectId) =>
+        logger.trace(
+          "Language Server controller requested to stop [client: {}] [project: {}]",
+          clientId,
+          projectId
+        )
         removeClient(
           connectionInfo,
           serverProcessManager,
@@ -239,6 +244,11 @@ class LanguageServerController(
         shutDownServer(None)
 
       case ClientDisconnected(clientId, port) =>
+        logger.trace(
+          "Client disconnected from Language Server [client: {}] [port: {}]",
+          clientId,
+          port
+        )
         removeClient(
           connectionInfo,
           serverProcessManager,
@@ -342,7 +352,7 @@ class LanguageServerController(
   }
 
   private def shutDownServer(maybeRequester: Option[ActorRef]): Unit = {
-    logger.debug("Shutting down a language server for project {}", project.id)
+    logger.trace("Shutting down Language Server for project {}", project.id)
     context.children.foreach(_ ! GracefulStop)
     val cancellable =
       context.system.scheduler
