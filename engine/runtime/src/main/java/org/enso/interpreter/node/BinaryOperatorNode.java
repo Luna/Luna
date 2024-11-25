@@ -93,8 +93,7 @@ final class BinaryOperatorNode extends ExpressionNode {
         VirtualFrame frame, String symbol, Object self, Object that);
 
     static Type findType(TypeOfNode typeOfNode, Object obj) {
-      var rawType = typeOfNode.execute(obj);
-      return rawType instanceof Type type ? type : null;
+      return typeOfNode.findTypeOrNull(obj);
     }
 
     static Type findTypeUncached(Object obj) {
@@ -153,7 +152,9 @@ final class BinaryOperatorNode extends ExpressionNode {
             InvokeFunctionNode invokeNode) {
       var selfType = findType(typeOfNode, self);
       if (that instanceof EnsoMultiValue multi) {
-        for (var thatType : multi.allTypes()) {
+        var all = typeOfNode.findAllTypesOrNull(multi);
+        assert all != null;
+        for (var thatType : all) {
           var fn = findSymbol(symbol, thatType);
           if (fn != null) {
             var thatCasted = EnsoMultiValue.CastToNode.getUncached().executeCast(thatType, multi);
