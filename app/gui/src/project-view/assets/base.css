@@ -69,7 +69,7 @@
   --color-node-text: white;
   --color-node-background: var(--node-group-color);
   --color-node-primary: var(--node-group-color);
-  --color-node-port: color-mix(in oklab, var(--color-node-primary) 85%, white 15%);
+  --color-node-port: color-mix(in oklab, var(--color-node-background) 85%, white 15%);
   --color-node-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
   --color-node-pending: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
 
@@ -79,6 +79,7 @@
 
   &.selected {
     --color-node-background: color-mix(in oklab, var(--color-node-primary) 30%, white 70%);
+    --color-node-port: color-mix(in oklab, var(--color-node-background) 40%, white 60%);
     --color-node-text: color-mix(in oklab, var(--color-node-primary) 70%, black 30%);
   }
 }

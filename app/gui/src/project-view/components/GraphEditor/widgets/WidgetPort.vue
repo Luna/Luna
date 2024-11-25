@@ -203,11 +203,12 @@ export const widgetDefinition = defineWidget(
   min-height: var(--node-port-height);
   min-width: var(--node-port-height);
   box-sizing: border-box;
+  transition: background-color 0.2s ease;
 }
 
 .WidgetPort.connected {
-  background-color: var(--node-color-port);
-  color: white;
+  background-color: var(--color-node-port);
+  color: var(--color-node-text);
 }
 
 .GraphEditor.draggingEdge .WidgetPort {
