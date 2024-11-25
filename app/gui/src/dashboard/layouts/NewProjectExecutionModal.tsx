@@ -135,6 +135,7 @@ export interface NewProjectExecutionModalProps {
   readonly backend: Backend
   readonly item: ProjectAsset
   readonly defaultOpen?: boolean
+  readonly defaultDate?: ZonedDateTime
 }
 
 /** A modal for confirming the deletion of an asset. */
@@ -151,7 +152,7 @@ export function NewProjectExecutionModal(props: NewProjectExecutionModalProps) {
 
 /** A modal for confirming the deletion of an asset. */
 function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
-  const { backend, item } = props
+  const { backend, item, defaultDate } = props
   const { getText } = useText()
 
   const nowZonedDateTime = now(getLocalTimeZone())
@@ -163,7 +164,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       multiSelect: false,
       repeatInterval: 'weekly',
       parallelMode: 'restart',
-      date: minFirstOccurrence,
+      date: defaultDate ?? minFirstOccurrence,
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
       dates: [],
       days: [],

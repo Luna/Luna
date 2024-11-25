@@ -5,10 +5,11 @@ import {
   CalendarDate,
   endOfMonth,
   getLocalTimeZone,
-  parseDateTime,
+  parseAbsolute,
   startOfMonth,
   toCalendarDate,
   today,
+  toZoned,
 } from '@internationalized/date'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
@@ -129,9 +130,7 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
         startDate,
         endDate,
       )) {
-        const dateString = toCalendarDate(
-          parseDateTime(date.toISOString().replace(/Z$/, '')),
-        ).toString()
+        const dateString = toCalendarDate(parseAbsolute(date.toISOString(), timeZone)).toString()
         ;(result[dateString] ??= []).push({ date, projectExecution })
       }
     }
@@ -166,7 +165,11 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       <ButtonGroup>
         <DialogTrigger>
           <Button variant="outline">{getText('newProjectExecution')}</Button>
-          <NewProjectExecutionModal backend={backend} item={item} />
+          <NewProjectExecutionModal
+            backend={backend}
+            item={item}
+            defaultDate={toZoned(selectedDate, timeZone)}
+          />
         </DialogTrigger>
       </ButtonGroup>
       <Form.Controller
