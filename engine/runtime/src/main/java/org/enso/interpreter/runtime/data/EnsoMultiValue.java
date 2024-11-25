@@ -457,6 +457,7 @@ public final class EnsoMultiValue extends EnsoObject {
      *
      * @param type the requested t
      * @param mv a multi value
+     * @param reorderOnly allow (modified) {@link EnsoMultiValue} to be returned
      * @return instance of the {@code t} or {@code null} if no suitable value was found
      */
     public abstract Object executeCast(Type type, EnsoMultiValue mv, boolean reorderOnly);

@@ -40,8 +40,11 @@ final class AllOfTypesCheckNode extends AbstractTypeCheckNode {
       if (result == null) {
         return null;
       }
-      values[at] = result;
       valueTypes[at] = types.getType(result);
+      if (result instanceof EnsoMultiValue emv) {
+        result = EnsoMultiValue.CastToNode.getUncached().executeCast(valueTypes[at], emv, false);
+      }
+      values[at] = result;
       at++;
     }
     return EnsoMultiValue.create(valueTypes, valueTypes.length, values);
