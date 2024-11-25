@@ -187,15 +187,15 @@ public class MethodDefinitions implements IRPass {
       // We add a type check to it to ensure only `instance` of `My_Type` can be passed to it.
       var staticMethod =
           dup.copy(
-              method.methodReference(),
+              dup.methodReference(),
               newBody,
               true,
-              method.isPrivate(),
+              dup.isPrivate(),
               true,
-              method.location(),
-              method.passData(),
-              method.diagnostics(),
-              method.id());
+              dup.location(),
+              dup.passData(),
+              dup.diagnostics(),
+              dup.id());
       return staticMethod;
     }
     return null;
