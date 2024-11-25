@@ -16,8 +16,13 @@ export interface DialogContextValue {
 const DialogContext = React.createContext<DialogContextValue | null>(null)
 
 /** The provider for a dialog. */
-// eslint-disable-next-line no-restricted-syntax
-export const DialogProvider = DialogContext.Provider
+export function DialogProvider(props: DialogContextValue & React.PropsWithChildren) {
+  const { children, close, dialogId } = props
+
+  const value = React.useMemo(() => ({ close, dialogId }), [close, dialogId])
+
+  return <DialogContext.Provider value={value}>{children}</DialogContext.Provider>
+}
 
 /** Custom hook to get the dialog context. */
 export function useDialogContext() {

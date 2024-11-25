@@ -110,7 +110,6 @@ export function Popover(props: PopoverProps) {
     }),
   })
 
-  const dialogContextValue = React.useMemo(() => ({ close, dialogId }), [close, dialogId])
   const popoverStyle = React.useMemo(() => ({ zIndex: '' }), [])
 
   return (
@@ -140,13 +139,13 @@ export function Popover(props: PopoverProps) {
             ref={dialogRef}
             className={POPOVER_STYLES({ ...opts, size, rounded }).dialog()}
           >
-            <dialogProvider.DialogProvider value={dialogContextValue}>
-              <errorBoundary.ErrorBoundary>
-                <suspense.Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
+            <errorBoundary.ErrorBoundary>
+              <suspense.Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
+                <dialogProvider.DialogProvider close={close} dialogId={dialogId}>
                   {typeof children === 'function' ? children({ ...opts, close }) : children}
-                </suspense.Suspense>
-              </errorBoundary.ErrorBoundary>
-            </dialogProvider.DialogProvider>
+                </dialogProvider.DialogProvider>
+              </suspense.Suspense>
+            </errorBoundary.ErrorBoundary>
           </div>
         </aria.FocusScope>
       )}

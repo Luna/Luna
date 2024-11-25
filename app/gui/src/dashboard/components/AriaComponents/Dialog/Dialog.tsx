@@ -341,54 +341,56 @@ function DialogContent(props: DialogContentProps) {
         {...ariaDialogProps}
       >
         {(opts) => (
-          <dialogProvider.DialogProvider value={{ close: opts.close, dialogId }}>
-            <motion.div layout className="w-full" transition={{ duration: 0 }}>
-              <DialogHeader
-                closeButton={closeButton}
-                title={title}
-                titleId={titleId}
-                headerClassName={styles.header({ scrolledToTop: isScrolledToTop })}
-                closeButtonClassName={styles.closeButton()}
-                headingClassName={styles.heading()}
-                headerDimensionsRef={headerDimensionsRef}
-              />
-            </motion.div>
+          <>
+            <dialogProvider.DialogProvider close={opts.close} dialogId={dialogId}>
+              <motion.div layout className="w-full" transition={{ duration: 0 }}>
+                <DialogHeader
+                  closeButton={closeButton}
+                  title={title}
+                  titleId={titleId}
+                  headerClassName={styles.header({ scrolledToTop: isScrolledToTop })}
+                  closeButtonClassName={styles.closeButton()}
+                  headingClassName={styles.heading()}
+                  headerDimensionsRef={headerDimensionsRef}
+                />
+              </motion.div>
 
-            <motion.div
-              layout
-              layoutScroll
-              className={styles.scroller()}
-              ref={handleScroll}
-              onScroll={handleScrollEvent}
-              transition={{ duration: 0 }}
-            >
-              <div className={styles.measurerWrapper()}>
-                {/* eslint-disable jsdoc/check-alignment */}
-                {/**
-                 * This div is used to measure the content dimensions.
-                 * It's takes the same grid area as the content, thus
-                 * resizes together with the content.
-                 *
-                 * We use grid + grid-area to avoid setting `position: relative`
-                 * on the element, which would interfere with the layout.
-                 *
-                 * It's set to `pointer-events-none` so that it doesn't
-                 * interfere with the layout.
-                 */}
-                {/* eslint-enable jsdoc/check-alignment */}
-                <div ref={contentDimensionsRef} className={styles.measurer()} />
-                <div className={styles.content()}>
-                  <errorBoundary.ErrorBoundary>
-                    <suspense.Suspense
-                      loaderProps={{ minHeight: type === 'fullscreen' ? 'full' : 'h32' }}
-                    >
-                      {typeof children === 'function' ? children(opts) : children}
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
+              <motion.div
+                layout
+                layoutScroll
+                className={styles.scroller()}
+                ref={handleScroll}
+                onScroll={handleScrollEvent}
+                transition={{ duration: 0 }}
+              >
+                <div className={styles.measurerWrapper()}>
+                  {/* eslint-disable jsdoc/check-alignment */}
+                  {/**
+                   * This div is used to measure the content dimensions.
+                   * It's takes the same grid area as the content, thus
+                   * resizes together with the content.
+                   *
+                   * We use grid + grid-area to avoid setting `position: relative`
+                   * on the element, which would interfere with the layout.
+                   *
+                   * It's set to `pointer-events-none` so that it doesn't
+                   * interfere with the layout.
+                   */}
+                  {/* eslint-enable jsdoc/check-alignment */}
+                  <div ref={contentDimensionsRef} className={styles.measurer()} />
+                  <div className={styles.content()}>
+                    <errorBoundary.ErrorBoundary>
+                      <suspense.Suspense
+                        loaderProps={{ minHeight: type === 'fullscreen' ? 'full' : 'h32' }}
+                      >
+                        {typeof children === 'function' ? children(opts) : children}
+                      </suspense.Suspense>
+                    </errorBoundary.ErrorBoundary>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </dialogProvider.DialogProvider>
+              </motion.div>
+            </dialogProvider.DialogProvider>
+          </>
         )}
       </MotionDialog>
 

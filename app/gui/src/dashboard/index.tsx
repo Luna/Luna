@@ -32,7 +32,18 @@ import { MotionGlobalConfig } from 'framer-motion'
 
 export type { GraphEditorRunner } from '#/layouts/Editor'
 
-MotionGlobalConfig.skipAnimations = window.DISABLE_ANIMATIONS ?? false
+const ARE_ANIMATIONS_DISABLED =
+  window.DISABLE_ANIMATIONS === true ||
+  localStorage.getItem('disableAnimations') === 'true' ||
+  false
+
+MotionGlobalConfig.skipAnimations = ARE_ANIMATIONS_DISABLED
+
+if (ARE_ANIMATIONS_DISABLED) {
+  document.documentElement.classList.add('disable-animations')
+} else {
+  document.documentElement.classList.remove('disable-animations')
+}
 
 // =================
 // === Constants ===
