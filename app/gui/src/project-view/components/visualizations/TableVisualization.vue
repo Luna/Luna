@@ -81,7 +81,12 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
-  data_quality_pairs?: Record<string, number[]>[]
+  data_quality_metrics?: DataQualityMetric[]
+}
+
+type DataQualityMetric = {
+  name: string
+  percentage_value: number[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -351,14 +356,17 @@ function toField(
   const displayValue = valueType ? valueType.display_text : null
   const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
 
+  console.log(props.data)
+
   const dataQualityMetrics =
-    typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
-      props.data.data_quality_pairs.map((obj: Record<string, number[]>) => {
-        const key = Object.keys(obj)[0] as string
-        return { [key]: obj[key]?.[index!] ?? 0 }
+    typeof props.data === 'object' && 'data_quality_metrics' in props.data ?
+      props.data.data_quality_metrics.map((metric: DataQualityMetric) => {
+        console.log({ metric })
+        return { [metric.name]: metric.percentage_value[index!] ?? 0 }
       })
-      // eslint-disable-next-line camelcase
     : []
+
+  console.log(dataQualityMetrics)
 
   const showDataQuality =
     dataQualityMetrics.filter((obj) => (Object.values(obj)[0] as number) > 0).length > 0
