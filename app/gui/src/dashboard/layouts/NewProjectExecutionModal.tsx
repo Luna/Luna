@@ -34,6 +34,7 @@ import {
   Text,
 } from '#/components/AriaComponents'
 import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText, type GetText } from '#/providers/TextProvider'
 import { DAY_3_LETTER_TEXT_IDS } from 'enso-common/src/utilities/data/dateTime'
 
@@ -48,7 +49,7 @@ const DAYS: readonly number[] = [...Array(7).keys()]
 const HOURS: readonly number[] = [...Array(24).keys()]
 
 /** Create the form schema for this page. */
-function createUpsertExecutionSchema(getText: GetText) {
+function createUpsertExecutionSchema(getText: GetText, timeZone: string | undefined) {
   return z
     .object({
       multiSelect: z.boolean(),
@@ -99,6 +100,7 @@ function createUpsertExecutionSchema(getText: GetText) {
         hours,
         minute,
       }) => {
+        const zonedDate = toTimeZone(date, timeZone ?? getLocalTimeZone())
         const utcDate = toTimeZone(date, 'UTC')
         if (multiSelect) {
           return {
@@ -154,12 +156,13 @@ export function NewProjectExecutionModal(props: NewProjectExecutionModalProps) {
 function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   const { backend, item, defaultDate } = props
   const { getText } = useText()
+  const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
 
   const nowZonedDateTime = now(getLocalTimeZone())
   const minFirstOccurrence = nowZonedDateTime
   const form = Form.useForm({
     method: 'dialog',
-    schema: createUpsertExecutionSchema(getText),
+    schema: createUpsertExecutionSchema(getText, preferredTimeZone),
     defaultValues: {
       multiSelect: false,
       repeatInterval: 'weekly',

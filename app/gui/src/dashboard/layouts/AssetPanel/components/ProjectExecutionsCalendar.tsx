@@ -29,6 +29,7 @@ import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
 import { AssetPanelPlaceholder } from '#/layouts/AssetPanel/components/AssetPanelPlaceholder'
 import { ProjectExecution } from '#/layouts/AssetPanel/components/ProjectExecution'
 import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
+import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import {
@@ -89,9 +90,10 @@ interface ProjectExecutionsCalendarInternalProps extends ProjectExecutionsCalend
 function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInternalProps) {
   const { backend, item } = props
   const { getText } = useText()
+  const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
 
   const form = Form.useForm({ schema: (z) => z.object({ date: z.instanceof(CalendarDate) }) })
-  const timeZone = getLocalTimeZone()
+  const timeZone = preferredTimeZone ?? getLocalTimeZone()
   const [focusedMonth, setFocusedMonth] = useState(() => startOfMonth(today(timeZone)))
   const todayDate = today(timeZone)
   const selectedDate = Form.useWatch({

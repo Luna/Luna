@@ -120,6 +120,7 @@ declare module '#/utilities/LocalStorage' {
   interface LocalStorageData {
     readonly inputBindings: Readonly<Record<string, readonly string[]>>
     readonly localRootDirectory: string
+    readonly preferredTimeZone: string
   }
 }
 
@@ -137,6 +138,7 @@ LocalStorage.registerKey('inputBindings', {
 })
 
 LocalStorage.registerKey('localRootDirectory', { schema: z.string() })
+LocalStorage.registerKey('preferredTimeZone', { schema: z.string() })
 
 // ======================
 // === getMainPageUrl ===
