@@ -136,7 +136,7 @@ export function ProjectExecution(props: ProjectExecutionProps) {
           size="xsmall"
           variant="outline"
           icon={TimeIcon}
-          tooltip={getText('maxDurationMinutesLabel')}
+          tooltip={getText('maxDurationLabel')}
           tooltipPlacement="left"
           className={styles.maximumDuration()}
         >
