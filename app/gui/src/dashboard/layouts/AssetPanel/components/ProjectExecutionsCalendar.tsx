@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 
 import {
   CalendarDate,
-  endOfMonth,
   getLocalTimeZone,
   parseAbsolute,
   startOfMonth,
@@ -120,7 +119,7 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
   >(() => {
     const start = startOfMonth(focusedMonth)
     const startDate = start.toDate(timeZone)
-    const end = endOfMonth(focusedMonth)
+    const end = startOfMonth(focusedMonth.add({ months: 1 }))
     const endDate = end.toDate(timeZone)
     const result: Record<
       string,
