@@ -68,7 +68,9 @@ export function DialogStackProvider(props: React.PropsWithChildren) {
 }
 
 /** DialogStackRegistrar is a React component that registers a dialog in the dialog stack. */
-export const DialogStackRegistrar = React.memo(function DialogStackRegistrar(props: DialogStackItem) {
+export const DialogStackRegistrar = React.memo(function DialogStackRegistrar(
+  props: DialogStackItem,
+) {
   const { id, type } = props
 
   const store = React.useContext(DialogStackContext)
