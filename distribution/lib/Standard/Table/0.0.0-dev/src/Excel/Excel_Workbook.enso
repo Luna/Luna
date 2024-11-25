@@ -1,4 +1,5 @@
 from Standard.Base import all
+import Standard.Base.Data.Vector.No_Wrap
 import Standard.Base.Errors.Common.Type_Error
 import Standard.Base.Errors.Deprecated.Deprecated
 import Standard.Base.Errors.File_Error.File_Error
@@ -28,7 +29,7 @@ import project.Match_Columns.Match_Columns
 import project.Return_As_Table.Return_As_Table
 import project.Rows_To_Read.Rows_To_Read
 import project.Table.Table
-from project.Errors import Empty_Sheet
+from project.Errors import Empty_Sheet, No_Rows
 from project.Internal.Excel_Reader import handle_invalid_location
 from project.Internal.Table_Helpers import duplicate_rows
 
@@ -362,15 +363,20 @@ type Excel_Workbook
     read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return=..As_Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
         resolved_return = _resolve_return_as_compatibility return
         if sheet_names.is_empty then Error.throw (Illegal_Argument.Error "No sheets selected.") else
-            tables = _read_sheets self sheet_names headers on_problems
+            names_and_tables = _read_sheets self sheet_names headers on_problems
             case resolved_return of
-                Return_As_Table.With_New_Column -> Table.new [["Sheet Name", sheet_names], ["Table", tables]]
+                Return_As_Table.With_New_Column -> 
+                    names = names_and_tables.map .first
+                    tables_or_nothing = names_and_tables.map .second
+                    Table.new [["Sheet Name", names], ["Table", tables_or_nothing]]
                 Return_As_Table.As_Merged_Table columns_to_keep match ->
-                    first_tbl = tables.find t-> t != Nothing
-                    if first_tbl == Nothing then Error.throw (Illegal_Argument.Error "No valid sheets found.") else
-                        found_tables = tables.filter ..Not_Nothing
-                        unified_tables = Table.from_union found_tables columns_to_keep=columns_to_keep match_columns=match on_problems=on_problems
-                        (_sheet_names_table sheet_names found_tables).zip unified_tables right_prefix="" on_problems=on_problems
+                    only_valid = names_and_tables.filter p-> p.second.is_nothing.not
+                    no_valid_sheets = only_valid.is_empty
+                    if no_valid_sheets then Error.throw (Illegal_Argument.Error "No valid sheets found.") else
+                        valid_names = only_valid.map .first
+                        valid_tables = only_valid.map .second
+                        unified_tables = Table.from_union valid_tables columns_to_keep=columns_to_keep match_columns=match on_problems=on_problems
+                        (_sheet_names_table valid_names valid_tables).zip unified_tables right_prefix="" on_problems=on_problems
 
 ## PRIVATE
 close_connection c = c.close
@@ -416,8 +422,15 @@ private _query_widget wb:Excel_Workbook display:Display=..Always -> Widget =
     options = [Option "<By Index>" "1", Option "<Range>" "Excel_Range.from_address "+default_address.pretty] + (wb.tables.at "Name" . to_vector . map t-> Option t t.pretty)
     Single_Choice display=display values=options
 
-private _read_sheets (workbook : Excel_Workbook) sheet_names headers on_problems =
-    sheet_names.map on_problems=on_problems address-> workbook.read address headers on_problems=on_problems
+private _read_sheets workbook:Excel_Workbook (sheet_names : Vector Text) headers:Headers on_problems:Problem_Behavior -> Vector (Pair Text (Table | Nothing)) =
+    sheet_names.map on_problems=No_Wrap.Value address-> 
+        table = workbook.read address headers on_problems=on_problems
+        r = Pair.new address table
+        # If in Report_Error mode, we forward the original error without wrapping, otherwise we wrap any warnings.
+        if on_problems == Problem_Behavior.Report_Error then r else 
+            r.catch Any error->
+                on_problems.attach_problem_after (Pair.new address Nothing) <|
+                    (No_Rows.Warning "The sheet "+address.to_display_text+" failed to load, so it is not included in the `As_Merged_Table` result of `read_many`. The error was: "+error.to_display_text)
 
 private _sheet_names_table (sheet_names : Vector Text) (loaded_tables : Vector Table) -> Table =
     table = Column.from_vector "Sheet Name" sheet_names . to_table
@@ -427,10 +440,17 @@ private _sheet_names_table (sheet_names : Vector Text) (loaded_tables : Vector T
 ## PRIVATE
    Loads all sheets in the Excel workbook and merges them into a single table.
 Read_Many_As_Merged_Table_Strategy.from (that:Excel_Workbook) =
-    callback _ columns_to_keep match_columns on_problems =
-        sheet_names = that.sheet_names
-        tables = _read_sheets that sheet_names ..Detect_Headers on_problems
-        metadata = _sheet_names_table sheet_names tables
-        data = Table.from_union tables columns_to_keep match_columns on_problems
-        Read_Many_As_Table_Result.Table metadata=metadata data=data
+    callback path columns_to_keep match_columns on_problems =
+        tables = _read_sheets that that.sheet_names ..Detect_Headers on_problems
+        only_valid = tables.filter p-> p.second.is_nothing.not
+        case only_valid.is_empty of
+            True ->
+                on_problems.attach_problem_after Read_Many_As_Table_Result.No_Data <|
+                    (No_Rows.Warning "The workbook "+path.to_display_text+" failed to load any sheets, so it is not included in the `As_Merged_Table` result of `read_many`.")
+            False ->
+                sheet_names = only_valid.map .first
+                valid_tables = only_valid.map .second
+                metadata = _sheet_names_table sheet_names valid_tables
+                data = Table.from_union valid_tables columns_to_keep match_columns on_problems
+                Read_Many_As_Table_Result.Table metadata=metadata data=data
     Read_Many_As_Merged_Table_Strategy.Value callback

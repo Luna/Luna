@@ -592,7 +592,7 @@ replace_columns_with_transformed_columns table selectors transformer error_on_mi
    duplicated according to the counts.
    The vector should have the same number of elements as the number of rows in the table.
 duplicate_rows (table : Table) (counts : Vector Integer) -> Table =
-    Runtime.assert (table.row_count == counts.length) "The number of counts must match the number of rows in the table."
+    Runtime.assert (table.row_count == counts.length) "The number of counts ("+counts.length.to_text+") must match the number of rows in the table ("+table.row_count.to_text+")."
     mask_array = counts
         . map_with_index ix-> count-> Vector.fill count ix
         . flatten
