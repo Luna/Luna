@@ -14,8 +14,9 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline, useOfflineChange } from '#/hooks/offlineHooks'
 import { useText } from '#/providers/TextProvider'
 import * as errorUtils from '#/utilities/error'
+import { unsafeMutable } from '#/utilities/object'
 import { useMutation } from '@tanstack/react-query'
-import { mergeProps } from '../../../aria'
+import { mergeProps } from '#/components/aria'
 import * as schemaModule from './schema'
 import type * as types from './types'
 
@@ -120,18 +121,12 @@ function useFormInstance<Schema extends types.TSchema, SubmitResult>(
     },
   )
 
-  // @ts-expect-error - This is safe, because even though the property is readonly,
-  // it's readonly only for external usage, and we're merging the callbacks internally
-  form.onSubmit = props.onSubmit
-  // @ts-expect-error - This is safe, because even though the property is readonly,
-  // it's readonly only for external usage, and we're merging the callbacks internally
-  form.onSubmitFailed = props.onSubmitFailed
-  // @ts-expect-error - This is safe, because even though the property is readonly,
-  // it's readonly only for external usage, and we're merging the callbacks internally
-  form.onSubmitSuccess = props.onSubmitSuccess
-  // @ts-expect-error - This is safe, because even though the property is readonly,
-  // it's readonly only for external usage, and we're merging the callbacks internally
-  form.onSubmitted = props.onSubmitted
+  // down there we're mutating the form instance, and merging the callbacks.
+  // The readonly modifier is only for external usage
+  unsafeMutable(form).onSubmit = props.onSubmit
+  unsafeMutable(form).onSubmitFailed = props.onSubmitFailed
+  unsafeMutable(form).onSubmitSuccess = props.onSubmitSuccess
+  unsafeMutable(form).onSubmitted = props.onSubmitted
 
   return form
 }
