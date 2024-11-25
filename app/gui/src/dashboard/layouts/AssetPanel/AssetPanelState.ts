@@ -10,11 +10,9 @@ import type { AnyAsset } from '#/services/Backend'
 import * as zustand from '#/utilities/zustand'
 import { startTransition } from 'react'
 import {
-  getAssetPanelTab,
-  getIsAssetPanelHidden,
-  setAssetPanelTab,
-  setIsAssetPanelHidden,
-  setIsAssetPanelOpen,
+  storedAssetPanelTab,
+  storedIsAssetPanelHidden,
+  storedIsAssetPanelOpen,
 } from './assetPanelLocalStorage'
 import { type AssetPanelTab } from './types'
 
@@ -36,10 +34,10 @@ export interface AssetPanelState {
 
 export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) => {
   return {
-    selectedTab: getAssetPanelTab() ?? 'settings',
+    selectedTab: storedAssetPanelTab.get() ?? 'settings',
     setSelectedTab: (tab) => {
       set({ selectedTab: tab })
-      setAssetPanelTab(tab)
+      storedAssetPanelTab.set(tab)
     },
     isAssetPanelPermanentlyOpen: false,
     toggleIsAssetPanelPermanentlyOpen: () => {
@@ -48,7 +46,7 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
     setIsAssetPanelPermanentlyOpen: (isAssetPanelPermanentlyOpen) => {
       if (get().isAssetPanelPermanentlyOpen !== isAssetPanelPermanentlyOpen) {
         set({ isAssetPanelPermanentlyOpen })
-        setIsAssetPanelOpen(isAssetPanelPermanentlyOpen)
+        storedIsAssetPanelOpen.set(isAssetPanelPermanentlyOpen)
       }
     },
     setIsAssetPanelOpen: (isAssetPanelExpanded) => {
@@ -76,7 +74,7 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
       }
     },
     assetPanelProps: {
-      selectedTab: getAssetPanelTab() ?? 'settings',
+      selectedTab: storedAssetPanelTab.get() ?? 'settings',
       backend: null,
       item: null,
       spotlightOn: null,
@@ -88,13 +86,13 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
         set({ assetPanelProps: { ...current, ...assetPanelProps } })
       }
     },
-    isAssetPanelHidden: getIsAssetPanelHidden() ?? false,
+    isAssetPanelHidden: storedIsAssetPanelHidden.get() ?? false,
     setIsAssetPanelHidden: (isAssetPanelHidden) => {
       const state = get()
 
       if (state.isAssetPanelHidden !== isAssetPanelHidden) {
         set({ isAssetPanelHidden })
-        setIsAssetPanelHidden(isAssetPanelHidden)
+        storedIsAssetPanelHidden.set(isAssetPanelHidden)
       }
     },
   }

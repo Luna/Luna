@@ -5,10 +5,7 @@ import { createStore, useStore } from 'zustand'
 
 import { useMount } from '#/hooks/mountHooks'
 import { unsafeEntries } from '#/utilities/object'
-import {
-  useGetFeatureFlags,
-  useSetLocalStorageFeatureFlags,
-} from './FeatureFlagsProvider/featureFlagsLocalStorage'
+import { useFeatureFlags as useFeatureFlagsInternal } from './FeatureFlagsProvider/featureFlagsLocalStorage'
 import { useLocalStorage } from './LocalStorageProvider'
 export { FEATURE_FLAGS_SCHEMA } from './FeatureFlagsProvider/featureFlagsLocalStorage'
 
@@ -64,12 +61,11 @@ export function useSetFeatureFlags() {
  */
 export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
   const { localStorage } = useLocalStorage()
-  const getFeatureFlags = useGetFeatureFlags()
+  const { get: getFeatureFlagsInternal, set: setFeatureFlagsInternal } = useFeatureFlagsInternal()
   const setFeatureFlags = useSetFeatureFlags()
-  const setLocalStorageFeatureFlags = useSetLocalStorageFeatureFlags()
 
   useMount(() => {
-    const storedFeatureFlags = getFeatureFlags()
+    const storedFeatureFlags = getFeatureFlagsInternal()
 
     if (storedFeatureFlags != null) {
       for (const [key, value] of unsafeEntries(storedFeatureFlags)) {
@@ -82,11 +78,11 @@ export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
     () =>
       flagsStore.subscribe((state, prevState) => {
         if (state.featureFlags !== prevState.featureFlags) {
-          setLocalStorageFeatureFlags(state.featureFlags)
+          setFeatureFlagsInternal(state.featureFlags)
         }
       }),
-    [localStorage, setLocalStorageFeatureFlags],
+    [localStorage, setFeatureFlagsInternal],
   )
 
-  return <>{children}</>
+  return children
 }

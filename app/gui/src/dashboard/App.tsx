@@ -99,9 +99,8 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import {
   useAcceptedPrivacyPolicyVersionState,
   useAcceptedTermsOfServiceVersionState,
-  useGetInputBindings,
+  useInputBindings,
   useLocalRootDirectoryState,
-  useSetInputBindings,
 } from '#/appLocalStorage'
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
@@ -289,7 +288,7 @@ function AppRouter(props: AppRouterProps) {
 
   const [inputBindingsRaw] = React.useState(() => inputBindingsModule.createBindings())
 
-  const getInputBindings = useGetInputBindings()
+  const { get: getInputBindings, set: setInputBindings } = useInputBindings()
 
   React.useEffect(() => {
     const savedInputBindings = getInputBindings()
@@ -309,7 +308,6 @@ function AppRouter(props: AppRouterProps) {
     }
   }, [inputBindingsRaw, getInputBindings])
 
-  const setInputBindings = useSetInputBindings()
   const inputBindings = React.useMemo(() => {
     const updateLocalStorage = () => {
       setInputBindings(

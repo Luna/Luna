@@ -37,10 +37,7 @@ import { Dialog } from '#/components/AriaComponents'
 import { Result } from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { gtagOpenCloseCallback } from '#/hooks/gtagHooks'
-import {
-  useDeleteLoginRedirect,
-  useGetLoginRedirect,
-} from '#/pages/authentication/Registration/registrationLocalStorage'
+import { useLoginRedirect } from '#/pages/authentication/Registration/registrationLocalStorage'
 import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -619,15 +616,14 @@ export function SemiProtectedLayout() {
  */
 export function GuestLayout() {
   const { session } = useAuth()
-  const getLoginRedirect = useGetLoginRedirect()
-  const deleteLoginRedirect = useDeleteLoginRedirect()
+  const loginRedirect = useLoginRedirect()
 
   if (session?.type === UserSessionType.partial) {
     return <Navigate to={SETUP_PATH} />
   } else if (session?.type === UserSessionType.full) {
-    const redirectTo = getLoginRedirect()
+    const redirectTo = loginRedirect.get()
     if (redirectTo != null) {
-      deleteLoginRedirect()
+      loginRedirect.delete()
       location.href = redirectTo
       return
     } else {

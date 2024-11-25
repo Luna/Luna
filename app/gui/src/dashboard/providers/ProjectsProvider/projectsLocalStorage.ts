@@ -26,11 +26,8 @@ export type LaunchedProject = z.infer<typeof PROJECT_SCHEMA>
 /** Launched project ID. */
 export type LaunchedProjectId = ProjectId
 
-export const {
-  useGet: useGetLaunchedProjects,
-  useSet: useSetLaunchedProjects,
-  useState: useLaunchedProjectsState,
-} = defineLocalStorageKey('launchedProjects', {
-  isUserSpecific: true,
-  schema: () => LAUNCHED_PROJECT_SCHEMA,
-})
+export const { use: useLaunchedProjects, useState: useLaunchedProjectsState } =
+  defineLocalStorageKey('launchedProjects', {
+    isUserSpecific: true,
+    schema: () => LAUNCHED_PROJECT_SCHEMA,
+  })

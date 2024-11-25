@@ -10,10 +10,9 @@ export const FEATURE_FLAGS_SCHEMA = z.object({
   assetsTableBackgroundRefreshInterval: z.number().min(100),
 })
 
-export const {
-  useGet: useGetFeatureFlags,
-  useSet: useSetLocalStorageFeatureFlags,
-  useState: useFeatureFlagsState,
-} = defineLocalStorageKey('featureFlags', {
-  schema: () => FEATURE_FLAGS_SCHEMA,
-})
+export const { use: useFeatureFlags, useState: useFeatureFlagsState } = defineLocalStorageKey(
+  'featureFlags',
+  {
+    schema: () => FEATURE_FLAGS_SCHEMA,
+  },
+)

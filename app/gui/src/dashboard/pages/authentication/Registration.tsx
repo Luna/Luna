@@ -5,8 +5,8 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { useLocation } from 'react-router-dom'
 
 import {
-  useGetAcceptedPrivacyPolicyVersion,
-  useGetAcceptedTermsOfServiceVersion,
+  useAcceptedPrivacyPolicyVersion,
+  useAcceptedTermsOfServiceVersion,
 } from '#/appLocalStorage'
 import { LOGIN_PATH } from '#/appUtils'
 import AtIcon from '#/assets/at.svg'
@@ -83,7 +83,7 @@ export default function Registration() {
 
   const { stepperState } = useStepperState({ steps: 2, defaultStep: 0 })
 
-  const getTosVersion = useGetAcceptedTermsOfServiceVersion()
+  const { get: getTosVersion } = useAcceptedTermsOfServiceVersion()
   const cachedTosHash = getTosVersion()?.versionHash
   const { data: tosHash } = useSuspenseQuery({
     ...latestTermsOfServiceQueryOptions,
@@ -96,7 +96,7 @@ export default function Registration() {
     }),
     select: (data) => data.hash,
   })
-  const getPrivacyPolicyVersion = useGetAcceptedPrivacyPolicyVersion()
+  const { get: getPrivacyPolicyVersion } = useAcceptedPrivacyPolicyVersion()
   const cachedPrivacyPolicyHash = getPrivacyPolicyVersion()?.versionHash
   const { data: privacyPolicyHash } = useSuspenseQuery({
     ...latestPrivacyPolicyQueryOptions,

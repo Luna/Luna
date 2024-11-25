@@ -65,12 +65,12 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
     LocalStorage.getInstance().delete(key)
   }
 
-  const get = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
+  const getKey = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-unsafe-return
     return localStorage.get(key) as Value | undefined
   }
 
-  const set = (value: Value, localStorage: LocalStorage = LocalStorage.getInstance()) => {
+  const setKey = (value: Value, localStorage: LocalStorage = LocalStorage.getInstance()) => {
     localStorage.set(key, value)
   }
 
@@ -78,7 +78,7 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
     localStorage.delete(key)
   }
 
-  const useGet = () => {
+  const use = () => {
     const { localStorage } = useLocalStorage()
 
     useEffect(() => {
@@ -89,30 +89,28 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
 
     // The return type is not `any`, this is a bug in ESLint.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return useEventCallback(() => get(localStorage))
-  }
-
-  const useSet = () => {
-    const { localStorage } = useLocalStorage()
-    return useEventCallback((value: Value) => {
-      set(value, localStorage)
+    const getCallback = useEventCallback(() => getKey(localStorage))
+    const setCallback = useEventCallback((value: Value) => {
+      setKey(value, localStorage)
     })
-  }
-
-  const useDelete = () => {
-    const { localStorage } = useLocalStorage()
-    return useEventCallback(() => {
+    const deleteCallback = useEventCallback(() => {
       deleteKey(localStorage)
     })
+    return { get: getCallback, set: setCallback, delete: deleteCallback } as const
   }
 
   function useLocalStorageState(): readonly [
     value: Value | undefined,
     setValue: (newValue: SetStateAction<Value | undefined>) => void,
+    clearValue: () => void,
   ]
   function useLocalStorageState(
     defaultValue: Value,
-  ): readonly [value: Value, setValue: (newValue: SetStateAction<Value>) => void]
+  ): readonly [
+    value: Value,
+    setValue: (newValue: SetStateAction<Value>) => void,
+    clearValue: () => void,
+  ]
   /** Subscribe to Local Storage updates for a specific key. */
   // eslint-disable-next-line no-restricted-syntax
   function useLocalStorageState(
@@ -120,11 +118,12 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
   ): readonly [
     value: Value | undefined,
     setValue: (newValue: SetStateAction<Value | undefined>) => void,
+    clearValue: () => void,
   ] {
     const { localStorage } = useLocalStorage()
 
     const [value, privateSetValue] = useState<Value | undefined>(
-      () => get(localStorage) ?? defaultValue,
+      () => getKey(localStorage) ?? defaultValue,
     )
 
     const setValue = useEventCallback((newValue: SetStateAction<Value | undefined>) => {
@@ -139,7 +138,15 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
       })
     })
 
-    return [value, setValue]
+    const clearValue = useEventCallback(() => {
+      privateSetValue(undefined)
+    })
+
+    return [value, setValue, clearValue] as const
   }
-  return { get, set, delete: deleteKey, useGet, useSet, useDelete, useState: useLocalStorageState }
+  return {
+    key: { get: getKey, set: setKey, delete: deleteKey },
+    use,
+    useState: useLocalStorageState,
+  }
 }

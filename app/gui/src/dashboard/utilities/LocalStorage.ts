@@ -70,6 +70,9 @@ export class LocalStorage {
 
   /** Write an entry to the stored data, and save. */
   set(key: string, value: unknown) {
+    if (!Object.is(this.values[key], value)) {
+      return
+    }
     this.values[key] = value
     this.eventTarget.dispatchEvent(new Event(key))
     this.eventTarget.dispatchEvent(new Event('_change'))
@@ -78,6 +81,9 @@ export class LocalStorage {
 
   /** Delete an entry from the stored data, and save. */
   delete(key: string) {
+    if (!(key in this.values)) {
+      return
+    }
     const oldValue = this.values[key]
     // The key being deleted is one of a statically known set of keys.
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
