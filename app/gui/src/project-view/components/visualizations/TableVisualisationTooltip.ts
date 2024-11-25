@@ -31,7 +31,6 @@ export class TableVisualisationTooltip implements ITooltipComp {
     })
 
     const getPercentage = (value: number) => ((value / params.total) * 100).toFixed(2)
-    const getDisplay = (value: number) => (value > 0 ? 'block' : 'none')
     const createIndicator = (value: number) => {
       const color =
         value < 33 ? 'green'
@@ -46,10 +45,14 @@ export class TableVisualisationTooltip implements ITooltipComp {
         const key = Object.keys(obj)[0]
         const value = key ? obj[key] : null
         if (key && value) {
-          const metricTemplate = `<div style="display: ${getDisplay(value)};">
+          const metricTemplate = `<div>
           ${key}: ${getPercentage(value)}% ${createIndicator(+getPercentage(value))}
       </div>`
           template = template + metricTemplate
+        } else {
+          console.warn(
+            'Data quality metric is missing a valid key-value pair. Ensure each object in data_quality_pairs contains a single valid key with a numeric value.',
+          )
         }
       })
       return template
