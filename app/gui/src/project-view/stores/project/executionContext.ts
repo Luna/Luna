@@ -1,4 +1,4 @@
-import { findIndexOpt } from '@/util/data/array'
+import { findDifferenceIndex } from '@/util/data/array'
 import { isSome, type Opt } from '@/util/data/opt'
 import { Err, Ok, type Result } from '@/util/data/result'
 import { AsyncQueue, type AbortScope } from '@/util/net'
@@ -386,28 +386,36 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
         const state = newState
         if (state.status !== 'created')
           return Err('Cannot sync stack when execution context is not created')
-        const firstDifferent =
-          findIndexOpt(this._desiredStack, (item, index) => {
-            const stateStack = state.stack[index]
-            return stateStack == null || !stackItemsEqual(item, stateStack)
-          }) ?? this._desiredStack.length
-        for (let i = state.stack.length; i > firstDifferent; --i) {
-          const popResult = await this.withBackoff(
-            () => this.lsRpc.popExecutionContextItem(this.id),
-            'Failed to pop execution stack frame',
+        while (true) {
+          // Since this is an async function, the desired state can change inbetween individual API calls.
+          // We need to compare the desired stack state against current state on every loop iteration.
+
+          const firstDifferent = findDifferenceIndex(
+            this._desiredStack,
+            state.stack,
+            stackItemsEqual,
           )
-          if (popResult.ok) state.stack.pop()
-          else return popResult
+
+          if (state.stack.length > firstDifferent) {
+            // Found a difference within currently set stack context. We need to pop our way up to it.
+            const popResult = await this.withBackoff(
+              () => this.lsRpc.popExecutionContextItem(this.id),
+              'Failed to pop execution stack frame',
+            )
+            if (popResult.ok) state.stack.pop()
+            else return popResult
+          } else if (state.stack.length < this._desiredStack.length) {
+            // Desired stack is matching current state, but it is longer. We need to push the next item.
+            const newItem = this._desiredStack[state.stack.length]!
+            const pushResult = await this.withBackoff(
+              () => this.lsRpc.pushExecutionContextItem(this.id, newItem),
+              'Failed to push execution stack frame',
+            )
+            if (pushResult.ok) state.stack.push(newItem)
+            else return pushResult
+          } else break
         }
-        for (let i = state.stack.length; i < this._desiredStack.length; ++i) {
-          const newItem = this._desiredStack[i]!
-          const pushResult = await this.withBackoff(
-            () => this.lsRpc.pushExecutionContextItem(this.id, newItem),
-            'Failed to push execution stack frame',
-          )
-          if (pushResult.ok) state.stack.push(newItem)
-          else return pushResult
-        }
+
         return Ok()
       }
 
