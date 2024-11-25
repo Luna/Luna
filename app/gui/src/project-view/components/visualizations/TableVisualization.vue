@@ -358,7 +358,7 @@ function toField(
         return { [key]: obj[key]?.[index!] ?? 0 }
       })
       // eslint-disable-next-line camelcase
-    : [{ number_of_nothing: 0 }, { number_of_whitespace: 0 }]
+    : []
 
   const showDataQuality =
     dataQualityMetrics.filter((obj) => (Object.values(obj)[0] as number) > 0).length > 0
