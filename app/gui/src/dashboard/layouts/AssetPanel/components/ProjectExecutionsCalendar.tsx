@@ -46,7 +46,7 @@ const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
     calendarContainer: 'w-full',
     calendarHeader: 'flex items-center mb-2',
     calendarHeading: 'text-base grow text-center',
-    calendarGrid: 'w-full',
+    calendarGrid: 'w-full table-fixed',
     calendarGridHeader: 'flex',
     calendarGridHeaderCell: '',
     calendarGridBody: '',
