@@ -24,8 +24,9 @@ export const INPUT_STYLES = tv({
       false: { base: 'cursor-text' },
     },
     size: {
-      medium: { base: 'px-[11px] pb-[6.5px] pt-[8.5px]', icon: 'size-4' },
-      small: { base: 'px-[11px] pb-0.5 pt-1', icon: 'size-3' },
+      large: { base: 'px-[11px] pb-[3.5px] pt-[3.5px]', icon: 'size-4' },
+      medium: { base: 'px-[11px] pb-[3.5px] pt-[3.5px]', icon: 'size-4' },
+      small: { base: 'px-[7px] pb-0.5 pt-1', icon: 'size-3' },
       custom: {},
     },
     rounded: {

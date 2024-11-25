@@ -30,12 +30,22 @@ export type TSchema =
   | z.ZodEffects<z.AnyZodObject>
   | z.ZodEffects<z.ZodEffects<z.AnyZodObject>>
 
+/**
+ * A callback that returns a schema.
+ */
+export type SchemaCallback<Schema extends TSchema = TSchema> = (z: SchemaBuilder) => Schema
+
+/**
+ * The schema builder.
+ */
+export type SchemaBuilder = typeof schemaModule.schema
+
 /** OnSubmitCallbacks type. */
 export interface OnSubmitCallbacks<Schema extends TSchema, SubmitResult = void> {
   readonly onSubmit?:
     | ((
         values: FieldValues<Schema>,
-        form: UseFormReturn<Schema>,
+        form: UseFormReturn<Schema, SubmitResult>,
       ) => Promise<SubmitResult> | SubmitResult)
     | undefined
 
@@ -43,14 +53,14 @@ export interface OnSubmitCallbacks<Schema extends TSchema, SubmitResult = void> 
     | ((
         error: unknown,
         values: FieldValues<Schema>,
-        form: UseFormReturn<Schema>,
+        form: UseFormReturn<Schema, SubmitResult>,
       ) => Promise<void> | void)
     | undefined
   readonly onSubmitSuccess?:
     | ((
         data: SubmitResult,
         values: FieldValues<Schema>,
-        form: UseFormReturn<Schema>,
+        form: UseFormReturn<Schema, SubmitResult>,
       ) => Promise<void> | void)
     | undefined
   readonly onSubmitted?:
@@ -58,7 +68,7 @@ export interface OnSubmitCallbacks<Schema extends TSchema, SubmitResult = void> 
         data: SubmitResult | undefined,
         error: unknown,
         values: FieldValues<Schema>,
-        form: UseFormReturn<Schema>,
+        form: UseFormReturn<Schema, SubmitResult>,
       ) => Promise<void> | void)
     | undefined
 }
@@ -70,7 +80,7 @@ export interface UseFormOptions<Schema extends TSchema, SubmitResult = void>
       'handleSubmit' | 'resetOptions' | 'resolver'
     >,
     OnSubmitCallbacks<Schema, SubmitResult> {
-  readonly schema: Schema | ((schema: typeof schemaModule.schema) => Schema)
+  readonly schema: Schema | SchemaCallback<Schema>
   /**
    * Whether the form can submit offline.
    * @default false
@@ -79,7 +89,6 @@ export interface UseFormOptions<Schema extends TSchema, SubmitResult = void>
 
   /** Debug name for the form. Use it to identify the form in the tanstack query devtools. */
   readonly debugName?: string
-  readonly method?: 'dialog' | (string & {}) | undefined
 }
 
 /** Register function for a form field. */
@@ -111,16 +120,20 @@ export interface UseFormRegisterReturn<
  * Return type of the useForm hook.
  * @alias reactHookForm.UseFormReturn
  */
-export interface UseFormReturn<Schema extends TSchema>
+export interface UseFormReturn<Schema extends TSchema, SubmitResult = void>
   extends Omit<
-    reactHookForm.UseFormReturn<FieldValues<Schema>, unknown, TransformedValues<Schema>>,
-    'onSubmit' | 'resetOptions' | 'resolver'
-  > {
+      reactHookForm.UseFormReturn<FieldValues<Schema>, unknown, TransformedValues<Schema>>,
+      'onSubmit' | 'resetOptions' | 'resolver'
+    >,
+    OnSubmitCallbacks<Schema, SubmitResult> {
   readonly register: UseFormRegister<Schema>
   readonly submit: (event?: FormEvent<HTMLFormElement> | null) => Promise<void>
   readonly schema: Schema
   readonly setFormError: (error: string) => void
-  readonly closeRef: React.MutableRefObject<() => void>
+  readonly formProps: {
+    readonly onSubmit: (event?: FormEvent<HTMLFormElement> | null) => Promise<void>
+    readonly noValidate: true
+  }
 }
 
 /**
@@ -133,7 +146,16 @@ export type FormState<Schema extends TSchema> = reactHookForm.FormState<FieldVal
  * Form instance type
  * @alias UseFormReturn
  */
-export type FormInstance<Schema extends TSchema> = UseFormReturn<Schema>
+export type FormInstance<Schema extends TSchema, SubmitResult = void> = UseFormReturn<
+  Schema,
+  SubmitResult
+>
+
+/**
+ * Form instance with unknown schema.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFormInstance = FormInstance<any, any>
 
 /** Form type interface that check if FieldValues type is compatible with the value type from component */
 export interface FormWithValueValidation<

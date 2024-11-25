@@ -14,14 +14,14 @@ import type * as styles from './styles'
 export type * from './components'
 
 /** Props for the Form component */
-export type FormProps<
-  Schema extends components.TSchema,
-  SubmitResult = void,
-> = BaseFormProps<Schema> &
-  (FormPropsWithOptions<Schema, SubmitResult> | FormPropsWithParentForm<Schema>)
+export type FormProps<Schema extends components.TSchema, SubmitResult = void> = BaseFormProps<
+  Schema,
+  SubmitResult
+> &
+  (FormPropsWithOptions<Schema, SubmitResult> | FormPropsWithParentForm<Schema, SubmitResult>)
 
 /** Base props for the Form component. */
-interface BaseFormProps<Schema extends components.TSchema>
+interface BaseFormProps<Schema extends components.TSchema, SubmitResult = void>
   extends Omit<
       React.HTMLProps<HTMLFormElement>,
       'children' | 'className' | 'form' | 'onSubmit' | 'onSubmitCapture' | 'style'
@@ -30,17 +30,17 @@ interface BaseFormProps<Schema extends components.TSchema>
     TestIdProps {
   readonly style?:
     | React.CSSProperties
-    | ((props: components.UseFormReturn<Schema>) => React.CSSProperties)
+    | ((props: components.UseFormReturn<Schema, SubmitResult>) => React.CSSProperties)
   readonly children:
     | React.ReactNode
     | ((
-        props: components.UseFormReturn<Schema> & {
-          readonly form: components.UseFormReturn<Schema>
+        props: components.UseFormReturn<Schema, SubmitResult> & {
+          readonly form: components.UseFormReturn<Schema, SubmitResult>
         },
       ) => React.ReactNode)
-  readonly formRef?: React.MutableRefObject<components.UseFormReturn<Schema>>
+  readonly formRef?: React.MutableRefObject<components.UseFormReturn<Schema, SubmitResult>>
 
-  readonly className?: string | ((props: components.UseFormReturn<Schema>) => string)
+  readonly className?: string | ((props: components.UseFormReturn<Schema, SubmitResult>) => string)
 
   /** When set to `dialog`, form submission will close the parent dialog on successful submission. */
   readonly method?: 'dialog' | (NonNullable<unknown> & string)
@@ -52,15 +52,13 @@ interface BaseFormProps<Schema extends components.TSchema>
  * Props for the Form component with parent form
  * or if form is passed as a prop.
  */
-interface FormPropsWithParentForm<Schema extends components.TSchema> {
-  readonly form: components.UseFormReturn<Schema>
+interface FormPropsWithParentForm<Schema extends components.TSchema, SubmitResult = void>
+  extends components.OnSubmitCallbacks<Schema, SubmitResult> {
+  readonly form: components.UseFormReturn<Schema, SubmitResult>
+  // These props are not needed when form is passed as a prop
   readonly schema?: never
   readonly formOptions?: never
   readonly defaultValues?: never
-  readonly onSubmit?: never
-  readonly onSubmitSuccess?: never
-  readonly onSubmitFailed?: never
-  readonly onSubmitted?: never
 }
 
 /**

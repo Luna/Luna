@@ -4,12 +4,12 @@
  * Submit button for forms.
  * Manages the form state and displays a loading spinner when the form is submitting.
  */
-import type { JSX } from 'react'
+import { memo, type JSX } from 'react'
 
 import { Button, type ButtonProps } from '#/components/AriaComponents'
 import { useText } from '#/providers/TextProvider'
 import { useFormContext } from './FormProvider'
-import type { FormInstance } from './types'
+import type { AnyFormInstance } from './types'
 
 /** Additional props for the Submit component. */
 interface SubmitButtonBaseProps {
@@ -20,9 +20,7 @@ interface SubmitButtonBaseProps {
    *
    * This field is helpful when you need to use the submit button outside of the form.
    */
-  // We do not need to know the form fields.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly form?: FormInstance<any>
+  readonly form?: AnyFormInstance
   readonly cancel?: boolean
 }
 
@@ -35,7 +33,8 @@ export type SubmitProps = Omit<ButtonProps, 'formnovalidate' | 'href' | 'variant
  *
  * Manages the form state and displays a loading spinner when the form is submitting.
  */
-export function Submit(props: SubmitProps): JSX.Element {
+// eslint-disable-next-line no-restricted-syntax
+export const Submit = memo(function Submit(props: SubmitProps): JSX.Element {
   const { getText } = useText()
 
   const {
@@ -64,4 +63,4 @@ export function Submit(props: SubmitProps): JSX.Element {
       {children}
     </Button>
   )
-}
+})

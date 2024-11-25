@@ -77,6 +77,7 @@ export function Tooltip(props: TooltipProps) {
     variant,
     ...ariaTooltipProps
   } = props
+
   const root = portal.useStrictPortalContext()
 
   return (
