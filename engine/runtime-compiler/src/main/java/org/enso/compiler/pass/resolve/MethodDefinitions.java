@@ -44,7 +44,9 @@ import scala.jdk.javaapi.CollectionConverters;
  *
  * <p>Metadata type is {@link BindingsMap.Resolution}
  */
-public class MethodDefinitions implements IRPass {
+public final class MethodDefinitions implements IRPass {
+  private MethodDefinitions() {}
+
   public static final MethodDefinitions INSTANCE = new MethodDefinitions();
 
   @Override
