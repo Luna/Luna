@@ -55,7 +55,7 @@ jobs:
           ENSO_SNOWFLAKE_USER: ${{ secrets.ENSO_SNOWFLAKE_USER }}
           ENSO_SNOWFLAKE_WAREHOUSE: ${{ secrets.ENSO_SNOWFLAKE_WAREHOUSE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: (success() || failure()) && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      - if: (success() || failure()) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         name: Extra Library Test Reporter
         uses: dorny/test-reporter@v1
         with:
@@ -119,7 +119,7 @@ jobs:
           ENSO_LIB_S3_AWS_REGION: ${{ secrets.ENSO_LIB_S3_AWS_REGION }}
           ENSO_LIB_S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.ENSO_LIB_S3_AWS_SECRET_ACCESS_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: (success() || failure()) && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      - if: (success() || failure()) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         name: Standard Library Test Reporter
         uses: dorny/test-reporter@v1
         with:
