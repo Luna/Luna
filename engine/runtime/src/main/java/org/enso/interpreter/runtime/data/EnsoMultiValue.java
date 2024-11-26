@@ -29,14 +29,12 @@ import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.data.atom.StructsLibrary;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.graalvm.collections.Pair;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-@ExportLibrary(StructsLibrary.class)
 public final class EnsoMultiValue extends EnsoObject {
 
   @CompilationFinal(dimensions = 1)
@@ -413,25 +411,6 @@ public final class EnsoMultiValue extends EnsoObject {
       }
     }
     throw UnknownIdentifierException.create(name);
-  }
-
-  @ExportMessage
-  boolean isStruct(@Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
-    return methodDispatchTypes == 1 && structs.isStruct(values[0]);
-  }
-
-  @ExportMessage
-  Object getField(
-      int index, @Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
-    return structs.getField(values[0], index);
-  }
-
-  @ExportMessage
-  void setField(
-      int index,
-      Object value,
-      @Shared("structs") @CachedLibrary(limit = "3") StructsLibrary structs) {
-    structs.setField(values[0], index, value);
   }
 
   @TruffleBoundary
