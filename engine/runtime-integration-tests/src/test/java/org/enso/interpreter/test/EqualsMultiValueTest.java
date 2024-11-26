@@ -68,25 +68,37 @@ public class EqualsMultiValueTest {
   }
 
   @Test
-  public void testEqualityIntegerAndTextMultiValue() {
+  public void testEqualityTextAndExtraIntegerMultiValue() {
     executeInContext(
         context,
         () -> {
           var builtins = ContextUtils.leakContext(context).getBuiltins();
           var intType = builtins.number().getInteger();
-          var textText = builtins.text();
-          var fourExtraText =
-              EnsoMultiValue.create(
-                  new Type[] {textText, intType}, 1, new Object[] {Text.create("Hi"), 4L});
+          var textType = builtins.text();
+          var bothTypes = new Type[] {textType, intType};
 
+          var text = Text.create("Hi");
+          var ahoj = Text.create("Ahoj");
+          var integer = 4L;
+          //
+          // following variable represents result of
+          //     x = _ : (Text & Integer) : Text
+          // e.g. multi value with Text and Integer, casted to Text only
+          //
+          var multiV = EnsoMultiValue.create(bothTypes, 1, text, integer);
+
+          assertTrue("'Hi' == multiV", equalityCheck(text, multiV));
+          assertFalse("'Ahoj' != multiV", equalityCheck(ahoj, multiV));
           assertTrue(
               "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
-              equalityCheck(4L, fourExtraText));
-          assertFalse("5 != t4", equalityCheck(5L, fourExtraText));
+              equalityCheck(integer, multiV));
+          assertFalse("5 != t4", equalityCheck(5L, multiV));
           assertTrue(
               "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
-              equalityCheck(fourExtraText, 4L));
-          assertFalse("4 != t5", equalityCheck(fourExtraText, 5L));
+              equalityCheck(multiV, integer));
+          assertFalse("4 != t5", equalityCheck(multiV, 5L));
+          assertTrue("multiV == 'Hi'", equalityCheck(multiV, text));
+          assertFalse("multiV != 'Ahoj'", equalityCheck(multiV, ahoj));
 
           return null;
         });

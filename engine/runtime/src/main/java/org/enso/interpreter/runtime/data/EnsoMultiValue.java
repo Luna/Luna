@@ -2,7 +2,6 @@ package org.enso.interpreter.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -57,7 +56,21 @@ public final class EnsoMultiValue extends EnsoObject {
         : "Avoid double wrapping " + Arrays.toString(values);
   }
 
-  public static EnsoObject create(Type[] types, int dispatchTypes, Object[] values) {
+  /**
+   * Creates new instance of EnsoMultiValue from provided information.
+   *
+   * @param types all the types this value can be {@link CastToNode cast to}
+   * @param dispatchTypes the (subset of) types that the value is cast to currently - bigger than
+   *     {@code 0} and at most {@code type.length}
+   * @param values value of each of the provided {@code types}
+   * @return non-{@code null} multi value instance
+   */
+  @NeverDefault
+  public static EnsoMultiValue create(
+      @NeverDefault Type[] types, @NeverDefault int dispatchTypes, @NeverDefault Object... values) {
+    assert dispatchTypes > 0;
+    assert dispatchTypes <= types.length;
+    assert types.length == values.length;
     return new EnsoMultiValue(types, dispatchTypes, values);
   }
 
@@ -451,13 +464,9 @@ public final class EnsoMultiValue extends EnsoObject {
     }
 
     @Specialization
-    Object castsToAType(
-        Type type,
-        EnsoMultiValue mv,
-        boolean reorderOnly,
-        @Cached(value = "type", allowUncached = true, neverDefault = true) Type cachedType) {
+    Object castsToAType(Type type, EnsoMultiValue mv, boolean reorderOnly) {
       for (var i = 0; i < mv.types.length; i++) {
-        if (mv.types[i] == cachedType) {
+        if (mv.types[i] == type) {
           if (reorderOnly) {
             var copyTypes = mv.types.clone();
             var copyValues = mv.values.clone();

@@ -268,7 +268,11 @@ abstract class EqualsSimpleNode extends Node {
    * lexicographical order, handling Unicode normalization. See {@code Text_Utils.compare_to}.
    */
   @Specialization(
-      guards = {"selfInterop.isString(selfString)", "isNotMulti(selfString)"},
+      guards = {
+        "selfInterop.isString(selfString)",
+        "isNotMulti(selfString)",
+        "isNotMulti(otherString)"
+      },
       limit = "3")
   EqualsAndInfo equalsStrings(
       Object selfString,
