@@ -81,12 +81,12 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
-  data_quality_pairs?: DataQualityPairs
+  data_quality_metrics?: DataQualityMetric[]
 }
 
-interface DataQualityPairs {
-  number_of_nothing: number[]
-  number_of_whitespace: number[]
+type DataQualityMetric = {
+  name: string
+  percentage_value: number[]
 }
 
 export type TextFormatOptions = 'full' | 'partial' | 'off'
@@ -356,23 +356,15 @@ function toField(
   const displayValue = valueType ? valueType.display_text : null
   const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
 
-  const dataQuality =
-    typeof props.data === 'object' && 'data_quality_pairs' in props.data ?
-      props.data.data_quality_pairs
-      // eslint-disable-next-line camelcase
-    : { number_of_nothing: [], number_of_whitespace: [] }
+  const dataQualityMetrics =
+    typeof props.data === 'object' && 'data_quality_metrics' in props.data ?
+      props.data.data_quality_metrics.map((metric: DataQualityMetric) => {
+        return { [metric.name]: metric.percentage_value[index!] ?? 0 }
+      })
+    : []
 
-  const nothingIsNonZero =
-    index != null && dataQuality?.number_of_nothing ?
-      (dataQuality.number_of_nothing[index] ?? 0) > 0
-    : false
-
-  const whitespaceIsNonZero =
-    index != null && dataQuality?.number_of_nothing ?
-      (dataQuality.number_of_whitespace[index] ?? 0) > 0
-    : false
-
-  const showDataQuality = nothingIsNonZero || whitespaceIsNonZero
+  const showDataQuality =
+    dataQualityMetrics.filter((obj) => (Object.values(obj)[0] as number) > 0).length > 0
 
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
@@ -401,8 +393,7 @@ function toField(
     tooltipComponent: TableVisualisationTooltip,
     headerTooltip: displayValue ? displayValue : '',
     tooltipComponentParams: {
-      numberOfNothing: index != null ? dataQuality.number_of_nothing[index] : null,
-      numberOfWhitespace: index != null ? dataQuality.number_of_whitespace[index] : null,
+      dataQualityMetrics,
       total: typeof props.data === 'object' ? props.data.all_rows_count : 0,
       showDataQuality,
     },
@@ -605,6 +596,29 @@ watchEffect(() => {
   defaultColDef.value.sortable = !isTruncated.value
 })
 
+const colTypeMap = computed(() => {
+  const colMap: Map<string, string> = new Map()
+  if (typeof props.data === 'object' && !('error' in props.data)) {
+    const valueTypes = 'value_type' in props.data ? props.data.value_type : []
+    const headers = 'header' in props.data ? props.data.header : []
+    headers?.forEach((header, index) => {
+      if (valueTypes[index]) {
+        colMap.set(header, valueTypes[index].constructor)
+      }
+    })
+  }
+  return colMap
+})
+
+const getColumnValueToEnso = (columnName: string) => {
+  const columnType = colTypeMap.value.get(columnName) ?? ''
+  const isNumber = ['Integer', 'Float', 'Decimal', 'Byte']
+  if (isNumber.indexOf(columnType) != -1) {
+    return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
+  }
+  return (item: string) => Ast.TextLiteral.new(item)
+}
+
 function checkSortAndFilter(e: SortChangedEvent) {
   const gridApi = e.api
   const columnApi = e.columnApi
@@ -657,6 +671,7 @@ config.setToolbar(
     isDisabled: () => !isCreateNodeEnabled.value,
     isFilterSortNodeEnabled,
     createNodes: config.createNodes,
+    getColumnValueToEnso,
   }),
 )
 </script>

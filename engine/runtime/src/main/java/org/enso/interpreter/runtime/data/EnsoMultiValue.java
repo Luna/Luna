@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
@@ -35,7 +36,7 @@ import org.graalvm.collections.Pair;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-public final class EnsoMultiValue implements EnsoObject {
+public final class EnsoMultiValue extends EnsoObject {
 
   @CompilationFinal(dimensions = 1)
   private final Type[] types;
@@ -47,6 +48,8 @@ public final class EnsoMultiValue implements EnsoObject {
     this.types = types;
     assert types.length == values.length;
     this.values = values;
+    assert !Stream.of(values).filter(v -> v instanceof EnsoMultiValue).findAny().isPresent()
+        : "Avoid double wrapping " + Arrays.toString(values);
   }
 
   public static EnsoObject create(Type[] types, Object[] values) {
@@ -64,16 +67,19 @@ public final class EnsoMultiValue implements EnsoObject {
   }
 
   @ExportMessage
-  public final Type getType() {
+  final Type getType() {
     return types[0];
   }
 
-  public final Type[] allTypes() {
+  @ExportMessage
+  final Type[] allTypes() {
     return types.clone();
   }
 
   @ExportMessage
-  String toDisplayString(boolean ignore) {
+  @TruffleBoundary
+  @Override
+  public final String toDisplayString(boolean ignore) {
     return toString();
   }
 

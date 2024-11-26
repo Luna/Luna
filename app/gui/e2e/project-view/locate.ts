@@ -85,6 +85,7 @@ export const componentBrowser = componentLocator('.ComponentBrowser')
 export const nodeOutputPort = componentLocator('.outputPortHoverArea')
 export const smallPlusButton = componentLocator('.SmallPlusButton')
 export const editorRoot = componentLocator('.EditorRoot')
+export const nodeComment = componentLocator('.GraphNodeComment div[contentEditable]')
 
 /**
  * A not-selected variant of Component Browser Entry.
@@ -118,6 +119,16 @@ export function rightDockRoot(page: Page) {
 /** Bottom-docked panel */
 export function bottomDock(page: Page) {
   return page.getByTestId('bottomDock')
+}
+
+/** Button to add an item to a vector */
+export function addItemButton(page: Locator | Page) {
+  return page.getByRole('button', { name: 'new item' })
+}
+
+/** Button to delete a specific item from a vector */
+export function deleteItemButton(page: Locator | Page) {
+  return page.getByRole('button', { name: 'Remove item' })
 }
 
 export const navBreadcrumb = componentLocator('.NavBreadcrumb')
