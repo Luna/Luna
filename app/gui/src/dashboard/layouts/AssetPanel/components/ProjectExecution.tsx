@@ -33,6 +33,7 @@ const PROJECT_EXECUTION_STYLES = tv({
   },
   slots: {
     timeContainer: 'flex flex-row items-center gap-2 grow px-2 py-0.5',
+    times: 'flex flex-col max-h-[10lh] overflow-auto grow',
     time: '',
     timeButtons: 'opacity-0 group-hover:opacity-100 transition-[opacity]',
     optionContainer: 'flex flex-col grow-0 gap-1',
@@ -80,25 +81,24 @@ export function ProjectExecution(props: ProjectExecutionProps) {
     )
   }
 
-  const dateString =
-    time.dates?.[0] != null ?
-      getOrdinal(time.dates[0] + 1)
-    : getText(
-        time.days?.[0] != null ? DAY_TEXT_IDS[time.days[0]] ?? 'monday'
-        : projectExecution.repeatInterval === 'hourly' ? 'everyHour'
-        : 'everyDay',
-      )
+  const dateStrings = time.dates?.map((otherDate) => getOrdinal(otherDate + 1)) ??
+    time.days?.map((day) => getText(DAY_TEXT_IDS[day] ?? 'monday')) ?? [
+      getText(projectExecution.repeatInterval === 'hourly' ? 'everyHour' : 'everyDay'),
+    ]
   const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
-  const hour = date?.getHours() ?? time.hours?.[0]
-  const timeString =
-    hour != null ?
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}${minuteString}`)
-    : getText('everyHourXMinute', minuteString.replace(/^:/, '') || '00')
-  const dateTimeString =
+  const hours =
+    time.hours ??
+    (date && projectExecution.repeatInterval !== 'hourly' ? [date.getHours()] : undefined)
+  const timeStrings = hours?.map((hour) =>
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}${minuteString}`),
+  ) ?? [getText('everyHourXMinute', minuteString.replace(/^:/, '') || '00')]
+  const dateTimeStrings =
     hideDay && projectExecution.repeatInterval !== 'hourly' ?
-      timeString
-    : getText('dateXTimeX', dateString, timeString)
+      timeStrings
+    : dateStrings.flatMap((dateString) =>
+        timeStrings.map((timeString) => getText('dateXTimeX', dateString, timeString)),
+      )
 
   const styles = PROJECT_EXECUTION_STYLES({
     isEnabled: projectExecution.enabled,
@@ -119,9 +119,13 @@ export function ProjectExecution(props: ProjectExecutionProps) {
   return (
     <div className={styles.base()}>
       <div className={styles.timeContainer()}>
-        <Text elementType="time" className={styles.time()}>
-          {dateTimeString}
-        </Text>
+        <div className={styles.times()}>
+          {dateTimeStrings.map((dateTimeString) => (
+            <Text elementType="time" className={styles.time()}>
+              {dateTimeString}
+            </Text>
+          ))}
+        </div>
         <Button
           variant="icon"
           tooltip={
