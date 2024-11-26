@@ -6,8 +6,9 @@ import { defineWidget, Score, WidgetInput, widgetProps } from '@/providers/widge
 import { WidgetEditHandler } from '@/providers/widgetRegistry/editHandler'
 import { useGraphStore } from '@/stores/graph'
 import { Ast } from '@/util/ast'
-import { MutableModule } from '@/util/ast/abstract'
+import { MutableModule, MutableTextLiteral } from '@/util/ast/abstract'
 import { targetIsOutside } from '@/util/autoBlur'
+import { At } from 'framer-motion'
 import { computed, ref, watch, type ComponentInstance } from 'vue'
 
 const props = defineProps(widgetProps(widgetDefinition))
@@ -38,9 +39,16 @@ function accepted() {
     edit.getVersion(props.input.value).setRawTextContent(editedContents.value)
     props.onUpdate({ edit })
   } else {
+    let value: Ast.Owned<Ast.MutableTextLiteral>
+    if (inputTextLiteral.value) {
+      value = inputTextLiteral.value.module.edit().getVersion(inputTextLiteral.value).take()
+      value.setRawTextContent(editedContents.value)
+    } else {
+      value = makeNewLiteral(editedContents.value)
+    }
     props.onUpdate({
       portUpdate: {
-        value: makeNewLiteral(editedContents.value),
+        value,
         origin: props.input.portId,
       },
     })
@@ -64,15 +72,15 @@ function makeLiteralFromUserInput(value: string): Ast.Owned<Ast.MutableTextLiter
   }
 }
 
-const shownLiteral = computed(() => inputTextLiteral.value ?? emptyTextLiteral.value)
-const closeToken = computed(() => shownLiteral.value.close ?? shownLiteral.value.open)
+const openToken = computed(() => inputTextLiteral.value?.open ?? emptyTextLiteral.value.open)
+const closeToken = computed(() => inputTextLiteral.value?.close ?? openToken.value)
 
 const textContents = computed(() =>
-  WidgetInput.isPlaceholder(props.input) ? '' : shownLiteral.value.rawTextContent,
+  props.input.value instanceof Ast.TextLiteral ? props.input.value.rawTextContent : '',
 )
 const placeholder = computed(() =>
   WidgetInput.isPlaceholder(props.input) ?
-    shownLiteral.value.rawTextContent ?? WidgetInput.valueRepr(props.input)
+    inputTextLiteral.value?.rawTextContent ?? WidgetInput.valueRepr(props.input)
   : '',
 )
 const editedContents = ref(textContents.value)
@@ -104,7 +112,7 @@ export const widgetDefinition = defineWidget(
 
 <template>
   <label ref="widgetRoot" class="WidgetText widgetRounded">
-    <NodeWidget v-if="shownLiteral.open" :input="WidgetInput.FromAst(shownLiteral.open)" />
+    <NodeWidget v-if="openToken" :input="WidgetInput.FromAst(openToken)" />
     <!-- Do not finish edit on blur here!
 
     It is tempting, but it breaks the cooperation with possible drop-down widget. Blur may be done on
