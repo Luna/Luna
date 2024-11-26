@@ -73,6 +73,9 @@ public class LRUCache<M> {
   /** Used to get the current free disk space; mockable. */
   private final DiskSpaceGetter diskSpaceGetter;
 
+  /** Used to clear the cache on reload. */
+  private final ReloadDetector reloadDetector = new ReloadDetector();
+
   public LRUCache() {
     this(LRUCacheSettings.getDefault(), new NowGetter(), new DiskSpaceGetter());
   }
@@ -85,6 +88,8 @@ public class LRUCache<M> {
 
   public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
       throws IOException, InterruptedException, ResponseTooLargeException {
+    clearOnReload();
+
     String cacheKey = itemBuilder.makeCacheKey();
     if (cache.containsKey(cacheKey)) {
       return getResultForCacheEntry(cacheKey);
@@ -197,6 +202,12 @@ public class LRUCache<M> {
   /** Remove all cache entries (and their files). */
   public void clear() {
     removeCacheEntriesByPredicate(e -> true);
+  }
+
+  private void clearOnReload() {
+    if (reloadDetector.hasReloadOccurred()) {
+      clear();
+    }
   }
 
   /** Remove all cache entries (and their cache files) that match the predicate. */

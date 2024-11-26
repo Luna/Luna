@@ -19,12 +19,10 @@ import org.enso.base.cache.ResponseTooLargeException;
 import org.enso.base.net.URISchematic;
 import org.enso.base.net.URIWithSecrets;
 import org.graalvm.collections.Pair;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Value;
 
 /** Makes HTTP requests with secrets in either header or query string. */
 public final class EnsoSecretHelper extends SecretValueResolver {
-  private static Value cache;
+  private static EnsoHTTPResponseCache cache;
 
   /** Gets a JDBC connection resolving EnsoKeyValuePair into the properties. */
   public static Connection getJDBCConnection(
