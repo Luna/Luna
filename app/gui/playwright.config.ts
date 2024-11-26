@@ -147,6 +147,8 @@ export default defineConfig({
       dependencies: ['Setup Tests for Project View'],
       testDir: './integration-test/project-view',
       timeout: 60000,
+      repeatEach: 3,
+      retries: 0,
       expect: {
         timeout: 5000,
         toHaveScreenshot: { threshold: 0 },
