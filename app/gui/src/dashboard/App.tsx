@@ -92,9 +92,9 @@ import RemoteBackend from '#/services/RemoteBackend'
 import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
-import * as object from '#/utilities/object'
 import { Path } from '#/utilities/path'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
+import * as object from 'enso-common/src/utilities/data/object'
 
 import {
   useAcceptedPrivacyPolicyVersionState,

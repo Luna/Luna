@@ -16,7 +16,7 @@ import * as remoteBackendPaths from '#/services/remoteBackendPaths'
 
 import * as download from '#/utilities/download'
 import type HttpClient from '#/utilities/HttpClient'
-import * as object from '#/utilities/object'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // =================
 // === Constants ===

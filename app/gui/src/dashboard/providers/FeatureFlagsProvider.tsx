@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import { createStore, useStore } from 'zustand'
 
 import { useMount } from '#/hooks/mountHooks'
-import { unsafeEntries } from '#/utilities/object'
+import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 import { useFeatureFlags as useFeatureFlagsInternal } from './FeatureFlagsProvider/featureFlagsLocalStorage'
 import { useLocalStorage } from './LocalStorageProvider'
 export { FEATURE_FLAGS_SCHEMA } from './FeatureFlagsProvider/featureFlagsLocalStorage'

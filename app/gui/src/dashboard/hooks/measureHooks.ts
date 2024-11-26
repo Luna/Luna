@@ -5,8 +5,8 @@
  */
 import { frame } from 'framer-motion'
 
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
 import { startTransition, useEffect, useRef, useState } from 'react'
-import { unsafeMutable } from '../utilities/object'
 import { useDebouncedCallback } from './debounceCallbackHooks'
 import { useEventCallback } from './eventCallbackHooks'
 import { useUnmount } from './unmountHooks'

@@ -17,7 +17,7 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
-import * as object from '#/utilities/object'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // =================
 // === Constants ===

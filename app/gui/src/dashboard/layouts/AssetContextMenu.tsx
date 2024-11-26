@@ -39,8 +39,8 @@ import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHo
 import { usePasteData } from '#/providers/DriveProvider'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
-import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
+import * as object from 'enso-common/src/utilities/data/object'
 import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyOpen } from './AssetPanel'
 
 // ========================

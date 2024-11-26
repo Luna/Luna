@@ -5,7 +5,7 @@ import type * as z from 'zod'
 import { PRODUCT_NAME } from 'enso-common'
 import { IS_DEV_MODE } from 'enso-common/src/detect'
 
-import { unsafeEntries, unsafeKeys } from '#/utilities/object'
+import { createObject, unsafeEntries, unsafeKeys } from 'enso-common/src/utilities/data/object'
 
 const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
 
@@ -140,7 +140,7 @@ export class LocalStorage {
   /** Add an event listener to all keys. */
   subscribeAll(callback: (value: Record<string, unknown>) => void) {
     const onChange = () => {
-      callback(this.values)
+      callback(createObject(this.values))
     }
     onChange()
 

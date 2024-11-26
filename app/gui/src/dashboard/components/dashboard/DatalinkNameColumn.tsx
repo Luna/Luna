@@ -9,8 +9,8 @@ import type * as backendModule from '#/services/Backend'
 import { useSetIsAssetPanelTemporarilyOpen } from '#/layouts/AssetPanel'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
-import * as object from '#/utilities/object'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // ====================
 // === DatalinkName ===
