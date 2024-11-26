@@ -34,6 +34,9 @@
 - [Table Input Widget is now matched for Table.input method instead of
   Table.new. Values must be string literals, and their content is parsed to the
   suitable type][11612].
+- [Visualizations on components are slightly transparent when not
+  focused][11582].
+- [New design for vector-editing widget][11620]
 - [Default values on widgets are displayed in italic][11666].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
@@ -57,6 +60,8 @@
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
 [11666]: https://github.com/enso-org/enso/pull/11666
+[11582]: https://github.com/enso-org/enso/pull/11582
+[11620]: https://github.com/enso-org/enso/pull/11620
 
 #### Enso Standard Library
 
