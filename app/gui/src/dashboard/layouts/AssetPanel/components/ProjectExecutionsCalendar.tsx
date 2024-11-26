@@ -12,6 +12,8 @@ import {
 } from '@internationalized/date'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
+import { getProjectExecutionRepetitionsForDateRange } from 'enso-common/src/services/Backend/projectExecution'
+
 import ArrowIcon from '#/assets/folder_arrow.svg'
 import {
   Calendar,
@@ -34,7 +36,6 @@ import type Backend from '#/services/Backend'
 import {
   AssetType,
   BackendType,
-  getProjectExecutionRepetitionsForDateRange,
   type ProjectExecution as BackendProjectExecution,
   type ProjectAsset,
 } from '#/services/Backend'
@@ -213,12 +214,13 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       </Text>
       {projectExecutionsForToday.length === 0 ?
         <Text color="disabled">{getText('noProjectExecutions')}</Text>
-      : projectExecutionsForToday.map(({ projectExecution }) => (
+      : projectExecutionsForToday.map(({ projectExecution, date }) => (
           <ProjectExecution
             hideDay
             backend={backend}
             item={item}
             projectExecution={projectExecution}
+            date={date}
           />
         ))
       }

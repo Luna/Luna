@@ -25,6 +25,7 @@
     "./src/text": "./src/text/index.ts",
     "./src/utilities/permissions": "./src/utilities/permissions.ts",
     "./src/services/Backend": "./src/services/Backend.ts",
+    "./src/services/Backend/projectExecution": "./src/services/Backend/projectExecution.ts",
     "./src/types": "./src/types.d.ts"
   },
   "scripts": {

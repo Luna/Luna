@@ -16,8 +16,8 @@ import { useDispatchAssetListEvent } from '#/layouts/AssetsTable/EventListProvid
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, type AnyAsset, type S3ObjectVersion } from '#/services/Backend'
-import { formatDateTime } from '#/utilities/dateTime'
 import { twMerge } from '#/utilities/tailwindMerge'
+import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {

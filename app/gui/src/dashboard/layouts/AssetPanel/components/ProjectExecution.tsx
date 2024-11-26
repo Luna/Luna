@@ -1,7 +1,12 @@
 /** @file Displays information describing a specific version of an asset. */
 import { useMutation } from '@tanstack/react-query'
 
-import { DAY_TEXT_IDS } from 'enso-common/src/utilities/data/dateTime'
+import {
+  DAY_TEXT_IDS,
+  HOUR_MINUTE,
+  HOURS_PER_DAY,
+  MINUTE_MS,
+} from 'enso-common/src/utilities/data/dateTime'
 
 import ParallelIcon from '#/assets/parallel.svg'
 import Play2Icon from '#/assets/play2.svg'
@@ -14,10 +19,12 @@ import { Button, ButtonGroup, CloseButton, Text } from '#/components/AriaCompone
 import { backendMutationOptions } from '#/hooks/backendHooks'
 import { useGetOrdinal } from '#/hooks/ordinalHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
+import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
+import { getLocalTimeZone, now } from '@internationalized/date'
 
 const PROJECT_EXECUTION_STYLES = tv({
   base: 'group flex flex-row gap-1 w-full rounded-default items-center odd:bg-primary/5 p-2',
@@ -37,19 +44,42 @@ const PROJECT_EXECUTION_STYLES = tv({
 
 /** Props for a {@link ProjectExecution}. */
 export interface ProjectExecutionProps {
+  /** Defaults to `false`. */
+  readonly hideDay?: boolean
   readonly backend: Backend
   readonly item: backendModule.ProjectAsset
   readonly projectExecution: backendModule.ProjectExecution
-  /** Defaults to `false`. */
-  readonly hideDay?: boolean
+  /** Defaults to the first date of `projectExecution` if not given. */
+  readonly date?: Date
 }
 
 /** Displays information describing a specific version of an asset. */
 export function ProjectExecution(props: ProjectExecutionProps) {
-  const { backend, item, projectExecution, hideDay = false } = props
+  const { hideDay = false, backend, item, projectExecution, date } = props
   const { getText } = useText()
   const getOrdinal = useGetOrdinal()
-  const time = projectExecution.time
+  const [timeZone] = useLocalStorageState('preferredTimeZone')
+  const time = { ...projectExecution.time }
+
+  const timeZoneOffsetMs = now(timeZone ?? getLocalTimeZone()).offset
+  const timeZoneOffsetMinutesTotal = Math.trunc(timeZoneOffsetMs / MINUTE_MS)
+  let timeZoneOffsetHours = Math.floor(timeZoneOffsetMinutesTotal / HOUR_MINUTE)
+  const timeZoneOffsetMinutes = timeZoneOffsetMinutesTotal - timeZoneOffsetHours * HOUR_MINUTE
+  time.minute += timeZoneOffsetMinutes
+  while (time.minute < 0) {
+    time.minute += HOUR_MINUTE
+    timeZoneOffsetHours += 1
+  }
+  while (time.minute > HOUR_MINUTE) {
+    time.minute -= HOUR_MINUTE
+    timeZoneOffsetHours -= 1
+  }
+  if (time.hours) {
+    time.hours = time.hours.map(
+      (hour) => (hour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY,
+    )
+  }
+
   const dateString =
     time.dates?.[0] != null ?
       getOrdinal(time.dates[0] + 1)
@@ -59,10 +89,11 @@ export function ProjectExecution(props: ProjectExecutionProps) {
         : 'everyDay',
       )
   const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
+  const hour = date?.getHours() ?? time.hours?.[0]
   const timeString =
-    time.hours?.[0] != null ?
+    hour != null ?
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      getText(time.hours[0] > 11 ? 'xPm' : 'xAm', `${time.hours[0] % 12 || 12}${minuteString}`)
+      getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}${minuteString}`)
     : getText('everyHourXMinute', minuteString.replace(/^:/, '') || '00')
   const dateTimeString =
     hideDay && projectExecution.repeatInterval !== 'hourly' ?

@@ -12,6 +12,7 @@ import {
 import { useMutation } from '@tanstack/react-query'
 
 import type Backend from '#/services/Backend'
+import type { ProjectId } from '#/services/Backend'
 import {
   PARALLEL_MODE_TO_DESCRIPTION_ID,
   PARALLEL_MODE_TO_TEXT_ID,
@@ -56,6 +57,7 @@ const HOURS: readonly number[] = [...Array(HOURS_PER_DAY).keys()]
 function createUpsertExecutionSchema(timeZone: string | undefined) {
   return z
     .object({
+      projectId: z.string().refine((x: unknown): x is ProjectId => true),
       multiSelect: z.boolean(),
       repeatInterval: z.enum(PROJECT_REPEAT_INTERVALS),
       dates: z
@@ -94,6 +96,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
     })
     .transform(
       ({
+        projectId,
         startDate = null,
         endDate = null,
         repeatInterval,
@@ -110,6 +113,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         const startDateTime = startDate != null ? toRfc3339(startDate.toDate()) : startDate
         const endDateTime = endDate != null ? toRfc3339(endDate.toDate()) : endDate
         const shared = {
+          projectId,
           repeatInterval,
           maxDurationMinutes,
           parallelMode,
@@ -117,7 +121,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
           endDate: endDateTime,
         }
         if (multiSelect) {
-          const timeZoneOffsetMs = toTimeZone(date, timeZone ?? getLocalTimeZone()).offset
+          const timeZoneOffsetMs = -toTimeZone(date, timeZone ?? getLocalTimeZone()).offset
           const timeZoneOffsetMinutesTotal = Math.trunc(timeZoneOffsetMs / MINUTE_MS)
           let timeZoneOffsetHours = Math.floor(timeZoneOffsetMinutesTotal / HOUR_MINUTE)
           const timeZoneOffsetMinutes =
@@ -191,6 +195,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     method: 'dialog',
     schema: createUpsertExecutionSchema(preferredTimeZone),
     defaultValues: {
+      projectId: item.id,
       multiSelect: false,
       repeatInterval: 'weekly',
       parallelMode: 'restart',
@@ -203,7 +208,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       minute: 0,
     },
     onSubmit: async (values) => {
-      await createProjectExecution([{ projectId: item.id, ...values }, item.title])
+      await createProjectExecution([values, item.title])
     },
   })
   const repeatInterval = form.watch('repeatInterval', 'weekly')

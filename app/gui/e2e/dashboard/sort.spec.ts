@@ -1,7 +1,7 @@
 /** @file Test sorting of assets columns. */
 import * as test from '@playwright/test'
 
-import * as dateTime from '#/utilities/dateTime'
+import * as dateTime from 'enso-common/src/utilities/data/dateTime'
 
 import * as actions from './actions'
 

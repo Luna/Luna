@@ -5,7 +5,7 @@ import ProjectLogsModal from '#/modals/ProjectLogsModal'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import type { ProjectSession as BackendProjectSession, ProjectAsset } from '#/services/Backend'
-import { formatDateTime } from '#/utilities/dateTime'
+import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
 
 /** Props for a {@link ProjectSession}. */
 export interface ProjectSessionProps {
