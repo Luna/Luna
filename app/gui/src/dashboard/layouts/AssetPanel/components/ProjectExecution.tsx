@@ -87,8 +87,7 @@ export function ProjectExecution(props: ProjectExecutionProps) {
     ]
   const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
   const hours =
-    time.hours ??
-    (date && projectExecution.repeatInterval !== 'hourly' ? [date.getHours()] : undefined)
+    date && projectExecution.repeatInterval !== 'hourly' ? [date.getHours()] : time.hours
   const timeStrings = hours?.map((hour) =>
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}${minuteString}`),
