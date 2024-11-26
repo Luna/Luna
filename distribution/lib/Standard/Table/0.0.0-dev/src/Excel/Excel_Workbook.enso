@@ -363,13 +363,13 @@ type Excel_Workbook
     read_many self sheet_names:Vector=self.sheet_names (headers:Headers=..Detect_Headers) (return=..As_Merged_Table) (on_problems:Problem_Behavior=..Report_Warning) =
         resolved_return = _resolve_return_as_compatibility return
         if sheet_names.is_empty then Error.throw (Illegal_Argument.Error "No sheets selected.") else
-            names_and_tables = _read_sheets self sheet_names headers on_problems
             case resolved_return of
                 Return_As_Table.With_New_Column -> 
-                    names = names_and_tables.map .first
-                    tables_or_nothing = names_and_tables.map .second
-                    Table.new [["Sheet Name", names], ["Table", tables_or_nothing]]
+                    tables_or_nothing = sheet_names.map on_problems=on_problems address->
+                        self.read address headers on_problems=on_problems
+                    Table.new [["Sheet Name", sheet_names], ["Table", tables_or_nothing]]
                 Return_As_Table.As_Merged_Table columns_to_keep match ->
+                    names_and_tables = _read_sheets self sheet_names headers on_problems
                     only_valid = names_and_tables.filter p-> p.second.is_nothing.not
                     no_valid_sheets = only_valid.is_empty
                     if no_valid_sheets then Error.throw (Illegal_Argument.Error "No valid sheets found.") else
@@ -423,7 +423,7 @@ private _query_widget wb:Excel_Workbook display:Display=..Always -> Widget =
     Single_Choice display=display values=options
 
 private _read_sheets workbook:Excel_Workbook (sheet_names : Vector Text) headers:Headers on_problems:Problem_Behavior -> Vector (Pair Text (Table | Nothing)) =
-    sheet_names.map on_problems=No_Wrap.Value address-> 
+    sheet_names.map on_problems=No_Wrap.Value address->
         table = workbook.read address headers on_problems=on_problems
         r = Pair.new address table
         # If in Report_Error mode, we forward the original error without wrapping, otherwise we wrap any warnings.
