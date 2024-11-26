@@ -36,7 +36,7 @@ import {
 import { backendMutationOptions } from '#/hooks/backendHooks'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import { DAY_3_LETTER_TEXT_IDS } from 'enso-common/src/utilities/data/dateTime'
+import { DAY_3_LETTER_TEXT_IDS, toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 const MAX_DURATION_DEFAULT_MINUTES = 60
 const MAX_DURATION_MINIMUM_MINUTES = 1
@@ -107,6 +107,15 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
       }) => {
         const date = startDate ?? now('UTC')
         const utcDate = toTimeZone(date, 'UTC')
+        const startDateTime = startDate != null ? toRfc3339(startDate.toDate()) : startDate
+        const endDateTime = endDate != null ? toRfc3339(endDate.toDate()) : endDate
+        const shared = {
+          repeatInterval,
+          maxDurationMinutes,
+          parallelMode,
+          startDate: startDateTime,
+          endDate: endDateTime,
+        }
         if (multiSelect) {
           const timeZoneOffsetMs = toTimeZone(date, timeZone ?? getLocalTimeZone()).offset
           const timeZoneOffsetMinutesTotal = Math.trunc(timeZoneOffsetMs / MINUTE_MS)
@@ -123,11 +132,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
             timeZoneOffsetHours -= 1
           }
           return {
-            repeatInterval,
-            maxDurationMinutes,
-            parallelMode,
-            startDate,
-            endDate,
+            ...shared,
             time: {
               ...(repeatInterval === 'monthly' && { dates }),
               ...(repeatInterval === 'weekly' && { days }),
@@ -141,11 +146,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
           }
         } else {
           return {
-            repeatInterval,
-            maxDurationMinutes,
-            parallelMode,
-            startDate,
-            endDate,
+            ...shared,
             time: {
               ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
               ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
@@ -207,7 +208,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   })
   const repeatInterval = form.watch('repeatInterval', 'weekly')
   const parallelMode = form.watch('parallelMode', 'restart')
-  const date = form.watch('startDate', nowZonedDateTime)
+  const date = form.watch('startDate', nowZonedDateTime) ?? nowZonedDateTime
   const multiSelect = form.watch('multiSelect', false)
 
   const createProjectExecution = useMutation(
@@ -255,7 +256,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           form={form}
           isRequired
           noCalendarHeader
-          name="date"
+          name="startDate"
           granularity="minute"
           label={getText('firstOccurrenceLabel')}
           minValue={minFirstOccurrence}
