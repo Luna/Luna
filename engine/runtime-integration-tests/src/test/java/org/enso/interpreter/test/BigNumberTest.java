@@ -1,5 +1,7 @@
 package org.enso.interpreter.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -176,5 +178,40 @@ public class BigNumberTest {
   public void doubleBigInteger() throws Exception {
     var fourtyTwo = assertMul(6.0, new BigInteger("7"));
     assertEquals(42, fourtyTwo.asInt());
+  }
+
+  @Test
+  public void everyValueSmallerThanIntegerMaxVal_IsPrimitiveInt() {
+    var almostMaxInt = Integer.toString(Integer.MAX_VALUE - 1);
+    var intVal = ContextUtils.evalModule(ctx, "main = " + almostMaxInt);
+    assertThat("Is a number", intVal.isNumber(), is(true));
+    assertThat("Fits in int", intVal.fitsInInt(), is(true));
+    assertThat("Fits in long", intVal.fitsInLong(), is(true));
+    assertThat("Fits in double", intVal.fitsInDouble(), is(true));
+    assertThat("Fits in big int", intVal.fitsInBigInteger(), is(true));
+  }
+
+  @Test
+  public void everyValueSmallerThanLongMaxVal_IsPrimitiveLong() {
+    var almostMaxLong = Long.toString(Long.MAX_VALUE - 1);
+    var longVal = ContextUtils.evalModule(ctx, "main = " + almostMaxLong);
+    assertThat("Is a number", longVal.isNumber(), is(true));
+    assertThat("Does not fit in int", longVal.fitsInInt(), is(false));
+    assertThat("Fits in long", longVal.fitsInLong(), is(true));
+    assertThat("Does not fit in double (but could)", longVal.fitsInDouble(), is(false));
+    assertThat("Fits in big int", longVal.fitsInBigInteger(), is(true));
+  }
+
+  @Test
+  public void everyValueBiggerThanLongMaxVal_IsEnsoBigInt() {
+    // This number is bigger than Long.MAX_VALUE, but smaller than Double.MAX_VALUE
+    // so it could technically fit in double, but in Enso, it is automatically converted
+    // to EnsoBigInteger
+    var bigIntVal = ContextUtils.evalModule(ctx, "main = 9223372036854775808");
+    assertThat("Is a number", bigIntVal.isNumber(), is(true));
+    assertThat("Does not fit in int", bigIntVal.fitsInInt(), is(false));
+    assertThat("Does not fit in long", bigIntVal.fitsInLong(), is(false));
+    assertThat("Does not fit in double (but could)", bigIntVal.fitsInDouble(), is(false));
+    assertThat("Fits in big int", bigIntVal.fitsInBigInteger(), is(true));
   }
 }
