@@ -7,7 +7,6 @@ import type * as React from 'react'
 
 import type * as reactHookForm from 'react-hook-form'
 
-import type { DeepPartialSkipArrayKey } from 'react-hook-form'
 import type { TestIdProps } from '../types'
 import type * as components from './components'
 import type * as styles from './styles'
@@ -37,7 +36,6 @@ interface BaseFormProps<Schema extends components.TSchema>
     | ((
         props: components.UseFormReturn<Schema> & {
           readonly form: components.UseFormReturn<Schema>
-          readonly values: DeepPartialSkipArrayKey<components.FieldValues<Schema>>
         },
       ) => React.ReactNode)
   readonly formRef?: React.MutableRefObject<components.UseFormReturn<Schema>>
@@ -73,7 +71,7 @@ interface FormPropsWithOptions<Schema extends components.TSchema, SubmitResult =
   extends components.OnSubmitCallbacks<Schema, SubmitResult> {
   readonly schema: Schema | ((schema: typeof components.schema) => Schema)
   readonly formOptions?: Omit<
-    components.UseFormProps<Schema, SubmitResult>,
+    components.UseFormOptions<Schema, SubmitResult>,
     'defaultValues' | 'onSubmit' | 'onSubmitFailed' | 'onSubmitSuccess' | 'onSubmitted' | 'schema'
   >
   /**
@@ -83,7 +81,7 @@ interface FormPropsWithOptions<Schema extends components.TSchema, SubmitResult =
    * it is recommended to provide default values and specify all fields defined in the schema.
    * Otherwise Typescript fails to infer the correct type for the form values.
    */
-  readonly defaultValues?: components.UseFormProps<Schema>['defaultValues']
+  readonly defaultValues?: components.UseFormOptions<Schema>['defaultValues']
   readonly form?: never
 }
 

@@ -13,7 +13,7 @@ import { computed, toRef, watch } from 'vue'
 import { DisplayIcon } from './widgets/WidgetIcon.vue'
 
 const props = defineProps<{
-  ast: Ast.Ast
+  ast: Ast.Expression
   nodeId: NodeId
   nodeElement: HTMLElement | undefined
   nodeType: NodeType
@@ -125,7 +125,7 @@ export const ICON_WIDTH = 16
 
 <style scoped>
 .NodeWidgetTree {
-  color: white;
+  color: var(--color-node-text);
 
   outline: none;
   min-height: var(--node-port-height);

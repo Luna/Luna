@@ -30,7 +30,7 @@ import org.enso.pkg.QualifiedName;
 
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-public final class Type implements EnsoObject {
+public final class Type extends EnsoObject {
 
   private final String name;
   private @CompilerDirectives.CompilationFinal ModuleScope.Builder definitionScope;
@@ -166,6 +166,7 @@ public final class Type implements EnsoObject {
    * @param ctx contexts to get Any type (common super class) from
    * @return a compilation constant array with all types this type represents
    */
+  @ExportMessage.Ignore
   public final Type[] allTypes(EnsoContext ctx) {
     var types = new Type[3];
     var realCount = fillInTypes(this, types, ctx);
@@ -279,7 +280,8 @@ public final class Type implements EnsoObject {
   }
 
   @ExportMessage
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     return name;
   }
 

@@ -1,9 +1,9 @@
+import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import type { MockYdocProviderImpl } from '@/util/crdt'
 import type { WebSocketHandler } from '@/util/net'
 import type { QualifiedName } from '@/util/qualifiedName'
 import * as random from 'lib0/random'
-import * as Ast from 'ydoc-shared/ast'
 import {
   Builder,
   EnsoUUID,
@@ -28,7 +28,7 @@ import { uuidToBits } from 'ydoc-shared/uuid'
 import * as Y from 'yjs'
 import { mockFsDirectoryHandle, type FileTree } from '../util/convert/fsAccess'
 import { mockDataWSHandler as originalMockDataWSHandler } from './dataServer'
-import mockDb from './mockSuggestions.json' assert { type: 'json' }
+import mockDb from './mockSuggestions.json' with { type: 'json' }
 
 const mockProjectId = random.uuidv4() as Uuid
 const standardBase = 'Standard.Base' as QualifiedName
@@ -49,6 +49,7 @@ const mainFile = `\
 ## Module documentation
 from Standard.Base import all
 
+## A collapsed function
 func1 arg =
     f2 = Main.func2 arg
     result = f2 - 5
@@ -59,6 +60,12 @@ func2 a =
     r
 
 ## The main method
+
+   Here we test images:
+
+   ![Image](/images/image.png)
+   ![Image](../images/image.png)
+   ![Image](</images/image.png>)
 main =
     five = 5
     ten = 10
@@ -81,6 +88,16 @@ const fileTree = {
   src: {
     get 'Main.enso'() {
       return mainFile
+    },
+  },
+  images: {
+    get 'image.png'() {
+      return new Uint16Array([
+        20617, 18254, 2573, 2586, 0, 3328, 18505, 21060, 0, 768, 0, 768, 772, 0, 41984, 43014, 140,
+        0, 20501, 21580, 65093, 13106, 11262, 64043, 27756, 24571, 64863, 14906, 12030, 65070,
+        10023, 29424, 11222, 0, 4352, 17481, 21569, 55048, 28771, 24661, 4960, 24672, 52, 768, 161,
+        21933, 29603, 124, 0, 18688, 20037, 44612, 24642, 130,
+      ]).buffer
     },
   },
 }
@@ -459,8 +476,10 @@ export const mockLSHandler: MockTransportData = async (method, data, transport) 
         expressionId: ExpressionId
         expression: string
       }
-      const aiPromptPat = Pattern.parse('Standard.Visualization.AI.build_ai_prompt __ . to_json')
-      const exprAst = Ast.parse(data_.expression)
+      const aiPromptPat = Pattern.parseExpression(
+        'Standard.Visualization.AI.build_ai_prompt __ . to_json',
+      )
+      const exprAst = Ast.parseExpression(data_.expression)!
       if (aiPromptPat.test(exprAst)) {
         sendVizUpdate(
           data_.visualizationId,

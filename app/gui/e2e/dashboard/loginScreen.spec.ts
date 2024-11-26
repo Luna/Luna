@@ -1,18 +1,14 @@
 /** @file Test the login flow. */
 import * as test from '@playwright/test'
 
-import {
-  INVALID_PASSWORD,
-  mockAll,
-  passAgreementsDialog,
-  TEXT,
-  VALID_EMAIL,
-  VALID_PASSWORD,
-} from './actions'
+import { INVALID_PASSWORD, mockAll, TEXT, VALID_EMAIL, VALID_PASSWORD } from './actions'
 
 // =============
 // === Tests ===
 // =============
+
+// Reset storage state for this file to avoid being authenticated
+test.test.use({ storageState: { cookies: [], origins: [] } })
 
 test.test('login screen', ({ page }) =>
   mockAll({ page })
@@ -25,9 +21,6 @@ test.test('login screen', ({ page }) =>
     })
     // Technically it should not be allowed, but
     .login(VALID_EMAIL, INVALID_PASSWORD)
-    .do(async (thePage) => {
-      await passAgreementsDialog({ page: thePage })
-    })
     .withDriveView(async (driveView) => {
       await test.expect(driveView).toBeVisible()
     }),

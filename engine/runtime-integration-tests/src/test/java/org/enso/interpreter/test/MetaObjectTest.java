@@ -9,13 +9,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import org.enso.common.MethodNames;
+import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.type.ConstantsGen;
 import org.enso.interpreter.test.ValuesGenerator.Language;
 import org.enso.test.utils.ContextUtils;
@@ -271,6 +274,33 @@ main = Nothing
     }
   }
 
+  /**
+   * Primitive values and exceptions currently don't have an associated language.
+   *
+   * <p>TODO[PM]: Will be implemented in https://github.com/enso-org/enso/pull/11468
+   */
+  @Test
+  public void allEnsoNonPrimitiveValuesHaveLanguage() throws Exception {
+    var gen = ValuesGenerator.create(ctx, Language.ENSO);
+    Predicate<Value> isPrimitiveOrException =
+        (val) -> val.fitsInInt() || val.fitsInDouble() || val.isBoolean() || val.isException();
+    var nonPrimitiveValues =
+        gen.allValues().stream().filter(isPrimitiveOrException.negate()).toList();
+    var interop = InteropLibrary.getUncached();
+    ContextUtils.executeInContext(
+        ctx,
+        () -> {
+          for (var value : nonPrimitiveValues) {
+            var unwrappedValue = ContextUtils.unwrapValue(ctx, value);
+            assertThat(
+                "Value " + unwrappedValue + " should have associated language",
+                interop.hasLanguage(unwrappedValue),
+                is(true));
+          }
+          return null;
+        });
+  }
+
   @Test
   public void compareQualifiedAndSimpleTypeName() throws Exception {
     var g = generator();
@@ -383,6 +413,11 @@ main = Nothing
         // skip Nothing
         continue;
       }
+      var type = (Type) ContextUtils.unwrapValue(ctx, typ);
+      if (type.isEigenType()) {
+        // Skip singleton types
+        continue;
+      }
 
       var simpleName = sn.execute(typ).asString();
       var metaName = typ.getMetaSimpleName() + ".type";
@@ -410,6 +445,11 @@ main = Nothing
       if (t.isNull()) {
         continue;
       }
+      var type = (Type) ContextUtils.unwrapValue(ctx, t);
+      if (type.isEigenType()) {
+        // Skip checking singleton types
+        continue;
+      }
       switch (t.getMetaSimpleName()) {
           // represented as primitive values without meta object
         case "Float" -> {}
@@ -432,6 +472,17 @@ main = Nothing
 
   @FunctionalInterface
   interface Check {
+
+    /**
+     * @param v Instance of the type
+     * @param type Type. Nullable.
+     * @param expecting Set of types that are tested. The check should remove the currently tested
+     *     type from this set.
+     * @param successfullyRemoved Set of types that already were tested. The check should add the
+     *     currently tested type to this set.
+     * @param w StringBuilder for the error message that will be printed at the end in case of a
+     *     failure.
+     */
     void check(
         Value v, Value type, Set<Value> expecting, Set<Value> successfullyRemoved, StringBuilder w);
   }

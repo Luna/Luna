@@ -38,7 +38,17 @@ export interface ProjectNameColumnProps extends column.AssetColumnProps {
  * This should never happen.
  */
 export default function ProjectNameColumn(props: ProjectNameColumnProps) {
-  const { item, selected, rowState, setRowState, state, isEditable, backendType, isOpened } = props
+  const {
+    item,
+    selected,
+    rowState,
+    setRowState,
+    state,
+    isEditable,
+    backendType,
+    isOpened,
+    isPlaceholder,
+  } = props
   const { depth } = props
   const { backend, nodeMap } = state
 
@@ -85,8 +95,8 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
-        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
+      className={tailwindMerge.twJoin(
+        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {
@@ -114,7 +124,14 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
         }
       }}
     >
-      <ProjectIcon isDisabled={!canExecute} isOpened={isOpened} backend={backend} item={item} />
+      <ProjectIcon
+        isDisabled={!canExecute}
+        isOpened={isOpened}
+        backend={backend}
+        item={item}
+        isPlaceholder={isPlaceholder}
+      />
+
       <EditableSpan
         data-testid="asset-row-name"
         editable={rowState.isEditingName}

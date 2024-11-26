@@ -37,6 +37,7 @@ import * as errorModule from '#/utilities/error'
 
 import * as cognitoModule from '#/authentication/cognito'
 import type * as authServiceModule from '#/authentication/service'
+import { unsafeWriteValue } from '#/utilities/write'
 
 // ===================
 // === UserSession ===
@@ -151,22 +152,21 @@ function createUsersMeQuery(
       if (session == null) {
         return Promise.resolve(null)
       }
-      try {
-        const user = await remoteBackend.usersMe()
 
-        // if API returns null, user is not yet registered
-        // but already authenticated with Cognito
-        return user == null ?
-            ({ type: UserSessionType.partial, ...session } satisfies PartialUserSession)
-          : ({ type: UserSessionType.full, user, ...session } satisfies FullUserSession)
-      } catch (error) {
-        if (error instanceof backendModule.NotAuthorizedError) {
-          await performLogout()
-          return null
-        } else {
+      return remoteBackend
+        .usersMe()
+        .then((user) => {
+          return user == null ?
+              ({ type: UserSessionType.partial, ...session } satisfies PartialUserSession)
+            : ({ type: UserSessionType.full, user, ...session } satisfies FullUserSession)
+        })
+        .catch((error) => {
+          if (error instanceof backendModule.NotAuthorizedError) {
+            return performLogout().then(() => null)
+          }
+
           throw error
-        }
-      }
+        })
     },
   })
 }
@@ -201,11 +201,11 @@ export default function AuthProvider(props: AuthProviderProps) {
     gtag.event(name, params)
   }, [])
 
-  const performLogout = async () => {
+  const performLogout = useEventCallback(async () => {
     await cognito.signOut()
 
     const parentDomain = location.hostname.replace(/^[^.]*\./, '')
-    document.cookie = `logged_in=no;max-age=0;domain=${parentDomain}`
+    unsafeWriteValue(document, 'cookie', `logged_in=no;max-age=0;domain=${parentDomain}`)
     gtagEvent('cloud_sign_out')
     cognito.saveAccessToken(null)
     localStorage.clearUserSpecificEntries()
@@ -215,7 +215,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     await queryClient.clearWithPersister()
 
     return Promise.resolve()
-  }
+  })
 
   const logoutMutation = reactQuery.useMutation({
     mutationKey: [remoteBackend.type, 'usersMe', 'logout', session?.clientId] as const,

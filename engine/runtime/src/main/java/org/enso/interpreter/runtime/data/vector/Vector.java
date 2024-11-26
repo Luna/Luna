@@ -11,7 +11,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import org.enso.interpreter.dsl.Builtin;
-import org.enso.interpreter.node.expression.builtin.interop.syntax.HostValueToEnsoNode;
+import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
@@ -23,7 +23,7 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "immutable", stdlibName = "Standard.Base.Data.Vector.Vector")
-abstract class Vector implements EnsoObject {
+abstract class Vector extends EnsoObject {
   private static final Vector EMPTY_LONG = new Long(new long[0]);
   private static final Vector EMPTY_DOUBLE = new Double(new double[0]);
   private static final Vector EMPTY_VECTOR = new EnsoOnly(new Object[0]);
@@ -72,7 +72,8 @@ abstract class Vector implements EnsoObject {
 
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     final InteropLibrary iop = InteropLibrary.getUncached();
     return DisplayArrayUtils.toDisplayString(this, allowSideEffects, iop);
   }

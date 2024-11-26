@@ -19,7 +19,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 /** Internal wrapper for a {@link BigInteger}. */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class EnsoBigInteger implements EnsoObject {
+public final class EnsoBigInteger extends EnsoObject {
   private final BigInteger value;
 
   /**
@@ -47,7 +47,8 @@ public final class EnsoBigInteger implements EnsoObject {
 
   @CompilerDirectives.TruffleBoundary
   @ExportMessage
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
     return value.toString();
   }
 

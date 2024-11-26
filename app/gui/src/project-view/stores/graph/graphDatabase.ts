@@ -2,17 +2,17 @@ import { computeNodeColor } from '@/composables/nodeColors'
 import { ComputedValueRegistry, type ExpressionInfo } from '@/stores/project/computedValueRegistry'
 import { SuggestionDb, type Group } from '@/stores/suggestionDatabase'
 import type { SuggestionEntry } from '@/stores/suggestionDatabase/entry'
-import { assert } from '@/util/assert'
-import { Ast, RawAst } from '@/util/ast'
+import { Ast } from '@/util/ast'
 import type { AstId, NodeMetadata } from '@/util/ast/abstract'
-import { autospaced, MutableModule } from '@/util/ast/abstract'
-import { AliasAnalyzer } from '@/util/ast/aliasAnalysis'
+import { MutableModule } from '@/util/ast/abstract'
+import { analyzeBindings, type BindingInfo } from '@/util/ast/bindings'
 import { inputNodeFromAst, nodeFromAst, nodeRootExpr } from '@/util/ast/node'
-import { MappedKeyMap, MappedSet } from '@/util/containers'
 import { tryGetIndex } from '@/util/data/array'
 import { recordEqual } from '@/util/data/object'
+import { unwrap } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { ReactiveDb, ReactiveIndex, ReactiveMapping } from '@/util/database/reactiveDb'
+import { tryIdentifier } from '@/util/qualifiedName'
 import {
   nonReactiveView,
   resumeReactivity,
@@ -21,118 +21,17 @@ import {
 } from '@/util/reactivity'
 import * as objects from 'enso-common/src/utilities/data/object'
 import * as set from 'lib0/set'
-import { reactive, ref, shallowReactive, WatchStopHandle, type Ref } from 'vue'
+import { reactive, ref, shallowReactive, type Ref, type WatchStopHandle } from 'vue'
+import { type SourceDocument } from 'ydoc-shared/ast/sourceDocument'
 import type { MethodCall, StackItem } from 'ydoc-shared/languageServerTypes'
 import type { Opt } from 'ydoc-shared/util/data/opt'
-import type { ExternalId, SourceRange, VisualizationMetadata } from 'ydoc-shared/yjsModel'
-import { isUuid, sourceRangeKey, visMetadataEquals } from 'ydoc-shared/yjsModel'
+import type { ExternalId, VisualizationMetadata } from 'ydoc-shared/yjsModel'
+import { isUuid, visMetadataEquals } from 'ydoc-shared/yjsModel'
 
 export interface MethodCallInfo {
   methodCall: MethodCall
   methodCallSource: Ast.AstId
   suggestion: SuggestionEntry
-}
-
-export interface BindingInfo {
-  identifier: string
-  usages: Set<AstId>
-}
-
-/** TODO: Add docs */
-export class BindingsDb {
-  bindings = new ReactiveDb<AstId, BindingInfo>()
-  identifierToBindingId = new ReactiveIndex(this.bindings, (id, info) => [[info.identifier, id]])
-
-  /** TODO: Add docs */
-  readFunctionAst(
-    func: Ast.Function,
-    rawFunc: RawAst.Tree.Function | undefined,
-    moduleCode: string,
-    getSpan: (id: AstId) => SourceRange | undefined,
-  ) {
-    // TODO[ao]: Rename 'alias' to 'binding' in AliasAnalyzer and it's more accurate term.
-    const analyzer = new AliasAnalyzer(moduleCode, rawFunc)
-    analyzer.process()
-
-    const [bindingRangeToTree, bindingIdToRange] = BindingsDb.rangeMappings(func, analyzer, getSpan)
-
-    // Remove old keys.
-    for (const key of this.bindings.keys()) {
-      const range = bindingIdToRange.get(key)
-      if (range == null || !analyzer.aliases.has(range)) {
-        this.bindings.delete(key)
-      }
-    }
-
-    // Add or update bindings.
-    for (const [bindingRange, usagesRanges] of analyzer.aliases) {
-      const aliasAst = bindingRangeToTree.get(bindingRange)
-      assert(aliasAst != null)
-      if (aliasAst == null) continue
-      const aliasAstId = aliasAst.id
-      const info = this.bindings.get(aliasAstId)
-      if (info == null) {
-        function* usageIds() {
-          for (const usageRange of usagesRanges) {
-            const usageAst = bindingRangeToTree.get(usageRange)
-            assert(usageAst != null)
-            if (usageAst != null) yield usageAst.id
-          }
-        }
-        this.bindings.set(aliasAstId, {
-          identifier: aliasAst.code(),
-          usages: new Set(usageIds()),
-        })
-      } else {
-        const newIdentifier = aliasAst.code()
-        if (info.identifier != newIdentifier) info.identifier = newIdentifier
-        // Remove old usages.
-        for (const usage of info.usages) {
-          const range = bindingIdToRange.get(usage)
-          if (range == null || !usagesRanges.has(range)) info.usages.delete(usage)
-        }
-        // Add or update usages.
-        for (const usageRange of usagesRanges) {
-          const usageAst = bindingRangeToTree.get(usageRange)
-          if (usageAst != null && !info.usages.has(usageAst.id)) {
-            info.usages.add(usageAst.id)
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Create mappings between bindings' ranges and AST
-   *
-   * The AliasAnalyzer is general and returns ranges, but we're interested in AST nodes. This
-   * method creates mappings in both ways. For given range, only the shallowest AST node will be
-   * assigned (RawAst.Tree.Identifier, not RawAst.Token.Identifier).
-   */
-  private static rangeMappings(
-    ast: Ast.Ast,
-    analyzer: AliasAnalyzer,
-    getSpan: (id: AstId) => SourceRange | undefined,
-  ): [MappedKeyMap<SourceRange, Ast.Ast>, Map<AstId, SourceRange>] {
-    const bindingRangeToTree = new MappedKeyMap<SourceRange, Ast.Ast>(sourceRangeKey)
-    const bindingIdToRange = new Map<AstId, SourceRange>()
-    const bindingRanges = new MappedSet(sourceRangeKey)
-    for (const [binding, usages] of analyzer.aliases) {
-      bindingRanges.add(binding)
-      for (const usage of usages) bindingRanges.add(usage)
-    }
-    ast.visitRecursiveAst((ast) => {
-      const span = getSpan(ast.id)
-      assert(span != null)
-      if (bindingRanges.has(span)) {
-        bindingRangeToTree.set(span, ast)
-        bindingIdToRange.set(ast.id, span)
-        return false
-      }
-      return true
-    })
-    return [bindingRangeToTree, bindingIdToRange]
-  }
 }
 
 /** TODO: Add docs */
@@ -142,7 +41,10 @@ export class GraphDb {
   private highestZIndex = 0
   private readonly idToExternalMap = reactive(new Map<Ast.AstId, ExternalId>())
   private readonly idFromExternalMap = reactive(new Map<ExternalId, Ast.AstId>())
-  private bindings = new BindingsDb()
+  private readonly bindings = new ReactiveDb<AstId, BindingInfo>()
+  private readonly identifierToBindingId = new ReactiveIndex(this.bindings, (id, info) => [
+    [info.identifier, id],
+  ])
 
   /** TODO: Add docs */
   constructor(
@@ -153,17 +55,17 @@ export class GraphDb {
 
   private nodeIdToPatternExprIds = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     const exprs: AstId[] = []
-    if (entry.pattern) entry.pattern.visitRecursiveAst((ast) => void exprs.push(ast.id))
+    if (entry.pattern) entry.pattern.visitRecursive((ast) => void exprs.push(ast.id))
     return Array.from(exprs, (expr) => [id, expr])
   })
 
   private nodeIdToExprIds = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     const exprs: AstId[] = []
-    entry.innerExpr.visitRecursiveAst((ast) => void exprs.push(ast.id))
+    entry.innerExpr.visitRecursive((ast) => void exprs.push(ast.id))
     return Array.from(exprs, (expr) => [id, expr])
   })
 
-  connections = new ReactiveIndex(this.bindings.bindings, (alias, info) => {
+  connections = new ReactiveIndex(this.bindings, (alias, info) => {
     const srcNode = this.getPatternExpressionNodeId(alias) ?? this.getExpressionNodeId(alias)
     if (srcNode == null) return []
     return Array.from(this.connectionsFromBindings(info, alias, srcNode))
@@ -195,8 +97,8 @@ export class GraphDb {
   nodeOutputPorts = new ReactiveIndex(this.nodeIdToNode, (id, entry) => {
     if (entry.pattern == null) return []
     const ports = new Set<AstId>()
-    entry.pattern.visitRecursiveAst((ast) => {
-      if (this.bindings.bindings.has(ast.id)) {
+    entry.pattern.visitRecursive((ast) => {
+      if (this.bindings.has(ast.id)) {
         ports.add(ast.id)
         return false
       }
@@ -253,7 +155,7 @@ export class GraphDb {
 
   /** TODO: Add docs */
   getIdentDefiningNode(ident: string): NodeId | undefined {
-    const binding = set.first(this.bindings.identifierToBindingId.lookup(ident))
+    const binding = set.first(this.identifierToBindingId.lookup(ident))
     return this.getPatternExpressionNodeId(binding)
   }
 
@@ -265,12 +167,12 @@ export class GraphDb {
 
   /** TODO: Add docs */
   getOutputPortIdentifier(source: AstId | undefined): string | undefined {
-    return source ? this.bindings.bindings.get(source)?.identifier : undefined
+    return source ? this.bindings.get(source)?.identifier : undefined
   }
 
   /** TODO: Add docs */
   identifierUsed(ident: string): boolean {
-    return this.bindings.identifierToBindingId.hasKey(ident)
+    return this.identifierToBindingId.hasKey(ident)
   }
 
   /** TODO: Add docs */
@@ -342,7 +244,7 @@ export class GraphDb {
    * expression changes.
    */
   updateNodes(
-    functionAst_: Ast.Function,
+    functionAst_: Ast.FunctionDef,
     { watchEffect }: { watchEffect: (f: () => void) => WatchStopHandle },
   ) {
     const currentNodeIds = new Set<NodeId>()
@@ -350,7 +252,7 @@ export class GraphDb {
     const args = functionAst_.argumentDefinitions
     const update = (
       nodeId: NodeId,
-      ast: Ast.Ast,
+      ast: Ast.Expression | Ast.Statement,
       isInput: boolean,
       isOutput: boolean,
       argIndex: number | undefined,
@@ -383,7 +285,7 @@ export class GraphDb {
       update(nodeId, argPattern, true, false, index)
     })
     body.forEach((outerAst, index) => {
-      const nodeId = nodeIdFromOuterExpr(outerAst)
+      const nodeId = nodeIdFromOuterAst(outerAst)
       if (!nodeId) return
       const isLastInBlock = index === body.length - 1
       update(nodeId, outerAst, false, isLastInBlock, undefined)
@@ -400,12 +302,15 @@ export class GraphDb {
   /** Scan a node's content from its outer expression down to, but not including, its inner expression. */
   private updateNodeStructure(
     nodeId: NodeId,
-    ast: Ast.Ast,
+    ast: Ast.Statement | Ast.Expression,
     isOutput: boolean,
     isInput: boolean,
     argIndex?: number,
   ) {
-    const newNode = isInput ? inputNodeFromAst(ast, argIndex ?? 0) : nodeFromAst(ast, isOutput)
+    const newNode =
+      isInput ?
+        inputNodeFromAst(ast as Ast.Expression, argIndex ?? 0)
+      : nodeFromAst(ast as Ast.Statement, isOutput)
     if (!newNode) return
     const oldNode = this.nodeIdToNode.getUntracked(nodeId)
     if (oldNode == null) {
@@ -424,14 +329,13 @@ export class GraphDb {
     } else {
       const {
         type,
-        outerExpr,
+        outerAst,
         pattern,
         rootExpr,
         innerExpr,
         primarySubject,
         prefixes,
         conditionalPorts,
-        docs,
         argIndex,
       } = newNode
       const node = resumeReactivity(oldNode)
@@ -440,7 +344,7 @@ export class GraphDb {
       const updateAst = (field: NodeAstField) => {
         if (oldNode[field]?.id !== newNode[field]?.id) node[field] = newNode[field] as any
       }
-      const astFields: NodeAstField[] = ['outerExpr', 'pattern', 'rootExpr', 'innerExpr', 'docs']
+      const astFields: NodeAstField[] = ['outerAst', 'pattern', 'rootExpr', 'innerExpr']
       astFields.forEach(updateAst)
       if (oldNode.primarySubject !== primarySubject) node.primarySubject = primarySubject
       if (!recordEqual(oldNode.prefixes, prefixes)) node.prefixes = prefixes
@@ -448,34 +352,41 @@ export class GraphDb {
       // Ensure new fields can't be added to `NodeAstData` without this code being updated.
       const _allFieldsHandled = {
         type,
-        outerExpr,
+        outerAst,
         pattern,
         rootExpr,
         innerExpr,
         primarySubject,
         prefixes,
         conditionalPorts,
-        docs,
         argIndex,
       } satisfies NodeDataFromAst
     }
   }
 
   /** Deeply scan the function to perform alias-analysis. */
-  updateBindings(
-    functionAst_: Ast.Function,
-    rawFunction: RawAst.Tree.Function | undefined,
-    moduleCode: string,
-    getSpan: (id: AstId) => SourceRange | undefined,
-  ) {
-    this.bindings.readFunctionAst(functionAst_, rawFunction, moduleCode, getSpan)
+  updateBindings(func: Ast.FunctionDef, moduleSource: Pick<SourceDocument, 'text' | 'getSpan'>) {
+    const newBindings = analyzeBindings(func, moduleSource)
+    for (const id of this.bindings.keys()) {
+      if (!newBindings.has(id)) this.bindings.delete(id)
+    }
+    for (const [id, newInfo] of newBindings) {
+      const oldInfo = this.bindings.getUntracked(id)
+      if (oldInfo == null) {
+        this.bindings.set(id, newInfo)
+      } else {
+        const info = resumeReactivity(oldInfo)
+        if (oldInfo.identifier !== newInfo.identifier) info.identifier = newInfo.identifier
+        syncSetDiff(info.usages, oldInfo.usages, newInfo.usages)
+      }
+    }
   }
 
   /** TODO: Add docs */
   updateExternalIds(topLevel: Ast.Ast) {
     const idToExternalNew = new Map()
     const idFromExternalNew = new Map()
-    topLevel.visitRecursiveAst((ast) => {
+    topLevel.visitRecursive((ast) => {
       idToExternalNew.set(ast.id, ast.externalId)
       idFromExternalNew.set(ast.externalId, ast.id)
     })
@@ -540,14 +451,10 @@ export class GraphDb {
   /** TODO: Add docs */
   mockNode(binding: string, id: NodeId, code?: string): Node {
     const edit = MutableModule.Transient()
-    const pattern = Ast.parse(binding, edit)
-    const expression = Ast.parse(code ?? '0', edit)
-    const outerExpr = Ast.Assignment.concrete(
-      edit,
-      autospaced(pattern),
-      { node: Ast.Token.new('='), whitespace: ' ' },
-      { node: expression, whitespace: ' ' },
-    )
+    const ident = unwrap(tryIdentifier(binding))
+    const expression = Ast.parseExpression(code ?? '0', edit)!
+    const outerAst = Ast.Assignment.new(ident, expression, { edit })
+    const pattern = outerAst.pattern
 
     const node: Node = {
       type: 'component',
@@ -557,24 +464,23 @@ export class GraphDb {
       primarySubject: undefined,
       colorOverride: undefined,
       conditionalPorts: new Set(),
-      docs: undefined,
-      outerExpr,
+      outerAst,
       pattern,
-      rootExpr: Ast.parse(code ?? '0'),
-      innerExpr: Ast.parse(code ?? '0'),
+      rootExpr: expression,
+      innerExpr: expression,
       zIndex: this.highestZIndex,
       argIndex: undefined,
     }
     const bindingId = pattern.id
     this.nodeIdToNode.set(id, node)
-    this.bindings.bindings.set(bindingId, { identifier: binding, usages: new Set() })
+    this.bindings.set(bindingId, { identifier: binding, usages: new Set() })
     return node
   }
 }
 
 /** Source code data of the specific node. */
 interface NodeSource {
-  /** The outer AST of the node (see {@link NodeDataFromAst.outerExpr}). */
+  /** The outer AST of the node (see {@link NodeDataFromAst.outerAst}). */
   outerAst: Ast.Ast
   /**
    * Whether the node is `output` of the function or not. Mutually exclusive with `isInput`.
@@ -602,28 +508,37 @@ export function asNodeId(id: ExternalId | undefined): NodeId | undefined {
   return id != null ? (id as NodeId) : undefined
 }
 
-/** Given an expression at the top level of a block, return the `NodeId` for the expression. */
-export function nodeIdFromOuterExpr(outerExpr: Ast.Ast) {
-  const { root } = nodeRootExpr(outerExpr)
+/** Given the outermost AST for a node, returns its {@link NodeId}. */
+export function nodeIdFromOuterAst(outerAst: Ast.Statement | Ast.Expression) {
+  const { root } = nodeRootExpr(outerAst)
   return root && asNodeId(root.externalId)
 }
 
 export interface NodeDataFromAst {
   type: NodeType
-  /** The outer expression, usually an assignment expression (`a = b`). */
-  outerExpr: Ast.Ast
-  /** The left side of the assignment expression, if `outerExpr` is an assignment expression. */
-  pattern: Ast.Ast | undefined
   /**
-   * The value of the node. The right side of the assignment, if `outerExpr` is an assignment
-   * expression, else the entire `outerExpr`.
+   * The statement or top-level expression.
+   *
+   * If the function has a body block, the nodes derived from the block are statements:
+   * - Assignment expressions (`a = b`)
+   * - Expression-statements (unnamed nodes and output nodes)
+   * If the function has a single-line body, the corresponding node will be an expression.
+   *
+   * Nodes for the function's inputs have (pattern) expressions as their outer ASTs.
    */
-  rootExpr: Ast.Ast
+  outerAst: Ast.Statement | Ast.Expression
+  /** The left side of the assignment expression, if `outerAst` is an assignment expression. */
+  pattern: Ast.Expression | undefined
+  /**
+   * The value of the node. The right side of the assignment, if `outerAst` is an assignment
+   * expression, else the entire `outerAst`.
+   */
+  rootExpr: Ast.Expression
   /**
    * The expression displayed by the node. This is `rootExpr`, minus the prefixes, which are in
    * `prefixes`.
    */
-  innerExpr: Ast.Ast
+  innerExpr: Ast.Expression
   /**
     Prefixes that are present in `rootExpr` but omitted in `innerExpr` to ensure a clean output.
    */
@@ -632,8 +547,6 @@ export interface NodeDataFromAst {
   primarySubject: Ast.AstId | undefined
   /** Ports that are not targetable by default; they can be targeted while holding the modifier key. */
   conditionalPorts: Set<Ast.AstId>
-  /** An AST node containing the node's documentation comment. */
-  docs: Ast.Documented | undefined
   /** The index of the argument in the function's argument list, if the node is an input node. */
   argIndex: number | undefined
 }

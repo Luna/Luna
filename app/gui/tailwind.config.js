@@ -20,6 +20,11 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         // This should be named "regular".
         primary: 'rgb(var(--color-primary-rgb) / var(--color-primary-opacity))',
         invert: 'rgb(var(--color-invert-rgb) / var(--color-invert-opacity))',
+        background: 'rgb(var(--color-background-rgb) / var(--color-background-opacity))',
+        'background-hex': 'var(--color-background-hex)',
+
+        dashboard:
+          'rgb(var(--color-dashboard-background-rgb) / var(--color-dashboard-background-opacity))',
         accent: 'rgb(var(--color-accent-rgb) / 100%)',
         danger: 'rgb(var(--color-danger-rgb) / 100%)',
         'accent-dark': '#3e9152',
@@ -155,10 +160,6 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
 
         'members-name-column': 'var(--members-name-column-width)',
         'members-email-column': 'var(--members-email-column-width)',
-        'keyboard-shortcuts-icon-column': 'var(--keyboard-shortcuts-icon-column-width)',
-        'keyboard-shortcuts-name-column': 'var(--keyboard-shortcuts-name-column-width)',
-        'keyboard-shortcuts-description-column':
-          'var(--keyboard-shortcuts-description-column-width)',
         'drive-name-column': 'var(--drive-name-column-width)',
         'drive-modified-column': 'var(--drive-modified-column-width)',
         'drive-shared-with-column': 'var(--drive-shared-with-column-width)',
@@ -216,15 +217,8 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         sample: 'var(--sample-gap)',
         samples: 'var(--samples-gap)',
         settings: 'var(--settings-gap)',
-        'settings-header': 'var(--settings-header-gap)',
-        'settings-section': 'var(--settings-section-gap)',
-        'settings-subsection': 'var(--settings-subsection-gap)',
-        'settings-section-header': 'var(--settings-section-header-gap)',
         'settings-entry': 'var(--settings-entry-gap)',
-        'settings-sidebar': 'var(--settings-sidebar-gap)',
         'new-empty-project': 'var(--new-empty-project-gap)',
-        modifiers: 'var(--modifiers-gap)',
-        'modifiers-macos': 'var(--modifiers-macos-gap)',
         'side-panel': 'var(--side-panel-gap)',
         'side-panel-section': 'var(--side-panel-section-gap)',
         'asset-search-bar': 'var(--asset-search-bar-gap)',
@@ -241,7 +235,6 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         'context-menus': 'var(--context-menus-gap)',
         'asset-panel': 'var(--asset-panel-gap)',
         'search-suggestions': 'var(--search-suggestions-gap)',
-        'keyboard-shortcuts-button': 'var(--keyboard-shortcuts-button-gap)',
         'chat-buttons': 'var(--chat-buttons-gap)',
       },
       padding: {
@@ -555,20 +548,32 @@ inset 0 -36px 51px -51px #00000014`,
 
           '.rounded-rows': {
             [`:where(
-              & > tbody > tr:nth-child(odd of .rounded-rows-child) > td:not(.rounded-rows-skip-level),
-              & > tbody > tr:nth-child(odd of .rounded-rows-child) > td.rounded-rows-skip-level > *
+              & :nth-child(odd of .rounded-rows-child) > .rounded-rows-have-level
             )`]: {
               backgroundColor: `rgb(0 0 0 / 3%)`,
             },
             [`:where(
-              & > tbody > tr.rounded-rows-child.selected > td:not(.rounded-rows-skip-level),
-              & > tbody > tr.rounded-rows-child.selected > td.rounded-rows-skip-level > *
+              & :nth-child(odd of .rounded-rows-child) > .rounded-rows-skip-level > .rounded-rows-child
+            )`]: {
+              backgroundColor: `rgb(0 0 0 / 3%)`,
+            },
+            [`:where(
+              & .selected > .rounded-rows-have-level
             )`]: {
               backgroundColor: 'rgb(255 255 255 / 90%)',
             },
             [`:where(
-              & > tbody > tr.rounded-rows-child[data-drop-target] > td:not(.rounded-rows-skip-level),
-              & > tbody > tr.rounded-rows-child[data-drop-target] > td.rounded-rows-skip-level > *
+              & .selected > .rounded-rows-skip-level > .rounded-rows-child
+            )`]: {
+              backgroundColor: 'rgb(255 255 255 / 90%)',
+            },
+            [`:where(
+              & [data-drop-target]:nth-child(odd of .rounded-rows-child) > .rounded-rows-have-level
+            )`]: {
+              backgroundColor: 'rgb(0 0 0 / 8%)',
+            },
+            [`:where(
+              & [data-drop-target]:nth-child(odd of .rounded-rows-child) > .rounded-rows-skip-level > .rounded-rows-child
             )`]: {
               backgroundColor: 'rgb(0 0 0 / 8%)',
             },

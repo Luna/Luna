@@ -18,7 +18,7 @@ import project.Runtime.Ref.Ref
 from project.Data.Boolean import Boolean, False, True
 from project.Data.Range.Extensions import all
 from project.Errors.Common import Unsupported_Argument_Types
-from project.Metadata import Choice, Widget
+from project.Metadata import Choice, Display, Widget
 
 polyglot java import java.lang.NullPointerException
 polyglot java import org.enso.base.CompareException
@@ -133,11 +133,10 @@ type Statistic
 
     ## PRIVATE
        Bulk widget for Statistic.
-    bulk_widget : Widget
-    bulk_widget =
+    bulk_widget display:Display=..When_Modified -> Widget =
         options = ["Count", "Minimum", "Maximum", "Sum", "Product", "Mean", "Variance", "Standard_Deviation", "Skew", "Kurtosis", "Covariance", "Pearson", "Spearman", "R_Squared"].map n-> Choice.Option n ".."+n
         items = Widget.Single_Choice options
-        Widget.Vector_Editor items "..Count"
+        Widget.Vector_Editor items "..Count" display=display
 
     ## PRIVATE
        Gets the order needed to compute a statistic for a moment based statistic.
@@ -190,7 +189,7 @@ type Statistic
     compute_bulk : Vector -> Vector Statistic -> Vector Any
     compute_bulk data statistics:Vector=[Statistic.Count, Statistic.Sum] =
         resolved_stats = statistics.map (r-> r:Statistic)
-        moment_order = resolved_stats.map on_problems=No_Wrap .order
+        moment_order = resolved_stats.map on_problems=No_Wrap.Value .order
         has_min_max = resolved_stats.any (s-> s == Statistic.Minimum || s == Statistic.Maximum)
         has_product = resolved_stats.any (s-> s == Statistic.Product)
         max_moment_order = moment_order.filter (v-> v != Nothing) . fold 0 .max
@@ -202,7 +201,7 @@ type Statistic
             Error.throw (Illegal_Argument.Error ("Can only compute " + stat.to_text + " on numerical data sets."))
 
         if max_moment_order > 0 && counter.moments.is_nothing then report_error resolved_stats else
-            resolved_stats.map on_problems=No_Wrap statistic-> case statistic of
+            resolved_stats.map on_problems=No_Wrap.Value statistic-> case statistic of
                 Statistic.Covariance series -> check_if_empty counter.count <| calculate_correlation_statistics data series . covariance
                 Statistic.Pearson series -> check_if_empty counter.count <| calculate_correlation_statistics data series . pearsonCorrelation
                 Statistic.R_Squared series -> check_if_empty counter.count <| calculate_correlation_statistics data series . rSquared
@@ -229,7 +228,7 @@ type Statistic
     running_bulk data statistics=[Statistic.Count, Statistic.Sum] =
         resolved_stats = statistics.map (r-> r:Statistic)
         check_running_support resolved_stats <|
-            moment_order = resolved_stats.map on_problems=No_Wrap .order
+            moment_order = resolved_stats.map on_problems=No_Wrap.Value .order
             has_min_max = resolved_stats.any (s-> s == Statistic.Minimum || s == Statistic.Maximum)
             has_product = resolved_stats.any (s-> s == Statistic.Product)
             max_moment_order = moment_order.filter (v-> v != Nothing) . fold 0 .max
@@ -241,7 +240,7 @@ type Statistic
                     data.fold counter current->value->
                         result = compute_fold current value
 
-                        row = Panic.rethrow_wrapped_if_error <| resolved_stats.map on_problems=No_Wrap s-> case s of
+                        row = Panic.rethrow_wrapped_if_error <| resolved_stats.map on_problems=No_Wrap.Value s-> case s of
                             Statistic.Maximum -> if result.count == 0 then Nothing else result.maximum
                             Statistic.Minimum -> if result.count == 0 then Nothing else result.minimum
                             _ -> result.compute s

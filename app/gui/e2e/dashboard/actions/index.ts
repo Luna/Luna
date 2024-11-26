@@ -444,7 +444,7 @@ export namespace settings {
 
     /** Find a "name" input in the "user account" settings section. */
     export function locateNameInput(page: test.Page) {
-      return locate(page).getByLabel('Name')
+      return locate(page).getByLabel(TEXT.userNameSettingsInput).getByRole('textbox')
     }
   }
 
@@ -481,9 +481,9 @@ export namespace settings {
         .getByRole('textbox')
     }
 
-    /** Find a "change" button. */
-    export function locateChangeButton(page: test.Page) {
-      return locate(page).getByRole('button', { name: 'Change' }).getByText('Change')
+    /** Find a "save" button. */
+    export function locateSaveButton(page: test.Page) {
+      return locate(page).getByRole('button', { name: 'Save' }).getByText('Save')
     }
   }
 
@@ -524,22 +524,22 @@ export namespace settings {
 
     /** Find a "name" input in the "organization" settings section. */
     export function locateNameInput(page: test.Page) {
-      return locate(page).getByLabel('Organization display name')
+      return locate(page).getByLabel(TEXT.organizationNameSettingsInput).getByRole('textbox')
     }
 
     /** Find an "email" input in the "organization" settings section. */
     export function locateEmailInput(page: test.Page) {
-      return locate(page).getByLabel('Email')
+      return locate(page).getByLabel(TEXT.organizationEmailSettingsInput).getByRole('textbox')
     }
 
     /** Find an "website" input in the "organization" settings section. */
     export function locateWebsiteInput(page: test.Page) {
-      return locate(page).getByLabel('Website')
+      return locate(page).getByLabel(TEXT.organizationWebsiteSettingsInput).getByRole('textbox')
     }
 
     /** Find an "location" input in the "organization" settings section. */
     export function locateLocationInput(page: test.Page) {
-      return locate(page).getByLabel('Location')
+      return locate(page).getByLabel(TEXT.organizationLocationSettingsInput).getByRole('textbox')
     }
   }
 
@@ -636,46 +636,6 @@ export async function expectNotOpacity0(locator: test.Locator) {
   })
 }
 
-/** A test assertion to confirm that the element is onscreen. */
-export async function expectOnScreen(locator: test.Locator) {
-  await test.test.step('Expect to be onscreen', async () => {
-    await test
-      .expect(async () => {
-        const pageBounds = await locator.evaluate(() => document.body.getBoundingClientRect())
-        const bounds = await locator.evaluate((el) => el.getBoundingClientRect())
-        test
-          .expect(
-            bounds.left < pageBounds.right &&
-              bounds.right > pageBounds.left &&
-              bounds.top < pageBounds.bottom &&
-              bounds.bottom > pageBounds.top,
-          )
-          .toBe(true)
-      })
-      .toPass()
-  })
-}
-
-/** A test assertion to confirm that the element is onscreen. */
-export async function expectNotOnScreen(locator: test.Locator) {
-  await test.test.step('Expect to not be onscreen', async () => {
-    await test
-      .expect(async () => {
-        const pageBounds = await locator.evaluate(() => document.body.getBoundingClientRect())
-        const bounds = await locator.evaluate((el) => el.getBoundingClientRect())
-        test
-          .expect(
-            bounds.left >= pageBounds.right ||
-              bounds.right <= pageBounds.left ||
-              bounds.top >= pageBounds.bottom ||
-              bounds.bottom <= pageBounds.top,
-          )
-          .toBe(true)
-      })
-      .toPass()
-  })
-}
-
 // ==========================
 // === Keyboard utilities ===
 // ==========================
@@ -723,10 +683,18 @@ export async function login(
   first = true,
 ) {
   await test.test.step('Login', async () => {
+    const url = new URL(page.url())
+
+    if (url.pathname !== '/login') {
+      return
+    }
+
     await locateEmailInput(page).fill(email)
     await locatePasswordInput(page).fill(password)
     await locateLoginButton(page).click()
+
     await test.expect(page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
+
     if (first) {
       await passAgreementsDialog({ page, setupAPI })
       await test.expect(page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
@@ -808,22 +776,77 @@ export const mockApi = apiModule.mockApi
 
 /** Set up all mocks, without logging in. */
 export function mockAll({ page, setupAPI }: MockParams) {
-  return new LoginPageActions(page).step('Execute all mocks', async () => {
-    await mockApi({ page, setupAPI })
-    await mockDate({ page, setupAPI })
+  const actions = new LoginPageActions(page)
+
+  actions.step('Execute all mocks', async () => {
+    await Promise.all([
+      mockApi({ page, setupAPI }),
+      mockDate({ page, setupAPI }),
+      mockAllAnimations({ page }),
+      mockUnneededUrls({ page }),
+    ])
+
     await page.goto('/')
   })
+
+  return actions
 }
 
 /** Set up all mocks, and log in with dummy credentials. */
-export function mockAllAndLogin({ page, setupAPI }: MockParams) {
-  return new DrivePageActions(page)
-    .step('Execute all mocks', async () => {
-      await mockApi({ page, setupAPI })
-      await mockDate({ page, setupAPI })
-      await page.goto('/')
-    })
-    .do((thePage) => login({ page: thePage, setupAPI }))
+export function mockAllAndLogin({ page, setupAPI }: MockParams): DrivePageActions {
+  mockAll({ page, setupAPI })
+
+  const actions = new DrivePageActions(page)
+
+  actions.step('Login', async () => {
+    await login({ page, setupAPI })
+  })
+
+  return actions
+}
+
+/**
+ * Mock all animations.
+ */
+export async function mockAllAnimations({ page }: MockParams) {
+  await page.addInitScript({
+    content: `
+      window.DISABLE_ANIMATIONS = true;
+      document.addEventListener('DOMContentLoaded', () => {
+        document.documentElement.classList.add('disable-animations')
+      })
+    `,
+  })
+}
+
+/**
+ * Mock unneeded URLs.
+ */
+export async function mockUnneededUrls({ page }: MockParams) {
+  const EULA_JSON = JSON.stringify(apiModule.EULA_JSON)
+  const PRIVACY_JSON = JSON.stringify(apiModule.PRIVACY_JSON)
+
+  return Promise.all([
+    page.route('https://*.ingest.sentry.io/api/*/envelope/*', async (route) => {
+      await route.fulfill()
+    }),
+
+    page.route('https://api.mapbox.com/mapbox-gl-js/*/mapbox-gl.css', async (route) => {
+      await route.fulfill({ contentType: 'text/css', body: '' })
+    }),
+
+    page.route('https://ensoanalytics.com/eula.json', async (route) => {
+      await route.fulfill({ contentType: 'text/json', body: EULA_JSON })
+    }),
+
+    page.route('https://ensoanalytics.com/privacy.json', async (route) => {
+      await route.fulfill({ contentType: 'text/json', body: PRIVACY_JSON })
+    }),
+
+    page.route('https://fonts.googleapis.com/css2*', async (route) => {
+      await route.fulfill({ contentType: 'text/css', body: '' })
+    }),
+  ])
 }
 
 /**

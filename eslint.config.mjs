@@ -233,7 +233,9 @@ export default [
         },
       ],
       '@typescript-eslint/no-namespace': 'off',
-      '@typescript-eslint/no-empty-object-type': ['error'],
+      // Empty interfaces have valid uses; e.g. although an empty interface extending a class is semantically equivalent
+      // to a type alias, it is not resolved by IDEs to the base type (which may be internal).
+      '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
       'no-unused-labels': 'off',
       // Taken care of by prettier
       'vue/max-attributes-per-line': 'off',
@@ -381,7 +383,7 @@ export default [
       'react/prop-types': 'off',
       'react/self-closing-comp': 'error',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll' }],
+      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll|useLazyMemoHooks' }],
       'react/jsx-pascal-case': ['error', { allowNamespace: true }],
 
       // We use warnings instead of errors because we want to gradually migrate the codebase to the new compiler.
@@ -552,6 +554,18 @@ export default [
       ],
       // This rule does not work with TypeScript, and TypeScript already does this.
       'no-undef': 'off',
+    },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/naming-convention': 'off',
     },
   },
 ]

@@ -35,16 +35,13 @@ import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 
-import { useUploadFileWithToastMutation } from '#/hooks/backendHooks'
-import {
-  usePasteData,
-  useSetAssetPanelProps,
-  useSetIsAssetPanelTemporarilyVisible,
-} from '#/providers/DriveProvider'
+import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
+import { usePasteData } from '#/providers/DriveProvider'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
+import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
 
 // ========================
 // === AssetContextMenu ===
@@ -105,6 +102,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
 
+  const newProject = useNewProject(backend, category)
+
   const systemApi = window.systemApi
   const ownsThisAsset = !isCloud || self?.permission === permissions.PermissionAction.own
   const managesThisAsset = ownsThisAsset || self?.permission === permissions.PermissionAction.admin
@@ -145,11 +144,17 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         }
       })
 
-  const { data } = reactQuery.useQuery(
-    asset.type === backendModule.AssetType.project ?
-      projectHooks.createGetProjectDetailsQuery.createPassiveListener(asset.id)
-    : { queryKey: ['__IGNORED__'] },
-  )
+  const { data } = reactQuery.useQuery({
+    ...projectHooks.createGetProjectDetailsQuery({
+      // This is safe because we disable the query when the asset is not a project.
+      // see `enabled` property below.
+      // eslint-disable-next-line no-restricted-syntax
+      assetId: asset.id as backendModule.ProjectId,
+      parentId: asset.parentId,
+      backend,
+    }),
+    enabled: asset.type === backendModule.AssetType.project,
+  })
 
   const isRunningProject =
     (asset.type === backendModule.AssetType.project &&
@@ -219,14 +224,11 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               hidden={hidden}
               action="useInNewProject"
               doAction={() => {
-                dispatchAssetListEvent({
-                  type: AssetListEventType.newProject,
-                  parentId: asset.parentId,
-                  parentKey: asset.parentId,
-                  templateId: null,
-                  datalinkId: asset.id,
-                  preferredName: asset.title,
-                })
+                void newProject(
+                  { templateName: asset.title, datalinkId: asset.id },
+                  asset.parentId,
+                  path,
+                )
               }}
             />
           )}
@@ -507,9 +509,11 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
           <GlobalContextMenu
             hidden={hidden}
             backend={backend}
+            category={category}
             rootDirectoryId={rootDirectoryId}
             directoryKey={asset.id}
             directoryId={asset.id}
+            path={path}
             doPaste={doPaste}
           />
         )}

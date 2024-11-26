@@ -1,10 +1,11 @@
-import { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
-import { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
-import { ToolbarItem } from '@/components/visualizations/toolbar'
+import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
+import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
+import type { ToolbarItem } from '@/components/visualizations/toolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
-import { ToValue } from '@/util/reactivity'
-import { computed, ComputedRef, Ref, toValue } from 'vue'
+import type { ToValue } from '@/util/reactivity'
+import { computed, type ComputedRef, type Ref, toValue } from 'vue'
+import { Expression, MutableExpression } from 'ydoc-shared/ast'
 
 type SortDirection = 'asc' | 'desc'
 export type SortModel = {
@@ -24,6 +25,9 @@ export interface SortFilterNodesButtonOptions {
   isDisabled: ToValue<boolean>
   isFilterSortNodeEnabled: ToValue<boolean>
   createNodes: (...options: NodeCreationOptions[]) => void
+  getColumnValueToEnso: (
+    columnName: string,
+  ) => (columnValue: string, module: Ast.MutableModule) => Ast.Owned<Ast.MutableAst>
 }
 
 export interface FormatMenuOptions {
@@ -38,8 +42,9 @@ function useSortFilterNodesButton({
   isDisabled,
   isFilterSortNodeEnabled,
   createNodes,
+  getColumnValueToEnso,
 }: SortFilterNodesButtonOptions): ComputedRef<ToolbarItem | undefined> {
-  const sortPatternPattern = computed(() => Pattern.parse('(..Name __ __ )'))
+  const sortPatternPattern = computed(() => Pattern.parseExpression('(..Name __ __ )')!)
 
   const sortDirection = computed(() => ({
     asc: '..Ascending',
@@ -53,36 +58,47 @@ function useSortFilterNodesButton({
       .map((sort) =>
         sortPatternPattern.value.instantiateCopied([
           Ast.TextLiteral.new(sort.columnName),
-          Ast.parse(sortDirection.value[sort.sortDirection as SortDirection]),
+          Ast.parseExpression(sortDirection.value[sort.sortDirection as SortDirection])!,
         ]),
       )
     return Ast.Vector.new(module, columnSortExpressions)
   }
 
-  const filterPattern = computed(() => Pattern.parse('__ (__ __)'))
+  const filterPattern = computed(() => Pattern.parseExpression('__ (__ __)')!)
 
   function makeFilterPattern(module: Ast.MutableModule, columnName: string, items: string[]) {
     if (
       (items?.length === 1 && items.indexOf('true') != -1) ||
       (items?.length === 1 && items.indexOf('false') != -1)
     ) {
-      const boolToInclude = items.indexOf('false') != -1 ? Ast.parse('False') : Ast.parse('True')
+      const boolToInclude = Ast.Ident.tryParse(items.indexOf('false') != -1 ? 'False' : 'True')!
       return filterPattern.value.instantiateCopied([
         Ast.TextLiteral.new(columnName),
-        Ast.parse('..Equal'),
+        Ast.parseExpression('..Equal')!,
         boolToInclude,
       ])
     }
-    const itemList = items.map((i) => Ast.TextLiteral.new(i))
+    const valueFormatter = getColumnValueToEnso(columnName)
+    if (items?.length === 1) {
+      const item = items[0]
+      if (item) {
+        return filterPattern.value.instantiateCopied([
+          Ast.TextLiteral.new(columnName),
+          Ast.parseExpression('..Equal')!,
+          valueFormatter(item, module) as Expression | MutableExpression,
+        ])
+      }
+    }
+    const itemList = items.map((i) => valueFormatter(i, module))
     return filterPattern.value.instantiateCopied([
       Ast.TextLiteral.new(columnName),
-      Ast.parse('..Is_In'),
+      Ast.parseExpression('..Is_In')!,
       Ast.Vector.new(module, itemList),
     ])
   }
 
   function getAstPatternSort() {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('sort')!),
         makeSortPattern(ast.module),
@@ -91,7 +107,7 @@ function useSortFilterNodesButton({
   }
 
   function getAstPatternFilter(columnName: string, items: string[]) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.App.positional(
         Ast.PropertyAccess.new(ast.module, ast, Ast.identifier('filter')!),
         makeFilterPattern(ast.module, columnName, items),
@@ -100,7 +116,7 @@ function useSortFilterNodesButton({
   }
 
   function getAstPatternFilterAndSort(columnName: string, items: string[]) {
-    return Pattern.new((ast) =>
+    return Pattern.new<Ast.Expression>((ast) =>
       Ast.OprApp.new(
         ast.module,
         Ast.App.positional(
@@ -122,7 +138,7 @@ function useSortFilterNodesButton({
     const sortModelValue = toValue(sortModel)
     if (Object.keys(filterModelValue).length) {
       for (const [columnName, columnFilter] of Object.entries(filterModelValue)) {
-        const items = columnFilter.values.map((item) => `${item}`)
+        const items = columnFilter.values
         const filterPatterns =
           sortModelValue.length ?
             getAstPatternFilterAndSort(columnName, items)

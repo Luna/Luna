@@ -10,7 +10,17 @@ import { defineConfig } from '@playwright/test'
 import net from 'net'
 
 const DEBUG = process.env.DEBUG_E2E === 'true'
-const TIMEOUT_MS = DEBUG ? 100_000_000 : 60_000
+const isCI = process.env.CI === 'true'
+const isProd = process.env.PROD === 'true'
+
+const TIMEOUT_MS =
+  DEBUG ? 100_000_000
+  : isCI ? 25_000
+  : 15_000
+
+// We tend to use less CPU on CI to reduce the number of failures due to timeouts.
+// Instead of using workers on CI, we use shards to run tests in parallel.
+const WORKERS = isCI ? 2 : '35%'
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
@@ -52,12 +62,14 @@ process.env.PLAYWRIGHT_PORT_PV = `${ports.projectView}`
 
 export default defineConfig({
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  repeatEach: process.env.CI ? 3 : 1,
-  reporter: 'html',
+  ...(WORKERS ? { workers: WORKERS } : {}),
+  forbidOnly: isCI,
+  reporter: isCI ? ([['list'], ['blob']] as const) : ([['list']] as const),
+  retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
     actionTimeout: 5000,
+
     trace: 'retain-on-failure',
     ...(DEBUG ?
       {}
@@ -86,9 +98,36 @@ export default defineConfig({
       }),
   },
   projects: [
+    // Setup project
+    {
+      name: 'Setup Dashboard',
+      testDir: './e2e/dashboard',
+      testMatch: /.*\.setup\.ts/,
+      timeout: TIMEOUT_MS,
+      use: {
+        baseURL: `http://localhost:${ports.dashboard}`,
+        actionTimeout: TIMEOUT_MS,
+      },
+    },
     {
       name: 'Dashboard',
       testDir: './e2e/dashboard',
+      testMatch: /.*\.spec\.ts/,
+      dependencies: ['Setup Dashboard'],
+      expect: {
+        toHaveScreenshot: { threshold: 0 },
+        timeout: TIMEOUT_MS,
+      },
+      timeout: TIMEOUT_MS,
+      use: {
+        baseURL: `http://localhost:${ports.dashboard}`,
+        actionTimeout: TIMEOUT_MS,
+        storageState: './playwright/.auth/user.json',
+      },
+    },
+    {
+      name: 'Auth',
+      testDir: './e2e/dashboard/auth',
       expect: {
         toHaveScreenshot: { threshold: 0 },
         timeout: TIMEOUT_MS,
@@ -120,11 +159,9 @@ export default defineConfig({
   ],
   webServer: [
     {
-      env: {
-        E2E: 'true',
-      },
+      env: { E2E: 'true' },
       command:
-        process.env.CI || process.env.PROD ?
+        isCI || isProd ?
           `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
         : `corepack pnpm exec vite dev --port ${ports.projectView}`,
       // Build from scratch apparently can take a while on CI machines.
@@ -135,7 +172,7 @@ export default defineConfig({
     },
     {
       command:
-        process.env.CI || process.env.PROD ?
+        isCI || isProd ?
           `corepack pnpm exec vite -c vite.test.config.ts build && vite -c vite.test.config.ts preview --port ${ports.dashboard} --strictPort`
         : `corepack pnpm exec vite -c vite.test.config.ts --port ${ports.dashboard}`,
       timeout: 240 * 1000,
