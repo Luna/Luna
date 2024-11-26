@@ -643,7 +643,7 @@ const getColumnValueToEnso = (columnName: string) => {
     return createDateTimePattern('(Time_Of_Day.new __ __ __ __ __ __)', 6)
   }
   if (columnType === 'Date_Time') {
-    return (item: string) => Ast.parseExpression(`(Date_Time.parse '${item}')`)
+    return (item: string) => Ast.parseExpression(`(Date_Time.parse '${item}')`)!
   }
   return (item: string) => Ast.TextLiteral.new(item)
 }
