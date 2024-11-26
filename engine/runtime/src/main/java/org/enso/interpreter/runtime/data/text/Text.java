@@ -2,7 +2,6 @@ package org.enso.interpreter.runtime.data.text;
 
 import com.ibm.icu.text.Normalizer2;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -15,7 +14,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.node.expression.builtin.text.util.ToJavaStringNode;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -222,16 +220,6 @@ public final class Text extends EnsoObject {
   @ExportMessage
   boolean hasMetaObject() {
     return true;
-  }
-
-  @ExportMessage
-  boolean hasLanguage() {
-    return true;
-  }
-
-  @ExportMessage
-  Class<? extends TruffleLanguage<?>> getLanguage() {
-    return EnsoLanguage.class;
   }
 
   private void setContents(String contents) {

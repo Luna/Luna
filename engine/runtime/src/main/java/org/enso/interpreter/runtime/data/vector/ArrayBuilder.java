@@ -1,7 +1,6 @@
 package org.enso.interpreter.runtime.data.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -12,7 +11,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.Arrays;
-import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.warning.WarningsLibrary;
 
@@ -243,16 +241,6 @@ final class ArrayBuilder extends EnsoObject {
   @Override
   public String toDisplayString(boolean ignore) {
     return "Array_Builder";
-  }
-
-  @ExportMessage
-  boolean hasLanguage() {
-    return true;
-  }
-
-  @ExportMessage
-  Class<? extends TruffleLanguage<?>> getLanguage() {
-    return EnsoLanguage.class;
   }
 
   Object asVector(boolean mustBeExact) {
