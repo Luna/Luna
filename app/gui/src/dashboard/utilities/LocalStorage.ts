@@ -1,5 +1,6 @@
 /** @file A LocalStorage data manager. */
 import invariant from 'tiny-invariant'
+import type * as z from 'zod'
 
 import { PRODUCT_NAME } from 'enso-common'
 import { IS_DEV_MODE } from 'enso-common/src/detect'
@@ -22,6 +23,7 @@ function isSourceChanged(key: string) {
 /** Metadata describing runtime behavior associated with a local storage key. */
 export interface LocalStorageKeyMetadata {
   readonly isUserSpecific?: boolean
+  readonly schema: z.ZodType
 }
 
 /** A LocalStorage data manager. */
@@ -30,13 +32,14 @@ export class LocalStorage {
   private static instance: LocalStorage | null = null
   localStorageKey = PRODUCT_NAME.toLowerCase()
   protected values: Record<string, unknown>
+  protected validatedKeys = new Set<string>()
   private readonly eventTarget = new EventTarget()
 
   /** Create a {@link LocalStorage}. */
   private constructor() {
-    const value: unknown = JSON.parse(localStorage.getItem(this.localStorageKey) ?? '{}')
+    const values: unknown = JSON.parse(localStorage.getItem(this.localStorageKey) ?? '{}')
     // eslint-disable-next-line no-restricted-syntax
-    this.values = typeof value === 'object' ? ((value ?? {}) as typeof this.values) : {}
+    this.values = typeof values === 'object' ? ((values ?? {}) as typeof this.values) : {}
   }
 
   /** Get the singleton instance of {@link LocalStorage}. */
@@ -65,6 +68,23 @@ export class LocalStorage {
 
   /** Retrieve an entry from the stored data. */
   get(key: string) {
+    if (!this.validatedKeys.has(key)) {
+      this.validatedKeys.add(key)
+      const metadata = LocalStorage.keyMetadata[key]
+      const value = this.values[key]
+      if (key in this.values && metadata) {
+        const parsed = metadata.schema.safeParse(value)
+        if (!parsed.success) {
+          // eslint-disable-next-line no-restricted-properties
+          console.warn(`Value for key '${key}' does not match schema:`, value)
+          // eslint-disable-next-line no-restricted-properties
+          console.warn('Errors:', parsed.error)
+          // The key being deleted is one of a statically known set of keys.
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete this.values[key]
+        }
+      }
+    }
     return this.values[key]
   }
 

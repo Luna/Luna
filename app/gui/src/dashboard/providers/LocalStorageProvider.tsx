@@ -4,7 +4,6 @@ import {
   type PropsWithChildren,
   type SetStateAction,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react'
@@ -45,7 +44,7 @@ export function useLocalStorage() {
 
 /** Options for {@link defineLocalStorageKey}. */
 export interface DefineLocalStorageKeyOptions<Schema extends z.ZodSchema>
-  extends LocalStorageKeyMetadata {
+  extends Omit<LocalStorageKeyMetadata, 'schema'> {
   readonly schema: (zod: typeof z) => Schema
 }
 
@@ -58,12 +57,7 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
   type Value = NonFunction & z.infer<Schema>
 
   const { schema: makeSchema, ...metadata } = options
-  const schema = makeSchema(z)
-  LocalStorage.defineKey(key, metadata)
-
-  if ('error' in schema.safeParse(LocalStorage.getInstance().get(key))) {
-    LocalStorage.getInstance().delete(key)
-  }
+  LocalStorage.defineKey(key, { ...metadata, schema: makeSchema(z) })
 
   const getKey = (localStorage: LocalStorage = LocalStorage.getInstance()) => {
     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-unsafe-return
@@ -80,12 +74,6 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
 
   const use = () => {
     const { localStorage } = useLocalStorage()
-
-    useEffect(() => {
-      if ('error' in schema.safeParse(localStorage.get(key))) {
-        localStorage.delete(key)
-      }
-    }, [localStorage])
 
     // The return type is not `any`, this is a bug in ESLint.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
