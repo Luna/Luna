@@ -3,9 +3,7 @@ package org.enso.interpreter.runtime.data.atom;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import org.enso.interpreter.EnsoLanguage;
-import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.scope.ModuleScope;
 
@@ -37,14 +35,8 @@ final class GetFieldNode extends GetFieldBaseNode {
    */
   public Object execute(VirtualFrame frame) {
     // this is safe, as only Atoms will ever get here through method dispatch.
-    var obj = Function.ArgumentsHelper.getPositionalArguments(frame.getArguments())[0];
-    if (obj instanceof Atom atom) {
-      return structs.getField(atom, index);
-    } else if (obj instanceof EnsoMultiValue multi) {
-      return structs.getField(multi, index);
-    } else {
-      throw EnsoContext.get(this).raiseAssertionPanic(this, null, null);
-    }
+    Atom atom = (Atom) Function.ArgumentsHelper.getPositionalArguments(frame.getArguments())[0];
+    return structs.getField(atom, index);
   }
 
   @Override
