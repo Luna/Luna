@@ -128,13 +128,13 @@ export function getProjectExecutionRepetitionsForDateRange(
     return EMPTY_ARRAY
   }
   const firstDate = firstProjectExecutionOnOrAfter(projectExecution, startDate)
-  if (firstDate > endDate) {
+  if (firstDate >= endDate) {
     return EMPTY_ARRAY
   }
   const repetitions: Date[] = [firstDate]
   let currentDate = firstDate
   currentDate = nextProjectExecutionDate(projectExecution, currentDate)
-  while (currentDate <= endDate) {
+  while (currentDate < endDate) {
     repetitions.push(currentDate)
     currentDate = nextProjectExecutionDate(projectExecution, currentDate)
   }
