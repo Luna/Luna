@@ -4,6 +4,18 @@ import Standard.Base.Errors.Common.Type_Error
 
 import project.Data.Complex.Complex
 
+type A
+type B
+    B v
+type C
+    C v
+
+B.from (that:A) = B.B that
+C.from (that:B) = C.C that
+
+type X
+X.from (_:A) = X
+
 add_specs suite_builder =
     suite_builder.group "Complex Multi Value" group_builder->
         group_builder.specify "Cannot convert to Float if it has imaginary part" <|
@@ -13,6 +25,48 @@ add_specs suite_builder =
             c = Complex.new 1.5 0.0
             (c:Complex).re . should_equal 1.5
             (c:Float) . should_equal 1.5
+
+    suite_builder.group "Chain Multi Value" group_builder->
+        to_b_to_c a =
+            b = a : B
+            c = b : C
+            c
+
+        group_builder.specify "Multiple conversions of A work" <|
+            a = A
+            a_text = to_b_to_c a
+            a_text . to_text . should_equal "(C (B A))"
+
+        group_builder.specify "Multiple conversions of A & X work" <|
+            ax = A:A&X
+            a_text = to_b_to_c ax
+            a_text . to_text . should_equal "(C (B A & X))"
+
+        group_builder.specify "Multiple conversions of A & X work" <|
+            xa = A:X&A
+            a_text = to_b_to_c xa
+            a_text . to_text . should_equal "(C (B A & X))"
+
+        group_builder.specify "Multiple conversions of (A & X : A) work" <|
+            ax = A:A&X
+            a = ax : A
+            a_text = to_b_to_c a
+            a_text . to_text . should_equal "(C (B A & X))"
+
+        group_builder.specify "Multiple conversions of X fail" <|
+            x = X
+
+            # has to fail as X cannot be converted to B in to_b_to_c
+            Test.expect_panic Type_Error <|
+                to_b_to_c x
+
+        group_builder.specify "Multiple conversions of (A & X : X) work" <|
+            ax = A:A&X
+            x = ax : X
+            # should it fail? X cannot be converted to B, but there is "extra"
+            # A in the x and allows the to_b_to_c conversion to succeed
+            a_text = to_b_to_c x
+            a_text . to_text . should_equal "(C (B A & X))"
 
 main filter=Nothing =
     suite = Test.build suite_builder->
