@@ -73,6 +73,17 @@ trait CompilerRunner {
         newIr
       })
     }
+
+    def runPasses(
+      passManager: PassManager,
+      passGroup: PassGroup,
+      moduleContext: ModuleContext
+    ): Module = {
+      val runtimeMod = runtime.Module.fromCompilerModule(moduleContext.module)
+      ModuleTestUtils.unsafeSetIr(runtimeMod, ir)
+      val newIr = passManager.runPassesOnModule(ir, moduleContext, passGroup)
+      newIr
+    }
   }
 
   /** Wrapper for the implicit method. Callable from Java.
