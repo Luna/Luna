@@ -7,6 +7,7 @@ import {
 import { readSyncMessage, writeSyncStep1, writeUpdate } from 'y-protocols/sync'
 import * as Y from 'yjs'
 
+import createDebug from 'debug'
 import WebSocket from 'isomorphic-ws'
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
@@ -25,6 +26,8 @@ interface AwarenessUpdate {
 }
 
 type ConnectionId = YjsConnection | string
+
+const debugLog = createDebug('ydoc-server:ydoc')
 
 /** A Yjs document that is shared over multiple websocket connections. */
 export class WSSharedDoc {
@@ -92,17 +95,19 @@ export class WSSharedDoc {
  * document is considered to be the root document of the `DistributedProject` data model.
  */
 export function setupGatewayClient(ws: WebSocket, lsUrl: string, docName: string) {
-  const lsSession = LanguageServerSession.get(lsUrl)
+  const lsSession = LanguageServerSession.get(lsUrl, docName)
   const wsDoc = lsSession.getYDoc(docName)
   if (wsDoc == null) {
     console.error(`Document '${docName}' not found in language server session '${lsUrl}'.`)
     ws.close()
     return
   }
+  debugLog('Setup gateway for ' + docName + ' @ ' + lsUrl)
   const connection = new YjsConnection(ws, wsDoc)
   connection.once('close', async () => {
     try {
-      await lsSession.release()
+      debugLog('Closing yjs connection to ' + docName)
+      await lsSession.release(docName)
     } catch (error) {
       console.error('Session release failed.\n', error)
     }

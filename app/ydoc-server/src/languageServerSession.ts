@@ -71,7 +71,7 @@ export class LanguageServerSession {
     this.docs = new Map()
     this.retainCount = 0
     this.url = url
-    console.log('new session with', url)
+    debugLog('new session with', url)
     this.indexDoc = new WSSharedDoc()
     this.docs.set('index', this.indexDoc)
     this.model = new DistributedProject(this.indexDoc.doc)
@@ -87,29 +87,31 @@ export class LanguageServerSession {
       }
     })
     this.ls = new LanguageServer(this.clientId, new ReconnectingWebSocketTransport(this.url))
-    this.clientScope.onAbort(() => this.ls.release())
+    this.clientScope.onAbort(() => this.ls.release('unknown'))
     this.setupClient()
   }
 
   static sessions = new Map<string, LanguageServerSession>()
 
   /** Get a {@link LanguageServerSession} by its URL. */
-  static get(url: string): LanguageServerSession {
-    const session = map.setIfUndefined(
-      LanguageServerSession.sessions,
-      url,
-      () => new LanguageServerSession(url),
-    )
-    session.retain()
+  static get(url: string, docName: String): LanguageServerSession {
+    const session = map.setIfUndefined(LanguageServerSession.sessions, url, () => {
+      debugLog('getting a new session for ' + url)
+      return new LanguageServerSession(url)
+    })
+    debugLog('LanguageServerSession.get(' + docName + ')')
+    session.retain(docName)
     return session
   }
 
   private restartClient() {
+    debugLog('Restarting LS session client')
     this.ls.reconnect()
     return exponentialBackoff(() => this.readInitialState())
   }
 
   private setupClient() {
+    debugLog('Setup client')
     this.ls.on('file/event', async event => {
       debugLog('file/event %O', event)
       const result = await this.handleFileEvent(event)
@@ -195,9 +197,10 @@ export class LanguageServerSession {
         if (!files.ok) return files
         moduleOpenPromises = this.indexDoc.doc.transact(
           () =>
-            files.value.map(file =>
-              this.getModuleModel(pushPathSegment(file.path, file.name)).open(),
-            ),
+            files.value.map(file => {
+              debugLog('Reading initial state of ' + file.path + ' @ ' + file.name)
+              return this.getModuleModel(pushPathSegment(file.path, file.name)).open()
+            }),
           this,
         )
         const results = await Promise.all(moduleOpenPromises)
@@ -225,13 +228,16 @@ export class LanguageServerSession {
 
   /** TODO: Add docs */
   getModuleModel(path: Path): ModulePersistence {
+    debugLog('get module model ' + path)
     const name = pathToModuleName(path)
     return map.setIfUndefined(this.authoritativeModules, name, () => {
       const wsDoc = new WSSharedDoc()
+      debugLog('set module model ' + wsDoc.doc.guid + ' for name ' + name)
       this.docs.set(wsDoc.doc.guid, wsDoc)
       this.model.createUnloadedModule(name, wsDoc.doc)
       const mod = new ModulePersistence(this.ls, path, wsDoc.doc)
       mod.once('removed', () => {
+        debugLog('deleting module ' + wsDoc.doc.guid)
         const index = this.model.findModuleByDocId(wsDoc.doc.guid)
         this.docs.delete(wsDoc.doc.guid)
         this.authoritativeModules.delete(name)
@@ -242,19 +248,22 @@ export class LanguageServerSession {
   }
 
   /** TODO: Add docs */
-  retain() {
+  retain(docName: String) {
     this.retainCount += 1
+    debugLog('retain ' + docName + ': ' + this.retainCount)
   }
 
   /** TODO: Add docs */
-  async release(): Promise<void> {
+  async release(docName: String): Promise<void> {
+    debugLog('LanguageServerSession.release() for ' + docName + ', retain: ' + this.retainCount)
     this.retainCount -= 1
     if (this.retainCount !== 0) return
+    debugLog('LanguageServerSession.release(): full cleanup')
     const modules = this.authoritativeModules.values()
     const moduleDisposePromises = Array.from(modules, mod => mod.dispose())
     this.authoritativeModules.clear()
     this.model.doc.destroy()
-    this.clientScope.dispose('LangueServerSession disposed.')
+    this.clientScope.dispose('LanguageServerSession disposed.')
     LanguageServerSession.sessions.delete(this.url)
     await Promise.all(moduleDisposePromises)
   }
@@ -826,6 +835,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
   }
 
   async dispose(): Promise<void> {
+    debugLog('LanguageServerSession.dispose() ' + this.docs + ', url: ' + this.url)
     this.cleanup()
     const alreadyClosed = this.inState(LsSyncState.Closing, LsSyncState.Closed)
     this.setState(LsSyncState.Disposed)

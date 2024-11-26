@@ -8,7 +8,7 @@
  * server. It is not yet deployed to any other environment.
  */
 
-import debug from 'debug'
+import { default as createDebug, default as debug } from 'debug'
 import type { Server } from 'http'
 import type { Http2SecureServer } from 'http2'
 import type { WebSocket } from 'isomorphic-ws'
@@ -17,6 +17,8 @@ import { ConnectionData, docName } from './auth'
 import { deserializeIdMap } from './serialization'
 import { setupGatewayClient } from './ydoc'
 
+const debugLogIndex = createDebug('ydoc-server:index')
+
 export { deserializeIdMap, docName, setupGatewayClient }
 
 /** @param customLogger Optional external logger to use for all debug logs. */
@@ -24,7 +26,12 @@ export function configureAllDebugLogs(
   forceEnable: boolean,
   customLogger?: (...args: any[]) => any,
 ) {
-  for (const debugModule of ['ydoc-server:session', 'ydoc-shared:languageServer']) {
+  for (const debugModule of [
+    'ydoc-server:session',
+    'ydoc-shared:languageServer',
+    'ydoc-server:index',
+    'ydoc-server:ydoc',
+  ]) {
     const instance = debug(debugModule)
     if (forceEnable) instance.enabled = true
     if (customLogger) instance.log = customLogger
@@ -41,7 +48,11 @@ export async function createGatewayServer(
 
   const wss = new WebSocketServer({ noServer: true })
   wss.on('connection', (ws: WebSocket, _request: IncomingMessage, data: ConnectionData) => {
+    ws.onclose = function close() {
+      debugLogIndex('websocket disconnected @' + data.lsUrl + ' for ' + data.doc)
+    }
     ws.on('error', onWebSocketError)
+    debugLogIndex('new connection: ' + data.doc + ' @ ' + data.lsUrl)
     setupGatewayClient(ws, overrideLanguageServerUrl ?? data.lsUrl, data.doc)
   })
 
