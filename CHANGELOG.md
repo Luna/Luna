@@ -84,8 +84,10 @@
 #### Enso Language & Runtime
 
 - [Arguments in constructor definitions may now be on their own lines][11374]
+- [Intersection types & type checks][11600]
 
 [11374]: https://github.com/enso-org/enso/pull/11374
+[11600]: https://github.com/enso-org/enso/pull/11600
 
 # Enso 2024.4
 
