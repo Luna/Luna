@@ -79,9 +79,13 @@ public class EqualsMultiValueTest {
               EnsoMultiValue.create(
                   new Type[] {textText, intType}, 1, new Object[] {Text.create("Hi"), 4L});
 
-          assertFalse("4 != t4", equalityCheck(4L, fourExtraText));
+          assertTrue(
+              "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
+              equalityCheck(4L, fourExtraText));
           assertFalse("5 != t4", equalityCheck(5L, fourExtraText));
-          assertFalse("t4 != 4", equalityCheck(fourExtraText, 4L));
+          assertTrue(
+              "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
+              equalityCheck(fourExtraText, 4L));
           assertFalse("4 != t5", equalityCheck(fourExtraText, 5L));
 
           return null;

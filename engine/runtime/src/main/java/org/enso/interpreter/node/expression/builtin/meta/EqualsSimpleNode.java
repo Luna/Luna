@@ -21,6 +21,7 @@ import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.atom.Atom;
 import org.enso.interpreter.runtime.data.atom.AtomConstructor;
 import org.enso.interpreter.runtime.data.text.Text;
+import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.enso.interpreter.runtime.number.EnsoBigInteger;
 import org.enso.interpreter.runtime.warning.WarningsLibrary;
 import org.enso.polyglot.common_utils.Core_Text_Utils;
@@ -323,8 +324,19 @@ abstract class EqualsSimpleNode extends Node {
       VirtualFrame frame,
       EnsoMultiValue self,
       Object other,
-      @Cached EnsoMultiValue.EqualsNode equalsMultiNode) {
-    return equalsMultiNode.executeEquals(frame, self, other);
+      @Shared("multiCast") @Cached EnsoMultiValue.CastToNode castNode,
+      @Shared("multiType") @Cached TypeOfNode typesNode,
+      @Shared("multiEquals") @Cached EqualsSimpleNode delegate) {
+    var types = typesNode.findAllTypesOrNull(self);
+    assert types != null;
+    for (var t : types) {
+      var value = castNode.executeCast(t, self, false);
+      var res = delegate.execute(frame, value, other);
+      if (res.isTrue()) {
+        return res;
+      }
+    }
+    return EqualsAndInfo.FALSE;
   }
 
   @Specialization
@@ -332,8 +344,10 @@ abstract class EqualsSimpleNode extends Node {
       VirtualFrame frame,
       Object self,
       EnsoMultiValue other,
-      @Cached EnsoMultiValue.EqualsNode equalsMultiNode) {
-    return equalsMultiNode.executeEquals(frame, other, self);
+      @Shared("multiCast") @Cached EnsoMultiValue.CastToNode castNode,
+      @Shared("multiType") @Cached TypeOfNode typesNode,
+      @Shared("multiEquals") @Cached EqualsSimpleNode delegate) {
+    return equalsMultiValue(frame, other, self, castNode, typesNode, delegate);
   }
 
   @Specialization

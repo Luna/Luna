@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
@@ -28,7 +27,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
-import org.enso.interpreter.node.expression.builtin.meta.EqualsAndInfo;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.function.Function;
@@ -474,44 +472,6 @@ public final class EnsoMultiValue extends EnsoObject {
         }
       }
       return null;
-    }
-  }
-
-  /** Implementation of equals for {@link EnsoMultiValue}. */
-  @GenerateUncached
-  public abstract static class EqualsNode extends Node {
-    /**
-     * Casts value in a multi value into specific type.
-     *
-     * @return instance of the {@code t} or {@code null} if no suitable value was found
-     */
-    public abstract EqualsAndInfo executeEquals(
-        VirtualFrame frame, EnsoMultiValue self, Object other);
-
-    @NeverDefault
-    public static EqualsNode create() {
-      return EnsoMultiValueFactory.EqualsNodeGen.create();
-    }
-
-    @NeverDefault
-    public static EqualsNode getUncached() {
-      return EnsoMultiValueFactory.EqualsNodeGen.getUncached();
-    }
-
-    @Specialization
-    EqualsAndInfo equalsToOther(
-        VirtualFrame frame,
-        EnsoMultiValue mv,
-        Object other,
-        @Cached org.enso.interpreter.node.expression.builtin.meta.EqualsNode equalsNode) {
-      EqualsAndInfo res = null;
-      for (var i = 0; i < mv.methodDispatchTypes; i++) {
-        res = equalsNode.execute(frame, mv.values[i], other);
-        if (res.isTrue()) {
-          return res;
-        }
-      }
-      return res;
     }
   }
 
