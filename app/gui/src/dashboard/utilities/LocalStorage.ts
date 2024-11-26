@@ -90,7 +90,7 @@ export class LocalStorage {
 
   /** Write an entry to the stored data, and save. */
   set(key: string, value: unknown) {
-    if (!Object.is(this.values[key], value)) {
+    if (Object.is(this.values[key], value)) {
       return
     }
     this.values[key] = value
