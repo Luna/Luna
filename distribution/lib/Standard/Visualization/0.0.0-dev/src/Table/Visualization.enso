@@ -189,11 +189,10 @@ make_json_for_table dataframe max_rows all_rows_count include_index_col is_db_ta
     all_rows    = ["all_rows_count", all_rows_count]
     has_index_col = ["has_index_col", include_index_col]
     links       = ["get_child_node_action", "get_row"]
-    number_of_nothing = if is_db_table then Nothing else columns.map .count_nothing
-    number_of_whitespace= if is_db_table then Nothing else columns.map .count_untrimmed
-    nothing_p = JS_Object.from_pairs [["name", "Number of nothings"], ["percentage_value", number_of_nothing]]
-    whitespace_p = JS_Object.from_pairs [["name", "Number of untrimmed whitespace"], ["percentage_value",number_of_whitespace]]
-    data_quality_metrics =  [nothing_p, whitespace_p]
+    data_quality_metrics = if is_db_table then [] else
+        number_nothing = JS_Object.from_pairs [["name", "Number of nothings"], ["percentage_value", columns.map .count_nothing]]
+        number_untrimmed = JS_Object.from_pairs [["name", "Number of untrimmed whitespace"], ["percentage_value", columns.map .count_untrimmed]]
+        [number_nothing, number_untrimmed]
     pairs       = [header, value_type, data, all_rows, has_index_col, links, ["data_quality_metrics", data_quality_metrics] ,["type", "Table"]]
     JS_Object.from_pairs pairs
 
