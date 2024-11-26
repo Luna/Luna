@@ -4,6 +4,7 @@ import {
   type PropsWithChildren,
   type SetStateAction,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
@@ -114,20 +115,28 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
       () => getKey(localStorage) ?? defaultValue,
     )
 
+    useEffect(
+      () =>
+        localStorage.subscribe(key, (newValue) => {
+          // This is SAFE, assuming the functions in this file are the only functions
+          // allowed to set the value.
+          // eslint-disable-next-line no-restricted-syntax
+          privateSetValue(newValue as Value)
+        }),
+      [localStorage],
+    )
+
     const setValue = useEventCallback((newValue: SetStateAction<Value | undefined>) => {
-      privateSetValue((currentValue) => {
-        const nextValue = isFunction(newValue) ? newValue(currentValue) : newValue
-        if (nextValue === undefined) {
-          localStorage.delete(key)
-        } else {
-          localStorage.set(key, nextValue)
-        }
-        return nextValue
-      })
+      const nextValue = isFunction(newValue) ? newValue(value) : newValue
+      if (nextValue === undefined) {
+        deleteKey(localStorage)
+      } else {
+        setKey(nextValue, localStorage)
+      }
     })
 
     const clearValue = useEventCallback(() => {
-      privateSetValue(undefined)
+      deleteKey(localStorage)
     })
 
     return [value, setValue, clearValue] as const
