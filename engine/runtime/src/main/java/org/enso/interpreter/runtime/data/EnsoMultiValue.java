@@ -449,9 +449,16 @@ public final class EnsoMultiValue extends EnsoObject {
      * @param type the requested t
      * @param mv a multi value
      * @param reorderOnly allow (modified) {@link EnsoMultiValue} to be returned
+     * @param allTypes should we search all types or nu
      * @return instance of the {@code t} or {@code null} if no suitable value was found
      */
-    public abstract Object executeCast(Type type, EnsoMultiValue mv, boolean reorderOnly);
+    public final Object findTypeOrNull(
+        Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
+      return executeCast(type, mv, reorderOnly, allTypes);
+    }
+
+    abstract Object executeCast(
+        Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes);
 
     @NeverDefault
     public static CastToNode create() {
@@ -464,8 +471,9 @@ public final class EnsoMultiValue extends EnsoObject {
     }
 
     @Specialization
-    Object castsToAType(Type type, EnsoMultiValue mv, boolean reorderOnly) {
-      for (var i = 0; i < mv.types.length; i++) {
+    Object castsToAType(Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
+      var max = allTypes ? mv.types.length : mv.methodDispatchTypes;
+      for (var i = 0; i < max; i++) {
         if (mv.types[i] == type) {
           if (reorderOnly) {
             var copyTypes = mv.types.clone();

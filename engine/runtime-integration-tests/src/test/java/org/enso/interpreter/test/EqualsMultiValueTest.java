@@ -89,13 +89,11 @@ public class EqualsMultiValueTest {
 
           assertTrue("'Hi' == multiV", equalityCheck(text, multiV));
           assertFalse("'Ahoj' != multiV", equalityCheck(ahoj, multiV));
-          assertTrue(
-              "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
-              equalityCheck(integer, multiV));
+          assertFalse(
+              "Don't consider extra Integer type in equals", equalityCheck(integer, multiV));
           assertFalse("5 != t4", equalityCheck(5L, multiV));
-          assertTrue(
-              "Only Text is 'dispatch type'. Not integer. Shall we be equal to 4?",
-              equalityCheck(multiV, integer));
+          assertFalse(
+              "Don't consider extra Integer type in equals", equalityCheck(multiV, integer));
           assertFalse("4 != t5", equalityCheck(multiV, 5L));
           assertTrue("multiV == 'Hi'", equalityCheck(multiV, text));
           assertFalse("multiV != 'Ahoj'", equalityCheck(multiV, ahoj));

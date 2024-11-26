@@ -334,7 +334,10 @@ abstract class EqualsSimpleNode extends Node {
     var types = typesNode.findAllTypesOrNull(self);
     assert types != null;
     for (var t : types) {
-      var value = castNode.executeCast(t, self, false);
+      var value = castNode.findTypeOrNull(t, self, false, false);
+      if (value == null) {
+        continue;
+      }
       var res = delegate.execute(frame, value, other);
       if (res.isTrue()) {
         return res;

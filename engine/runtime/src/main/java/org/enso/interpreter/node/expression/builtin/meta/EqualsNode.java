@@ -242,7 +242,11 @@ public final class EqualsNode extends Node {
       try {
         var thatAsSelf = convertNode.execute(convert, state, new Object[] {selfType, that});
         if (thatAsSelf instanceof EnsoMultiValue emv) {
-          thatAsSelf = EnsoMultiValue.CastToNode.getUncached().executeCast(selfType, emv, false);
+          thatAsSelf =
+              EnsoMultiValue.CastToNode.getUncached().findTypeOrNull(selfType, emv, false, false);
+        }
+        if (thatAsSelf == null) {
+          return EqualsAndInfo.FALSE;
         }
         var withInfo = equalityNode.execute(frame, self, thatAsSelf);
         var result = withInfo.isTrue();
