@@ -25,7 +25,6 @@ import org.graalvm.polyglot.Value;
 /** Makes HTTP requests with secrets in either header or query string. */
 public final class EnsoSecretHelper extends SecretValueResolver {
   private static Value cache;
-  private static Value triggerReference;
 
   /** Gets a JDBC connection resolving EnsoKeyValuePair into the properties. */
   public static Connection getJDBCConnection(
@@ -180,79 +179,14 @@ public final class EnsoSecretHelper extends SecretValueResolver {
   }
 
   private static EnsoHTTPResponseCache getOrCreateCache() {
-    if (getCache() instanceof EnsoHTTPResponseCache httpCache) {
-      return httpCache;
-    } else {
-      var module =
-          Context.getCurrent()
-              .eval(
-                  "enso",
-                  """
-      import Standard.Base.Runtime.Ref.Ref
-      import Standard.Base.Data.Boolean.Boolean
-      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
-      polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
-
-      type Cache
-          private Value ref:Ref
-
-          new obj -> Cache =
-            #EnsoSecretHelper.hello 10
-            ref = Ref.new obj Boolean.True
-            Cache.Value ref
-
-          get self = self.ref.get
-      """);
-      var cacheNew = module.invokeMember("eval_expression", "Cache.new");
-      var httpCache = new EnsoHTTPResponseCache();
-      cache = cacheNew.execute(httpCache);
-      return httpCache;
+    if (cache == null) {
+      cache = new EnsoHTTPResponseCache();
     }
-  }
-
-  public static void hello(long x) {
-    System.out.println("HELLO " + x);
+    return cache;
   }
 
   public static EnsoHTTPResponseCache getCache() {
-    var c = cache instanceof Value v ? v.invokeMember("get") : null;
-    if (c != null
-        && c.isHostObject()
-        && c.asHostObject() instanceof EnsoHTTPResponseCache httpCache) {
-      return httpCache;
-    } else {
-      return null;
-    }
-  }
-
-  public static void installTriggerReference() {
-      var module =
-          Context.getCurrent()
-              .eval(
-                  "enso",
-                  """
-      import Standard.Base.IO
-      import Standard.Base.Runtime.Ref.Ref
-      import Standard.Base.Data.Boolean.Boolean
-      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
-      polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
-
-      type Cache2
-          private Value ref:Ref
-
-          new -> Cache2 =
-            do_clear _ =
-              IO.println "Hi from clearer"
-              EnsoSecretHelper.hello 11
-            mr = Managed_Resource.register 0 do_clear
-            ref = Ref.new mr Boolean.True
-            IO.println "Hi from TR"
-            Cache2.Value ref
-
-          fin self = self.ref.get.finalize
-          get self = self.ref.get
-      """);
-      triggerReference = module.invokeMember("eval_expression", "Cache2.new");
+    return cache;
   }
 
   private static final Comparator<Pair<String, String>> headerNameComparator =
