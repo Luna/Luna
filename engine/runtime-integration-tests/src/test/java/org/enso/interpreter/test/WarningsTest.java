@@ -104,12 +104,14 @@ public class WarningsTest {
   }
 
   @Test
-  public void withWarningHasMetaObject() {
-    var warning42 = wrap.execute("warn:1", 42);
+  public void withWarningsDelegatesToMetaObject() {
+    var warning42 = wrap.execute("warn:1", "Text");
+    var meta = warning42.getMetaObject();
     assertThat(
         "Value (" + warning42 + ") wrapped in warning must have a meta object",
-        warning42.getMetaObject(),
+        meta,
         is(notNullValue()));
+    assertThat(meta.toString(), containsString("Text"));
   }
 
   @Test
