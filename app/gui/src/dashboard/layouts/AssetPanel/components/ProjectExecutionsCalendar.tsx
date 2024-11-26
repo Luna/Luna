@@ -194,16 +194,24 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
                 {() => <CalendarHeaderCell className={styles.calendarGridHeaderCell()} />}
               </CalendarGridHeader>
               <CalendarGridBody className={styles.calendarGridBody()}>
-                {(date) => (
-                  <CalendarCell date={date} className={styles.calendarGridCell()}>
-                    <div className="flex flex-col items-center">
-                      <Text color="custom">{date.day}</Text>
-                      {projectExecutionsByDate[date.toString()]?.map((data) => (
-                        <Text color="disabled">{`${data.date.getHours().toString().padStart(2, '0')}:${data.date.getMinutes().toString().padStart(2, '0')}`}</Text>
-                      ))}
-                    </div>
-                  </CalendarCell>
-                )}
+                {(date) => {
+                  const isToday = date.compare(todayDate) === 0
+                  return (
+                    <CalendarCell date={date} className={styles.calendarGridCell()}>
+                      <div className="flex flex-col items-center">
+                        <Text
+                          weight={isToday ? 'bold' : 'medium'}
+                          color={isToday ? 'success' : 'current'}
+                        >
+                          {date.day}
+                        </Text>
+                        {projectExecutionsByDate[date.toString()]?.map((data) => (
+                          <Text color="disabled">{`${data.date.getHours().toString().padStart(2, '0')}:${data.date.getMinutes().toString().padStart(2, '0')}`}</Text>
+                        ))}
+                      </div>
+                    </CalendarCell>
+                  )
+                }}
               </CalendarGridBody>
             </CalendarGrid>
           </Calendar>
