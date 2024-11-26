@@ -155,7 +155,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
               ...(repeatInterval === 'monthly' && { dates: [utcDate.day] }),
               ...(repeatInterval === 'weekly' && { days: [getDayOfWeek(utcDate, 'en-US')] }),
               ...(repeatInterval !== 'hourly' && { hours: [utcDate.hour] }),
-              minute: repeatInterval !== 'hourly' ? utcDate.minute : minute,
+              minute: utcDate.minute,
             },
           }
         }
