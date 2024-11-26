@@ -173,7 +173,6 @@ impl HasOperatorProperties for variant::TypeAnnotationOperator {
         OperatorProperties {
             binary_infix_precedence: Some(Precedence { value: 2 }),
             lhs_section_termination: Some(SectionTermination::Reify),
-            is_right_associative: true,
             is_compile_time: true,
             rhs_is_non_expression: true,
             ..default()
