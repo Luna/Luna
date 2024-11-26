@@ -590,7 +590,7 @@ export class LanguageServer extends ObservableV2<Notifications & TransportEvents
    * Decrement the reference count of this {@link LanguageServer},
    * disposing it if there are no longer any references to this {@link LanguageServer}.
    */
-  release() {
+  release(docName: String) {
     if (this.retainCount > 0) {
       this.retainCount -= 1
       // Equivalent to `this.isDisposed`, but written out explicitly here to avoid confusion,

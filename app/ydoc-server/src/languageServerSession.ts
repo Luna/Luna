@@ -835,7 +835,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
   }
 
   async dispose(): Promise<void> {
-    debugLog('LanguageServerSession.dispose() ' + this.docs + ', url: ' + this.url)
+    debugLog('ModulePersistence.dispose() ' + this.doc + ', path: ' + this.path)
     this.cleanup()
     const alreadyClosed = this.inState(LsSyncState.Closing, LsSyncState.Closed)
     this.setState(LsSyncState.Disposed)
