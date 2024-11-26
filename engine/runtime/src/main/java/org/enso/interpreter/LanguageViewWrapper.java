@@ -1,6 +1,6 @@
 package org.enso.interpreter;
 
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -12,7 +12,7 @@ import org.enso.interpreter.runtime.data.EnsoObject;
  * com.oracle.truffle.api.interop.InteropLibrary#hasLanguage(Object)} message implementation.
  */
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "delegate")
-final class LanguageViewWrapper implements EnsoObject {
+final class LanguageViewWrapper extends EnsoObject {
   final Object delegate;
 
   LanguageViewWrapper(Object delegate) {
@@ -20,18 +20,15 @@ final class LanguageViewWrapper implements EnsoObject {
   }
 
   @ExportMessage
-  boolean hasLanguage() {
-    return true;
-  }
-
-  @ExportMessage
-  Class<? extends TruffleLanguage<?>> getLanguage() {
-    return EnsoLanguage.class;
-  }
-
-  @ExportMessage
   Object toDisplayString(
       boolean allowSideEffects, @CachedLibrary("this.delegate") InteropLibrary interop) {
     return interop.toDisplayString(delegate, allowSideEffects);
+  }
+
+  @Override
+  @TruffleBoundary
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(allowSideEffects, InteropLibrary.getUncached());
   }
 }
