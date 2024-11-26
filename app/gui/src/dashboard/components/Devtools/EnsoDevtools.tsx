@@ -292,6 +292,7 @@ export function EnsoDevtools() {
                   size="small"
                   isDisabled={localStorageState[key] == null}
                   aria-label={getText('delete')}
+                  tooltipPlacement="left"
                   icon={CrossIcon}
                   onPress={() => {
                     localStorage.delete(key)

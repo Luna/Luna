@@ -128,6 +128,8 @@ export class LocalStorage {
     const onChange = () => {
       callback(this.get(key))
     }
+    onChange()
+
     this.eventTarget.addEventListener(key, onChange)
 
     return () => {
@@ -140,6 +142,8 @@ export class LocalStorage {
     const onChange = () => {
       callback(this.values)
     }
+    onChange()
+
     this.eventTarget.addEventListener('_change', onChange)
 
     return () => {
