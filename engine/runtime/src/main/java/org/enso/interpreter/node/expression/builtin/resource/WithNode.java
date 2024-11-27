@@ -6,6 +6,7 @@ import com.oracle.truffle.api.nodes.Node;
 import org.enso.interpreter.dsl.BuiltinMethod;
 import org.enso.interpreter.node.callable.InvokeCallableNode;
 import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.ResourceManager;
 import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.data.ManagedResource;
 import org.enso.interpreter.runtime.state.State;
@@ -32,17 +33,12 @@ public abstract class WithNode extends Node {
 
   @Specialization
   Object doWith(State state, VirtualFrame frame, ManagedResource self, Object action) {
-    var ctx = EnsoContext.get(this);
-    var resourceManager = ctx.getResourceManager();
-    if (self.getPhantomReference().refersTo(self)) {
-      resourceManager.park(self);
-      try {
-        return invokeCallableNode.execute(action, frame, state, new Object[] {self.getResource()});
-      } finally {
-        resourceManager.unpark(self);
-      }
-    } else {
-      return ctx.getBuiltins().nothing();
+    ResourceManager resourceManager = EnsoContext.get(this).getResourceManager();
+    resourceManager.park(self);
+    try {
+      return invokeCallableNode.execute(action, frame, state, new Object[] {self.getResource()});
+    } finally {
+      resourceManager.unpark(self);
     }
   }
 }
