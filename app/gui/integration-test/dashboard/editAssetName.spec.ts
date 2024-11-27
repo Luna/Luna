@@ -1,7 +1,6 @@
 /** @file Test copying, moving, cutting and pasting. */
 import { test } from '@playwright/test'
 
-import * as backend from '#/services/Backend'
 import * as actions from './actions'
 
 test('edit name (double click)', async ({ page }) => {

@@ -261,6 +261,7 @@ export const BUTTON_STYLES = tv({
     iconPosition: 'start',
     showIconOnHover: false,
     isDisabled: false,
+    extraClickZone: true,
   },
   compoundVariants: [
     { isFocused: true, iconOnly: true, class: 'focus-visible:outline-offset-[3px]' },

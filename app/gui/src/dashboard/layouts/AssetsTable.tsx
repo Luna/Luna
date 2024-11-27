@@ -1945,15 +1945,12 @@ export default function AssetsTable(props: AssetsTableProps) {
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
                   <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
 
-                  <div
-                    data-testid="extra-columns"
-                    className="absolute right-2 flex self-end px-2 py-3"
-                  >
+                  <div data-testid="extra-columns" className="absolute right-3 flex self-end p-2">
                     <FocusArea direction="horizontal">
                       {(columnsBarProps) => (
                         <div
                           {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
-                            className: 'inline-flex gap-icons ',
+                            className: 'inline-flex gap-icons',
                             onFocus: () => {
                               setKeyboardSelectedIndex(null)
                             },
@@ -1998,7 +1995,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 }
 
 /**
- *
+ * Props for the HiddenColumn component.
  */
 interface HiddenColumnProps {
   readonly column: Column
@@ -2026,8 +2023,8 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
 
   return (
     <Button
-      size="custom"
-      variant="custom"
+      size="medium"
+      variant="icon"
       key={column}
       icon={COLUMN_ICONS[column]}
       aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
