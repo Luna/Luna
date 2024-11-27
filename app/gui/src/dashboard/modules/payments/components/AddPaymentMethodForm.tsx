@@ -4,19 +4,24 @@ import type { PaymentMethod, Stripe, StripeCardElement, StripeElements } from '@
 
 import { Form, useDialogContext, type FormInstance, type schema } from '#/components/AriaComponents'
 import { useText, type GetText } from '#/providers/TextProvider'
-import { useCreatePaymentMethodMutation } from '../api/createPaymentMethod'
+import {
+  useCreatePaymentMethodMutation,
+  type CreatedPaymentMethod,
+} from '../api/createPaymentMethod'
+
+/** The form values for this form. */
+interface AddPaymentMethodSchema extends ReturnType<typeof createAddPaymentMethodFormSchema> {}
 
 /** Props for an {@link AddPaymentMethodForm}. */
 export interface AddPaymentMethodFormProps<
-  Schema extends ReturnType<typeof createAddPaymentMethodFormSchema> = ReturnType<
-    typeof createAddPaymentMethodFormSchema
-  >,
+  Schema extends AddPaymentMethodSchema = AddPaymentMethodSchema,
+  FormReturn = void,
 > {
   readonly stripeInstance: Stripe
   readonly elements: StripeElements
   readonly submitText: string
   readonly onSubmit?: ((paymentMethodId: PaymentMethod['id']) => Promise<void> | void) | undefined
-  readonly form?: FormInstance<Schema>
+  readonly form?: FormInstance<Schema, FormReturn>
 }
 
 /** The validation schema for this form. */
@@ -42,31 +47,41 @@ export function createAddPaymentMethodFormSchema(z: typeof schema, getText: GetT
 
 /** A form for adding a payment method. */
 export function AddPaymentMethodForm<
-  Schema extends ReturnType<typeof createAddPaymentMethodFormSchema> = ReturnType<
-    typeof createAddPaymentMethodFormSchema
-  >,
->(props: AddPaymentMethodFormProps<Schema>) {
+  Schema extends AddPaymentMethodSchema = AddPaymentMethodSchema,
+  FormReturn = void,
+>(props: AddPaymentMethodFormProps<Schema, FormReturn>) {
   const { stripeInstance, onSubmit, submitText, form: formRaw } = props
   const { getText } = useText()
   const dialogContext = useDialogContext()
   const createPaymentMethodMutation = useCreatePaymentMethodMutation()
 
   const form = Form.useForm(
-    formRaw ?? {
+    // UNSAFE when extracting callbacks (which should never happen).
+    // eslint-disable-next-line no-restricted-syntax
+    (formRaw as unknown as
+      | FormInstance<AddPaymentMethodSchema, CreatedPaymentMethod>
+      | undefined) ?? {
       mode: 'onChange',
       schema: (z) => createAddPaymentMethodFormSchema(z, getText),
-      onSubmit: ({ cardElement }) =>
-        createPaymentMethodMutation.mutateAsync({ stripeInstance, cardElement }),
+      onSubmit: async ({ cardElement }) =>
+        await createPaymentMethodMutation.mutateAsync({
+          stripeInstance,
+          cardElement,
+        }),
       onSubmitSuccess: ({ paymentMethod }) => onSubmit?.(paymentMethod.id),
     },
   )
 
   const cardElement =
-    // FIXME[sb]: I do not understand why `useWatch` is not sufficient for Playwright.
-    // (The value is always `undefined` with `useWatch` alone)
+    // FIXME[sb]: I do not understand why `defaultValue` is required for Playwright.
+    // (The value is always `undefined` without `defaultValue`)
     // It is worth noting that E2E tests previously worked without requiring this change - as of:
     // 1500849c32f70f5f4d95240b7e31377c649dc25b
-    Form.useWatch({ control: form.control, name: 'cardElement' }) ?? form.getValues().cardElement
+    Form.useWatch({
+      control: form.control,
+      name: 'cardElement',
+      defaultValue: form.getValues().cardElement,
+    })
 
   return (
     <Form method="dialog" form={form}>

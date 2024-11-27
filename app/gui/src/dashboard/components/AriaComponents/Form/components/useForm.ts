@@ -1,8 +1,4 @@
-/**
- * @file
- *
- * A hook that returns a form instance.
- */
+/** @file A hook that returns a form instance. */
 import * as sentry from '@sentry/react'
 import * as React from 'react'
 
@@ -10,13 +6,13 @@ import * as zodResolver from '@hookform/resolvers/zod'
 import * as reactHookForm from 'react-hook-form'
 import invariant from 'tiny-invariant'
 
+import { mergeProps } from '#/components/aria'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline, useOfflineChange } from '#/hooks/offlineHooks'
 import { useText } from '#/providers/TextProvider'
 import * as errorUtils from '#/utilities/error'
 import { unsafeMutable } from '#/utilities/object'
 import { useMutation } from '@tanstack/react-query'
-import { mergeProps } from '#/components/aria'
 import * as schemaModule from './schema'
 import type * as types from './types'
 
@@ -80,9 +76,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
   /* eslint-enable react-hooks/rules-of-hooks, react-compiler/react-compiler */
 }
 
-/**
- * Checks if the argument is a form instance
- */
+/** Checks if the argument is a form instance */
 function isFormInstance<Schema extends types.TSchema, SubmitResult>(
   args: types.UseFormOptions<Schema, SubmitResult> | types.UseFormReturn<Schema, SubmitResult>,
 ): args is types.UseFormReturn<Schema, SubmitResult> {
@@ -97,7 +91,7 @@ function getArgsType<Schema extends types.TSchema, SubmitResult = void>(
 }
 
 /**
- * Returns Form instance with merged callbacks
+ * Returns form instance with merged callbacks
  * @internal
  */
 function useFormInstance<Schema extends types.TSchema, SubmitResult>(

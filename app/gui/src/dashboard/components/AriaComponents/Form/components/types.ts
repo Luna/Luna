@@ -1,7 +1,4 @@
-/**
- * @file
- * Types for the Form component.
- */
+/** @file Types for the Form component. */
 import type * as React from 'react'
 
 import type * as reactHookForm from 'react-hook-form'
@@ -30,14 +27,10 @@ export type TSchema =
   | z.ZodEffects<z.AnyZodObject>
   | z.ZodEffects<z.ZodEffects<z.AnyZodObject>>
 
-/**
- * A callback that returns a schema.
- */
+/** A callback that returns a schema. */
 export type SchemaCallback<Schema extends TSchema = TSchema> = (z: SchemaBuilder) => Schema
 
-/**
- * The schema builder.
- */
+/** The schema builder. */
 export type SchemaBuilder = typeof schemaModule.schema
 
 /** OnSubmitCallbacks type. */
