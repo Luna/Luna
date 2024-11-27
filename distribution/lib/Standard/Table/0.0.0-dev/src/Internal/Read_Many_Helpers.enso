@@ -109,7 +109,7 @@ _add_objects_column (base_table : Table) (objects : Vector Any) -> Table  =
     base_table.set (Column.from_vector objects_column_name objects) as=objects_column_name set_mode=..Add
 
 ## Workaround for bug https://github.com/enso-org/enso/issues/11570
-   Once that is addressed, this function may be removed.
+   TODO: Remove workaround one #11570 is closed.
 private _inherit_warnings_from_vector vector:Vector ~action =
     result = action
     Warning.set result (Warning.get_all vector + Warning.get_all result)
