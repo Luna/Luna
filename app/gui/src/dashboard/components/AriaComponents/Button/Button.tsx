@@ -339,6 +339,7 @@ export const Button = memo(
     const isLoading = loading || implicitlyLoading
     const isDisabled = props.isDisabled ?? isLoading
     const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
+    const extraClickZone = extraClickZoneProp ?? variant === 'icon'
 
     useLayoutEffect(() => {
       const delay = 350
@@ -390,7 +391,7 @@ export const Button = memo(
       variant,
       iconPosition,
       showIconOnHover,
-      extraClickZone: extraClickZoneProp,
+      extraClickZone,
       iconOnly: isIconOnly,
     })
 
