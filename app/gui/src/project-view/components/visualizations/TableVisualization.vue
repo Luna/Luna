@@ -631,10 +631,31 @@ const getColumnValueToEnso = (columnName: string) => {
     return createDateTimePattern('(Date.new __ __ __)', 3)
   }
   if (columnType === 'Time') {
-    return createDateTimePattern('(Time_Of_Day.new __ __ __ __ __ __)', 6)
+    return (item: string) => Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
   }
   if (columnType === 'Date_Time') {
     return (item: string) => Ast.parseExpression(`(Date_Time.parse '${item}')`)!
+  }
+  if (columnType == 'Mixed') {
+    return (item: string, module: Ast.MutableModule) => {
+      if (!isNaN(Number(item))) {
+        return Ast.tryNumberToEnso(Number(item), module)!
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(item)) {
+        const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
+        const dateTimeParts = item.match(/\d+/g)!.map(Number)
+        const dateTimePartsNumeric = []
+        for (let i = 0; i < 3; i++) {
+          dateTimePartsNumeric.push(Ast.tryNumberToEnso(Number(dateTimeParts[i] ?? 0), module)!)
+        }
+        return dateOrTimePattern.instantiateCopied(dateTimePartsNumeric)
+      }
+      if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)) {
+        return Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
+      }
+
+      return Ast.TextLiteral.new(item)
+    }
   }
   return (item: string) => Ast.TextLiteral.new(item)
 }
