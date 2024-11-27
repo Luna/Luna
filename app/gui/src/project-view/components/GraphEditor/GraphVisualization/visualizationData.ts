@@ -159,6 +159,7 @@ export function useVisualizationData({
 
   const effectiveVisualizationData = computed(() => {
     const dataSourceValue = toValue(dataSource)
+    console.log('UPDATE VISUALIZATION DATA', dataSource)
     const name = currentType.value?.name
     if (dataSourceValue?.type === 'raw') return dataSourceValue.data
     if (vueError.value) return { name, error: vueError.value }
