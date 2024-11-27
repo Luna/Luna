@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import * as z from 'zod'
 
+import { SEARCH_PARAMS_PREFIX } from '#/appUtils'
 import CloudIcon from '#/assets/cloud.svg'
 import ComputerIcon from '#/assets/computer.svg'
 import FolderIcon from '#/assets/folder.svg'
@@ -410,9 +411,10 @@ function CategorySwitcher(props: CategorySwitcherProps) {
               aria-label={getText('changeLocalRootDirectoryInSettings')}
               className="opacity-0 transition-opacity group-hover:opacity-100"
               onPress={() => {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                setSearchParams({ 'cloud-ide_SettingsTab': '"local"' })
-                setPage(TabType.settings)
+                setSearchParams({
+                  [`${SEARCH_PARAMS_PREFIX}SettingsTab`]: JSON.stringify('local'),
+                  [`${SEARCH_PARAMS_PREFIX}page`]: JSON.stringify(TabType.settings),
+                })
               }}
             />
           </div>
