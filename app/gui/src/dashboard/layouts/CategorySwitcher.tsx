@@ -34,7 +34,7 @@ import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
-import { TabType, useSetPage } from '#/providers/ProjectsProvider'
+import { TabType } from '#/providers/ProjectsProvider'
 import * as textProvider from '#/providers/TextProvider'
 import * as backend from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
@@ -232,7 +232,6 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   const { getText } = textProvider.useText()
   const remoteBackend = backendProvider.useRemoteBackend()
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const setPage = useSetPage()
   const [, setSearchParams] = useSearchParams()
   const [localRootDirectories, setLocalRootDirectories] =
     useLocalStorageState('localRootDirectories')
