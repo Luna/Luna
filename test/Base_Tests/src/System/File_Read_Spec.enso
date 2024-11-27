@@ -132,7 +132,9 @@ add_specs suite_builder =
             Problems.expect_only_warning File_Error r1
 
         group_builder.specify "should return empty vector if no files were provided" <|
-            Data.read_many [] . should_equal []
+            r1 = Data.read_many []
+            r1.should_equal []
+            Problems.assume_no_problems r1
 
 main filter=Nothing =
     suite = Test.build suite_builder->

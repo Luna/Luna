@@ -10,7 +10,7 @@ import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 import Standard.Base.Runtime.Ref.Ref
 
 from Standard.Table import Table, Match_Columns, Excel_Format, Excel_Range, Data_Formatter, Delimited_Format, Excel_Workbook, Value_Type
-from Standard.Table.Errors import Invalid_Column_Names, Duplicate_Output_Column_Names, Invalid_Location, Range_Exceeded, Existing_Data, Column_Count_Mismatch, Column_Name_Mismatch, Empty_Sheet, No_Rows
+from Standard.Table.Errors import Invalid_Column_Names, Duplicate_Output_Column_Names, Invalid_Location, Range_Exceeded, Existing_Data, Column_Count_Mismatch, Column_Name_Mismatch, Empty_Sheet, No_Rows, No_Common_Type
 from Standard.Table.Extensions.Excel_Extensions import all
 import Standard.Table.Excel.Excel_Workbook.Return_As as Old_Return_As
 
@@ -1010,6 +1010,7 @@ add_specs suite_builder =
 
                 r1 = Data.read_many files return=..With_New_Column
                 r1.should_be_a Table
+                Problems.assume_no_problems r1
                 within_table r1 <|
                     r1.column_names . should_equal ["Path", "Value"]
                     r1.row_count . should_equal 3
@@ -1019,6 +1020,7 @@ add_specs suite_builder =
 
                 r2 = Data.read_many files return=..As_Merged_Table
                 r2.should_be_a Table
+                Problems.assume_no_problems r2
                 within_table r2 <|
                     r2.column_names . should_equal ["Path", "Sheet Name", "A", "B", "C"]
 
@@ -1032,6 +1034,15 @@ add_specs suite_builder =
                     rows.at 5 . should_equal ["3.xlsx",      "nr 2", 400, Nothing, Nothing]
                     rows.at 6 . should_equal ["3.xlsx",      "nr 2", 500, Nothing, Nothing]
                     rows.at 7 . should_equal ["3.xlsx",      "nr 2", 600, Nothing, Nothing]
+
+                # Test loading only Excel files and alternate matching mode to weed out edge cases
+                r3 = Data.read_many (Data.list base_dir name_filter="*.xlsx" . sort on=(.name)) return=..As_Merged_Table
+                r3.should_be_a Table
+                Problems.assume_no_problems r3
+                within_table r3 <|
+                    r3.column_names . should_equal ["Path", "Sheet Name", "A", "B", "C"]
+                    r3.at "Sheet Name" . to_vector . should_equal ["EnsoSheet", "EnsoSheet", "nr 1", "nr 2", "nr 2", "nr 2"]
+                    r3.at "A" . to_vector . should_equal [10, 20, 100, 400, 500, 600]
 
         group_builder.specify "during `read_many`, should not mix metadata columns with data columns with same name or when matching by position" <|
             with_temp_dir base_dir->
@@ -1061,6 +1072,9 @@ add_specs suite_builder =
                     rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,          "500", Nothing, Nothing]
                     rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", Nothing,          "600", Nothing, Nothing]
 
+                    Problems.expect_warning Duplicate_Output_Column_Names r1
+                    Problems.expect_warning No_Common_Type r1
+
                 r2 = Data.read_many input return=(..As_Merged_Table match=..By_Position)
                 r2.should_be_a Table
                 within_table r2 <|
@@ -1077,6 +1091,9 @@ add_specs suite_builder =
                     rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 500,       Nothing, Nothing]
                     rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 600,       Nothing, Nothing]
 
+                    Problems.expect_warning Duplicate_Output_Column_Names r2
+                    Problems.expect_warning No_Common_Type r2
+
                 r3 = Data.read_many input return=(..As_Merged_Table columns_to_keep=..In_All match=..By_Position)
                 r3.should_be_a Table
                 within_table r3 <|
@@ -1092,6 +1109,9 @@ add_specs suite_builder =
                     rows.at 4 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 400]
                     rows.at 5 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 500]
                     rows.at 6 . should_equal       ["3.xlsx",    "input 3",         "nr 2", 600]
+
+                    Problems.expect_warning Duplicate_Output_Column_Names r3
+                    Problems.expect_warning Column_Count_Mismatch r3
                 
         group_builder.specify "during `read_many`, should correctly handle empty sheets" <|
             with_temp_dir base_dir->
