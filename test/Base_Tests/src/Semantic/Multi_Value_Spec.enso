@@ -1,19 +1,28 @@
 from Standard.Base import all
 from Standard.Test import all
 import Standard.Base.Errors.Common.Type_Error
+import Standard.Base.Errors.Common.No_Such_Method
 
 import project.Data.Complex.Complex
 
 type A
+    a = "a"
 type B
     B v
+
+    b = "b"
+
 type C
     C v
+
+    c = "c"
 
 B.from (that:A) = B.B that
 C.from (that:B) = C.C that
 
 type X
+    x = "x"
+
 X.from (_:A) = X
 
 add_specs suite_builder =
@@ -27,8 +36,8 @@ add_specs suite_builder =
             (c:Float) . should_equal 1.5
 
     suite_builder.group "Chain Multi Value" group_builder->
-        to_b_to_c a =
-            b = a : B
+        to_b_to_c obj =
+            b = obj : B
             c = b : C
             c
 
@@ -62,7 +71,21 @@ add_specs suite_builder =
 
         group_builder.specify "Multiple conversions of (A & X : X) work" <|
             ax = A:A&X
+
+            ax.a . should_equal "a"
+            ax.x . should_equal "x"
+
             x = ax : X
+
+            x.x . should_equal "x"
+            Test.expect_panic No_Such_Method <|
+                # method of A isn't visible for direct dispatch
+                x.a
+
+            # but the object can be converted to A and then
+            # method a is available
+            (x:A).a . should_equal "a"
+
             # should it fail? X cannot be converted to B, but there is "extra"
             # A in the x and allows the to_b_to_c conversion to succeed
             a_text = to_b_to_c x
