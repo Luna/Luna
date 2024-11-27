@@ -84,9 +84,8 @@ public class LRUCache<M> {
   }
 
   /**
-   * IOExceptions thrown by the HTTP request are propagated; exceptions thrown
-   * while creating or accessing cache files are caught, and the request is
-   * re-issued without caching.
+   * IOExceptions thrown by the HTTP request are propagated; exceptions thrown while creating or
+   * accessing cache files are caught, and the request is re-issued without caching.
    */
   public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
       throws IOException, InterruptedException, ResponseTooLargeException {
@@ -113,7 +112,7 @@ public class LRUCache<M> {
   }
 
   private CacheResult<M> makeRequestAndCache(String cacheKey, ItemBuilder<M> itemBuilder)
-      throws IOException, InterruptedException, LRUCacheException , ResponseTooLargeException {
+      throws IOException, InterruptedException, LRUCacheException, ResponseTooLargeException {
     assert !cache.containsKey(cacheKey) : "Cache should not contain key " + cacheKey;
 
     Item<M> item = itemBuilder.buildItem();
@@ -149,7 +148,8 @@ public class LRUCache<M> {
 
       return getResultForCacheEntry(cacheKey);
     } catch (IOException e) {
-      // Throw this to re-issue the request since we don't know if we've consumed any of the response.
+      // Throw this to re-issue the request since we don't know if we've consumed any of the
+      // response.
       throw new LRUCacheException("Failure storing cache entry", e);
     }
   }
@@ -157,10 +157,11 @@ public class LRUCache<M> {
   /**
    * Mark cache entry used and return a stream reading from the cache file.
    *
-   * If the file has been deleted, an LRUCacheException is thrown, causing
-   * .makeRequest to re-issue the request without caching.
+   * <p>If the file has been deleted, an LRUCacheException is thrown, causing .makeRequest to
+   * re-issue the request without caching.
    */
-  private CacheResult<M> getResultForCacheEntry(String cacheKey) throws IOException, LRUCacheException {
+  private CacheResult<M> getResultForCacheEntry(String cacheKey)
+      throws IOException, LRUCacheException {
     var cacheFile = cache.get(cacheKey).responseData;
 
     if (!cacheFile.exists()) {
@@ -169,8 +170,7 @@ public class LRUCache<M> {
     }
 
     markCacheEntryUsed(cacheKey);
-    return new CacheResult<>(
-        new FileInputStream(cacheFile), cache.get(cacheKey).metadata());
+    return new CacheResult<>(new FileInputStream(cacheFile), cache.get(cacheKey).metadata());
   }
 
   /**
@@ -333,7 +333,10 @@ public class LRUCache<M> {
   /** Public for testing. */
   public List<String> getFiles() {
     return new ArrayList<>(
-        cache.values().stream().map(CacheEntry::responseData).map(f -> f.getPath()).collect(Collectors.toList()));
+        cache.values().stream()
+            .map(CacheEntry::responseData)
+            .map(f -> f.getPath())
+            .collect(Collectors.toList()));
   }
 
   /** Public for testing. */
