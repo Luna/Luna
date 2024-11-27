@@ -28,7 +28,6 @@ import project.Internal.Read_Many_Helpers
 import project.Internal.Storage
 import project.Internal.Value_Type_Helpers
 import project.Internal.Widget_Helpers
-import project.Return_As_Table.Return_As_Table
 import project.Rows_To_Read.Rows_To_Read
 import project.Table.Table
 import project.Value_Type.Auto
@@ -2935,4 +2934,4 @@ apply_unary_map column:Column new_name:Text function expected_result_type:Value_
 ## PRIVATE
 Many_Files_List.from (that : Column) =
     Read_Many_Helpers.ensure_column_type_valid_to_be_files_list that <|
-        Many_Files_List.Value that that.to_vector Return_As_Table.As_Merged_Table
+        Many_Files_List.Value that that.to_vector

@@ -2,6 +2,7 @@ from Standard.Base import all
 import Standard.Base.Data.Vector.Map_Error
 import Standard.Base.Errors.Encoding_Error.Encoding_Error
 import Standard.Base.Errors.File_Error.File_Error
+import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 from Standard.Test import all
 
@@ -97,13 +98,22 @@ add_specs suite_builder =
 
             # Read all files using Auto_Detect - each file is read according to its inferred format.
             # If the return type is not specified, if the input is a Vector, the return type is also Vector:
-            r1 = Data.read_many files
+            r1 = Data.read_many files return=..As_Vector
             r1.should_equal [js_object, "Hello World!"]
 
             # Read all files using a specified format.
-            r2 = Data.read_many files format=..Plain_Text
+            r2 = Data.read_many files format=..Plain_Text return=..As_Vector
             r2.should_be_a Vector
             r2.should_equal [js_as_text.get, "Hello World!"]
+
+        group_builder.specify "would default to returning as merged Table, but will raise a helpful error if Standard.Table is not loaded" <|
+            # This test assumes that Base_Tests *does not import* Standard.Table.
+            files = [enso_project.data / "sample.json"]
+            r1 = Data.read_many files
+            r1.should_fail_with Illegal_Argument
+            r1.catch.to_display_text.should_contain "not imported"
+            r1.catch.to_display_text.should_contain "Standard.Table"
+            r1.catch.to_display_text.should_contain "As_Vector"
 
         group_builder.specify "should work with paths as Text" <|
             files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
@@ -132,7 +142,7 @@ add_specs suite_builder =
             Problems.expect_only_warning File_Error r1
 
         group_builder.specify "should return empty vector if no files were provided" <|
-            r1 = Data.read_many []
+            r1 = Data.read_many [] return=..As_Vector
             r1.should_equal []
             Problems.assume_no_problems r1
 

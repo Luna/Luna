@@ -109,7 +109,7 @@ add_specs suite_builder =
             Data.read_many (table.at "path") . should_fail_with Invalid_Value_Type
             Data.read_many (table.select_columns ["X"]) . should_fail_with Invalid_Value_Type
 
-        group_builder.specify "if input is a Column or Table, the return type should default to a merged table" <|
+        group_builder.specify "should return a merged table by default" <|
             r1 = Data.read_many (Column.from_vector "my column" files_vector)
             r1.should_be_a Table
             r1.column_names . should_equal ["my column", "Value", "a", "b", "c"]
@@ -124,17 +124,17 @@ add_specs suite_builder =
             r2.at "Y" . to_vector . should_equal [300, 400, 400]
             check_common_columns r2
 
-        group_builder.specify "if input is a Vector, the default can be overridden to return a Table" <|
+            r3 = Data.read_many files_vector
+            r3.should_be_a Table
+            r3.column_names . should_equal ["Path", "Value", "a", "b", "c"]
+            check_common_columns r3
+
+        group_builder.specify "if input is a Vector, the default can be overridden to return a new column" <|
             r1 = Data.read_many files_vector return=..With_New_Column
             r1.should_be_a Table
             r1.column_names . should_equal ["Path", "Value"]
             r1.at "Path" . to_vector . should_equal files_vector
             check_returned_vector (r1.at "Value" . to_vector)
-
-            r2 = Data.read_many files_vector return=..As_Merged_Table
-            r2.should_be_a Table
-            r2.column_names . should_equal ["Path", "Value", "a", "b", "c"]
-            check_common_columns r2
 
         group_builder.specify "should merge files that read as non-Table values into a Table using reasonable defaults" <|
             with_temp_dir base_dir->
@@ -161,7 +161,7 @@ add_specs suite_builder =
 
                 files = Data.list base_dir . sort on=(.name)
                 IO.println (Meta.type_of files.first)
-                r = Data.read_many files return=..As_Merged_Table
+                r = Data.read_many files
                 r.should_be_a Table
 
                 within_table r <|
@@ -209,7 +209,7 @@ add_specs suite_builder =
                 r1 . at "Path" . map .name . to_vector . should_equal ["1_js_object.json", "2_empty_array.json", "3_js_object.json"]
                 r1.at "Value" . at 1 . should_equal []
 
-                r2 = Data.read_many files return=..As_Merged_Table
+                r2 = Data.read_many files
                 r2.should_be_a Table
                 w2 = Problems.expect_only_warning No_Rows r2
                 w2.to_display_text . should_contain "2_empty_array.json"
@@ -290,7 +290,7 @@ add_specs suite_builder =
                 '{"a": 1}'.write (base_dir / "1_js_object.json")
                 '{"a": "str"}'.write (base_dir / "2_js_object.json")
                 files = Data.list base_dir . sort on=(.name)
-                r = Data.read_many files return=..As_Merged_Table
+                r = Data.read_many files
                 r.should_be_a Table
                 r.column_names . should_equal ["Path", "a"]
                 r.at "a" . value_type . should_equal Value_Type.Char
@@ -301,7 +301,7 @@ add_specs suite_builder =
                 '{"a": {}}'.write (base_dir / "1_js_object.json")
                 '{"a": []}'.write (base_dir / "2_js_object.json")
                 files = Data.list base_dir . sort on=(.name)
-                r = Data.read_many files return=..As_Merged_Table
+                r = Data.read_many files
                 r.should_be_a Table
                 r.column_names . should_equal ["Path", "a"]
                 r.at "a" . value_type . should_equal Value_Type.Mixed
@@ -316,7 +316,7 @@ add_specs suite_builder =
             t.row_count . should_equal 0
             t.column_names . should_equal ["C"]
 
-            t2 = Data.read_many [] return=..As_Merged_Table
+            t2 = Data.read_many []
             t2.should_be_a Table
             t2.row_count . should_equal 0
             t2.column_names . should_equal ["Path"]
@@ -332,7 +332,7 @@ add_specs suite_builder =
                 '[{}, {}]'.write (base_dir / "2_js_array.json")
 
                 files = Data.list base_dir . sort on=(.name)
-                r = Data.read_many files return=..As_Merged_Table
+                r = Data.read_many files
                 r.should_be_a Table
                 Problems.expect_warning Illegal_Argument r
                 within_table r <|
@@ -351,7 +351,7 @@ add_specs suite_builder =
                 r1.column_names . should_equal ["Path", "Value"]
                 Problems.assume_no_problems r1
 
-                r2 = Data.read_many files return=..As_Merged_Table
+                r2 = Data.read_many files
                 r2.should_be_a Table
                 r2.row_count . should_equal 0
                 r2.column_names . should_equal ["Path"]

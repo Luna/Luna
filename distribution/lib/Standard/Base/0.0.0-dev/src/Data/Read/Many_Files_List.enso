@@ -1,5 +1,3 @@
-import project.Data.Read.Return_As.Return_As
-import project.Data.Read.Return_As.Return_As_Base
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 
@@ -9,7 +7,7 @@ import project.Data.Vector.Vector
    used in `Data.read_many`.
 type Many_Files_List
     ## PRIVATE
-    Value original_value paths_to_load:Vector default_return:Return_As
+    Value original_value paths_to_load:Vector
 
     ## PRIVATE
     to_text self -> Text =
@@ -21,4 +19,4 @@ type Many_Files_List
 
 ## PRIVATE
 Many_Files_List.from (that : Vector) =
-    Many_Files_List.Value that that Return_As_Base.As_Vector
+    Many_Files_List.Value that that
