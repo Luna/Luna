@@ -616,19 +616,16 @@ const getColumnValueToEnso = (columnName: string) => {
   if (isNumber.indexOf(columnType) != -1) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
-  const createDateTimePattern = (pattern: string, numberOfParts: number) => {
-    const dateOrTimePattern = Pattern.parseExpression(pattern)
-    return (item: string, module: Ast.MutableModule) => {
-      const dateTimeParts = item.match(/\d+/g)!.map(Number)
-      const dateTimePartsNumeric = []
-      for (let i = 0; i < numberOfParts; i++) {
-        dateTimePartsNumeric.push(Ast.tryNumberToEnso(Number(dateTimeParts[i] ?? 0), module)!)
-      }
-      return dateOrTimePattern.instantiateCopied(dateTimePartsNumeric)
-    }
+  const createDateValue = (item: string, module: Ast.MutableModule) => {
+    const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
+    const dateTimeParts = item
+      .match(/\d+/g)!
+      .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
+    return dateOrTimePattern.instantiateCopied([...dateTimeParts])
   }
+
   if (columnType === 'Date') {
-    return createDateTimePattern('(Date.new __ __ __)', 3)
+    return (item: string, module: Ast.MutableModule) => createDateValue(item, module)
   }
   if (columnType === 'Time') {
     return (item: string) => Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
@@ -642,13 +639,7 @@ const getColumnValueToEnso = (columnName: string) => {
         return Ast.tryNumberToEnso(Number(item), module)!
       }
       if (/^\d{4}-\d{2}-\d{2}$/.test(item)) {
-        const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
-        const dateTimeParts = item.match(/\d+/g)!.map(Number)
-        const dateTimePartsNumeric = []
-        for (let i = 0; i < 3; i++) {
-          dateTimePartsNumeric.push(Ast.tryNumberToEnso(Number(dateTimeParts[i] ?? 0), module)!)
-        }
-        return dateOrTimePattern.instantiateCopied(dateTimePartsNumeric)
+        return createDateValue(item, module)
       }
       if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)) {
         return Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
