@@ -58,11 +58,15 @@ type Managed_Resource
        ADVANCED
 
        Executes the provided action on the resource managed by the managed
-       resource object.
+       resource object. The action is only invoked if the managed resource
+       has not yet been finalized.
 
        Arguments:
        - action: The action that will be applied to the resource managed by
          resource.
+       Returns:
+       Value returned from the `action` or `Nothing` if the managed resource
+       was already finalized
     with : (Any -> Any) -> Any
     with self ~action = @Builtin_Method "Managed_Resource.with"
 
