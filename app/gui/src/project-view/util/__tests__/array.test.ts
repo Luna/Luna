@@ -1,4 +1,3 @@
-import { shallowEquality } from '#/utilities/equalities'
 import { findDifferenceIndex, partitionPoint } from '@/util/data/array'
 import { fc, test } from '@fast-check/vitest'
 import { expect } from 'vitest'
@@ -41,16 +40,32 @@ test.prop({
 })
 
 test.prop({
+  array: fc.array(fc.anything()),
+})('findDifferenceIndex (same array)', ({ array }) => {
+  expect(findDifferenceIndex(array, array)).toEqual(array.length)
+})
+
+test.prop({
+  array: fc.array(fc.anything()),
+})('findDifferenceIndex (empty)', ({ array }) => {
+  expect(findDifferenceIndex(array, [])).toEqual(0)
+})
+
+test.prop({
   arr1: fc.array(fc.anything()),
   arr2: fc.array(fc.anything()),
   returnedIndex: fc.context(),
-})('findDifferenceIndex (anything)', ({ arr1, arr2, returnedIndex }) => {
+})('findDifferenceIndex (arbitrary arrays)', ({ arr1, arr2, returnedIndex }) => {
   const differenceIndex = findDifferenceIndex(arr1, arr2)
+  const differenceIndexInverse = findDifferenceIndex(arr2, arr1)
   returnedIndex.log(`${differenceIndex}`)
+  expect(differenceIndex).toEqual(differenceIndexInverse)
+
   const shorterArrayLen = Math.min(arr1.length, arr2.length)
   expect(differenceIndex).toBeLessThanOrEqual(shorterArrayLen)
   expect(arr1.slice(0, differenceIndex)).toEqual(arr2.slice(0, differenceIndex))
   if (differenceIndex < shorterArrayLen) {
+    expect(arr1.slice(differenceIndex)).not.toEqual(arr2.slice(differenceIndex))
     expect(arr1[differenceIndex]).not.toEqual(arr2[differenceIndex])
   }
 })
