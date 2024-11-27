@@ -40,9 +40,18 @@ type Return_As
        Resolve an unresolved constructor to the actual type.
     private resolve value = case value of
         _ : Function ->
+            # Result when we fail to resolve an autoscoped constructor.
+            symbol_not_found =
+                # TODO ideally we'd like to use `Meta` but it currently has no support for UnresolvedConstructor so we use a 'hack'.
+                is_the_default = value.to_text == "..As_Merged_Table"
+                case is_the_default of
+                    True ->
+                        Error.throw (Illegal_Argument.Error "The method returns a merged Table by default, but Standard.Table is not imported. Add an import, or use `As_Vector`.")
+                    False ->
+                        Error.throw (Illegal_Argument.Error "Expected Return_As, but got a function.")
             types = _get_known_return_classes
             try_next idx =
-                if idx >= types.length then Error.throw (Illegal_Argument.Error "Expected Return_As, but got a function.") else
+                if idx >= types.length then symbol_not_found else
                     resolved = (types.at idx).resolve value
                     if resolved.is_nothing then @Tail_Call try_next (idx + 1) else resolved
             try_next 0
