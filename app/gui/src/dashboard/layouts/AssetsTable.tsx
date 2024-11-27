@@ -1943,35 +1943,34 @@ export default function AssetsTable(props: AssetsTableProps) {
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex-0 sticky top-0 flex h-0 flex-col">
-                    <div
-                      data-testid="extra-columns"
-                      className="sticky right-0 flex self-end px-2 py-3"
-                    >
-                      <FocusArea direction="horizontal">
-                        {(columnsBarProps) => (
-                          <div
-                            {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
-                              className: 'inline-flex gap-icons',
-                              onFocus: () => {
-                                setKeyboardSelectedIndex(null)
-                              },
-                            })}
-                          >
-                            {hiddenColumns.map((column) => (
-                              <HiddenColumn
-                                key={column}
-                                column={column}
-                                enabledColumns={enabledColumns}
-                                onColumnClick={setEnabledColumns}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </FocusArea>
-                    </div>
-                  </div>
                   <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
+
+                  <div
+                    data-testid="extra-columns"
+                    className="absolute right-2 flex self-end px-2 py-3"
+                  >
+                    <FocusArea direction="horizontal">
+                      {(columnsBarProps) => (
+                        <div
+                          {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
+                            className: 'inline-flex gap-icons ',
+                            onFocus: () => {
+                              setKeyboardSelectedIndex(null)
+                            },
+                          })}
+                        >
+                          {hiddenColumns.map((column) => (
+                            <HiddenColumn
+                              key={column}
+                              column={column}
+                              enabledColumns={enabledColumns}
+                              onColumnClick={setEnabledColumns}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </FocusArea>
+                  </div>
                 </div>
               </div>
             </IsolateLayout>
