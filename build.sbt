@@ -2002,13 +2002,15 @@ lazy val `ydoc-server` = project
   .settings(
     NativeImage.smallJdk := None,
     NativeImage.additionalCp := Seq.empty,
-    rebuildNativeImage := NativeImage
-      .buildNativeImage(
-        "ydoc",
-        staticOnLinux = false,
-        mainClass     = Some("org.enso.ydoc.server.Main")
-      )
-      .value,
+    rebuildNativeImage := Def.taskDyn {
+      NativeImage
+        .buildNativeImage(
+          "ydoc",
+          staticOnLinux = false,
+          targetDir     = target.value / "native-image",
+          mainClass     = Some("org.enso.ydoc.server.Main")
+        )
+    }.value,
     buildNativeImage := NativeImage
       .incrementalNativeImageBuild(
         rebuildNativeImage,
@@ -4087,6 +4089,7 @@ lazy val `std-benchmarks` = (project in file("std-bits/benchmarks"))
   )
   .dependsOn(`bench-processor`)
   .dependsOn(`ydoc-polyfill`)
+  .dependsOn(`logging-service-logback`)
   .dependsOn(`runtime-language-arrow`)
   .dependsOn(`syntax-rust-definition`)
   .dependsOn(`profiling-utils`)
