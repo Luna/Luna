@@ -644,6 +644,13 @@ const getColumnValueToEnso = (columnName: string) => {
       if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)) {
         return Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
       }
+      if (
+        /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?(\[[+-]\d{1,3}(:[0-5]\d)?\])?$/.test(
+          item,
+        )
+      ) {
+        return Ast.parseExpression(`(Date_Time.parse '${item}')`)!
+      }
 
       return Ast.TextLiteral.new(item)
     }
