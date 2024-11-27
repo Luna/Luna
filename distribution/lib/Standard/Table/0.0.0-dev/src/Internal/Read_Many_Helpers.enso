@@ -89,14 +89,14 @@ _unify_metadata (tables : Vector Read_Many_As_Table_Result) (on_problems : Probl
             if r.metadata.is_nothing.not then unique.mark_used r.metadata.column_names
         
         # A dummy column because we cannot create a table with 0 columns, it will be removed after union. We find an unique name for it to avoid conflicts.
-        dummy_column_name = unique.make_unique "Dummy"
+        dummy_column_name = unique.make_unique "_Internal_Placeholder_Column_"
         tables_for_union = tables.map r->
             if r.metadata.is_nothing.not then r.metadata else
                 Table.new [Column.from_repeated_item dummy_column_name Nothing r.data.row_count]
         
         # Metadata are always merged by-name and columns that appear only in some tables are kept.
         unified_metadata = Table.from_union tables_for_union ..In_Any ..By_Name on_problems
-        unified_metadata.remove_columns [dummy_column_name]
+        unified_metadata.remove_columns [dummy_column_name] on_problems=..Ignore
 
 _make_table_with_one_null_row (empty_table : Table) -> Table =
     Runtime.assert (empty_table.row_count == 0) "The table must be empty."
