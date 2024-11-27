@@ -95,12 +95,10 @@ export function partition<T>(array: Iterable<T>, pred: (elem: T) => boolean): [T
 export function findDifferenceIndex<T>(
   lhs: T[],
   rhs: T[],
-  equals = (a: T, b: T) => a != b,
+  equals = (a: T, b: T) => a === b,
 ): number {
   return (
-    findIndexOpt(lhs, (item, index) => {
-      const rhsItem = rhs[index]
-      return rhsItem == null || !equals(item, rhsItem)
-    }) ?? Math.min(lhs.length, rhs.length)
+    findIndexOpt(lhs, (item, index) => index >= rhs.length || !equals(item, rhs[index]!)) ??
+    lhs.length
   )
 }
