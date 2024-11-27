@@ -78,7 +78,7 @@ export function AssetPanel(props: AssetPanelProps) {
             initial={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
-            className="absolute bottom-0 right-0 top-0 flex flex-col bg-background-hex"
+            className="absolute bottom-0 right-0 top-0 flex flex-col"
             onClick={(event) => {
               // Prevent deselecting Assets Table rows.
               event.stopPropagation()
@@ -156,7 +156,6 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
       <AnimatePresence initial={!isExpanded} mode="sync">
         {isExpanded && (
           <motion.div
-            custom={ASSET_PANEL_WIDTH}
             initial="initial"
             animate="animate"
             exit="exit"
