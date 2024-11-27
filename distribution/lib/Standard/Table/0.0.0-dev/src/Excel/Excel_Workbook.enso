@@ -395,9 +395,16 @@ build_sheet_selector workbook:Excel_Workbook display:Display=Display.Always -> W
 type Return_As
     ## DEPRECATED
        Each sheet is returned as a row.
+
+       This option is deprecated, because it has been renamed. Please use the
+       equivalent `With_New_Column` instead.
     Table_Of_Tables
 
-    ## All sheets are merged into a single table. A union operation is performed.
+    ## DEPRECATED
+       All sheets are merged into a single table. A union operation is performed.
+
+       This option is deprecated, because it has been renamed. Please use the
+       equivalent `As_Merged_Table` instead.
     Merged_Table (columns_to_keep : Columns_To_Keep = Columns_To_Keep.In_Any) (match : Match_Columns = Match_Columns.By_Name)
 
 ## A helper method that ensures that we can take the new `Return_As_Table` type
@@ -412,9 +419,11 @@ private _resolve_return_as_compatibility return =
         if old_style.is_nothing then Error.throw (Illegal_Argument.Error "Valid values for `return` are: `..With_New_Column` or `..As_Merged_Table`. Instead, got `"+return.to_display_text+"`.") else
             case old_style of
                 Return_As.Table_Of_Tables ->
-                    Return_As_Table.With_New_Column
+                    Warning.attach (Deprecated.Warning "Standard.Table.Excel.Excel_Workbook.Return_As" "Table_Of_Tables" "Deprecated: use `..With_New_Column` instead.") <|
+                        Return_As_Table.With_New_Column
                 Return_As.Merged_Table columns_to_keep match ->
-                    Return_As_Table.As_Merged_Table columns_to_keep match
+                    Warning.attach (Deprecated.Warning "Standard.Table.Excel.Excel_Workbook.Return_As" "Merged_Table" "Deprecated: use `..As_Merged_Table` instead.") <|
+                        Return_As_Table.As_Merged_Table columns_to_keep match
 
 ## Creates a query widget for the `read` method.
 private _query_widget wb:Excel_Workbook display:Display=..Always -> Widget =

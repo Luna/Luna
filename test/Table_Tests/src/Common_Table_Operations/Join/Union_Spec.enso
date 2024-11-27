@@ -544,7 +544,7 @@ run_union_tests group_builder setup call_union =
 
         t = call_union [t1, t2, t3, t4, t5]
         expect_column_names ["A"] t
-        t.at "A" . to_vector . should_equal [Nothing, '2', '3', Nothing, 'a', 'b']
+        t.at "A" . to_vector . should_equal [Nothing, '2', '3', Nothing, Nothing, 'a', 'b', Nothing]
         t.at "A" . value_type . is_text . should_be_true
 
     if setup.is_database.not then group_builder.specify "all-Nothing column should not influence result type, unless it had a type explicitly given to it" pending="TODO Value_Type.Null #6281" <|
