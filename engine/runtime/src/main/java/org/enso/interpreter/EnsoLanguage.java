@@ -416,8 +416,11 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
           return ArrayLikeHelpers.asVectorFromArray(value);
         }
         case CONVERT_TO_BIG_INT -> {
+          // long and doubles are valid primitive types in Enso
           if (interop.fitsInLong(value)) {
             return new LanguageViewWrapper(interop.asLong(value));
+          } else if (interop.fitsInDouble(value)) {
+            return new LanguageViewWrapper(interop.asDouble(value));
           } else {
             return new EnsoBigInteger(interop.asBigInteger(value));
           }
