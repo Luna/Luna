@@ -43,6 +43,7 @@ import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.data.EnsoDate;
 import org.enso.interpreter.runtime.data.EnsoDateTime;
 import org.enso.interpreter.runtime.data.EnsoDuration;
+import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.EnsoTimeOfDay;
 import org.enso.interpreter.runtime.data.EnsoTimeZone;
 import org.enso.interpreter.runtime.data.atom.AtomNewInstanceNode;
@@ -396,6 +397,9 @@ public final class EnsoLanguage extends TruffleLanguage<EnsoContext> {
       var bool = context.getBuiltins().bool();
       var cons = b ? bool.getTrue() : bool.getFalse();
       return AtomNewInstanceNode.getUncached().newInstance(cons);
+    }
+    if (value instanceof EnsoObject ensoObject) {
+      return ensoObject;
     }
     var interop = InteropLibrary.getUncached();
     // We want to know if the `value` can be converted to some Enso builtin type.
