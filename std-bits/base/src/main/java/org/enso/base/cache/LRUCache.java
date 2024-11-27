@@ -100,6 +100,9 @@ public class LRUCache<M> {
       }
     } catch (LRUCacheException e) {
       // Re-issue the request without caching.
+      // We don't re-attempt to store the cache file and entry. In some cases
+      // (such as a cache file deleted from the outside), we could, but this is
+      // a rare case so it seems unnecessary.
       logger.log(
           Level.WARNING,
           "Error in cache file handling; will re-execute without caching: {}",
@@ -151,7 +154,12 @@ public class LRUCache<M> {
     }
   }
 
-  /** Mark cache entry used and return a stream reading from the cache file. */
+  /**
+   * Mark cache entry used and return a stream reading from the cache file.
+   *
+   * If the file has been deleted, an LRUCacheException is thrown, causing
+   * .makeRequest to re-issue the request without caching.
+   */
   private CacheResult<M> getResultForCacheEntry(String cacheKey) throws IOException, LRUCacheException {
     var cacheFile = cache.get(cacheKey).responseData;
 
