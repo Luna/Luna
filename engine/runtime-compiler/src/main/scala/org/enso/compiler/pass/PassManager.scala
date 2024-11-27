@@ -101,7 +101,6 @@ class PassManager(
   }
 
   /** Executes all passes on the [[Expression]].
-    * TODO: Remove this method?
     *
     * @param ir the expression to execute the compiler passes on
     * @param inlineContext the inline context in which the passes are executed
