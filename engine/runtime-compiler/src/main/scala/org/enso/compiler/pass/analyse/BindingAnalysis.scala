@@ -13,7 +13,7 @@ import org.enso.compiler.data.BindingsMap.{
   ExtensionMethod,
   ModuleMethod
 }
-import org.enso.compiler.pass.IRPass
+import org.enso.compiler.pass.{IRPass, IRProcessingPass}
 import org.enso.compiler.pass.desugar.{
   ComplexType,
   FunctionBinding,
@@ -40,7 +40,7 @@ case object BindingAnalysis extends IRPass {
     Seq(ComplexType, FunctionBinding, GenerateMethodBodies)
 
   /** The passes that are invalidated by running this pass. */
-  override lazy val invalidatedPasses: Seq[IRPass] =
+  override lazy val invalidatedPasses: Seq[IRProcessingPass] =
     Seq(MethodDefinitions.INSTANCE, Patterns)
 
   /** Executes the pass on the provided `ir`, and returns a possibly transformed
