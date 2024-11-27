@@ -46,10 +46,11 @@ public class StdLibLoggingTest {
 
   @Test
   public void testLogInRef() {
-    ctx.eval(logExample).invokeMember("eval_expression", "test");
     var context = (LoggerContext) LoggerFactory.getILoggerFactory();
     var logger = context.getLogger(Logger.ROOT_LOGGER_NAME);
     var appender = (MemoryAppender) logger.getAppender("memory");
+    appender.reset();
+    ctx.eval(logExample).invokeMember("eval_expression", "test");
     var events = appender.getEvents().stream().map(ILoggingEvent::getMessage).toList();
 
     assertEquals(events, List.of("Logging something"));
