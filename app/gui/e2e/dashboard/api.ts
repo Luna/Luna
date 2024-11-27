@@ -175,7 +175,17 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         description: null,
         labels: [],
         parentId: defaultDirectoryId,
-        permissions: [],
+        permissions: [
+          {
+            user: {
+              organizationId: defaultOrganizationId,
+              userId: defaultUserId,
+              name: defaultUsername,
+              email: defaultEmail,
+            },
+            permission: permissions.PermissionAction.own,
+          },
+        ],
         parentsPath: '',
         virtualParentsPath: '',
       },
