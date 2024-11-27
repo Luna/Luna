@@ -36,8 +36,9 @@
   suitable type][11612].
 - [Visualizations on components are slightly transparent when not
   focused][11582].
-- [New design for vector-editing widget][11620]
-- [The `:` type operator can now be chained][11671]
+- [New design for vector-editing widget][11620].
+- [The `:` type operator can now be chained][11671].
+- [Fixed bug causing Table Visualization to show wrong data][11684].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -62,6 +63,7 @@
 [11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
 [11671]: https://github.com/enso-org/enso/pull/11671
+[11684]: https://github.com/enso-org/enso/pull/11684
 
 #### Enso Standard Library
 
