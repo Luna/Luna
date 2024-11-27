@@ -509,7 +509,6 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     suggestionsRepo.close()
     contextSupervisor.close()
     runtimeEventsMonitor.close()
-    ydocSupervisor.close()
     log.info("Stopped Language Server")
   }
 
