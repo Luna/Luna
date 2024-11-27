@@ -40,6 +40,7 @@ public class ReloadDetector {
                   """
       import Standard.Base.Runtime.Ref.Ref
       import Standard.Base.Data.Boolean.Boolean
+      import Standard.Base.Nothing.Nothing
 
       type Trigger
           private Value ref:Ref
@@ -49,7 +50,13 @@ public class ReloadDetector {
             Trigger.Value ref
 
           get self = self.ref.get
+
+          clear self = self.ref.put Nothing
       """);
       triggerRef = module.invokeMember("eval_expression", "Trigger.new");
+    }
+
+    void simulateReloadTestOnly() {
+        triggerRef.invokeMember("clear");
     }
 }

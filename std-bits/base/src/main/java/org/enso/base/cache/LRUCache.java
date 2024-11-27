@@ -321,6 +321,11 @@ public class LRUCache<M> {
     return settings;
   }
 
+  /** Public for testing. */
+  public void simulateReloadTestOnly() {
+    reloadDetector.simulateReloadTestOnly();
+  }
+
   private record CacheEntry<M>(File responseData, M metadata, long size, ZonedDateTime expiry) {}
 
   /**

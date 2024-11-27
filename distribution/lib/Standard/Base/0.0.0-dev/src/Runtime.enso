@@ -54,9 +54,6 @@ get_stack_trace =
 gc : Nothing
 gc = @Builtin_Method "Runtime.gc"
 
-release_references : Nothing
-release_references = @Builtin_Method "Runtime.release_references"
-
 ## PRIVATE
    ADVANCED
 
