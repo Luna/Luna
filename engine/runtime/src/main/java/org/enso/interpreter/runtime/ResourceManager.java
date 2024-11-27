@@ -408,6 +408,7 @@ public final class ResourceManager {
     @CompilerDirectives.TruffleBoundary
     private void finalizeNow(EnsoContext context) {
       try {
+        clear();
         InteropLibrary.getUncached(finalizer).execute(finalizer, underlying);
       } catch (Exception e) {
         context.getErr().println("Exception in finalizer: " + e.getMessage());
