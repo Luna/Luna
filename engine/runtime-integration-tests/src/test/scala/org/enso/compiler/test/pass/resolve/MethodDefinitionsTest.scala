@@ -9,7 +9,12 @@ import org.enso.compiler.core.ir.expression.errors
 import org.enso.compiler.data.BindingsMap
 import org.enso.compiler.data.BindingsMap.Type
 import org.enso.compiler.pass.resolve.MethodDefinitions
-import org.enso.compiler.pass.{PassConfiguration, PassGroup, PassManager}
+import org.enso.compiler.pass.{
+  MiniIRPass,
+  PassConfiguration,
+  PassGroup,
+  PassManager
+}
 import org.enso.compiler.test.CompilerTest
 
 class MethodDefinitionsTest extends CompilerTest {
@@ -43,7 +48,9 @@ class MethodDefinitionsTest extends CompilerTest {
       * @return [[ir]], with tail call analysis metadata attached
       */
     def analyse(implicit context: ModuleContext): Module = {
-      MethodDefinitions.INSTANCE.runModule(ir, context)
+      val miniPass =
+        MethodDefinitions.INSTANCE.createForModuleCompilation(context)
+      MiniIRPass.compile(classOf[Module], ir, miniPass)
     }
   }
 
