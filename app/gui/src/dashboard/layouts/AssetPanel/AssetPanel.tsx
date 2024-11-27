@@ -21,7 +21,7 @@ import { AssetDocs } from '../AssetDocs'
 import AssetProjectSessions from '../AssetProjectSessions'
 import AssetProperties from '../AssetProperties'
 import AssetVersions from '../AssetVersions/AssetVersions'
-import type { Category } from '../CategorySwitcher/Category'
+import { isLocalCategory, type Category } from '../CategorySwitcher/Category'
 import {
   assetPanelStore,
   useIsAssetPanelExpanded,
@@ -115,6 +115,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
   })
 
   const isReadonly = category.type === 'trash'
+  const isLocal = isLocalCategory(category)
 
   const { getText } = useText()
 
@@ -210,24 +211,28 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
           <AssetPanelTabs.Tab
             id="settings"
             icon={inspectIcon}
-            label={getText('properties')}
+            label={isLocal ? getText('assetProperties.localBackend') : getText('properties')}
             isExpanded={isExpanded}
             onPress={expandTab}
+            isDisabled={isLocal}
           />
           <AssetPanelTabs.Tab
             id="versions"
             icon={versionsIcon}
-            label={getText('versions')}
+            label={isLocal ? getText('assetVersions.localAssetsDoNotHaveVersions') : getText('versions')}
             isExpanded={isExpanded}
-            isDisabled={isHidden}
             onPress={expandTab}
+            isDisabled={isLocal}
           />
           <AssetPanelTabs.Tab
             id="sessions"
             icon={sessionsIcon}
-            label={getText('projectSessions')}
+            label={
+              isLocal ? getText('assetProjectSessions.localBackend') : getText('projectSessions')
+            }
             isExpanded={isExpanded}
             onPress={expandTab}
+            isDisabled={isLocal}
           />
           <AssetPanelTabs.Tab
             id="docs"

@@ -44,7 +44,7 @@ const UNDERLAY_ELEMENT = (
 
 /** Display a tab. */
 export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabProps) {
-  const { id, icon, label, isExpanded } = props
+  const { id, icon, label, isExpanded, isDisabled = false } = props
 
   const tabRef = useRef<HTMLDivElement>(null)
 
@@ -59,8 +59,9 @@ export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabPro
       ref={tabRef}
       id={id}
       aria-label={label}
-      className="aspect-square w-full cursor-pointer"
+      className="aspect-square w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
       data-testid={`asset-panel-tab-${id}`}
+      isDisabled={isDisabled}
     >
       {({ isSelected, isHovered }) => {
         const isActive = isSelected && isExpanded
