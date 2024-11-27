@@ -31,6 +31,8 @@ public class ReloadDetector {
     }
 
     private void resetTriggerRef() {
+      // The `0` value stored in the reference is not used; it just has to
+      // something other than null.
       var module =
           Context.getCurrent()
               .eval(
