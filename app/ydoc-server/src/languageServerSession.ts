@@ -840,9 +840,9 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     const alreadyClosed = this.inState(LsSyncState.Closing, LsSyncState.Closed)
     this.setState(LsSyncState.Disposed)
     if (alreadyClosed) return Promise.resolve()
-    const closing = await this.ls.closeTextFile(this.path)
-    if (!closing.ok) {
-      closing.error.log(`Closing text file ${this.path}`)
-    }
+    //const closing = await this.ls.closeTextFile(this.path)
+    //if (!closing.ok) {
+    //  closing.error.log(`Closing text file ${this.path}`)
+    //}
   }
 }
