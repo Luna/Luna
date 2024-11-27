@@ -86,10 +86,9 @@ add_specs suite_builder =
             # method a is available
             (x:A).a . should_equal "a"
 
-            # should it fail? X cannot be converted to B, but there is "extra"
-            # A in the x and allows the to_b_to_c conversion to succeed
-            a_text = to_b_to_c x
-            a_text . to_text . should_equal "(C (B A & X))"
+            # multivalue ax restricted to X cannot be converted to B in to_b_to_c
+            Test.expect_panic Type_Error <|
+                to_b_to_c x
 
 main filter=Nothing =
     suite = Test.build suite_builder->

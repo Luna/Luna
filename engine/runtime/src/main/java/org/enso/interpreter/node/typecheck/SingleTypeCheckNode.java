@@ -9,6 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.nodes.Node;
+import java.util.Arrays;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.EnsoRootNode;
 import org.enso.interpreter.node.ExpressionNode;
@@ -175,7 +176,15 @@ non-sealed abstract class SingleTypeCheckNode extends AbstractTypeCheckNode {
     if (v instanceof EnsoMultiValue multi) {
       var all = typeOfNode.findAllTypesOrNull(multi);
       assert all != null;
-      return all;
+      var to = 0;
+      // only consider methodDispatchTypes and not "all types" of the multi value
+      for (var i = 0; i < all.length; i++) {
+        var typeOrNull = EnsoMultiValue.CastToNode.getUncached().findTypeOrNull(all[i], multi, false, false);
+        if (typeOrNull != null) {
+          all[to++] = all[i];
+        }
+      }
+      return Arrays.copyOf(all, to);
     }
     if (v instanceof UnresolvedConstructor) {
       return null;
