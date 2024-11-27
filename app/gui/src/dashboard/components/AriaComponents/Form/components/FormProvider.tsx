@@ -10,23 +10,24 @@ import type * as types from './types'
 import type { FormInstance, FormInstanceValidated } from './types'
 
 /** Context type for the form provider. */
-interface FormContextType<Schema extends types.TSchema> {
-  readonly form: types.UseFormReturn<Schema>
+interface FormContextType<Schema extends types.TSchema, SubmitResult = void> {
+  readonly form: FormInstance<Schema, SubmitResult>
 }
 
 // at this moment, we don't know the type of the form context
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FormContext = createContext<FormContextType<any> | null>(null)
+const FormContext = createContext<{
+  form: types.AnyFormInstance
+} | null>(null)
 
 /** Provides the form instance to the component tree. */
-export function FormProvider<Schema extends types.TSchema>(
-  props: FormContextType<Schema> & PropsWithChildren,
+export function FormProvider<Schema extends types.TSchema, SubmitResult = void>(
+  props: FormContextType<Schema, SubmitResult> & PropsWithChildren,
 ) {
   const { children, form } = props
 
   return (
-    // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-explicit-any
-    <FormContext.Provider value={{ form: form as types.UseFormReturn<any> }}>
+    // eslint-disable-next-line no-restricted-syntax
+    <FormContext.Provider value={{ form: form as types.AnyFormInstance }}>
       {children}
     </FormContext.Provider>
   )

@@ -1,8 +1,4 @@
-/**
- * @file
- *
- * Dialog that shows the plan details, price, and the payment form.
- */
+/** @file Dialog that shows the plan details, price, and the payment form. */
 import * as React from 'react'
 
 import type { PaymentMethod } from '@stripe/stripe-js'
@@ -210,7 +206,6 @@ export function PlanSelectorDialog(props: PlanSelectorDialogProps) {
                     elements={elements}
                     stripeInstance={stripe}
                     submitText={isTrialing ? getText('startTrial') : getText('subscribeSubmit')}
-                    onSubmit={(paymentMethodId) => onSubmit?.(paymentMethodId, seats, period)}
                   />
                 )}
               </StripeProvider>

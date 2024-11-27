@@ -1,9 +1,9 @@
 /** @file Reset button for forms. */
-import * as React from 'react'
-
 import * as ariaComponents from '#/components/AriaComponents'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useText } from '#/providers/TextProvider'
+import { memo, type JSX } from 'react'
 import * as formContext from './FormProvider'
 import type * as types from './types'
 
@@ -15,13 +15,12 @@ export interface ResetProps extends Omit<ariaComponents.ButtonProps, 'loading'> 
    *
    * This field is helpful when you need to use the reset button outside of a form.
    */
-  // We do not need to know the form fields.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly form?: types.FormInstance<any>
+  readonly form?: types.AnyFormInstance
 }
 
 /** Reset button for forms. */
-export function Reset(props: ResetProps): React.JSX.Element {
+
+export const Reset = memo(function Reset(props: ResetProps): JSX.Element {
   const { getText } = useText()
   const {
     variant = 'outline',
@@ -34,6 +33,10 @@ export function Reset(props: ResetProps): React.JSX.Element {
   const form = formContext.useFormContext(props.form)
   const { formState } = form
 
+  const onReset = useEventCallback(() => {
+    form.reset()
+  })
+
   return (
     <ariaComponents.Button
       variant={variant}
@@ -41,14 +44,10 @@ export function Reset(props: ResetProps): React.JSX.Element {
       isDisabled={formState.isSubmitting || !formState.isDirty}
       testId={testId}
       children={children}
-      onPress={() => {
-        // `type="reset"` triggers native HTML reset, which does not work here as it clears inputs
-        // rather than resetting them to default values.
-        form.reset()
-      }}
+      onPress={onReset}
       /* This is safe because we are passing all props to the button */
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax */
       {...(buttonProps as any)}
     />
   )
-}
+})

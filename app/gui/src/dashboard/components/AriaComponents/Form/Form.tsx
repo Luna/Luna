@@ -35,7 +35,6 @@ export const Form = forwardRef(function Form<
     className,
     style,
     onSubmitted = () => {},
-    onSubmitSuccess = () => {},
     onSubmitFailed = () => {},
     id = formId,
     schema,
@@ -43,47 +42,68 @@ export const Form = forwardRef(function Form<
     gap,
     method,
     canSubmitOffline = false,
-    testId = props['data-testid'],
+    testId: rawTestId,
     ...formProps
   } = props
+
+  const testId = rawTestId ?? formProps['data-testid']
 
   const { getText } = textProvider.useText()
 
   const dialogContext = dialog.useDialogContext()
 
   const onSubmit = useEventCallback(
-    async (fieldValues: types.FieldValues<Schema>, formInstance: types.UseFormReturn<Schema>) => {
-      // This is SAFE because we're passing the result transparently, and it's typed outside
-      // eslint-disable-next-line no-restricted-syntax
-      const result = (await props.onSubmit?.(fieldValues, formInstance)) as SubmitResult
+    (
+      fieldValues: types.FieldValues<Schema>,
+      formInstance: types.UseFormReturn<Schema, SubmitResult>,
+    ) => props.onSubmit?.(fieldValues, formInstance),
+  )
 
+  const onSubmitSuccess = useEventCallback(
+    (
+      data: SubmitResult,
+      fieldValues: types.FieldValues<Schema>,
+      formInstance: types.UseFormReturn<Schema, SubmitResult>,
+    ) => {
       if (method === 'dialog') {
         dialogContext?.close()
       }
 
-      return result
+      return props.onSubmitSuccess?.(data, fieldValues, formInstance)
     },
   )
 
-  const innerForm = components.useForm<Schema, SubmitResult>(
-    form ?? {
-      ...formOptions,
-      ...(defaultValues ? { defaultValues } : {}),
-      schema,
-      canSubmitOffline,
-      onSubmit,
-      onSubmitFailed,
-      onSubmitSuccess,
-      onSubmitted,
-      shouldFocusError: true,
-      debugName: `Form ${testId} id: ${id}`,
-    },
-  )
+  const formOpts =
+    form == null ?
+      ([
+        {
+          ...formOptions,
+          ...(defaultValues ? { defaultValues } : {}),
+          schema,
+          canSubmitOffline,
+          onSubmit,
+          onSubmitFailed,
+          onSubmitSuccess,
+          onSubmitted,
+          shouldFocusError: true,
+          debugName: `Form ${testId} id: ${id}`,
+        },
+      ] as const)
+    : ([
+        form,
+        {
+          onSubmit,
+          onSubmitFailed,
+          onSubmitSuccess,
+          onSubmitted,
+        },
+      ] as const)
+
+  const innerForm =
+    // @ts-expect-error - This is safe as we're spreading arguments transparently
+    components.useForm<Schema, SubmitResult>(...formOpts)
 
   React.useImperativeHandle(formRef, () => innerForm, [innerForm])
-  React.useImperativeHandle(form?.closeRef, () => dialogContext?.close ?? (() => {}), [
-    dialogContext?.close,
-  ])
 
   const base = styles.FORM_STYLES({
     className: typeof className === 'function' ? className(innerForm) : className,
@@ -102,14 +122,13 @@ export const Form = forwardRef(function Form<
 
   return (
     <form
-      {...formProps}
       id={id}
       ref={ref}
       className={base}
       style={typeof style === 'function' ? style(innerForm) : style}
-      noValidate
       data-testid={testId}
-      onSubmit={innerForm.submit}
+      {...formProps}
+      {...innerForm.formProps}
     >
       <aria.FormValidationContext.Provider value={errors}>
         <components.FormProvider form={innerForm}>
@@ -123,6 +142,7 @@ export const Form = forwardRef(function Form<
 ) => React.JSX.Element) & {
   /* eslint-disable @typescript-eslint/naming-convention */
   schema: typeof components.schema
+  createSchema: typeof components.createSchema
   useForm: typeof components.useForm
   useField: typeof components.useField
   Submit: typeof components.Submit
@@ -138,10 +158,12 @@ export const Form = forwardRef(function Form<
   useWatch: typeof components.useWatch
   useFieldRegister: typeof components.useFieldRegister
   useFieldState: typeof components.useFieldState
+  useFormState: typeof components.useFormState
   /* eslint-enable @typescript-eslint/naming-convention */
 }
 
 Form.schema = components.schema
+Form.createSchema = components.createSchema
 Form.useForm = components.useForm
 Form.useField = components.useField
 Form.useFormSchema = components.useFormSchema
@@ -157,3 +179,4 @@ Form.useWatch = components.useWatch
 Form.FIELD_STYLES = components.FIELD_STYLES
 Form.useFieldRegister = components.useFieldRegister
 Form.useFieldState = components.useFieldState
+Form.useFormState = components.useFormState
