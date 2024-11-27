@@ -509,7 +509,7 @@ type No_Common_Type
        Create a human-readable version of the error.
     to_display_text : Text
     to_display_text self =
-        types = self.types.map .to_display_text . join ", "
+        types = self.types.distinct.map .to_display_text . join ", "
         prefix = "No common type was found for types: "+types
         location = case self.related_column_name of
             column_name : Text -> " when unifying column ["+column_name+"]"
@@ -517,8 +517,7 @@ type No_Common_Type
         suffix_type = case self of
             No_Common_Type.Error _ _ -> "."
             No_Common_Type.Warning_Convert_To_Text _ _ -> ", so the values were converted to text."
-        suffix_mixed = " If you want to have mixed types instead, please cast one of the columns to `Mixed` beforehand."
-        prefix + location + suffix_type + suffix_mixed
+        prefix + location + suffix_type
 
     ## PRIVATE
     to_text self -> Text =
