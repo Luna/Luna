@@ -128,6 +128,7 @@ export const AssetPanelTabPanel = memo(function AssetPanelTabPanel(props: AssetP
               // eslint-disable-next-line @typescript-eslint/no-magic-numbers
               exit={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
               className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
+              data-testid={`asset-panel-tab-panel-${id}`}
             >
               <Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
                 <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 px-4 py-5">

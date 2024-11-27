@@ -206,7 +206,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
           getTranslation={getTranslation}
         />
 
-        <AssetPanelTabs.TabList className="">
+        <AssetPanelTabs.TabList>
           <AssetPanelTabs.Tab
             id="settings"
             icon={inspectIcon}

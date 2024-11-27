@@ -71,5 +71,11 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
     return <Result status="info" title={getText('assetDocs.noDocs')} centered />
   }
 
-  return <MarkdownViewer text={docs} imgUrlResolver={resolveProjectAssetPath} />
+  return (
+    <MarkdownViewer
+      testId="asset-docs-content"
+      text={docs}
+      imgUrlResolver={resolveProjectAssetPath}
+    />
+  )
 }
