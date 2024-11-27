@@ -1902,7 +1902,7 @@ export default function AssetsTable(props: AssetsTableProps) {
     : <div className="relative grow contain-strict">
         <div
           data-testid="extra-columns"
-          className="absolute right-3 top-0.5 isolate flex self-end p-2 z-1"
+          className="absolute right-3 top-0.5 isolate z-1 flex self-end p-2"
         >
           <FocusArea direction="horizontal">
             {(columnsBarProps) => (

@@ -219,7 +219,9 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
           <AssetPanelTabs.Tab
             id="versions"
             icon={versionsIcon}
-            label={isLocal ? getText('assetVersions.localAssetsDoNotHaveVersions') : getText('versions')}
+            label={
+              isLocal ? getText('assetVersions.localAssetsDoNotHaveVersions') : getText('versions')
+            }
             isExpanded={isExpanded}
             onPress={expandTab}
             isDisabled={isLocal}

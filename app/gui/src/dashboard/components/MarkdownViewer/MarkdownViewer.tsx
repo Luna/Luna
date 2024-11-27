@@ -77,5 +77,11 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   })
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  return <div className="select-text" data-testid={testId} dangerouslySetInnerHTML={{ __html: markdownToHtml }} />
+  return (
+    <div
+      className="select-text"
+      data-testid={testId}
+      dangerouslySetInnerHTML={{ __html: markdownToHtml }}
+    />
+  )
 }
