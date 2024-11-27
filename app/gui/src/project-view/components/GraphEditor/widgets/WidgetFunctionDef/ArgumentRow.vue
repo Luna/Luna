@@ -4,7 +4,7 @@ import SvgIcon from '@/components/SvgIcon.vue'
 import { WidgetInput } from '@/providers/widgetRegistry'
 import { computed } from 'vue'
 import { ArgumentDefinition, ConcreteRefs } from 'ydoc-shared/ast'
-import { andThen, isSome } from 'ydoc-shared/util/data/opt'
+import { isSome, mapOrUndefined } from 'ydoc-shared/util/data/opt'
 
 const { definition } = defineProps<{
   definition: ArgumentDefinition<ConcreteRefs>
@@ -12,23 +12,23 @@ const { definition } = defineProps<{
 
 const allWidgets = computed(() =>
   [
-    andThen(definition.open?.node, WidgetInput.FromAst),
-    andThen(definition.open2?.node, WidgetInput.FromAst),
-    andThen(definition.suspension?.node, WidgetInput.FromAst),
-    andThen(definition.pattern?.node, WidgetInput.FromAst),
-    andThen(definition.type?.operator.node, WidgetInput.FromAst),
-    andThen(definition.type?.type.node, WidgetInput.FromAst),
-    andThen(definition.close2?.node, WidgetInput.FromAst),
-    andThen(definition.defaultValue?.equals.node, WidgetInput.FromAst),
-    andThen(definition.defaultValue?.expression.node, WidgetInput.FromAst),
-    andThen(definition.close?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.open?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.open2?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.suspension?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.pattern?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.type?.operator.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.type?.type.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.close2?.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.defaultValue?.equals.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.defaultValue?.expression.node, WidgetInput.FromAst),
+    mapOrUndefined(definition.close?.node, WidgetInput.FromAst),
   ].flatMap((v, key) => (isSome(v) ? ([[key, v]] as const) : [])),
 )
 </script>
 
 <template>
   <div class="ArgumentRow widgetResetPadding widgetRounded">
-    <SvgIcon name="sort" />
+    <SvgIcon name="grab" />
     <NodeWidget v-for="[key, widget] of allWidgets" :key="key" :input="widget" />
   </div>
 </template>

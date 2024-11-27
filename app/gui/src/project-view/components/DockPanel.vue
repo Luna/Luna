@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Tab extends string">
 import { documentationEditorBindings } from '@/bindings'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
@@ -6,7 +6,7 @@ import ToggleIcon from '@/components/ToggleIcon.vue'
 import { useResizeObserver } from '@/composables/events'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
-import { Icon } from '@/util/iconName'
+import { TabButton } from '@/util/tabs'
 import { tabClipPath } from 'enso-common/src/utilities/style/tabBar'
 import { computed, ref } from 'vue'
 
@@ -16,13 +16,11 @@ const TAB_RADIUS_PX = 8
 
 const show = defineModel<boolean>('show', { required: true })
 const size = defineModel<number | undefined>('size')
-const currentTab = defineModel<string>('tab')
-
-export type TabButton = { tab: string; title: string; icon: Icon }
+const currentTab = defineModel<Tab>('tab')
 
 const props = defineProps<{
   contentFullscreen: boolean
-  tabButtons: TabButton[]
+  tabButtons: TabButton<Tab>[]
 }>()
 
 const slideInPanel = ref<HTMLElement>()

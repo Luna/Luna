@@ -15,15 +15,16 @@ import {
 import { useUnconnectedEdges, type UnconnectedEdge } from '@/stores/graph/unconnectedEdges'
 import { type ProjectStore } from '@/stores/project'
 import { type SuggestionDbStore } from '@/stores/suggestionDatabase'
-import { assert, bail } from '@/util/assert'
+import { assert, assertNever, bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import type { AstId, Identifier, MutableModule } from '@/util/ast/abstract'
 import { isAstId, isIdentifier } from '@/util/ast/abstract'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
 import { stringUnionToArray, type Events } from '@/util/data/observable'
+import { mapOrUndefined } from '@/util/data/opt'
 import { Rect } from '@/util/data/rect'
-import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
+import { andThen, Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { normalizeQualifiedName, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
@@ -167,20 +168,26 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
         db.updateBindings(methodAst.value.value, moduleSource)
     })
 
-    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
+    const currentMethodPointer = computed((): Result<MethodPointer> => {
       const executionStackTop = proj.executionContext.getStackTop()
       switch (executionStackTop.type) {
         case 'ExplicitCall': {
-          return getMethodAst(executionStackTop.methodPointer, module)
+          return Ok(executionStackTop.methodPointer)
         }
         case 'LocalCall': {
           const exprId = executionStackTop.expressionId
           const info = db.getExpressionInfo(exprId)
           const ptr = info?.methodCall?.methodPointer
           if (!ptr) return Err("Unknown method pointer of execution stack's top frame")
-          return getMethodAst(ptr, module)
+          return Ok(ptr)
         }
+        default:
+          return assertNever(executionStackTop)
       }
+    })
+
+    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
+      return andThen(currentMethodPointer.value, (ptr) => getMethodAst(ptr, module))
     }
 
     function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.FunctionDef> {
@@ -811,11 +818,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       addMissingImportsDisregardConflicts,
       isConnectedTarget,
       nodeCanBeEntered,
-      currentMethodPointer() {
-        const currentMethod = proj.executionContext.getStackTop()
-        if (currentMethod.type === 'ExplicitCall') return currentMethod.methodPointer
-        return db.getExpressionInfo(currentMethod.expressionId)?.methodCall?.methodPointer
-      },
+      currentMethodPointer,
       modulePath,
       connectedEdges,
       ...unconnectedEdges,

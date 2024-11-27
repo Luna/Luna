@@ -11,7 +11,7 @@ import type { WidgetEditHandlerParent } from './widgetRegistry/editHandler'
 export type WidgetComponent<T extends WidgetInput> = Component<WidgetProps<T>>
 
 export namespace WidgetInput {
-  /** Returns widget-input data for the given AST expression or token. */
+  /** Returns widget-input data for the given AST tree or token. */
   export function FromAst<A extends Ast.Ast | Ast.Token>(ast: A): WidgetInput & { value: A } {
     return {
       portId: ast.id,
@@ -115,7 +115,7 @@ export interface WidgetInput {
    */
   portId: PortId
   /**
-   * An expected widget value. If Ast.Expression or Ast.Token, the widget represents an existing part of
+   * An expected widget value. If Ast.Ast or Ast.Token, the widget represents an existing part of
    * code. If string, it may be e.g. a default value of an argument.
    */
   value: Ast.Ast | Ast.Token | string | undefined

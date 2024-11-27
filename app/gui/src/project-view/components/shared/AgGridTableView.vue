@@ -293,10 +293,8 @@ const { AgGridVue } = await import('ag-grid-vue3')
 .ag-theme-alpine {
   --ag-grid-size: 3px;
   --ag-list-item-height: 20px;
+  --ag-background-color: var(--color-visualization-bg);
+  --ag-header-background-color: var(--color-visualization-bg);
   font-family: var(--font-mono);
-}
-
-.TableVisualization > .ag-theme-alpine > :deep(.ag-root-wrapper.ag-layout-normal) {
-  border-radius: 0 0 var(--radius-default) var(--radius-default);
 }
 </style>

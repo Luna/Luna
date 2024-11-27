@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import ComponentDocumentation from '@/components/ComponentDocumentation.vue'
-import DockPanel, { type TabButton } from '@/components/DockPanel.vue'
+import DockPanel from '@/components/DockPanel.vue'
 import DocumentationEditor from '@/components/DocumentationEditor.vue'
 import FunctionSignatureEditor from '@/components/FunctionSignatureEditor.vue'
-import { useRightDock } from '@/stores/rightDock'
+import { tabButtons, useRightDock } from '@/stores/rightDock'
 import { ref } from 'vue'
 import { SuggestionId } from 'ydoc-shared/languageServerTypes/suggestions'
-import * as Y from 'yjs'
 
 const dockStore = useRightDock()
 
@@ -14,15 +13,7 @@ const displayedDocsSuggestion = defineModel<SuggestionId | undefined>('displayed
 
 const props = defineProps<{ aiMode: boolean }>()
 
-// type Tabs = (typeof tabButtons)[number]['tab']
-
-const tabButtons = [
-  { tab: 'docs', icon: 'text', title: 'Documentation Editor' },
-  { tab: 'help', icon: 'help', title: 'Component Help' },
-] as const satisfies TabButton[]
 const isFullscreen = ref(false)
-
-const mainMarkdownDocs = new Y.Doc().getText() // TODO
 </script>
 
 <template>
@@ -37,15 +28,17 @@ const mainMarkdownDocs = new Y.Doc().getText() // TODO
   >
     <template #tab-docs>
       <DocumentationEditor
-        v-if="mainMarkdownDocs"
+        v-if="dockStore.markdownDocs"
         ref="docEditor"
-        :yText="mainMarkdownDocs"
+        :yText="dockStore.markdownDocs"
         @update:fullscreen="isFullscreen = $event"
       >
         <template #belowToolbar>
           <FunctionSignatureEditor
             v-if="dockStore.inspectedAst"
             :functionAst="dockStore.inspectedAst"
+            :methodPointer="dockStore.inspectedMethodPointer"
+            :markdownDocs="dockStore.markdownDocs"
           />
         </template>
       </DocumentationEditor>

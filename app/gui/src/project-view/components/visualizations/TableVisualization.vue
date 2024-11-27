@@ -738,7 +738,6 @@ config.setToolbar(
 
 .table-visualization-status-bar {
   height: 20px;
-  background-color: white;
   font-size: 14px;
   white-space: nowrap;
   padding: 0 5px;
@@ -747,6 +746,7 @@ config.setToolbar(
 
 .TableVisualization:deep(.ag-root-wrapper) {
   --ag-wrapper-border-radius: 0 0 var(--radius-default) var(--radius-default) !important;
+  border: none;
 }
 
 /* Tag selectors are inefficient to compute, and should be replaced with a class selector

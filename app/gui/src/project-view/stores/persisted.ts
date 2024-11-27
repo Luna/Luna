@@ -59,8 +59,8 @@ export const [providePersisted, usePersisted] = createContextStore(
         // - each project
         // - each function within the project
         encoding.writeVarString(enc, toValue(projectId))
-        const methodPtr = graphStore.currentMethodPointer()
-        if (methodPtr != null) encodeMethodPointer(enc, methodPtr)
+        const methodPtr = graphStore.currentMethodPointer
+        if (methodPtr.ok) encodeMethodPointer(enc, methodPtr.value)
       },
       debounce: 200,
       captureState() {

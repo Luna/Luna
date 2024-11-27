@@ -397,6 +397,30 @@ function recomputeOnce() {
   recomputationTimeout.value = true
   setTimeout(() => (recomputationTimeout.value = false), MINIMAL_EXECUTION_TIMEOUT_MS)
 }
+
+const nodeStyle = computed(() => {
+  return {
+    transform: transform.value,
+    minWidth: isVisualizationEnabled.value ? `${visualizationWidth.value ?? 200}px` : undefined,
+    '--node-group-color': color.value,
+    ...(props.node.zIndex ? { 'z-index': props.node.zIndex } : {}),
+    '--viz-below-node': `${graphSelectionSize.value.y - nodeSize.value.y}px`,
+    '--node-size-x': `${nodeSize.value.x}px`,
+    '--node-size-y': `${nodeSize.value.y}px`,
+  }
+})
+
+const nodeClass = computed(() => {
+  return {
+    selected: selected.value,
+    selectionVisible: selectionVisible.value,
+    pending: pending.value,
+    inputNode: props.node.type === 'input',
+    outputNode: props.node.type === 'output',
+    menuVisible: menuVisible.value,
+    menuFull: menuFull.value,
+  }
+})
 </script>
 
 <template>
@@ -404,24 +428,8 @@ function recomputeOnce() {
     v-show="!edited"
     ref="rootNode"
     class="GraphNode define-node-colors"
-    :style="{
-      transform,
-      minWidth: isVisualizationEnabled ? `${visualizationWidth ?? 200}px` : undefined,
-      '--node-group-color': color,
-      ...(node.zIndex ? { 'z-index': node.zIndex } : {}),
-      '--viz-below-node': `${graphSelectionSize.y - nodeSize.y}px`,
-      '--node-size-x': `${nodeSize.x}px`,
-      '--node-size-y': `${nodeSize.y}px`,
-    }"
-    :class="{
-      selected,
-      selectionVisible,
-      pending,
-      inputNode: props.node.type === 'input',
-      outputNode: props.node.type === 'output',
-      menuVisible,
-      menuFull,
-    }"
+    :style="nodeStyle"
+    :class="nodeClass"
     :data-node-id="nodeId"
     @pointerenter="(nodeHovered = true), updateNodeHover($event)"
     @pointerleave="(nodeHovered = false), updateNodeHover(undefined)"
@@ -565,7 +573,6 @@ function recomputeOnce() {
   top: 0;
   left: 0;
   display: flex;
-
   --output-port-transform: translateY(var(--viz-below-node));
 }
 
@@ -576,17 +583,6 @@ function recomputeOnce() {
 
   fill: var(--color-node-background);
   transition: fill 0.2s ease;
-}
-
-.GraphNode {
-  --color-node-text: white;
-  --color-node-primary: var(--node-group-color);
-  --color-node-background: var(--node-group-color);
-}
-
-.GraphNode.selected {
-  --color-node-background: color-mix(in oklab, var(--color-node-primary) 30%, white 70%);
-  --color-node-text: color-mix(in oklab, var(--color-node-primary) 70%, black 30%);
 }
 
 .GraphNode {
