@@ -198,20 +198,20 @@ public class BigNumberTest {
     assertThat("Is a number", longVal.isNumber(), is(true));
     assertThat("Does not fit in int", longVal.fitsInInt(), is(false));
     assertThat("Fits in long", longVal.fitsInLong(), is(true));
-    assertThat("Does not fit in double (but could)", longVal.fitsInDouble(), is(false));
+    // Does not fit in double, because it is not a power of 2 and therefore a precision would
+    // be lost if converted to double.
+    assertThat("Does not fit in double", longVal.fitsInDouble(), is(false));
     assertThat("Fits in big int", longVal.fitsInBigInteger(), is(true));
   }
 
   @Test
   public void everyValueBiggerThanLongMaxVal_IsEnsoBigInt() {
-    // This number is bigger than Long.MAX_VALUE, but smaller than Double.MAX_VALUE
-    // so it could technically fit in double, but in Enso, it is automatically converted
-    // to EnsoBigInteger
+    // This number is bigger than Long.MAX_VALUE, and not a power of 2.
     var bigIntVal = ContextUtils.evalModule(ctx, "main = 9223372036854775808");
     assertThat("Is a number", bigIntVal.isNumber(), is(true));
     assertThat("Does not fit in int", bigIntVal.fitsInInt(), is(false));
     assertThat("Does not fit in long", bigIntVal.fitsInLong(), is(false));
-    assertThat("Does not fit in double (but could)", bigIntVal.fitsInDouble(), is(false));
+    assertThat("Does not fit in double (not a power of 2)", bigIntVal.fitsInDouble(), is(false));
     assertThat("Fits in big int", bigIntVal.fitsInBigInteger(), is(true));
   }
 }
