@@ -49,12 +49,12 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
   const { data: docs } = useSuspenseQuery({
     ...versionContentQueryOptions({ backend, projectId: item.id, metadata: false }),
     select: (data) => {
-      const withoutMeta = splitFileContents(data)
-      const module = ast.parseModule(withoutMeta.code)
+      const { code } = splitFileContents(data)
+      const module = ast.parseModule(code)
 
       for (const statement of module.statements()) {
         if (statement instanceof ast.MutableFunctionDef && statement.name.code() === 'main') {
-          return normalizedMarkdownToStandard(statement.mutableDocumentationMarkdown().toJSON())
+          return statement.mutableDocumentationMarkdown().toJSON()
         }
       }
 
