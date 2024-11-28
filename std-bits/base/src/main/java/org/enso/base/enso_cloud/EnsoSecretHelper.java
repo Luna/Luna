@@ -187,17 +187,18 @@ public final class EnsoSecretHelper extends SecretValueResolver {
               .eval(
                   "enso",
                   """
-      import Standard.Base.Runtime.Ref.Ref
+      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
       import Standard.Base.Data.Boolean.Boolean
 
       type Cache
-          private Value ref:Ref
+          private Value ref:Managed_Resource
 
           new obj -> Cache =
-            ref = Ref.new obj
-            Cache.Value ref
+              on_finalize _ = 0
+              ref = Managed_Resource.register obj on_finalize Boolean.True
+              Cache.Value ref
 
-          get self = self.ref.get
+          get self = self.ref.with (r->r)
       """);
       var cacheNew = module.invokeMember("eval_expression", "Cache.new");
       var httpCache = new EnsoHTTPResponseCache();
