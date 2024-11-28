@@ -105,4 +105,24 @@ public class MiniPassTraverserTest {
     assertThat(
         "e2 should still be transformed by miniPass1", e2.isTransformedBy(miniPass1), is(true));
   }
+
+  @Test
+  public void chainedMiniPass_StopsTraversingWhenPrepareFromBothPassesReturnNull() {
+    var e1 = new MockExpression(false);
+    var e2 = new MockExpression(true);
+    var e3 = new MockExpression(true);
+    e1.addChild(e2);
+    e2.addChild(e3);
+    // Both mini passes process just e1.
+    var miniPass1 = MockMiniPass.builder().stopExpr(e2).build();
+    var miniPass2 = MockMiniPass.builder().stopExpr(e2).build();
+    var chainedPass = MiniIRPass.combine(miniPass1, miniPass2);
+    MiniIRPass.compile(MockExpression.class, e1, chainedPass);
+    assertThat("e3 should not be prepared by any pass", e3.isPreparedByAny(), is(false));
+    assertThat("e3 should not be transformed by any pass", e3.isTransformedByAny(), is(false));
+    assertThat("e2 should not be prepared by any pass", e2.isPreparedByAny(), is(false));
+    assertThat("e2 should not be transformed by any pass", e2.isTransformedByAny(), is(false));
+    assertThat("e1 should be processed by both passes", e1.isTransformedBy(miniPass1), is(true));
+    assertThat("e1 should be processed by both passes", e1.isTransformedBy(miniPass2), is(true));
+  }
 }
