@@ -44,9 +44,9 @@ final class ChainedMiniPass extends MiniIRPass {
 
   @Override
   public Module transformModule(Module moduleIr) {
-    var first = firstPass == null ? moduleIr : firstPass.transformModule(moduleIr);
-    var second = secondPass == null ? first : secondPass.transformModule(first);
-    return second;
+    var firstIr = firstPass == null ? moduleIr : firstPass.transformModule(moduleIr);
+    var secondIr = secondPass == null ? firstIr : secondPass.transformModule(firstIr);
+    return secondIr;
   }
 
   @Override
