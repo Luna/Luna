@@ -25,14 +25,17 @@ import { unsafeEntries } from '#/utilities/object'
 
 /** Settings tab for viewing and editing keyboard shortcuts. */
 export default function KeyboardShortcutsSettingsSection() {
-  const doRefresh = useRefresh()
+  const [refresh, doRefresh] = useRefresh()
   const inputBindings = useInputBindings()
   const { getText } = useText()
   const rootRef = React.useRef<HTMLDivElement>(null)
   const bodyRef = React.useRef<HTMLTableSectionElement>(null)
-  const allShortcuts = new Set(
-    Object.values(inputBindings.metadata).flatMap((value) => value.bindings),
-  )
+  const allShortcuts = React.useMemo(() => {
+    // This is REQUIRED, in order to avoid disabling the `react-hooks/exhaustive-deps` lint.
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    refresh
+    return new Set(Object.values(inputBindings.metadata).flatMap((value) => value.bindings))
+  }, [inputBindings.metadata, refresh])
   const visibleBindings = React.useMemo(
     () => unsafeEntries(inputBindings.metadata).filter((kv) => kv[1].rebindable !== false),
     [inputBindings.metadata],
