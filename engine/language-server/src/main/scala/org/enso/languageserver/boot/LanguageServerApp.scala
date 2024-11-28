@@ -42,9 +42,9 @@ object LanguageServerApp {
       }
     } else {
       val line = StdIn.readLine()
-      logger.info(s"Stop requested by sending to stdin: $line. Ignoring...")
-      StdIn.readLine()
-      //stop(server, "stopped by the user: " + line)(config.computeExecutionContext)
+      stop(server, "stopped by the user: " + line)(
+        config.computeExecutionContext
+      )
     }
   }
 

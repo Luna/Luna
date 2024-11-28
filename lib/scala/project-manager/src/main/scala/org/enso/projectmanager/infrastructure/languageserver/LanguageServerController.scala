@@ -312,28 +312,40 @@ class LanguageServerController(
     val updatedClients = clients - clientId
     if (updatedClients.isEmpty) {
       if (!explicitShutdownRequested) {
-        logger.debug("Delaying shutdown for project {}", project.id)
-        val scheduledShutdown: Option[(Cancellable, Int)] =
-          shutdownTimeout.orElse(
-            Some(
-              (
-                context.system.scheduler.scheduleOnce(
-                  timeoutConfig.delayedShutdownTimeout,
-                  self,
-                  ScheduledShutdown(maybeRequester)
-                ),
-                atPort.getOrElse(0)
-              )
+        if (maybeRequester.isEmpty) {
+          logger.debug("Last client disconnected. Keeping Language Server up")
+          context.become(
+            supervising(
+              connectionInfo,
+              serverProcessManager,
+              Set.empty,
+              None
             )
           )
-        context.become(
-          supervising(
-            connectionInfo,
-            serverProcessManager,
-            Set.empty,
-            scheduledShutdown
+        } else {
+          logger.debug("Delaying shutdown for project {}", project.id)
+          val scheduledShutdown: Option[(Cancellable, Int)] =
+            shutdownTimeout.orElse(
+              Some(
+                (
+                  context.system.scheduler.scheduleOnce(
+                    timeoutConfig.delayedShutdownTimeout,
+                    self,
+                    ScheduledShutdown(maybeRequester)
+                  ),
+                  atPort.getOrElse(0)
+                )
+              )
+            )
+          context.become(
+            supervising(
+              connectionInfo,
+              serverProcessManager,
+              Set.empty,
+              scheduledShutdown
+            )
           )
-        )
+        }
       } else {
         shutdownTimeout.foreach(_._1.cancel())
         shutDownServer(maybeRequester)
