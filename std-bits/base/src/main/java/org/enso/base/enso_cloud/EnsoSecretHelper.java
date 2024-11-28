@@ -194,7 +194,7 @@ public final class EnsoSecretHelper extends SecretValueResolver {
           private Value ref:Ref
 
           new obj -> Cache =
-            ref = Ref.new obj Boolean.True
+            ref = Ref.new obj
             Cache.Value ref
 
           get self = self.ref.get
