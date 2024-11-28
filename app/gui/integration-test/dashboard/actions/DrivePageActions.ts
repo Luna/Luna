@@ -21,24 +21,12 @@ import NewDataLinkModalActions from './NewDataLinkModalActions'
 import PageActions from './PageActions'
 import StartModalActions from './StartModalActions'
 
-// =================
-// === Constants ===
-// =================
-
 const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
-
-// =======================
-// === locateAssetRows ===
-// =======================
 
 /** Find all assets table rows (if any). */
 function locateAssetRows(page: test.Page) {
   return locateAssetsTable(page).getByTestId('asset-row')
 }
-
-// ========================
-// === DrivePageActions ===
-// ========================
 
 /** Actions for the "drive" page. */
 export default class DrivePageActions extends PageActions {

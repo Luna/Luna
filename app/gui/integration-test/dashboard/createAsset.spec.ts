@@ -3,10 +3,6 @@ import * as test from '@playwright/test'
 
 import * as actions from './actions'
 
-// =================
-// === Constants ===
-// =================
-
 /** The name of the uploaded file. */
 const FILE_NAME = 'foo.txt'
 /** The contents of the uploaded file. */
@@ -15,10 +11,6 @@ const FILE_CONTENTS = 'hello world'
 const SECRET_NAME = 'a secret name'
 /** The value of the created secret. */
 const SECRET_VALUE = 'a secret value'
-
-// =============
-// === Tests ===
-// =============
 
 test.test('create folder', ({ page }) =>
   actions

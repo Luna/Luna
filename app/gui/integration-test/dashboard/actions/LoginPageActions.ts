@@ -8,10 +8,6 @@ import ForgotPasswordPageActions from './ForgotPasswordPageActions'
 import RegisterPageActions from './RegisterPageActions'
 import SetupUsernamePageActions from './SetupUsernamePageActions'
 
-// ========================
-// === LoginPageActions ===
-// ========================
-
 /** Available actions for the login page. */
 export default class LoginPageActions extends BaseActions {
   /** Actions for navigating to another page. */

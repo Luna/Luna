@@ -6,10 +6,6 @@ import type BaseActions from './BaseActions'
 import LoginPageActions from './LoginPageActions'
 import SettingsPageActions from './SettingsPageActions'
 
-// =======================
-// === UserMenuActions ===
-// =======================
-
 /** Actions for the user menu. */
 export interface UserMenuActions<T extends BaseActions> {
   readonly downloadApp: (callback: (download: test.Download) => Promise<void> | void) => T
@@ -17,10 +13,6 @@ export interface UserMenuActions<T extends BaseActions> {
   readonly logout: () => LoginPageActions
   readonly goToLoginPage: () => LoginPageActions
 }
-
-// =======================
-// === userMenuActions ===
-// =======================
 
 /** Generate actions for the user menu. */
 export function userMenuActions<T extends BaseActions>(

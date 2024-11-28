@@ -3,10 +3,6 @@ import { TEXT } from '.'
 import BaseActions from './BaseActions'
 import SetupDonePageActions from './SetupDonePageActions'
 
-// ================================
-// === SetupTeamNamePageActions ===
-// ================================
-
 /** Actions for the "setup team name" page. */
 export default class SetupTeamNamePagePageActions extends BaseActions {
   /** Set the username for a new user that does not yet have a username. */

@@ -5,27 +5,15 @@ import type * as inputBindings from '#/utilities/inputBindings'
 
 import { modModifier } from '.'
 
-// ====================
-// === PageCallback ===
-// ====================
-
 /** A callback that performs actions on a {@link test.Page}. */
 export interface PageCallback {
   (input: test.Page): Promise<void> | void
 }
 
-// =======================
-// === LocatorCallback ===
-// =======================
-
 /** A callback that performs actions on a {@link test.Locator}. */
 export interface LocatorCallback {
   (input: test.Locator): Promise<void> | void
 }
-
-// ===================
-// === BaseActions ===
-// ===================
 
 /**
  * The base class from which all `Actions` classes are derived.

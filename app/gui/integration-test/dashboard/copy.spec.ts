@@ -3,10 +3,6 @@ import * as test from '@playwright/test'
 
 import * as actions from './actions'
 
-// =============
-// === Tests ===
-// =============
-
 test.test('copy', ({ page }) =>
   actions
     .mockAllAndLogin({ page })

@@ -6,18 +6,10 @@ import type * as baseActions from './BaseActions'
 import BaseActions from './BaseActions'
 import DrivePageActions from './DrivePageActions'
 
-// ==============================
-// === locateNewDataLinkModal ===
-// ==============================
-
 /** Locate the "new data link" modal. */
 function locateNewDataLinkModal(page: test.Page) {
   return page.getByRole('dialog').filter({ has: page.getByText('Create Datalink') })
 }
-
-// ===============================
-// === NewDataLinkModalActions ===
-// ===============================
 
 /** Actions for a "new Data Link" modal. */
 export default class NewDataLinkModalActions extends BaseActions {

@@ -3,10 +3,6 @@ import { TEXT } from '.'
 import BaseActions from './BaseActions'
 import SetupInvitePageActions from './SetupInvitePageActions'
 
-// ====================================
-// === SetupOrganizationPageActions ===
-// ====================================
-
 /** Actions for the third step of the "setup" page. */
 export default class SetupOrganizationPageActions extends BaseActions {
   /** Set the organization name for this organization. */

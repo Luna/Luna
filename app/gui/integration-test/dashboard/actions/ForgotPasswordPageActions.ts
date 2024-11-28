@@ -5,10 +5,6 @@ import { TEXT, VALID_EMAIL } from '.'
 import BaseActions, { type LocatorCallback } from './BaseActions'
 import LoginPageActions from './LoginPageActions'
 
-// =================================
-// === ForgotPasswordPageActions ===
-// =================================
-
 /** Available actions for the login page. */
 export default class ForgotPasswordPageActions extends BaseActions {
   /** Actions for navigating to another page. */

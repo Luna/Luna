@@ -5,17 +5,9 @@ import * as dateTime from '#/utilities/dateTime'
 
 import * as actions from './actions'
 
-// =================
-// === Constants ===
-// =================
-
 const START_DATE_EPOCH_MS = 1.7e12
 /** The number of milliseconds in a minute. */
 const MIN_MS = 60_000
-
-// =============
-// === Tests ===
-// =============
 
 test.test('sort', async ({ page }) => {
   await actions.mockAll({

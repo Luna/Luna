@@ -4,10 +4,6 @@ import type * as baseActions from './BaseActions'
 import type BaseActions from './BaseActions'
 import EditorPageActions from './EditorPageActions'
 
-// ==========================
-// === ContextMenuActions ===
-// ==========================
-
 /** Actions for the context menu. */
 export interface ContextMenuActions<T extends BaseActions> {
   readonly open: () => T
@@ -33,10 +29,6 @@ export interface ContextMenuActions<T extends BaseActions> {
   readonly newSecret: () => T
   readonly newDataLink: () => T
 }
-
-// ==========================
-// === contextMenuActions ===
-// ==========================
 
 /** Generate actions for the context menu. */
 export function contextMenuActions<T extends BaseActions>(

@@ -7,20 +7,12 @@ import * as permissions from '#/utilities/permissions'
 
 import * as actions from './actions'
 
-// =================
-// === Constants ===
-// =================
-
 /** An example description for the asset selected in the asset panel. */
 const DESCRIPTION = 'foo bar'
 /** An example owner username for the asset selected in the asset panel. */
 const USERNAME = 'baz quux'
 /** An example owner email for the asset selected in the asset panel. */
 const EMAIL = 'baz.quux@email.com'
-
-// =============
-// === Tests ===
-// =============
 
 test('open and close asset panel', ({ page }) =>
   actions

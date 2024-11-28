@@ -17,10 +17,6 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'json' }
 
-// =================
-// === Constants ===
-// =================
-
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const MOCK_SVG = `
@@ -57,10 +53,6 @@ const GLOB_TAG_ID = backend.TagId('*')
 const GLOB_CHECKOUT_SESSION_ID = backend.CheckoutSessionId('*')
 const BASE_URL = 'https://mock/'
 const MOCK_S3_BUCKET_URL = 'https://mock-s3-bucket.com/'
-
-// ===============
-// === mockApi ===
-// ===============
 
 /** Parameters for {@link mockApi}. */
 export interface MockParams {

@@ -7,10 +7,6 @@ import * as apiModule from '../api'
 import DrivePageActions from './DrivePageActions'
 import LoginPageActions from './LoginPageActions'
 
-// =================
-// === Constants ===
-// =================
-
 /** An example password that does not meet validation requirements. */
 export const INVALID_PASSWORD = 'password'
 /** An example password that meets validation requirements. */
@@ -18,10 +14,6 @@ export const VALID_PASSWORD = 'Password0!'
 /** An example valid email address. */
 export const VALID_EMAIL = 'email@example.com'
 export const TEXT = TEXTS.english
-
-// ================
-// === Locators ===
-// ================
 
 // === Input locators ===
 

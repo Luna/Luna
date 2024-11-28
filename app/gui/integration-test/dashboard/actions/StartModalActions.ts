@@ -4,10 +4,6 @@ import BaseActions from './BaseActions'
 import DrivePageActions from './DrivePageActions'
 import EditorPageActions from './EditorPageActions'
 
-// =========================
-// === StartModalActions ===
-// =========================
-
 /** Actions for the "start" modal. */
 export default class StartModalActions extends BaseActions {
   /** Close this modal and go back to the Drive page. */

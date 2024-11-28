@@ -3,10 +3,6 @@ import BaseActions from './BaseActions'
 import * as openUserMenuAction from './openUserMenuAction'
 import * as userMenuActions from './userMenuActions'
 
-// ===================
-// === PageActions ===
-// ===================
-
 /** Actions common to all pages. */
 export default class PageActions extends BaseActions {
   /** Actions related to the User Menu. */

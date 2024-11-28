@@ -2,10 +2,6 @@
 import * as goToPageActions from './goToPageActions'
 import PageActions from './PageActions'
 
-// =========================
-// === EditorPageActions ===
-// =========================
-
 /** Actions for the "editor" page. */
 export default class EditorPageActions extends PageActions {
   /** Actions for navigating to another page. */

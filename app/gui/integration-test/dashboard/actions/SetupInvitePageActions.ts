@@ -3,10 +3,6 @@ import { TEXT } from '.'
 import BaseActions from './BaseActions'
 import SetupTeamPageActions from './SetupTeamPageActions'
 
-// ==============================
-// === SetupInvitePageActions ===
-// ==============================
-
 /** Actions for the "invite users" step of the "setup" page. */
 export default class SetupInvitePageActions extends BaseActions {
   /** Invite users by email. */

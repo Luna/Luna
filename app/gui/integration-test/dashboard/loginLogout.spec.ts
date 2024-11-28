@@ -3,10 +3,6 @@ import * as test from '@playwright/test'
 
 import * as actions from './actions'
 
-// =============
-// === Tests ===
-// =============
-
 // Reset storage state for this file to avoid being authenticated
 test.test.use({ storageState: { cookies: [], origins: [] } })
 

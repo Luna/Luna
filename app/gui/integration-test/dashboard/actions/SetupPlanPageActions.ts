@@ -6,10 +6,6 @@ import BaseActions from './BaseActions'
 import SetupDonePageActions from './SetupDonePageActions'
 import SetupOrganizationPageActions from './SetupOrganizationPageActions'
 
-// ============================
-// === SetupPlanPageActions ===
-// ============================
-
 /** Actions for the "select plan" step of the "setup" page. */
 export default class SetupPlanPageActions extends BaseActions {
   /** Select a plan. */
