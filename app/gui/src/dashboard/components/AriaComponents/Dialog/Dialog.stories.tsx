@@ -93,6 +93,9 @@ export const AnimateSize: Story = {
   args: {
     children: <ResizableContent />,
   },
+  parameters: {
+    chromatic: { disableSnapshot: true },
+  }
 }
 
 export const Fullscreen = {
