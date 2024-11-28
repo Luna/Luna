@@ -20,7 +20,11 @@ export default {
   ),
 } satisfies Meta<PopoverProps>
 
-export const Default: Story = {}
+export const Default: Story = {
+  args: {
+    isOpen: true,
+  }
+}
 
 export const Dismissible: Story = {
   play: async ({ canvasElement }) => {
