@@ -1,6 +1,4 @@
 @Builtin_Type
 type Ref
 
-new value allow_gc=0 = new_impl value allow_gc
-
-private new_impl value allow_gc = @Builtin_Method "Ref.new"
+new value = @Builtin_Method "Ref.new"
