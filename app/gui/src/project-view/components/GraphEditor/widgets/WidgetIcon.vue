@@ -31,7 +31,7 @@ export const widgetDefinition = defineWidget(
 
 <template>
   <div class="WidgetIcon">
-    <SvgIcon class="nodeCategoryIcon grab-handle draggable" :name="props.input[DisplayIcon].icon" />
+    <SvgIcon class="nodeCategoryIcon grab-handle" :name="props.input[DisplayIcon].icon" />
     <NodeWidget v-if="props.input[DisplayIcon].showContents === true" :input="props.input" />
   </div>
 </template>
