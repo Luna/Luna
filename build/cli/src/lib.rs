@@ -73,6 +73,7 @@ use ide_ci::programs::git;
 use ide_ci::programs::git::clean;
 use ide_ci::programs::rustc;
 use ide_ci::programs::Cargo;
+use ide_ci::programs::Pnpm;
 use octocrab::models::ReleaseId;
 use std::time::Duration;
 use tokio::process::Child;
@@ -292,7 +293,9 @@ impl Processor {
         let context = self.context();
         let target = self.target::<Target>();
         let job = self.resolve_build_job(job);
+        let info = self.write_build_info_file();
         async move {
+            info.await?;
             let job = job.await?;
             target?.build(context, job).await
         }
@@ -431,6 +434,7 @@ impl Processor {
                     build_native_runner: true,
                     // Espresso+NI needs to be checked only on a single platform.
                     build_espresso_runner: TARGET_OS == OS::Linux,
+                    build_native_ydoc: TARGET_OS == OS::Linux,
                     execute_benchmarks: {
                         // Run benchmarks only on Linux.
                         let mut ret = BTreeSet::new();
@@ -517,6 +521,16 @@ impl Processor {
         .boxed()
     }
 
+    pub fn write_build_info_file(&self) -> BoxFuture<'static, Result> {
+        let build_info_get = self.js_build_info();
+        let build_info_path = self.context.inner.repo_root.join(&*enso_build::ide::web::BUILD_INFO);
+        async move {
+            let build_info = build_info_get.await?;
+            build_info_path.write_as_json(&build_info)
+        }
+        .boxed()
+    }
+
     pub fn handle_ide(&self, ide: arg::ide::Target) -> BoxFuture<'static, Result> {
         match ide.command {
             arg::ide::Command::Build { params } => self.build_ide(params).void_ok().boxed(),
@@ -559,19 +573,11 @@ impl Processor {
             sign_artifacts,
         } = params;
 
-        let build_info_get = self.js_build_info();
-        let build_info_path = self.context.inner.repo_root.join(&*enso_build::ide::web::BUILD_INFO);
-
-        let build_info = async move {
-            let build_info = build_info_get.await?;
-            build_info_path.write_as_json(&build_info)
-        };
-
+        let info = self.write_build_info_file();
         let gui = self.get(gui);
-
         let input = ide::BuildInput {
             gui: async move {
-                build_info.await?;
+                info.await?;
                 gui.await
             }
             .boxed(),
@@ -778,7 +784,29 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                 enso_build::release::draft_a_new_release(&ctx, &commit).await?;
             }
             Action::DeployRuntime(args) => {
-                enso_build::release::deploy_to_ecr(&ctx, args.ecr_repository).await?;
+                enso_build::release::deploy_runtime_to_ecr(&ctx, args.ecr_repository).await?;
+            }
+            Action::DeployYdocPolyglot(args) => {
+                let config = enso_build::engine::BuildConfigurationFlags {
+                    build_native_ydoc: true,
+                    ..default()
+                };
+                let backend_context = ctx.prepare_backend_context(config).await?;
+                backend_context.build().await?;
+
+                enso_build::release::deploy_ydoc_polyglot_to_ecr(&ctx, args.ecr_repository).await?;
+            }
+            Action::DeployYdocNodejs(args) => {
+                enso_build::web::install(&ctx.repo_root).await?;
+                Pnpm.cmd()?
+                    .with_current_dir(&ctx.repo_root)
+                    .run("-r")
+                    .arg("compile")
+                    .run_ok()
+                    .await?;
+                enso_build::release::deploy_ydoc_nodejs_to_ecr(&ctx, args.ecr_repository).await?;
+            }
+            Action::DispatchBuildImage => {
                 enso_build::repo::cloud::build_image_workflow_dispatch_input(
                     &ctx.octocrab,
                     &ctx.triple.versions.version,

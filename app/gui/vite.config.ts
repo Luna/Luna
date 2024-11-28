@@ -28,7 +28,10 @@ const entrypoint =
 
 // NOTE(Frizi): This rename is for the sake of forward compatibility with not yet merged config refactor on bazel branch,
 // and because Vite's HTML env replacements only work with import.meta.env variables, not defines.
-process.env.ENSO_IDE_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
+process.env.ENSO_IDE_VERSION ??= process.env.ENSO_CLOUD_DASHBOARD_VERSION
+console.info(`Building IDE version: ${process.env.ENSO_IDE_VERSION}`)
+
+const isCI = process.env.CI === 'true'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -36,6 +39,7 @@ export default defineConfig({
   cacheDir: fileURLToPath(new URL('../../node_modules/.cache/vite', import.meta.url)),
   publicDir: fileURLToPath(new URL('./public', import.meta.url)),
   envDir: fileURLToPath(new URL('.', import.meta.url)),
+  logLevel: isCI ? 'error' : 'info',
   plugins: [
     wasm(),
     ...(process.env.NODE_ENV === 'development' ? [await VueDevTools()] : []),
@@ -52,7 +56,10 @@ export default defineConfig({
       babel: {
         plugins: [
           '@babel/plugin-syntax-import-attributes',
-          ['babel-plugin-react-compiler', { target: '18' }],
+          [
+            'babel-plugin-react-compiler',
+            { target: '18', enablePreserveExistingMemoizationGuarantees: true },
+          ],
         ],
       },
     }),

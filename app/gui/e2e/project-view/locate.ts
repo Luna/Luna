@@ -121,6 +121,16 @@ export function bottomDock(page: Page) {
   return page.getByTestId('bottomDock')
 }
 
+/** Button to add an item to a vector */
+export function addItemButton(page: Locator | Page) {
+  return page.getByRole('button', { name: 'new item' })
+}
+
+/** Button to delete a specific item from a vector */
+export function deleteItemButton(page: Locator | Page) {
+  return page.getByRole('button', { name: 'Remove item' })
+}
+
 export const navBreadcrumb = componentLocator('.NavBreadcrumb')
 export const componentBrowserInput = componentLocator('.ComponentEditor')
 
@@ -148,14 +158,22 @@ export const warningsVisualization = visualizationLocator('.WarningsVisualizatio
 
 /** All edges going from a node with given binding. */
 export async function edgesFromNodeWithBinding(page: Page, binding: string) {
-  const node = graphNodeByBinding(page, binding).first()
+  return edgesFromNode(page, graphNodeByBinding(page, binding).first())
+}
+
+/** All edges going from a node. */
+export async function edgesFromNode(page: Page, node: Locator) {
   const nodeId = await node.getAttribute('data-node-id')
   return page.locator(`[data-source-node-id="${nodeId}"]`)
 }
 
 /** All edges going to a node with given binding. */
 export async function edgesToNodeWithBinding(page: Page, binding: string) {
-  const node = graphNodeByBinding(page, binding).first()
+  return edgesToNode(page, graphNodeByBinding(page, binding).first())
+}
+
+/** All edges going to a node. */
+export async function edgesToNode(page: Page, node: Locator) {
   const nodeId = await node.getAttribute('data-node-id')
   return page.locator(`[data-target-node-id="${nodeId}"]`)
 }

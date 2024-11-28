@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nodeEditBindings } from '@/bindings'
-import CircularMenu from '@/components/CircularMenu.vue'
+import ComponentMenu from '@/components/ComponentMenu.vue'
 import GraphNodeComment from '@/components/GraphEditor/GraphNodeComment.vue'
 import GraphNodeMessage, {
   colorForMessageType,
@@ -292,6 +292,7 @@ const dragPointer = usePointer(
   { pointerCapturedBy: 'target' },
 )
 const isDragged = computed(() => dragPointer.dragging && significantMove.value)
+watch(isDragged, () => graph.db.moveNodeToTop(nodeId.value))
 
 const isRecordingOverridden = computed({
   get() {
@@ -481,7 +482,7 @@ function recomputeOnce() {
     >
       <SvgIcon name="record" />
     </button>
-    <CircularMenu
+    <ComponentMenu
       v-if="menuVisible"
       v-model:isVisualizationEnabled="isVisualizationEnabled"
       :isRecordingEnabledGlobally="projectStore.isRecordingEnabled"
