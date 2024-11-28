@@ -6,9 +6,8 @@ import { defineWidget, Score, WidgetInput, widgetProps } from '@/providers/widge
 import { WidgetEditHandler } from '@/providers/widgetRegistry/editHandler'
 import { useGraphStore } from '@/stores/graph'
 import { Ast } from '@/util/ast'
-import { MutableModule, MutableTextLiteral } from '@/util/ast/abstract'
+import { MutableModule } from '@/util/ast/abstract'
 import { targetIsOutside } from '@/util/autoBlur'
-import { At } from 'framer-motion'
 import { computed, ref, watch, type ComponentInstance } from 'vue'
 
 const props = defineProps(widgetProps(widgetDefinition))
@@ -41,7 +40,7 @@ function accepted() {
   } else {
     let value: Ast.Owned<Ast.MutableTextLiteral>
     if (inputTextLiteral.value) {
-      value = inputTextLiteral.value.module.edit().getVersion(inputTextLiteral.value).take()
+      value = Ast.copyIntoNewModule(inputTextLiteral.value)
       value.setRawTextContent(editedContents.value)
     } else {
       value = makeNewLiteral(editedContents.value)
@@ -55,6 +54,7 @@ function accepted() {
   }
 }
 
+/** Widget Input as Text Literal; undefined if there's no value, or the value is not a Text literal. */
 const inputTextLiteral = computed((): Ast.TextLiteral | undefined => {
   if (props.input.value instanceof Ast.TextLiteral) return props.input.value
   const valueStr = WidgetInput.valueRepr(props.input)
