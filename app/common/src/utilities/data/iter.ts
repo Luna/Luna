@@ -67,7 +67,7 @@ export function filter<T>(iter: Iterable<T>, include: (value: T) => boolean): It
  * that pass the given predicate.
  */
 export function filter<T>(iter: Iterable<T>, include: (value: T) => boolean): IterableIterator<T> {
-  return iteratorFilter(iter[Symbol.iterator](), include) as any
+  return iteratorFilter(iter[Symbol.iterator](), include)
 }
 
 /**
@@ -188,7 +188,7 @@ export function every<T>(iter: Iterable<T>, f: (value: T) => boolean): boolean {
  * Returns whether the predicate returned `true` for any values yielded by the provided iterator. Short-circuiting.
  * Returns `false` if the iterator doesn't yield any values.
  */
-export function any<T>(iter: Iterable<T>, f: (value: T) => boolean): boolean {
+export function some<T>(iter: Iterable<T>, f: (value: T) => boolean): boolean {
   for (const value of iter) if (f(value)) return true
   return false
 }
