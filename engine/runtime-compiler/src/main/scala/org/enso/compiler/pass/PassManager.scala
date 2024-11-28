@@ -22,7 +22,7 @@ import scala.collection.mutable.ListBuffer
   */
 //noinspection DuplicatedCode
 class PassManager(
-  private val passes: List[PassGroup],
+  protected val passes: List[PassGroup],
   passConfiguration: PassConfiguration
 ) {
   private val logger = LoggerFactory.getLogger(classOf[PassManager])
