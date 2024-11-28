@@ -42,8 +42,7 @@ type Return_As
         _ : Function ->
             # Result when we fail to resolve an autoscoped constructor.
             symbol_not_found =
-                # TODO ideally we'd like to use `Meta` but it currently has no support for UnresolvedConstructor so we use a 'hack'.
-                is_the_default = value.to_text == "..As_Merged_Table"
+                is_the_default = (Return_As_Table_Mock.resolve value).is_nothing.not
                 case is_the_default of
                     True ->
                         Error.throw (Illegal_Argument.Error "The method returns a merged Table by default, but Standard.Table is not imported. Add an import, or use `As_Vector`.")
@@ -85,3 +84,12 @@ type Return_As_Base
 ## PRIVATE
 Return_As.from (that : Return_As_Base) =
     Return_As.Instance that
+
+## PRIVATE
+   A mock type used only to check the autoscoped `As_Merged_Table` constructor.
+   TODO If we get support for `Unresolved_Constructor` in `Meta`, this type may be removed.
+type Return_As_Table_Mock
+    private As_Merged_Table columns_to_keep=Nothing match=Nothing
+
+    private resolve value =
+        Panic.catch Type_Error (value:Return_As_Table_Mock) _->Nothing
