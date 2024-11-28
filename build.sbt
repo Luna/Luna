@@ -2160,7 +2160,6 @@ lazy val `engine-common` = project
   .enablePlugins(JPMSPlugin)
   .settings(
     frgaalJavaCompilerSetting,
-    scalaModuleDependencySetting,
     Test / fork := true,
     commands += WithDebugCommand.withDebug,
     Test / envVars ++= distributionEnvironmentOverrides,
@@ -3253,6 +3252,7 @@ lazy val `runtime-compiler` =
         (`pkg` / Compile / exportedModule).value,
         (`runtime-parser` / Compile / exportedModule).value,
         (`syntax-rust-definition` / Compile / exportedModule).value,
+        (`scala-libs-wrapper` / Compile / exportedModule).value,
         (`persistance` / Compile / exportedModule).value,
         (`editions` / Compile / exportedModule).value
       ),

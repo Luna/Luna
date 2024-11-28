@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.enso.common.MethodNames;
-import org.enso.common.ScalaConversions;
 import org.enso.compiler.PackageRepository;
 import org.enso.editions.LibraryName;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -26,6 +25,7 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.type.Types;
 import org.enso.pkg.Package;
 import org.enso.pkg.QualifiedName;
+import org.enso.scala.wrapper.ScalaConversions;
 
 /** Represents the top scope of Enso execution, containing all the importable modules. */
 @ExportLibrary(InteropLibrary.class)

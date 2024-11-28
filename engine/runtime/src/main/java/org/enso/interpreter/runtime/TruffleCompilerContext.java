@@ -1,7 +1,7 @@
 package org.enso.interpreter.runtime;
 
-import static org.enso.common.ScalaConversions.cons;
-import static org.enso.common.ScalaConversions.nil;
+import static org.enso.scala.wrapper.ScalaConversions.cons;
+import static org.enso.scala.wrapper.ScalaConversions.nil;
 
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;

@@ -2,7 +2,6 @@ package org.enso.compiler.pass.analyse;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.enso.common.ScalaConversions;
 import org.enso.compiler.context.InlineContext;
 import org.enso.compiler.context.ModuleContext;
 import org.enso.compiler.core.IR;
@@ -17,6 +16,7 @@ import org.enso.compiler.pass.IRProcessingPass;
 import org.enso.compiler.pass.MiniIRPass;
 import org.enso.compiler.pass.MiniPassFactory;
 import org.enso.compiler.pass.desugar.GenerateMethodBodies$;
+import org.enso.scala.wrapper.ScalaConversions;
 import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
 
