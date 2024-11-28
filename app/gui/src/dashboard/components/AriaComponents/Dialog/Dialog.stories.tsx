@@ -95,7 +95,7 @@ export const AnimateSize: Story = {
   },
   parameters: {
     chromatic: { disableSnapshot: true },
-  }
+  },
 }
 
 export const Fullscreen = {
