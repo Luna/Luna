@@ -135,15 +135,15 @@ spec_fmt suite_builder header file read_method sheet_count=5 =
             table1 = wb.read_many return=..Table_Of_Tables
             table1.row_count . should_equal 5
             table1.column_names . should_equal ["Sheet Name", "Table"]
-            Problems.expect_only_warning Deprecated table1
+            Problems.expect_warning Deprecated table1
 
             table2 = wb.read_many return=Old_Return_As.Merged_Table
             table2.row_count . should_equal 25
-            Problems.expect_only_warning Deprecated table2
+            Problems.expect_warning Deprecated table2
 
             table3 = wb.read_many return=..Merged_Table
             table3.row_count . should_equal 25
-            Problems.expect_only_warning Deprecated table3
+            Problems.expect_warning Deprecated table3
 
         group_builder.specify "should let you read some sheets from xlsx" <|
             wb = read_method file
