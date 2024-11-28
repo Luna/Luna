@@ -646,9 +646,12 @@ pub fn typical_check_triggers() -> Event {
 }
 
 pub fn gui() -> Result<Workflow> {
-    let on = typical_check_triggers();
-    let mut workflow = Workflow { name: "GUI Packaging".into(), on, ..default() };
-    workflow.add(PRIMARY_TARGET, job::CancelWorkflow);
+    let mut workflow = Workflow {
+        name: "GUI Packaging".into(),
+        on: typical_check_triggers(),
+        concurrency: Some(concurrency()),
+        ..default()
+    };
 
     for target in PR_CHECKED_TARGETS {
         let project_manager_job = workflow.add(target, job::BuildBackend);
