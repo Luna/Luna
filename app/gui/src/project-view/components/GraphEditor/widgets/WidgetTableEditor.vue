@@ -297,6 +297,14 @@ export const widgetDefinition = defineWidget(
   height: 100%;
 }
 
+:deep(.newColumnCell) {
+  display: none;
+}
+
+:deep(.rowIndexCell) {
+  color: rgba(0, 0, 0, 0.4);
+}
+
 /* Those two classes are copied from AgGridTableView component.
 For some reason, Vue cannot load them there, probably because it is used also as Custom Element. */
 :deep(.inner) {
