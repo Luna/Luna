@@ -50,7 +50,7 @@ config.setToolbar([
 <template>
   <div class="WarningsVisualization">
     <ul>
-      <li v-if="props.data.message">There are no warnings.</li>
+      <li v-if="!props.data.message">There are no warnings.</li>
       <li v-else v-text="data.message"></li>
     </ul>
   </div>
