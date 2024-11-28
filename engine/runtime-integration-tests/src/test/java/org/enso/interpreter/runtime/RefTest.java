@@ -70,7 +70,7 @@ public class RefTest {
     assertFalse("Value was not GCed", getRef.execute(ref).isNull());
     assertEquals("We get the object", weakRef.get(), getRef.execute(ref).asHostObject());
 
-//    ensoCtx.getReferencesManager().releaseAll();
+    //    ensoCtx.getReferencesManager().releaseAll();
     assertEquals(
         "releaseAll has no effect on regular reference",
         weakRef.get(),
