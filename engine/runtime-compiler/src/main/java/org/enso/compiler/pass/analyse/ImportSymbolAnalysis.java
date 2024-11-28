@@ -26,7 +26,7 @@ import scala.jdk.javaapi.CollectionConverters;
  * the IR import with {@link org.enso.compiler.core.ir.expression.errors.ImportExport}. Reports only
  * the first unresolved symbol.
  */
-public class ImportSymbolAnalysis implements MiniPassFactory {
+public final class ImportSymbolAnalysis implements MiniPassFactory {
   public static final ImportSymbolAnalysis INSTANCE = new ImportSymbolAnalysis();
 
   private ImportSymbolAnalysis() {}
