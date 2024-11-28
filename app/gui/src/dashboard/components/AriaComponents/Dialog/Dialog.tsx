@@ -14,7 +14,7 @@ import * as mergeRefs from '#/utilities/mergeRefs'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useMeasure } from '#/hooks/measureHooks'
-import { motion } from '#/utilities/motion'
+import { motion, type Spring } from '#/utilities/motion'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
 import { Close } from './Close'
@@ -122,7 +122,7 @@ const DIALOG_STYLES = tv({
       'sticky z-1 top-0 grid grid-cols-[1fr_auto_1fr] items-center border-b border-primary/10 transition-[border-color] duration-150',
     closeButton: 'col-start-1 col-end-1 mr-auto',
     heading: 'col-start-2 col-end-2 my-0 text-center',
-    scroller: 'relative overflow-y-auto max-h-[inherit]',
+    scroller: 'flex flex-col overflow-y-auto max-h-[inherit]',
     measurerWrapper: 'inline-grid h-fit max-h-fit min-h-fit w-full grid-rows-[auto]',
     measurer: 'pointer-events-none block [grid-area:1/1]',
     content: 'inline-block h-fit max-h-fit min-h-fit [grid-area:1/1] min-w-0',
@@ -145,6 +145,15 @@ const DIALOG_STYLES = tv({
     rounded: 'xxxlarge',
   },
 })
+
+const TRANSITION: Spring = {
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  stiffness: 2_000,
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  damping: 90,
+  type: 'spring',
+  mass: 1,
+}
 
 // ==============
 // === Dialog ===
@@ -314,12 +323,13 @@ function DialogContent(props: DialogContentProps) {
   const dialogHeight =
     dimensions == null || headerDimensions == null ?
       null
-    : dimensions.height + headerDimensions.height + 4
+    : dimensions.height + headerDimensions.height
 
   return (
     <>
       <MotionDialog
         layout
+        transition={TRANSITION}
         style={dialogHeight != null ? { height: dialogHeight } : undefined}
         id={dialogId}
         ref={() =>

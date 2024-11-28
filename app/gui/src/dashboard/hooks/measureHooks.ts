@@ -53,15 +53,11 @@ export type OnResizeCallback = (bounds: RectReadOnly) => void
  * A type that represents the options for the useMeasure hook.
  */
 export interface Options {
-  readonly debounce?:
-    | number
-    | { readonly scroll: number; readonly resize: number; readonly frame: number }
+  readonly debounce?: number | { readonly scroll: number; readonly resize: number }
   readonly scroll?: boolean
   readonly offsetSize?: boolean
   readonly onResize?: OnResizeCallback
-  readonly maxWait?:
-    | number
-    | { readonly scroll: number; readonly resize: number; readonly frame: number }
+  readonly maxWait?: number | { readonly scroll: number; readonly resize: number }
   /**
    * Whether to use RAF to measure the element.
    */
@@ -138,12 +134,10 @@ export function useMeasureCallback(options: Options & Required<Pick<Options, 'on
 
   const scrollMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.scroll
   const resizeMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.resize
-  const frameMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.frame
 
   // set actual debounce values early, so effects know if they should react accordingly
   const scrollDebounce = typeof debounce === 'number' ? debounce : debounce.scroll
   const resizeDebounce = typeof debounce === 'number' ? debounce : debounce.resize
-  const frameDebounce = typeof debounce === 'number' ? debounce : debounce.frame
 
   const callback = useEventCallback(() => {
     frame.read(measureCallback)
@@ -169,7 +163,6 @@ export function useMeasureCallback(options: Options & Required<Pick<Options, 'on
     }
   })
 
-  const frameDebounceCallback = useDebouncedCallback(measureCallback, frameDebounce, frameMaxWait)
   const resizeDebounceCallback = useDebouncedCallback(
     measureCallback,
     resizeDebounce,
@@ -211,7 +204,7 @@ export function useMeasureCallback(options: Options & Required<Pick<Options, 'on
 
     if (useRAF) {
       frame.read(() => {
-        frameDebounceCallback()
+        measureCallback()
       }, true)
     }
 
