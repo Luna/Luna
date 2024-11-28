@@ -242,16 +242,17 @@ const nodeSelection = provideGraphSelection(
     isValid: (id) => graphStore.db.isNodeId(id),
     onSelected: (id) => graphStore.db.moveNodeToTop(id),
     toSorted: (ids) => {
+      const idsSet = new Set(ids)
       const inputNodes = [
         ...iter.filter(
           iter.filterDefined(
-            iter.map(ids, graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode)),
+            iter.map(idsSet, graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode)),
           ),
           isInputNode,
         ),
       ]
       inputNodes.sort((a, b) => a.argIndex - b.argIndex)
-      const nonInputNodeIds = graphStore.pickInCodeOrder(new Set(ids))
+      const nonInputNodeIds = graphStore.pickInCodeOrder(idsSet)
       return iter.chain(inputNodes.map(nodeId), nonInputNodeIds)
     },
   },
