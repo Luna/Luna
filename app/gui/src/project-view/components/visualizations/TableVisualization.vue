@@ -128,7 +128,12 @@ const defaultColDef: Ref<ColDef> = ref({
   minWidth: 25,
   cellRenderer: cellRenderer,
   cellClass: cellClass,
-  contextMenuItems: [commonContextMenuActions.copy, 'copyWithHeaders', 'separator', 'export'],
+  contextMenuItems: [
+    commonContextMenuActions.copy,
+    commonContextMenuActions.copyWithHeaders,
+    'separator',
+    'export',
+  ],
 } satisfies ColDef)
 const rowData = ref<Record<string, any>[]>([])
 const columnDefs: Ref<ColDef[]> = ref([])
