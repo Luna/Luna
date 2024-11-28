@@ -23,7 +23,7 @@ export default {
 export const Default: Story = {
   args: {
     isOpen: true,
-  }
+  },
 }
 
 export const Dismissible: Story = {
