@@ -172,25 +172,23 @@ function PopoverContent(props: PopoverContentProps) {
 
   return (
     <>
-      <aria.FocusScope restoreFocus contain={!opts.isExiting}>
-        <dialogStackProvider.DialogStackRegistrar id={dialogId} type="popover" />
-        <div
-          id={dialogId}
-          ref={dialogRef}
-          role="dialog"
-          aria-labelledby={labelledBy}
-          tabIndex={-1}
-          className={POPOVER_STYLES({ ...opts, size, rounded }).dialog()}
-        >
-          <dialogProvider.DialogProvider dialogId={dialogId} close={close}>
-            <errorBoundary.ErrorBoundary>
-              <suspense.Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
-                {typeof children === 'function' ? children({ ...opts, close }) : children}
-              </suspense.Suspense>
-            </errorBoundary.ErrorBoundary>
-          </dialogProvider.DialogProvider>
-        </div>
-      </aria.FocusScope>
+      <dialogStackProvider.DialogStackRegistrar id={dialogId} type="popover" />
+      <div
+        id={dialogId}
+        ref={dialogRef}
+        role="dialog"
+        aria-labelledby={labelledBy}
+        tabIndex={-1}
+        className={POPOVER_STYLES({ ...opts, size, rounded }).dialog()}
+      >
+        <dialogProvider.DialogProvider dialogId={dialogId} close={close}>
+          <errorBoundary.ErrorBoundary>
+            <suspense.Suspense loaderProps={SUSPENSE_LOADER_PROPS}>
+              {typeof children === 'function' ? children({ ...opts, close }) : children}
+            </suspense.Suspense>
+          </errorBoundary.ErrorBoundary>
+        </dialogProvider.DialogProvider>
+      </div>
     </>
   )
 }
