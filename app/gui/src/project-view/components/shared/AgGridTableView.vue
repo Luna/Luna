@@ -132,8 +132,6 @@ watch(
   },
 )
 
-watch(_props.rowData, (val, oldVal) => console.error(this, val, oldVal), { flush: 'sync' })
-
 function updateColumnWidths(event: FirstDataRenderedEvent | RowDataUpdatedEvent) {
   if (event.api == null) {
     console.warn('AG Grid API does not exist.')
@@ -272,10 +270,8 @@ const { AgGridVue } = await import('ag-grid-vue3')
       :processDataFromClipboard="processDataFromClipboard"
       @gridReady="onGridReady"
       @firstDataRendered="updateColumnWidths"
-      @rowDataUpdated="
-        console.log($event), updateColumnWidths($event), emit('rowDataUpdated', $event)
-      "
-      @columnResized="console.log($event), lockColumnSize($event)"
+      @rowDataUpdated="updateColumnWidths($event), emit('rowDataUpdated', $event)"
+      @columnResized="lockColumnSize"
       @cellEditingStarted="emit('cellEditingStarted', $event)"
       @cellEditingStopped="emit('cellEditingStopped', $event)"
       @rowEditingStarted="emit('rowEditingStarted', $event)"
