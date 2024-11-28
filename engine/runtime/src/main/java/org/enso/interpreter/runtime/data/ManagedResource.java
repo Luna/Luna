@@ -73,8 +73,9 @@ public final class ManagedResource extends EnsoObject {
           "Makes an object into a managed resource, automatically finalized when the returned"
               + " object is garbage collected.")
   @Builtin.Specialize
-  public static ManagedResource register(EnsoContext context, Object resource, Function function) {
-    return context.getResourceManager().register(resource, function);
+  public static ManagedResource register_builtin(
+      EnsoContext context, Object resource, Function function, boolean systemCanFinalize) {
+    return context.getResourceManager().register(resource, function, systemCanFinalize);
   }
 
   @Builtin.Method(
