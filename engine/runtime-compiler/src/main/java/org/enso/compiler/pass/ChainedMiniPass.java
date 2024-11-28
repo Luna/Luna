@@ -31,7 +31,7 @@ final class ChainedMiniPass extends MiniIRPass {
     if (firstPrepared == firstPass && secondPrepared == secondPass) {
       return this;
     } else {
-      return new ChainedMiniPass(firstPrepared, secondPrepared);
+      return chain(firstPass, secondPass);
     }
   }
 
