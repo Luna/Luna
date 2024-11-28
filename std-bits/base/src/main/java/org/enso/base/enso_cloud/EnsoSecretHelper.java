@@ -178,7 +178,7 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     }
   }
 
-  private static EnsoHTTPResponseCache getOrCreateCache() {
+  public static EnsoHTTPResponseCache getOrCreateCache() {
     if (getCache() instanceof EnsoHTTPResponseCache httpCache) {
       return httpCache;
     } else {
