@@ -248,7 +248,7 @@ class PassManager(
   }
 
   /** Validates consistency between the IR accessible via `moduleContext` and `ir`.
-    * There is no way how to enforce this consistency statically.
+    * There is no way to enforce this consistency statically.
     * Should be called only iff assertions are enabled.
     * @return true if they are consistent, otherwise throws [[AssertionError]].
     */
