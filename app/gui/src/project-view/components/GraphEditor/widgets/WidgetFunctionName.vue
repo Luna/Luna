@@ -40,7 +40,6 @@ async function renameFunction(newName: string): Promise<Result> {
   const modPath = project.modulePath.value
   const editedName = props.input[FunctionName].editableName
   const refactorResult = await project.lsRpcConnection.renameSymbol(modPath, editedName, newName)
-  console.log('refactorResult', refactorResult)
   if (refactorResult.ok) {
     project.executionContext.desiredStack = project.executionContext.desiredStack.map((item) => {
       if (
