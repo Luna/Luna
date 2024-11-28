@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import MenuButton from '@/components/MenuButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { type ComponentAction } from '@/util/componentActions'
+import {
+  injectComponentAndSelectionActions,
+  type ComponentAndSelectionActions,
+} from '@/providers/selectionActions'
 
-const { action } = defineProps<{ action: ComponentAction }>()
+const { action: actionName } = defineProps<{ action: keyof ComponentAndSelectionActions }>()
+
+const { actions } = injectComponentAndSelectionActions()
+const action = actions[actionName]
 </script>
 
 <template>
-  <!-- eslint-disable vue/no-mutating-props -- `ComponentAction` is an internally-reactive object. -->
   <MenuButton
     :data-testid="action.testid"
     :disabled="action.disabled"
@@ -16,7 +21,6 @@ const { action } = defineProps<{ action: ComponentAction }>()
     @update:modelValue="action.state != null && (action.state = $event)"
     @click="action.action"
   >
-    <!-- eslint-enable vue/no-mutating-props -->
     <SvgIcon :name="action.icon" class="rowIcon" />
     <span v-text="action.description" />
     <span v-if="action.shortcut" class="shortcutHint" v-text="action.shortcut" />

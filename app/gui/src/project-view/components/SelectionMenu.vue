@@ -4,24 +4,24 @@ import SelectionActionButton from '@/components/SelectionActionButton.vue'
 import { injectSelectionActions } from '@/providers/selectionActions'
 
 const { selectedNodeCount, actions } = injectSelectionActions()
-const { collapse, copy, deleteSelected, pickColorMulti } = actions
+const { pickColorMulti } = actions
 </script>
 
 <template>
   <Transition>
     <div v-if="selectedNodeCount > 1" class="SelectionMenu">
       <span v-text="`${selectedNodeCount} components selected`" />
-      <SelectionActionButton :action="collapse" />
+      <SelectionActionButton action="collapse" />
       <SelectionActionButton
-        :action="pickColorMulti"
+        action="pickColorMulti"
         :class="{
           // Any `pointerdown` event outside the color picker will close it. Ignore clicks that occur while the color
           // picker is open, so that it isn't toggled back open.
           disableInput: pickColorMulti.state,
         }"
       />
-      <SelectionActionButton :action="copy" />
-      <SelectionActionButton :action="deleteSelected" />
+      <SelectionActionButton action="copy" />
+      <SelectionActionButton action="deleteSelected" />
       <ColorPickerMenu
         v-if="pickColorMulti.state"
         class="submenu"
@@ -40,10 +40,7 @@ const { collapse, copy, deleteSelected, pickColorMulti } = actions
   backdrop-filter: var(--blur-app-bg);
   place-items: center;
   gap: 12px;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding: 4px 10px;
 }
 
 .submenu {

@@ -1,33 +1,20 @@
-import { createContextStore } from '@/providers'
 import { type Icon } from '@/util/iconName'
-import {
-  computed,
-  type ComputedRef,
-  markRaw,
-  MaybeRef,
-  proxyRefs,
-  Ref,
-  unref,
-  type UnwrapRef,
-} from 'vue'
+import { computed, type ComputedRef, markRaw, type MaybeRef, type Ref, unref } from 'vue'
 
-type ActionOrStateRequired = { action: () => void } | { state: Ref<boolean> }
+export type ActionOrStateRequired = { action: () => void } | { state: Ref<boolean> }
 
-interface ComputedComponentActionControl {
+export interface ComponentActionControl {
   action?: (() => void) | undefined
   state?: Ref<boolean> | undefined
   hidden?: ComputedRef<boolean> | undefined
   disabled?: ComputedRef<boolean> | undefined
 }
-interface ComputedComponentActionInterface {
+export interface ComponentActionInterface {
   icon: Icon
   description: ComputedRef<string> | string
   shortcut?: string | undefined
   testid?: string | undefined
 }
-interface ComputedComponentAction
-  extends ComputedComponentActionControl,
-    ComputedComponentActionInterface {}
 
 export interface ComponentAction<T = unknown> extends ComponentActionImpl<T> {}
 
@@ -68,7 +55,10 @@ class ComponentActionImpl<T> {
   }
 }
 
-type ComponentActionInputs<T> = Omit<ComputedComponentAction, 'shortcut'> & {
+type ComponentActionInputs<T> = Omit<
+  ComponentActionControl & ComponentActionInterface,
+  'shortcut'
+> & {
   shortcut?: { humanReadable: string }
 } & {
   actionData?: T
@@ -77,8 +67,15 @@ type ComponentActionInputs<T> = Omit<ComputedComponentAction, 'shortcut'> & {
       actionData: T
     })
 
+export interface StatefulInput {
+  state: Ref<boolean>
+}
+export interface Stateful {
+  state: boolean
+}
+
 export function componentAction<T = void>(
-  inputs: ComponentActionInputs<T> & ComputedStateful,
+  inputs: ComponentActionInputs<T> & StatefulInput,
 ): ComponentAction<T> & Stateful
 export function componentAction<T = void>(inputs: ComponentActionInputs<T>): ComponentAction<T>
 /** Create a {@link ComponentAction}. */
@@ -95,109 +92,3 @@ export function componentAction<T = void>(inputs: ComponentActionInputs<T>): Com
     inputs.state,
   )
 }
-
-type ActionsWithVoidActionData =
-  | 'enterNode'
-  | 'startEditing'
-  | 'editingComment'
-  | 'createNewNode'
-  | 'toggleDocPanel'
-  | 'toggleVisualization'
-  | 'recompute'
-type Actions = ActionsWithVoidActionData | 'pickColor'
-
-type ComputedStateful = { state: Ref<boolean> }
-type Stateful = { state: boolean }
-
-type ComputedPickColorData = {
-  currentColor: Ref<string | undefined>
-  matchableColors: Readonly<Ref<ReadonlySet<string>>>
-}
-type PickColorData = UnwrapRef<ComputedPickColorData>
-
-export type ComponentActions = Record<ActionsWithVoidActionData, ComponentAction<void>> &
-  Record<'toggleVisualization' | 'pickColor', Stateful> &
-  Record<'pickColor', ComponentAction<PickColorData>>
-
-function useComponentActions(
-  {
-    graphBindings,
-    nodeEditBindings,
-    onBeforeAction,
-  }: {
-    graphBindings: Record<'openComponentBrowser' | 'toggleVisualization', { humanReadable: string }>
-    nodeEditBindings: Record<'edit', { humanReadable: string }>
-    onBeforeAction: () => void
-  },
-  actions: Record<Actions, ComputedComponentActionControl & ActionOrStateRequired> &
-    Record<'toggleVisualization' | 'pickColor', ComputedStateful> & {
-      pickColor: { actionData: ComputedPickColorData }
-    },
-): ComponentActions {
-  function withHooks<T extends { action?: (() => void) | undefined }>(value: T): T {
-    return {
-      ...value,
-      action:
-        value.action ?
-          () => {
-            onBeforeAction()
-            value.action?.()
-          }
-        : onBeforeAction,
-    }
-  }
-  return {
-    enterNode: componentAction({
-      ...withHooks(actions.enterNode),
-      icon: 'open',
-      description: 'Open Grouped Components',
-      testid: 'enter-node-button',
-    }),
-    startEditing: componentAction({
-      ...withHooks(actions.startEditing),
-      icon: 'edit',
-      description: 'Code Edit',
-      shortcut: nodeEditBindings.edit,
-      testid: 'edit-button',
-    }),
-    editingComment: componentAction({
-      ...withHooks(actions.editingComment),
-      icon: 'comment',
-      description: 'Add Comment',
-    }),
-    createNewNode: componentAction({
-      ...withHooks(actions.createNewNode),
-      icon: 'add',
-      description: 'Add New Component',
-      shortcut: graphBindings.openComponentBrowser,
-    }),
-    toggleDocPanel: componentAction({
-      ...withHooks(actions.toggleDocPanel),
-      icon: 'help',
-      description: 'Help',
-    }),
-    toggleVisualization: componentAction({
-      ...withHooks(actions.toggleVisualization),
-      icon: 'eye',
-      description: computed(() =>
-        actions.toggleVisualization.state.value ? 'Hide Visualization' : 'Show Visualization',
-      ),
-      shortcut: graphBindings.toggleVisualization,
-    }),
-    recompute: componentAction({
-      ...withHooks(actions.recompute),
-      icon: 'workflow_play',
-      description: 'Write',
-      testid: 'recompute',
-    }),
-    pickColor: componentAction({
-      ...withHooks(actions.pickColor),
-      icon: 'paint_palette',
-      description: 'Color Component',
-      actionData: proxyRefs(actions.pickColor.actionData),
-    }),
-  }
-}
-
-export { injectFn as injectComponentActions, provideFn as provideComponentActions }
-const { provideFn, injectFn } = createContextStore('Component actions', useComponentActions)

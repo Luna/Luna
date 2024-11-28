@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import ComponentActionButton from '@/components/ComponentActionButton.vue'
 import MenuPanel from '@/components/MenuPanel.vue'
-import { injectSelectionActions } from '@/providers/selectionActions'
-import { injectComponentActions } from '@/util/componentActions'
+import { type SelectionActions } from '@/providers/selectionActions'
+import { type SingleComponentActions } from '@/providers/singleComponentActions'
 
 const emit = defineEmits<{ close: [] }>()
 
-const componentActions = injectComponentActions()
-const { actions: selectionActions } = injectSelectionActions()
-
-const componentActionButtons: (keyof typeof componentActions)[] = [
+const componentActions: (keyof SingleComponentActions)[] = [
   'toggleDocPanel',
   'toggleVisualization',
   'createNewNode',
@@ -19,21 +16,16 @@ const componentActionButtons: (keyof typeof componentActions)[] = [
   'enterNode',
   'startEditing',
 ]
-const selectionActionButtons: (keyof typeof selectionActions)[] = ['copy', 'deleteSelected']
+const selectionActions: (keyof SelectionActions)[] = ['copy', 'deleteSelected']
+const actions = [...componentActions, ...selectionActions]
 </script>
 
 <template>
   <MenuPanel class="ComponentContextMenu" @contextmenu.stop.prevent="emit('close')">
     <ComponentActionButton
-      v-for="action in componentActionButtons"
-      :key="`component:${action}`"
-      :action="componentActions[action]"
-      @click.stop="emit('close')"
-    />
-    <ComponentActionButton
-      v-for="action in selectionActionButtons"
-      :key="`selection:${action}`"
-      :action="selectionActions[action]"
+      v-for="action in actions"
+      :key="action"
+      :action="action"
       @click.stop="emit('close')"
     />
   </MenuPanel>

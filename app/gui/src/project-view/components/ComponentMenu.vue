@@ -4,10 +4,10 @@ import ComponentContextMenu from '@/components/ComponentContextMenu.vue'
 import DropdownMenu from '@/components/DropdownMenu.vue'
 import SvgButton from '@/components/SvgButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { injectComponentActions } from '@/util/componentActions'
+import { injectSingleComponentActions } from '@/providers/singleComponentActions'
 import { ref } from 'vue'
 
-const componentActions = injectComponentActions()
+const componentActions = injectSingleComponentActions()
 const isDropdownOpened = ref(false)
 </script>
 

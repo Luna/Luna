@@ -41,12 +41,12 @@ import { provideGraphSelection } from '@/providers/graphSelection'
 import { provideStackNavigator } from '@/providers/graphStackNavigator'
 import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
-import { provideSelectionActions, useSelectedNodes } from '@/providers/selectionActions'
+import { provideSelectionActions } from '@/providers/selectionActions'
 import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
 import type { Node, NodeId } from '@/stores/graph'
 import { provideGraphStore } from '@/stores/graph'
-import { nodeId } from '@/stores/graph/graphDatabase'
+import { isInputNode, nodeId } from '@/stores/graph/graphDatabase'
 import type { RequiredImport } from '@/stores/graph/imports'
 import { useProjectStore } from '@/stores/project'
 import { provideNodeExecution } from '@/stores/project/nodeExecution'
@@ -241,6 +241,19 @@ const nodeSelection = provideGraphSelection(
   {
     isValid: (id) => graphStore.db.isNodeId(id),
     onSelected: (id) => graphStore.db.moveNodeToTop(id),
+    toSorted: (ids) => {
+      const inputNodes = [
+        ...iter.filter(
+          iter.filterDefined(
+            iter.map(ids, graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode)),
+          ),
+          isInputNode,
+        ),
+      ]
+      inputNodes.sort((a, b) => a.argIndex - b.argIndex)
+      const nonInputNodeIds = graphStore.pickInCodeOrder(new Set(ids))
+      return iter.chain(inputNodes.map(nodeId), nonInputNodeIds)
+    },
   },
 )
 
@@ -274,16 +287,20 @@ const { copyNodesToClipboard, createNodesFromClipboard } = useGraphEditorClipboa
 
 // === Selection Actions ===
 
-const { selectedNodes } = useSelectedNodes(
-  toRef(nodeSelection, 'selected'),
-  graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode),
-  graphStore.pickInCodeOrder,
+const { actions: selectionActions } = provideSelectionActions(
+  () =>
+    iter.filterDefined(
+      iter.map(
+        nodeSelection.selected,
+        graphStore.db.nodeIdToNode.get.bind(graphStore.db.nodeIdToNode),
+      ),
+    ),
+  {
+    collapseNodes,
+    copyNodesToClipboard,
+    deleteNodes: (nodes) => graphStore.deleteNodes(nodes.map(nodeId)),
+  },
 )
-const { actions: selectionActions } = provideSelectionActions(selectedNodes, {
-  collapseNodes,
-  copyNodesToClipboard,
-  deleteNodes: (nodes) => graphStore.deleteNodes(nodes.map(nodeId)),
-})
 
 // === Interactions ===
 

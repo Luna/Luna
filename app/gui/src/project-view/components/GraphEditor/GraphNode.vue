@@ -26,6 +26,7 @@ import { injectGraphNavigator } from '@/providers/graphNavigator'
 import { injectNodeColors } from '@/providers/graphNodeColors'
 import { injectGraphSelection } from '@/providers/graphSelection'
 import { injectKeyboard } from '@/providers/keyboard'
+import { provideSingleComponentActions } from '@/providers/singleComponentActions'
 import { useGraphStore, type Node } from '@/stores/graph'
 import { asNodeId } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
@@ -33,7 +34,6 @@ import { useNodeExecution } from '@/stores/project/nodeExecution'
 import { Ast } from '@/util/ast'
 import type { AstId } from '@/util/ast/abstract'
 import { prefixes } from '@/util/ast/node'
-import { provideComponentActions } from '@/util/componentActions'
 import type { Opt } from '@/util/data/opt'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
@@ -430,7 +430,7 @@ function useRecomputation() {
 const { getNodeColor, getNodeColors } = injectNodeColors()
 const { recomputeOnce, isBeingRecomputed } = useRecomputation()
 
-const { editingComment } = provideComponentActions(
+const { editingComment } = provideSingleComponentActions(
   {
     graphBindings: graphBindings.bindings,
     nodeEditBindings: nodeEditBindings.bindings,
