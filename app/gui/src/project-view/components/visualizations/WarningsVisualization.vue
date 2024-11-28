@@ -20,7 +20,17 @@ const removeWarnings = computed(() =>
 </script>
 
 <script setup lang="ts">
-type Data = string[]
+type Data = {
+  type?: string
+  content?: {
+    argument_name?: string
+    call_location?: string
+    constructor?: string
+    function_name?: string
+    type?: string
+  }
+  message?: string
+}
 
 const props = defineProps<{ data: Data }>()
 
@@ -30,7 +40,7 @@ config.setToolbar([
   {
     icon: 'not_exclamation',
     title: 'Remove Warnings',
-    disabled: () => props.data.length === 0,
+    disabled: () => !!props.data.message,
     onClick: () => config.createNodes({ content: removeWarnings.value, commit: true }),
     dataTestid: 'remove-warnings-button',
   },
@@ -40,8 +50,8 @@ config.setToolbar([
 <template>
   <div class="WarningsVisualization">
     <ul>
-      <li v-if="props.data.length === 0">There are no warnings.</li>
-      <li v-for="(warning, index) in props.data" :key="index" v-text="warning"></li>
+      <li v-if="props.data.message">There are no warnings.</li>
+      <li v-else v-text="data.message"></li>
     </ul>
   </div>
 </template>
