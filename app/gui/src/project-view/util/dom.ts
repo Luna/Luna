@@ -1,11 +1,24 @@
 /** TODO: Add docs */
-export function* elementHierarchy(element: Element, selectors: string) {
+export function* selectorHierarchy(element: Element, selectors: string) {
   for (;;) {
     const match = element.closest(selectors)
     if (!match) return
     yield match
     if (!match.parentElement) return
     element = match.parentElement
+  }
+}
+
+/** Yield the input, if it is an {@link Element}, followed by each of its `parentElement`s. */
+export function* elementHierarchy(
+  el: Element | EventTarget | Node | null,
+): IterableIterator<Element> {
+  if (!(el instanceof Element) && el instanceof Node) {
+    el = el.parentElement
+  }
+  while (el instanceof Element) {
+    yield el
+    el = el.parentElement
   }
 }
 
