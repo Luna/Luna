@@ -110,12 +110,6 @@ public abstract class MiniIRPass {
    *     if both provided passes are {@code null}.
    */
   public static MiniIRPass combine(MiniIRPass first, MiniIRPass second) {
-    if (first == null) {
-      return second;
-    }
-    if (second == null) {
-      return first;
-    }
     return ChainedMiniPass.chain(first, second);
   }
 
