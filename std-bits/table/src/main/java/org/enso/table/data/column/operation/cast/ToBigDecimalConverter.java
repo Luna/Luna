@@ -10,6 +10,7 @@ import org.enso.table.data.column.storage.numeric.BigDecimalStorage;
 import org.enso.table.data.column.storage.numeric.BigIntegerStorage;
 import org.enso.table.data.column.storage.numeric.DoubleStorage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.graalvm.polyglot.Context;
 
 public class ToBigDecimalConverter implements StorageConverter<BigDecimal> {
@@ -25,7 +26,7 @@ public class ToBigDecimalConverter implements StorageConverter<BigDecimal> {
       return convertBigIntegerStorage(bigIntegerStorage, problemAggregator);
     } else if (storage instanceof BoolStorage boolStorage) {
       return convertBoolStorage(boolStorage, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType) {
+    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

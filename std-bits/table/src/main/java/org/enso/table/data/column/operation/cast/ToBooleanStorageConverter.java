@@ -4,6 +4,7 @@ import org.enso.table.data.column.builder.BoolBuilder;
 import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.graalvm.polyglot.Context;
 
 public class ToBooleanStorageConverter implements StorageConverter<Boolean> {
@@ -11,7 +12,7 @@ public class ToBooleanStorageConverter implements StorageConverter<Boolean> {
   public Storage<Boolean> cast(Storage<?> storage, CastProblemAggregator problemAggregator) {
     if (storage instanceof BoolStorage boolStorage) {
       return boolStorage;
-    } else if (storage.getType() instanceof AnyObjectType) {
+    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

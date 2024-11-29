@@ -16,6 +16,7 @@ import org.enso.table.data.column.storage.datetime.TimeOfDayStorage;
 import org.enso.table.data.column.storage.numeric.AbstractLongStorage;
 import org.enso.table.data.column.storage.numeric.DoubleStorage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
 
@@ -47,7 +48,7 @@ public class ToTextStorageConverter implements StorageConverter<String> {
       return castDateTimeStorage(dateStorage, this::convertDate, problemAggregator);
     } else if (storage instanceof DateTimeStorage dateTimeStorage) {
       return castDateTimeStorage(dateTimeStorage, this::convertDateTime, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType) {
+    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(
