@@ -101,7 +101,6 @@ async function expectTableInputContent(page: Page, node: Locator) {
   const widget = node.locator('.WidgetTableEditor')
   await expect(widget).toBeVisible({ timeout: 5000 })
   await expect(widget.locator('.valueCell')).toHaveText([
-    '0',
     '0,0',
     '0,1',
     '1,0',
