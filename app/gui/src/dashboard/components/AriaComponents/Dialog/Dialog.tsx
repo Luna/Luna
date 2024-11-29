@@ -247,6 +247,7 @@ function DialogContent(props: DialogContentProps) {
   } = props
 
   const dialogRef = React.useRef<HTMLDivElement>(null)
+  const scrollerRef = React.useRef<HTMLDivElement | null>()
   const dialogId = aria.useId()
 
   const titleId = `${dialogId}-title`
@@ -258,12 +259,12 @@ function DialogContent(props: DialogContentProps) {
 
   const [contentDimensionsRef, dimensions] = useMeasure({
     isDisabled: isLayoutDisabled,
-    useRAF: true,
+    useRAF: false,
   })
 
   const [headerDimensionsRef, headerDimensions] = useMeasure({
     isDisabled: isLayoutDisabled,
-    useRAF: true,
+    useRAF: false,
   })
 
   utlities.useInteractOutside({
@@ -283,6 +284,7 @@ function DialogContent(props: DialogContentProps) {
 
   /** Handles the scroll event on the dialog content. */
   const handleScroll = useEventCallback((ref: HTMLDivElement | null) => {
+    scrollerRef.current = ref
     React.startTransition(() => {
       if (ref && ref.scrollTop > 0) {
         setIsScrolledToTop(false)
@@ -332,7 +334,17 @@ function DialogContent(props: DialogContentProps) {
         transition={TRANSITION}
         style={dialogHeight != null ? { height: dialogHeight } : undefined}
         id={dialogId}
-        ref={() =>
+        onLayoutAnimationStart={() => {
+          if (scrollerRef.current) {
+            scrollerRef.current.style.overflowY = 'clip'
+          }
+        }}
+        onLayoutAnimationComplete={() => {
+          if (scrollerRef.current) {
+            scrollerRef.current.style.overflowY = ''
+          }
+        }}
+        ref={(ref: HTMLDivElement | null) => {
           mergeRefs.mergeRefs(dialogRef, (element) => {
             if (element) {
               // This is a workaround for the `data-testid` attribute not being
@@ -344,8 +356,8 @@ function DialogContent(props: DialogContentProps) {
               // this will allow us to set the `data-testid` attribute on the dialog
               element.dataset.testId = testId
             }
-          })
-        }
+          })(ref)
+        }}
         className={styles.base()}
         aria-labelledby={titleId}
         {...ariaDialogProps}
