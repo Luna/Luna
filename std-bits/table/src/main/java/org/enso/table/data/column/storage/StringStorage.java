@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
-  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(StringStorage.class);
-
   private final TextType type;
   private long _countLeadingTrailingWhitespace = -1;
 
@@ -38,12 +36,7 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    CompletableFuture.runAsync(
-        () -> {
-          LOGGER.warn("Background counting untrimmed cells in the column " + this.size);
-          countUntrimmed();
-          LOGGER.warn("Counted untrimmed " + this.size);
-        });
+    CompletableFuture.runAsync(this::countUntrimmed);
   }
 
   @Override
@@ -68,12 +61,10 @@ public final class StringStorage extends SpecializedStorage<String> {
    */
   public Long countUntrimmed() {
     if (_countLeadingTrailingWhitespace != -1) {
-      LOGGER.warn("Using memoized implementation for StringStorage");
       return _countLeadingTrailingWhitespace;
     }
 
     _countLeadingTrailingWhitespace = CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
-    LOGGER.warn("Counted untrimmed text in the column " + this.size);
     return _countLeadingTrailingWhitespace;
   }
 

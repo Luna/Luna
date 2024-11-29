@@ -13,8 +13,6 @@ import java.util.Random;
 import java.util.random.RandomGenerator;
 
 public class CountUntrimmed {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CountUntrimmed.class);
-
   // Default seed for random number generation (no specific reason for this value, just stability on result).
   private static final long RANDOM_SEED = 677280131;
 
@@ -29,13 +27,9 @@ public class CountUntrimmed {
 
   /** Counts the number of cells in the given storage with leading or trailing whitespace. */
   public static long applyToStorage(ColumnStorage storage, long sampleSize) {
-    if (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage) {
-      LOGGER.warn("Using memoized implementation for StringStorage");
-      return stringStorage.countUntrimmed();
-    }
-
-    LOGGER.warn("Using fallback implementation for ColumnStorage");
-    return compute(storage, sampleSize);
+    return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)
+        ? stringStorage.countUntrimmed()
+        : compute(storage, sampleSize);
   }
 
   /** Internal method performing the calculation on a storage. */
