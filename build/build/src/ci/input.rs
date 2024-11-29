@@ -24,9 +24,9 @@ pub mod env {
         }
     }
 
-    impl Into<String> for Ydoc {
-        fn into(self) -> String {
-            self.name().to_owned()
+    impl From<Ydoc> for String {
+        fn from(val: Ydoc) -> Self {
+            val.name().to_owned()
         }
     }
 }
