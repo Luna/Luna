@@ -55,7 +55,7 @@ import { Ast } from '@/util/ast'
 import { colorFromString } from '@/util/colors'
 import { partition } from '@/util/data/array'
 import { Rect } from '@/util/data/rect'
-import { Err, Ok } from '@/util/data/result'
+import { Err, Ok, unwrapOr } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import * as iter from 'enso-common/src/utilities/data/iter'
 import { set } from 'lib0'
@@ -510,10 +510,9 @@ function collapseNodes() {
       toasts.userActionFailed.show(`Unable to group nodes: ${info.error.payload}.`)
       return
     }
-    const currentMethod = projectStore.executionContext.getStackTop()
-    const currentMethodName = graphStore.db.stackItemToMethodName(currentMethod)
+    const currentMethodName = unwrapOr(graphStore.currentMethodPointer, undefined)?.name
     if (currentMethodName == null) {
-      bail(`Cannot get the method name for the current execution stack item. ${currentMethod}`)
+      bail(`Cannot get the method name for the current execution stack item.`)
     }
     const topLevel = graphStore.moduleRoot
     if (!topLevel) {

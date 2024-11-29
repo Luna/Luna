@@ -39,6 +39,7 @@ const allWidgets = computed(() =>
   flex-direction: row;
   place-items: center;
   overflow-x: clip;
+  margin-left: 24px;
 
   .SvgIcon {
     color: color-mix(in srgb, currentColor, transparent 50%);

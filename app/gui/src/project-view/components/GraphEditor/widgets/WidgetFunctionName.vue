@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import AutoSizedInput from '@/components/widgets/AutoSizedInput.vue'
-import { Score, WidgetInput, defineWidget, widgetProps } from '@/providers/widgetRegistry'
+import { defineWidget, Score, WidgetInput, widgetProps } from '@/providers/widgetRegistry'
+import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { Ast } from '@/util/ast'
 import { Err, Ok, type Result } from '@/util/data/result'
 import { useToast } from '@/util/toast'
 import { computed, ref, watchEffect } from 'vue'
 import { PropertyAccess } from 'ydoc-shared/ast'
-import type { ExpressionId } from 'ydoc-shared/languageServerTypes'
+import type { ExpressionId, MethodPointer } from 'ydoc-shared/languageServerTypes'
 import NodeWidget from '../NodeWidget.vue'
 
 const props = defineProps(widgetProps(widgetDefinition))
+const graph = useGraphStore()
 const displayedName = ref(props.input.value.code())
 
 const project = useProjectStore()
@@ -27,38 +29,31 @@ const name = computed(() =>
 )
 watchEffect(() => (displayedName.value = name.value.code()))
 
-function newNameAccepted(newName: string | undefined) {
+async function newNameAccepted(newName: string | undefined) {
   if (!newName) {
     displayedName.value = name.value.code()
   } else {
-    renameFunction(newName).then((result) => result.ok || renameError.reportError(result.error))
+    const result = await renameFunction(newName)
+    if (!result.ok) {
+      renameError.reportError(result.error)
+      displayedName.value = name.value.code()
+    }
   }
 }
 
 async function renameFunction(newName: string): Promise<Result> {
   if (!project.modulePath?.ok) return project.modulePath ?? Err('Unknown module Path')
   const modPath = project.modulePath.value
-  const editedName = props.input[FunctionName].editableName
+  const editedName = props.input[FunctionName].editableNameExpression
+  const oldMethodPointer = props.input[FunctionName].methodPointer
   const refactorResult = await project.lsRpcConnection.renameSymbol(modPath, editedName, newName)
-  if (refactorResult.ok) {
-    project.executionContext.desiredStack = project.executionContext.desiredStack.map((item) => {
-      if (
-        item.type == 'ExplicitCall' &&
-        item.methodPointer.module == modPath &&
-        item.methodPointer.name == editedName
-      ) {
-        return {
-          ...item,
-          methodPointer: {
-            ...item.methodPointer,
-            name: newName,
-          },
-        }
-      }
-      return item
+  if (!refactorResult.ok) return refactorResult
+  if (oldMethodPointer) {
+    graph.db.insertSyntheticMethodPointerUpdate(oldMethodPointer, {
+      ...oldMethodPointer,
+      name: refactorResult.value.newName,
     })
   }
-  if (!refactorResult.ok) return refactorResult
   return Ok()
 }
 </script>
@@ -72,14 +67,16 @@ declare module '@/providers/widgetRegistry' {
        * Id of expression which is accepted by Language Server's
        * [`refactoring/renameSymbol` method](https://github.com/enso-org/enso/blob/develop/docs/language-server/protocol-language-server.md#refactoringrenamesymbol)
        */
-      editableName: ExpressionId
+      editableNameExpression: ExpressionId
+      methodPointer: MethodPointer
     }
   }
 }
 
-function isFunctionName(
-  input: WidgetInput,
-): input is WidgetInput & { value: Ast.Ast; [FunctionName]: { editableName: ExpressionId } } {
+function isFunctionName(input: WidgetInput): input is WidgetInput & {
+  value: Ast.Ast
+  [FunctionName]: { editableNameExpression: ExpressionId }
+} {
   return WidgetInput.isAst(input) && FunctionName in input
 }
 

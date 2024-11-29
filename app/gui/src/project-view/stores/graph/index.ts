@@ -22,7 +22,6 @@ import { isAstId, isIdentifier } from '@/util/ast/abstract'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
 import { stringUnionToArray, type Events } from '@/util/data/observable'
-import { mapOrUndefined } from '@/util/data/opt'
 import { Rect } from '@/util/data/rect'
 import { andThen, Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
@@ -178,6 +177,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
           const exprId = executionStackTop.expressionId
           const info = db.getExpressionInfo(exprId)
           const ptr = info?.methodCall?.methodPointer
+          console.log('currentMethodPointer', ptr)
           if (!ptr) return Err("Unknown method pointer of execution stack's top frame")
           return Ok(ptr)
         }

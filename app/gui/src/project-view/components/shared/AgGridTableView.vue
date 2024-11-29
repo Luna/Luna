@@ -294,6 +294,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
   --ag-grid-size: 3px;
   --ag-list-item-height: 20px;
   --ag-background-color: var(--color-visualization-bg);
+  --ag-odd-row-background-color: var(--color-visualization-bg);
   --ag-header-background-color: var(--color-visualization-bg);
   font-family: var(--font-mono);
 }

@@ -69,7 +69,8 @@
   --color-node-text: white;
   --color-node-background: var(--node-group-color);
   --color-node-primary: var(--node-group-color);
-  --color-node-port: color-mix(in oklab, var(--color-node-background) 85%, white 15%);
+  --color-node-edge: color-mix(in oklab, var(--node-group-color) 85%, white 15%);
+  --color-node-port: var(--color-node-edge);
   --color-node-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
   --color-node-pending: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
 

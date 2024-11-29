@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { useWidgetFunctionCallInfo } from '@/components/GraphEditor/widgets/WidgetFunction/widgetFunctionCallInfo'
-import { FunctionName } from '@/components/GraphEditor/widgets/WidgetFunctionName.vue'
 import { injectFunctionInfo, provideFunctionInfo } from '@/providers/functionInfo'
 import {
   Score,

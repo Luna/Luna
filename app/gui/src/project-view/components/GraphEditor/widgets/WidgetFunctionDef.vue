@@ -6,12 +6,13 @@ import { defineWidget, Score, WidgetInput, widgetProps } from '@/providers/widge
 import { getDocsIcon } from '@/stores/suggestionDatabase/documentation'
 import { Ast } from '@/util/ast'
 import { computed } from 'vue'
+import { MethodPointer } from 'ydoc-shared/languageServerTypes'
 import ArgumentRow from './WidgetFunctionDef/ArgumentRow.vue'
 
-const props = defineProps(widgetProps(widgetDefinition))
+const { input } = defineProps(widgetProps(widgetDefinition))
 
 const funcIcon = computed(() => {
-  return getDocsIcon(props.input.value.mutableDocumentationMarkdown().toJSON()) ?? 'enso_logo'
+  return getDocsIcon(input.value.mutableDocumentationMarkdown().toJSON()) ?? 'enso_logo'
 })
 
 const funcNameInput = computed(() => {
@@ -23,13 +24,15 @@ const funcNameInput = computed(() => {
     },
   }
 
-  const nameAst = props.input.value.name
-  const canEditName = nameAst.code() !== 'main'
+  const nameAst = input.value.name
+  const methodPointer = input[FunctionInfoKey]?.methodPointer
+  console.log('methodPointer', methodPointer)
   const editableName =
-    canEditName ?
+    nameAst.code() !== 'main' && methodPointer != null ?
       {
         [FunctionName]: {
-          editableName: nameAst.externalId,
+          editableNameExpression: nameAst.externalId,
+          methodPointer,
         },
       }
     : {}
@@ -46,7 +49,7 @@ const funcNameInput = computed(() => {
   <div class="WidgetFunctionDef">
     <NodeWidget :input="funcNameInput" />
     <ArgumentRow
-      v-for="(definition, i) in props.input.value.argumentDefinitions"
+      v-for="(definition, i) in input.value.argumentDefinitions"
       :key="i"
       :definition="definition"
     />
@@ -54,6 +57,14 @@ const funcNameInput = computed(() => {
 </template>
 
 <script lang="ts">
+export const FunctionInfoKey: unique symbol = Symbol.for('WidgetInput:FunctionInfoKey')
+declare module '@/providers/widgetRegistry' {
+  export interface WidgetInput {
+    [FunctionInfoKey]?: {
+      methodPointer: MethodPointer
+    }
+  }
+}
 export const widgetDefinition = defineWidget(
   WidgetInput.astMatcher(Ast.FunctionDef),
   {
@@ -68,6 +79,6 @@ export const widgetDefinition = defineWidget(
 .WidgetFunctionDef {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
 }
 </style>

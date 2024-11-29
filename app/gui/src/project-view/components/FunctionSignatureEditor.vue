@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { WidgetInput } from '@/providers/widgetRegistry'
-import { useGraphStore } from '@/stores/graph'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { documentationData } from '@/stores/suggestionDatabase/documentation'
 import { colorFromString } from '@/util/colors'
 import { isQualifiedName } from '@/util/qualifiedName'
-import { last } from 'enso-common/src/utilities/data/iter'
 import { computed, ref, watchEffect } from 'vue'
 import { FunctionDef } from 'ydoc-shared/ast'
 import { MethodPointer } from 'ydoc-shared/languageServerTypes'
 import type * as Y from 'yjs'
 import WidgetTreeRoot from './GraphEditor/WidgetTreeRoot.vue'
+import { FunctionInfoKey } from './GraphEditor/widgets/WidgetFunctionDef.vue'
 
-const graph = useGraphStore(false)
 const suggestionDb = useSuggestionDbStore()
 
 const { functionAst, markdownDocs, methodPointer } = defineProps<{
@@ -40,7 +38,10 @@ const docsData = computed(() => {
 })
 
 const treeRootInput = computed(() => {
-  return WidgetInput.FromAst(functionAst)
+  return {
+    ...WidgetInput.FromAst(functionAst),
+    [FunctionInfoKey]: { methodPointer },
+  }
 })
 
 const rootElement = ref<HTMLElement>()
