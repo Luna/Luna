@@ -20,7 +20,7 @@ class ShadowedPatternFieldsTest extends CompilerTest {
   val passes = new Passes(defaultConfig)
 
   val precursorPasses: PassGroup =
-    passes.getPrecursors(ShadowedPatternFields).get
+    passes.getPrecursors(ShadowedPatternFields.INSTANCE).get
   val passConfig: PassConfiguration = PassConfiguration()
 
   implicit val passManager: PassManager =
@@ -40,7 +40,7 @@ class ShadowedPatternFieldsTest extends CompilerTest {
       */
     def lint(implicit inlineContext: InlineContext): Expression = {
       val miniPass =
-        ShadowedPatternFields.createForInlineCompilation(inlineContext)
+        ShadowedPatternFields.INSTANCE.createForInlineCompilation(inlineContext)
       MiniIRPass.compile(classOf[Expression], ir, miniPass)
     }
   }

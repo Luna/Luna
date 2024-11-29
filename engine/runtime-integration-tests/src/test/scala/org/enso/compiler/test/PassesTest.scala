@@ -68,7 +68,7 @@ class PassesTest extends CompilerTest {
           AmbiguousImportsAnalysis.INSTANCE,
           PrivateModuleAnalysis.INSTANCE,
           PrivateConstructorAnalysis.INSTANCE,
-          ShadowedPatternFields,
+          ShadowedPatternFields.INSTANCE,
           UnreachableMatchBranches,
           NestedPatternMatch,
           IgnoredBindings,
