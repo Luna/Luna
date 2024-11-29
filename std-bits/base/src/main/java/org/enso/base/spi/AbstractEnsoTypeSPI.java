@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.enso.base.polyglot.EnsoMeta;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
 public abstract class AbstractEnsoTypeSPI {
@@ -30,10 +31,22 @@ public abstract class AbstractEnsoTypeSPI {
     if (!wasLoaded) {
       try {
         cachedTypeObject = EnsoMeta.getType(getModuleName(), getTypeName());
-      } catch (Exception e) {
-        Logger.getLogger(this.getClass().getCanonicalName())
-            .warning("Failed to instantiate type object for SPI: " + e.getMessage());
-        cachedTypeObject = null;
+      } catch (PolyglotException e) {
+        // Currently I have not found a way to get the type/class of the exception, so we rely on
+        // the message.
+        boolean isModuleNotLoaded =
+            e.getMessage().equals("Module " + getModuleName() + " does not exist.");
+        if (isModuleNotLoaded) {
+          Logger.getLogger(this.getClass().getCanonicalName())
+              .warning(
+                  "Failed to instantiate type object for "
+                      + this.getClass().getCanonicalName()
+                      + " SPI: "
+                      + e.getMessage());
+          cachedTypeObject = null;
+        } else {
+          throw e;
+        }
       }
 
       wasLoaded = true;
