@@ -63,10 +63,11 @@ public final class StringStorage extends SpecializedStorage<String> {
   public Long countUntrimmed() throws InterruptedException {
     if (countUntrimmed.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      countUntrimmed = CompletableFuture.supplyAsync(
-          () ->
-              CountUntrimmed.compute(
-                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+      countUntrimmed =
+          CompletableFuture.supplyAsync(
+              () ->
+                  CountUntrimmed.compute(
+                      this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
