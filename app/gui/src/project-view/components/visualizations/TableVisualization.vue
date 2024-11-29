@@ -628,10 +628,16 @@ const getColumnValueToEnso = (columnName: string) => {
     return (item: string, module: Ast.MutableModule) => createDateValue(item, module)
   }
   if (columnType === 'Time') {
-    return (item: string) => Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
+    return (item: string, module: Ast.MutableModule) => {
+      const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
+      return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+    }
   }
   if (columnType === 'Date_Time') {
-    return (item: string) => Ast.parseExpression(`(Date_Time.parse '${item}')`)!
+    return (item: string, module: Ast.MutableModule) => {
+      const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
+      return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+    }
   }
   if (columnType == 'Mixed') {
     return (item: string, module: Ast.MutableModule) => {
@@ -642,14 +648,16 @@ const getColumnValueToEnso = (columnName: string) => {
         return createDateValue(item, module)
       }
       if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)) {
-        return Ast.parseExpression(`(Time_Of_Day.parse '${item}')`)!
+        const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
+        return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
       }
       if (
         /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?(\[[+-]\d{1,3}(:[0-5]\d)?\])?$/.test(
           item,
         )
       ) {
-        return Ast.parseExpression(`(Date_Time.parse '${item}')`)!
+        const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
+        return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
       }
 
       return Ast.TextLiteral.new(item)
