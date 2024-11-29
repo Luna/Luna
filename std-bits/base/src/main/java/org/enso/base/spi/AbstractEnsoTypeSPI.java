@@ -41,7 +41,7 @@ public abstract class AbstractEnsoTypeSPI {
               .warning(
                   "Failed to instantiate type object for "
                       + this.getClass().getCanonicalName()
-                      + " SPI: "
+                      + ": "
                       + e.getMessage());
           cachedTypeObject = null;
         } else {
