@@ -1,43 +1,49 @@
 package org.enso.base.file_system;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 import org.enso.base.polyglot.EnsoMeta;
+import org.enso.base.spi.AbstractEnsoTypeSPI;
 import org.graalvm.polyglot.Value;
 
-public abstract class FileSystemSPI {
-  private static final ServiceLoader<org.enso.base.file_system.FileSystemSPI> loader =
-      ServiceLoader.load(
-          org.enso.base.file_system.FileSystemSPI.class,
-          org.enso.base.file_format.FileFormatSPI.class.getClassLoader());
+public abstract class FileSystemSPI extends AbstractEnsoTypeSPI {
+
+  private final static class FileSystemLoader extends Loader<FileSystemSPI> {
+    public FileSystemLoader() {
+      super(FileSystemSPI.class);
+    }
+  }
+  private static final FileSystemLoader loader = new FileSystemLoader();
 
   public static Value get_type(String protocol, boolean refresh) {
+    Objects.requireNonNull(protocol, "subType must not be null/Nothing.");
+
     if (refresh) {
-      loader.reload();
+      loader.refresh();
     }
 
-    var first =
-        loader.stream()
-            .filter(provider -> provider.get().getProtocol().equals(protocol))
-            .findFirst();
-    return first
-        .map(fileSystemSPIProvider -> fileSystemSPIProvider.get().getTypeObject())
-        .orElse(null);
-  }
-
-  public static Value[] get_types(boolean refresh) {
-    if (refresh) {
-      loader.reload();
+    var found = loader.findSingleProvider(
+        provider -> protocol.equals(provider.getProtocol()),
+        protocol
+    );
+    if (found == null) {
+      return null;
     }
-    return loader.stream().map(provider -> provider.get().getTypeObject()).toArray(Value[]::new);
+    return found.getTypeObject();
   }
 
-  public Value getTypeObject() {
-    return EnsoMeta.getType(getModuleName(), getTypeName());
+  public static List<Value> get_types(boolean refresh) {
+    if (refresh) {
+      loader.refresh();
+    }
+    return loader.getProviders().map(FileSystemSPI::getTypeObject).toList();
   }
 
-  protected abstract String getModuleName();
-
-  protected abstract String getTypeName();
-
+  /**
+   * Defines the protocol that this file system provider is responsible for.
+   * <p>
+   * For example "enso" protocol is used for handling Enso Cloud `enso://` paths.
+   */
   protected abstract String getProtocol();
 }
