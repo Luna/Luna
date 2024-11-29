@@ -72,7 +72,7 @@ test('Copy/paste from Table Visualization', async ({ page, context }) => {
   const widget = node.locator('.WidgetTableEditor')
   await expect(widget).toBeVisible()
   await widget.getByRole('button', { name: 'Add new column' }).click()
-  await widget.locator('.ag-cell', { hasNotText: /0/ }).first().click()
+  await widget.locator('.valueCell').first().click()
   await page.keyboard.press(`${CONTROL_KEY}+V`)
   await expectTableInputContent(page, node)
 
@@ -100,21 +100,14 @@ test('Copy/paste from Table Visualization', async ({ page, context }) => {
 async function expectTableInputContent(page: Page, node: Locator) {
   const widget = node.locator('.WidgetTableEditor')
   await expect(widget).toBeVisible({ timeout: 5000 })
-  await expect(widget.locator('.ag-cell')).toHaveText([
+  await expect(widget.locator('.valueCell')).toHaveText([
     '0',
     '0,0',
     '0,1',
-    '',
-    '1',
     '1,0',
     '1,1',
-    '',
-    '2',
     '2,0',
     '2,1',
-    '',
-    '3',
-    '',
     '',
     '',
   ])
