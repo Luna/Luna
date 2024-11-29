@@ -10,12 +10,12 @@ type A
 type B
     B v
 
-    b = "b"
+    b self = "b"
 
 type C
     C v
 
-    c = "c"
+    c self = "c"
 
 B.from (that:A) = B.B that
 C.from (that:B) = C.C that
@@ -89,6 +89,50 @@ add_specs suite_builder =
             # multivalue ax restricted to X cannot be converted to B in to_b_to_c
             Test.expect_panic Type_Error <|
                 to_b_to_c x
+
+        group_builder.specify "Intersection type of unrelated types is not possible" <|
+            Test.expect_panic Type_Error <|
+                _ = X:X&B
+            Test.expect_panic Type_Error <|
+                _ = B:X&B
+            Test.expect_panic Type_Error <|
+                _ = X:B&X
+            Test.expect_panic Type_Error <|
+                _ = B:B&X
+
+        group_builder.specify "X:(A|X) --> B is not possible" <|
+            a = X:(A|X)
+            Test.expect_panic Type_Error <|
+                _ = a : B
+
+        group_builder.specify "A:(A|X) --> B is possible" <|
+            a = A:(A|X)
+            b = a : B
+            b.to_text . should_equal "(B A)"
+
+        # This test is failing
+        group_builder.specify "A:(A|B) --> (A&B) is possible" <|
+            a = A:(A|B)
+            both = a : (A&B)
+            both.a . should_equal "a"
+            both.b . should_equal "b"
+
+        group_builder.specify "B:(A|B) --> (A&B) is not possible" <|
+            b = B.B 42
+            a_or_b = b : (A|B)
+            Test.expect_panic Type_Error <|
+                _ = a_or_b : (A&B)
+
+        # This test is failing
+        group_builder.specify "B --> (A|C) is possible" <|
+            b = B.B 42
+            a_or_c = b : (A|C)
+            a_or_c.c . should_equal "c"
+
+        group_builder.specify "no transitive conversions" <|
+            a = A
+            Test.expect_panic Type_Error <|
+                a : C
 
 main filter=Nothing =
     suite = Test.build suite_builder->
