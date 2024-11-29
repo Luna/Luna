@@ -616,28 +616,16 @@ const getColumnValueToEnso = (columnName: string) => {
   if (isNumber.indexOf(columnType) != -1) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
-  const createDateValue = (item: string, module: Ast.MutableModule) => {
-    const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
-    const dateTimeParts = item
-      .match(/\d+/g)!
-      .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
-    return dateOrTimePattern.instantiateCopied([...dateTimeParts])
-  }
-
   if (columnType === 'Date') {
     return (item: string, module: Ast.MutableModule) => createDateValue(item, module)
   }
   if (columnType === 'Time') {
-    return (item: string, module: Ast.MutableModule) => {
-      const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
-      return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
-    }
+    return (item: string, module: Ast.MutableModule) =>
+      createDateTimeValue('Time_Of_Day.parse (__)', item, module)
   }
   if (columnType === 'Date_Time') {
-    return (item: string, module: Ast.MutableModule) => {
-      const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
-      return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
-    }
+    return (item: string, module: Ast.MutableModule) =>
+      createDateTimeValue('Date_Time.parse (__)', item, module)
   }
   if (columnType == 'Mixed') {
     return (item: string, module: Ast.MutableModule) => {
@@ -653,26 +641,29 @@ const getFormattedValueForCell = (item: string, module: Ast.MutableModule, cellT
   if (isNumber.indexOf(cellType) != -1) {
     return Ast.tryNumberToEnso(Number(item), module)!
   }
-  const createDateValue = (item: string, module: Ast.MutableModule) => {
-    const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
-    const dateTimeParts = item
-      .match(/\d+/g)!
-      .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
-    return dateOrTimePattern.instantiateCopied([...dateTimeParts])
-  }
-
   if (cellType === 'Date') {
     return createDateValue(item, module)
   }
   if (cellType === 'Time') {
-    const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
-    return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+    return createDateTimeValue('Time_Of_Day.parse (__)', item, module)
   }
   if (cellType === 'Date_Time') {
-    const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
-    return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+    return createDateTimeValue('Date_Time.parse (__)', item, module)
   }
   return Ast.TextLiteral.new(item)
+}
+
+const createDateTimeValue = (patternString: string, item: string, module: Ast.MutableModule) => {
+  const pattern = Pattern.parseExpression(patternString)!
+  return pattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+}
+
+const createDateValue = (item: string, module: Ast.MutableModule) => {
+  const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
+  const dateTimeParts = item
+    .match(/\d+/g)!
+    .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
+  return dateOrTimePattern.instantiateCopied([...dateTimeParts])
 }
 
 const getCellValueType = (item: string) => {
