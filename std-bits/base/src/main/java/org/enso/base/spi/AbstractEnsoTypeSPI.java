@@ -1,10 +1,10 @@
 package org.enso.base.spi;
 
+import java.util.List;
 import java.util.ServiceLoader;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.enso.base.polyglot.EnsoMeta;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
@@ -67,16 +67,27 @@ public abstract class AbstractEnsoTypeSPI {
       loader = ServiceLoader.load(clazz, clazz.getClassLoader());
     }
 
+    private transient List<T> cachedProviders = null;
+
     public final void reload() {
+      cachedProviders = null;
       loader.reload();
     }
 
-    public final Stream<T> getProviders() {
-      return loader.stream().map(ServiceLoader.Provider::get).filter(AbstractEnsoTypeSPI::isLoaded);
+    public final List<T> getProviders() {
+      if (cachedProviders == null) {
+        cachedProviders =
+            loader.stream()
+                .map(ServiceLoader.Provider::get)
+                .filter(AbstractEnsoTypeSPI::isLoaded)
+                .toList();
+      }
+
+      return cachedProviders;
     }
 
     public T findSingleProvider(Predicate<T> predicate, String predicateDescription) {
-      var found = getProviders().filter(predicate).toList();
+      var found = getProviders().stream().filter(predicate).toList();
       if (found.isEmpty()) {
         return null;
       } else if (found.size() > 1) {

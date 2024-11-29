@@ -26,6 +26,6 @@ public abstract class ReadManyReturnSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().map(ReadManyReturnSPI::getTypeObject).toList();
+    return loader.getProviders().stream().map(ReadManyReturnSPI::getTypeObject).toList();
   }
 }

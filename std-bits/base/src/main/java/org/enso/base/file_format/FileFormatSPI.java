@@ -13,7 +13,7 @@ public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().map(AbstractEnsoTypeSPI::getTypeObject).toList();
+    return loader.getProviders().stream().map(AbstractEnsoTypeSPI::getTypeObject).toList();
   }
 
   public static Value findFormatForDataLinkSubType(String subType) {

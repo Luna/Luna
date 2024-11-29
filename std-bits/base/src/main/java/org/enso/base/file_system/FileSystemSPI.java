@@ -34,7 +34,7 @@ public abstract class FileSystemSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().map(FileSystemSPI::getTypeObject).toList();
+    return loader.getProviders().stream().map(FileSystemSPI::getTypeObject).toList();
   }
 
   /**

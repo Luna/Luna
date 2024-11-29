@@ -17,8 +17,7 @@ public abstract class DatabaseConnectionDetailsSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader
-        .getProviders()
+    return loader.getProviders().stream()
         .map(
             provider ->
                 new String[] {
@@ -37,7 +36,7 @@ public abstract class DatabaseConnectionDetailsSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().map(DatabaseConnectionDetailsSPI::getTypeObject).toList();
+    return loader.getProviders().stream().map(DatabaseConnectionDetailsSPI::getTypeObject).toList();
   }
 
   private static final class DatabaseConnectionDetailsLoader
