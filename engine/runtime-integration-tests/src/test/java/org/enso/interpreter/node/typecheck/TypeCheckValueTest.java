@@ -9,6 +9,7 @@ import org.enso.interpreter.runtime.data.Type;
 import org.enso.test.utils.ContextUtils;
 import org.enso.test.utils.TestRootNode;
 import org.graalvm.polyglot.Context;
+import org.junit.AfterClass;
 import org.junit.Test;
 
 public class TypeCheckValueTest {
@@ -19,6 +20,14 @@ public class TypeCheckValueTest {
       ctx = ContextUtils.defaultContextBuilder().build();
     }
     return ctx;
+  }
+
+  @AfterClass
+  public static void closeCtx() {
+    if (ctx != null) {
+      ctx.close();
+    }
+    ctx = null;
   }
 
   @Test
