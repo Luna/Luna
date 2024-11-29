@@ -105,8 +105,12 @@ public class InferredBuilder extends Builder {
 
   @Override
   public void appendBulkStorage(Storage<?> storage) {
-    for (int i = 0; i < storage.size(); i++) {
-      append(storage.getItemBoxed(i));
+    if (storage.getType() instanceof NullType) {
+      appendNulls(storage.size());
+    } else {
+      for (int i = 0; i < storage.size(); i++) {
+        append(storage.getItemBoxed(i));
+      }
     }
   }
 
