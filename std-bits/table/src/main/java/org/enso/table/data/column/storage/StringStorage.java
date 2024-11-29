@@ -4,8 +4,6 @@ import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
-  private static final Executor EXECUTOR = Executors.newSingleThreadExecutor();
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(StringStorage.class);
 
   private final TextType type;
@@ -42,8 +39,11 @@ public final class StringStorage extends SpecializedStorage<String> {
     this.type = type;
 
     CompletableFuture.runAsync(
-        this::countLeadingTrailingWhitespace,
-        EXECUTOR);
+        () -> {
+          LOGGER.warn("Background counting untrimmed cells in the column " + this.size);
+          countUntrimmed();
+          LOGGER.warn("Counted untrimmed " + this.size);
+        });
   }
 
   @Override
@@ -66,14 +66,14 @@ public final class StringStorage extends SpecializedStorage<String> {
    * Memoized into the storage for performance.
    * @return the number of cells with whitespace
    */
-  public Long countLeadingTrailingWhitespace() {
-    if (_countLeadingTrailingWhitespace >= 0) {
+  public Long countUntrimmed() {
+    if (_countLeadingTrailingWhitespace != -1) {
       LOGGER.warn("Using memoized implementation for StringStorage");
       return _countLeadingTrailingWhitespace;
     }
 
-    _countLeadingTrailingWhitespace = CountUntrimmed.compute(this);
-    LOGGER.warn("Counted leading and trailing whitespace in the column " + this.size);
+    _countLeadingTrailingWhitespace = CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
+    LOGGER.warn("Counted untrimmed text in the column " + this.size);
     return _countLeadingTrailingWhitespace;
   }
 

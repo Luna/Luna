@@ -2217,10 +2217,10 @@ type Column
     ## PRIVATE
        Counts the number of text values with leading or trailing whitespace.
        Used for data quality indicator in Table Viz.
-    count_untrimmed : Integer | Nothing
-    count_untrimmed self =
+    count_untrimmed : Integer -> Integer | Nothing
+    count_untrimmed self sample_size:Integer=CountUntrimmed.DEFAULT_SAMPLE_SIZE =
         if (self.value_type == Value_Type.Mixed || self.value_type.is_text).not then Nothing else
-            CountUntrimmed.apply self.java_column
+            CountUntrimmed.apply self.java_column sample_size
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
