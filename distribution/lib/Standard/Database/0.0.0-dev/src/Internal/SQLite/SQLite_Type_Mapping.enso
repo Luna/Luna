@@ -60,6 +60,7 @@ type SQLite_Type_Mapping
             Value_Type.Date -> unsupported_date_time
             Value_Type.Date_Time _ -> unsupported_date_time
             Value_Type.Binary _ _ -> SQLite_Types.blob
+            Value_Type.Null -> SQLite_Types.null
             Value_Type.Mixed ->
                 ## The best we could do would be to store mixed values and
                    report invalid type or coerce the values to Text. Both seem
@@ -245,6 +246,9 @@ type SQLite_Types
     ## PRIVATE
        The artificial 6th affinity that is used to distinguish boolean columns.
     boolean = SQL_Type.Value Types.BOOLEAN "BOOLEAN"
+
+    ## PRIVATE
+    null = SQL_Type.Value Types.NULL "NULL"
 
 ## PRIVATE
 default_text = Value_Type.Char size=Nothing variable_length=True

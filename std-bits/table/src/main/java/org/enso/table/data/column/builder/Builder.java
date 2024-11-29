@@ -9,10 +9,13 @@ import org.enso.table.data.column.storage.type.DateTimeType;
 import org.enso.table.data.column.storage.type.DateType;
 import org.enso.table.data.column.storage.type.FloatType;
 import org.enso.table.data.column.storage.type.IntegerType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.enso.table.data.column.storage.type.TimeOfDayType;
 import org.enso.table.problems.ProblemAggregator;
+
+import java.util.Objects;
 
 /** A builder for creating columns dynamically. */
 public abstract class Builder {
@@ -41,9 +44,10 @@ public abstract class Builder {
           case TextType textType -> new StringBuilder(size, textType);
           case BigDecimalType x -> new BigDecimalBuilder(size);
           case BigIntegerType x -> new BigIntegerBuilder(size, problemAggregator);
+          case NullType x -> new NullBuilder(size);
           case null -> new InferredBuilder(size, problemAggregator);
         };
-    assert java.util.Objects.equals(builder.getType(), type);
+    assert Objects.equals(builder.getType(), type);
     return builder;
   }
 
