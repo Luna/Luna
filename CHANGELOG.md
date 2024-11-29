@@ -75,7 +75,7 @@
   operation.][11490]
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
-- [Ref.new with allow_gc][11577]
+- [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
