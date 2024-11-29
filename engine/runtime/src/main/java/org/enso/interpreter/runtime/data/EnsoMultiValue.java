@@ -50,7 +50,7 @@ public final class EnsoMultiValue extends EnsoObject {
     this.methodDispatchTypes = dispatchTypes;
     assert types.length == values.length;
     this.values = values;
-    assert !Stream.of(values).filter(v -> v instanceof EnsoMultiValue).findAny().isPresent()
+    assert !Stream.of(values).anyMatch(v -> v instanceof EnsoMultiValue)
         : "Avoid double wrapping " + Arrays.toString(values);
   }
 
