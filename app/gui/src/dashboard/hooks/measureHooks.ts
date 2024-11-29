@@ -53,7 +53,7 @@ export type OnResizeCallback = (bounds: RectReadOnly) => void
  * A type that represents the options for the useMeasure hook.
  */
 export interface Options {
-  readonly debounce?: number | { readonly scroll: number; readonly resize: number }
+  readonly debounce?: number | false | { readonly scroll: number | false; readonly resize: number | false }
   readonly scroll?: boolean
   readonly offsetSize?: boolean
   readonly onResize?: OnResizeCallback
@@ -133,7 +133,7 @@ const DEFAULT_MAX_WAIT = 500
  */
 export function useMeasureCallback(options: Options & Required<Pick<Options, 'onResize'>>) {
   const {
-    debounce = 0,
+    debounce = false,
     scroll = false,
     offsetSize = false,
     onResize,
@@ -158,8 +158,8 @@ export function useMeasureCallback(options: Options & Required<Pick<Options, 'on
   const resizeMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.resize
 
   // set actual debounce values early, so effects know if they should react accordingly
-  const scrollDebounce = typeof debounce === 'number' ? debounce : debounce.scroll
-  const resizeDebounce = typeof debounce === 'number' ? debounce : debounce.resize
+  const scrollDebounce = typeof debounce === 'number' || debounce === false ? debounce : debounce.scroll
+  const resizeDebounce = typeof debounce === 'number' || debounce === false ? debounce : debounce.resize
 
   const callback = useEventCallback(() => {
     frame.read(measureCallback)
