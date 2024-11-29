@@ -1,7 +1,10 @@
 <script lang="ts">
 import icons from '@/assets/icons.svg'
 import AgGridTableView, { commonContextMenuActions } from '@/components/shared/AgGridTableView.vue'
-import { useTableVizToolbar, type SortModel } from '@/components/visualizations/tableVizToolbar'
+import {
+  useTableVizToolbar,
+  type SortModel,
+} from '@/components/visualizations/TableVisualization/tableVizToolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
@@ -14,7 +17,8 @@ import type {
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
-import { TableVisualisationTooltip } from './TableVisualisationTooltip'
+import { TableVisualisationTooltip } from './TableVisualization/TableVisualisationTooltip'
+import { getCellValueType } from './TableVisualization/tableVizUtils'
 
 export const name = 'Table'
 export const icon = 'table'
@@ -664,39 +668,6 @@ const createDateValue = (item: string, module: Ast.MutableModule) => {
     .match(/\d+/g)!
     .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
   return dateOrTimePattern.instantiateCopied([...dateTimeParts])
-}
-
-const getCellValueType = (item: string) => {
-  switch (true) {
-    case isInteger(item):
-      return 'Integer'
-    case isDate(item):
-      return 'Date'
-    case isTime(item):
-      return 'Time'
-    case isDateTime(item):
-      return 'Date_Time'
-    default:
-      return 'Char'
-  }
-}
-
-const isInteger = (item: string) => {
-  return !isNaN(Number(item))
-}
-
-const isDate = (item: string) => {
-  return /^\d{4}-\d{2}-\d{2}$/.test(item)
-}
-
-const isTime = (item: string) => {
-  return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)
-}
-
-const isDateTime = (item: string) => {
-  return /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?(\[[+-]\d{1,3}(:[0-5]\d)?\])?$/.test(
-    item,
-  )
 }
 
 function checkSortAndFilter(e: SortChangedEvent) {
