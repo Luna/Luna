@@ -641,29 +641,71 @@ const getColumnValueToEnso = (columnName: string) => {
   }
   if (columnType == 'Mixed') {
     return (item: string, module: Ast.MutableModule) => {
-      if (!isNaN(Number(item))) {
-        return Ast.tryNumberToEnso(Number(item), module)!
-      }
-      if (/^\d{4}-\d{2}-\d{2}$/.test(item)) {
-        return createDateValue(item, module)
-      }
-      if (/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)) {
-        const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
-        return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
-      }
-      if (
-        /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?(\[[+-]\d{1,3}(:[0-5]\d)?\])?$/.test(
-          item,
-        )
-      ) {
-        const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
-        return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
-      }
-
-      return Ast.TextLiteral.new(item)
+      const parsedCellType = getCellValueType(item)
+      return getFormattedValueForCell(item, module, parsedCellType)
     }
   }
   return (item: string) => Ast.TextLiteral.new(item)
+}
+
+const getFormattedValueForCell = (item: string, module: Ast.MutableModule, cellType: string) => {
+  const isNumber = ['Integer', 'Float', 'Decimal', 'Byte']
+  if (isNumber.indexOf(cellType) != -1) {
+    return Ast.tryNumberToEnso(Number(item), module)!
+  }
+  const createDateValue = (item: string, module: Ast.MutableModule) => {
+    const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
+    const dateTimeParts = item
+      .match(/\d+/g)!
+      .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
+    return dateOrTimePattern.instantiateCopied([...dateTimeParts])
+  }
+
+  if (cellType === 'Date') {
+    return createDateValue(item, module)
+  }
+  if (cellType === 'Time') {
+    const timePattern = Pattern.parseExpression('Time_Of_Day.parse (__)')!
+    return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+  }
+  if (cellType === 'Date_Time') {
+    const timePattern = Pattern.parseExpression('Date_Time.parse (__)')!
+    return timePattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+  }
+  return Ast.TextLiteral.new(item)
+}
+
+const getCellValueType = (item: string) => {
+  switch (true) {
+    case isInteger(item):
+      return 'Integer'
+    case isDate(item):
+      return 'Date'
+    case isTime(item):
+      return 'Time'
+    case isDateTime(item):
+      return 'Date_Time'
+    default:
+      return 'Char'
+  }
+}
+
+const isInteger = (item: string) => {
+  return !isNaN(Number(item))
+}
+
+const isDate = (item: string) => {
+  return /^\d{4}-\d{2}-\d{2}$/.test(item)
+}
+
+const isTime = (item: string) => {
+  return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?$/.test(item)
+}
+
+const isDateTime = (item: string) => {
+  return /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d{1,6})?(\[[+-]\d{1,3}(:[0-5]\d)?\])?$/.test(
+    item,
+  )
 }
 
 function checkSortAndFilter(e: SortChangedEvent) {
