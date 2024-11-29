@@ -651,7 +651,11 @@ pub fn typical_check_triggers() -> Event {
 }
 
 pub fn gui() -> Result<Workflow> {
-    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
+    let on = Event {
+        workflow_dispatch: Some(manual_workflow_dispatch()),
+        workflow_call: Some(default()),
+        ..default()
+    };
     let mut workflow = Workflow {
         name: "GUI Packaging".into(),
         concurrency: Some(concurrency()),
@@ -670,7 +674,11 @@ pub fn gui() -> Result<Workflow> {
 }
 
 pub fn gui_tests() -> Result<Workflow> {
-    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
+    let on = Event {
+        workflow_dispatch: Some(manual_workflow_dispatch()),
+        workflow_call: Some(default()),
+        ..default()
+    };
     let mut workflow = Workflow { name: "WASM Checks".into(), on, ..default() };
     workflow.add(PRIMARY_TARGET, job::CancelWorkflow);
     workflow.add(PRIMARY_TARGET, job::Lint);
@@ -689,7 +697,11 @@ fn concurrency() -> Concurrency {
 }
 
 pub fn backend() -> Result<Workflow> {
-    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
+    let on = Event {
+        workflow_dispatch: Some(manual_workflow_dispatch()),
+        workflow_call: Some(default()),
+        ..default()
+    };
     let mut workflow =
         Workflow { name: "Engine CI".into(), concurrency: Some(concurrency()), on, ..default() };
     workflow.add(PRIMARY_TARGET, job::VerifyLicensePackages);

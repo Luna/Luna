@@ -10,6 +10,7 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call: {}
 jobs:
   enso-build-ci-gen-job-cancel-workflow-linux-amd64:
     name: Cancel Previous Runs
