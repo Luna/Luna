@@ -428,7 +428,7 @@ public final class EnsoMultiValue extends EnsoObject {
      * @param type the requested t
      * @param mv a multi value
      * @param reorderOnly allow (modified) {@link EnsoMultiValue} to be returned
-     * @param allTypes should we search all types or nu
+     * @param allTypes should we search all types or just up to {@code methodDispatchTypes}
      * @return instance of the {@code t} or {@code null} if no suitable value was found
      */
     public final Object findTypeOrNull(
