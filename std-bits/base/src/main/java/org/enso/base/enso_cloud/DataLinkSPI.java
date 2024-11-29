@@ -3,6 +3,8 @@ package org.enso.base.enso_cloud;
 import org.enso.base.spi.AbstractEnsoTypeSPI;
 import org.graalvm.polyglot.Value;
 
+import java.util.Objects;
+
 /**
  * An interface for data link parser providers. A class providing this interface can register an
  * Enso type that defines how to `parse` a specific type of datalink. The `parse` method on that
@@ -22,6 +24,7 @@ public abstract class DataLinkSPI extends AbstractEnsoTypeSPI {
   }
 
   public static Value findDataLinkType(String name) {
+    Objects.requireNonNull(name, "name must not be null/Nothing.");
     var found =
         loader.findSingleProvider(provider -> name.equals(provider.getLinkTypeName()), name);
     if (found == null) {

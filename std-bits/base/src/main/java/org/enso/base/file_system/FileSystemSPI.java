@@ -16,7 +16,7 @@ public abstract class FileSystemSPI extends AbstractEnsoTypeSPI {
   private static final FileSystemLoader loader = new FileSystemLoader();
 
   public static Value get_type(String protocol, boolean refresh) {
-    Objects.requireNonNull(protocol, "subType must not be null/Nothing.");
+    Objects.requireNonNull(protocol, "protocol must not be null/Nothing.");
 
     if (refresh) {
       loader.reload();
