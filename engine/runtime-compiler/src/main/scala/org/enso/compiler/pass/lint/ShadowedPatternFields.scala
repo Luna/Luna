@@ -68,6 +68,11 @@ case object ShadowedPatternFields extends MiniPassFactory {
       expr match {
         case branch: Case.Branch =>
           lintCaseBranch(branch)
+        case caseExpr: Case.Expr =>
+          val newBranches = caseExpr.branches.map(lintCaseBranch)
+          caseExpr.copy(
+            branches = newBranches
+          )
         case _ => expr
       }
     }
