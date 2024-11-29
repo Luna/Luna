@@ -2218,9 +2218,14 @@ type Column
        Counts the number of text values with leading or trailing whitespace.
        Used for data quality indicator in Table Viz.
     count_untrimmed : Integer -> Integer | Nothing
-    count_untrimmed self sample_size:Integer=CountUntrimmed.DEFAULT_SAMPLE_SIZE =
+    count_untrimmed self sample_size:Integer=Column.default_sample_size =
         if (self.value_type == Value_Type.Mixed || self.value_type.is_text).not then Nothing else
             CountUntrimmed.apply self.java_column sample_size
+
+    ## PRIVATE
+       Default size for sampling data quality indicators.
+    default_sample_size -> Integer =
+        CountUntrimmed.DEFAULT_SAMPLE_SIZE
 
     ## GROUP Standard.Base.Metadata
        ICON metadata

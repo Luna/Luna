@@ -2,6 +2,8 @@ package org.enso.table.data.column.storage;
 
 import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
@@ -21,7 +23,7 @@ import org.graalvm.polyglot.Context;
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
   private final TextType type;
-  private long countUntrimmed = -1;
+  private Future<Long> countUntrimmed;
 
   /**
    * @param data the underlying data
@@ -32,7 +34,9 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    CompletableFuture.runAsync(this::countUntrimmed);
+    countUntrimmed =
+        CompletableFuture.supplyAsync(
+            () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
   }
 
   @Override
@@ -51,19 +55,25 @@ public final class StringStorage extends SpecializedStorage<String> {
   }
 
   /**
-   * Counts the number of cells in the columns with whitespace. Memoized into the storage for
-   * performance.
+   * Counts the number of cells in the columns with whitespace. If the calculation fails then it
+   * returns null.
    *
    * @return the number of cells with whitespace
    */
-  public Long countUntrimmed() {
-    if (countUntrimmed != -1) {
-      return countUntrimmed;
+  public Long countUntrimmed() throws InterruptedException {
+    if (countUntrimmed.isCancelled()) {
+      // Need to recompute the value, as was cancelled.
+      countUntrimmed = CompletableFuture.supplyAsync(
+          () ->
+              CountUntrimmed.compute(
+                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
-    countUntrimmed =
-        CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
-    return countUntrimmed;
+    try {
+      return countUntrimmed.get();
+    } catch (ExecutionException e) {
+      return null;
+    }
   }
 
   private static MapOperationStorage<String, SpecializedStorage<String>> buildOps() {

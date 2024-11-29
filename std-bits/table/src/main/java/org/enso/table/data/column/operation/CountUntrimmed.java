@@ -16,44 +16,51 @@ public class CountUntrimmed {
   public static final long DEFAULT_SAMPLE_SIZE = 10000;
 
   /** Counts the number of cells in the columns with leading or trailing whitespace. */
-  public static long apply(Column column, long sampleSize) {
+  public static Long apply(Column column, long sampleSize) throws InterruptedException {
     ColumnStorage storage = column.getStorage();
     return applyToStorage(storage, sampleSize);
   }
 
   /** Counts the number of cells in the given storage with leading or trailing whitespace. */
-  public static long applyToStorage(ColumnStorage storage, long sampleSize) {
+  public static Long applyToStorage(ColumnStorage storage, long sampleSize)
+      throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)
         ? stringStorage.countUntrimmed()
-        : compute(storage, sampleSize);
+        : (Long) compute(storage, sampleSize, Context.getCurrent());
   }
 
   /** Internal method performing the calculation on a storage. */
-  public static long compute(ColumnStorage storage, long sampleSize) {
+  public static long compute(ColumnStorage storage, long sampleSize, Context context) {
     long size = storage.getSize();
-    boolean sample = sampleSize < size;
-    Random rng = sample ? new Random(RANDOM_SEED) : null;
-    double sampleRate = sample ? (double) sampleSize / size : 1.0;
 
-    Context context = Context.getCurrent();
     long count = 0;
-    for (long i = 0; i < storage.getSize(); i++) {
-      if (sample && rng.nextDouble() > sampleRate) {
-        continue;
-      }
-
-      var val = storage.getItemAsObject(i);
-      if (val instanceof String str) {
-        if (Text_Utils.has_leading_trailing_whitespace(str)) {
+    if (sampleSize < size) {
+      var rng = new Random(RANDOM_SEED);
+      for (int i = 0; i < sampleSize; i++) {
+        long idx = rng.nextInt((int) size);
+        var val = storage.getItemAsObject(idx);
+        if (val instanceof String str && Text_Utils.has_leading_trailing_whitespace(str)) {
           count++;
         }
+
+        if (context != null) {
+          context.safepoint();
+        }
       }
-      context.safepoint();
+      count = Math.min(size, (long) Math.ceil((double) count / sampleSize * size));
+    } else {
+      for (long i = 0; i < storage.getSize(); i++) {
+        var val = storage.getItemAsObject(i);
+        if (val instanceof String str && Text_Utils.has_leading_trailing_whitespace(str)) {
+          count++;
+        }
+
+        if (context != null) {
+          context.safepoint();
+        }
+      }
     }
 
-    if (sample) {
-      count = Math.min(size, (long) Math.ceil((double) count / sampleRate));
-    }
     return count;
   }
 }
