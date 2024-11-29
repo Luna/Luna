@@ -1,10 +1,9 @@
 package org.enso.base.file_format;
 
-import org.enso.base.spi.AbstractEnsoTypeSPI;
-import org.graalvm.polyglot.Value;
-
 import java.util.List;
 import java.util.Objects;
+import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.graalvm.polyglot.Value;
 
 public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
 
@@ -12,7 +11,7 @@ public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
 
   public static List<Value> get_types(boolean refresh) {
     if (refresh) {
-      loader.refresh();
+      loader.reload();
     }
     return loader.getProviders().map(AbstractEnsoTypeSPI::getTypeObject).toList();
   }
@@ -20,10 +19,9 @@ public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
   public static Value findFormatForDataLinkSubType(String subType) {
     Objects.requireNonNull(subType, "subType must not be null/Nothing.");
 
-    var found = loader.findSingleProvider(
-        provider -> subType.equalsIgnoreCase(provider.getDataLinkFormatName()),
-        subType
-    );
+    var found =
+        loader.findSingleProvider(
+            provider -> subType.equalsIgnoreCase(provider.getDataLinkFormatName()), subType);
     if (found == null) {
       return null;
     }

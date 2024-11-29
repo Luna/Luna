@@ -1,8 +1,6 @@
 package org.enso.base.enso_cloud;
 
-import java.util.ServiceLoader;
-import java.util.stream.Collectors;
-import org.enso.base.polyglot.EnsoMeta;
+import org.enso.base.spi.AbstractEnsoTypeSPI;
 import org.graalvm.polyglot.Value;
 
 /**
@@ -10,44 +8,33 @@ import org.graalvm.polyglot.Value;
  * Enso type that defines how to `parse` a specific type of datalink. The `parse` method on that
  * type should return a configured datalink instance that can later be `read`.
  */
-public abstract class DataLinkSPI {
-  private static final ServiceLoader<DataLinkSPI> loader =
-      ServiceLoader.load(DataLinkSPI.class, DataLinkSPI.class.getClassLoader());
+public abstract class DataLinkSPI extends AbstractEnsoTypeSPI {
+  private static final class DataLinkTypeLoader extends Loader<DataLinkSPI> {
+    public DataLinkTypeLoader() {
+      super(DataLinkSPI.class);
+    }
+  }
+
+  private static final DataLinkTypeLoader loader = new DataLinkTypeLoader();
 
   public void reload() {
     loader.reload();
   }
 
   public static Value findDataLinkType(String name) {
-    var providers =
-        loader.stream().filter(provider -> provider.get().getLinkTypeName().equals(name)).toList();
-    if (providers.isEmpty()) {
+    var found =
+        loader.findSingleProvider(provider -> name.equals(provider.getLinkTypeName()), name);
+    if (found == null) {
       return null;
     }
-
-    if (providers.size() > 1) {
-      var modules =
-          providers.stream()
-              .map(provider -> provider.get().getModuleName())
-              .collect(Collectors.joining(", "));
-      throw new IllegalStateException(
-          "Error: Multiple Data Link providers found for type: "
-              + name
-              + ". The clashing definitions are in the following modules: "
-              + modules
-              + ".");
-    }
-
-    return providers.get(0).get().getTypeObject();
+    return found.getTypeObject();
   }
 
-  public Value getTypeObject() {
-    return EnsoMeta.getType(getModuleName(), getTypeName());
-  }
-
-  protected abstract String getModuleName();
-
-  protected abstract String getTypeName();
-
+  /**
+   * Defines the name of the data link type associated with this SPI registration.
+   *
+   * <p>This is the same value as the `type` property of the corresponding variant in
+   * `dataLinkSchema.json`.
+   */
   protected abstract String getLinkTypeName();
 }
