@@ -1,19 +1,15 @@
 package org.enso.table.data.column.operation;
 
+import java.util.Random;
 import org.enso.base.Text_Utils;
-import org.enso.base.random.Random_Utils;
 import org.enso.table.data.column.storage.ColumnStorage;
 import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.table.Column;
 import org.graalvm.polyglot.Context;
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
-import java.util.Random;
-import java.util.random.RandomGenerator;
 
 public class CountUntrimmed {
-  // Default seed for random number generation (no specific reason for this value, just stability on result).
+  // Default seed for random number generation (no specific reason for this value, just stability on
+  // result).
   private static final long RANDOM_SEED = 677280131;
 
   // Default sample size for counting untrimmed cells.

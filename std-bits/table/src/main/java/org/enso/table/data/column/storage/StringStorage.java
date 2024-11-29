@@ -2,9 +2,6 @@ package org.enso.table.data.column.storage;
 
 import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
@@ -20,7 +17,6 @@ import org.enso.table.data.column.operation.map.text.StringStringOp;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
-import org.slf4j.LoggerFactory;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
@@ -55,8 +51,9 @@ public final class StringStorage extends SpecializedStorage<String> {
   }
 
   /**
-   * Counts the number of cells in the columns with whitespace.
-   * Memoized into the storage for performance.
+   * Counts the number of cells in the columns with whitespace. Memoized into the storage for
+   * performance.
+   *
    * @return the number of cells with whitespace
    */
   public Long countUntrimmed() {
@@ -64,7 +61,8 @@ public final class StringStorage extends SpecializedStorage<String> {
       return _countLeadingTrailingWhitespace;
     }
 
-    _countLeadingTrailingWhitespace = CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
+    _countLeadingTrailingWhitespace =
+        CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
     return _countLeadingTrailingWhitespace;
   }
 
