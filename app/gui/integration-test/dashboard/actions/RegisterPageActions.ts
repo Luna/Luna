@@ -6,14 +6,14 @@ import BaseActions, { type LocatorCallback } from './BaseActions'
 import LoginPageActions from './LoginPageActions'
 
 /** Available actions for the login page. */
-export default class RegisterPageActions extends BaseActions {
+export default class RegisterPageActions<Context> extends BaseActions<Context> {
   /** Actions for navigating to another page. */
   get goToPage() {
     return {
-      login: (): LoginPageActions =>
+      login: (): LoginPageActions<Context> =>
         this.step("Go to 'login' page", async (page) =>
           page.getByRole('link', { name: TEXT.alreadyHaveAnAccount, exact: true }).click(),
-        ).into(LoginPageActions),
+        ).into(LoginPageActions<Context>),
     }
   }
 
@@ -21,7 +21,7 @@ export default class RegisterPageActions extends BaseActions {
   register(email = VALID_EMAIL, password = VALID_PASSWORD, confirmPassword = password) {
     return this.step('Reegister', () =>
       this.registerInternal(email, password, confirmPassword),
-    ).into(LoginPageActions)
+    ).into(LoginPageActions<Context>)
   }
 
   /** Perform a failing login. */

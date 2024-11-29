@@ -29,9 +29,9 @@ function locateAssetRows(page: test.Page) {
 }
 
 /** Actions for the "drive" page. */
-export default class DrivePageActions extends PageActions {
+export default class DrivePageActions<Context> extends PageActions<Context> {
   /** Actions for navigating to another page. */
-  get goToPage(): Omit<goToPageActions.GoToPageActions, 'drive'> {
+  get goToPage(): Omit<goToPageActions.GoToPageActions<Context>, 'drive'> {
     return goToPageActions.goToPageActions(this.step.bind(this))
   }
 
@@ -43,7 +43,7 @@ export default class DrivePageActions extends PageActions {
   /** Switch to a different category. */
   get goToCategory() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self: DrivePageActions = this
+    const self: DrivePageActions<Context> = this
     return {
       /** Switch to the "cloud" category. */
       cloud() {
@@ -84,7 +84,7 @@ export default class DrivePageActions extends PageActions {
   /** Actions specific to the Drive table. */
   get driveTable() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self: DrivePageActions = this
+    const self: DrivePageActions<Context> = this
     return {
       /** Click the column heading for the "name" column to change its sort order. */
       clickNameColumnHeading() {
@@ -126,10 +126,14 @@ export default class DrivePageActions extends PageActions {
       },
       /** Interact with the set of all rows in the Drive table. */
       withRows(
-        callback: (assetRows: test.Locator, nonAssetRows: test.Locator) => Promise<void> | void,
+        callback: (
+          assetRows: test.Locator,
+          nonAssetRows: test.Locator,
+          context: Context,
+        ) => Promise<void> | void,
       ) {
         return self.step('Interact with drive table rows', async (page) => {
-          await callback(locateAssetRows(page), locateNonAssetRows(page))
+          await callback(locateAssetRows(page), locateNonAssetRows(page), self.context)
         })
       },
       /** Drag a row onto another row. */
@@ -225,14 +229,14 @@ export default class DrivePageActions extends PageActions {
   openStartModal() {
     return this.step('Open "start" modal', (page) =>
       page.getByText(TEXT.startWithATemplate).click(),
-    ).into(StartModalActions)
+    ).into(StartModalActions<Context>)
   }
 
   /** Create a new empty project. */
   newEmptyProject() {
     return this.step('Create empty project', (page) =>
       page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
-    ).into(EditorPageActions)
+    ).into(EditorPageActions<Context>)
   }
 
   /** Interact with the drive view (the main container of this page). */
@@ -357,7 +361,7 @@ export default class DrivePageActions extends PageActions {
   openDataLinkModal() {
     return this.step('Open "new data link" modal', (page) =>
       page.getByRole('button', { name: TEXT.newDatalink }).click(),
-    ).into(NewDataLinkModalActions)
+    ).into(NewDataLinkModalActions<Context>)
   }
 
   /** Interact with the context menus (the context menus MUST be visible). */

@@ -12,7 +12,7 @@ function locateNewDataLinkModal(page: test.Page) {
 }
 
 /** Actions for a "new Data Link" modal. */
-export default class NewDataLinkModalActions extends BaseActions {
+export default class NewDataLinkModalActions<Context> extends BaseActions<Context> {
   /** Cancel creating the new Data Link (don't submit the form). */
   cancel() {
     return this.step('Cancel out of "new data link" modal', async () => {

@@ -6,8 +6,8 @@ import type * as inputBindings from '#/utilities/inputBindings'
 import { modModifier } from '.'
 
 /** A callback that performs actions on a {@link test.Page}. */
-export interface PageCallback {
-  (input: test.Page): Promise<void> | void
+export interface PageCallback<Context> {
+  (input: test.Page, context: Context): Promise<void> | void
 }
 
 /** A callback that performs actions on a {@link test.Locator}. */
@@ -22,10 +22,11 @@ export interface LocatorCallback {
  *
  * [`thenable`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables
  */
-export default class BaseActions implements Promise<void> {
+export default class BaseActions<Context> implements Promise<void> {
   /** Create a {@link BaseActions}. */
   constructor(
     protected readonly page: test.Page,
+    protected readonly context: Context,
     private readonly promise = Promise.resolve(),
   ) {}
 
@@ -87,10 +88,15 @@ export default class BaseActions implements Promise<void> {
 
   /** Return a {@link BaseActions} with the same {@link Promise} but a different type. */
   into<
-    T extends new (page: test.Page, promise: Promise<void>, ...args: Args) => InstanceType<T>,
+    T extends new (
+      page: test.Page,
+      context: Context,
+      promise: Promise<void>,
+      ...args: Args
+    ) => InstanceType<T>,
     Args extends readonly unknown[],
   >(clazz: T, ...args: Args): InstanceType<T> {
-    return new clazz(this.page, this.promise, ...args)
+    return new clazz(this.page, this.context, this.promise, ...args)
   }
 
   /**
@@ -98,18 +104,18 @@ export default class BaseActions implements Promise<void> {
    * specific methods; this is more or less an escape hatch used ONLY when the methods do not
    * support desired functionality.
    */
-  do(callback: PageCallback): this {
+  do(callback: PageCallback<Context>): this {
     // @ts-expect-error This is SAFE, but only when the constructor of this class has the exact
     // same parameters as `BaseActions`.
     return new this.constructor(
       this.page,
-      this.then(() => callback(this.page)),
+      this.then(() => callback(this.page, this.context)),
     )
   }
 
   /** Perform an action on the current page. */
-  step(name: string, callback: PageCallback) {
-    return this.do(() => test.test.step(name, () => callback(this.page)))
+  step(name: string, callback: PageCallback<Context>) {
+    return this.do(() => test.test.step(name, () => callback(this.page, this.context)))
   }
 
   /**
@@ -140,7 +146,7 @@ export default class BaseActions implements Promise<void> {
   }
 
   /** Perform actions with the "Mod" modifier key pressed. */
-  withModPressed<R extends BaseActions>(callback: (actions: this) => R) {
+  withModPressed<R extends BaseActions<Context>>(callback: (actions: this) => R) {
     return callback(
       this.step('Press "Mod"', async (page) => {
         await page.keyboard.down(await modModifier(page))

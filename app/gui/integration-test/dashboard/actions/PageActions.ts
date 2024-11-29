@@ -4,7 +4,7 @@ import * as openUserMenuAction from './openUserMenuAction'
 import * as userMenuActions from './userMenuActions'
 
 /** Actions common to all pages. */
-export default class PageActions extends BaseActions {
+export default class PageActions<Context> extends BaseActions<Context> {
   /** Actions related to the User Menu. */
   get userMenu() {
     return userMenuActions.userMenuActions(this.step.bind(this))

@@ -6,21 +6,21 @@ import BaseActions, { type LocatorCallback } from './BaseActions'
 import LoginPageActions from './LoginPageActions'
 
 /** Available actions for the login page. */
-export default class ForgotPasswordPageActions extends BaseActions {
+export default class ForgotPasswordPageActions<Context> extends BaseActions<Context> {
   /** Actions for navigating to another page. */
   get goToPage() {
     return {
-      login: (): LoginPageActions =>
+      login: (): LoginPageActions<Context> =>
         this.step("Go to 'login' page", async (page) =>
           page.getByRole('link', { name: TEXT.goBackToLogin, exact: true }).click(),
-        ).into(LoginPageActions),
+        ).into(LoginPageActions<Context>),
     }
   }
 
   /** Perform a successful login. */
   forgotPassword(email = VALID_EMAIL) {
     return this.step('Forgot password', () => this.forgotPasswordInternal(email)).into(
-      LoginPageActions,
+      LoginPageActions<Context>,
     )
   }
 

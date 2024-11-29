@@ -54,6 +54,66 @@ const GLOB_CHECKOUT_SESSION_ID = backend.CheckoutSessionId('*')
 const BASE_URL = 'https://mock/'
 const MOCK_S3_BUCKET_URL = 'https://mock-s3-bucket.com/'
 
+function array<T>(): Readonly<T>[] {
+  return []
+}
+
+const INITIAL_CALLS_OBJECT = {
+  changePassword: array<{ oldPassword: string; newPassword: string }>(),
+  listDirectory: array<{
+    parent_id?: string
+    filter_by?: backend.FilterBy
+    labels?: backend.LabelName[]
+    recent_projects?: boolean
+  }>(),
+  listFiles: array<object>(),
+  listProjects: array<object>(),
+  listSecrets: array<object>(),
+  listTags: array<object>(),
+  listUsers: array<object>(),
+  listUserGroups: array<object>(),
+  listVersions: array<object>(),
+  getProjectDetails: array<{ projectId: backend.ProjectId }>(),
+  copyAsset: array<{ assetId: backend.AssetId; parentId: backend.DirectoryId }>(),
+  listInvitations: array<object>(),
+  inviteUser: array<object>(),
+  createPermission: array<object>(),
+  closeProject: array<{ projectId: backend.ProjectId }>(),
+  openProject: array<{ projectId: backend.ProjectId }>(),
+  deleteTag: array<{ tagId: backend.TagId }>(),
+  postLogEvent: array<object>(),
+  uploadUserPicture: array<{ content: string }>(),
+  uploadOrganizationPicture: array<{ content: string }>(),
+  s3Put: array<object>(),
+  uploadFileStart: array<{ uploadId: backend.FileId }>(),
+  uploadFileEnd: array<backend.UploadFileEndRequestBody>(),
+  createSecret: array<backend.CreateSecretRequestBody>(),
+  createCheckoutSession: array<backend.CreateCheckoutSessionRequestBody>(),
+  getCheckoutSession: array<{
+    body: backend.CreateCheckoutSessionRequestBody
+    status: backend.CheckoutSessionStatus
+  }>(),
+  updateAsset: array<{ assetId: backend.AssetId } & backend.UpdateAssetRequestBody>(),
+  associateTag: array<{ assetId: backend.AssetId; labels: readonly backend.LabelName[] }>(),
+  updateDirectory: array<
+    { directoryId: backend.DirectoryId } & backend.UpdateDirectoryRequestBody
+  >(),
+  deleteAsset: array<{ assetId: backend.AssetId }>(),
+  undoDeleteAsset: array<{ assetId: backend.AssetId }>(),
+  createUser: array<backend.CreateUserRequestBody>(),
+  createUserGroup: array<backend.CreateUserGroupRequestBody>(),
+  changeUserGroup: array<{ userId: backend.UserId } & backend.ChangeUserGroupRequestBody>(),
+  updateCurrentUser: array<backend.UpdateUserRequestBody>(),
+  usersMe: array<object>(),
+  updateOrganization: array<backend.UpdateOrganizationRequestBody>(),
+  getOrganization: array<object>(),
+  createTag: array<backend.CreateTagRequestBody>(),
+  createProject: array<backend.CreateProjectRequestBody>(),
+  createDirectory: array<backend.CreateDirectoryRequestBody>(),
+  getProjectContent: array<{ projectId: backend.ProjectId }>(),
+  getProjectAsset: array<{ projectId: backend.ProjectId }>(),
+}
+
 /** Parameters for {@link mockApi}. */
 export interface MockParams {
   readonly page: test.Page
@@ -69,7 +129,7 @@ export interface SetupAPI {
 }
 
 /** The return type of {@link mockApi}. */
-export type MockApi = Awaited<ReturnType<typeof mockApiInternal>>
+export interface MockApi extends Awaited<ReturnType<typeof mockApiInternal>> {}
 
 export const mockApi: (params: MockParams) => Promise<MockApi> = mockApiInternal
 
@@ -116,6 +176,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     website: null,
     subscription: {},
   }
+  const callsObjects = new Set<typeof INITIAL_CALLS_OBJECT>()
   let totalSeats = 1
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let subscriptionDuration = 0
@@ -151,6 +212,29 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     }
   >()
   usersMap.set(defaultUser.userId, defaultUser)
+
+  function trackCalls() {
+    const calls = { ...INITIAL_CALLS_OBJECT }
+    callsObjects.add(calls)
+    return calls
+  }
+
+  function pushToKey<Object extends Record<keyof Object, unknown[]>, Key extends keyof Object>(
+    object: Object,
+    key: Key,
+    item: Object[Key][number],
+  ) {
+    object[key].push(item)
+  }
+
+  function called<Key extends keyof typeof INITIAL_CALLS_OBJECT>(
+    key: Key,
+    args: (typeof INITIAL_CALLS_OBJECT)[Key][number],
+  ) {
+    for (const callsObject of callsObjects) {
+      pushToKey(callsObject, key, args)
+    }
+  }
 
   const addAsset = <T extends backend.AnyAsset>(asset: T) => {
     assets.push(asset)
@@ -299,7 +383,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     return label
   }
 
-  const setLabels = (id: backend.AssetId, newLabels: backend.LabelName[]) => {
+  const setLabels = (id: backend.AssetId, newLabels: readonly backend.LabelName[]) => {
     const ids = new Set<backend.AssetId>([id])
     for (const [innerId, asset] of assetMap) {
       if (ids.has(asset.parentId)) {
@@ -502,6 +586,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
           readonly newPassword: string
         }
         const body: Body = await request.postDataJSON()
+        called('changePassword', body)
         if (body.oldPassword === currentPassword) {
           currentPassword = body.newPassword
           await route.fulfill({ status: HTTP_STATUS_NO_CONTENT })
@@ -521,14 +606,15 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         readonly labels?: backend.LabelName[]
         readonly recent_projects?: boolean
       }
-      const body = Object.fromEntries(
+      const query = Object.fromEntries(
         new URL(request.url()).searchParams.entries(),
       ) as unknown as Query
-      const parentId = body.parent_id ?? defaultDirectoryId
+      called('listDirectory', query)
+      const parentId = query.parent_id ?? defaultDirectoryId
       let filteredAssets = assets.filter((asset) => asset.parentId === parentId)
 
       // This lint rule is broken; there is clearly a case for `undefined` below.
-      switch (body.filter_by) {
+      switch (query.filter_by) {
         case backend.FilterBy.active: {
           filteredAssets = filteredAssets.filter((asset) => !deletedAssets.has(asset.id))
           break
@@ -559,18 +645,23 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       return json
     })
     await get(remoteBackendPaths.LIST_FILES_PATH + '*', () => {
+      called('listFiles', {})
       return { files: [] } satisfies remoteBackend.ListFilesResponseBody
     })
     await get(remoteBackendPaths.LIST_PROJECTS_PATH + '*', () => {
+      called('listProjects', {})
       return { projects: [] } satisfies remoteBackend.ListProjectsResponseBody
     })
     await get(remoteBackendPaths.LIST_SECRETS_PATH + '*', () => {
+      called('listSecrets', {})
       return { secrets: [] } satisfies remoteBackend.ListSecretsResponseBody
     })
     await get(remoteBackendPaths.LIST_TAGS_PATH + '*', () => {
+      called('listTags', {})
       return { tags: labels } satisfies remoteBackend.ListTagsResponseBody
     })
     await get(remoteBackendPaths.LIST_USERS_PATH + '*', async (route) => {
+      called('listUsers', {})
       if (currentUser != null) {
         return { users } satisfies remoteBackend.ListUsersResponseBody
       } else {
@@ -579,28 +670,35 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       }
     })
     await get(remoteBackendPaths.LIST_USER_GROUPS_PATH + '*', async (route) => {
+      called('listUserGroups', {})
       await route.fulfill({ json: userGroups })
     })
-    await get(remoteBackendPaths.LIST_VERSIONS_PATH + '*', (_route, request) => ({
-      versions: [
-        {
-          ami: null,
-          created: dateTime.toRfc3339(new Date()),
-          number: {
-            lifecycle:
-              'Development' satisfies `${backend.VersionLifecycle.development}` as backend.VersionLifecycle.development,
-            value: '2023.2.1-dev',
-          },
-          // eslint-disable-next-line camelcase
-          version_type: (new URL(request.url()).searchParams.get('version_type') ??
-            '') as backend.VersionType,
-        } satisfies backend.Version,
-      ],
-    }))
+    await get(remoteBackendPaths.LIST_VERSIONS_PATH + '*', (_route, request) => {
+      called('listVersions', {})
+      return {
+        versions: [
+          {
+            ami: null,
+            created: dateTime.toRfc3339(new Date()),
+            number: {
+              lifecycle:
+                'Development' satisfies `${backend.VersionLifecycle.development}` as backend.VersionLifecycle.development,
+              value: '2023.2.1-dev',
+            },
+            // eslint-disable-next-line camelcase
+            version_type: (new URL(request.url()).searchParams.get('version_type') ??
+              '') as backend.VersionType,
+          } satisfies backend.Version,
+        ],
+      }
+    })
 
     // === Endpoints with dummy implementations ===
     await get(remoteBackendPaths.getProjectDetailsPath(GLOB_PROJECT_ID), (_route, request) => {
-      const projectId = backend.ProjectId(request.url().match(/[/]projects[/]([^?/]+)/)?.[1] ?? '')
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const projectId = backend.ProjectId(maybeId)
+      called('getProjectDetails', { projectId })
       const project = assetMap.get(projectId)
 
       if (!project) {
@@ -644,11 +742,12 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         readonly parentDirectoryId: backend.DirectoryId
       }
 
-      const assetId = request.url().match(/[/]assets[/]([^?/]+)/)?.[1]
+      const maybeId = request.url().match(/[/]assets[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const assetId = maybeId != null ? backend.DirectoryId(decodeURIComponent(maybeId)) : null
       // This could be an id for an arbitrary asset, but pretend it's a
       // `DirectoryId` to make TypeScript happy.
-      const asset =
-        assetId != null ? assetMap.get(backend.DirectoryId(decodeURIComponent(assetId))) : null
+      const asset = assetId != null ? assetMap.get(assetId) : null
       if (asset == null) {
         if (assetId == null) {
           await route.fulfill({
@@ -664,6 +763,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       } else {
         const body: Body = request.postDataJSON()
         const parentId = body.parentDirectoryId
+        called('copyAsset', { assetId: assetId!, parentId })
         // Can be any asset ID.
         const id = backend.DirectoryId(`${assetId?.split('-')[0]}-${uniqueString.uniqueString()}`)
         const json: backend.CopyAssetResponse = {
@@ -684,22 +784,25 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
 
     await get(remoteBackendPaths.INVITATION_PATH + '*', (): backend.ListInvitationsResponseBody => {
+      called('listInvitations', {})
       return {
         invitations: [],
         availableLicenses: totalSeats - usersMap.size,
       }
     })
     await post(remoteBackendPaths.INVITE_USER_PATH + '*', async (route) => {
+      called('inviteUser', {})
       await route.fulfill()
     })
     await post(remoteBackendPaths.CREATE_PERMISSION_PATH + '*', async (route) => {
-      await route.fulfill()
-    })
-    await delete_(remoteBackendPaths.deleteAssetPath(GLOB_ASSET_ID), async (route) => {
+      called('createPermission', {})
       await route.fulfill()
     })
     await post(remoteBackendPaths.closeProjectPath(GLOB_PROJECT_ID), async (route, request) => {
-      const projectId = backend.ProjectId(request.url().match(/[/]projects[/]([^?/]+)/)?.[1] ?? '')
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const projectId = backend.ProjectId(maybeId)
+      called('closeProject', { projectId })
       const project = assetMap.get(projectId)
       if (project?.projectState) {
         object.unsafeMutable(project.projectState).type = backend.ProjectState.closed
@@ -707,7 +810,10 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       await route.fulfill()
     })
     await post(remoteBackendPaths.openProjectPath(GLOB_PROJECT_ID), async (route, request) => {
-      const projectId = backend.ProjectId(request.url().match(/[/]projects[/]([^?/]+)/)?.[1] ?? '')
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const projectId = backend.ProjectId(maybeId)
+      called('openProject', { projectId })
 
       const project = assetMap.get(projectId)
 
@@ -723,10 +829,15 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
 
       route.fulfill()
     })
-    await delete_(remoteBackendPaths.deleteTagPath(GLOB_TAG_ID), async (route) => {
+    await delete_(remoteBackendPaths.deleteTagPath(GLOB_TAG_ID), async (route, request) => {
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const tagId = backend.TagId(maybeId)
+      called('deleteTag', { tagId })
       await route.fulfill()
     })
     await post(remoteBackendPaths.POST_LOG_EVENT_PATH, async (route) => {
+      called('postLogEvent', {})
       await route.fulfill()
     })
 
@@ -735,6 +846,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     await put(remoteBackendPaths.UPLOAD_USER_PICTURE_PATH + '*', async (route, request) => {
       const content = request.postData()
       if (content != null) {
+        called('uploadUserPicture', { content })
         currentProfilePicture = content
         return null
       } else {
@@ -745,6 +857,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     await put(remoteBackendPaths.UPLOAD_ORGANIZATION_PICTURE_PATH + '*', async (route, request) => {
       const content = request.postData()
       if (content != null) {
+        called('uploadOrganizationPicture', { content })
         currentOrganizationProfilePicture = content
         return null
       } else {
@@ -754,6 +867,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await page.route(MOCK_S3_BUCKET_URL + '**', async (route, request) => {
       if (request.method() !== 'PUT') {
+        called('s3Put', {})
         await route.fallback()
       } else {
         await route.fulfill({
@@ -765,9 +879,11 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       }
     })
     await post(remoteBackendPaths.UPLOAD_FILE_START_PATH + '*', () => {
+      const uploadId = backend.FileId('file-' + uniqueString.uniqueString())
+      called('uploadFileStart', { uploadId })
       return {
         sourcePath: backend.S3FilePath(''),
-        uploadId: 'file-' + uniqueString.uniqueString(),
+        uploadId,
         presignedUrls: Array.from({ length: 10 }, () =>
           backend.HttpsUrl(`${MOCK_S3_BUCKET_URL}${uniqueString.uniqueString()}`),
         ),
@@ -775,6 +891,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await post(remoteBackendPaths.UPLOAD_FILE_END_PATH + '*', (_route, request) => {
       const body: backend.UploadFileEndRequestBody = request.postDataJSON()
+      called('uploadFileEnd', body)
 
       const file = addFile(body.fileName, {
         id: backend.FileId(body.uploadId),
@@ -787,6 +904,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
 
     await post(remoteBackendPaths.CREATE_SECRET_PATH + '*', async (_route, request) => {
       const body: backend.CreateSecretRequestBody = await request.postDataJSON()
+      called('createSecret', body)
       const secret = addSecret(body.name)
       return secret.id
     })
@@ -795,6 +913,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
 
     await post(remoteBackendPaths.CREATE_CHECKOUT_SESSION_PATH + '*', async (_route, request) => {
       const body: backend.CreateCheckoutSessionRequestBody = await request.postDataJSON()
+      called('createCheckoutSession', body)
       return createCheckoutSession(body)
     })
     await get(
@@ -806,6 +925,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         } else {
           const result = checkoutSessionsMap.get(backend.CheckoutSessionId(checkoutSessionId))
           if (result) {
+            called('getCheckoutSession', result)
             if (currentUser) {
               object.unsafeMutable(currentUser).plan = result.body.plan
             }
@@ -819,11 +939,14 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       },
     )
     await patch(remoteBackendPaths.updateAssetPath(GLOB_ASSET_ID), (_route, request) => {
-      const assetId = request.url().match(/[/]assets[/]([^?]+)/)?.[1] ?? ''
-      const body: backend.UpdateAssetRequestBody = request.postDataJSON()
+      const maybeId = request.url().match(/[/]assets[/]([^?]+)/)?.[1]
+      if (!maybeId) return
       // This could be an id for an arbitrary asset, but pretend it's a
       // `DirectoryId` to make TypeScript happy.
-      const asset = assetMap.get(backend.DirectoryId(assetId))
+      const assetId = backend.DirectoryId(maybeId)
+      const body: backend.UpdateAssetRequestBody = request.postDataJSON()
+      called('updateAsset', { ...body, assetId })
+      const asset = assetMap.get(assetId)
       if (asset != null) {
         if (body.description != null) {
           object.unsafeMutable(asset).description = body.description
@@ -835,19 +958,22 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       }
     })
     await patch(remoteBackendPaths.associateTagPath(GLOB_ASSET_ID), async (_route, request) => {
-      const assetId = request.url().match(/[/]assets[/]([^/?]+)/)?.[1] ?? ''
+      const maybeId = request.url().match(/[/]assets[/]([^/?]+)/)?.[1]
+      if (!maybeId) return
+      // This could be an id for an arbitrary asset, but pretend it's a
+      // `DirectoryId` to make TypeScript happy.
+      const assetId = backend.DirectoryId(maybeId)
       /** The type for the JSON request payload for this endpoint. */
       interface Body {
-        readonly labels: backend.LabelName[]
+        readonly labels: readonly backend.LabelName[]
       }
       /** The type for the JSON response payload for this endpoint. */
       interface Response {
-        readonly tags: backend.Label[]
+        readonly tags: readonly backend.Label[]
       }
       const body: Body = await request.postDataJSON()
-      // This could be an id for an arbitrary asset, but pretend it's a
-      // `DirectoryId` to make TypeScript happy.
-      setLabels(backend.DirectoryId(assetId), body.labels)
+      called('associateTag', { ...body, assetId })
+      setLabels(assetId, body.labels)
       const json: Response = {
         tags: body.labels.flatMap((value) => {
           const label = labelsByValue.get(value)
@@ -857,16 +983,19 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       return json
     })
     await put(remoteBackendPaths.updateDirectoryPath(GLOB_DIRECTORY_ID), async (route, request) => {
-      const directoryId = request.url().match(/[/]directories[/]([^?]+)/)?.[1] ?? ''
+      const maybeId = request.url().match(/[/]directories[/]([^?]+)/)?.[1]
+      if (!maybeId) return
+      const directoryId = backend.DirectoryId(maybeId)
       const body: backend.UpdateDirectoryRequestBody = request.postDataJSON()
-      const asset = assetMap.get(backend.DirectoryId(directoryId))
+      called('updateDirectory', { ...body, directoryId })
+      const asset = assetMap.get(directoryId)
       if (asset == null) {
         await route.abort()
       } else {
         object.unsafeMutable(asset).title = body.title
         await route.fulfill({
           json: {
-            id: backend.DirectoryId(directoryId),
+            id: directoryId,
             parentId: asset.parentId,
             title: body.title,
           } satisfies backend.UpdatedDirectory,
@@ -874,10 +1003,13 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       }
     })
     await delete_(remoteBackendPaths.deleteAssetPath(GLOB_ASSET_ID), async (route, request) => {
-      const assetId = decodeURIComponent(request.url().match(/[/]assets[/]([^?]+)/)?.[1] ?? '')
+      const maybeId = request.url().match(/[/]assets[/]([^?]+)/)?.[1]
+      if (!maybeId) return
       // This could be an id for an arbitrary asset, but pretend it's a
       // `DirectoryId` to make TypeScript happy.
-      deleteAsset(backend.DirectoryId(assetId))
+      const assetId = backend.DirectoryId(decodeURIComponent(maybeId))
+      called('deleteAsset', { assetId })
+      deleteAsset(assetId)
       await route.fulfill({ status: HTTP_STATUS_NO_CONTENT })
     })
     await patch(remoteBackendPaths.UNDO_DELETE_ASSET_PATH, async (route, request) => {
@@ -886,6 +1018,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         readonly assetId: backend.AssetId
       }
       const body: Body = await request.postDataJSON()
+      called('undoDeleteAsset', body)
       undeleteAsset(body.assetId)
       await route.fulfill({ status: HTTP_STATUS_NO_CONTENT })
     })
@@ -895,6 +1028,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       const rootDirectoryId = backend.DirectoryId(
         organizationId.replace(/^organization-/, 'directory-'),
       )
+      called('createUser', body)
       currentUser = {
         email: body.userEmail,
         name: body.userName,
@@ -909,17 +1043,19 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await post(remoteBackendPaths.CREATE_USER_GROUP_PATH + '*', async (_route, request) => {
       const body: backend.CreateUserGroupRequestBody = await request.postDataJSON()
+      called('createUserGroup', body)
       const userGroup = addUserGroup(body.name)
       return userGroup
     })
     await put(
       remoteBackendPaths.changeUserGroupPath(GLOB_USER_ID) + '*',
       async (route, request) => {
-        const userId = backend.UserId(
-          decodeURIComponent(request.url().match(/[/]users[/]([^?/]+)/)?.[1] ?? ''),
-        )
+        const maybeId = request.url().match(/[/]users[/]([^?/]+)/)?.[1]
+        if (!maybeId) return
+        const userId = backend.UserId(decodeURIComponent(maybeId))
         // The type of the body sent by this app is statically known.
         const body: backend.ChangeUserGroupRequestBody = await request.postDataJSON()
+        called('changeUserGroup', { userId, ...body })
         const user = usersMap.get(userId)
         if (!user) {
           await route.fulfill({ status: HTTP_STATUS_BAD_REQUEST })
@@ -931,11 +1067,13 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     )
     await put(remoteBackendPaths.UPDATE_CURRENT_USER_PATH + '*', async (_route, request) => {
       const body: backend.UpdateUserRequestBody = await request.postDataJSON()
+      called('updateCurrentUser', body)
       if (currentUser && body.username != null) {
         currentUser = { ...currentUser, name: body.username }
       }
     })
     await get(remoteBackendPaths.USERS_ME_PATH + '*', (route) => {
+      called('usersMe', {})
       if (currentUser == null) {
         return route.fulfill({ status: HTTP_STATUS_NOT_FOUND })
       } else {
@@ -944,6 +1082,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await patch(remoteBackendPaths.UPDATE_ORGANIZATION_PATH + '*', async (route, request) => {
       const body: backend.UpdateOrganizationRequestBody = await request.postDataJSON()
+      called('updateOrganization', body)
       if (body.name === '') {
         await route.fulfill({
           status: HTTP_STATUS_BAD_REQUEST,
@@ -959,6 +1098,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       }
     })
     await get(remoteBackendPaths.GET_ORGANIZATION_PATH + '*', async (route) => {
+      called('getOrganization', {})
       await route.fulfill({
         json: currentOrganization,
         status: currentOrganization == null ? 404 : 200,
@@ -966,10 +1106,12 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     })
     await post(remoteBackendPaths.CREATE_TAG_PATH + '*', (route) => {
       const body: backend.CreateTagRequestBody = route.request().postDataJSON()
+      called('createTag', body)
       return addLabel(body.value, body.color)
     })
     await post(remoteBackendPaths.CREATE_PROJECT_PATH + '*', (_route, request) => {
       const body: backend.CreateProjectRequestBody = request.postDataJSON()
+      called('createProject', body)
       const title = body.projectName
       const id = backend.ProjectId(`project-${uniqueString.uniqueString()}`)
       const parentId =
@@ -1007,6 +1149,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
 
     await post(remoteBackendPaths.CREATE_DIRECTORY_PATH + '*', (_route, request) => {
       const body: backend.CreateDirectoryRequestBody = request.postDataJSON()
+      called('createDirectory', body)
       const title = body.title
       const id = backend.DirectoryId(`directory-${uniqueString.uniqueString()}`)
       const parentId = body.parentId ?? defaultDirectoryId
@@ -1033,7 +1176,11 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       return json
     })
 
-    await get(remoteBackendPaths.getProjectContentPath(GLOB_PROJECT_ID), (route) => {
+    await get(remoteBackendPaths.getProjectContentPath(GLOB_PROJECT_ID), (route, request) => {
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const projectId = backend.ProjectId(maybeId)
+      called('getProjectContent', { projectId })
       const content = readFileSync(join(__dirname, './mock/enso-demo.main'), 'utf8')
 
       return route.fulfill({
@@ -1042,7 +1189,11 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       })
     })
 
-    await get(remoteBackendPaths.getProjectAssetPath(GLOB_PROJECT_ID, '*'), (route) => {
+    await get(remoteBackendPaths.getProjectAssetPath(GLOB_PROJECT_ID, '*'), (route, request) => {
+      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+      if (!maybeId) return
+      const projectId = backend.ProjectId(maybeId)
+      called('getProjectAsset', { projectId })
       return route.fulfill({
         // This is a mock SVG image. Just a square with a black background.
         body: '/mock/svg.svg',
@@ -1116,6 +1267,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     // deletePermission,
     addUserGroupToUser,
     removeUserGroupFromUser,
+    trackCalls,
   } as const
 
   if (setupAPI) {

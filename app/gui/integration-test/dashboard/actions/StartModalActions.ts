@@ -5,11 +5,11 @@ import DrivePageActions from './DrivePageActions'
 import EditorPageActions from './EditorPageActions'
 
 /** Actions for the "start" modal. */
-export default class StartModalActions extends BaseActions {
+export default class StartModalActions<Context> extends BaseActions<Context> {
   /** Close this modal and go back to the Drive page. */
   close() {
     return this.step('Close "start" modal', (page) => page.getByLabel('Close').click()).into(
-      DrivePageActions,
+      DrivePageActions<Context>,
     )
   }
 
@@ -20,6 +20,6 @@ export default class StartModalActions extends BaseActions {
         .locateSamples(page)
         .nth(index + 1)
         .click(),
-    ).into(EditorPageActions)
+    ).into(EditorPageActions<Context>)
   }
 }

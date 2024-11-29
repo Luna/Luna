@@ -9,18 +9,18 @@ import RegisterPageActions from './RegisterPageActions'
 import SetupUsernamePageActions from './SetupUsernamePageActions'
 
 /** Available actions for the login page. */
-export default class LoginPageActions extends BaseActions {
+export default class LoginPageActions<Context> extends BaseActions<Context> {
   /** Actions for navigating to another page. */
   get goToPage() {
     return {
-      register: (): RegisterPageActions =>
+      register: (): RegisterPageActions<Context> =>
         this.step("Go to 'register' page", async (page) =>
           page.getByRole('link', { name: TEXT.dontHaveAnAccount, exact: true }).click(),
-        ).into(RegisterPageActions),
-      forgotPassword: (): ForgotPasswordPageActions =>
+        ).into(RegisterPageActions<Context>),
+      forgotPassword: (): ForgotPasswordPageActions<Context> =>
         this.step("Go to 'forgot password' page", async (page) =>
           page.getByRole('link', { name: TEXT.forgotYourPassword, exact: true }).click(),
-        ).into(ForgotPasswordPageActions),
+        ).into(ForgotPasswordPageActions<Context>),
     }
   }
 
@@ -29,7 +29,7 @@ export default class LoginPageActions extends BaseActions {
     return this.step('Login', async (page) => {
       await this.loginInternal(email, password)
       await passAgreementsDialog({ page })
-    }).into(DrivePageActions)
+    }).into(DrivePageActions<Context>)
   }
 
   /** Perform a login as a new user (a user that does not yet have a username). */
@@ -37,7 +37,7 @@ export default class LoginPageActions extends BaseActions {
     return this.step('Login (as new user)', async (page) => {
       await this.loginInternal(email, password)
       await passAgreementsDialog({ page })
-    }).into(SetupUsernamePageActions)
+    }).into(SetupUsernamePageActions<Context>)
   }
 
   /** Perform a failing login. */

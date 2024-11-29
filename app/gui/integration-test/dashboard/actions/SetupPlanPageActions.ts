@@ -7,7 +7,7 @@ import SetupDonePageActions from './SetupDonePageActions'
 import SetupOrganizationPageActions from './SetupOrganizationPageActions'
 
 /** Actions for the "select plan" step of the "setup" page. */
-export default class SetupPlanPageActions extends BaseActions {
+export default class SetupPlanPageActions<Context> extends BaseActions<Context> {
   /** Select a plan. */
   selectSoloPlan() {
     return this.step(`Select 'solo' plan`, async (page) => {
@@ -17,7 +17,7 @@ export default class SetupPlanPageActions extends BaseActions {
         .getByText(TEXT.licenseAgreementCheckbox)
         .click()
       await page.getByText(TEXT.startTrial).click()
-    }).into(SetupDonePageActions)
+    }).into(SetupDonePageActions<Context>)
   }
 
   /** Select a plan that has teams. */
@@ -34,20 +34,20 @@ export default class SetupPlanPageActions extends BaseActions {
         .getByText(duration === 12 ? TEXT.billingPeriodOneYear : TEXT.billingPeriodThreeYears)
         .click()
       await page.getByText(TEXT.startTrial).click()
-    }).into(SetupOrganizationPageActions)
+    }).into(SetupOrganizationPageActions<Context>)
   }
 
   /** Stay on the current (free) plan. */
   stayOnFreePlan() {
     return this.step(`Stay on current plan`, async (page) => {
       await page.getByText(TEXT.skip).click()
-    }).into(SetupDonePageActions)
+    }).into(SetupDonePageActions<Context>)
   }
 
   /** Stay on the current (paid) plan. */
   stayOnPaidPlan() {
     return this.step(`Stay on current plan`, async (page) => {
       await page.getByText(TEXT.skip).click()
-    }).into(SetupOrganizationPageActions)
+    }).into(SetupOrganizationPageActions<Context>)
   }
 }

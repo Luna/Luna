@@ -764,15 +764,22 @@ export async function passAgreementsDialog({ page }: MockParams) {
   })
 }
 
+interface Context {
+  readonly api: apiModule.MockApi
+}
+
 export const mockApi = apiModule.mockApi
 
 /** Set up all mocks, without logging in. */
 export function mockAll({ page, setupAPI }: MockParams) {
-  const actions = new LoginPageActions(page)
+  let api!: apiModule.MockApi
+  const actions = new LoginPageActions<Context>(page, { api })
 
   actions.step('Execute all mocks', async () => {
     await Promise.all([
-      mockApi({ page, setupAPI }),
+      mockApi({ page, setupAPI }).then((theApi) => {
+        api = theApi
+      }),
       mockDate({ page, setupAPI }),
       mockAllAnimations({ page }),
       mockUnneededUrls({ page }),
@@ -785,10 +792,8 @@ export function mockAll({ page, setupAPI }: MockParams) {
 }
 
 /** Set up all mocks, and log in with dummy credentials. */
-export function mockAllAndLogin({ page, setupAPI }: MockParams): DrivePageActions {
-  mockAll({ page, setupAPI })
-
-  const actions = new DrivePageActions(page)
+export function mockAllAndLogin({ page, setupAPI }: MockParams) {
+  const actions = mockAll({ page, setupAPI }).into(DrivePageActions<Context>)
 
   actions.step('Login', async () => {
     await login({ page, setupAPI })
