@@ -324,30 +324,30 @@ add_specs suite_builder =
             with_temp_dir base_dir->
                 f = base_dir / "1.csv"
                 'x,y,z\n1,2,3'.write f . should_succeed
-            t = Table.new [["A", [1, 2, 3, 4]], ["Path", [Nothing, f, f, Nothing]]]
-            r = Data.read_many t return=..As_Merged_Table
-            r.should_be_a Table
-            within_table r <|
-                r.column_names . should_equal ["Path", "A", "x", "y", "z"]
-                r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
-                r.at "A" . to_vector . should_equal [1, 2, 3, 4]
-                r.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
-                r.at "y" . to_vector . should_equal [Nothing, 2, 2, Nothing]
-                r.at "z" . to_vector . should_equal [Nothing, 3, 3, Nothing]
+                t = Table.new [["A", [1, 2, 3, 4]], ["Path", [Nothing, f, f, Nothing]]]
+                r = Data.read_many t return=..As_Merged_Table
+                r.should_be_a Table
+                within_table r <|
+                    r.column_names . should_equal ["Path", "A", "x", "y", "z"]
+                    r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
+                    r.at "A" . to_vector . should_equal [1, 2, 3, 4]
+                    r.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
+                    r.at "y" . to_vector . should_equal [Nothing, 2, 2, Nothing]
+                    r.at "z" . to_vector . should_equal [Nothing, 3, 3, Nothing]
 
-            r2 = Data.read_many (t.at "Path") return=..As_Merged_Table
-            r2.should_be_a Table
-            within_table r2 <|
-                r2.column_names . should_equal ["Path", "x", "y", "z"]
-                r2.at "Path" . map .name . to_vector . should_equal ["1.csv", "1.csv"]
-                r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
-                r2.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
+                r2 = Data.read_many (t.at "Path") return=..As_Merged_Table
+                r2.should_be_a Table
+                within_table r2 <|
+                    r2.column_names . should_equal ["Path", "x", "y", "z"]
+                    r2.at "Path" . map .name . to_vector . should_equal ["1.csv", "1.csv"]
+                    r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
+                    r2.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
 
-            v3 = Data.read_many (t.at "Path") return=..As_Vector
-            v3.at 0 . should_equal Nothing
-            v3.at 1 . should_be_a Table
-            v3.at 2 . should_be_a Table
-            v3.at 3 . should_equal Nothing
+                v3 = Data.read_many (t.at "Path") return=..As_Vector
+                v3.at 0 . should_equal Nothing
+                v3.at 1 . should_be_a Table
+                v3.at 2 . should_be_a Table
+                v3.at 3 . should_equal Nothing
 
             all_null = Column.from_vector "C" [Nothing]
             r4 = Data.read_many all_null return=..As_Vector
