@@ -3,10 +3,6 @@
 
 name: GUI Packaging
 on:
-  push:
-    branches:
-      - develop
-  pull_request: {}
   workflow_dispatch:
     inputs:
       clean_build_required:

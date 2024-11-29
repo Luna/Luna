@@ -1,12 +1,8 @@
 # This file is auto-generated. Do not edit it manually!
 # Edit the enso_build::ci_gen module instead and run `cargo run --package enso-build-ci-gen`.
 
-name: GUI Check
+name: WASM Checks
 on:
-  push:
-    branches:
-      - develop
-  pull_request: {}
   workflow_dispatch:
     inputs:
       clean_build_required:

@@ -651,10 +651,11 @@ pub fn typical_check_triggers() -> Event {
 }
 
 pub fn gui() -> Result<Workflow> {
+    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
     let mut workflow = Workflow {
         name: "GUI Packaging".into(),
-        on: typical_check_triggers(),
         concurrency: Some(concurrency()),
+        on,
         ..default()
     };
 
@@ -669,8 +670,8 @@ pub fn gui() -> Result<Workflow> {
 }
 
 pub fn gui_tests() -> Result<Workflow> {
-    let on = typical_check_triggers();
-    let mut workflow = Workflow { name: "GUI Check".into(), on, ..default() };
+    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
+    let mut workflow = Workflow { name: "WASM Checks".into(), on, ..default() };
     workflow.add(PRIMARY_TARGET, job::CancelWorkflow);
     workflow.add(PRIMARY_TARGET, job::Lint);
     workflow.add(PRIMARY_TARGET, job::WasmTest);
@@ -688,12 +689,9 @@ fn concurrency() -> Concurrency {
 }
 
 pub fn backend() -> Result<Workflow> {
-    let mut workflow = Workflow {
-        name: "Engine CI".into(),
-        on: typical_check_triggers(),
-        concurrency: Some(concurrency()),
-        ..default()
-    };
+    let on = Event { workflow_dispatch: Some(manual_workflow_dispatch()), ..default() };
+    let mut workflow =
+        Workflow { name: "Engine CI".into(), concurrency: Some(concurrency()), on, ..default() };
     workflow.add(PRIMARY_TARGET, job::VerifyLicensePackages);
     for target in PR_CHECKED_TARGETS {
         add_backend_checks(&mut workflow, target, graalvm::Edition::Community);
