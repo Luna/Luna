@@ -30,6 +30,8 @@ ensure_column_type_valid_to_be_files_list (column : Column) ~action =
         Value_Type.Mixed -> True
         # Columns containing paths as Text will be Char
         Value_Type.Char _ _ -> True
+        # Empty columns are also valid
+        Value_Type.Null -> True
         _ -> False
     if is_expected_type then action else
         Error.throw (Invalid_Value_Type.Column "Text or Mixed" column.value_type column.name)
