@@ -11,9 +11,6 @@ on:
         type: boolean
         default: false
   workflow_call: {}
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 jobs:
   enso-build-ci-gen-job-ci-check-backend-graal-vm-ce-linux-amd64:
     name: Engine (GraalVM CE) (linux, amd64)
