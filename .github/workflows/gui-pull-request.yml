@@ -137,6 +137,8 @@ jobs:
     needs: [wasm-changed-files]
     if: ${{ needs.wasm-changed-files.outputs.any_changed == 'true' }}
     secrets: inherit
+    permissions:
+      actions: write
 
   engine-checks:
     name: 🧰 Engine Checks
