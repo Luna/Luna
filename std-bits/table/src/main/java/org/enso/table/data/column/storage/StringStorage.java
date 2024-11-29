@@ -19,11 +19,14 @@ import org.enso.table.data.column.operation.map.text.StringStringOp;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
+import org.slf4j.Logger;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
+  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StringStorage.class);
+
   private final TextType type;
-  private Future<Long> countUntrimmed;
+  private Future<Long> untrimmedCount;
 
   /**
    * @param data the underlying data
@@ -34,7 +37,7 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    countUntrimmed =
+    untrimmedCount =
         CompletableFuture.supplyAsync(
             () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
   }
@@ -60,19 +63,19 @@ public final class StringStorage extends SpecializedStorage<String> {
    *
    * @return the number of cells with whitespace
    */
-  public Long countUntrimmed() throws InterruptedException {
-    if (countUntrimmed.isCancelled()) {
+  public Long cachedUntrimmedCount() throws InterruptedException {
+    if (untrimmedCount.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      countUntrimmed =
-          CompletableFuture.supplyAsync(
-              () ->
-                  CountUntrimmed.compute(
-                      this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+      untrimmedCount =
+          CompletableFuture.completedFuture(
+              CountUntrimmed.compute(
+                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
-      return countUntrimmed.get();
+      return untrimmedCount.get();
     } catch (ExecutionException e) {
+      LOGGER.error("Failed to compute untrimmed count", e);
       return null;
     }
   }

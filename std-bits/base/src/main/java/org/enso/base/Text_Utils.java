@@ -42,7 +42,7 @@ public class Text_Utils {
    * @return whether the string has leading or trailing whitespace
    */
   public static boolean has_leading_trailing_whitespace(String s) {
-    if (s == null && s.isEmpty()) {
+    if (s == null || s.isEmpty()) {
       return false;
     }
 

@@ -25,7 +25,7 @@ public class CountUntrimmed {
   public static Long applyToStorage(ColumnStorage storage, long sampleSize)
       throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)
-        ? stringStorage.countUntrimmed()
+        ? stringStorage.cachedUntrimmedCount()
         : (Long) compute(storage, sampleSize, Context.getCurrent());
   }
 
@@ -37,7 +37,7 @@ public class CountUntrimmed {
     if (sampleSize < size) {
       var rng = new Random(RANDOM_SEED);
       for (int i = 0; i < sampleSize; i++) {
-        long idx = rng.nextInt((int) size);
+        long idx = rng.nextInt(Math.toIntExact(size));
         var val = storage.getItemAsObject(idx);
         if (val instanceof String str && Text_Utils.has_leading_trailing_whitespace(str)) {
           count++;
