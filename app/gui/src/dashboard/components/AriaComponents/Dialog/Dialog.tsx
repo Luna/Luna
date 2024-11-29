@@ -147,12 +147,12 @@ const DIALOG_STYLES = tv({
 })
 
 const TRANSITION: Spring = {
+  type: 'spring',
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  stiffness: 2_000,
+  stiffness: 1_200,
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   damping: 90,
-  type: 'spring',
-  mass: 1,
+  mass: 3,
 }
 
 // ==============
@@ -255,6 +255,7 @@ function DialogContent(props: DialogContentProps) {
   const isFullscreen = type === 'fullscreen'
 
   const [isScrolledToTop, setIsScrolledToTop] = React.useState(true)
+
   const [isLayoutDisabled, setIsLayoutDisabled] = React.useState(true)
 
   const [contentDimensionsRef, dimensions] = useMeasure({
@@ -322,17 +323,24 @@ function DialogContent(props: DialogContentProps) {
     fitContent,
   })
 
-  const dialogHeight =
-    dimensions == null || headerDimensions == null ?
-      null
-    : dimensions.height + headerDimensions.height
+  const dialogHeight = () => {
+    if (isFullscreen) {
+      return ''
+    }
+
+    if (dimensions == null || headerDimensions == null) {
+      return ''
+    }
+
+    return dimensions.height + headerDimensions.height
+  }
 
   return (
     <>
       <MotionDialog
         layout
         transition={TRANSITION}
-        style={dialogHeight != null ? { height: dialogHeight } : undefined}
+        style={{ height: dialogHeight() }}
         id={dialogId}
         onLayoutAnimationStart={() => {
           if (scrollerRef.current) {
