@@ -425,11 +425,12 @@ public final class EnsoMultiValue extends EnsoObject {
     /**
      * Casts value in a multi value into specific type.
      *
-     * @param type the requested t
+     * @param type the requested type
      * @param mv a multi value
-     * @param reorderOnly allow (modified) {@link EnsoMultiValue} to be returned
+     * @param reorderOnly allow (modified) {@link EnsoMultiValue} to be returned otherwise extract
+     *     the value of {@code type} and return it directly
      * @param allTypes should we search all types or just up to {@code methodDispatchTypes}
-     * @return instance of the {@code t} or {@code null} if no suitable value was found
+     * @return instance of the {@code type} or {@code null} if no suitable value was found
      */
     public final Object findTypeOrNull(
         Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
