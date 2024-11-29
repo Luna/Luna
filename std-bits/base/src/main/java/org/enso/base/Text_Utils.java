@@ -36,40 +36,6 @@ public class Text_Utils {
   }
 
   /**
-   * Gets the first Grapheme cluster in the string.
-   *
-   * @param string the string to substring
-   * @return the first grapheme cluster in the string or null if the string is empty.
-   */
-  public static String first_cluster(String string) {
-    BreakIterator breakIterator = BreakIterator.getCharacterInstance();
-    breakIterator.setText(string);
-    int start = breakIterator.first();
-    if (start == -1) {
-      return null;
-    }
-    int end = breakIterator.next();
-    return string.substring(start, end);
-  }
-
-  /**
-   * Gets the last Grapheme cluster in the string.
-   *
-   * @param string the string to substring
-   * @return the last grapheme cluster in the string or null if the string is empty.
-   */
-  public static String last_cluster(String string) {
-    BreakIterator breakIterator = BreakIterator.getCharacterInstance();
-    breakIterator.setText(string);
-    int start = breakIterator.last();
-    if (start == -1) {
-      return null;
-    }
-    int end = breakIterator.previous();
-    return string.substring(end, start);
-  }
-
-  /**
    * Checks if the string has leading or trailing whitespace.
    *
    * @param s the string to check
@@ -80,12 +46,12 @@ public class Text_Utils {
       return false;
     }
 
-    var leading = Text_Utils.first_cluster(s);
+    var leading = Text_Utils.take_prefix(s, 1);
     if (leading != null && is_all_whitespace(leading)) {
       return true;
     }
 
-    var trailing = Text_Utils.last_cluster(s);
+    var trailing = Text_Utils.take_suffix(s, 1);
     if (trailing != null && is_all_whitespace(trailing)) {
       return true;
     }
