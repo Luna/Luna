@@ -1,5 +1,4 @@
-import { test } from '@fast-check/vitest'
-import { expect } from 'vitest'
+import { expect, test } from 'vitest'
 import { getCellValueType } from '../TableVisualization/tableVizUtils'
 
 test('getCellValueType (Text)', () => {
