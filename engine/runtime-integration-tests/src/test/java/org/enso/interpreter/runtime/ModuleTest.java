@@ -60,7 +60,7 @@ public class ModuleTest {
   public void noSuchModuleError() {
     var b = ctx.getBindings(LanguageInfo.ID);
     try {
-      var r = b.invokeMember("get_module", "Does.Not.Exist.Module");
+      var r = b.invokeMember(MethodNames.TopScope.GET_MODULE, "Does.Not.Exist.Module");
       fail("Expecting failure, but got: " + r);
     } catch (PolyglotException ex) {
       assertThat(ex.getMessage(), containsString("Module_Does_Not_Exist"));
