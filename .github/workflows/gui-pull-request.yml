@@ -161,18 +161,66 @@ jobs:
 
   # This job is used to report success if the needed jobs were successful.
   # This is a workaround to make optional jobs required if they run
-  report-success:
-    name: GUI Checks Success or Skipped
+  gui-report:
+    name: GUI Checks Report
     runs-on: ubuntu-latest
     needs: [gui-checks, storybook]
     if: always()
     steps:
-      - name: Report success
+      - name: GUI Report
         run: |
-          echo "Checks: ${{ needs.checks.result }}"
+          echo "Checks: ${{ needs.gui-checks.result }}"
           echo "Storybook: ${{ needs.storybook.result }}"
 
-          if [[ "${{ needs.checks.result }}" == "failure" || "${{ needs.storybook.result }}" == "failure" ]]; then
+          if [[ "${{ needs.gui-checks.result }}" == "failure" || "${{ needs.storybook.result }}" == "failure" ]]; then
+            exit 1
+          fi
+
+          echo "Success!"
+
+  wasm-report:
+    name: WASM Checks Report
+    runs-on: ubuntu-latest
+    needs: [wasm-checks]
+    if: always()
+    steps:
+      - name: WASM Report
+        run: |
+          echo "Checks: ${{ needs.wasm-checks.result }}"
+
+          if [[ "${{ needs.wasm-checks.result }}" == "failure" ]]; then
+            exit 1
+          fi
+
+          echo "Success!"
+
+  engine-report:
+    name: Engine Checks Report
+    runs-on: ubuntu-latest
+    needs: [engine-checks]
+    if: always()
+    steps:
+      - name: Engine Report
+        run: |
+          echo "Checks: ${{ needs.engine-checks.result }}"
+
+          if [[ "${{ needs.engine-checks.result }}" == "failure" ]]; then
+            exit 1
+          fi
+
+          echo "Success!"
+
+  gui-packaging-report:
+    name: GUI Packaging Report
+    runs-on: ubuntu-latest
+    needs: [gui-packaging]
+    if: always()
+    steps:
+      - name: GUI Packaging Report
+        run: |
+          echo "Checks: ${{ needs.gui-packaging.result }}"
+
+          if [[ "${{ needs.gui-packaging.result }}" == "failure" ]]; then
             exit 1
           fi
 
