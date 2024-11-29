@@ -21,7 +21,7 @@ import org.graalvm.polyglot.Context;
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
   private final TextType type;
-  private long _countLeadingTrailingWhitespace = -1;
+  private long countUntrimmed = -1;
 
   /**
    * @param data the underlying data
@@ -57,13 +57,13 @@ public final class StringStorage extends SpecializedStorage<String> {
    * @return the number of cells with whitespace
    */
   public Long countUntrimmed() {
-    if (_countLeadingTrailingWhitespace != -1) {
-      return _countLeadingTrailingWhitespace;
+    if (countUntrimmed != -1) {
+      return countUntrimmed;
     }
 
-    _countLeadingTrailingWhitespace =
+    countUntrimmed =
         CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE);
-    return _countLeadingTrailingWhitespace;
+    return countUntrimmed;
   }
 
   private static MapOperationStorage<String, SpecializedStorage<String>> buildOps() {
