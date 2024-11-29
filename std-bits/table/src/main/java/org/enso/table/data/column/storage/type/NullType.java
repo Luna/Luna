@@ -5,19 +5,16 @@ public record NullType() implements StorageType {
 
   @Override
   public boolean isNumeric() {
-    // TODO ?
-    return false;
+    return true;
   }
 
   @Override
   public boolean hasDate() {
-    // TODO ?
-    return false;
+    return true;
   }
 
   @Override
   public boolean hasTime() {
-    // TODO ?
-    return false;
+    return true;
   }
 }
