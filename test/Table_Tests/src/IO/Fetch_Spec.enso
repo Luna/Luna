@@ -540,6 +540,7 @@ add_specs suite_builder =
             get_num_response_cache_entries . should_equal 3  # Cleaning is not triggered until the next request
             HTTP.fetch base_url_with_slash+'test_download?max-age=16&length=16'
             get_num_response_cache_entries . should_equal 1
+
         group_builder.specify "Reissues the request if the cache file disappears" pending=pending_has_url <| Test.with_retries <|
             with_default_cache <|
                 url = base_url_with_slash+'test_download?max-age=16&length=10'

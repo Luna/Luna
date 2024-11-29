@@ -13,47 +13,54 @@ import org.graalvm.polyglot.Value;
  */
 public class ReloadDetector {
   // Weak reference that is set to null on reload.
-  private Value triggerRef;
+  private Value trigger;
 
   public ReloadDetector() {
-    resetTriggerRef();
+    resetTrigger();
   }
 
   public boolean hasReloadOccurred() {
-    var reloadHasOccurred = triggerRef.invokeMember("get").isNull();
+    var reloadHasOccurred = trigger.invokeMember("get").isNull();
     if (reloadHasOccurred) {
-      resetTriggerRef();
+      resetTrigger();
     }
     return reloadHasOccurred;
   }
 
-  private void resetTriggerRef() {
-    // The `0` value stored in the reference is not used; it just has to
-    // something other than null.
+  private void resetTrigger() {
+    // The `on_finalize` function and the `clear` method both write `Nothing` to
+    // the ref. This is a signal that a reload has happenend. `on_finalize` is
+    // called by the engine when a reload happens. `clear` is only for testing,
+    // to simulate a reload.
+    //
+    // The `0` value stored in the ref is not used; it just has to be something
+    // other than Nothing.
     var module =
         Context.getCurrent()
             .eval(
                 "enso",
                 """
-      import Standard.Base.Runtime.Ref.Ref
       import Standard.Base.Data.Boolean.Boolean
       import Standard.Base.Nothing.Nothing
+      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 
       type Trigger
-          private Value ref:Ref
+          private Value mr:Managed_Resource
 
           new -> Trigger =
-            ref = Ref.new 0 Boolean.True
-            Trigger.Value ref
+            ref = Ref.new 0
+            on_finalize ref = ref.put Nothing
+            mr = Managed_Resource.register ref on_finalize Boolean.True
+            Trigger.Value mr
 
-          get self = self.ref.get
+          get self = self.mr.with .get
 
-          clear self = self.ref.put Nothing
+          clear self = self.mr.with (ref-> ref.put Nothing)
       """);
-    triggerRef = module.invokeMember("eval_expression", "Trigger.new");
+    trigger = module.invokeMember("eval_expression", "Trigger.new");
   }
 
   void simulateReloadTestOnly() {
-    triggerRef.invokeMember("clear");
+    trigger.invokeMember("clear");
   }
 }
