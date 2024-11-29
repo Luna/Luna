@@ -145,6 +145,18 @@ add_specs suite_builder =
             json = make_json header=["A", "B", "C"] data=[['hello', '   leading space', 'trailing space    '],['a', 'b', 'c'],[7, 8, 9]] all_rows=3 value_type=[value_type_char, value_type_char, value_type_int] has_index_col=True get_child_node="get_row" number_of_nothing=[0, 0, 0] number_of_whitespace=[2, 0, Nothing] number_of_whitespace_sampled=[Nothing, Nothing, Nothing]
             vis . should_equal json
 
+        group_builder.specify "should indicate number of leading/trailing whitespace with sample if more than 10000 rows" <|
+            space_data = 0.up_to 11000 . map i-> case i % 4 of
+                0 -> 'hello'
+                1 -> '   leading space'
+                2 -> 'trailing space    '
+                3 -> '   leading and trailing space    '
+            space_table = Table.new [["A", space_data]]
+            vis = Visualization.prepare_visualization space_table 1000
+            value_type_char = JS_Object.from_pairs [["type", "Value_Type"], ["constructor", "Char"], ["display_text", "Char (variable length, max_size=unlimited)"], ["size", Nothing], ["variable_length", True]]
+            json = make_json header=["A"] data=[space_data.take 1000] all_rows=11000 value_type=[value_type_char] has_index_col=True get_child_node="get_row" number_of_nothing=[0] number_of_whitespace=[Nothing] number_of_whitespace_sampled=[8236]
+            vis . should_equal json
+
 main filter=Nothing =
     suite = Test.build suite_builder->
         add_specs suite_builder
