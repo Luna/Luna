@@ -41,7 +41,7 @@ import { provideGraphSelection } from '@/providers/graphSelection'
 import { provideStackNavigator } from '@/providers/graphStackNavigator'
 import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
-import { provideSelectionActions } from '@/providers/selectionActions'
+import { provideSelectionButtons } from '@/providers/selectionButtons'
 import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
 import type { Node, NodeId } from '@/stores/graph'
@@ -286,9 +286,9 @@ const { scheduleCreateNode, createNodes, placeNode } = provideNodeCreation(
 
 const { copyNodesToClipboard, createNodesFromClipboard } = useGraphEditorClipboard(createNodes)
 
-// === Selection Actions ===
+// === Selection Buttons ===
 
-const { actions: selectionActions } = provideSelectionActions(
+const { buttons: selectionButtons } = provideSelectionButtons(
   () =>
     iter.filterDefined(
       iter.map(
@@ -353,7 +353,7 @@ const graphBindingsHandler = graphBindings.handler({
       createWithComponentBrowser(fromSelection() ?? { placement: { type: 'mouse' } })
     }
   },
-  deleteSelected: selectionActions.deleteSelected.action!,
+  deleteSelected: selectionButtons.deleteSelected.action!,
   zoomToSelected() {
     zoomToSelected()
   },
@@ -377,11 +377,11 @@ const graphBindingsHandler = graphBindings.handler({
       }
     })
   },
-  copyNode: selectionActions.copy.action!,
+  copyNode: selectionButtons.copy.action!,
   pasteNode() {
     createNodesFromClipboard()
   },
-  collapse: selectionActions.collapse.action!,
+  collapse: selectionButtons.collapse.action!,
   enterNode() {
     const selectedNode = set.first(nodeSelection.selected)
     if (selectedNode) {
@@ -392,7 +392,7 @@ const graphBindingsHandler = graphBindings.handler({
     stackNavigator.exitNode()
   },
   changeColorSelectedNodes() {
-    selectionActions.pickColorMulti.state = true
+    selectionButtons.pickColorMulti.state = true
   },
   openDocumentation() {
     const result = tryGetSelectionDocUrl()

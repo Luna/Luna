@@ -1,29 +1,26 @@
 import { graphBindings } from '@/bindings'
 import { createContextStore } from '@/providers'
-import {
-  injectSingleComponentActions,
-  type SingleComponentActions,
-} from '@/providers/singleComponentActions'
+import { type ComponentButtons, injectComponentButtons } from '@/providers/componentButtons'
 import { type Node } from '@/stores/graph'
-import { type ComponentAction, componentAction } from '@/util/componentActions'
+import { type Button, reactiveButton } from '@/util/button'
 import { type ToValue } from '@/util/reactivity'
 import * as iter from 'enso-common/src/utilities/data/iter'
 import { type DisjointKeysUnion } from 'enso-common/src/utilities/data/object'
 import { computed, type ComputedRef, type Ref, ref, toValue } from 'vue'
 
-export type SelectionActions = Record<
+export type SelectionButtons = Record<
   'collapse' | 'copy' | 'deleteSelected' | 'pickColorMulti',
-  ComponentAction<void>
+  Button<void>
 >
 
-function useSelectionActions(
+function useSelectionButtons(
   selectedNodes: ToValue<Iterable<Node>>,
   actions: {
     collapseNodes: (nodes: Node[]) => void
     copyNodesToClipboard: (nodes: Node[]) => void
     deleteNodes: (nodes: Node[]) => void
   },
-): { selectedNodeCount: Readonly<Ref<number>>; actions: SelectionActions } {
+): { selectedNodeCount: Readonly<Ref<number>>; buttons: SelectionButtons } {
   function everyNode(predicate: (node: Node) => boolean): ComputedRef<boolean> {
     return computed(() => iter.every(toValue(selectedNodes), predicate))
   }
@@ -36,15 +33,15 @@ function useSelectionActions(
   }
   return {
     selectedNodeCount,
-    actions: {
-      collapse: componentAction({
+    buttons: {
+      collapse: reactiveButton({
         disabled: computed(() => singleNodeSelected.value || noNormalNodes.value),
         icon: 'group',
         description: 'Group Selected Components',
         shortcut: graphBindings.bindings.collapse,
         action: action('collapseNodes'),
       }),
-      copy: componentAction({
+      copy: reactiveButton({
         disabled: noNormalNodes,
         icon: 'copy2',
         description: computed(() =>
@@ -53,7 +50,7 @@ function useSelectionActions(
         shortcut: graphBindings.bindings.copyNode,
         action: action('copyNodesToClipboard'),
       }),
-      deleteSelected: componentAction({
+      deleteSelected: reactiveButton({
         disabled: noNormalNodes,
         icon: 'trash2',
         description: computed(() =>
@@ -63,7 +60,7 @@ function useSelectionActions(
         action: action('deleteNodes'),
         testid: 'removeNode',
       }),
-      pickColorMulti: componentAction({
+      pickColorMulti: reactiveButton({
         state: ref(false),
         disabled: computed(() => singleNodeSelected.value || noNormalNodes.value),
         icon: 'paint_palette',
@@ -73,23 +70,20 @@ function useSelectionActions(
   }
 }
 
-export { injectFn as injectSelectionActions, provideFn as provideSelectionActions }
-const { provideFn, injectFn } = createContextStore('Selection actions', useSelectionActions)
+export { injectFn as injectSelectionButtons, provideFn as provideSelectionButtons }
+const { provideFn, injectFn } = createContextStore('Selection buttons', useSelectionButtons)
 
-export type ComponentAndSelectionActions = DisjointKeysUnion<
-  SingleComponentActions,
-  SelectionActions
->
+export type ComponentAndSelectionButtons = DisjointKeysUnion<ComponentButtons, SelectionButtons>
 
-/** Returns all {@link ComponentAction}s, including the single-component actions and the selected-components actions. */
-export function injectComponentAndSelectionActions(): {
+/** Returns {@link Button}s for the single-component actions and the selected-components actions. */
+export function injectComponentAndSelectionButtons(): {
   selectedNodeCount: Readonly<Ref<number>>
-  actions: ComponentAndSelectionActions
+  buttons: ComponentAndSelectionButtons
 } {
-  const selectionActions = injectFn()
-  const componentActions = injectSingleComponentActions()
+  const selectionButtons = injectFn()
+  const componentButtons = injectComponentButtons()
   return {
-    ...selectionActions,
-    actions: { ...selectionActions.actions, ...componentActions },
+    ...selectionButtons,
+    buttons: { ...selectionButtons.buttons, ...componentButtons },
   }
 }

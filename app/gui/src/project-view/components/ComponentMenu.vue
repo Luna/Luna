@@ -4,10 +4,10 @@ import ComponentContextMenu from '@/components/ComponentContextMenu.vue'
 import DropdownMenu from '@/components/DropdownMenu.vue'
 import SvgButton from '@/components/SvgButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { injectSingleComponentActions } from '@/providers/singleComponentActions'
+import { injectComponentButtons } from '@/providers/componentButtons'
 import { ref } from 'vue'
 
-const componentActions = injectSingleComponentActions()
+const componentButtons = injectComponentButtons()
 const isDropdownOpened = ref(false)
 </script>
 
@@ -15,24 +15,24 @@ const isDropdownOpened = ref(false)
   <div
     class="CircularMenu"
     :class="{
-      menu: !componentActions.pickColor.state,
+      menu: !componentButtons.pickColor.state,
       openedDropdown: isDropdownOpened,
     }"
   >
-    <template v-if="!componentActions.pickColor.state">
+    <template v-if="!componentButtons.pickColor.state">
       <SvgButton
         name="eye"
         class="slotS"
         title="Visualization"
         @click.stop="
-          componentActions.toggleVisualization.state = !componentActions.toggleVisualization.state
+          componentButtons.toggleVisualization.state = !componentButtons.toggleVisualization.state
         "
       />
       <SvgButton
         name="help"
         class="slotSW"
         title="Help"
-        @click.stop="componentActions.toggleDocPanel.action"
+        @click.stop="componentButtons.toggleDocPanel.action"
       />
       <DropdownMenu
         v-model:open="isDropdownOpened"
@@ -49,10 +49,10 @@ const isDropdownOpened = ref(false)
     </template>
     <ColorRing
       v-else
-      v-model="componentActions.pickColor.actionData.currentColor"
-      :matchableColors="componentActions.pickColor.actionData.matchableColors"
+      v-model="componentButtons.pickColor.actionData.currentColor"
+      :matchableColors="componentButtons.pickColor.actionData.matchableColors"
       :initialColorAngle="90"
-      @close="componentActions.pickColor.state = false"
+      @close="componentButtons.pickColor.state = false"
     />
   </div>
 </template>

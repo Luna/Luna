@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import ComponentActionButton from '@/components/ComponentActionButton.vue'
+import ComponentButton from '@/components/ComponentButton.vue'
 import MenuPanel from '@/components/MenuPanel.vue'
-import { type SelectionActions } from '@/providers/selectionActions'
-import { type SingleComponentActions } from '@/providers/singleComponentActions'
+import { type ComponentButtons } from '@/providers/componentButtons'
+import { type SelectionButtons } from '@/providers/selectionButtons'
 
 const emit = defineEmits<{ close: [] }>()
 
-const componentActions: (keyof SingleComponentActions)[] = [
+const componentButtons: (keyof ComponentButtons)[] = [
   'toggleDocPanel',
   'toggleVisualization',
   'createNewNode',
@@ -16,16 +16,16 @@ const componentActions: (keyof SingleComponentActions)[] = [
   'enterNode',
   'startEditing',
 ]
-const selectionActions: (keyof SelectionActions)[] = ['copy', 'deleteSelected']
-const actions = [...componentActions, ...selectionActions]
+const selectionButtons: (keyof SelectionButtons)[] = ['copy', 'deleteSelected']
+const buttons = [...componentButtons, ...selectionButtons]
 </script>
 
 <template>
   <MenuPanel class="ComponentContextMenu" @contextmenu.stop.prevent="emit('close')">
-    <ComponentActionButton
-      v-for="action in actions"
-      :key="action"
-      :action="action"
+    <ComponentButton
+      v-for="button in buttons"
+      :key="button"
+      :button="button"
       @click.stop="emit('close')"
     />
   </MenuPanel>

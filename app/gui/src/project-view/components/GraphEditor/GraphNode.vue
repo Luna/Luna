@@ -22,11 +22,11 @@ import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'
+import { provideComponentButtons } from '@/providers/componentButtons'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
 import { injectNodeColors } from '@/providers/graphNodeColors'
 import { injectGraphSelection } from '@/providers/graphSelection'
 import { injectKeyboard } from '@/providers/keyboard'
-import { provideSingleComponentActions } from '@/providers/singleComponentActions'
 import { useGraphStore, type Node } from '@/stores/graph'
 import { asNodeId } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
@@ -430,7 +430,7 @@ function useRecomputation() {
 const { getNodeColor, getNodeColors } = injectNodeColors()
 const { recomputeOnce, isBeingRecomputed } = useRecomputation()
 
-const { editingComment } = provideSingleComponentActions(
+const { editingComment } = provideComponentButtons(
   {
     graphBindings: graphBindings.bindings,
     nodeEditBindings: nodeEditBindings.bindings,
