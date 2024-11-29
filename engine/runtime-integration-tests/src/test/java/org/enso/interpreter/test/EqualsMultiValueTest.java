@@ -110,14 +110,16 @@ public class EqualsMultiValueTest {
           var builtins = ContextUtils.leakContext(context).getBuiltins();
           var intType = builtins.number().getInteger();
           var textText = builtins.text();
+          var hi = Text.create("Hi");
           var fourExtraText =
-              EnsoMultiValue.create(
-                  new Type[] {textText, intType}, 2, new Object[] {Text.create("Hi"), 4L});
+              EnsoMultiValue.create(new Type[] {textText, intType}, 2, new Object[] {hi, 4L});
 
           assertTrue("4 == 4t", equalityCheck(4L, fourExtraText));
           assertFalse("5 != 4t", equalityCheck(5L, fourExtraText));
           assertTrue("4t == 4", equalityCheck(fourExtraText, 4L));
           assertFalse("4t != 5", equalityCheck(fourExtraText, 5L));
+          assertTrue("4t == 'Hi'", equalityCheck(fourExtraText, hi));
+          assertTrue("'Hi' == 4t", equalityCheck(hi, fourExtraText));
 
           return null;
         });
