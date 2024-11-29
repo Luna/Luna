@@ -44,7 +44,7 @@ public abstract class Builder {
           case TextType textType -> new StringBuilder(size, textType);
           case BigDecimalType x -> new BigDecimalBuilder(size);
           case BigIntegerType x -> new BigIntegerBuilder(size, problemAggregator);
-          case NullType x -> new NullBuilder(size);
+          case NullType x -> new NullBuilder();
           case null -> new InferredBuilder(size, problemAggregator);
         };
     assert Objects.equals(builder.getType(), type);

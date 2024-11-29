@@ -10,21 +10,18 @@ public class NullBuilder extends Builder {
 
   public NullBuilder() {}
 
-  public NullBuilder(int initialCapacity) {
-    length = initialCapacity;
-  }
-
   @Override
   public void appendNoGrow(Object o) {
     if (o != null) {
       throw new IllegalArgumentException("NullBuilder can only append nulls, but got "+o);
     }
+
+    length++;
   }
 
   @Override
   public void append(Object o) {
     appendNoGrow(o);
-    length++;
   }
 
   @Override
