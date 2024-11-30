@@ -57,7 +57,6 @@
   },
   "//": [
     "vite is required for the watch script",
-    "@babel/plugin-syntax-import-attributes is a dependency of the dashboard",
     "babel-plugin-react-compiler is a dependency of the dashboard"
   ],
   "scripts": {
