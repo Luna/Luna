@@ -155,8 +155,8 @@ jobs:
   gui-packaging:
     name: 🧰 GUI Packaging
     uses: ./.github/workflows/gui.yml
-    needs: [gui-changed-files, wasm-changed-files, engine-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.wasm-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true'
+    needs: [gui-changed-files, engine-changed-files]
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true'
     secrets: inherit
 
   # This job is used to report success if the needed jobs were successful.
