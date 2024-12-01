@@ -284,14 +284,7 @@ export default [
 
   // === Dashboard Rules ===
   {
-    files: [
-      'app/gui/src/dashboard/**/*.ts',
-      'app/gui/src/dashboard/**/*.mts',
-      'app/gui/src/dashboard/**/*.cts',
-      'app/gui/src/dashboard/**/*.tsx',
-      'app/gui/src/dashboard/**/*.mtsx',
-      'app/gui/src/dashboard/**/*.ctsx',
-    ],
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
     settings: {
       react: {
         version: '18.2',
@@ -587,5 +580,13 @@ export default [
     ],
     plugins: { 'react-compiler': reactCompiler },
     rules: { 'react-compiler/react-compiler': 'error' },
+  },
+  {
+    files: ['**/*.json'],
+    rules: {
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'no-restricted-syntax': 'off',
+    },
   },
 ]
