@@ -43,6 +43,7 @@ public class ReloadDetector {
       import Standard.Base.Data.Boolean.Boolean
       import Standard.Base.Nothing.Nothing
       import Standard.Base.Runtime.Managed_Resource.Managed_Resource
+      import Standard.Base.Runtime.Ref.Ref
 
       type Trigger
           private Value mr:Managed_Resource
@@ -55,7 +56,9 @@ public class ReloadDetector {
 
           get self = self.mr.with .get
 
-          clear self = self.mr.with (ref-> ref.put Nothing)
+          clear self =
+            self.mr.with (ref-> ref.put Nothing)
+            Nothing
       """);
     trigger = module.invokeMember("eval_expression", "Trigger.new");
   }
