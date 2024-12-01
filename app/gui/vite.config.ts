@@ -61,7 +61,7 @@ export default defineConfig({
       include: fileURLToPath(new URL('./src/dashboard/**/*.tsx', import.meta.url)),
       babel: {
         plugins: [
-          [syntaxImportAttributes],
+          syntaxImportAttributes,
           [reactCompiler, { target: '18', enablePreserveExistingMemoizationGuarantees: true }],
         ],
       },
