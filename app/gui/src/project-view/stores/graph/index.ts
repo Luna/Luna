@@ -658,7 +658,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         profilingInfo: update.profilingInfo ?? [],
         fromCache: update.fromCache ?? false,
         payload: update.payload ?? { type: 'Value' },
-        ...(update.type ? { type: update.type } : {}),
+        type: update.type ?? [],
         ...(update.methodCall ? { methodCall: update.methodCall } : {}),
       }
       proj.computedValueRegistry.processUpdates([update_])
@@ -666,6 +666,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
     /** Iterate over code lines, return node IDs from `ids` set in the order of code positions. */
     function pickInCodeOrder(ids: Set<NodeId>): NodeId[] {
+      if (ids.size === 0) return []
       assert(syncModule.value != null)
       const func = unwrap(getExecutedMethodAst(syncModule.value))
       const body = func.bodyExpressions()

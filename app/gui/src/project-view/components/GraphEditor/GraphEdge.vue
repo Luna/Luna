@@ -105,7 +105,7 @@ const sourceRect = computed<Rect | undefined>(() => {
 
 /**
  * Edges which do not have `sourceRect` and `targetPos` initialized are marked by a special
- * `broken-edge` data-testid, for debugging and e2e test purposes.
+ * `broken-edge` data-testid, for debugging and integration test purposes.
  */
 const edgeIsBroken = computed(
   () =>
@@ -215,7 +215,7 @@ function junctionPoints(inputs: Inputs): JunctionPoints | null {
   const halfSourceSize = inputs.sourceSize?.scale(0.5) ?? Vec2.Zero
   // The maximum x-distance from the source (our local coordinate origin) for the point where the
   // edge will begin.
-  const sourceMaxXOffset = Math.max(halfSourceSize.x - theme.node.corner_radius, 0)
+  const sourceMaxXOffset = Math.max(halfSourceSize.x, 0)
   const attachmentTarget = inputs.targetOffset
   const targetWellBelowSource = inputs.targetOffset.y >= theme.edge.min_approach_height
   const targetBelowSource = inputs.targetOffset.y > 0
@@ -388,10 +388,11 @@ function render(sourcePos: Vec2, elements: Element[]): string {
 const sourceOriginPoint = computed(() => {
   const source = sourceRect.value
   if (source == null) return null
-  const sourceStartPosY = Math.max(
-    source.top + theme.node.corner_radius,
-    source.bottom - theme.node.corner_radius,
-  )
+  const target = targetPos.value
+  const targetAbove = target != null ? target.y < source.bottom : false
+  const targetAside = target != null ? source.left > target.x || source.right < target.x : false
+  const offset = targetAside || targetAbove ? theme.node.corner_radius : 0
+  const sourceStartPosY = Math.max(source.top + offset, source.bottom - offset)
   return new Vec2(source.center().x, sourceStartPosY)
 })
 

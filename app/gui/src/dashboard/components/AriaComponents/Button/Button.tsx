@@ -261,6 +261,7 @@ export const BUTTON_STYLES = tv({
     iconPosition: 'start',
     showIconOnHover: false,
     isDisabled: false,
+    extraClickZone: true,
   },
   compoundVariants: [
     { isFocused: true, iconOnly: true, class: 'focus-visible:outline-offset-[3px]' },
@@ -271,7 +272,8 @@ export const BUTTON_STYLES = tv({
     { size: 'medium', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-4 h-4' } },
     { size: 'large', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-4.5 h-4.5' } },
     { size: 'hero', iconOnly: true, class: { base: 'p-0 rounded-full', icon: 'w-12 h-12' } },
-    { fullWidth: false, class: { icon: 'flex-none' } },
+
+    { variant: 'icon', class: { base: 'flex-none' } },
 
     { variant: 'link', isFocused: true, class: 'focus-visible:outline-offset-1' },
     { variant: 'link', size: 'xxsmall', class: 'font-medium' },
@@ -338,6 +340,7 @@ export const Button = memo(
     const isLoading = loading || implicitlyLoading
     const isDisabled = props.isDisabled ?? isLoading
     const shouldUseVisualTooltip = shouldShowTooltip && isDisabled
+    const extraClickZone = extraClickZoneProp ?? variant === 'icon'
 
     useLayoutEffect(() => {
       const delay = 350
@@ -389,7 +392,7 @@ export const Button = memo(
       variant,
       iconPosition,
       showIconOnHover,
-      extraClickZone: extraClickZoneProp,
+      extraClickZone,
       iconOnly: isIconOnly,
     })
 
