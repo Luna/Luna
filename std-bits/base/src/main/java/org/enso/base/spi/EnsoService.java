@@ -1,10 +1,9 @@
 package org.enso.base.spi;
 
+import java.util.logging.Logger;
 import org.enso.base.polyglot.EnsoMeta;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
-
-import java.util.logging.Logger;
 
 /** A base class for an Enso service backed by an Enso type. */
 public abstract class EnsoService {
@@ -57,5 +56,4 @@ public abstract class EnsoService {
   public boolean isLoaded() {
     return getTypeObject() != null;
   }
-
 }
