@@ -906,7 +906,7 @@ type DB_Table
                         associated_selector = element.associated_selector
                         self.connection.dialect.prepare_order_descriptor column associated_selector.direction text_ordering=Nothing
                     True -> case self.default_ordering of
-                        Nothing -> Error.throw (Illegal_Argument.Error "No `order_by` is specified and the table has no existing ordering (e.g. from an `order_by` operation or a primary key). Some ordering is required for `add_row_number` in Database tables.")
+                        Nothing -> Error.throw (Illegal_Argument.Error "The table has no existing ordering (e.g. from a `sort` operation or primary key). `add_row_number` requires an ordering in database.")
                         descriptors -> descriptors
                 grouping_expressions = (grouping_columns.map _.as_internal).map .expression
 
