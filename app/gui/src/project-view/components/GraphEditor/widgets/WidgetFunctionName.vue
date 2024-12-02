@@ -38,7 +38,6 @@ async function newNameAccepted(newName: string | undefined) {
     displayedName.value = name.value.code()
   } else {
     const result = await renameFunction(newName)
-    console.log('newNameAccepted', result)
     if (!result.ok) {
       renameError.reportError(result.error)
       displayedName.value = name.value.code()

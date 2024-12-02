@@ -21,12 +21,16 @@ const { functionAst, markdownDocs, methodPointer } = defineProps<{
 
 const docsString = ref<string>()
 
+function updateDocs() {
+  docsString.value = markdownDocs?.toJSON()
+}
+
 watchEffect((onCleanup) => {
-  if (markdownDocs != null) {
-    docsString.value = markdownDocs.toJSON()
-    const observer = () => (docsString.value = markdownDocs.toJSON())
-    markdownDocs.observe(observer)
-    onCleanup(() => markdownDocs.unobserve(observer))
+  const localMarkdownDocs = markdownDocs
+  if (localMarkdownDocs != null) {
+    updateDocs()
+    localMarkdownDocs.observe(updateDocs)
+    onCleanup(() => localMarkdownDocs.unobserve(updateDocs))
   }
 })
 
@@ -39,7 +43,7 @@ const docsData = computed(() => {
 
 const treeRootInput = computed((): WidgetInput => {
   const input = WidgetInput.FromAst(functionAst)
-  if (methodPointer) input[FunctionInfoKey] = { methodPointer }
+  if (methodPointer) input[FunctionInfoKey] = { methodPointer, docsData }
   return input
 })
 

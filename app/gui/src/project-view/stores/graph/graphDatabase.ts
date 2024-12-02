@@ -479,20 +479,15 @@ export class GraphDb {
 
     const suggestion = this.suggestionDb.findByMethodPointer(oldMethodPointer)
     const suggestionEntry = suggestion != null ? this.suggestionDb.get(suggestion) : null
-    console.log('oldMethodPointer', oldMethodPointer)
-    console.log('newMethodPointer', newMethodPointer)
-    console.log('suggestion', suggestion)
     if (suggestionEntry != null) {
       DEV: assert(isQualifiedName(newMethodPointer.module))
       DEV: assert(isQualifiedName(newMethodPointer.definedOnType))
       DEV: assert(isIdentifierOrOperatorIdentifier(newMethodPointer.name))
-
       Object.assign(suggestionEntry, {
         definedIn: normalizeQualifiedName(newMethodPointer.module),
         memberOf: normalizeQualifiedName(newMethodPointer.definedOnType),
         name: newMethodPointer.name,
       })
-      console.log('suggstionData modified:', { ...suggestionEntry })
     }
   }
   /** TODO: Add docs */

@@ -150,7 +150,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
     )
 
     // When renaming a function, we temporarily lose track of edited function AST. Ensure that we
-    // still resolve it despite the code change.
+    // still resolve it before the refactor code change is received.
     const lastKnownResolvedMethodExternalId = ref<AstId>()
     watch(immediateMethodAst, (ast) => {
       if (ast.ok) lastKnownResolvedMethodExternalId.value = ast.value.id
@@ -159,7 +159,6 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
     const fallbackMethodAst = computed(() => {
       const id = lastKnownResolvedMethodExternalId.value
       const ast = id != null ? syncModule.value?.get(id) : undefined
-      console.log('fallback ast:', ast)
       if (ast instanceof Ast.FunctionDef) return ast
       return undefined
     })
@@ -182,7 +181,6 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
     }
 
     watchEffect(() => {
-      console.log('methodAst', methodAst.value)
       if (!methodAst.value.ok) return
       db.updateNodes(methodAst.value.value, watchContext)
       for (const cb of afterUpdate) {
@@ -206,7 +204,6 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
           const exprId = executionStackTop.expressionId
           const info = db.getExpressionInfo(exprId)
           const ptr = info?.methodCall?.methodPointer
-          console.log('currentMethodPointer', ptr)
           if (!ptr) return Err("Unknown method pointer of execution stack's top frame")
           return Ok(ptr)
         }
