@@ -48,7 +48,8 @@ public class ToTextStorageConverter implements StorageConverter<String> {
       return castDateTimeStorage(dateStorage, this::convertDate, problemAggregator);
     } else if (storage instanceof DateTimeStorage dateTimeStorage) {
       return castDateTimeStorage(dateTimeStorage, this::convertDateTime, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
+    } else if (storage.getType() instanceof AnyObjectType
+        || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

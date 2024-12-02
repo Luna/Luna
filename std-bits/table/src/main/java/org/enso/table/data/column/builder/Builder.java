@@ -1,5 +1,6 @@
 package org.enso.table.data.column.builder;
 
+import java.util.Objects;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
 import org.enso.table.data.column.storage.type.BigDecimalType;
@@ -14,8 +15,6 @@ import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.enso.table.data.column.storage.type.TimeOfDayType;
 import org.enso.table.problems.ProblemAggregator;
-
-import java.util.Objects;
 
 /** A builder for creating columns dynamically. */
 public abstract class Builder {

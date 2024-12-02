@@ -18,7 +18,8 @@ public class ToDateTimeStorageConverter implements StorageConverter<ZonedDateTim
       return dateTimeStorage;
     } else if (storage instanceof DateStorage dateStorage) {
       return convertDateStorage(dateStorage, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
+    } else if (storage.getType() instanceof AnyObjectType
+        || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

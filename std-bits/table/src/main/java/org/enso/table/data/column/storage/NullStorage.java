@@ -1,13 +1,12 @@
 package org.enso.table.data.column.storage;
 
+import java.util.BitSet;
+import java.util.List;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.mask.OrderMask;
 import org.enso.table.data.mask.SliceRange;
-
-import java.util.BitSet;
-import java.util.List;
 
 /** A specialized storage that can be used by columns that contain only null values. */
 public class NullStorage extends Storage<Void> {
@@ -43,13 +42,15 @@ public class NullStorage extends Storage<Void> {
   }
 
   @Override
-  public Storage<?> runVectorizedBinaryMap(String name, Object argument, MapOperationProblemAggregator problemAggregator) {
-    throw new IllegalArgumentException("Operation "+name+" is not vectorized for NullStorage");
+  public Storage<?> runVectorizedBinaryMap(
+      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+    throw new IllegalArgumentException("Operation " + name + " is not vectorized for NullStorage");
   }
 
   @Override
-  public Storage<?> runVectorizedZip(String name, Storage<?> argument, MapOperationProblemAggregator problemAggregator) {
-    throw new IllegalArgumentException("Operation "+name+" is not vectorized for NullStorage");
+  public Storage<?> runVectorizedZip(
+      String name, Storage<?> argument, MapOperationProblemAggregator problemAggregator) {
+    throw new IllegalArgumentException("Operation " + name + " is not vectorized for NullStorage");
   }
 
   @Override

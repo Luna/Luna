@@ -17,7 +17,8 @@ public class ToDateStorageConverter implements StorageConverter<LocalDate> {
       return dateStorage;
     } else if (storage instanceof DateTimeStorage dateTimeStorage) {
       return convertDateTimeStorage(dateTimeStorage, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
+    } else if (storage.getType() instanceof AnyObjectType
+        || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

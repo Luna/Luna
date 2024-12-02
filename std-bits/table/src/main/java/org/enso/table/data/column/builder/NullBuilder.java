@@ -13,7 +13,7 @@ public class NullBuilder extends Builder {
   @Override
   public void appendNoGrow(Object o) {
     if (o != null) {
-      throw new IllegalArgumentException("NullBuilder can only append nulls, but got "+o);
+      throw new IllegalArgumentException("NullBuilder can only append nulls, but got " + o);
     }
 
     length++;
@@ -35,7 +35,8 @@ public class NullBuilder extends Builder {
     if (!(storage.getType() instanceof NullType)) {
       for (int i = 0; i < storage.size(); i++) {
         if (!storage.isNothing(i)) {
-          throw new IllegalArgumentException("NullBuilder can only append nulls, but got "+storage.getItemBoxed(i));
+          throw new IllegalArgumentException(
+              "NullBuilder can only append nulls, but got " + storage.getItemBoxed(i));
         }
       }
     }

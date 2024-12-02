@@ -26,7 +26,8 @@ public class ToBigDecimalConverter implements StorageConverter<BigDecimal> {
       return convertBigIntegerStorage(bigIntegerStorage, problemAggregator);
     } else if (storage instanceof BoolStorage boolStorage) {
       return convertBoolStorage(boolStorage, problemAggregator);
-    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
+    } else if (storage.getType() instanceof AnyObjectType
+        || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(

@@ -12,7 +12,8 @@ public class ToBooleanStorageConverter implements StorageConverter<Boolean> {
   public Storage<Boolean> cast(Storage<?> storage, CastProblemAggregator problemAggregator) {
     if (storage instanceof BoolStorage boolStorage) {
       return boolStorage;
-    } else if (storage.getType() instanceof AnyObjectType || storage.getType() instanceof NullType) {
+    } else if (storage.getType() instanceof AnyObjectType
+        || storage.getType() instanceof NullType) {
       return castFromMixed(storage, problemAggregator);
     } else {
       throw new IllegalStateException(
