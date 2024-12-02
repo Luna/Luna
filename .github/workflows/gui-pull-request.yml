@@ -76,14 +76,14 @@ jobs:
         with:
           files: |
             .cargo/**
-            app/rust-ffi/**,
-            build/**,
-            lib/rust/**",
-            tools/language-server/logstat/**",
-            tools/language-server/wstest/**",
-            Cargo.lock,
-            Cargo.toml,
-            rust-toolchain.toml,
+            app/rust-ffi/**
+            build/**
+            lib/rust/**
+            tools/language-server/logstat/**
+            tools/language-server/wstest/**
+            Cargo.lock
+            Cargo.toml
+            rust-toolchain.toml
             rustfmt.toml
       - name: List all changed files
         env:
@@ -119,9 +119,10 @@ jobs:
             test/**
             build.sbt
             .cargo/**
-            Cargo.lock,
-            Cargo.toml,
-            rust-toolchain.toml,
+            Cargo.lock
+            Cargo.toml
+            rust-toolchain.toml
+            .github/workflows/scala-new.yml
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.engine-changed-files.outputs.all_changed_files }}
