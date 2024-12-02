@@ -40,6 +40,8 @@ final class IRNodeClassGenerator {
   private final SetLocationMethodGenerator setLocationMethodGenerator;
   private final BuilderMethodGenerator builderMethodGenerator;
   private final MapExpressionsMethodGenerator mapExpressionsMethodGenerator;
+  private final EqualsMethodGenerator equalsMethodGenerator;
+  private final HashCodeMethodGenerator hashCodeMethodGenerator;
 
   /**
    * For every method annotated with {@link IRCopyMethod}, there is a generator. Can be empty. Not
@@ -52,6 +54,7 @@ final class IRNodeClassGenerator {
           "java.util.UUID",
           "java.util.ArrayList",
           "java.util.function.Function",
+          "java.util.Objects",
           "org.enso.compiler.core.Identifier",
           "org.enso.compiler.core.IR",
           "org.enso.compiler.core.ir.DiagnosticStorage",
@@ -93,6 +96,8 @@ final class IRNodeClassGenerator {
         findCopyMethods().stream()
             .map(copyMethod -> new CopyMethodGenerator(copyMethod, generatedClassContext))
             .toList();
+    this.equalsMethodGenerator = new EqualsMethodGenerator(generatedClassContext);
+    this.hashCodeMethodGenerator = new HashCodeMethodGenerator(generatedClassContext);
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -171,6 +176,10 @@ final class IRNodeClassGenerator {
 
         $copyMethods
 
+        $equalsMethod
+
+        $hashCodeMethod
+
         $builder
         """
         .replace("$fields", fieldsCode())
@@ -179,6 +188,8 @@ final class IRNodeClassGenerator {
         .replace("$overrideIRMethods", overrideIRMethods())
         .replace("$mapExpressionsMethod", mapExpressions())
         .replace("$copyMethods", copyMethods())
+        .replace("$equalsMethod", equalsMethodGenerator.generateMethodCode())
+        .replace("$hashCodeMethod", hashCodeMethodGenerator.generateMethodCode())
         .replace("$builder", builderMethodGenerator.generateBuilder());
   }
 
