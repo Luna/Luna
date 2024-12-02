@@ -301,6 +301,11 @@ final class IRNodeClassGenerator {
         public IR setLocation(Option<IdentifiedLocation> location) {
           throw new UnsupportedOperationException("unimplemented");
         }
+        
+        @Override
+        public IdentifiedLocation identifiedLocation() {
+          return this.location;
+        }
 
         @Override
         public scala.collection.immutable.List<IR> children() {
