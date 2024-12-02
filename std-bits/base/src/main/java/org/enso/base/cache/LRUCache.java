@@ -129,7 +129,7 @@ public class LRUCache<M> {
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
       if (size > maxAllowedSize) {
-        throw new ResponseTooLargeException(maxAllowedSize);
+        throw new ResponseTooLargeException(size, maxAllowedSize);
       }
       makeRoomFor(size);
     } else {
@@ -195,7 +195,7 @@ public class LRUCache<M> {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(maxFileSize);
+        throw new ResponseTooLargeException(null, maxFileSize);
       }
     } finally {
       outputStream.close();
