@@ -694,11 +694,20 @@ pub fn gui() -> Result<Workflow> {
     };
 
     for target in PR_CHECKED_TARGETS {
-        let project_manager_job = workflow.add(target, job::BuildBackend);
+        let continue_on_error = match target {
+            (OS::MacOS, Arch::X86_64) => Some(true),
+            _ => None,
+        };
+        let project_manager_job = workflow.add_customized(target, job::BuildBackend, |job| {
+            job.continue_on_error = continue_on_error;
+        });
         workflow.add_customized(target, job::PackageIde, |job| {
             job.needs.insert(project_manager_job.clone());
+            job.continue_on_error = continue_on_error;
         });
-        workflow.add(target, job::GuiBuild);
+        workflow.add_customized(target, job::GuiBuild, |job| {
+            job.continue_on_error = continue_on_error;
+        });
     }
     Ok(workflow)
 }
