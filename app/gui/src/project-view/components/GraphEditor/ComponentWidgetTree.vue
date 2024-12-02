@@ -20,9 +20,6 @@ const props = defineProps<{
   conditionalPorts: Set<Ast.AstId>
   extended: boolean
 }>()
-const emit = defineEmits<{
-  openFullMenu: []
-}>()
 const graph = useGraphStore()
 const rootPort = computed(() => {
   const input = WidgetInput.FromAst(props.ast)
@@ -100,7 +97,6 @@ export const ICON_WIDTH = 16
     :conditionalPorts="conditionalPorts"
     :extended="extended"
     :onUpdate="handleWidgetUpdates"
-    @openFullMenu="emit('openFullMenu')"
     @currentEditChanged="onCurrentEditChange"
   />
 </template>
