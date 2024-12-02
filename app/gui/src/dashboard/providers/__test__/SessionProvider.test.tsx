@@ -76,12 +76,12 @@ describe('SessionProvider', () => {
     })
   })
 
-  it('Should refresh the user session', async () => {
+  it('Should refresh the expired user session', async () => {
     userSession.mockReturnValueOnce(
       Promise.resolve({
         ...(await userSession()),
         // 24 hours from now
-        expireAt: Rfc3339DateTime(new Date(Date.now() - 1).toString()),
+        expireAt: Rfc3339DateTime(new Date(Date.now() - 1).toJSON()),
       }),
     )
 
@@ -106,6 +106,36 @@ describe('SessionProvider', () => {
       // 2 initial calls(fetching session and refreshing session), 1 mutation call, 1 re-fetch call
       expect(userSession).toBeCalledTimes(4)
     })
+  })
+
+  it('Should refresh not stale user session', { timeout: 5_000 }, async () => {
+    userSession.mockReturnValueOnce(
+      Promise.resolve({
+        ...(await userSession()),
+        expireAt: Rfc3339DateTime(new Date(Date.now() + 1_000).toJSON()),
+      }),
+    )
+
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <SessionProvider
+          mainPageUrl={mainPageUrl}
+          userSession={userSession}
+          refreshUserSession={refreshUserSession}
+          registerAuthEventListener={registerAuthEventListener}
+          saveAccessToken={saveAccessToken}
+        >
+          <div>Hello</div>
+        </SessionProvider>
+      </Suspense>,
+    )
+
+    await waitFor(
+      () => {
+        expect(refreshUserSession).toBeCalledTimes(2)
+      },
+      { timeout: 5_000 },
+    )
   })
 
   it('Should call registerAuthEventListener when the session is updated', async () => {

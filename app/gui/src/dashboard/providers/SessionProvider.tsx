@@ -97,13 +97,19 @@ export default function SessionProvider(props: SessionProviderProps) {
   }
 
   const refreshUserSessionMutation = reactQuery.useMutation({
-    mutationKey: ['refreshUserSession', session.data?.expireAt],
+    mutationKey: ['refreshUserSession', { expireAt: session.data?.expireAt }],
     mutationFn: async () => refreshUserSession?.(),
+    onSuccess: (data) => {
+      if (data) {
+        httpClient?.setSessionToken(data.accessToken)
+        queryClient.setQueryData(sessionQuery.queryKey, data)
+      }
+    },
     meta: { invalidates: [sessionQuery.queryKey] },
   })
 
   reactQuery.useQuery({
-    queryKey: ['refreshUserSession'],
+    queryKey: ['refreshUserSession', { expireAt: session.data?.expireAt }],
     queryFn: () => refreshUserSessionMutation.mutateAsync(),
     meta: { persist: false },
     networkMode: 'online',
