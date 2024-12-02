@@ -55,9 +55,6 @@ export interface SessionProviderProps {
   readonly children: React.ReactNode | ((props: SessionContextType) => React.ReactNode)
 }
 
-const FIVE_MINUTES_MS = 300_000
-const SIX_HOURS_MS = 21_600_000
-
 /** Create a query for the user session. */
 function createSessionQuery(userSession: (() => Promise<cognito.UserSession | null>) | null) {
   return reactQuery.queryOptions({
@@ -92,13 +89,9 @@ export default function SessionProvider(props: SessionProviderProps) {
 
   const session = reactQuery.useSuspenseQuery(sessionQuery)
 
-  if (session.data && httpClient) {
-    httpClient.setSessionToken(session.data.accessToken)
-  }
-
   const refreshUserSessionMutation = reactQuery.useMutation({
     mutationKey: ['refreshUserSession', { expireAt: session.data?.expireAt }],
-    mutationFn: async () => refreshUserSession?.(),
+    mutationFn: async () => refreshUserSession?.() ?? null,
     onSuccess: (data) => {
       if (data) {
         httpClient?.setSessionToken(data.accessToken)
@@ -108,38 +101,9 @@ export default function SessionProvider(props: SessionProviderProps) {
     meta: { invalidates: [sessionQuery.queryKey] },
   })
 
-  reactQuery.useQuery({
-    queryKey: ['refreshUserSession', { accessToken: session.data?.accessToken }],
-    queryFn: () => refreshUserSessionMutation.mutateAsync(),
-    meta: { persist: false },
-    networkMode: 'online',
-    initialData: session.data,
-    initialDataUpdatedAt: Date.now(),
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: 'always',
-    refetchOnReconnect: 'always',
-    refetchOnMount: 'always',
-    refetchInterval: ({ state }) => {
-      const expireAt = state.data?.expireAt
-
-      const timeUntilRefresh =
-        expireAt ?
-          // If the session has not expired, we should refresh it when it is 5 minutes from expiring.
-          // We use 1 second to ensure that we refresh even if the time is very close to expiring
-          // and value won't be less than 0.
-          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-          Math.max(new Date(expireAt).getTime() - Date.now() - FIVE_MINUTES_MS, 1_000)
-        : Infinity
-
-      if (expireAt == null) {
-        return false
-      }
-
-      return timeUntilRefresh < SIX_HOURS_MS ? timeUntilRefresh : SIX_HOURS_MS
-    },
-    // We don't want to refetch the session if the user is not authenticated
-    enabled: userSession != null && refreshUserSession != null && session.data != null,
-  })
+  if (session.data) {
+    httpClient?.setSessionToken(session.data.accessToken)
+  }
 
   // Register an effect that will listen for authentication events. When the event occurs, we
   // will refresh or clear the user's session, forcing a re-render of the page with the new
@@ -188,9 +152,59 @@ export default function SessionProvider(props: SessionProviderProps) {
 
   return (
     <SessionContext.Provider value={sessionContextValue}>
+      {session.data && (
+        <SessionRefresher
+          session={session.data}
+          refreshUserSession={refreshUserSessionMutation.mutateAsync}
+        />
+      )}
+
       {typeof children === 'function' ? children(sessionContextValue) : children}
     </SessionContext.Provider>
   )
+}
+
+/** Props for a {@link SessionRefresher}. */
+interface SessionRefresherProps {
+  readonly session: cognito.UserSession
+  readonly refreshUserSession: () => Promise<cognito.UserSession | null>
+}
+
+const FIVE_MINUTES_MS = 300_000
+const SIX_HOURS_MS = 21_600_000
+
+/**
+ * A component that will refresh the user's session at a given interval.
+ */
+function SessionRefresher(props: SessionRefresherProps) {
+  const { refreshUserSession, session } = props
+
+  reactQuery.useQuery({
+    queryKey: ['refreshUserSession', { accessToken: session.accessToken }],
+    queryFn: () => refreshUserSession(),
+    meta: { persist: false },
+    networkMode: 'online',
+    initialData: session,
+    initialDataUpdatedAt: Date.now(),
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+    refetchOnMount: 'always',
+    refetchInterval: () => {
+      const expireAt = session.expireAt
+
+      const timeUntilRefresh =
+        // If the session has not expired, we should refresh it when it is 5 minutes from expiring.
+        // We use 1 second to ensure that we refresh even if the time is very close to expiring
+        // and value won't be less than 0.
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        Math.max(new Date(expireAt).getTime() - Date.now() - FIVE_MINUTES_MS, 1_000)
+
+      return timeUntilRefresh < SIX_HOURS_MS ? timeUntilRefresh : SIX_HOURS_MS
+    },
+  })
+
+  return null
 }
 
 // ==================
@@ -218,8 +232,5 @@ export function useSessionStrict() {
 
   invariant(session != null, 'Session must be defined')
 
-  return {
-    session,
-    sessionQueryKey,
-  } as const
+  return { session, sessionQueryKey } as const
 }
