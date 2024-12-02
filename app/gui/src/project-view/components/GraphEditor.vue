@@ -29,8 +29,6 @@ import { useDoubleClick } from '@/composables/doubleClick'
 import { keyboardBusy, keyboardBusyExceptIn, unrefElement, useEvent } from '@/composables/events'
 import { groupColorVar } from '@/composables/nodeColors'
 import type { PlacementStrategy } from '@/composables/nodeCreation'
-import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
-import { provideFullscreenContext } from '@/providers/fullscreenContext'
 import { provideGraphEditorLayers } from '@/providers/graphEditorLayers'
 import type { GraphNavigator } from '@/providers/graphNavigator'
 import { provideGraphNavigator } from '@/providers/graphNavigator'
@@ -41,7 +39,6 @@ import { provideStackNavigator } from '@/providers/graphStackNavigator'
 import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
 import { provideSelectionButtons } from '@/providers/selectionButtons'
-import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
 import type { Node, NodeId } from '@/stores/graph'
 import { provideGraphStore } from '@/stores/graph'
@@ -78,8 +75,6 @@ import {
 import { isDevMode } from 'ydoc-shared/util/detect'
 import RightDockPanel from './RightDockPanel.vue'
 
-const rootNode = ref<HTMLElement>()
-
 const keyboard = provideKeyboard()
 const projectStore = useProjectStore()
 const suggestionDb = provideSuggestionDbStore(projectStore)
@@ -87,8 +82,6 @@ const graphStore = provideGraphStore(projectStore, suggestionDb)
 const widgetRegistry = provideWidgetRegistry(graphStore.db)
 const _visualizationStore = provideVisualizationStore(projectStore)
 
-provideFullscreenContext(rootNode)
-const visible = injectVisibility()
 provideNodeExecution(projectStore)
 ;(window as any)._mockSuggestion = suggestionDb.mockSuggestion
 
@@ -112,6 +105,7 @@ const graphNavigator: GraphNavigator = provideGraphNavigator(viewportNode, keybo
 
 // === Exposed layers ===
 
+const rootNode = ref<HTMLElement>()
 const floatingLayer = ref<HTMLElement>()
 provideGraphEditorLayers({
   fullscreen: rootNode,
