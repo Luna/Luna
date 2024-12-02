@@ -22,13 +22,15 @@ public interface JEmpty extends IR {
     return JEmptyGen.builder().location(location).build();
   }
 
-  static JEmpty createFromLocationAndPassData(IdentifiedLocation location, MetadataStorage passData) {
-    return JEmptyGen.builder()
-        .location(location)
-        .passData(passData)
-        .build();
+  static JEmpty createFromLocationAndPassData(
+      IdentifiedLocation location, MetadataStorage passData) {
+    return JEmptyGen.builder().location(location).passData(passData).build();
   }
 
   @IRCopyMethod
-  JEmpty copy(IdentifiedLocation location, MetadataStorage passData, DiagnosticStorage diagnostics, UUID id);
+  JEmpty copy(
+      IdentifiedLocation location,
+      MetadataStorage passData,
+      DiagnosticStorage diagnostics,
+      UUID id);
 }

@@ -18,7 +18,6 @@ import org.enso.runtime.parser.processor.test.gen.ir.NameTestIR;
 import org.enso.runtime.parser.processor.test.gen.ir.NameTestIRGen;
 import org.enso.runtime.parser.processor.test.gen.ir.OptNameTestIRGen;
 import org.junit.Test;
-import scala.Option$;
 
 public class TestGeneratedIR {
   @Test

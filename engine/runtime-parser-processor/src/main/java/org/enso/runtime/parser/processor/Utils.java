@@ -116,16 +116,19 @@ final class Utils {
   }
 
   /**
-   * Finds a method in the interface hierarchy. The interface hierarchy processing starts from {@code interfaceType} and
-   * iterates until {@code org.enso.compiler.core.IR} interface type is encountered.
-   * Every method in the hierarchy is checked by {@code methodPredicate}.
+   * Finds a method in the interface hierarchy. The interface hierarchy processing starts from
+   * {@code interfaceType} and iterates until {@code org.enso.compiler.core.IR} interface type is
+   * encountered. Every method in the hierarchy is checked by {@code methodPredicate}.
+   *
    * @param interfaceType Type of the interface. Must extend {@code org.enso.compiler.core.IR}.
    * @param procEnv
    * @param methodPredicate Predicate that is called for each method in the hierarchy.
    * @return Method that satisfies the predicate or null if no such method is found.
    */
   static ExecutableElement findMethod(
-      TypeElement interfaceType, ProcessingEnvironment procEnv, Predicate<ExecutableElement> methodPredicate) {
+      TypeElement interfaceType,
+      ProcessingEnvironment procEnv,
+      Predicate<ExecutableElement> methodPredicate) {
     var foundMethod =
         iterateSuperInterfaces(
             interfaceType,
@@ -165,10 +168,11 @@ final class Utils {
 
   static ExecutableElement findMapExpressionsMethod(
       TypeElement interfaceType, ProcessingEnvironment processingEnv) {
-    var mapExprsMethod = findMethod(
-        interfaceType,
-        processingEnv,
-        method -> method.getSimpleName().toString().equals(MAP_EXPRESSIONS));
+    var mapExprsMethod =
+        findMethod(
+            interfaceType,
+            processingEnv,
+            method -> method.getSimpleName().toString().equals(MAP_EXPRESSIONS));
     hardAssert(
         mapExprsMethod != null,
         "mapExpressions method must be found it must be defined at least on IR super interface");
