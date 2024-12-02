@@ -53,8 +53,11 @@ jobs:
         env:
           ALL_CHANGED_FILES: ${{ steps.gui-changed-files.outputs.all_changed_files }}
         run: |
+          if [[ "${{ steps.gui-changed-files.outputs.any_changed }}" == "true" ]]; then
+            echo "Files changed:"
+          fi
           for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
+            echo "$file"
           done
 
   wasm-changed-files:
@@ -86,8 +89,11 @@ jobs:
         env:
           ALL_CHANGED_FILES: ${{ steps.wasm-changed-files.outputs.all_changed_files }}
         run: |
+          if [[ "${{ steps.wasm-changed-files.outputs.any_changed }}" == "true" ]]; then
+            echo "Files changed:"
+          fi
           for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
+            echo "$file"
           done
 
   engine-changed-files:
@@ -120,8 +126,11 @@ jobs:
         env:
           ALL_CHANGED_FILES: ${{ steps.engine-changed-files.outputs.all_changed_files }}
         run: |
+          if [[ "${{ steps.engine-changed-files.outputs.any_changed }}" == "true" ]]; then
+            echo "Files changed:"
+          fi
           for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
+            echo "$file"
           done
 
   gui-checks:
@@ -182,10 +191,8 @@ jobs:
           checks+=("${{ needs.engine-checks.result }}")
           checks+=("${{ needs.gui-packaging.result }}")
 
-          for result in "${checks[@]}"
-          do
-            if [[ "$result" == "failure" ]]
-            then
+          for result in "${checks[@]}"; do
+            if [[ "$result" == "failure" ]]; then
               exit 1
             fi
           done
