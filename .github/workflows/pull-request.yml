@@ -173,11 +173,6 @@ jobs:
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
-  test-continue-on-error:
-    name: Test continue-on-error
-    uses: ./.github/workflows/test.yml
-    secrets: inherit
-
   # This job is used to report success if the needed jobs were successful.
   # This is a workaround to make optional jobs required if they run
   checks-report:
