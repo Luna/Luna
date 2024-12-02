@@ -73,7 +73,7 @@ public class ManagedResourceTest {
     assertFalse("Value was not GCed", getResource.execute(ref).isNull());
     assertEquals("We get the object", weakRef.get(), getResource.execute(ref).asHostObject());
 
-    ensoCtx.getResourceManager().scheduleFinalization();
+    ensoCtx.getResourceManager().scheduleFinalizationOfSystemReferences();
     assertEquals(
         "scheduleFinalization has no effect on regular reference",
         weakRef.get(),
@@ -91,7 +91,7 @@ public class ManagedResourceTest {
         ref.getMetaObject().getMetaQualifiedName());
     assertEquals("We get the object", obj, getResource.execute(ref).asHostObject());
 
-    ensoCtx.getResourceManager().scheduleFinalization();
+    ensoCtx.getResourceManager().scheduleFinalizationOfSystemReferences();
 
     var none = getResource.execute(ref);
     assertTrue("Value was GCed", none.isException());

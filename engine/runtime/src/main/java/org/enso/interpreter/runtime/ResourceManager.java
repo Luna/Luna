@@ -126,13 +126,13 @@ public final class ResourceManager {
   }
 
   /**
-   * Registers a new resource to the system. {@code function} will be called on {@code object} when
+   * Registers a new resource to the system.{@code function} will be called on {@code object} when
    * the value returned by this method becomes unreachable.
    *
    * @param object the underlying resource
    * @param function the finalizer action to call on the underlying resource
-   * @param systemResource resource is subject to finalization when {@link #scheduleFinalization} is
-   *     called
+   * @param systemResource resource is subject to finalization when {@link
+   *     #scheduleFinalizationOfSystemReferences} is called
    * @return a wrapper object, containing the resource and serving as a reachability probe
    */
   @CompilerDirectives.TruffleBoundary
@@ -211,7 +211,7 @@ public final class ResourceManager {
    * @see #register
    */
   @CompilerDirectives.TruffleBoundary
-  public final synchronized void scheduleFinalization() {
+  public final synchronized void scheduleFinalizationOfSystemReferences() {
     for (var item : pendingItems) {
       if (item.systemResource) {
         item.enqueue();
