@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -264,8 +263,6 @@ public class LRUCache<M> {
   private void makeRoomFor(long newFileSize) {
     removeStaleEntries();
 
-    var beforeLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
-
     // Size of files on disk.
     long currentCacheSize = getTotalCacheSize();
     // Upper limit to cache size.
@@ -287,10 +284,9 @@ public class LRUCache<M> {
       toRemove.add(mapEntry);
       totalSize -= mapEntry.getValue().size();
     }
-    removeCacheEntries(toRemove);
-    var afterLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
     assert totalSize <= maxTotalCacheSize
-        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")"+Arrays.deepToString(beforeLens)+Arrays.deepToString(afterLens);
+        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")";
+    removeCacheEntries(toRemove);
   }
 
   private SortedSet<Map.Entry<String, CacheEntry<M>>> getSortedEntries() {
