@@ -3,7 +3,7 @@ package org.enso.snowflake;
 import org.enso.database.DatabaseConnectionDetailsSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DatabaseConnectionDetailsSPI.class)
-public class SnowflakeConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
+public final class SnowflakeConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Snowflake.Connection.Snowflake_Details";

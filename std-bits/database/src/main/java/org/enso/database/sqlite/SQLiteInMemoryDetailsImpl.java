@@ -3,7 +3,7 @@ package org.enso.database.sqlite;
 import org.enso.database.DatabaseConnectionDetailsSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DatabaseConnectionDetailsSPI.class)
-public class SQLiteInMemoryDetailsImpl extends DatabaseConnectionDetailsSPI {
+public final class SQLiteInMemoryDetailsImpl extends DatabaseConnectionDetailsSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Database.Connection.SQLite";

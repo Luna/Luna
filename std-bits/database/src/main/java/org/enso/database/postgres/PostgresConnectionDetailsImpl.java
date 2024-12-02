@@ -3,7 +3,7 @@ package org.enso.database.postgres;
 import org.enso.database.DatabaseConnectionDetailsSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DatabaseConnectionDetailsSPI.class)
-public class PostgresConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
+public final class PostgresConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Database.Connection.Postgres";

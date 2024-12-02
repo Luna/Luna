@@ -3,7 +3,7 @@ package org.enso.tableau;
 import org.enso.base.file_format.FileFormatSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = FileFormatSPI.class)
-public class TableauFileFormatImpl extends FileFormatSPI {
+public final class TableauFileFormatImpl extends FileFormatSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Tableau.Tableau_Format";

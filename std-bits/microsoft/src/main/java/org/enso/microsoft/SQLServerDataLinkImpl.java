@@ -3,7 +3,7 @@ package org.enso.microsoft;
 import org.enso.base.enso_cloud.DataLinkSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DataLinkSPI.class)
-public class SQLServerDataLinkImpl extends DataLinkSPI {
+public final class SQLServerDataLinkImpl extends DataLinkSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Microsoft.SQLServer_Data_Link";

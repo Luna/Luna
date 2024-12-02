@@ -1,7 +1,7 @@
 package org.enso.base.file_format;
 
 @org.openide.util.lookup.ServiceProvider(service = FileFormatSPI.class)
-public class XMLFileFormatImpl extends FileFormatSPI {
+public final class XMLFileFormatImpl extends FileFormatSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Base.Data.XML.XML_Format";
