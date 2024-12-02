@@ -1,12 +1,10 @@
-/** @file Actions for the "user" tab of the "settings" page. */
-import { goToPageActions, type GoToPageActions } from './goToPageActions'
-import PageActions from './PageActions'
+/** @file Actions for the default tab of the "settings" page. */
+import SettingsAccountTabActions from './SettingsAccountTabActions'
 
-// TODO: split settings page actions into different classes for each settings tab.
-/** Actions for the "user" tab of the "settings" page. */
-export default class SettingsPageActions<Context> extends PageActions<Context> {
-  /** Actions for navigating to another page. */
-  get goToPage(): Omit<GoToPageActions<Context>, 'settings'> {
-    return goToPageActions(this.step.bind(this))
-  }
-}
+/** Actions for the default tab of the "settings" page. */
+type SettingsPageActions<Context> = SettingsAccountTabActions<Context>
+
+/** Actions for the default tab of the "settings" page. */
+const SettingsPageActions = SettingsAccountTabActions
+
+export default SettingsPageActions

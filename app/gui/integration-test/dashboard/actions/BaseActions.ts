@@ -15,6 +15,11 @@ export interface LocatorCallback {
   (input: Locator): Promise<void> | void
 }
 
+export interface BaseActionsClass<Context, Args extends readonly unknown[] = []> {
+  // The return type should be `InstanceType<this>`, but that results in a circular reference error.
+  new (page: Page, context: Context, promise: Promise<void>, ...args: Args): any
+}
+
 /**
  * The base class from which all `Actions` classes are derived.
  * It contains method common to all `Actions` subclasses.
