@@ -39,7 +39,11 @@
 - [Visualizations on components are slightly transparent when not
   focused][11582].
 - [New design for vector-editing widget][11620]
-- [The `:` type operator can now be chained][11671]
+- [The component menu can be opened by right-click; supports operations on
+  multiple components; has a 'Copy Component' button][11690]
+- [New design for vector-editing widget][11620].
+- [Default values on widgets are displayed in italic][11666].
+- [Fixed bug causing Table Visualization to show wrong data][11684].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -59,12 +63,15 @@
 [11547]: https://github.com/enso-org/enso/pull/11547
 [11523]: https://github.com/enso-org/enso/pull/11523
 [11564]: https://github.com/enso-org/enso/pull/11564
+[11582]: https://github.com/enso-org/enso/pull/11582
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
 [11655]: https://github.com/enso-org/enso/pull/11655
 [11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
-[11671]: https://github.com/enso-org/enso/pull/11671
+[11666]: https://github.com/enso-org/enso/pull/11666
+[11690]: https://github.com/enso-org/enso/pull/11690
+[11684]: https://github.com/enso-org/enso/pull/11684
 
 #### Enso Standard Library
 
@@ -89,8 +96,10 @@
 #### Enso Language & Runtime
 
 - [Arguments in constructor definitions may now be on their own lines][11374]
+- [The `:` type operator can now be chained][11671].
 
 [11374]: https://github.com/enso-org/enso/pull/11374
+[11671]: https://github.com/enso-org/enso/pull/11671
 
 # Enso 2024.4
 

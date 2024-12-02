@@ -702,6 +702,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
 
     /** Iterate over code lines, return node IDs from `ids` set in the order of code positions. */
     function pickInCodeOrder(ids: Set<NodeId>): NodeId[] {
+      if (ids.size === 0) return []
       assert(syncModule.value != null)
       const func = unwrap(getExecutedMethodAst(syncModule.value))
       const body = func.bodyExpressions()

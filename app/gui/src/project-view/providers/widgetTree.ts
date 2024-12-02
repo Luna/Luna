@@ -14,7 +14,6 @@ export const [provideWidgetTree, injectWidgetTree] = createContextStore(
     extended: Ref<boolean>,
     hasActiveAnimations: Ref<boolean>,
     potentialSelfArgumentId: Ref<AstId | undefined>,
-    emitOpenFullMenu: () => void,
   ) => {
     const { setCurrentEditRoot, currentEdit } = useCurrentEdit()
     return proxyRefs({
@@ -26,7 +25,6 @@ export const [provideWidgetTree, injectWidgetTree] = createContextStore(
       potentialSelfArgumentId,
       setCurrentEditRoot,
       currentEdit,
-      emitOpenFullMenu,
     })
   },
 )

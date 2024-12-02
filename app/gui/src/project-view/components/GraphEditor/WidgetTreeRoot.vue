@@ -20,7 +20,6 @@ const props = defineProps<{
   onUpdate: (update: WidgetUpdate) => boolean
 }>()
 const emit = defineEmits<{
-  openFullMenu: []
   currentEditChanged: [WidgetEditHandlerParent | undefined]
 }>()
 
@@ -46,7 +45,6 @@ const tree = provideWidgetTree(
   toRef(props, 'extended'),
   layoutTransitions.active,
   toRef(props, 'potentialSelfArgumentId'),
-  () => emit('openFullMenu'),
 )
 watch(toRef(tree, 'currentEdit'), (edit) => emit('currentEditChanged', edit))
 </script>
