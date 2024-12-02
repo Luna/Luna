@@ -15,7 +15,7 @@ describe('SessionProvider', () => {
       accessToken: 'accessToken',
       refreshToken: 'refreshToken',
       refreshUrl: 'https://enso.dev',
-      expireAt: Rfc3339DateTime(new Date().toString()),
+      expireAt: Rfc3339DateTime(new Date(Date.now() + 5_000).toJSON()),
       clientId: 'clientId',
     }),
   )
@@ -116,6 +116,8 @@ describe('SessionProvider', () => {
       }),
     )
 
+    let session: UserSession | null = null
+
     render(
       <Suspense fallback={<div>Loading...</div>}>
         <SessionProvider
@@ -125,7 +127,10 @@ describe('SessionProvider', () => {
           registerAuthEventListener={registerAuthEventListener}
           saveAccessToken={saveAccessToken}
         >
-          <div>Hello</div>
+          {({ session: sessionFromContext }) => {
+            session = sessionFromContext
+            return null
+          }}
         </SessionProvider>
       </Suspense>,
     )
@@ -133,6 +138,9 @@ describe('SessionProvider', () => {
     await waitFor(
       () => {
         expect(refreshUserSession).toBeCalledTimes(2)
+        expect(session).not.toBeNull()
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        expect(new Date(session!.expireAt).getTime()).toBeGreaterThan(Date.now())
       },
       { timeout: 1_500 },
     )

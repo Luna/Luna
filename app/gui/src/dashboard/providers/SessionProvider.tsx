@@ -52,7 +52,7 @@ export interface SessionProviderProps {
   readonly userSession: (() => Promise<cognito.UserSession | null>) | null
   readonly saveAccessToken?: ((accessToken: cognito.UserSession) => void) | null
   readonly refreshUserSession: (() => Promise<cognito.UserSession | null>) | null
-  readonly children: React.ReactNode
+  readonly children: React.ReactNode | ((props: SessionContextType) => React.ReactNode)
 }
 
 const FIVE_MINUTES_MS = 300_000
@@ -109,7 +109,7 @@ export default function SessionProvider(props: SessionProviderProps) {
   })
 
   reactQuery.useQuery({
-    queryKey: ['refreshUserSession', { expireAt: session.data?.expireAt }],
+    queryKey: ['refreshUserSession', { accessToken: session.data?.accessToken }],
     queryFn: () => refreshUserSessionMutation.mutateAsync(),
     meta: { persist: false },
     networkMode: 'online',
@@ -181,11 +181,14 @@ export default function SessionProvider(props: SessionProviderProps) {
     }
   }, [session.data, saveAccessTokenEventCallback])
 
+  const sessionContextValue = {
+    session: session.data,
+    sessionQueryKey: sessionQuery.queryKey,
+  }
+
   return (
-    <SessionContext.Provider
-      value={{ session: session.data, sessionQueryKey: sessionQuery.queryKey }}
-    >
-      {children}
+    <SessionContext.Provider value={sessionContextValue}>
+      {typeof children === 'function' ? children(sessionContextValue) : children}
     </SessionContext.Provider>
   )
 }
