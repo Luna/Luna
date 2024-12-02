@@ -23,8 +23,7 @@ public class IsInfiniteOperation extends AbstractUnaryBooleanOperation {
   @Override
   public ColumnStorage apply(
       ColumnStorage storage, MapOperationProblemAggregator problemAggregator) {
-    if (storage instanceof ColumnLongStorage
-        && storage instanceof WithNothingMap withNothingMap) {
+    if (storage instanceof ColumnLongStorage && storage instanceof WithNothingMap withNothingMap) {
       // For a Column of Longs where we have the Nothing map, we can produce result immediately.
       return new BoolStorage(
           new BitSet(), withNothingMap.getIsNothingMap(), (int) storage.getSize(), false);
