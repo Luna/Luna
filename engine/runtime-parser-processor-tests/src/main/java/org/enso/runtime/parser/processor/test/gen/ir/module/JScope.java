@@ -1,4 +1,4 @@
-package org.enso.compiler.core.ir.module;
+package org.enso.runtime.parser.processor.test.gen.ir.module;
 
 import org.enso.compiler.core.IR;
 import org.enso.runtime.parser.dsl.IRNode;

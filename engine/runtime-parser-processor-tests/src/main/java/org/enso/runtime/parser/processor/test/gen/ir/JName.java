@@ -1,4 +1,4 @@
-package org.enso.compiler.core.ir;
+package org.enso.runtime.parser.processor.test.gen.ir;
 
 import org.enso.compiler.core.ir.JNameGen.JBlankGen;
 import org.enso.compiler.core.ir.module.scope.JDefinition;
