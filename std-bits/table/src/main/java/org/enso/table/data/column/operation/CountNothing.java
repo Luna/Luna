@@ -1,7 +1,8 @@
 package org.enso.table.data.column.operation;
 
 import org.enso.table.data.column.storage.ColumnStorage;
-import org.enso.table.data.column.storage.ColumnStorageWithNothingMap;
+import org.enso.table.data.column.storage.WithNothingCount;
+import org.enso.table.data.column.storage.WithNothingMap;
 import org.enso.table.data.table.Column;
 import org.graalvm.polyglot.Context;
 
@@ -15,7 +16,11 @@ public class CountNothing {
 
   /** Counts the number of Nothing values in the given storage. */
   public static long applyToStorage(ColumnStorage storage) {
-    if (storage instanceof ColumnStorageWithNothingMap withNothingMap) {
+    if (storage instanceof WithNothingCount withNothingCount) {
+      return withNothingCount.nothingCount();
+    }
+
+    if (storage instanceof WithNothingMap withNothingMap) {
       return withNothingMap.getIsNothingMap().cardinality();
     }
 
@@ -32,7 +37,11 @@ public class CountNothing {
 
   /** Returns true if any value in the storage is Nothing. */
   public static boolean anyNothing(ColumnStorage storage) {
-    if (storage instanceof ColumnStorageWithNothingMap withNothingMap) {
+    if (storage instanceof WithNothingCount withNothingCount) {
+      return withNothingCount.nothingCount() > 0;
+    }
+
+    if (storage instanceof WithNothingMap withNothingMap) {
       return !withNothingMap.getIsNothingMap().isEmpty();
     }
 
@@ -48,7 +57,11 @@ public class CountNothing {
 
   /** Returns true if all values in the storage are Nothing. */
   public static boolean allNothing(ColumnStorage storage) {
-    if (storage instanceof ColumnStorageWithNothingMap withNothingMap) {
+    if (storage instanceof WithNothingCount withNothingCount) {
+      return withNothingCount.nothingCount() == storage.getSize();
+    }
+
+    if (storage instanceof WithNothingMap withNothingMap) {
       return withNothingMap.getIsNothingMap().nextClearBit(0) >= storage.getSize();
     }
 

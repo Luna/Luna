@@ -9,7 +9,7 @@ import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.ColumnDoubleStorage;
 import org.enso.table.data.column.storage.ColumnLongStorage;
 import org.enso.table.data.column.storage.ColumnStorage;
-import org.enso.table.data.column.storage.ColumnStorageWithNothingMap;
+import org.enso.table.data.column.storage.WithNothingMap;
 import org.enso.table.data.column.storage.type.AnyObjectType;
 
 public class IsNaNOperation extends AbstractUnaryBooleanOperation {
@@ -31,7 +31,7 @@ public class IsNaNOperation extends AbstractUnaryBooleanOperation {
   public ColumnStorage apply(
       ColumnStorage storage, MapOperationProblemAggregator problemAggregator) {
     if (storage instanceof ColumnLongStorage
-        && storage instanceof ColumnStorageWithNothingMap withNothingMap) {
+        && storage instanceof WithNothingMap withNothingMap) {
       // For a Column of Longs where we have the Nothing map, we can produce result immediately.
       return new BoolStorage(
           new BitSet(), withNothingMap.getIsNothingMap(), (int) storage.getSize(), false);

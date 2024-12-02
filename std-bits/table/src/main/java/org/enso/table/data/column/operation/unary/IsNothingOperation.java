@@ -6,7 +6,7 @@ import org.enso.table.data.column.operation.UnaryOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.ColumnStorage;
-import org.enso.table.data.column.storage.ColumnStorageWithNothingMap;
+import org.enso.table.data.column.storage.WithNothingMap;
 
 public class IsNothingOperation extends AbstractUnaryBooleanOperation {
   public static final String NAME = "is_nothing";
@@ -25,7 +25,7 @@ public class IsNothingOperation extends AbstractUnaryBooleanOperation {
   @Override
   public ColumnStorage apply(
       ColumnStorage storage, MapOperationProblemAggregator problemAggregator) {
-    if (storage instanceof ColumnStorageWithNothingMap withNothingMap) {
+    if (storage instanceof WithNothingMap withNothingMap) {
       return new BoolStorage(
           withNothingMap.getIsNothingMap(), new BitSet(), (int) storage.getSize(), false);
     }

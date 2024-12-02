@@ -24,7 +24,7 @@ import org.graalvm.polyglot.Value;
 
 /** A boolean column storage. */
 public final class BoolStorage extends Storage<Boolean>
-    implements ColumnBooleanStorage, ColumnStorageWithNothingMap {
+    implements ColumnBooleanStorage, WithNothingMap {
   private static final MapOperationStorage<Boolean, BoolStorage> ops = buildOps();
   private final BitSet values;
   private final BitSet isNothing;

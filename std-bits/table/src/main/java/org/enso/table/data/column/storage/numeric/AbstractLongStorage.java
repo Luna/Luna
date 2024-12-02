@@ -24,7 +24,7 @@ import org.enso.table.data.column.storage.type.StorageType;
 import org.graalvm.polyglot.Context;
 
 public abstract class AbstractLongStorage extends NumericStorage<Long>
-    implements ColumnLongStorage, ColumnStorageWithNothingMap {
+    implements ColumnLongStorage, WithNothingMap {
   public abstract long getItem(int idx);
 
   private static final MapOperationStorage<Long, AbstractLongStorage> ops = buildOps();
