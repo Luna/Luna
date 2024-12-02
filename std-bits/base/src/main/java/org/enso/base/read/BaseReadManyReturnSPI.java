@@ -1,7 +1,6 @@
 package org.enso.base.read;
 
-@org.openide.util.lookup.ServiceProvider(service = ReadManyReturnSPI.class)
-public class BaseReadManyReturnSPI extends ReadManyReturnSPI {
+public final class BaseReadManyReturnSPI extends ReadManyReturnSPI {
   @Override
   protected String getModuleName() {
     return "Standard.Base.Data.Read.Return_As";
