@@ -169,12 +169,25 @@ jobs:
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
+  test-continue-on-error:
+    name: Test continue-on-error
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
   # This job is used to report success if the needed jobs were successful.
   # This is a workaround to make optional jobs required if they run
   checks-report:
     name: Checks Report
     runs-on: ubuntu-latest
-    needs: [gui-checks, storybook, wasm-checks, engine-checks, gui-packaging]
+    needs:
+      [
+        gui-checks,
+        storybook,
+        wasm-checks,
+        engine-checks,
+        gui-packaging,
+        test-continue-on-error,
+      ]
     if: always()
     steps:
       - name: Combined Checks Report
@@ -184,6 +197,7 @@ jobs:
           echo "WASM Checks: ${{ needs.wasm-checks.result }}"
           echo "Engine Checks: ${{ needs.engine-checks.result }}"
           echo "GUI Packaging: ${{ needs.gui-packaging.result }}"
+          echo "Test: ${{ needs.test-continue-on-error.result }}"
 
           declare -a checks
           checks+=("${{ needs.gui-checks.result }}")
@@ -191,6 +205,7 @@ jobs:
           checks+=("${{ needs.wasm-checks.result }}")
           checks+=("${{ needs.engine-checks.result }}")
           checks+=("${{ needs.gui-packaging.result }}")
+          checks+=("${{ needs.test-continue-on-error.result }}")
 
           for result in "${checks[@]}"; do
             if [[ "$result" == "failure" ]]; then

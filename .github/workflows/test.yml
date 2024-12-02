@@ -1,0 +1,30 @@
+## Test continue-on-error behavior
+
+name: Test continue-on-error
+on:
+  workflow_dispatch:
+    inputs:
+      clean_build_required:
+        description: Clean before and after the run.
+        required: false
+        type: boolean
+        default: false
+  workflow_call: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-test-continue-on-error
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
+jobs:
+  test-continue-on-error-behavior:
+    name: Test continue-on-error
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checking out the repository
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          submodules: recursive
+      - name: Clean before
+        run: |
+          echo "Oops..."
+          exit 1
