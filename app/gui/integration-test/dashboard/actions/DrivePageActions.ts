@@ -1,5 +1,5 @@
 /** @file Actions for the "drive" page. */
-import * as test from 'playwright/test'
+import { expect, type Locator, type Page } from 'playwright/test'
 
 import {
   locateAssetPanel,
@@ -13,10 +13,10 @@ import {
   locateSecretValueInput,
   TEXT,
 } from '.'
-import type * as baseActions from './BaseActions'
-import * as contextMenuActions from './contextMenuActions'
+import type { LocatorCallback } from './BaseActions'
+import { contextMenuActions } from './contextMenuActions'
 import EditorPageActions from './EditorPageActions'
-import * as goToPageActions from './goToPageActions'
+import { goToPageActions, type GoToPageActions } from './goToPageActions'
 import NewDataLinkModalActions from './NewDataLinkModalActions'
 import PageActions from './PageActions'
 import StartModalActions from './StartModalActions'
@@ -24,20 +24,20 @@ import StartModalActions from './StartModalActions'
 const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
 
 /** Find all assets table rows (if any). */
-function locateAssetRows(page: test.Page) {
+function locateAssetRows(page: Page) {
   return locateAssetsTable(page).getByTestId('asset-row')
 }
 
 /** Actions for the "drive" page. */
 export default class DrivePageActions<Context> extends PageActions<Context> {
   /** Actions for navigating to another page. */
-  get goToPage(): Omit<goToPageActions.GoToPageActions<Context>, 'drive'> {
-    return goToPageActions.goToPageActions(this.step.bind(this))
+  get goToPage(): Omit<GoToPageActions<Context>, 'drive'> {
+    return goToPageActions(this.step.bind(this))
   }
 
   /** Actions related to context menus. */
   get contextMenu() {
-    return contextMenuActions.contextMenuActions(this.step.bind(this))
+    return contextMenuActions(this.step.bind(this))
   }
 
   /** Switch to a different category. */
@@ -127,8 +127,8 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
       /** Interact with the set of all rows in the Drive table. */
       withRows(
         callback: (
-          assetRows: test.Locator,
-          nonAssetRows: test.Locator,
+          assetRows: Locator,
+          nonAssetRows: Locator,
           context: Context,
         ) => Promise<void> | void,
       ) {
@@ -147,7 +147,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
         })
       },
       /** Drag a row onto another row. */
-      dragRow(from: number, to: test.Locator, force?: boolean) {
+      dragRow(from: number, to: Locator, force?: boolean) {
         return self.step(`Drag drive table row #${from} to custom locator`, (page) =>
           locateAssetRows(page)
             .nth(from)
@@ -163,10 +163,10 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
        */
       expectPlaceholderRow() {
         return self.step('Expect placeholder row', async (page) => {
-          await test.expect(locateAssetRows(page)).toHaveCount(0)
+          await expect(locateAssetRows(page)).toHaveCount(0)
           const nonAssetRows = locateNonAssetRows(page)
-          await test.expect(nonAssetRows).toHaveCount(1)
-          await test.expect(nonAssetRows).toHaveText(/This folder is empty/)
+          await expect(nonAssetRows).toHaveCount(1)
+          await expect(nonAssetRows).toHaveText(/This folder is empty/)
         })
       },
       /**
@@ -175,10 +175,10 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
        */
       expectTrashPlaceholderRow() {
         return self.step('Expect trash placeholder row', async (page) => {
-          await test.expect(locateAssetRows(page)).toHaveCount(0)
+          await expect(locateAssetRows(page)).toHaveCount(0)
           const nonAssetRows = locateNonAssetRows(page)
-          await test.expect(nonAssetRows).toHaveCount(1)
-          await test.expect(nonAssetRows).toHaveText(/Your trash is empty/)
+          await expect(nonAssetRows).toHaveCount(1)
+          await expect(nonAssetRows).toHaveText(/Your trash is empty/)
         })
       },
       /** Toggle a column's visibility. */
@@ -240,7 +240,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the drive view (the main container of this page). */
-  withDriveView(callback: baseActions.LocatorCallback) {
+  withDriveView(callback: LocatorCallback) {
     return this.step('Interact with drive view', (page) => callback(locateDriveView(page)))
   }
 
@@ -248,7 +248,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   createFolder() {
     return this.step('Create folder', async (page) => {
       await page.getByRole('button', { name: TEXT.newFolder, exact: true }).click()
-      await test.expect(page.locator('input:focus')).toBeVisible()
+      await expect(page.locator('input:focus')).toBeVisible()
       await page.keyboard.press('Escape')
     })
   }
@@ -310,7 +310,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   /**
    * Check if the Asset Panel is shown.
    */
-  async isAssetPanelShown(page: test.Page) {
+  async isAssetPanelShown(page: Page) {
     return await page
       .getByTestId('asset-panel')
       .isVisible({ timeout: 0 })
@@ -323,7 +323,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   /**
    * Wait for the Asset Panel to be shown and visually stable
    */
-  async waitForAssetPanelShown(page: test.Page) {
+  async waitForAssetPanelShown(page: Page) {
     await page.getByTestId('asset-panel').waitFor({ state: 'visible' })
   }
 
@@ -344,14 +344,14 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the container element of the assets table. */
-  withAssetsTable(callback: baseActions.LocatorCallback) {
+  withAssetsTable(callback: LocatorCallback) {
     return this.step('Interact with drive table', async (page) => {
       await callback(locateAssetsTable(page))
     })
   }
 
   /** Interact with the Asset Panel. */
-  withAssetPanel(callback: baseActions.LocatorCallback) {
+  withAssetPanel(callback: LocatorCallback) {
     return this.step('Interact with asset panel', async (page) => {
       await callback(locateAssetPanel(page))
     })
@@ -365,7 +365,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the context menus (the context menus MUST be visible). */
-  withContextMenus(callback: baseActions.LocatorCallback) {
+  withContextMenus(callback: LocatorCallback) {
     return this.step('Interact with context menus', async (page) => {
       await callback(locateContextMenus(page))
     })

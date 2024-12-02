@@ -1,7 +1,7 @@
 /** @file Actions for the context menu. */
 import { TEXT } from '.'
-import type * as baseActions from './BaseActions'
 import type BaseActions from './BaseActions'
+import type { PageCallback } from './BaseActions'
 import EditorPageActions from './EditorPageActions'
 
 /** Actions for the context menu. */
@@ -32,7 +32,7 @@ export interface ContextMenuActions<T extends BaseActions<Context>, Context> {
 
 /** Generate actions for the context menu. */
 export function contextMenuActions<T extends BaseActions<Context>, Context>(
-  step: (name: string, callback: baseActions.PageCallback<Context>) => T,
+  step: (name: string, callback: PageCallback<Context>) => T,
 ): ContextMenuActions<T, Context> {
   return {
     open: () =>

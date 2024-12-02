@@ -1,17 +1,17 @@
 /** @file Actions common to all pages. */
 import BaseActions from './BaseActions'
-import * as openUserMenuAction from './openUserMenuAction'
-import * as userMenuActions from './userMenuActions'
+import { openUserMenuAction } from './openUserMenuAction'
+import { userMenuActions } from './userMenuActions'
 
 /** Actions common to all pages. */
 export default class PageActions<Context> extends BaseActions<Context> {
   /** Actions related to the User Menu. */
   get userMenu() {
-    return userMenuActions.userMenuActions(this.step.bind(this))
+    return userMenuActions(this.step.bind(this))
   }
 
   /** Open the User Menu. */
   openUserMenu() {
-    return openUserMenuAction.openUserMenuAction(this.step.bind(this))
+    return openUserMenuAction(this.step.bind(this))
   }
 }

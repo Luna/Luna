@@ -1,5 +1,5 @@
 /** @file Available actions for the login page. */
-import * as test from '@playwright/test'
+import { expect } from '@playwright/test'
 
 import { TEXT, VALID_EMAIL, VALID_PASSWORD } from '.'
 import BaseActions, { type LocatorCallback } from './BaseActions'
@@ -51,11 +51,11 @@ export default class RegisterPageActions<Context> extends BaseActions<Context> {
       return next
     } else if (formError != null) {
       return next.step(`Expect form error to be '${formError}'`, async (page) => {
-        await test.expect(page.getByTestId('form-submit-error')).toHaveText(formError)
+        await expect(page.getByTestId('form-submit-error')).toHaveText(formError)
       })
     } else {
       return next.step('Expect no form error', async (page) => {
-        await test.expect(page.getByTestId('form-submit-error')).not.toBeVisible()
+        await expect(page.getByTestId('form-submit-error')).not.toBeVisible()
       })
     }
   }
@@ -91,6 +91,6 @@ export default class RegisterPageActions<Context> extends BaseActions<Context> {
       .getByRole('button', { name: TEXT.register, exact: true })
       .getByText(TEXT.register)
       .click()
-    await test.expect(this.page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
+    await expect(this.page.getByText(TEXT.loadingAppMessage)).not.toBeVisible()
   }
 }

@@ -1,5 +1,5 @@
 /** @file Actions for going to a different page. */
-import type * as baseActions from './BaseActions'
+import type { PageCallback } from './BaseActions'
 import BaseActions from './BaseActions'
 import DrivePageActions from './DrivePageActions'
 import EditorPageActions from './EditorPageActions'
@@ -14,7 +14,7 @@ export interface GoToPageActions<Context> {
 
 /** Generate actions for going to a different page. */
 export function goToPageActions<Context>(
-  step: (name: string, callback: baseActions.PageCallback<Context>) => BaseActions<Context>,
+  step: (name: string, callback: PageCallback<Context>) => BaseActions<Context>,
 ): GoToPageActions<Context> {
   return {
     drive: () =>

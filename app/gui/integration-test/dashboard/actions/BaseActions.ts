@@ -1,18 +1,18 @@
 /** @file The base class from which all `Actions` classes are derived. */
-import * as test from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import type * as inputBindings from '#/utilities/inputBindings'
+import type { AutocompleteKeybind } from '#/utilities/inputBindings'
 
 import { modModifier } from '.'
 
-/** A callback that performs actions on a {@link test.Page}. */
+/** A callback that performs actions on a {@link Page}. */
 export interface PageCallback<Context> {
-  (input: test.Page, context: Context): Promise<void> | void
+  (input: Page, context: Context): Promise<void> | void
 }
 
-/** A callback that performs actions on a {@link test.Locator}. */
+/** A callback that performs actions on a {@link Locator}. */
 export interface LocatorCallback {
-  (input: test.Locator): Promise<void> | void
+  (input: Locator): Promise<void> | void
 }
 
 /**
@@ -25,7 +25,7 @@ export interface LocatorCallback {
 export default class BaseActions<Context> implements Promise<void> {
   /** Create a {@link BaseActions}. */
   constructor(
-    protected readonly page: test.Page,
+    protected readonly page: Page,
     protected readonly context: Context,
     private readonly promise = Promise.resolve(),
   ) {}
@@ -42,11 +42,11 @@ export default class BaseActions<Context> implements Promise<void> {
    * Press a key, replacing the text `Mod` with `Meta` (`Cmd`) on macOS, and `Control`
    * on all other platforms.
    */
-  static press(page: test.Page, keyOrShortcut: string): Promise<void> {
-    return test.test.step(`Press '${keyOrShortcut}'`, async () => {
+  static press(page: Page, keyOrShortcut: string): Promise<void> {
+    return test.step(`Press '${keyOrShortcut}'`, async () => {
       if (/\bMod\b|\bDelete\b/.test(keyOrShortcut)) {
         let userAgent = ''
-        await test.test.step('Detect browser OS', async () => {
+        await test.step('Detect browser OS', async () => {
           userAgent = await page.evaluate(() => navigator.userAgent)
         })
         const isMacOS = /\bMac OS\b/i.test(userAgent)
@@ -89,7 +89,7 @@ export default class BaseActions<Context> implements Promise<void> {
   /** Return a {@link BaseActions} with the same {@link Promise} but a different type. */
   into<
     T extends new (
-      page: test.Page,
+      page: Page,
       context: Context,
       promise: Promise<void>,
       ...args: Args
@@ -115,21 +115,21 @@ export default class BaseActions<Context> implements Promise<void> {
 
   /** Perform an action on the current page. */
   step(name: string, callback: PageCallback<Context>) {
-    return this.do(() => test.test.step(name, () => callback(this.page, this.context)))
+    return this.do(() => test.step(name, () => callback(this.page, this.context)))
   }
 
   /**
    * Press a key, replacing the text `Mod` with `Meta` (`Cmd`) on macOS, and `Control`
    * on all other platforms.
    */
-  press<Key extends string>(keyOrShortcut: inputBindings.AutocompleteKeybind<Key>) {
+  press<Key extends string>(keyOrShortcut: AutocompleteKeybind<Key>) {
     return this.do((page) => BaseActions.press(page, keyOrShortcut))
   }
 
   /** Perform actions until a predicate passes. */
   retry(
     callback: (actions: this) => this,
-    predicate: (page: test.Page) => Promise<boolean>,
+    predicate: (page: Page) => Promise<boolean>,
     options: { retries?: number; delay?: number } = {},
   ) {
     const { retries = 3, delay = 1_000 } = options
@@ -165,11 +165,11 @@ export default class BaseActions<Context> implements Promise<void> {
       return this
     } else if (expected != null) {
       return this.step(`Expect ${description} error to be '${expected}'`, async (page) => {
-        await test.expect(page.getByTestId(testId).getByTestId('error')).toHaveText(expected)
+        await expect(page.getByTestId(testId).getByTestId('error')).toHaveText(expected)
       })
     } else {
       return this.step(`Expect no ${description} error`, async (page) => {
-        await test.expect(page.getByTestId(testId).getByTestId('error')).not.toBeVisible()
+        await expect(page.getByTestId(testId).getByTestId('error')).not.toBeVisible()
       })
     }
   }
