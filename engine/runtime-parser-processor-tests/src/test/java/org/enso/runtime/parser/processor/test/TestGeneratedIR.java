@@ -98,7 +98,7 @@ public class TestGeneratedIR {
 
   @Test
   public void duplicateRespectsParameters() {
-    var location = IdentifiedLocation.create(new Location(1, 2), Option$.MODULE$.empty());
+    var location = new IdentifiedLocation(new Location(1, 2));
     var diagnostics = DiagnosticStorage.empty();
     var nameIR =
         NameTestIRGen.builder().name("name").location(location).diagnostics(diagnostics).build();
