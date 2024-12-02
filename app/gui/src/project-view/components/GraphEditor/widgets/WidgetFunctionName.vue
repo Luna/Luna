@@ -7,7 +7,7 @@ import { useProjectStore } from '@/stores/project'
 import { Ast } from '@/util/ast'
 import { Err, Ok, type Result } from '@/util/data/result'
 import { useToast } from '@/util/toast'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { PropertyAccess } from 'ydoc-shared/ast'
 import type { ExpressionId, MethodPointer } from 'ydoc-shared/languageServerTypes'
 import NodeWidget from '../NodeWidget.vue'
@@ -29,13 +29,16 @@ const operator = computed(() =>
 const name = computed(() =>
   props.input.value instanceof PropertyAccess ? props.input.value.rhs : props.input.value,
 )
-watchEffect(() => (displayedName.value = name.value.code()))
+
+const nameCode = computed(() => name.value.code())
+watch(nameCode, (newValue) => (displayedName.value = newValue))
 
 async function newNameAccepted(newName: string | undefined) {
   if (!newName) {
     displayedName.value = name.value.code()
   } else {
     const result = await renameFunction(newName)
+    console.log('newNameAccepted', result)
     if (!result.ok) {
       renameError.reportError(result.error)
       displayedName.value = name.value.code()
