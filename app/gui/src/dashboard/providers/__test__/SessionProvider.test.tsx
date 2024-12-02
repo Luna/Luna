@@ -108,7 +108,7 @@ describe('SessionProvider', () => {
     })
   })
 
-  it('Should refresh not stale user session', { timeout: 5_000 }, async () => {
+  it('Should refresh not stale user session', { timeout: 1_500 }, async () => {
     userSession.mockReturnValueOnce(
       Promise.resolve({
         ...(await userSession()),
@@ -134,7 +134,7 @@ describe('SessionProvider', () => {
       () => {
         expect(refreshUserSession).toBeCalledTimes(2)
       },
-      { timeout: 5_000 },
+      { timeout: 1_500 },
     )
   })
 
