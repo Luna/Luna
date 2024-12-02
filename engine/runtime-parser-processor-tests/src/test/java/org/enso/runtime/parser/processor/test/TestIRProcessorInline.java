@@ -99,7 +99,6 @@ public class TestIRProcessorInline {
       import org.enso.runtime.parser.dsl.IRNode;
       import org.enso.runtime.parser.dsl.IRChild;
       import org.enso.compiler.core.IR;
-      import org.enso.compiler.core.ir.JExpression;
 
       @IRNode
       public interface MyIR extends IR {
@@ -161,14 +160,14 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
-        import org.enso.compiler.core.ir.JExpression;
+        import org.enso.compiler.core.ir.Expression;
 
         @IRNode
         public interface MyIR extends IR {
-          @IRChild JExpression expression();
+          @IRChild Expression expression();
         }
         """);
-    assertThat(genSrc, containsString("JExpression expression()"));
+    assertThat(genSrc, containsString("Expression expression()"));
   }
 
   @Test
@@ -180,7 +179,6 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
-        import org.enso.compiler.core.ir.JExpression;
 
         @IRNode
         public interface MyIR extends IR {
@@ -199,7 +197,6 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
-        import org.enso.compiler.core.ir.JExpression;
 
         interface MySuperIR extends IR {
           boolean suspended();
@@ -222,7 +219,6 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
-        import org.enso.compiler.core.ir.JExpression;
 
         interface MySuperIR extends IR {
           boolean suspended();
@@ -246,7 +242,6 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
-        import org.enso.compiler.core.ir.JExpression;
 
         interface MySuperSuperIR extends IR {
           boolean suspended();
