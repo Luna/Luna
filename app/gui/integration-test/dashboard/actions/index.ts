@@ -4,6 +4,7 @@ import * as test from '@playwright/test'
 import { TEXTS } from 'enso-common/src/text'
 
 import * as apiModule from '../api'
+import LATEST_GITHUB_RELEASES from '../latestGithubReleases.json' with { type: 'json' }
 import DrivePageActions from './DrivePageActions'
 import LoginPageActions from './LoginPageActions'
 
@@ -773,9 +774,7 @@ export const mockApi = apiModule.mockApi
 /** Set up all mocks, without logging in. */
 export function mockAll({ page, setupAPI }: MockParams) {
   let api!: apiModule.MockApi
-  const actions = new LoginPageActions<Context>(page, { api })
-
-  actions.step('Execute all mocks', async () => {
+  return new LoginPageActions<Context>(page, { api }).step('Execute all mocks', async () => {
     await Promise.all([
       mockApi({ page, setupAPI }).then((theApi) => {
         api = theApi
@@ -787,24 +786,18 @@ export function mockAll({ page, setupAPI }: MockParams) {
 
     await page.goto('/')
   })
-
-  return actions
 }
 
 /** Set up all mocks, and log in with dummy credentials. */
 export function mockAllAndLogin({ page, setupAPI }: MockParams) {
-  const actions = mockAll({ page, setupAPI }).into(DrivePageActions<Context>)
-
-  actions.step('Login', async () => {
-    await login({ page, setupAPI })
-  })
-
-  return actions
+  return mockAll({ page, setupAPI })
+    .into(DrivePageActions<Context>)
+    .step('Login', async () => {
+      await login({ page, setupAPI })
+    })
 }
 
-/**
- * Mock all animations.
- */
+/** Mock all animations. */
 export async function mockAllAnimations({ page }: MockParams) {
   await page.addInitScript({
     content: `
@@ -816,14 +809,24 @@ export async function mockAllAnimations({ page }: MockParams) {
   })
 }
 
-/**
- * Mock unneeded URLs.
- */
+/** Mock unneeded URLs. */
 export async function mockUnneededUrls({ page }: MockParams) {
   const EULA_JSON = JSON.stringify(apiModule.EULA_JSON)
   const PRIVACY_JSON = JSON.stringify(apiModule.PRIVACY_JSON)
 
   return Promise.all([
+    page.route('https://cdn.enso.org/**', async (route) => {
+      await route.fulfill()
+    }),
+
+    page.route('https://www.google-analytics.com/**', async (route) => {
+      await route.fulfill()
+    }),
+
+    page.route('https://www.googletagmanager.com/gtag/js*', async (route) => {
+      await route.fulfill({ contentType: 'text/javascript', body: 'export {};' })
+    }),
+
     page.route('https://*.ingest.sentry.io/api/*/envelope/*', async (route) => {
       await route.fulfill()
     }),
@@ -843,6 +846,50 @@ export async function mockUnneededUrls({ page }: MockParams) {
     page.route('https://fonts.googleapis.com/css2*', async (route) => {
       await route.fulfill({ contentType: 'text/css', body: '' })
     }),
+
+    ...(process.env.MOCK_ALL_URLS === 'true' ?
+      []
+    : [
+        page.route('https://api.github.com/repos/enso-org/enso/releases/latest', async (route) => {
+          await route.fulfill({ json: LATEST_GITHUB_RELEASES })
+        }),
+
+        page.route('https://github.com/enso-org/enso/releases/download/**', async (route) => {
+          await route.fulfill({
+            status: 302,
+            headers: { location: 'https://objects.githubusercontent.com/foo/bar' },
+          })
+        }),
+
+        page.route('https://objects.githubusercontent.com/**', async (route) => {
+          await route.fulfill({
+            status: 200,
+            headers: {
+              'content-type': 'application/octet-stream',
+              'last-modified': 'Wed, 24 Jul 2024 17:22:47 GMT',
+              etag: '"0x8DCAC053D058EA5"',
+              server: 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0',
+              'x-ms-request-id': '20ab2b4e-c01e-0068-7dfa-dd87c5000000',
+              'x-ms-version': '2020-10-02',
+              'x-ms-creation-time': 'Wed, 24 Jul 2024 17:22:47 GMT',
+              'x-ms-lease-status': 'unlocked',
+              'x-ms-lease-state': 'available',
+              'x-ms-blob-type': 'BlockBlob',
+              'content-disposition': 'attachment; filename=enso-linux-x86_64-2024.3.1-rc3.AppImage',
+              'x-ms-server-encrypted': 'true',
+              via: '1.1 varnish, 1.1 varnish',
+              'accept-ranges': 'bytes',
+              age: '1217',
+              date: 'Mon, 29 Jul 2024 09:40:09 GMT',
+              'x-served-by': 'cache-iad-kcgs7200163-IAD, cache-bne12520-BNE',
+              'x-cache': 'HIT, HIT',
+              'x-cache-hits': '48, 0',
+              'x-timer': 'S1722246008.269342,VS0,VE895',
+              'content-length': '1030383958',
+            },
+          })
+        }),
+      ]),
   ])
 }
 
