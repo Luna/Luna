@@ -680,7 +680,7 @@ pub fn typical_check_triggers() -> Event {
     }
 }
 
-pub fn gui() -> Result<Workflow> {
+pub fn gui_packaging() -> Result<Workflow> {
     let on = Event {
         workflow_dispatch: Some(manual_workflow_dispatch()),
         workflow_call: Some(default()),
@@ -712,7 +712,7 @@ pub fn gui() -> Result<Workflow> {
     Ok(workflow)
 }
 
-pub fn gui_tests() -> Result<Workflow> {
+pub fn wasm_checks() -> Result<Workflow> {
     let on = Event {
         workflow_dispatch: Some(manual_workflow_dispatch()),
         workflow_call: Some(default()),
@@ -730,7 +730,7 @@ pub fn gui_tests() -> Result<Workflow> {
     Ok(workflow)
 }
 
-pub fn backend() -> Result<Workflow> {
+pub fn engine_checks() -> Result<Workflow> {
     let on = Event {
         workflow_dispatch: Some(manual_workflow_dispatch()),
         workflow_call: Some(default()),
@@ -757,7 +757,7 @@ pub fn backend() -> Result<Workflow> {
     Ok(workflow)
 }
 
-pub fn engine_nightly() -> Result<Workflow> {
+pub fn engine_checks_nightly() -> Result<Workflow> {
     let on = Event {
         schedule: vec![Schedule::new("0 3 * * *")?],
         workflow_dispatch: Some(manual_workflow_dispatch()),
@@ -863,11 +863,11 @@ pub fn generate(
     let workflows = [
         (repo_root.changelog_yml.to_path_buf(), changelog()?),
         (repo_root.nightly_yml.to_path_buf(), nightly()?),
-        (repo_root.scala_new_yml.to_path_buf(), backend()?),
-        (repo_root.engine_nightly_yml.to_path_buf(), engine_nightly()?),
+        (repo_root.engine_checks_yml.to_path_buf(), engine_checks()?),
+        (repo_root.engine_checks_nightly_yml.to_path_buf(), engine_checks_nightly()?),
         (repo_root.extra_nightly_tests_yml.to_path_buf(), extra_nightly_tests()?),
-        (repo_root.gui_yml.to_path_buf(), gui()?),
-        (repo_root.gui_tests_yml.to_path_buf(), gui_tests()?),
+        (repo_root.gui_packaging_yml.to_path_buf(), gui_packaging()?),
+        (repo_root.wasm_checks_yml.to_path_buf(), wasm_checks()?),
         (repo_root.engine_benchmark_yml.to_path_buf(), engine_benchmark()?),
         (repo_root.std_libs_benchmark_yml.to_path_buf(), std_libs_benchmark()?),
         (repo_root.release_yml.to_path_buf(), release()?),
