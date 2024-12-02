@@ -22,18 +22,33 @@ import org.graalvm.polyglot.Context;
 import org.slf4j.Logger;
 
 /** A column storing strings. */
-public final class StringStorage extends SpecializedStorage<String> {
+public final class StringStorage extends SpecializedStorage<String> implements WithNothingCount {
   private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StringStorage.class);
 
   private final TextType type;
+  private int nothingCount = -1;
   private Future<Long> untrimmedCount;
 
   /**
+   * Creates a new storage instance.
+   *
    * @param data the underlying data
    * @param size the number of items stored
-   * @param type the type of the column
+   * @param type the type of the storage
    */
   public StringStorage(String[] data, int size, TextType type) {
+    this(data, size, type, -1);
+  }
+
+  /**
+   * Creates a new storage instance.
+   *
+   * @param data the underlying data
+   * @param size the number of items stored
+   * @param type the type of the storage
+   * @param nothingCount the number of nothing values in the storage
+   */
+  public StringStorage(String[] data, int size, TextType type, int nothingCount) {
     super(data, size, buildOps());
     this.type = type;
 
@@ -44,7 +59,7 @@ public final class StringStorage extends SpecializedStorage<String> {
 
   @Override
   protected SpecializedStorage<String> newInstance(String[] data, int size) {
-    return new StringStorage(data, size, type);
+    return new StringStorage(data, size, type, -1);
   }
 
   @Override
@@ -274,6 +289,20 @@ public final class StringStorage extends SpecializedStorage<String> {
       // existing elements to do not fit into the 255 bound).
       return getType();
     }
+  }
+
+  @Override
+  public long nothingCount() {
+    if (nothingCount == -1) {
+      int result = 0;
+      for (int i = 0; i < size(); i++) {
+        if (getItem(i) == null) {
+          result++;
+        }
+      }
+      nothingCount = result;
+    }
+    return nothingCount;
   }
 
   private abstract static class StringComparisonOp extends StringBooleanOp {

@@ -36,7 +36,7 @@ public abstract class CoalescingStringStringOp extends StringStringOp {
 
       TextType argumentType = TextType.preciseTypeForValue(argString);
       TextType newType = computeResultType((TextType) storage.getType(), argumentType);
-      return new StringStorage(newVals, size, newType);
+      return new StringStorage(newVals, size, newType, 0);
     } else {
       throw new UnexpectedTypeException("a Text");
     }
@@ -50,6 +50,7 @@ public abstract class CoalescingStringStringOp extends StringStringOp {
     if (arg instanceof StringStorage v) {
       int size = storage.size();
       String[] newVals = new String[size];
+      int nothingCount = 0;
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {
         String a = storage.getItem(i);
@@ -68,12 +69,15 @@ public abstract class CoalescingStringStringOp extends StringStringOp {
         }
 
         newVals[i] = r;
+        if (r == null) {
+          nothingCount++;
+        }
 
         context.safepoint();
       }
 
       TextType newType = computeResultType((TextType) storage.getType(), v.getType());
-      return new StringStorage(newVals, size, newType);
+      return new StringStorage(newVals, size, newType, nothingCount);
     } else {
       throw new UnexpectedTypeException("a Text column");
     }

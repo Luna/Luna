@@ -31,18 +31,23 @@ public abstract class StringLongToStringOp
       return builder.seal();
     } else if (arg instanceof Long argLong) {
       String[] newVals = new String[size];
+      int nothingCount = 0;
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {
         if (storage.isNothing(i)) {
           newVals[i] = null;
+          nothingCount++;
         } else {
           newVals[i] = doOperation(storage.getItem(i), argLong);
+          if (newVals[i] == null) {
+            nothingCount++;
+          }
         }
 
         context.safepoint();
       }
 
-      return new StringStorage(newVals, size, (TextType) storage.getType());
+      return new StringStorage(newVals, size, (TextType) storage.getType(), nothingCount);
     } else {
       throw new UnexpectedTypeException("a Text");
     }
@@ -56,10 +61,12 @@ public abstract class StringLongToStringOp
     if (arg instanceof LongStorage v) {
       int size = storage.size();
       String[] newVals = new String[size];
+      int nothingCount = 0;
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {
         if (storage.isNothing(i) || v.isNothing(i)) {
           newVals[i] = null;
+          nothingCount++;
         } else {
           newVals[i] = doOperation(storage.getItem(i), v.getItem(i));
         }
@@ -67,7 +74,7 @@ public abstract class StringLongToStringOp
         context.safepoint();
       }
 
-      return new StringStorage(newVals, size, (TextType) storage.getType());
+      return new StringStorage(newVals, size, (TextType) storage.getType(), nothingCount);
     } else {
       throw new UnexpectedTypeException("a Text column");
     }

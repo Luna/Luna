@@ -32,12 +32,18 @@ public abstract class StringStringOp
       return builder.seal();
     } else if (arg instanceof String argString) {
       String[] newVals = new String[size];
+      int nothingCount = 0;
+
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {
         if (storage.isNothing(i)) {
           newVals[i] = null;
+          nothingCount++;
         } else {
           newVals[i] = doString(storage.getItem(i), argString);
+          if (newVals[i] == null) {
+            nothingCount++;
+          }
         }
 
         context.safepoint();
@@ -45,7 +51,7 @@ public abstract class StringStringOp
 
       TextType argumentType = TextType.preciseTypeForValue(argString);
       TextType newType = computeResultType((TextType) storage.getType(), argumentType);
-      return new StringStorage(newVals, size, newType);
+      return new StringStorage(newVals, size, newType, nothingCount);
     } else {
       throw new UnexpectedTypeException("a Text");
     }
@@ -59,19 +65,25 @@ public abstract class StringStringOp
     if (arg instanceof StringStorage v) {
       int size = storage.size();
       String[] newVals = new String[size];
+      int nothingCount = 0;
+
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {
         if (storage.isNothing(i) || v.isNothing(i)) {
           newVals[i] = null;
+          nothingCount++;
         } else {
           newVals[i] = doString(storage.getItem(i), v.getItem(i));
+          if (newVals[i] == null) {
+            nothingCount++;
+          }
         }
 
         context.safepoint();
       }
 
       TextType newType = computeResultType((TextType) storage.getType(), v.getType());
-      return new StringStorage(newVals, size, newType);
+      return new StringStorage(newVals, size, newType, nothingCount);
     } else {
       throw new UnexpectedTypeException("a Text column");
     }

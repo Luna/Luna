@@ -22,15 +22,17 @@ public class MapHelpers {
     }
 
     int n = storage1.size();
+    int nothingCount = 0;
     String[] result = new String[n];
     for (int i = 0; i < n; i++) {
       if (!storage1.isNothing(i) && !storage2.isNothing(i)) {
         result[i] = storage1.getItem(i) + storage2.getItem(i);
       } else {
         result[i] = null;
+        nothingCount++;
       }
     }
-    return new StringStorage(result, n, TextType.VARIABLE_LENGTH);
+    return new StringStorage(result, n, TextType.VARIABLE_LENGTH, nothingCount);
   }
 
   public static LongStorage longAddBimap(LongStorage storage1, LongStorage storage2) {

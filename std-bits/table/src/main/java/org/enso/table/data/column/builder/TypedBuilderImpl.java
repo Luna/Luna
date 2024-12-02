@@ -10,6 +10,7 @@ import org.enso.table.data.column.storage.type.StorageType;
 public abstract class TypedBuilderImpl<T> extends TypedBuilder {
   protected T[] data;
   protected int currentSize = 0;
+  protected int nothingCount = 0;
 
   protected abstract T[] newArray(int size);
 
@@ -50,6 +51,7 @@ public abstract class TypedBuilderImpl<T> extends TypedBuilder {
 
   @Override
   public void appendNulls(int count) {
+    nothingCount += count;
     currentSize += count;
   }
 
