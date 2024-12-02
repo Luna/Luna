@@ -2,6 +2,7 @@ package org.enso.runtime.parser.processor;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -115,6 +116,34 @@ final class Utils {
   }
 
   /**
+   * Finds a method in the interface hierarchy. The interface hierarchy processing starts from {@code interfaceType} and
+   * iterates until {@code org.enso.compiler.core.IR} interface type is encountered.
+   * Every method in the hierarchy is checked by {@code methodPredicate}.
+   * @param interfaceType Type of the interface. Must extend {@code org.enso.compiler.core.IR}.
+   * @param procEnv
+   * @param methodPredicate Predicate that is called for each method in the hierarchy.
+   * @return Method that satisfies the predicate or null if no such method is found.
+   */
+  static ExecutableElement findMethod(
+      TypeElement interfaceType, ProcessingEnvironment procEnv, Predicate<ExecutableElement> methodPredicate) {
+    var foundMethod =
+        iterateSuperInterfaces(
+            interfaceType,
+            procEnv,
+            (TypeElement superInterface) -> {
+              for (var enclosedElem : superInterface.getEnclosedElements()) {
+                if (enclosedElem instanceof ExecutableElement execElem) {
+                  if (methodPredicate.test(execElem)) {
+                    return execElem;
+                  }
+                }
+              }
+              return null;
+            });
+    return foundMethod;
+  }
+
+  /**
    * Find any override of {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean,
    * boolean) duplicate method}. Or the duplicate method on the interface itself. Note that there
    * can be an override with a different return type in a sub interface.
@@ -125,20 +154,7 @@ final class Utils {
    */
   static ExecutableElement findDuplicateMethod(
       TypeElement interfaceType, ProcessingEnvironment procEnv) {
-    var duplicateMethod =
-        iterateSuperInterfaces(
-            interfaceType,
-            procEnv,
-            (TypeElement superInterface) -> {
-              for (var enclosedElem : superInterface.getEnclosedElements()) {
-                if (enclosedElem instanceof ExecutableElement execElem) {
-                  if (isDuplicateMethod(execElem)) {
-                    return execElem;
-                  }
-                }
-              }
-              return null;
-            });
+    var duplicateMethod = findMethod(interfaceType, procEnv, Utils::isDuplicateMethod);
     hardAssert(
         duplicateMethod != null,
         "Interface "
@@ -149,23 +165,10 @@ final class Utils {
 
   static ExecutableElement findMapExpressionsMethod(
       TypeElement interfaceType, ProcessingEnvironment processingEnv) {
-    var mapExprsMethod =
-        Utils.iterateSuperInterfaces(
-            interfaceType,
-            processingEnv,
-            iface -> {
-              // Filter only ExecutableElement from iface.getEnclosedElements and convert the stream
-              // to Stream<ExecutableElement>
-              var declaredMethods =
-                  iface.getEnclosedElements().stream()
-                      .filter(elem -> elem instanceof ExecutableElement)
-                      .map(elem -> (ExecutableElement) elem);
-              var mapExprMethod =
-                  declaredMethods
-                      .filter(elem -> elem.getSimpleName().toString().equals(MAP_EXPRESSIONS))
-                      .findFirst();
-              return mapExprMethod.orElse(null);
-            });
+    var mapExprsMethod = findMethod(
+        interfaceType,
+        processingEnv,
+        method -> method.getSimpleName().toString().equals(MAP_EXPRESSIONS));
     hardAssert(
         mapExprsMethod != null,
         "mapExpressions method must be found it must be defined at least on IR super interface");
