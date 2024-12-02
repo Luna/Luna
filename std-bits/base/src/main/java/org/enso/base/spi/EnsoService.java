@@ -27,7 +27,8 @@ public abstract class EnsoService {
   /**
    * Resolved the Enso type object associated with this SPI registration and returns it as a Value.
    *
-   * <p>It may return {@code null} if the Enso library for the associated module is not loaded.
+   * <p>If the Enso library associated with the service is not loaded, it returns a Polyglot Value
+   * which {@code isNull}.
    */
   public final Value getTypeObject() {
     if (cachedTypeObject == null) {
