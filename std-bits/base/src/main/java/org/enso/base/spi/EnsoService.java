@@ -7,8 +7,13 @@ import org.graalvm.polyglot.Value;
 
 /** A base class for an Enso service backed by an Enso type. */
 public abstract class EnsoService {
+  /**
+   * A cached Value representing the loaded type object.
+   *
+   * <p>If it is set to {@code null} it means it has not been loaded yet. If it cannot be loaded it
+   * is set to a Value instance that {@code isNull}.
+   */
   private transient Value cachedTypeObject = null;
-  private transient boolean wasLoaded = false;
 
   /**
    * Defines the path of the Enso module that defines the type associated with this SPI
@@ -25,7 +30,7 @@ public abstract class EnsoService {
    * <p>It may return {@code null} if the Enso library for the associated module is not loaded.
    */
   public final Value getTypeObject() {
-    if (!wasLoaded) {
+    if (cachedTypeObject == null) {
       try {
         cachedTypeObject = EnsoMeta.getType(getModuleName(), getTypeName());
       } catch (PolyglotException e) {
@@ -41,19 +46,20 @@ public abstract class EnsoService {
                       + ": "
                       + e.getMessage());
           cachedTypeObject = Value.asValue(null);
+          assert cachedTypeObject.isNull();
         } else {
           throw e;
         }
       }
-
-      wasLoaded = true;
     }
 
+    assert cachedTypeObject != null;
     return cachedTypeObject;
   }
 
   /** Returns whether the Enso library providing the associated type is loaded. */
   public boolean isLoaded() {
-    return getTypeObject() != null;
+    boolean unavailable = getTypeObject().isNull();
+    return !unavailable;
   }
 }
