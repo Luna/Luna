@@ -167,17 +167,18 @@ add_expression_specs suite_builder detailed setup =
         group_builder.specify "a null column may fail typechecks that expect a concrete type" <|
             t = table_builder [["X", [1, 2, 3]]]
             c = t.evaluate_expression "null"
-            (c + c) . should_fail_with Illegal_Argument
-            (c - c) . should_fail_with Invalid_Value_Type
-            (c.starts_with "X") . should_fail_with Invalid_Value_Type
-            c.not . should_fail_with Invalid_Value_Type
+            nulls = [Nothing, Nothing, Nothing]
+            c.not . to_vector . should_equal nulls
+            (c + c) . to_vector . should_equal nulls
+            (c - c) . to_vector . should_equal nulls
+            (c.starts_with "X") . to_vector . should_equal nulls
 
-            t.evaluate_expression "not(Nothing)" . should_fail_with Invalid_Value_Type
-            t.evaluate_expression "Nothing + Nothing" . should_fail_with Illegal_Argument
-            t.evaluate_expression "Nothing * Nothing" . should_fail_with Invalid_Value_Type
+            t.evaluate_expression "not(Nothing)" . to_vector . should_equal nulls
+            t.evaluate_expression "Nothing + Nothing" . to_vector . should_equal nulls
+            t.evaluate_expression "Nothing * Nothing" . to_vector . should_equal nulls
 
-            t.evaluate_expression "[X] + Nothing" . to_vector . should_equal [Nothing, Nothing, Nothing]
-            t.evaluate_expression "Nothing + [X]" . should_fail_with Illegal_Argument
+            t.evaluate_expression "[X] + Nothing" . to_vector . should_equal nulls
+            t.evaluate_expression "Nothing + [X]" . to_vector . should_equal nulls
 
     suite_builder.group prefix+"Expression Date and Time literals" group_builder->
         specify_test "should be able to add a date or time column" group_builder pending=pending_datetime expression_test->
