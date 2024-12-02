@@ -86,6 +86,7 @@ jobs:
             Cargo.toml
             rust-toolchain.toml
             rustfmt.toml
+            .github/workflows/wasm-checks.yml
             .github/workflows/pull-request.yml
       - name: List all changed files
         env:
@@ -124,7 +125,7 @@ jobs:
             Cargo.lock
             Cargo.toml
             rust-toolchain.toml
-            .github/workflows/scala-new.yml
+            .github/workflows/engine-checks.yml
             .github/workflows/pull-request.yml
       - name: List all changed files
         env:
@@ -153,21 +154,21 @@ jobs:
 
   wasm-checks:
     name: 🧰 WASM Checks
-    uses: ./.github/workflows/gui-tests.yml
+    uses: ./.github/workflows/wasm-checks.yml
     needs: [wasm-changed-files]
     if: needs.wasm-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   engine-checks:
     name: 🧰 Engine Checks
-    uses: ./.github/workflows/scala-new.yml
+    uses: ./.github/workflows/engine-checks.yml
     needs: [engine-changed-files]
     if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   gui-packaging:
     name: 🧰 GUI Packaging
-    uses: ./.github/workflows/gui.yml
+    uses: ./.github/workflows/gui-packaging.yml
     needs: [gui-changed-files, engine-changed-files]
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
