@@ -687,7 +687,7 @@ pub fn gui_packaging() -> Result<Workflow> {
         ..default()
     };
     let mut workflow = Workflow {
-        name: "GUI Packaging".into(),
+        name: "🗐 GUI Packaging".into(),
         concurrency: Some(concurrency("gui-packaging")),
         on,
         ..default()
@@ -719,7 +719,7 @@ pub fn wasm_checks() -> Result<Workflow> {
         ..default()
     };
     let mut workflow = Workflow {
-        name: "WASM Checks".into(),
+        name: "🦀 WASM Checks".into(),
         concurrency: Some(concurrency("wasm-checks")),
         on,
         ..default()
@@ -737,7 +737,7 @@ pub fn engine_checks() -> Result<Workflow> {
         ..default()
     };
     let mut workflow = Workflow {
-        name: "Engine Checks".into(),
+        name: "⚙️ Engine Checks".into(),
         concurrency: Some(concurrency("engine-checks")),
         on,
         ..default()
