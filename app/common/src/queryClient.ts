@@ -121,7 +121,7 @@ export function createQueryClient(): QueryClient {
         refetchOnReconnect: 'always',
         staleTime: DEFAULT_QUERY_STALE_TIME_MS,
         retry: (failureCount, error: unknown) => {
-          const statusesToIgnore = [401, 403, 404]
+          const statusesToIgnore = [403, 404]
           const errorStatus =
             (
               typeof error === 'object' &&
@@ -132,11 +132,15 @@ export function createQueryClient(): QueryClient {
               error.status
             : -1
 
+          if (errorStatus === 401) {
+            return true
+          }
+
           if (statusesToIgnore.includes(errorStatus)) {
             return false
-          } else {
-            return failureCount < 3
           }
+
+          return failureCount < 3
         },
       },
     },

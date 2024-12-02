@@ -63,8 +63,9 @@ function createSessionQuery(userSession: (() => Promise<cognito.UserSession | nu
   return reactQuery.queryOptions({
     queryKey: ['userSession'],
     queryFn: () => userSession?.().catch(() => null) ?? null,
-    refetchOnWindowFocus: true,
-    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: 'always',
+    refetchOnMount: 'always',
+    refetchOnReconnect: 'always',
   })
 }
 
@@ -95,12 +96,6 @@ export default function SessionProvider(props: SessionProviderProps) {
     httpClient.setSessionToken(session.data.accessToken)
   }
 
-  const timeUntilRefresh =
-    session.data ?
-      // If the session has not expired, we should refresh it when it is 5 minutes from expiring.
-      new Date(session.data.expireAt).getTime() - Date.now() - FIVE_MINUTES_MS
-    : Infinity
-
   const refreshUserSessionMutation = reactQuery.useMutation({
     mutationKey: ['refreshUserSession', session.data?.expireAt],
     mutationFn: async () => refreshUserSession?.(),
@@ -112,11 +107,30 @@ export default function SessionProvider(props: SessionProviderProps) {
     queryFn: () => refreshUserSessionMutation.mutateAsync(),
     meta: { persist: false },
     networkMode: 'online',
-    initialData: null,
+    initialData: session.data,
     initialDataUpdatedAt: Date.now(),
-    refetchOnWindowFocus: true,
     refetchIntervalInBackground: true,
-    refetchInterval: timeUntilRefresh < SIX_HOURS_MS ? timeUntilRefresh : SIX_HOURS_MS,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+    refetchOnMount: 'always',
+    refetchInterval: ({ state }) => {
+      const expireAt = state.data?.expireAt
+
+      const timeUntilRefresh =
+        expireAt ?
+          // If the session has not expired, we should refresh it when it is 5 minutes from expiring.
+          // We use 1 second to ensure that we refresh even if the time is very close to expiring
+          // and value won't be less than 0.
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          Math.max(new Date(expireAt).getTime() - Date.now() - FIVE_MINUTES_MS, 1_000)
+        : Infinity
+
+      if (expireAt == null) {
+        return false
+      }
+
+      return timeUntilRefresh < SIX_HOURS_MS ? timeUntilRefresh : SIX_HOURS_MS
+    },
     // We don't want to refetch the session if the user is not authenticated
     enabled: userSession != null && refreshUserSession != null && session.data != null,
   })
