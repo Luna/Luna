@@ -43,7 +43,6 @@ jobs:
             .prettierrc.js
             .prettierignore
             vitest.workspace.ts
-            .github/workflows/gui*
           files_ignore: |
             app/ide-desktop/**
             app/gui/scripts/**
@@ -122,7 +121,6 @@ jobs:
             Cargo.lock
             Cargo.toml
             rust-toolchain.toml
-            .github/workflows/scala-new.yml
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.engine-changed-files.outputs.all_changed_files }}
