@@ -7,7 +7,7 @@ import org.graalvm.polyglot.Value;
 
 public abstract class DatabaseConnectionDetailsSPI extends EnsoService {
   private static final EnsoServiceLoader<DatabaseConnectionDetailsSPI> loader =
-      EnsoServiceLoader.make(DatabaseConnectionDetailsSPI.class);
+      EnsoServiceLoader.load(DatabaseConnectionDetailsSPI.class);
 
   /**
    * Returns an array of pairs, where the first element is the user facing connection name and the

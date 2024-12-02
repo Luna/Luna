@@ -8,7 +8,7 @@ import org.graalvm.polyglot.Value;
 
 public abstract class FileFormatSPI extends EnsoService {
   private static final EnsoServiceLoader<FileFormatSPI> loader =
-      EnsoServiceLoader.make(FileFormatSPI.class);
+      EnsoServiceLoader.load(FileFormatSPI.class);
 
   public static List<Value> get_types(boolean refresh) {
     if (refresh) {

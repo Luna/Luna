@@ -15,7 +15,7 @@ public class EnsoServiceLoader<T extends EnsoService> {
     loader = ServiceLoader.load(clazz, clazz.getClassLoader());
   }
 
-  public static <T extends EnsoService> EnsoServiceLoader<T> make(Class<T> clazz) {
+  public static <T extends EnsoService> EnsoServiceLoader<T> load(Class<T> clazz) {
     return new EnsoServiceLoader<>(clazz);
   }
 

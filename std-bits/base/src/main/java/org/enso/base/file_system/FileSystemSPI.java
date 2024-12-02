@@ -8,7 +8,7 @@ import org.graalvm.polyglot.Value;
 
 public abstract class FileSystemSPI extends EnsoService {
   private static final EnsoServiceLoader<FileSystemSPI> loader =
-      EnsoServiceLoader.make(FileSystemSPI.class);
+      EnsoServiceLoader.load(FileSystemSPI.class);
 
   public static Value get_type(String protocol, boolean refresh) {
     Objects.requireNonNull(protocol, "protocol must not be null/Nothing.");

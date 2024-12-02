@@ -16,7 +16,7 @@ import org.graalvm.polyglot.Value;
  */
 public abstract class ReadManyReturnSPI extends EnsoService {
   private static final EnsoServiceLoader<ReadManyReturnSPI> loader =
-      EnsoServiceLoader.make(ReadManyReturnSPI.class);
+      EnsoServiceLoader.load(ReadManyReturnSPI.class);
 
   public static List<Value> get_types(boolean refresh) {
     if (refresh) {

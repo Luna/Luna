@@ -12,7 +12,7 @@ import org.graalvm.polyglot.Value;
  */
 public abstract class DataLinkSPI extends EnsoService {
   private static final EnsoServiceLoader<DataLinkSPI> loader =
-      EnsoServiceLoader.make(DataLinkSPI.class);
+      EnsoServiceLoader.load(DataLinkSPI.class);
 
   public void reload() {
     loader.reload();
