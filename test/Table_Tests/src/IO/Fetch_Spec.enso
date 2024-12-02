@@ -453,6 +453,11 @@ add_specs suite_builder =
                     HTTP.fetch headers=headers2 uri
                     get_num_response_cache_entries . should_equal 2
 
+        group_builder.specify "Does not attempt to make room for the maximum file size when that is larger than the total disk size" pending=pending_has_url <| Test.with_retries <|
+            with_config 1000 (TotalCacheLimit.Bytes.new 100) _-> _->
+                url = base_url_with_slash+'test_download?omit-content-length=1&length=10'
+                Data.fetch url . decode_as_text . should_succeed
+
         group_builder.specify "Cache limits should have defaults" <|
             lru_cache = LRUCache.new
             lru_cache.getSettings.getMaxFileSize . should_equal (2 * 1024 * 1024 * 1024)

@@ -108,17 +108,19 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
+    // Calculate the largest size we can allow, which is the minimum of the max file size and the max total cache size.
+    long maxAllowedSize = Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
+
     // If we have a content-length, clear up enough space for that. If not,
-    // then clear up enough space for the largest allowed file size.
-    long maxFileSize = settings.getMaxFileSize();
+    // then clear up enough space for the largest allowed size.
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
-      if (size > maxFileSize) {
-        throw new ResponseTooLargeException(maxFileSize);
+      if (size > maxAllowedSize) {
+        throw new ResponseTooLargeException(maxAllowedSize);
       }
       makeRoomFor(size);
     } else {
-      makeRoomFor(maxFileSize);
+      makeRoomFor(maxAllowedSize);
     }
 
     try {
@@ -130,8 +132,6 @@ public class LRUCache<M> {
 
       // Create a cache entry.
       var cacheEntry = new CacheEntry<>(responseData, metadata, size, expiry);
-      System.out.println("AAAAA adding " + cacheEntry);
-    System.out.println("AAAAA total size " + getTotalCacheSize() + settings + " " + Arrays.deepToString(cache.values().stream().map(e -> e.size()).toArray(Long[]::new)));
       cache.put(cacheKey, cacheEntry);
       markCacheEntryUsed(cacheKey);
 
@@ -220,8 +220,6 @@ public class LRUCache<M> {
 
   /** Remove a cache entry: from `cache`, `lastUsed`, and the filesystem. */
   private void removeCacheEntry(Map.Entry<String, CacheEntry<M>> toRemove) {
-    System.out.println("AAAAA removing " + toRemove);
-    System.out.println("AAAAA total size " + getTotalCacheSize() + settings + " " + Arrays.deepToString(cache.values().stream().map(e -> e.size()).toArray(Long[]::new)));
     var key = toRemove.getKey();
     var value = toRemove.getValue();
     cache.remove(key);
@@ -266,7 +264,6 @@ public class LRUCache<M> {
     }
     removeCacheEntries(toRemove);
     var afterLens = cache.values().stream().map(e -> e.size()).toArray(Long[]::new);
-    System.out.println("AAAAA makeRoomFor " + totalSize + " " + maxTotalCacheSize + " " + Arrays.deepToString(beforeLens)+Arrays.deepToString(afterLens));
     assert totalSize <= maxTotalCacheSize
         : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")"+Arrays.deepToString(beforeLens)+Arrays.deepToString(afterLens);
   }
