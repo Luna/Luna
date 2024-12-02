@@ -17,7 +17,6 @@ jobs:
   test-continue-on-error-behavior:
     name: Test continue-on-error
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checking out the repository
         uses: actions/checkout@v4
