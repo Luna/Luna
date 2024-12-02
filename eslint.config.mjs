@@ -569,15 +569,8 @@ export default [
     },
   },
   {
-    files: [
-      'app/gui/src/dashboard/**/*.ts',
-      'app/gui/src/dashboard/**/*.tsx',
-      '!**/*.stories.tsx',
-      '!**/*.test.tsx',
-      '!**/*.test.ts',
-      '!**/*.d.ts',
-      '!**/*.spec.ts',
-    ],
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
+    ignores: ['**/*.d.ts', '**/*.spec.ts', '**/*.stories.tsx', '**/*.test.tsx', '**/*.test.ts'],
     plugins: { 'react-compiler': reactCompiler },
     rules: { 'react-compiler/react-compiler': 'error' },
   },
