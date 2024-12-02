@@ -153,21 +153,21 @@ jobs:
     secrets: inherit
 
   wasm-checks:
-    name: 🧰 WASM Checks
+    name: 🦀 WASM Checks
     uses: ./.github/workflows/wasm-checks.yml
     needs: [wasm-changed-files]
     if: needs.wasm-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   engine-checks:
-    name: 🧰 Engine Checks
+    name: ⚙️ Engine Checks
     uses: ./.github/workflows/engine-checks.yml
     needs: [engine-changed-files]
     if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   gui-packaging:
-    name: 🧰 GUI Packaging
+    name: 🗐 GUI Packaging
     uses: ./.github/workflows/gui-packaging.yml
     needs: [gui-changed-files, engine-changed-files]
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'

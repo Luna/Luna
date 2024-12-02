@@ -1,7 +1,7 @@
 # This file is auto-generated. Do not edit it manually!
 # Edit the enso_build::ci_gen module instead and run `cargo run --package enso-build-ci-gen`.
 
-name: 🦀 WASM Checks
+name: WASM Checks
 on:
   workflow_dispatch:
     inputs:
