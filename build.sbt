@@ -3216,10 +3216,20 @@ lazy val `runtime-parser` =
       Compile / moduleDependencies ++= Seq(
         "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion
       ),
-      Compile / javacOptions ++= Seq(
-        "-processor",
-        "org.enso.runtime.parser.processor.IRProcessor"
-      ),
+      // Java compiler is not able to correctly find all the annotation processor, because
+      // one of the is on module-path. To overcome this, we explicitly list all of them here.
+      Compile / javacOptions ++= {
+        val processorClasses = Seq(
+          "org.enso.runtime.parser.processor.IRProcessor",
+          "org.enso.persist.impl.PersistableProcessor",
+          "org.netbeans.modules.openide.util.ServiceProviderProcessor",
+          "org.netbeans.modules.openide.util.NamedServiceProcessor"
+        ).mkString(",")
+        Seq(
+          "-processor",
+          processorClasses
+        )
+      },
       Compile / internalModuleDependencies := Seq(
         (`syntax-rust-definition` / Compile / exportedModule).value,
         (`persistance` / Compile / exportedModule).value,
