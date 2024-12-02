@@ -198,6 +198,7 @@ export default [
       '**/*.timestamp-*.mjs',
       '**/node_modules',
       '**/generated',
+      '**/*.json',
       'app/rust-ffi/pkg/',
     ],
   },
@@ -573,13 +574,5 @@ export default [
     ignores: ['**/*.d.ts', '**/*.spec.ts', '**/*.stories.tsx', '**/*.test.tsx', '**/*.test.ts'],
     plugins: { 'react-compiler': reactCompiler },
     rules: { 'react-compiler/react-compiler': 'error' },
-  },
-  {
-    files: ['**/*.json'],
-    rules: {
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-expressions': 'off',
-      'no-restricted-syntax': 'off',
-    },
   },
 ]
