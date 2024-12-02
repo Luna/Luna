@@ -7,17 +7,17 @@ import LoginPageActions from './LoginPageActions'
 import SettingsPageActions from './SettingsPageActions'
 
 /** Actions for the user menu. */
-export interface UserMenuActions<T extends BaseActions> {
+export interface UserMenuActions<T extends BaseActions<Context>, Context> {
   readonly downloadApp: (callback: (download: test.Download) => Promise<void> | void) => T
-  readonly settings: () => SettingsPageActions
-  readonly logout: () => LoginPageActions
-  readonly goToLoginPage: () => LoginPageActions
+  readonly settings: () => SettingsPageActions<Context>
+  readonly logout: () => LoginPageActions<Context>
+  readonly goToLoginPage: () => LoginPageActions<Context>
 }
 
 /** Generate actions for the user menu. */
-export function userMenuActions<T extends BaseActions>(
-  step: (name: string, callback: baseActions.PageCallback) => T,
-): UserMenuActions<T> {
+export function userMenuActions<T extends BaseActions<Context>, Context>(
+  step: (name: string, callback: baseActions.PageCallback<Context>) => T,
+): UserMenuActions<T, Context> {
   return {
     downloadApp: (callback: (download: test.Download) => Promise<void> | void) =>
       step('Download app (user menu)', async (page) => {
@@ -28,14 +28,14 @@ export function userMenuActions<T extends BaseActions>(
     settings: () =>
       step('Go to Settings (user menu)', async (page) => {
         await page.getByRole('button', { name: 'Settings' }).getByText('Settings').click()
-      }).into(SettingsPageActions),
+      }).into(SettingsPageActions<Context>),
     logout: () =>
       step('Logout (user menu)', (page) =>
         page.getByRole('button', { name: 'Logout' }).getByText('Logout').click(),
-      ).into(LoginPageActions),
+      ).into(LoginPageActions<Context>),
     goToLoginPage: () =>
       step('Login (user menu)', (page) =>
         page.getByRole('button', { name: 'Login', exact: true }).getByText('Login').click(),
-      ).into(LoginPageActions),
+      ).into(LoginPageActions<Context>),
   }
 }

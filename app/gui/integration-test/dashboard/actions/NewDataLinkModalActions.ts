@@ -14,10 +14,10 @@ function locateNewDataLinkModal(page: test.Page) {
 /** Actions for a "new Data Link" modal. */
 export default class NewDataLinkModalActions<Context> extends BaseActions<Context> {
   /** Cancel creating the new Data Link (don't submit the form). */
-  cancel() {
+  cancel(): DrivePageActions<Context> {
     return this.step('Cancel out of "new data link" modal', async () => {
       await this.press('Escape')
-    }).into(DrivePageActions)
+    }).into(DrivePageActions<Context>)
   }
 
   /** Interact with the "name" input - for example, to set the name using `.fill("")`. */
