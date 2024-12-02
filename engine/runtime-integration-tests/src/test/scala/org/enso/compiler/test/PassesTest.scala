@@ -69,7 +69,7 @@ class PassesTest extends CompilerTest {
           PrivateModuleAnalysis.INSTANCE,
           PrivateConstructorAnalysis.INSTANCE,
           ShadowedPatternFields.INSTANCE,
-          UnreachableMatchBranches,
+          UnreachableMatchBranches.INSTANCE,
           NestedPatternMatch,
           IgnoredBindings,
           TypeFunctions,

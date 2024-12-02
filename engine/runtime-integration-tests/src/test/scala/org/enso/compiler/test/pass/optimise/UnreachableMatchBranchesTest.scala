@@ -20,7 +20,7 @@ class UnreachableMatchBranchesTest extends CompilerTest {
   val passes = new Passes(defaultConfig)
 
   val precursorPasses: PassGroup =
-    passes.getPrecursors(UnreachableMatchBranches).get
+    passes.getPrecursors(UnreachableMatchBranches.INSTANCE).get
   val passConfig: PassConfiguration = PassConfiguration()
 
   implicit val passManager: PassManager =
@@ -40,7 +40,9 @@ class UnreachableMatchBranchesTest extends CompilerTest {
       */
     def optimize(implicit inlineContext: InlineContext): Expression = {
       val miniPass =
-        UnreachableMatchBranches.createForInlineCompilation(inlineContext)
+        UnreachableMatchBranches.INSTANCE.createForInlineCompilation(
+          inlineContext
+        )
       MiniIRPass.compile(classOf[Expression], ir, miniPass)
     }
   }
