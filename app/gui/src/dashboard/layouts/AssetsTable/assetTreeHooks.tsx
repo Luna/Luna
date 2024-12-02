@@ -87,11 +87,11 @@ export function useAssetTree(options: UseAssetTreeOptions) {
   useQuery(
     useMemo(
       () => ({
-        queryKey: ['refetchListDirectory'],
+        queryKey: [backend.type, 'refetchListDirectory'],
         queryFn: () =>
           queryClient
             .refetchQueries({
-              queryKey: ['listDirectory'],
+              queryKey: [backend.type, 'listDirectory'],
               type: 'active',
             })
             .then(() => null),
@@ -104,6 +104,7 @@ export function useAssetTree(options: UseAssetTreeOptions) {
         meta: { persist: false },
       }),
       [
+        backend.type,
         enableAssetsTableBackgroundRefresh,
         assetsTableBackgroundRefreshInterval,
         hidden,
