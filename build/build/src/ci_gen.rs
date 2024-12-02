@@ -475,6 +475,16 @@ impl PromoteReleaseJob {
     pub const PROMOTE_STEP_ID: &'static str = "promote";
 }
 
+fn concurrency(group: impl AsRef<str>) -> Concurrency {
+    let github_workflow = wrap_expression("github.workflow");
+    let github_ref = wrap_expression("github.ref");
+    let group_ref = group.as_ref();
+    Concurrency::Map {
+        group:              format!("{github_workflow}-{github_ref}-{group_ref}"),
+        cancel_in_progress: wrap_expression(not_default_branch()),
+    }
+}
+
 /// Generate a workflow that checks if the changelog has been updated (if needed).
 pub fn changelog() -> Result<Workflow> {
     use PullRequestActivityType::*;
@@ -656,7 +666,12 @@ pub fn gui() -> Result<Workflow> {
         workflow_call: Some(default()),
         ..default()
     };
-    let mut workflow = Workflow { name: "GUI Packaging".into(), on, ..default() };
+    let mut workflow = Workflow {
+        name: "GUI Packaging".into(),
+        concurrency: Some(concurrency("gui-packaging")),
+        on,
+        ..default()
+    };
 
     for target in PR_CHECKED_TARGETS {
         let project_manager_job = workflow.add(target, job::BuildBackend);
@@ -674,7 +689,12 @@ pub fn gui_tests() -> Result<Workflow> {
         workflow_call: Some(default()),
         ..default()
     };
-    let mut workflow = Workflow { name: "WASM Checks".into(), on, ..default() };
+    let mut workflow = Workflow {
+        name: "WASM Checks".into(),
+        concurrency: Some(concurrency("wasm-checks")),
+        on,
+        ..default()
+    };
     workflow.add(PRIMARY_TARGET, job::Lint);
     workflow.add(PRIMARY_TARGET, job::WasmTest);
     workflow.add(PRIMARY_TARGET, job::NativeTest);
@@ -687,7 +707,12 @@ pub fn backend() -> Result<Workflow> {
         workflow_call: Some(default()),
         ..default()
     };
-    let mut workflow = Workflow { name: "Engine CI".into(), on, ..default() };
+    let mut workflow = Workflow {
+        name: "Engine Checks".into(),
+        concurrency: Some(concurrency("engine-checks")),
+        on,
+        ..default()
+    };
     workflow.add(PRIMARY_TARGET, job::VerifyLicensePackages);
     for target in PR_CHECKED_TARGETS {
         add_backend_checks(&mut workflow, target, graalvm::Edition::Community);

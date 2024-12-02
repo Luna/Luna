@@ -11,6 +11,9 @@ on:
         type: boolean
         default: false
   workflow_call: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-wasm-checks
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 jobs:
   enso-build-ci-gen-job-lint-linux-amd64:
     name: Lint (linux, amd64)

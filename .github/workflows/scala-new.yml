@@ -1,7 +1,7 @@
 # This file is auto-generated. Do not edit it manually!
 # Edit the enso_build::ci_gen module instead and run `cargo run --package enso-build-ci-gen`.
 
-name: Engine CI
+name: Engine Checks
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +11,9 @@ on:
         type: boolean
         default: false
   workflow_call: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-engine-checks
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' }}
 jobs:
   enso-build-ci-gen-job-ci-check-backend-graal-vm-ce-linux-amd64:
     name: Engine (GraalVM CE) (linux, amd64)
