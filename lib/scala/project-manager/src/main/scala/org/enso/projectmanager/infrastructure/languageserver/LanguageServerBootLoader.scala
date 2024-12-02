@@ -248,6 +248,9 @@ class LanguageServerBootLoader(
         self ! Boot
 
       case GracefulStop =>
+        logger.trace(
+          "Requested Language Server shutdown as part of restart procedure"
+        )
         context.children.foreach(_ ! LanguageServerProcess.Stop)
     }
 

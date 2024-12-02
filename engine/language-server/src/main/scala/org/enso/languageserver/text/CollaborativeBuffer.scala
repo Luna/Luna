@@ -3,6 +3,7 @@ package org.enso.languageserver.text
 import akka.actor.{Actor, ActorRef, Cancellable, Props, Stash, Status}
 import com.typesafe.scalalogging.LazyLogging
 import org.enso.languageserver.boot.TimingsConfig
+import org.enso.languageserver.boot.config.TimeoutConfig
 import org.enso.languageserver.capability.CapabilityProtocol._
 import org.enso.languageserver.data.{CanEdit, CapabilityRegistration, ClientId}
 import org.enso.languageserver.event.{
@@ -23,6 +24,7 @@ import org.enso.languageserver.filemanager.{
 import org.enso.languageserver.session.JsonSession
 import org.enso.languageserver.text.CollaborativeBuffer.{
   AutoSave,
+  DelayedShutdownTimeout,
   ForceSave,
   IOTimeout,
   ReloadBuffer,
@@ -51,7 +53,8 @@ class CollaborativeBuffer(
   bufferPath: Path,
   fileManager: ActorRef,
   runtimeConnector: ActorRef,
-  timingsConfig: TimingsConfig
+  timingsConfig: TimingsConfig,
+  timeoutConfig: TimeoutConfig
 )(implicit
   versionCalculator: ContentBasedVersioning
 ) extends Actor
@@ -946,10 +949,16 @@ class CollaborativeBuffer(
 
     val newClientMap = clients - clientId
     if (newClientMap.isEmpty) {
-      runtimeConnector ! Api.Request(
-        Api.CloseFileNotification(buffer.fileWithMetadata.file)
+      logger.trace(
+        "No more clients are registered. Scheduling a delayed shutdown"
       )
-      stop(autoSave)
+      val timeoutCancellable = context.system.scheduler
+        .scheduleOnce(
+          timeoutConfig.delayedShutdownTimeout,
+          self,
+          DelayedShutdownTimeout
+        )
+      context.become(delayedShutdown(buffer, timeoutCancellable))
     } else {
       context.become(
         collaborativeEditing(
@@ -960,6 +969,41 @@ class CollaborativeBuffer(
         )
       )
     }
+  }
+
+  private def delayedShutdown(
+    buffer: Buffer,
+    shutdownTimeout: Cancellable
+  ): Receive = {
+    case DelayedShutdownTimeout =>
+      runtimeConnector ! Api.Request(
+        Api.CloseFileNotification(buffer.fileWithMetadata.file)
+      )
+      logger.trace("No clients connected while in shutdown mode. Stopping...")
+      stop(Map.empty)
+    case OpenFile(client, path) =>
+      shutdownTimeout.cancel()
+      unstashAll()
+      context.system.eventStream.publish(BufferOpened(path))
+      logger.debug(
+        "Shutdown interrupted. Buffer re-opened for [path:{}, client:{}].",
+        path,
+        client.clientId
+      )
+      readFile(client, path)
+
+    case OpenBuffer(client, path) =>
+      shutdownTimeout.cancel()
+      unstashAll()
+      context.system.eventStream.publish(BufferOpened(path))
+      logger.debug(
+        "Shutdown interrupted. Buffer re-opened in-memory for [path:{}, client:{}].",
+        path,
+        client.clientId
+      )
+      openBuffer(client, path)
+    case _ =>
+      stash()
   }
 
   private def releaseWriteLock(
@@ -1047,6 +1091,8 @@ object CollaborativeBuffer {
 
   case class ReloadedBuffer(path: Path)
 
+  private case object DelayedShutdownTimeout
+
   /** Creates a configuration object used to create a [[CollaborativeBuffer]]
     *
     * @param bufferPath a path to a file
@@ -1060,14 +1106,16 @@ object CollaborativeBuffer {
     bufferPath: Path,
     fileManager: ActorRef,
     runtimeConnector: ActorRef,
-    timingsConfig: TimingsConfig
+    timingsConfig: TimingsConfig,
+    timeoutConfig: TimeoutConfig
   )(implicit versionCalculator: ContentBasedVersioning): Props =
     Props(
       new CollaborativeBuffer(
         bufferPath,
         fileManager,
         runtimeConnector,
-        timingsConfig
+        timingsConfig,
+        timeoutConfig
       )
     )
 

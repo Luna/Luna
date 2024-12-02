@@ -5,6 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.apache.commons.io.FileUtils
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.capability.CapabilityProtocol.{
   AcquireCapability,
   CapabilityAcquired
@@ -996,6 +997,7 @@ class SuggestionsHandlerSpec
       ProjectDirectoriesConfig.initialize(root.file),
       ProfilingConfig(),
       StartupConfig(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
   }

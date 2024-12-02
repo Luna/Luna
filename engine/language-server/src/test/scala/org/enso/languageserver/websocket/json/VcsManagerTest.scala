@@ -9,6 +9,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.data._
 import org.enso.languageserver.vcsmanager.VcsApi
 import org.enso.testkit.{FlakySpec, ReportLogsOnFailure}
@@ -37,6 +38,7 @@ class VcsManagerTest
       ProjectDirectoriesConfig.initialize(testContentRoot.file),
       ProfilingConfig(),
       StartupConfig(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
   }

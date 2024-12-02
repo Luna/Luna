@@ -148,9 +148,14 @@ class BinaryWebSocketServer[A, B](
       }
       .to {
         Sink.actorRef[Either[DecodingFailure, A]](
-          frontController,
-          ConnectionClosed,
-          ConnectionFailed
+          frontController, {
+            logger.trace("Binary sink stream finished with no failure")
+            ConnectionClosed
+          },
+          { e: Throwable =>
+            logger.trace("Binary sink stream finished with a failure", e)
+            ConnectionFailed(e)
+          }
         )
       }
   }

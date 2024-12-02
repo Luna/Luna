@@ -2,6 +2,7 @@ package org.enso.languageserver.boot;
 
 import java.util.UUID;
 import org.apache.commons.cli.CommandLine;
+import org.enso.languageserver.boot.config.ApplicationConfig;
 import org.enso.runner.common.LanguageServerApi;
 import org.enso.runner.common.ProfilingConfig;
 import org.enso.runner.common.WrongOption;
@@ -80,6 +81,7 @@ public final class LanguageServerRunner extends LanguageServerApi {
             rootPath,
             profilingConfig,
             new StartupConfig(graalVMUpdater),
+            ApplicationConfig.load(),
             "language-server",
             ExecutionContext.global());
     return config;

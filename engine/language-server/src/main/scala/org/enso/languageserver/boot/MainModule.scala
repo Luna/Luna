@@ -105,6 +105,7 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     directoriesConfig,
     serverConfig.profilingConfig,
     serverConfig.startupConfig,
+    serverConfig.appConfig,
     openAiCfg
   )
   log.trace("Created Language Server config [{}]", languageServerConfig)
@@ -247,7 +248,8 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
         vcsManager,
         runtimeConnector,
         contentRootManagerWrapper,
-        TimingsConfig.default().withAutoSave(6.seconds)
+        TimingsConfig.default().withAutoSave(6.seconds),
+        languageServerConfig.appConfig.timeout
       ),
       "buffer-registry"
     )

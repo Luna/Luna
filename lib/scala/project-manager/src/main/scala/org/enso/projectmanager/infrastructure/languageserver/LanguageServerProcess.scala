@@ -1,7 +1,7 @@
 package org.enso.projectmanager.infrastructure.languageserver
 import java.util.UUID
-
 import akka.actor.{Actor, ActorRef, Cancellable, Props, Stash}
+import com.typesafe.scalalogging.LazyLogging
 import org.enso.projectmanager.data.Socket
 import org.enso.projectmanager.infrastructure.http.AkkaBasedWebSocketConnectionFactory
 import org.enso.projectmanager.infrastructure.languageserver.LanguageServerExecutor.ProcessHandle
@@ -47,7 +47,8 @@ class LanguageServerProcess(
   bootTimeout: FiniteDuration,
   executor: LanguageServerExecutor
 ) extends Actor
-    with Stash {
+    with Stash
+    with LazyLogging {
 
   import context.dispatcher
 
@@ -170,9 +171,17 @@ class LanguageServerProcess(
     * is stopped.
     */
   private def runningStage(process: ProcessHandle): Receive = {
-    case Stop => process.requestGracefulTermination()
-    case Kill => process.kill()
+    case Stop =>
+      logger.trace("Request to stop Language Server process")
+      process.requestGracefulTermination()
+    case Kill =>
+      logger.trace("Request to kill Language Server process")
+      process.kill()
     case ProcessTerminated(exitCode) =>
+      logger.trace(
+        "Language Server process terminated with exit code: {}",
+        exitCode
+      )
       context.parent ! ServerTerminated(exitCode)
       context.stop(self)
     case ProcessFailed(error) => handleFatalError(error)

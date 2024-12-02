@@ -3,6 +3,7 @@ package org.enso.jsonrpc
 import akka.actor.{Actor, ActorRef, Stash}
 import io.circe.Json
 import org.enso.jsonrpc.Errors.InvalidParams
+import org.slf4j.{Logger, LoggerFactory}
 
 /** An actor responsible for passing parsed massages between the web and
   * a controller actor.
@@ -14,13 +15,17 @@ class MessageHandler(protocolFactory: ProtocolFactory, controller: ActorRef)
     extends Actor
     with Stash {
 
+  private[this] val logger: Logger =
+    LoggerFactory.getLogger(classOf[MessageHandler])
+
   private def getProtocol(): Protocol = protocolFactory.getProtocol()
 
   /** A pre-initialization behavior, awaiting a to-web connection end.
     * @return the actor behavior.
     */
   override def receive: Receive = {
-    case MessageHandler.Connected(webConnection, _) =>
+    case MessageHandler.Connected(webConnection, port) =>
+      logger.trace("New connection initiated @ {}", port)
       unstashAll()
       context.become(established(webConnection, Map()))
     case _ => stash()
@@ -39,6 +44,7 @@ class MessageHandler(protocolFactory: ProtocolFactory, controller: ActorRef)
     case MessageHandler.WebMessage(msg) =>
       handleWebMessage(msg, webConnection, awaitingResponses)
     case MessageHandler.Disconnected(port) =>
+      logger.trace("Disconnected @ {}", port)
       controller ! MessageHandler.Disconnected(port)
       context.stop(self)
     case request: Request[Method, Any] =>

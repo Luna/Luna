@@ -1,9 +1,10 @@
 package org.enso.languageserver.filemanager
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, Cancellable, Props, Stash}
 import akka.pattern.pipe
 import com.typesafe.scalalogging.LazyLogging
 import org.enso.filewatcher.{Watcher, WatcherFactory}
+import org.enso.languageserver.boot.config.TimeoutConfig
 import org.enso.languageserver.capability.CapabilityProtocol.{
   CapabilityAcquired,
   CapabilityAcquisitionFileSystemFailure,
@@ -39,11 +40,13 @@ import scala.util.{Failure, Success, Try}
   */
 final class PathWatcher(
   config: PathWatcherConfig,
+  timeoutConfig: TimeoutConfig,
   contentRootManager: ContentRootManager,
   watcherFactory: WatcherFactory,
   fs: FileSystemApi[BlockingIO],
   exec: Exec[BlockingIO]
 ) extends Actor
+    with Stash
     with LazyLogging
     with UnhandledLogging {
 
@@ -180,10 +183,36 @@ final class PathWatcher(
     clients: Set[ActorRef]
   ): Unit = {
     if (clients.isEmpty) {
-      context.stop(self)
+      val timeoutCancellable = context.system.scheduler
+        .scheduleOnce(
+          timeoutConfig.delayedShutdownTimeout,
+          self,
+          PathWatcher.DelayedShutdownTimeout
+        )
+      logger.trace(
+        "No more clients registered to watch {}. Delayed shutdown initiated",
+        base
+      )
+      delayedShutdownStage(root, base, timeoutCancellable)
     } else {
       context.become(initializedStage(root, base, clients))
     }
+  }
+
+  private def delayedShutdownStage(
+    root: File,
+    base: Path,
+    timeout: Cancellable
+  ): Receive = {
+    case PathWatcher.DelayedShutdownTimeout =>
+      context.stop(self)
+    case WatchPath(_, newClients) =>
+      timeout.cancel()
+      sender() ! CapabilityAcquired
+      unstashAll()
+      context.become(initializedStage(root, base, newClients))
+    case _ =>
+      stash()
   }
 
   private def validatePath(path: File): BlockingIO[FileSystemFailure, Unit] =
@@ -269,6 +298,8 @@ object PathWatcher {
     */
   case class ForwardResponse(sender: ActorRef, response: Any, last: Boolean)
 
+  case object DelayedShutdownTimeout
+
   /** Creates a configuration object used to create a [[PathWatcher]].
     *
     * @param config configuration
@@ -279,10 +310,20 @@ object PathWatcher {
     */
   def props(
     config: PathWatcherConfig,
+    timeoutConfig: TimeoutConfig,
     contentRootManager: ContentRootManager,
     watcherFactory: WatcherFactory,
     fs: FileSystemApi[BlockingIO],
     exec: Exec[BlockingIO]
   ): Props =
-    Props(new PathWatcher(config, contentRootManager, watcherFactory, fs, exec))
+    Props(
+      new PathWatcher(
+        config,
+        timeoutConfig,
+        contentRootManager,
+        watcherFactory,
+        fs,
+        exec
+      )
+    )
 }

@@ -8,6 +8,7 @@ import com.google.flatbuffers.FlatBufferBuilder
 import org.apache.commons.io.FileUtils
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.data.{
   Config,
   ExecutionContextConfig,
@@ -55,6 +56,7 @@ abstract class BaseBinaryServerTest extends BinaryServerTestKit {
     ProjectDirectoriesConfig.initialize(testContentRoot.file),
     ProfilingConfig(),
     StartupConfig(),
+    ApplicationConfig.load("application-test.conf"),
     None
   )
 

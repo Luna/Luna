@@ -5,6 +5,7 @@ import akka.testkit._
 import org.apache.commons.io.FileUtils
 import org.enso.runner.common.ProfilingConfig
 import org.enso.languageserver.boot.StartupConfig
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.languageserver.data._
 import org.enso.languageserver.event.InitializedEvent
 import org.enso.languageserver.filemanager.{ContentRoot, ContentRootWithFile}
@@ -96,6 +97,7 @@ class RepoInitializationSpec
       ProjectDirectoriesConfig.initialize(root.file),
       ProfilingConfig(),
       StartupConfig(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
   }

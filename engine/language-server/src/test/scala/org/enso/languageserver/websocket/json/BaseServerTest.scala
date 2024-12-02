@@ -15,6 +15,7 @@ import org.enso.filewatcher.test.NoopWatcherFactory
 import org.enso.jsonrpc.test.JsonRpcServerTestKit
 import org.enso.jsonrpc.{ClientControllerFactory, ProtocolFactory}
 import org.enso.languageserver.TestClock
+import org.enso.languageserver.boot.config.ApplicationConfig
 import org.enso.runner.common.ProfilingConfig
 import org.enso.runner.common.CompilerBasedDependencyExtractor
 import org.enso.languageserver.boot.{StartupConfig, TimingsConfig}
@@ -72,7 +73,6 @@ import java.nio.file.{Files, Path}
 import java.util.UUID
 import java.util.concurrent.{Executors, ThreadFactory}
 import java.util.concurrent.atomic.AtomicInteger
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import org.slf4j.LoggerFactory
@@ -118,6 +118,7 @@ abstract class BaseServerTest
       ProjectDirectoriesConfig(testContentRoot.file),
       ProfilingConfig(),
       StartupConfig(),
+      ApplicationConfig.load("application-test.conf"),
       None
     )
 
@@ -190,6 +191,7 @@ abstract class BaseServerTest
   var cleanupCallbacks: List[() => Unit] = Nil
 
   var timingsConfig = TimingsConfig.default()
+  var appConfig     = ApplicationConfig.load("application-test.conf")
 
   override def afterEach(): Unit = {
     cleanupCallbacks.foreach(_())
@@ -262,7 +264,8 @@ abstract class BaseServerTest
           vcsManager,
           runtimeConnectorProbe.ref,
           contentRootManagerWrapper,
-          timingsConfig
+          timingsConfig,
+          appConfig.timeout
         )(
           Sha3_224VersionCalculator
         ),
