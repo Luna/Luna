@@ -37,6 +37,7 @@ final class IRNodeClassGenerator {
 
   private final GeneratedClassContext generatedClassContext;
   private final DuplicateMethodGenerator duplicateMethodGenerator;
+  private final SetLocationMethodGenerator setLocationMethodGenerator;
   private final BuilderMethodGenerator builderMethodGenerator;
   private final MapExpressionsMethodGenerator mapExpressionsMethodGenerator;
 
@@ -81,6 +82,13 @@ final class IRNodeClassGenerator {
     var mapExpressionsMethod = Utils.findMapExpressionsMethod(interfaceType, processingEnv);
     this.mapExpressionsMethodGenerator =
         new MapExpressionsMethodGenerator(mapExpressionsMethod, generatedClassContext);
+    var setLocationMethod =
+        Utils.findMethod(
+            interfaceType,
+            processingEnv,
+            method -> method.getSimpleName().toString().equals("setLocation"));
+    this.setLocationMethodGenerator =
+        new SetLocationMethodGenerator(setLocationMethod, processingEnv);
     this.copyMethodGenerators =
         findCopyMethods().stream()
             .map(copyMethod -> new CopyMethodGenerator(copyMethod, generatedClassContext))
@@ -297,11 +305,8 @@ final class IRNodeClassGenerator {
           }
         }
 
-        @Override
-        public IR setLocation(Option<IdentifiedLocation> location) {
-          throw new UnsupportedOperationException("unimplemented");
-        }
-        
+        $setLocationMethod
+
         @Override
         public IdentifiedLocation identifiedLocation() {
           return this.location;
@@ -341,6 +346,7 @@ final class IRNodeClassGenerator {
         }
         """
             .replace("$childrenMethodBody", childrenMethodBody())
+            .replace("$setLocationMethod", setLocationMethodGenerator.generateMethodCode())
             .replace("$duplicateMethod", duplicateMethodGenerator.generateDuplicateMethodCode());
     return indent(code, 2);
   }
