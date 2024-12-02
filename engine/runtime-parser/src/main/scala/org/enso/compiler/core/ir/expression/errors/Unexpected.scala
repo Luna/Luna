@@ -10,12 +10,14 @@ import java.util.UUID
 sealed trait Unexpected extends Error {
 
   /** The unexpected construct. */
-  val ir: IR
+  def ir: IR
 
   /** The name of the unexpected entity. */
-  val entity: String
+  def entity: String
 
-  override val location: Option[IdentifiedLocation] = ir.location
+  /** @inheritdoc */
+  override def identifiedLocation: IdentifiedLocation =
+    ir.identifiedLocation()
 
   /** @inheritdoc */
   override def message(source: (IdentifiedLocation => String)): String =
@@ -75,7 +77,7 @@ object Unexpected {
     ): TypeSignature = {
       if (
         ir != this.ir
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {

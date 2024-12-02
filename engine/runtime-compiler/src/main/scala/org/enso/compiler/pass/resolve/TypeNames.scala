@@ -96,12 +96,17 @@ case object TypeNames extends IRPass {
     def fromMethodReference(m: Name.MethodReference): SelfTypeInfo =
       m.typePointer match {
         case Some(p) =>
-          p.getMetadata(MethodDefinitions) match {
+          p.getMetadata(
+            MethodDefinitions.INSTANCE,
+            classOf[BindingsMap.Resolution]
+          ) match {
             case Some(resolution) =>
               resolution.target match {
                 case typ: BindingsMap.ResolvedType =>
                   val params =
-                    typ.tp.params.map(Name.Literal(_, false, None)).toList
+                    typ.tp.params
+                      .map(Name.Literal(_, false, identifiedLocation = null))
+                      .toList
                   SelfTypeInfo(Some(typ), params)
                 case _: BindingsMap.ResolvedModule =>
                   SelfTypeInfo.empty

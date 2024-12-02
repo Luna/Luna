@@ -2,6 +2,7 @@ from Standard.Base import all hiding Range
 from Standard.Test import Bench
 import project.Collections
 import project.Column_Numeric
+import project.Compiler.Compile
 import project.Decimal_Benchmark
 import project.Equality
 import project.Json_Bench
@@ -30,6 +31,7 @@ import project.Text.Build
 import project.Text.Compare
 import project.Text.Contains
 import project.Text.Pretty
+import project.Text.Regex_Bench
 import project.Text.Reverse
 import project.Time.Work_Days
 import project.Time.Format
@@ -78,6 +80,7 @@ all_benchmarks =
         builder.append Compare.collect_benches
         builder.append Contains.collect_benches
         builder.append Pretty.collect_benches
+        builder.append Regex_Bench.collect_benches
         builder.append Reverse.collect_benches
 
         # Time
@@ -99,6 +102,7 @@ all_benchmarks =
         # Runtime
         builder.append Panics_And_Errors.collect_benches
 
+        builder.append Compile.collect_benches
         builder.append Startup.collect_benches
         builder.append Sieve.Main.collect_benches
 

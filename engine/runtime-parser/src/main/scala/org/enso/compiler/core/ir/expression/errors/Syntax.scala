@@ -63,7 +63,7 @@ sealed case class Syntax(
     if (
       at != this.at
       || reason != this.reason
-      || passData != this.passData
+      || (passData ne this.passData)
       || diagnostics != this.diagnostics
       || id != this.id
     ) {
@@ -93,7 +93,8 @@ sealed case class Syntax(
     this
 
   /** @inheritdoc */
-  override val location: Option[IdentifiedLocation] = Option(at)
+  override def identifiedLocation: IdentifiedLocation =
+    at
 
   /** @inheritdoc */
   override def mapExpressions(

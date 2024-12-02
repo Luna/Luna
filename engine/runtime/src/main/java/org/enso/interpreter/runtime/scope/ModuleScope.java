@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.scope;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -20,7 +21,7 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /** A representation of Enso's per-file top-level scope. */
 @ExportLibrary(TypesLibrary.class)
-public final class ModuleScope implements EnsoObject {
+public final class ModuleScope extends EnsoObject {
   private final Type associatedType;
   private final Module module;
   private final Map<String, Supplier<TruffleObject>> polyglotSymbols;
@@ -290,6 +291,12 @@ public final class ModuleScope implements EnsoObject {
     return "Scope" + module;
   }
 
+  @Override
+  @TruffleBoundary
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toString();
+  }
+
   public static class Builder {
 
     @CompilerDirectives.CompilationFinal private ModuleScope moduleScope = null;
@@ -511,17 +518,25 @@ public final class ModuleScope implements EnsoObject {
      *     currently registered entities
      */
     public ModuleScope asModuleScope() {
-      if (moduleScope != null) return moduleScope;
-      else
-        return new ModuleScope(
-            module,
-            associatedType,
-            Collections.unmodifiableMap(polyglotSymbols),
-            Collections.unmodifiableMap(types),
-            Collections.unmodifiableMap(methods),
-            Collections.unmodifiableMap(conversions),
-            Collections.unmodifiableSet(imports),
-            Collections.unmodifiableSet(exports));
+      if (moduleScope != null) {
+        return moduleScope;
+      } else {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        return createModuleScope();
+      }
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private ModuleScope createModuleScope() {
+      return new ModuleScope(
+          module,
+          associatedType,
+          Collections.unmodifiableMap(polyglotSymbols),
+          Collections.unmodifiableMap(types),
+          Collections.unmodifiableMap(methods),
+          Collections.unmodifiableMap(conversions),
+          Collections.unmodifiableSet(imports),
+          Collections.unmodifiableSet(exports));
     }
 
     @Override

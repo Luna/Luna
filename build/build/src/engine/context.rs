@@ -336,6 +336,9 @@ impl RunContext {
         if self.config.build_native_runner {
             tasks.push("engine-runner/buildNativeImage");
         }
+        if self.config.build_native_ydoc {
+            tasks.push("ydoc-server/buildNativeImage");
+        }
         if self.config.build_project_manager_package() {
             tasks.push("buildProjectManagerDistribution");
         }
@@ -664,13 +667,48 @@ pub async fn runner_sanity_test(
             .bin
             .join("enso")
             .with_executable_extension();
+
         let test_base = Command::new(&enso)
             .args(["--run", repo_root.test.join("Base_Tests").as_str()])
-            .set_env_opt(ENSO_JAVA, enso_java)?
             .set_env(ENSO_DATA_DIRECTORY, engine_package)?
             .run_ok()
             .await;
-        test_base
+
+        let test_internal_base = Command::new(&enso)
+            .args([
+                "--disable-private-check",
+                "--run",
+                repo_root.test.join("Base_Internal_Tests").as_str(),
+            ])
+            .set_env(ENSO_DATA_DIRECTORY, engine_package)?
+            .run_ok()
+            .await;
+
+        let test_geo = Command::new(&enso)
+            .args(["--run", repo_root.test.join("Geo_Tests").as_str()])
+            .set_env(ENSO_DATA_DIRECTORY, engine_package)?
+            .run_ok()
+            .await;
+
+        let all_cmds = test_base.and(test_internal_base).and(test_geo);
+
+        // The following test does not actually run anything, it just checks if the engine
+        // can accept `--jvm` argument and evaluates something.
+        if TARGET_OS != OS::Windows {
+            let test_jvm_arg = Command::new(&enso)
+                .args([
+                    "--jvm",
+                    "--run",
+                    repo_root.test.join("Base_Tests").as_str(),
+                    "__NON_EXISTING_TEST__",
+                ])
+                .set_env(ENSO_DATA_DIRECTORY, engine_package)?
+                .run_ok()
+                .await;
+            all_cmds.and(test_jvm_arg)
+        } else {
+            all_cmds
+        }
     } else {
         Ok(())
     }

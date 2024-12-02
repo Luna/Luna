@@ -18,24 +18,24 @@
       shader-tools.yml:
       std-libs-benchmark.yml:
   app/:
-    gui2/: # The new, Vue-based GUI.
+    gui/: # GUI.
       dist/:
-      playwright-report/: # Test results for the new GUI that we want to keep as artifacts.
+      playwright-report/: # Test results for the GUI that we want to keep as artifacts.
       public/:
         font-enso/:
         font-mplus1/:
         font-dejavu/:
       src/:
-        assets/:
-          font-enso.css:
-          font-mplus1.css:
-          font-dejavu.css:
-    dashboard/:
-      playwright-report/: # Test results for the dashboard that we want to keep as artifacts.
+        project-view/:
+          assets/:
+            font-enso.css:
+            font-mplus1.css:
+            font-dejavu.css:
     ide-desktop/:
       client/:
       common/:
       icons/:
+    ydoc-server-nodejs/:
   build/:
     prettier/:
   built-distribution/:
@@ -60,7 +60,7 @@
         type: project_manager_bundle
         var: project_manager_bundle
   dist/:
-    gui2/:
+    gui/:
       assets/:
 
     # Final WASM artifacts in `dist` directory.
@@ -92,6 +92,10 @@
     runtime-benchmarks/:
       bench-report.xml:
   lib/:
+    java/:
+      ydoc-server/:
+        target/:
+          native-image/:
     rust/:
       parser/:
         generate-java/:
@@ -111,8 +115,14 @@
   tools/:
     ci/:
       docker/:
-        docker-entrypoint.sh:
-        Dockerfile:
+        engine/:
+          docker-entrypoint.sh:
+          Dockerfile:
+        ydoc-server-nodejs/:
+          Dockerfile:
+          ydoc-server-entrypoint.sh:
+        ydoc-server-polyglot/:
+          Dockerfile:
     simple-library-server/:
   std-bits/:
     benchmarks/:

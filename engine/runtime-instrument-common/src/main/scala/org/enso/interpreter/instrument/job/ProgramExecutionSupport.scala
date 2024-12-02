@@ -49,6 +49,7 @@ import java.io.File
 import java.util.UUID
 import java.util.function.Consumer
 import java.util.logging.Level
+
 import scala.jdk.OptionConverters.RichOptional
 import scala.util.Try
 
@@ -57,7 +58,7 @@ import scala.util.Try
   */
 object ProgramExecutionSupport {
 
-  /** Runs an Enso program.
+  /** Runs the program.
     *
     * @param contextId an identifier of an execution context
     * @param executionFrame an execution frame
@@ -142,6 +143,7 @@ object ProgramExecutionSupport {
           methodCallsCache,
           syncState,
           callStack.headOption.map(_.expressionId).orNull,
+          ctx.state.expressionExecutionState,
           callablesCallback,
           onComputedValueCallback,
           onCachedValueCallback,
@@ -183,6 +185,7 @@ object ProgramExecutionSupport {
           methodCallsCache,
           syncState,
           callStack.headOption.map(_.expressionId).orNull,
+          ctx.state.expressionExecutionState,
           callablesCallback,
           onComputedValueCallback,
           onCachedValueCallback,
@@ -195,14 +198,14 @@ object ProgramExecutionSupport {
         val notExecuted =
           methodCallsCache.getNotExecuted(executionFrame.cache.getCalls)
         notExecuted.forEach { expressionId =>
-          val expressionType = executionFrame.cache.getType(expressionId)
-          val expressionCall = executionFrame.cache.getCall(expressionId)
+          val expressionTypes = executionFrame.cache.getType(expressionId)
+          val expressionCall  = executionFrame.cache.getCall(expressionId)
           onCachedMethodCallCallback.accept(
             new ExpressionValue(
               expressionId,
               null,
-              expressionType,
-              expressionType,
+              expressionTypes,
+              expressionTypes,
               expressionCall,
               expressionCall,
               Array(ExecutionTime.empty()),
@@ -226,7 +229,7 @@ object ProgramExecutionSupport {
     }
   }
 
-  /** Runs an Enso program.
+  /** Runs the program.
     *
     * @param contextId an identifier of an execution context
     * @param stack a call stack
@@ -271,7 +274,9 @@ object ProgramExecutionSupport {
           Some(Api.ExecutionResult.Failure("Execution stack is empty.", None))
         )
       _ <-
-        Try(executeProgram(contextId, stackItem, localCalls)).toEither.left
+        Try(
+          executeProgram(contextId, stackItem, localCalls)
+        ).toEither.left
           .map(onExecutionError(stackItem.item, _))
     } yield ()
     logger.log(Level.FINEST, s"Execution finished: $executionResult")
@@ -386,7 +391,7 @@ object ProgramExecutionSupport {
           expressionId
         )
       ) ||
-      Types.isPanic(value.getType)
+      Types.isPanic(value.getTypes)
     ) {
       val payload = value.getValue match {
         case sentinel: PanicSentinel =>
@@ -498,7 +503,7 @@ object ProgramExecutionSupport {
               Set(
                 Api.ExpressionUpdate(
                   value.getExpressionId,
-                  Option(value.getType),
+                  Option(value.getTypes).map(_.toVector),
                   methodCall,
                   value.getProfilingInfo.map { case e: ExecutionTime =>
                     Api.ProfilingInfo.ExecutionTime(e.getNanoTimeElapsed)
@@ -514,6 +519,7 @@ object ProgramExecutionSupport {
       }
 
       syncState.setExpressionSync(expressionId)
+      ctx.state.expressionExecutionState.setExpressionExecuted(expressionId)
       if (methodCall.isDefined) {
         syncState.setMethodPointerSync(expressionId)
       }
@@ -545,7 +551,7 @@ object ProgramExecutionSupport {
         } else {
           runtimeCache.getAnyValue(visualization.expressionId)
         }
-        if (v != null) {
+        if (v != null && !VisualizationResult.isInterruptedException(v)) {
           executeAndSendVisualizationUpdate(
             contextId,
             runtimeCache,
@@ -574,7 +580,7 @@ object ProgramExecutionSupport {
         Array[Object](
           visualization.id,
           expressionId,
-          Try(TypeOfNode.getUncached.execute(expressionValue))
+          Try(TypeOfNode.getUncached.findTypeOrError(expressionValue))
             .getOrElse(expressionValue.getClass)
         )
       )
@@ -634,8 +640,7 @@ object ProgramExecutionSupport {
           Option(error.getMessage).getOrElse(error.getClass.getSimpleName)
         if (!TypesGen.isPanicSentinel(expressionValue)) {
           val typeOfNode =
-            Option(TypeOfNode.getUncached.execute(expressionValue))
-              .getOrElse(expressionValue.getClass)
+            TypeOfNode.getUncached.findTypeOrError(expressionValue)
           ctx.executionService.getLogger.log(
             Level.WARNING,
             "Execution of visualization [{0}] on value [{1}] of [{2}] failed. {3} | {4} | {5}",
@@ -752,7 +757,7 @@ object ProgramExecutionSupport {
       !value.wasCached() && !value.getValue.isInstanceOf[DataflowError]
     for {
       call <-
-        if (Types.isPanic(value.getType) || notCachedAndNotDataflowError)
+        if (Types.isPanic(value.getTypes) || notCachedAndNotDataflowError)
           Option(value.getCallInfo)
         else Option(value.getCallInfo).orElse(Option(value.getCachedCallInfo))
       methodPointer <- toMethodPointer(call.functionPointer)

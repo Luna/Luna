@@ -1,7 +1,7 @@
 package org.enso.interpreter.instrument.job
 
 import com.oracle.truffle.api.TruffleLogger
-import org.enso.common.CompilationStage
+import org.enso.common.{CachePreferences, CompilationStage}
 import org.enso.compiler.{data, CompilerResult}
 import org.enso.compiler.context._
 import org.enso.compiler.core.Implicits.AsMetadata
@@ -58,7 +58,7 @@ class EnsureCompiledJob(
   import EnsureCompiledJob._
 
   /** @inheritdoc */
-  override def run(implicit ctx: RuntimeContext): CompilationStatus = {
+  override def runImpl(implicit ctx: RuntimeContext): CompilationStatus = {
     ctx.locking.withWriteCompilationLock(
       this.getClass,
       () => {
@@ -403,6 +403,12 @@ class EnsureCompiledJob(
         CacheInvalidation.StackSelector.All,
         invalidateStaleCommand,
         Set(CacheInvalidation.IndexSelector.All)
+      ),
+      CacheInvalidation(
+        CacheInvalidation.StackSelector.Tail,
+        CacheInvalidation.Command.InvalidateByKind(
+          Seq(CachePreferences.Kind.SELF_ARGUMENT)
+        )
       )
     )
   }

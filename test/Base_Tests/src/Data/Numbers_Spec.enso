@@ -9,6 +9,7 @@ from Standard.Base.Data.Numbers import Number_Parse_Error
 from Standard.Test import all
 
 import project.Data.Round_Spec
+import project.Data.Complex.Complex
 
 polyglot java import java.math.BigInteger
 polyglot java import java.math.BigDecimal
@@ -17,34 +18,6 @@ polyglot java import org.enso.base_test_helpers.Number_Utils
 Integer.is_even self = self % 2 == 0
 
 Float.get_fun_factor self = "Wow, " + self.to_text + " is such a fun number!"
-
-type Complex
-    Value re:Float im:Float
-
-    new re=0 im=0 = Complex.Value re im
-
-    + self (that:Complex) = Complex.new self.re+that.re self.im+that.im
-
-    < self (that:Complex) = Complex_Comparator.compare self that == Ordering.Less
-    > self (that:Complex) = Complex_Comparator.compare self that == Ordering.Greater
-    >= self (that:Complex) =
-        ordering = Complex_Comparator.compare self that
-        ordering == Ordering.Greater || ordering == Ordering.Equal
-    <= self (that:Complex) =
-        ordering = Complex_Comparator.compare self that
-        ordering == Ordering.Less || ordering == Ordering.Equal
-
-Complex.from (that:Number) = Complex.new that
-
-type Complex_Comparator
-    compare x:Complex y:Complex = if x.re==y.re && x.im==y.im then Ordering.Equal else
-        if x.im==0 && y.im==0 then Ordering.compare x.re y.re else
-            Nothing
-    hash x:Complex = if x.im == 0 then Ordering.hash x.re else
-        7*x.re + 11*x.im
-
-Comparable.from (that:Complex) = Comparable.new that Complex_Comparator
-Comparable.from (that:Number) = Comparable.new that Complex_Comparator
 
 float_id : Float -> Float
 float_id f =
@@ -301,6 +274,28 @@ add_specs suite_builder =
             Float.parse "000000" l . should_equal 0
             Float.parse "000000,0001" l . should_equal 0.0001
             Float.parse "aaaa" l . should_fail_with Number_Parse_Error
+
+        group_builder.specify "should parse correctly with format and/or locale" <|
+            Float.parse "123,456,789.87654" locale=Locale.default . should_equal 123456789.87654
+            Float.parse "123.456.789,87654" locale=Locale.italy . should_equal 123456789.87654
+
+            Float.parse "123,456,789.88" format="#,###.##" . should_equal 123456789.88
+            Float.parse "123.456.789,88" format="#.###,##" locale=Locale.italy . should_equal 123456789.88
+            Float.parse "1,23,45,67,89.88" format="#,##.##" . should_equal 123456789.88
+            Float.parse "1.23.45.67.89,88" format="#.##,##" locale=Locale.italy . should_equal 123456789.88
+
+            Float.parse "123.456.789,88" format="#,###.##" locale=Locale.italy . should_fail_with Illegal_Argument
+            Float.parse "123,456,789.88" format="#.###,##" . should_fail_with Illegal_Argument
+
+            Float.parse "123,456,789.87654" locale=Locale.italy . should_equal 123.456
+            Float.parse "123.456.789,87654" locale=Locale.us . should_equal 123.456
+
+            Float.parse "123,456,789.654" format="###,###.##;-###,###.##" . should_equal 123456789.654
+            Float.parse "-123,456,789.654" format="###,###.##;-###,###.##" . should_equal -123456789.654
+            Float.parse "(123,456,789.654)" format="###,###.##;-###,###.##" . should_fail_with Number_Parse_Error
+            Float.parse "123,456,789.654" format="###,###.##;(###,###.##)" . should_equal 123456789.654
+            Float.parse "-123,456,789.654" format="###,###.##;(###,###.##)" . should_fail_with Number_Parse_Error
+            Float.parse "(123,456,789.654)" format="###,###.##;(###,###.##)" . should_equal -123456789.654
 
         group_builder.specify "Float should parse hundred factorial well" <|
             txt = hundred_factorial.to_text + ".345"

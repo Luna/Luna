@@ -13,6 +13,7 @@ import project.Internal.IR.SQL_Expression.SQL_Expression
 import project.Internal.IR.SQL_Join_Kind.SQL_Join_Kind
 import project.Internal.IR.Traversal_Helpers
 import project.SQL.SQL_Builder
+import project.SQL_Statement.SQL_Statement
 from project.Dialect import Temp_Table_Style
 from project.Errors import Unsupported_Database_Operation
 from project.Internal.IR.Operation_Metadata import Row_Number_Metadata
@@ -43,8 +44,7 @@ type Dialect_Operations
 
     ## PRIVATE
        Checks if an operation is supported by the dialect.
-    is_supported : Text -> Boolean
-    is_supported self operation =
+    is_operation_supported self operation:Text -> Boolean =
         self.operations_dict.contains_key operation
 
 ## PRIVATE
@@ -57,7 +57,7 @@ type Dialect_Operations
 type SQL_Generator
     ## We can use a Hashset for the let-binding names, since they are guaranteed
        to be distinct and not result in any shadowing.
-    Value (let_bindings_ref : Ref Hashset)
+    private Value (let_bindings_ref : Ref Hashset)
 
     ## PRIVATE
     private new -> SQL_Generator = SQL_Generator.Value (Ref.new Hashset.empty)
@@ -81,11 +81,7 @@ type SQL_Generator
         SQL_Expression.Operation kind arguments metadata ->
             op = dialect.dialect_operations.operations_dict.get kind (Error.throw <| Unsupported_Database_Operation.Error kind)
             parsed_args = arguments.map (self.generate_expression dialect)
-            result = op parsed_args
-            # If the function expects more arguments, we pass the metadata as the last argument.
-            case result of
-                _ : Function -> result metadata
-                _ -> result
+            self.apply_op_generator_with_metadata op parsed_args metadata
         SQL_Expression.Let _ binder bindee body ->
             wrapped_binder = dialect.wrap_identifier binder
             bindee_exp = SQL_Builder.code "SELECT " ++ (self.generate_expression dialect bindee).paren ++ " AS " ++ "x"
@@ -107,6 +103,14 @@ type SQL_Generator
         descriptor : Order_Descriptor -> self.generate_order dialect descriptor
 
     ## PRIVATE
+    apply_op_generator_with_metadata self op arguments metadata =
+        result = op arguments
+        # If the function expects more arguments, we pass the metadata as the last argument.
+        case result of
+            _ : Function -> result metadata
+            _ -> result
+
+    ## PRIVATE
 
        Builds code for the FROM clause.
 
@@ -118,7 +122,12 @@ type SQL_Generator
         From_Spec.Table name as_name _ ->
             dialect.wrap_identifier name ++ alias dialect as_name
         From_Spec.Query raw_sql as_name ->
-            SQL_Builder.code raw_sql . paren ++ alias dialect as_name
+            subquery = case raw_sql of
+                prepared_statement : SQL_Statement ->
+                    SQL_Builder.from_fragments prepared_statement.fragments
+                raw_code : Text ->
+                    SQL_Builder.code raw_code
+            subquery.paren ++ alias dialect as_name
         From_Spec.Literal_Values vecs column_names as_name ->
             Runtime.assert (vecs.length == column_names.length) "Vectors and column names must have the same length"
             dialect.make_table_literal vecs column_names as_name
@@ -157,7 +166,7 @@ type SQL_Generator
             Nulls_Order.Last -> " NULLS LAST"
         collation = case order_descriptor.collation of
             Nothing -> ""
-            collation_name -> ' COLLATE "' + collation_name + '"'
+            collation_name -> dialect.generate_collate collation_name
         base_expression = self.generate_expression dialect order_descriptor.expression
         base_expression ++ collation ++ order_suffix ++ nulls_suffix
 
@@ -169,8 +178,8 @@ type SQL_Generator
         - ctx: A description of the SELECT clause.
     generate_select_query_sql : Dialect -> Vector (Pair Text SQL_Expression) -> Context -> SQL_Builder
     generate_select_query_sql self dialect columns ctx =
-        gen_exprs exprs = exprs.map (self.generate_expression dialect)
-        gen_column pair = (self.generate_expression dialect pair.second) ++ alias dialect pair.first
+        gen_exprs exprs = exprs.map (expr-> dialect.generate_expression self expr for_select=False)
+        gen_column pair = (dialect.generate_expression self expr=pair.second for_select=True) ++ alias dialect pair.first
 
         generated_columns = case columns of
             Nothing -> SQL_Builder.code "*"
@@ -715,6 +724,9 @@ truncate_table_truncate_table_style dialect table_name =
 default_fetch_types_query dialect expression context where_filter_always_false_literal="FALSE" =
     empty_context = context.add_where_filters [SQL_Expression.Literal where_filter_always_false_literal]
     dialect.generate_sql (Query.Select [["typed_column", expression]] empty_context)
+
+## PRIVATE
+default_generate_collate collation_name:Text quote_char:Text='"' -> Text = ' COLLATE ' + quote_char + collation_name + quote_char
 
 ## PRIVATE
    Helper class for shortening the binder names generated for WITH clauses.

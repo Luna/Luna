@@ -134,9 +134,7 @@ case class BindingsMap(
     val withImports: Option[BindingsMap] = newMap.flatMap { bindings =>
       val newImports = this._resolvedImports.map { imp =>
         imp.targets.foreach { t =>
-          LibraryName
-            .fromModuleName(t.qualifiedName.toString())
-            .foreach(r.ensurePackageIsLoaded(_));
+          t.toLibraryName.foreach(r.ensurePackageIsLoaded(_));
         }
         imp.toConcrete(moduleMap)
       }
@@ -463,6 +461,16 @@ object BindingsMap {
     override def toAbstract:                       ImportTarget
     override def toConcrete(moduleMap: ModuleMap): Option[ImportTarget]
     def findExportedSymbolsFor(name: String):      List[ResolvedName]
+
+    /** Quicker conversion to library name */
+    private[BindingsMap] lazy val toLibraryName: Option[LibraryName] = {
+      val qnp = qualifiedName.path
+      if (qnp.length >= 2) {
+        Some(LibraryName(qnp(0), qnp(1)))
+      } else {
+        None
+      }
+    }
 
     /** Resolves the symbol with the given name in the context of this import target.
       * Note that it is valid to have multiple resolved names for a single symbol name,
@@ -867,7 +875,7 @@ object BindingsMap {
         case method: ir.module.scope.definition.Method.Explicit =>
           method.methodReference.methodName.name == this.method.name && method.methodReference.typePointer
             .forall(
-              _.getMetadata(MethodDefinitions)
+              _.getMetadata(MethodDefinitions.INSTANCE)
                 .contains(Resolution(ResolvedModule(module)))
             )
         case _ => false

@@ -1,24 +1,27 @@
 /** @file Project Manager bindings. */
 
+import { net } from 'electron'
 import * as childProcess from 'node:child_process'
 import * as fsSync from 'node:fs'
+import * as url from 'node:url'
 import * as util from 'node:util'
 
 import * as contentConfig from '@/contentConfig'
 
 import type * as config from '@/config'
+import { getProjectRoot } from './projectManagement'
 
 const logger = contentConfig.logger
-// This is a wrapped function, so it should be `camelCase`.
-// eslint-disable-next-line no-restricted-syntax
 const execFile = util.promisify(childProcess.execFile)
 
 // =======================
 // === Project Manager ===
 // =======================
 
-/** Return the Project Manager path.
- * @throws If the Project Manager path is invalid. */
+/**
+ * Return the Project Manager path.
+ * @throws If the Project Manager path is invalid.
+ */
 export function pathOrPanic(args: config.Args): string {
   const binPath = args.groups.engine.options.projectManagerPath.value
   const binExists = fsSync.existsSync(binPath)
@@ -35,11 +38,13 @@ async function exec(args: config.Args, processArgs: string[], env?: NodeJS.Proce
   return await execFile(binPath, processArgs, { env })
 }
 
-/** Spawn the Project Manager process.
+/**
+ * Spawn the Project Manager process.
  *
  * The standard output and error handles will be redirected to the output and error handles of the
  * Electron app. Input is piped to this process, so it will not be closed until this process
- * finishes. */
+ * finishes.
+ */
 export function spawn(
   args: config.Args,
   processArgs: string[],
@@ -95,4 +100,19 @@ export async function version(args: config.Args) {
   } else {
     return
   }
+}
+
+/**
+ * Handle requests to the `enso-project` protocol.
+ *
+ * The protocol is used to fetch project assets from the backend.
+ * If a given path is not inside a project, the request is rejected with a 403 error.
+ */
+export async function handleProjectProtocol(absolutePath: string) {
+  if (getProjectRoot(absolutePath) == null) {
+    logger.error(`The given path is not inside a project: ${absolutePath}.`)
+    return new Response(null, { status: 403 })
+  }
+
+  return net.fetch(url.pathToFileURL(absolutePath).toString())
 }

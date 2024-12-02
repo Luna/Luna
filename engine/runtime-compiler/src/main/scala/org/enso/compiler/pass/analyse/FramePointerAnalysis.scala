@@ -12,7 +12,8 @@ import org.enso.compiler.core.ir.{
   Function,
   Module,
   Name,
-  Pattern
+  Pattern,
+  Type
 }
 import org.enso.compiler.core.ir.module.scope.Definition
 import org.enso.compiler.core.ir.module.scope.definition.Method
@@ -117,7 +118,7 @@ case object FramePointerAnalysis extends IRPass {
   ): Unit = {
     args.foreach { arg =>
       arg.name match {
-        case Name.Self(loc, synthetic, _) if loc.isEmpty && synthetic =>
+        case Name.Self(loc, synthetic, _) if loc == null && synthetic =>
           // synthetic self argument has occurrence attached, but there is no Occurence.Def for it.
           // So we have to handle it specially.
           updateMeta(arg, new FramePointer(0, 1))
@@ -163,6 +164,9 @@ case object FramePointerAnalysis extends IRPass {
         caseExpr.branches.foreach { branch =>
           processCaseBranch(branch)
         }
+      case asc: Type.Ascription =>
+        processExpression(asc.typed, graph)
+        processExpression(asc.signature, graph)
       case _ => ()
     }
     if (updateSymbols) {
@@ -238,12 +242,13 @@ case object FramePointerAnalysis extends IRPass {
     arguments: List[CallArgument],
     graph: Graph
   ): Unit = {
-    arguments.foreach { case arg @ CallArgument.Specified(name, value, _, _) =>
-      maybeAttachFramePointer(arg, graph)
-      name.foreach(maybeAttachFramePointer(_, graph))
-      processExpression(value, graph, false)
-      maybAttachFrameVariableNames(value)
-      maybAttachFrameVariableNames(arg)
+    arguments.foreach {
+      case arg @ CallArgument.Specified(name, value, _, _, _) =>
+        maybeAttachFramePointer(arg, graph)
+        name.foreach(maybeAttachFramePointer(_, graph))
+        processExpression(value, graph, false)
+        maybAttachFrameVariableNames(value)
+        maybAttachFrameVariableNames(arg)
     }
   }
 

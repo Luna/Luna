@@ -120,7 +120,7 @@ case object FullyQualifiedNames extends IRPass {
                           tpeName,
                           allStarting.head.getName.toString,
                           m,
-                          m.location
+                          m.identifiedLocation
                         )
                       )
                     case _ =>
@@ -181,7 +181,10 @@ case object FullyQualifiedNames extends IRPass {
       case asc: Type.Ascription => asc
       case method: definition.Method =>
         val resolution = method.methodReference.typePointer.flatMap(
-          _.getMetadata(MethodDefinitions)
+          _.getMetadata(
+            MethodDefinitions.INSTANCE,
+            classOf[BindingsMap.Resolution]
+          )
         )
         method.mapExpressions(
           processExpression(

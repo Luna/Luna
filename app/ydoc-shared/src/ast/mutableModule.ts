@@ -1,16 +1,30 @@
 import * as random from 'lib0/random'
 import * as Y from 'yjs'
-import type { AstId, NodeChild, Owned, RawNodeChild, SyncTokenId } from '.'
-import { Token, asOwned, isTokenId, newExternalId, subtreeRoots } from '.'
+import { subtreeRoots } from '.'
 import { assert, assertDefined } from '../util/assert'
 import type { SourceRangeEdit } from '../util/data/text'
 import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
-import type { AstFields, FixedMap, Mutable } from './tree'
+import { newExternalId } from './idMap'
+import { parseModule } from './parse'
+import type { SyncTokenId } from './token'
+import { Token, isTokenId } from './token'
+import type {
+  AstFields,
+  AstId,
+  BodyBlock,
+  FixedMap,
+  Mutable,
+  MutableAst,
+  MutableBodyBlock,
+  MutableInvalid,
+  NodeChild,
+  Owned,
+  RawNodeChild,
+} from './tree'
 import {
   Ast,
-  MutableAst,
-  MutableInvalid,
   Wildcard,
+  asOwned,
   composeFieldData,
   invalidFields,
   materializeMutable,
@@ -19,7 +33,7 @@ import {
 
 export interface Module {
   edit(): MutableModule
-  root(): Ast | undefined
+  root(): BodyBlock | undefined
   tryGet(id: AstId | undefined): Ast | undefined
 
   /////////////////////////////////
@@ -40,6 +54,7 @@ export interface ModuleUpdate {
   nodesUpdated: Set<AstId>
   updateRoots: Set<AstId>
   metadataUpdated: { id: AstId; changes: Map<string, unknown> }[]
+  widgetMetadataUpdated: Set<AstId>
   origin: Origin | undefined
 }
 
@@ -49,6 +64,7 @@ type YNodes = Y.Map<YNode>
 type UpdateObserver = (update: ModuleUpdate) => void
 type YjsObserver = (events: Y.YEvent<any>[], transaction: Y.Transaction) => void
 
+/** TODO: Add docs */
 export class MutableModule implements Module {
   private readonly nodes: YNodes
   private updateObservers: UpdateObserver[] | undefined
@@ -66,56 +82,53 @@ export class MutableModule implements Module {
     return instance as Mutable<T>
   }
 
+  /** TODO: Add docs */
   edit(): MutableModule {
     const doc = new Y.Doc()
     Y.applyUpdateV2(doc, Y.encodeStateAsUpdateV2(this.ydoc))
     return new MutableModule(doc)
   }
 
+  /** TODO: Add docs */
   applyEdit(edit: MutableModule, origin: Origin = defaultLocalOrigin) {
     Y.applyUpdateV2(this.ydoc, Y.encodeStateAsUpdateV2(edit.ydoc), origin)
   }
 
+  /** TODO: Add docs */
   transact<T>(f: () => T, origin: Origin = defaultLocalOrigin): T {
     return this.ydoc.transact(f, origin)
   }
 
-  root(): MutableAst | undefined {
-    return this.rootPointer()?.expression
+  /** Return the top-level block of the module. */
+  root(): MutableBodyBlock | undefined {
+    return this.rootPointer()?.expression as MutableBodyBlock | undefined
   }
 
-  replaceRoot(newRoot: Owned | undefined): Owned | undefined {
+  /** Set the given block to be the top-level block of the module. */
+  setRoot(newRoot: Owned<MutableBodyBlock> | undefined) {
     if (newRoot) {
       const rootPointer = this.rootPointer()
       if (rootPointer) {
-        return rootPointer.expression.replace(newRoot)
+        rootPointer.expression.replace(newRoot)
       } else {
         invalidFields(this, this.baseObject('Invalid', undefined, ROOT_ID), {
           whitespace: '',
           node: newRoot,
         })
-        return undefined
       }
     } else {
       const oldRoot = this.root()
-      if (!oldRoot) return
-      this.nodes.delete(ROOT_ID)
-      oldRoot.fields.set('parent', undefined)
-      return asOwned(oldRoot)
+      if (oldRoot) oldRoot.fields.set('parent', undefined)
     }
   }
 
-  syncRoot(root: Owned) {
-    this.replaceRoot(root)
-    this.gc()
-  }
-
+  /** TODO: Add docs */
   syncToCode(code: string) {
     const root = this.root()
     if (root) {
       root.syncToCode(code)
     } else {
-      this.replaceRoot(Ast.parse(code, this))
+      this.setRoot(parseModule(code, this))
     }
   }
 
@@ -160,17 +173,19 @@ export class MutableModule implements Module {
   /** @internal */
   importCopy<T extends Ast>(ast: T): Owned<Mutable<T>> {
     assert(ast.module !== this)
-    ast.visitRecursiveAst(ast => this.nodes.set(ast.id, ast.fields.clone() as any))
+    ast.visitRecursive(ast => this.nodes.set(ast.id, ast.fields.clone() as any))
     const fields = this.nodes.get(ast.id)
     assertDefined(fields)
     fields.set('parent', undefined)
     return materializeMutable(this, fields) as Owned<Mutable<typeof ast>>
   }
 
+  /** TODO: Add docs */
   static Transient() {
     return new this(new Y.Doc())
   }
 
+  /** TODO: Add docs */
   observe(observer: (update: ModuleUpdate) => void) {
     this.updateObservers ??= []
     this.updateObservers.push(observer)
@@ -190,6 +205,7 @@ export class MutableModule implements Module {
     this.nodes.observeDeep(this.yjsObserver)
   }
 
+  /** TODO: Add docs */
   unobserve(handle: UpdateObserver) {
     const i = this.updateObservers?.indexOf(handle)
     if (i == null || i < 0) return
@@ -204,6 +220,7 @@ export class MutableModule implements Module {
     return !!this.updateObservers?.length
   }
 
+  /** TODO: Add docs */
   getStateAsUpdate(): ModuleUpdate {
     const updateBuilder = new UpdateBuilder(this, this.nodes, undefined)
     for (const id of this.nodes.keys()) {
@@ -213,6 +230,7 @@ export class MutableModule implements Module {
     return updateBuilder.finish()
   }
 
+  /** TODO: Add docs */
   applyUpdate(update: Uint8Array, origin: Origin): ModuleUpdate | undefined {
     let summary: ModuleUpdate | undefined
     const observer = (events: Y.YEvent<any>[]) => {
@@ -255,29 +273,49 @@ export class MutableModule implements Module {
           node.get(key as any),
         ])
         updateBuilder.updateFields(id, changes)
-      } else if (event.target.parent.parent === this.nodes) {
-        // Updates to fields of a metadata object within a node.
+      } else if (event.target.parent?.parent === this.nodes) {
+        // Updates to fields of an object within a node.
         const id = event.target.parent.get('id')
         DEV: assertAstId(id)
         const node = this.nodes.get(id)
         if (!node) continue
-        const metadata = node.get('metadata') as unknown as Map<string, unknown>
-        const changes: (readonly [string, unknown])[] = Array.from(event.changes.keys, ([key]) => [
-          key,
-          metadata.get(key as any),
-        ])
-        updateBuilder.updateMetadata(id, changes)
+        const metadata = node.get('metadata')
+        if (event.target === metadata) {
+          const changes: (readonly [string, unknown])[] = Array.from(
+            event.changes.keys,
+            ([key]) => [key, metadata.get(key as any)],
+          )
+          updateBuilder.updateMetadata(id, changes)
+        } else {
+          // `AbstractType` in node fields.
+          updateBuilder.nodesUpdated.add(id)
+        }
+      } else if (event.target.parent?.parent?.parent === this.nodes) {
+        const id = event.target.parent.parent.get('id')
+        assertAstId(id)
+        const node = this.nodes.get(id)
+        if (!node) continue
+        const metadata = node.get('metadata')
+        const widgets = metadata?.get('widget')
+        if (event.target === widgets) {
+          // Updates to some specific widget's metadata
+          updateBuilder.updateWidgets(id)
+        }
       }
     }
     return updateBuilder.finish()
   }
 
+  /** TODO: Add docs */
   clear() {
     this.nodes.clear()
   }
 
+  /** TODO: Add docs */
   get(id: AstId): Mutable
+  /** TODO: Add docs */
   get(id: AstId | undefined): Mutable | undefined
+  /** TODO: Add docs */
   get(id: AstId | undefined): Mutable | undefined {
     if (!id) return undefined
     const ast = this.tryGet(id)
@@ -285,6 +323,7 @@ export class MutableModule implements Module {
     return ast
   }
 
+  /** TODO: Add docs */
   tryGet(id: AstId | undefined): Mutable | undefined {
     if (!id) return undefined
     const nodeData = this.nodes.get(id)
@@ -293,24 +332,24 @@ export class MutableModule implements Module {
     return materializeMutable(this, fields)
   }
 
+  /** TODO: Add docs */
   replace(id: AstId, value: Owned): Owned | undefined {
     return this.tryGet(id)?.replace(value)
   }
 
+  /** TODO: Add docs */
   replaceValue(id: AstId, value: Owned): Owned | undefined {
     return this.tryGet(id)?.replaceValue(value)
   }
 
+  /** TODO: Add docs */
   take(id: AstId): Owned {
     return this.replace(id, Wildcard.new(this)) || asOwned(this.get(id))
   }
 
-  updateValue<T extends MutableAst>(id: AstId, f: (x: Owned) => Owned<T>): T | undefined {
-    return this.tryGet(id)?.updateValue(f)
-  }
-
   /////////////////////////////////////////////
 
+  /** TODO: Add docs */
   constructor(doc: Y.Doc) {
     this.nodes = doc.getMap<YNode>('nodes')
   }
@@ -323,11 +362,12 @@ export class MutableModule implements Module {
   /** @internal */
   baseObject(type: string, externalId?: ExternalId, overrideId?: AstId): FixedMap<AstFields> {
     const map = new Y.Map()
-    const map_ = map as unknown as FixedMap<{}>
+    const map_ = map as unknown as FixedMap<object>
     const id = overrideId ?? newAstId(type)
-    const metadata = new Y.Map() as unknown as FixedMap<{}>
+    const metadata = new Y.Map() as unknown as FixedMap<object>
     const metadataFields = setAll(metadata, {
       externalId: externalId ?? newExternalId(),
+      widget: new Y.Map<unknown>(),
     })
     const fields = setAll(map_, {
       id,
@@ -342,25 +382,33 @@ export class MutableModule implements Module {
 
   /** @internal */
   getToken(token: SyncTokenId): Token
+  /** TODO: Add docs */
   getToken(token: SyncTokenId | undefined): Token | undefined
+  /** TODO: Add docs */
   getToken(token: SyncTokenId | undefined): Token | undefined {
     if (!token) return token
     if (token instanceof Token) return token
     return Token.withId(token.code_, token.tokenType_, token.id)
   }
 
+  /** TODO: Add docs */
   getAny(node: AstId | SyncTokenId): MutableAst | Token {
     return isTokenId(node) ? this.getToken(node) : this.get(node)
   }
 
+  /** TODO: Add docs */
   getConcrete(child: RawNodeChild): NodeChild<Ast> | NodeChild<Token> {
     if (isTokenId(child.node))
       return { whitespace: child.whitespace, node: this.getToken(child.node) }
     else return { whitespace: child.whitespace, node: this.get(child.node) }
   }
 
-  /** @internal Copy a node into the module, if it is bound to a different module. */
+  /**
+   * Copy a node into the module, if it is bound to a different module.
+   * @internal
+   */
   copyIfForeign<T extends MutableAst>(ast: Owned<T>): Owned<T>
+  /** TODO: Add docs */
   copyIfForeign<T extends MutableAst>(ast: Owned<T> | undefined): Owned<T> | undefined {
     if (!ast) return ast
     if (ast.module === this) return ast
@@ -390,10 +438,12 @@ export const __TEST = { newAstId }
 
 /** Checks whether the input looks like an AstId. */
 const astIdRegex = /^ast:[A-Za-z]+#[0-9]+$/
+/** TODO: Add docs */
 export function isAstId(value: string): value is AstId {
   return astIdRegex.test(value)
 }
 
+/** TODO: Add docs */
 export function assertAstId(value: string): asserts value is AstId {
   assert(isAstId(value), `Incorrect AST ID: ${value}`)
 }
@@ -404,7 +454,11 @@ class UpdateBuilder {
   readonly nodesAdded = new Set<AstId>()
   readonly nodesDeleted = new Set<AstId>()
   readonly nodesUpdated = new Set<AstId>()
-  readonly metadataUpdated: { id: AstId; changes: Map<string, unknown> }[] = []
+  readonly metadataUpdated: {
+    id: AstId
+    changes: Map<string, unknown>
+  }[] = []
+  readonly widgetMetadataUpdated = new Set<AstId>()
   readonly origin: Origin | undefined
 
   private readonly module: Module
@@ -433,18 +487,31 @@ class UpdateBuilder {
         assert(value instanceof Y.Map)
         metadataChanges = new Map<string, unknown>(value.entries())
       } else {
-        assert(!(value instanceof Y.AbstractType))
         fieldsChanged = true
       }
     }
     if (fieldsChanged) this.nodesUpdated.add(id)
-    if (metadataChanges) this.metadataUpdated.push({ id, changes: metadataChanges })
+    if (metadataChanges) {
+      this.metadataUpdated.push({ id, changes: metadataChanges })
+      if (metadataChanges.has('widget')) {
+        this.widgetMetadataUpdated.add(id)
+      }
+    }
   }
 
   updateMetadata(id: AstId, changes: Iterable<readonly [string, unknown]>) {
     const changeMap = new Map<string, unknown>()
-    for (const [key, value] of changes) changeMap.set(key, value)
+    for (const [key, value] of changes) {
+      changeMap.set(key, value)
+      if (key === 'widget') {
+        this.widgetMetadataUpdated.add(id)
+      }
+    }
     this.metadataUpdated.push({ id, changes: changeMap })
+  }
+
+  updateWidgets(id: AstId) {
+    this.widgetMetadataUpdated.add(id)
   }
 
   deleteNode(id: AstId) {

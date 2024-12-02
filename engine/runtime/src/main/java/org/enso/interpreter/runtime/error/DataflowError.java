@@ -20,10 +20,10 @@ import org.enso.interpreter.node.callable.IndirectInvokeMethodNode;
 import org.enso.interpreter.node.expression.builtin.text.util.TypeToDisplayTextNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
-import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
+import org.enso.interpreter.runtime.state.HasContextEnabledNode;
 import org.enso.interpreter.runtime.state.State;
 
 /**
@@ -35,7 +35,7 @@ import org.enso.interpreter.runtime.state.State;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @ImportStatic(PanicException.class)
-public final class DataflowError extends AbstractTruffleException implements EnsoObject {
+public final class DataflowError extends AbstractTruffleException {
   /** Signals (local) values that haven't yet been initialized */
   public static final DataflowError UNINITIALIZED = new DataflowError(null, (Node) null);
 
@@ -51,15 +51,18 @@ public final class DataflowError extends AbstractTruffleException implements Ens
    * @param location the node in which the error was created
    * @return a new dataflow error
    */
-  public static DataflowError withDefaultTrace(State state, Object payload, Node location) {
+  public static DataflowError withDefaultTrace(
+      State state, Object payload, Node location, HasContextEnabledNode hasContextEnabledNode) {
     assert payload != null;
+    var ensoCtx = EnsoContext.get(location);
+    var dataflowStacktraceCtx = ensoCtx.getBuiltins().context().getDataflowStackTrace();
     boolean attachFullStackTrace =
         state == null
-            || EnsoContext.get(location)
-                .getExecutionEnvironment()
-                .hasContextEnabled("Dataflow_Stack_Trace");
+            || hasContextEnabledNode.executeHasContextEnabled(
+                ensoCtx.getExecutionEnvironment(), dataflowStacktraceCtx);
     if (attachFullStackTrace) {
-      var result = new DataflowError(payload, UNLIMITED_STACK_TRACE, location);
+      var result =
+          new DataflowError(payload, AbstractTruffleException.UNLIMITED_STACK_TRACE, location);
       TruffleStackTrace.fillIn(result);
       return result;
     } else {
@@ -68,8 +71,9 @@ public final class DataflowError extends AbstractTruffleException implements Ens
     }
   }
 
+  /** Slow version of {@link #withDefaultTrace(State, Object, Node, HasContextEnabledNode)}. */
   public static DataflowError withDefaultTrace(Object payload, Node location) {
-    return withDefaultTrace(null, payload, location);
+    return withDefaultTrace(null, payload, location, HasContextEnabledNode.getUncached());
   }
 
   /**
@@ -161,7 +165,7 @@ public final class DataflowError extends AbstractTruffleException implements Ens
   @ExportMessage
   Object getExceptionMessage(
       @Cached IndirectInvokeMethodNode payloads,
-      @Cached(value = "toDisplayText(payloads)", allowUncached = true)
+      @Cached(value = "toDisplayText(this.getPayload(), payloads)", allowUncached = true)
           UnresolvedSymbol toDisplayText,
       @CachedLibrary(limit = "3") InteropLibrary strings,
       @Cached TypeToDisplayTextNode typeToDisplayTextNode) {

@@ -10,12 +10,11 @@ from Standard.Table.Aggregate_Column.Aggregate_Column import all
 from Standard.Table.Errors import Inexact_Type_Coercion
 from Standard.Table.Internal.Storage import get_storage_for_column
 
-from Standard.Database.Dialect_Flags import all
-
 import project.Connection.Connection.Connection
 import project.DB_Column.DB_Column
 import project.DB_Table.DB_Table
 import project.Dialect
+import project.Dialect_Flag.Dialect_Flag
 import project.Internal.Base_Generator
 import project.Internal.Common.Database_Distinct_Helper
 import project.Internal.Common.Database_Join_Helper
@@ -41,6 +40,7 @@ import project.SQL_Statement.SQL_Statement
 import project.SQL_Type.SQL_Type
 from project.Dialect import Temp_Table_Style
 from project.Errors import SQL_Error, Unsupported_Database_Operation
+from project.Feature import Feature
 from project.Internal.IR.Operation_Metadata import Date_Period_Metadata
 from project.Internal.JDBC_Connection import JDBC_Connection
 
@@ -169,23 +169,6 @@ type Postgres_Dialect
         False
 
     ## PRIVATE
-       Specifies if the Database backend supports WITH clauses in nested queries.
-    supports_nested_with_clause : Boolean
-    supports_nested_with_clause self = True
-
-    ## PRIVATE
-    supports_separate_nan : Boolean
-    supports_separate_nan self = True
-
-    ## PRIVAITE
-       Specifies implementation details flags.
-    dialect_flags : Dialect_Flags
-    dialect_flags self -> Dialect_Flags =
-        rounding = Rounding_Flags.Value supports_negative_decimal_places=True supports_float_decimal_places=False use_builtin_bankers=False
-        primary_key = Primary_Key_Flags.Value allows_nulls=False
-        Dialect_Flags.Value rounding=rounding primary_key=primary_key
-
-    ## PRIVATE
        Specifies how the database creates temp tables.
     temp_table_style : Temp_Table_Style
     temp_table_style self = Temp_Table_Style.Temporary_Table
@@ -254,6 +237,9 @@ type Postgres_Dialect
         Base_Generator.default_fetch_types_query self expression context
 
     ## PRIVATE
+    generate_collate self collation_name:Text -> Text = Base_Generator.default_generate_collate collation_name
+
+    ## PRIVATE
     check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation
     check_aggregate_support self aggregate =
         _ = aggregate
@@ -261,9 +247,48 @@ type Postgres_Dialect
 
     ## PRIVATE
        Checks if an operation is supported by the dialect.
-    is_supported : Text -> Boolean
-    is_supported self operation =
-        self.dialect_operations.is_supported operation
+    is_operation_supported self operation:Text -> Boolean =
+        self.dialect_operations.is_operation_supported operation
+
+    ## PRIVATE
+       Checks if a feature is supported by the dialect.
+    is_feature_supported self feature:Feature -> Boolean =
+        _ = feature
+        True
+
+    ## PRIVATE
+       Checks a dialect flag
+    flagged self flag:Dialect_Flag -> Boolean =
+        case flag of
+            Dialect_Flag.Supports_Negative_Decimal_Places -> True
+            Dialect_Flag.Supports_Float_Decimal_Places -> False
+            Dialect_Flag.Use_Builtin_Bankers -> False
+            Dialect_Flag.Primary_Key_Allows_Nulls -> False
+            Dialect_Flag.Supports_Separate_NaN -> True
+            Dialect_Flag.Supports_Nested_With_Clause -> True
+            Dialect_Flag.Supports_Case_Sensitive_Columns -> True
+            Dialect_Flag.Supports_Infinity -> True
+            Dialect_Flag.Case_Sensitive_Text_Comparison -> True
+            Dialect_Flag.Supports_Sort_Digits_As_Numbers -> False
+            Dialect_Flag.Case_Insensitive_Ordering -> True
+            Dialect_Flag.Order_By_Unicode_Normalization_By_Default -> True
+            Dialect_Flag.Allows_Mixed_Type_Comparisons -> False
+            Dialect_Flag.Supports_Unicode_Normalization -> False
+            Dialect_Flag.NaN_Non_Comparable -> False
+            Dialect_Flag.Distinct_Returns_First_Row_From_Group_If_Ordered -> True
+            Dialect_Flag.Date_Time -> True
+            Dialect_Flag.Text_Length_Limited_Columns -> True
+            Dialect_Flag.Fixed_Length_Text_Columns -> True
+            Dialect_Flag.Length_Restricted_Text_Columns -> True
+            Dialect_Flag.Removes_Trailing_Whitespace_Casting_From_Char_To_Varchar -> True
+            Dialect_Flag.Char_Max_Size_After_Substring_Kept -> False
+            Dialect_Flag.Different_Size_Integer_Types -> True
+            Dialect_Flag.Supports_8bit_Integer -> False
+            Dialect_Flag.Supports_Decimal_Type -> True
+            Dialect_Flag.Supports_Time_Duration -> False
+            Dialect_Flag.Supports_Nanoseconds_In_Time -> False
+            Dialect_Flag.Supports_Mixed_Columns -> False
+            Dialect_Flag.Supports_Date_Time_Without_Timezone -> True
 
     ## PRIVATE
        The default table types to use when listing tables.
@@ -324,6 +349,11 @@ type Postgres_Dialect
     needs_literal_table_cast self value_type =
         _ = value_type
         False
+
+    ## PRIVATE
+    generate_expression self base_gen expr:(SQL_Expression | Order_Descriptor | Query) for_select:Boolean -> SQL_Builder =
+        _ = for_select
+        base_gen.generate_expression self expr
 
     ## PRIVATE
     ensure_query_has_no_holes : JDBC_Connection -> Text -> Nothing ! Illegal_Argument
@@ -548,7 +578,7 @@ make_order_descriptor internal_column sort_direction text_ordering =
             Order_Descriptor.Value internal_column.expression sort_direction nulls_order=nulls collation=Nothing
         _ ->
             ## In the future we can modify this error to suggest using a custom defined collation.
-            if text_ordering.sort_digits_as_numbers then Error.throw (Unsupported_Database_Operation.Error "Natural ordering") else
+            if text_ordering.sort_digits_as_numbers then Error.throw (Unsupported_Database_Operation.Error "sort_digits_as_numbers") else
                 case text_ordering.case_sensitivity of
                     Case_Sensitivity.Default ->
                         Order_Descriptor.Value internal_column.expression sort_direction nulls_order=nulls collation=Nothing

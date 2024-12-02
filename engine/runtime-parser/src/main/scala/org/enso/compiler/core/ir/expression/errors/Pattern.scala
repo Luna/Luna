@@ -67,7 +67,7 @@ sealed case class Pattern(
     if (
       originalPattern != this.originalPattern
       || reason != this.reason
-      || passData != this.passData
+      || (passData ne this.passData)
       || diagnostics != this.diagnostics
       || id != this.id
     ) {
@@ -104,8 +104,8 @@ sealed case class Pattern(
 
   override def diagnosticKeys(): Array[Any] = Array(reason)
 
-  override val location: Option[IdentifiedLocation] =
-    originalPattern.location
+  override def identifiedLocation: IdentifiedLocation =
+    originalPattern.identifiedLocation()
 
   override def children: List[IR] = List(originalPattern)
 

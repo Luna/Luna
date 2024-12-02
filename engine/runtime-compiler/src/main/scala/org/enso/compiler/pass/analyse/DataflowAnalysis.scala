@@ -29,6 +29,7 @@ import org.enso.compiler.core.ir.{
 }
 import org.enso.compiler.core.ir.MetadataStorage._
 import org.enso.compiler.pass.IRPass
+import org.enso.compiler.pass.IRProcessingPass
 import org.enso.compiler.pass.analyse.DataflowAnalysis.DependencyInfo.Type.asStatic
 import org.enso.compiler.pass.analyse.alias.graph.GraphOccurrence
 
@@ -53,13 +54,13 @@ case object DataflowAnalysis extends IRPass {
   override type Metadata = DependencyInfo
   override type Config   = IRPass.Configuration.Default
 
-  override lazy val precursorPasses: Seq[IRPass] = List(
+  override lazy val precursorPasses: Seq[IRProcessingPass] = List(
     AliasAnalysis,
     DemandAnalysis,
-    TailCall
+    TailCall.INSTANCE
   )
 
-  override lazy val invalidatedPasses: Seq[IRPass] = List()
+  override lazy val invalidatedPasses: Seq[IRProcessingPass] = List()
 
   /** Executes the dataflow analysis process on an Enso module.
     *
@@ -744,7 +745,7 @@ case object DataflowAnalysis extends IRPass {
     info: DependencyInfo
   ): CallArgument = {
     argument match {
-      case spec @ CallArgument.Specified(name, value, _, _) =>
+      case spec @ CallArgument.Specified(name, value, _, _, _) =>
         val specDep  = asStatic(spec)
         val valueDep = asStatic(value)
         info.dependents.updateAt(valueDep, Set(specDep))

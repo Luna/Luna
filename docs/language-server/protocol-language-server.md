@@ -25,6 +25,8 @@ transport formats, please look [here](./protocol-architecture).
   - [`MethodCall`](#methodcall)
   - [`MethodPointer`](#methodpointer)
   - [`ProfilingInfo`](#profilinginfo)
+  - [`ExecutionEnvironment`](#executionenvironment)
+  - [`ExpressionConfig`](#expressionConfig)
   - [`ExpressionUpdate`](#expressionupdate)
   - [`ExpressionUpdatePayload`](#expressionupdatepayload)
   - [`VisualizationConfiguration`](#visualizationconfiguration)
@@ -343,6 +345,19 @@ The execution environment of Enso runtime.
 type ExecutionEnvironment = Design | Live;
 ```
 
+### `ExpressionConfig`
+
+The expression configuration used in the recompute request.
+
+```typescript
+interface ExpressionConfig {
+  /** The expression identifier. */
+  expressionId: ExpressionId;
+  /** The execution environment that should be used to run this expression. */
+  executionEnvironment?: ExecutionEnvironment;
+}
+```
+
 ### `ExpressionUpdate`
 
 An update about the computed expression.
@@ -351,8 +366,14 @@ An update about the computed expression.
 interface ExpressionUpdate {
   /** The id of updated expression. */
   expressionId: ExpressionId;
-  /** The updated type of the expression. */
-  type?: string;
+  /** The updated type of the expression.
+   *
+   *  Possible values:
+   *  - empty array indicates no type information for this expression
+   *  - array with a single value contains a value of this expression
+   *  - array with multiple values represents an intersetion type
+   */
+  type: string[];
   /** The updated method call info. */
   methodCall?: MethodCall;
   /** Profiling information about the expression. */
@@ -3176,14 +3197,6 @@ Current limitations of the method renaming are:
   ```rust
   Main.function1 x = x
   ```
-- Method calls where the self type is not specified will not be renamed, i.e.
-
-  ```rust
-  function1 x = x
-
-  main =
-      operator1 = function1 42
-  ```
 
 #### Parameters
 
@@ -3633,10 +3646,23 @@ May include a list of expressions for which caches should be invalidated.
 interface ExecutionContextRecomputeParameters {
   /** The execution context identifier. */
   contextId: ContextId;
-  /** The expressions that will be invalidated before the execution. */
+
+  /** The expressions that will be invalidated before the execution.
+   *
+   *  Only the provided expression ids are invalidated excluding the dependencies.
+   */
   invalidatedExpressions?: "all" | ExpressionId[];
+
   /** The execution environment that will be used in the execution. */
   executionEnvironment?: ExecutionEnvironment;
+
+  /** The execution configurations for particular expressions.
+   *
+   *  The provided expressions will be invalidated from the cache with the
+   *  dependencies. The result of the execution will stay in the cache until the
+   *  cache is invalidated by editing the node or other means.
+   */
+  expressionConfigs?: ExpressionConfig[];
 }
 ```
 

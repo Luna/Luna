@@ -4,15 +4,98 @@
 
 - [Rows and Columns may be now removed in Table Input Widget][11151]. The option
   is available in right-click context menu.
+- [Rows and Columns may be now reordered by dragging in Table Input
+  Widget][11271]
+- [Copying and pasting in Table Editor Widget now works properly][11332]
+- [Fix invisible selection in Table Input Widget][11358]
+- [Enable cloud file browser in local projects][11383]
+- [Changed the way of adding new column in Table Input Widget][11388]. The
+  "virtual column" is replaced with an explicit (+) button.
+- [New dropdown-based component menu][11398].
+- [Methods defined on Standard.Base.Any type are now visible on all
+  components][11451].
+- [Undo/redo buttons in the top bar][11433].
+- [Size of Table Input Widget is preserved and restored after project
+  re-opening][11435]
+- [Added application version to the title bar.][11446]
+- [Added "open grouped components" action to the context menu.][11447]
+- [Table Input Widget has now a limit of 256 cells.][11448]
+- [Added an error message screen displayed when viewing a deleted
+  component.][11452]
+- [New documentation editor provides improved Markdown editing experience, and
+  paves the way for new documentation features.][11469]
+- [You can now add images to documentation panel][11547] by pasting them from
+  clipboard or by drag'n'dropping image files.
+- ["Write" button in component menu allows to evaluate it separately from the
+  rest of the workflow][11523].
+- [The documentation editor can now display tables][11564]
+- [The documentation editor supports the Markdown URL syntax, and uses it to
+  render pasted URLs as links][11597]
+- [Table Input Widget is now matched for Table.input method instead of
+  Table.new. Values must be string literals, and their content is parsed to the
+  suitable type][11612].
+- [Visualizations on components are slightly transparent when not
+  focused][11582].
+- [New design for vector-editing widget][11620]
+- [The component menu can be opened by right-click; supports operations on
+  multiple components; has a 'Copy Component' button][11690]
+- [New design for vector-editing widget][11620].
+- [Default values on widgets are displayed in italic][11666].
+- [Fixed bug causing Table Visualization to show wrong data][11684].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
+[11271]: https://github.com/enso-org/enso/pull/11271
+[11332]: https://github.com/enso-org/enso/pull/11332
+[11358]: https://github.com/enso-org/enso/pull/11358
+[11383]: https://github.com/enso-org/enso/pull/11383
+[11388]: https://github.com/enso-org/enso/pull/11388
+[11398]: https://github.com/enso-org/enso/pull/11398
+[11451]: https://github.com/enso-org/enso/pull/11451
+[11433]: https://github.com/enso-org/enso/pull/11433
+[11435]: https://github.com/enso-org/enso/pull/11435
+[11446]: https://github.com/enso-org/enso/pull/11446
+[11447]: https://github.com/enso-org/enso/pull/11447
+[11448]: https://github.com/enso-org/enso/pull/11448
+[11452]: https://github.com/enso-org/enso/pull/11452
+[11469]: https://github.com/enso-org/enso/pull/11469
+[11547]: https://github.com/enso-org/enso/pull/11547
+[11523]: https://github.com/enso-org/enso/pull/11523
+[11564]: https://github.com/enso-org/enso/pull/11564
+[11582]: https://github.com/enso-org/enso/pull/11582
+[11597]: https://github.com/enso-org/enso/pull/11597
+[11612]: https://github.com/enso-org/enso/pull/11612
+[11620]: https://github.com/enso-org/enso/pull/11620
+[11666]: https://github.com/enso-org/enso/pull/11666
+[11690]: https://github.com/enso-org/enso/pull/11690
+[11684]: https://github.com/enso-org/enso/pull/11684
 
 #### Enso Standard Library
 
 - [The `enso://~` path now resolves to user's home directory in the
   cloud.][11235]
+- [The user may set description and labels of an Enso Cloud asset
+  programmatically.][11255]
+- [DB_Table may be saved as a Data Link.][11371]
+- [Support for dates before 1900 in Excel and signed AWS requests.][11373]
+- [Added `Data.read_many` that allows to read a list of files in a single
+  operation.][11490]
+- [Added `Table.input` allowing creation of typed tables from vectors of data,
+  including auto parsing text columns.][11562]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
+[11255]: https://github.com/enso-org/enso/pull/11255
+[11371]: https://github.com/enso-org/enso/pull/11371
+[11373]: https://github.com/enso-org/enso/pull/11373
+[11490]: https://github.com/enso-org/enso/pull/11490
+[11562]: https://github.com/enso-org/enso/pull/11562
+
+#### Enso Language & Runtime
+
+- [Arguments in constructor definitions may now be on their own lines][11374]
+- [The `:` type operator can now be chained][11671].
+
+[11374]: https://github.com/enso-org/enso/pull/11374
+[11671]: https://github.com/enso-org/enso/pull/11671
 
 # Enso 2024.4
 
@@ -68,11 +151,17 @@
 - [Support for creating Atoms in expressions.][10820]
 - [IO.print without new line][10858]
 - [Add `Text.to_decimal`.][10874]
-- [Added .floor, .ceil, .trunc to the in-memory `Decimal` column.][10887]
+- [Added `floor`, `ceil`, `trunc` to the in-memory `Decimal` column.][10887]
 - [Added vectorized .round to the in-memory `Decimal` column.][10912]
 - [`select_into_database_table` no longer defaults the primary key to the first
   column.][11120]
+- [Extend the range of `floor`, `ceil`, `trunc` to values outside the `Long`
+  range.][11135]
 - [Added `format` parameter to `Decimal.parse`.][11205]
+- [Added `format` parameter to `Float.parse`.][11229]
+- [Implemented a cache for HTTP data requests, as well as a per-file response
+  size limit.][11342]
+- [Overhauled Google Analytics APIs.][11484]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -85,7 +174,11 @@
 [10887]: https://github.com/enso-org/enso/pull/10887
 [10912]: https://github.com/enso-org/enso/pull/10912
 [11120]: https://github.com/enso-org/enso/pull/11120
+[11135]: https://github.com/enso-org/enso/pull/11135
 [11205]: https://github.com/enso-org/enso/pull/11205
+[11229]: https://github.com/enso-org/enso/pull/11229
+[11342]: https://github.com/enso-org/enso/pull/11342
+[11484]: https://github.com/enso-org/enso/pull/11484
 
 #### Enso Language & Runtime
 

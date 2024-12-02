@@ -34,14 +34,14 @@ export const nodeMetadata = z
   })
   .passthrough()
 
-export type ImportMetadata = z.infer<typeof importMetadata>
-export const importMetadata = z.object({}).passthrough()
-
 export type IdeMetadata = z.infer<typeof ideMetadata>
 export const ideMetadata = z
   .object({
     node: z.record(z.string().uuid(), nodeMetadata),
-    import: z.record(z.string(), importMetadata),
+    widget: z.optional(z.record(z.string().uuid(), z.record(z.string(), z.unknown()))),
+    // The ydoc diff algorithm places the snapshot at the end of the metadata.
+    // Making it the last field prevents unnecessary edits.
+    snapshot: z.string().optional(),
   })
   .passthrough()
   .default(() => defaultMetadata().ide)
@@ -86,6 +86,7 @@ function defaultMetadata() {
     ide: {
       node: {},
       import: {},
+      widget: {},
     },
   }
 }
@@ -109,18 +110,20 @@ export function tryParseMetadataOrFallback(metadataJson: string | undefined | nu
   return metadata.parse(parsedMeta)
 }
 
+/** Return a parsed {@link IdMap} from a JSON string, or a default value if parsing failed. */
 export function tryParseIdMapOrFallback(idMapJson: string | undefined | null): IdMap {
   if (idMapJson == null) return []
   const parsedIdMap = tryParseJson(idMapJson)
   return idMap.parse(parsedIdMap)
 }
 
+/** Parse a JSON string, or return `null` if parsing failed instead of throwing an error. */
 function tryParseJson(jsonString: string) {
   try {
     return json.parse(jsonString)
-  } catch (e) {
+  } catch (error) {
     console.error('Failed to parse metadata JSON:')
-    console.error(e)
+    console.error(error)
     return null
   }
 }
