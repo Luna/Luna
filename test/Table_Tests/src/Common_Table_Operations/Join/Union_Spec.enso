@@ -539,7 +539,7 @@ run_union_tests group_builder setup call_union =
         t4 = table_builder [["A", ['a', 'b']]]
         t5 = table_builder [["A", [Nothing]]]
 
-        t1.at "A" . value_type . should_equal Value_Type.Mixed
+        t1.at "A" . value_type . should_equal Value_Type.Null
         setup.expect_integer_type <| t2.at "A"
 
         t = call_union [t1, t2, t3, t4, t5]
