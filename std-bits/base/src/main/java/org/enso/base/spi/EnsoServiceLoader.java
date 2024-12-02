@@ -7,11 +7,11 @@ import java.util.stream.Collectors;
 import org.graalvm.polyglot.Value;
 
 /** A helper class that allows loading Enso services from the classpath. */
-public class EnsoServiceLoader<T extends EnsoService> {
+public final class EnsoServiceLoader<T extends EnsoService> {
   private final ServiceLoader<T> loader;
   private transient List<T> cachedProviders = null;
 
-  protected EnsoServiceLoader(Class<T> clazz) {
+  private EnsoServiceLoader(Class<T> clazz) {
     loader = ServiceLoader.load(clazz, clazz.getClassLoader());
   }
 
