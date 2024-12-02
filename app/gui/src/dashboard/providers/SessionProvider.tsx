@@ -92,7 +92,7 @@ export default function SessionProvider(props: SessionProviderProps) {
 
   const session = reactQuery.useSuspenseQuery(sessionQuery)
 
-  if (session.data) {
+  if (session.data && httpClient) {
     httpClient.setSessionToken(session.data.accessToken)
   }
 

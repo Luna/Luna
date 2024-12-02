@@ -1,0 +1,130 @@
+import type { UserSession } from '#/authentication/cognito'
+import { render, screen, waitFor } from '#/test'
+import { Rfc3339DateTime } from '#/utilities/dateTime'
+import HttpClient from '#/utilities/HttpClient'
+import { Suspense } from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { HttpClientProvider } from '../HttpClientProvider'
+import SessionProvider from '../SessionProvider'
+
+describe('SessionProvider', () => {
+  const mainPageUrl = new URL('https://enso.dev')
+  const userSession = vi.fn<[], Promise<UserSession>>(() =>
+    Promise.resolve({
+      email: 'test@test.com',
+      accessToken: 'accessToken',
+      refreshToken: 'refreshToken',
+      refreshUrl: 'https://enso.dev',
+      expireAt: Rfc3339DateTime(new Date().toString()),
+      clientId: 'clientId',
+    }),
+  )
+  const refreshUserSession = vi.fn(() => Promise.resolve(null))
+  const registerAuthEventListener = vi.fn()
+  const saveAccessToken = vi.fn()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('Should retrieve the user session', async () => {
+    const { getByText } = render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <SessionProvider
+          mainPageUrl={mainPageUrl}
+          userSession={userSession}
+          refreshUserSession={refreshUserSession}
+          registerAuthEventListener={registerAuthEventListener}
+          saveAccessToken={saveAccessToken}
+        >
+          <div>Hello</div>
+        </SessionProvider>
+      </Suspense>,
+    )
+
+    expect(userSession).toBeCalled()
+    expect(getByText(/Loading/)).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(getByText(/Hello/)).toBeInTheDocument()
+    })
+  })
+
+  it('Should set the access token on the HTTP client', async () => {
+    const httpClient = new HttpClient()
+
+    httpClient.setSessionToken = vi.fn()
+
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <HttpClientProvider httpClient={httpClient}>
+          <SessionProvider
+            mainPageUrl={mainPageUrl}
+            userSession={userSession}
+            refreshUserSession={refreshUserSession}
+            registerAuthEventListener={registerAuthEventListener}
+            saveAccessToken={saveAccessToken}
+          >
+            <div>Hello</div>
+          </SessionProvider>
+        </HttpClientProvider>
+      </Suspense>,
+    )
+
+    await waitFor(() => {
+      expect(httpClient.setSessionToken).toBeCalledWith('accessToken')
+    })
+  })
+
+  it('Should refresh the user session', async () => {
+    userSession.mockReturnValueOnce(
+      Promise.resolve({
+        ...(await userSession()),
+        // 24 hours from now
+        expireAt: Rfc3339DateTime(new Date(Date.now() - 1).toString()),
+      }),
+    )
+
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <SessionProvider
+          mainPageUrl={mainPageUrl}
+          userSession={userSession}
+          refreshUserSession={refreshUserSession}
+          registerAuthEventListener={registerAuthEventListener}
+          saveAccessToken={saveAccessToken}
+        >
+          <div>Hello</div>
+        </SessionProvider>
+      </Suspense>,
+    )
+
+    await waitFor(() => {
+      expect(refreshUserSession).toBeCalledTimes(1)
+      expect(screen.getByText(/Hello/)).toBeInTheDocument()
+
+      // 2 initial calls(fetching session and refreshing session), 1 mutation call, 1 re-fetch call
+      expect(userSession).toBeCalledTimes(4)
+    })
+  })
+
+  it('Should call registerAuthEventListener when the session is updated', async () => {
+    render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <SessionProvider
+          mainPageUrl={mainPageUrl}
+          userSession={userSession}
+          refreshUserSession={refreshUserSession}
+          registerAuthEventListener={registerAuthEventListener}
+          saveAccessToken={saveAccessToken}
+        >
+          <div>Hello</div>
+        </SessionProvider>
+      </Suspense>,
+    )
+
+    await waitFor(() => {
+      expect(registerAuthEventListener).toBeCalled()
+    })
+  })
+})
