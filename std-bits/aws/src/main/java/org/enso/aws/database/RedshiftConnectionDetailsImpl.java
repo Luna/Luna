@@ -1,26 +1,26 @@
-package org.enso.snowflake;
+package org.enso.aws.database;
 
 import org.enso.database.DatabaseConnectionDetailsSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DatabaseConnectionDetailsSPI.class)
-public class SnowflakeConnectionDetailsSPI extends DatabaseConnectionDetailsSPI {
+public class RedshiftConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
   @Override
   protected String getModuleName() {
-    return "Standard.Snowflake.Connection.Snowflake_Details";
+    return "Standard.AWS.Database.Redshift.Redshift_Details";
   }
 
   @Override
   protected String getTypeName() {
-    return "Snowflake_Details";
+    return "Redshift_Details";
   }
 
   @Override
   protected String getCodeForDefaultConstructor() {
-    return "..Snowflake";
+    return "..Redshift";
   }
 
   @Override
   protected String getUserFacingConnectionName() {
-    return "Snowflake";
+    return "Redshift";
   }
 }

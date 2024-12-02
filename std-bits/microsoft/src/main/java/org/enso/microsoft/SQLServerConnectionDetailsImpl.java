@@ -1,26 +1,27 @@
-package org.enso.database.postgres;
+package org.enso.microsoft;
 
 import org.enso.database.DatabaseConnectionDetailsSPI;
 
 @org.openide.util.lookup.ServiceProvider(service = DatabaseConnectionDetailsSPI.class)
-public class PostgresConnectionDetailsSPI extends DatabaseConnectionDetailsSPI {
+public class SQLServerConnectionDetailsImpl extends DatabaseConnectionDetailsSPI {
+
   @Override
   protected String getModuleName() {
-    return "Standard.Database.Connection.Postgres";
+    return "Standard.Microsoft.Connection.SQLServer_Details";
   }
 
   @Override
   protected String getTypeName() {
-    return "Postgres";
+    return "SQLServer_Details";
   }
 
   @Override
   protected String getCodeForDefaultConstructor() {
-    return "(Postgres.Server 'localhost' 5432)";
+    return "..SQLServer";
   }
 
   @Override
   protected String getUserFacingConnectionName() {
-    return "Postgres";
+    return "Microsoft SQL Server";
   }
 }
