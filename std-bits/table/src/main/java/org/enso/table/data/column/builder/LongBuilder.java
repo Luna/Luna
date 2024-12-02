@@ -110,14 +110,14 @@ public abstract class LongBuilder extends NumericBuilder {
             data[currentSize++] = ToIntegerStorageConverter.booleanAsLong(boolStorage.getItem(i));
           }
         }
-      } else if (storage.getType() instanceof NullType) {
-        appendNulls(storage.size());
       } else {
         throw new IllegalStateException(
             "Unexpected storage implementation for type BOOLEAN: "
                 + storage
                 + ". This is a bug in the Table library.");
       }
+    } else if (storage.getType() instanceof NullType) {
+      appendNulls(storage.size());
     } else {
       throw new StorageTypeMismatchException(getType(), storage.getType());
     }
