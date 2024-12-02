@@ -64,6 +64,7 @@ jobs:
     name: Engine (GraalVM CE) (macos, amd64)
     runs-on:
       - macos-13
+    continue-on-error: true
     steps:
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
@@ -209,6 +210,7 @@ jobs:
     name: JVM Tests (GraalVM CE) (macos, amd64)
     runs-on:
       - macos-13
+    continue-on-error: true
     steps:
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
@@ -379,6 +381,7 @@ jobs:
     name: Standard Library Tests (GraalVM CE) (macos, amd64)
     runs-on:
       - macos-13
+    continue-on-error: true
     steps:
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack

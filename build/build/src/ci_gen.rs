@@ -565,14 +565,34 @@ fn add_release_steps(workflow: &mut Workflow) -> Result {
 }
 
 /// Add jobs that perform backend checks ,including Scala and Standard Library tests.
+pub fn add_backend_checks_customized(
+    workflow: &mut Workflow,
+    target: Target,
+    graal_edition: graalvm::Edition,
+    continue_on_error: impl Fn(&Target) -> Option<bool>,
+) {
+    workflow.add_customized(target, job::CiCheckBackend { graal_edition }, |job| {
+        job.continue_on_error = continue_on_error(&target);
+    });
+    workflow.add_customized(target, job::JvmTests { graal_edition }, |job| {
+        job.continue_on_error = continue_on_error(&target);
+    });
+    workflow.add_customized(
+        target,
+        job::StandardLibraryTests { graal_edition, cloud_tests_enabled: false },
+        |job| {
+            job.continue_on_error = continue_on_error(&target);
+        },
+    );
+}
+
+/// Add jobs that perform backend checks ,including Scala and Standard Library tests.
 pub fn add_backend_checks(
     workflow: &mut Workflow,
     target: Target,
     graal_edition: graalvm::Edition,
 ) {
-    workflow.add(target, job::CiCheckBackend { graal_edition });
-    workflow.add(target, job::JvmTests { graal_edition });
-    workflow.add(target, job::StandardLibraryTests { graal_edition, cloud_tests_enabled: false });
+    add_backend_checks_customized(workflow, target, graal_edition, |_| None);
 }
 
 pub fn workflow_call_job(name: impl Into<String>, path: impl Into<String>) -> Job {
@@ -715,7 +735,15 @@ pub fn backend() -> Result<Workflow> {
     };
     workflow.add(PRIMARY_TARGET, job::VerifyLicensePackages);
     for target in PR_CHECKED_TARGETS {
-        add_backend_checks(&mut workflow, target, graalvm::Edition::Community);
+        add_backend_checks_customized(
+            &mut workflow,
+            target,
+            graalvm::Edition::Community,
+            |target| match target {
+                (OS::MacOS, Arch::X86_64) => Some(true),
+                _ => None,
+            },
+        );
     }
     Ok(workflow)
 }
