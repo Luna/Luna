@@ -1,4 +1,5 @@
 from Standard.Base import all
+import Standard.Base.Errors.Common.Failed_To_Load
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 from Standard.Table import all
@@ -160,7 +161,6 @@ add_specs suite_builder =
                 '"str"'.write (base_dir / "7_js_string.json")
 
                 files = Data.list base_dir . sort on=(.name)
-                IO.println (Meta.type_of files.first)
                 r = Data.read_many files
                 r.should_be_a Table
 
@@ -320,43 +320,46 @@ add_specs suite_builder =
             t3.row_count . should_equal 0
             t3.column_names . should_equal ["Path", "Value"]
 
-        group_builder.specify "works correctly if Nothing entries are encountered in the input column" <|
+        group_builder.specify "does not allow Nothing in Path column" <|
+            t = Table.new [["A", [1, 2]], ["Path", [Nothing, Nothing]]]
+            r1 = Data.read_many t return=..As_Merged_Table
+            r1.should_fail_with Illegal_Argument
+
+            r2 = Data.read_many t return=..With_New_Column
+            r2.should_fail_with Illegal_Argument
+
+            r3 = Data.read_many t return=..As_Vector
+            r3.should_fail_with Illegal_Argument
+
+            r4 = Data.read_many (t.at "Path")
+            r4.should_fail_with Illegal_Argument
+
+            r5 = Data.read_many [Nothing]
+            r5.should_fail_with Illegal_Argument
+
+        group_builder.specify "in As_Merged_Table mode, will discard rows associated with files that fail to load" <|
             with_temp_dir base_dir->
-                f = base_dir / "1.csv"
-                'x,y,z\n1,2,3'.write f . should_succeed
-                t = Table.new [["A", [1, 2, 3, 4]], ["Path", [Nothing, f, f, Nothing]]]
-                r = Data.read_many t return=..As_Merged_Table
+                'A,B\n1,2'.write (base_dir / "1_table.csv")
+
+                files = [base_dir / "1_table.csv", base_dir / "nonexistent.csv"]
+                r = Data.read_many files
                 r.should_be_a Table
-                within_table r <|
-                    r.column_names . should_equal ["Path", "A", "x", "y", "z"]
-                    r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
-                    r.at "A" . to_vector . should_equal [1, 2, 3, 4]
-                    r.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
-                    r.at "y" . to_vector . should_equal [Nothing, 2, 2, Nothing]
-                    r.at "z" . to_vector . should_equal [Nothing, 3, 3, Nothing]
+                r.row_count . should_equal 1
+                r.at "Path" . map .name . to_vector . should_equal ["1_table.csv"]
 
-                r2 = Data.read_many (t.at "Path") return=..As_Merged_Table
+                w = Problems.expect_only_warning No_Rows r
+                w.to_display_text . should_contain "nonexistent.csv"
+                w.to_display_text . should_contain "does not exist."
+
+                r2 = Data.read_many files return=..With_New_Column
                 r2.should_be_a Table
-                within_table r2 <|
-                    r2.column_names . should_equal ["Path", "x", "y", "z"]
-                    r2.at "Path" . map .name . to_vector . should_equal ["1.csv", "1.csv"]
-                    r.at "Path" . map (p-> p.if_not_nothing p.name) . to_vector . should_equal [Nothing, "1.csv", "1.csv", Nothing]
-                    r2.at "x" . to_vector . should_equal [Nothing, 1, 1, Nothing]
+                r2.row_count . should_equal 2
+                r2.at "Path" . map .name . to_vector . should_equal ["1_table.csv", "nonexistent.csv"]
+                r2.at "Value" . at 0 . should_be_a Table
+                r2.at "Value" . at 1 . should_equal Nothing
 
-                v3 = Data.read_many (t.at "Path") return=..As_Vector
-                v3.at 0 . should_equal Nothing
-                v3.at 1 . should_be_a Table
-                v3.at 2 . should_be_a Table
-                v3.at 3 . should_equal Nothing
-
-            all_null = Column.from_vector "C" [Nothing]
-            r4 = Data.read_many all_null return=..As_Vector
-            r4.at 0 . should_equal Nothing
-
-            r5 = Data.read_many all_null return=..As_Merged_Table
-            r5.should_be_a Table
-            r5.column_names . should_equal ["C"]
-            r5.at "C" . to_vector . should_equal [Nothing]
+                w2 = Problems.expect_only_warning Failed_To_Load r2
+                w2.to_display_text . should_contain "nonexistent.csv"
 
         group_builder.specify "should have sane behaviour if all files are weird" <|
             with_temp_dir base_dir->
