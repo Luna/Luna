@@ -137,35 +137,35 @@ jobs:
     name: 🧰 GUI Checks
     uses: ./.github/workflows/gui-checks.yml
     needs: [gui-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true'
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   storybook:
     name: 📚 Deploy Storybook
     uses: ./.github/workflows/storybook.yml
     needs: [gui-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true'
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   wasm-checks:
     name: 🧰 WASM Checks
     uses: ./.github/workflows/gui-tests.yml
     needs: [wasm-changed-files]
-    if: needs.wasm-changed-files.outputs.any_changed == 'true'
+    if: needs.wasm-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   engine-checks:
     name: 🧰 Engine Checks
     uses: ./.github/workflows/scala-new.yml
     needs: [engine-changed-files]
-    if: needs.engine-changed-files.outputs.any_changed == 'true'
+    if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   gui-packaging:
     name: 🧰 GUI Packaging
     uses: ./.github/workflows/gui.yml
     needs: [gui-changed-files, engine-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true'
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   # This job is used to report success if the needed jobs were successful.
