@@ -44,6 +44,7 @@ jobs:
             .prettierignore
             vitest.workspace.ts
             .github/workflows/gui*
+            .github/workflows/pull-request.yml
           files_ignore: |
             app/ide-desktop/**
             app/gui/scripts/**
@@ -85,6 +86,7 @@ jobs:
             Cargo.toml
             rust-toolchain.toml
             rustfmt.toml
+            .github/workflows/pull-request.yml
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.wasm-changed-files.outputs.all_changed_files }}
@@ -123,6 +125,7 @@ jobs:
             Cargo.toml
             rust-toolchain.toml
             .github/workflows/scala-new.yml
+            .github/workflows/pull-request.yml
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.engine-changed-files.outputs.all_changed_files }}
