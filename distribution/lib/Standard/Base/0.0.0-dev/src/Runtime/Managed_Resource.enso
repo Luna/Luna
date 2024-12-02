@@ -68,18 +68,17 @@ type Managed_Resource
 
        Executes the provided action on the resource managed by the managed
        resource object. The action is only invoked if the managed resource
-       has not yet been finalized.
+       has not yet been finalized. If the resource has already been finalized
+       then `Error` representing `Uninitialized_State` is returned.
 
        Arguments:
        - action: The action that will be applied to the resource managed by
          resource.
-       - on_missing: Optional action to perform when the value is no longer
-         reachable
        Returns:
-       Value returned from the `action` or `Nothing` if the managed resource
-       was already finalized
+       Value returned from the `action` or `Uninitialized_State` `Error`
+       if the managed resource was already finalized
     with : (Any -> Any) -> Any -> Any
-    with self ~action ~on_missing=Nothing = with_builtin self action on_missing...
+    with self ~action = @Tail_Call with_builtin self action
 
     ## PRIVATE
        ADVANCED
@@ -91,4 +90,4 @@ type Managed_Resource
     take self = @Builtin_Method "Managed_Resource.take"
 
 register_builtin r fn sys:Boolean = @Builtin_Method "Managed_Resource.register_builtin"
-with_builtin r fn ~on_missing = @Builtin_Method "Managed_Resource.with_builtin"
+with_builtin r fn = @Builtin_Method "Managed_Resource.with_builtin"

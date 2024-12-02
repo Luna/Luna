@@ -20,10 +20,9 @@ import org.junit.Test;
 public class ManagedResourceTest {
   private static Context ctx;
   private static EnsoContext ensoCtx;
-  private static Value newRef;
-  private static Value createRef;
-  private static Value getRef;
-  private static Value finalizeRef;
+  private static Value newResource;
+  private static Value createResource;
+  private static Value getResource;
 
   @BeforeClass
   public static void initCtx() throws Exception {
@@ -33,22 +32,20 @@ public class ManagedResourceTest {
         """
               import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 
-              new_ref obj =
+              make_new obj =
                 Managed_Resource.register obj (_->0)
 
-              create_ref obj system_resource =
+              create_new obj system_resource =
                 Managed_Resource.register obj (_->0) system_resource
 
-              get_ref ref = ref.with it->
+              get_res ref = ref.with it->
                 it
-              finalize_ref ref = ref.finalize
               """;
     var src = Source.newBuilder("enso", code, "gc.enso").build();
     var gcEnso = ctx.eval(src);
-    newRef = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "new_ref");
-    createRef = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "create_ref");
-    getRef = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "get_ref");
-    finalizeRef = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "finalize_ref");
+    newResource = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "make_new");
+    createResource = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "create_new");
+    getResource = gcEnso.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "get_res");
   }
 
   @AfterClass
@@ -60,7 +57,7 @@ public class ManagedResourceTest {
   @Test
   public void regularReference() throws Exception {
     var obj = new Object();
-    var ref = newRef.execute(obj);
+    var ref = newResource.execute(obj);
 
     assertFalse("Value returned", ref.isNull());
     assertEquals(
@@ -70,33 +67,36 @@ public class ManagedResourceTest {
     var weakRef = new WeakReference<>(obj);
     obj = null;
 
-    assertEquals("We get the object", weakRef.get(), getRef.execute(ref).asHostObject());
+    assertEquals("We get the object", weakRef.get(), getResource.execute(ref).asHostObject());
 
     assertGC("Weak wasn't released", false, weakRef);
-    assertFalse("Value was not GCed", getRef.execute(ref).isNull());
-    assertEquals("We get the object", weakRef.get(), getRef.execute(ref).asHostObject());
+    assertFalse("Value was not GCed", getResource.execute(ref).isNull());
+    assertEquals("We get the object", weakRef.get(), getResource.execute(ref).asHostObject());
 
     ensoCtx.getResourceManager().scheduleFinalization();
     assertEquals(
         "scheduleFinalization has no effect on regular reference",
         weakRef.get(),
-        getRef.execute(ref).asHostObject());
+        getResource.execute(ref).asHostObject());
   }
 
   @Test
   public void explicitlyReclaimableReference() throws Exception {
     var obj = new Object();
-    var ref = createRef.execute(obj, true);
+    var ref = createResource.execute(obj, true);
 
     assertFalse("Value returned", ref.isNull());
     assertEquals(
         "Standard.Base.Runtime.Managed_Resource.Managed_Resource",
         ref.getMetaObject().getMetaQualifiedName());
-    assertEquals("We get the object", obj, getRef.execute(ref).asHostObject());
+    assertEquals("We get the object", obj, getResource.execute(ref).asHostObject());
 
     ensoCtx.getResourceManager().scheduleFinalization();
 
-    assertTrue("Value was GCed", getRef.execute(ref).isNull());
+    var none = getResource.execute(ref);
+    assertTrue("Value was GCed", none.isException());
+    assertEquals(
+        "It is an error", "Standard.Base.Error.Error", none.getMetaObject().getMetaQualifiedName());
   }
 
   private static void assertGC(String msg, boolean expectGC, Reference<?> ref) {

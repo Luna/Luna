@@ -7,6 +7,7 @@ import org.enso.interpreter.node.callable.InvokeCallableNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.data.ManagedResource;
+import org.enso.interpreter.runtime.error.DataflowError;
 import org.enso.interpreter.runtime.state.State;
 
 @BuiltinMethod(
@@ -28,8 +29,7 @@ public final class WithNode extends Node {
     return new WithNode();
   }
 
-  Object execute(
-      State state, VirtualFrame frame, ManagedResource mr, Object action, Object onMissing) {
+  Object execute(State state, VirtualFrame frame, ManagedResource mr, Object action) {
     var ctx = EnsoContext.get(this);
     var resourceManager = ctx.getResourceManager();
     if (mr.getPhantomReference().refersTo(mr)) {
@@ -40,7 +40,8 @@ public final class WithNode extends Node {
         resourceManager.unpark(mr);
       }
     } else {
-      return onMissing;
+      var err = ctx.getBuiltins().error().makeUninitializedStateError(mr);
+      return DataflowError.withDefaultTrace(err, this);
     }
   }
 }
