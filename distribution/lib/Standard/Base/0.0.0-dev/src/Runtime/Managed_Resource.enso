@@ -2,7 +2,7 @@
 
 import project.Any.Any
 import project.Nothing.Nothing
-import project.Data.Boolean.Boolean
+from project.Data.Boolean import Boolean, False
 
 ## Resource provides an API for manual management of computation resources.
 
@@ -52,7 +52,7 @@ type Managed_Resource
        Returns:
        A `Managed_Resource` object that can be used to access the resource.
     register : Any -> (Any -> Nothing) -> Boolean -> Managed_Resource
-    register resource function system_finalization_allowed=Boolean.False =
+    register resource function system_finalization_allowed=False =
         @Tail_Call register_builtin resource function system_finalization_allowed
 
     ## PRIVATE
