@@ -2,6 +2,7 @@
 import AutoSizedInput from '@/components/widgets/AutoSizedInput.vue'
 import { defineWidget, Score, WidgetInput, widgetProps } from '@/providers/widgetRegistry'
 import { useGraphStore } from '@/stores/graph'
+import { usePersisted } from '@/stores/persisted'
 import { useProjectStore } from '@/stores/project'
 import { Ast } from '@/util/ast'
 import { Err, Ok, type Result } from '@/util/data/result'
@@ -12,7 +13,8 @@ import type { ExpressionId, MethodPointer } from 'ydoc-shared/languageServerType
 import NodeWidget from '../NodeWidget.vue'
 
 const props = defineProps(widgetProps(widgetDefinition))
-const graph = useGraphStore()
+const graph = useGraphStore(true)
+const persisted = usePersisted(true)
 const displayedName = ref(props.input.value.code())
 
 const project = useProjectStore()
@@ -49,10 +51,12 @@ async function renameFunction(newName: string): Promise<Result> {
   const refactorResult = await project.lsRpcConnection.renameSymbol(modPath, editedName, newName)
   if (!refactorResult.ok) return refactorResult
   if (oldMethodPointer) {
-    graph.db.insertSyntheticMethodPointerUpdate(oldMethodPointer, {
+    const newMethodPointer = {
       ...oldMethodPointer,
       name: refactorResult.value.newName,
-    })
+    }
+    graph?.db.insertSyntheticMethodPointerUpdate(oldMethodPointer, newMethodPointer)
+    persisted?.handleModifiedMethodPointer(oldMethodPointer, newMethodPointer)
   }
   return Ok()
 }

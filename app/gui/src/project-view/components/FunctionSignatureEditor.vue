@@ -37,11 +37,10 @@ const docsData = computed(() => {
     : undefined
 })
 
-const treeRootInput = computed(() => {
-  return {
-    ...WidgetInput.FromAst(functionAst),
-    [FunctionInfoKey]: { methodPointer },
-  }
+const treeRootInput = computed((): WidgetInput => {
+  const input = WidgetInput.FromAst(functionAst)
+  if (methodPointer) input[FunctionInfoKey] = { methodPointer }
+  return input
 })
 
 const rootElement = ref<HTMLElement>()

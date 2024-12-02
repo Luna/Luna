@@ -2,12 +2,13 @@ import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
 import { createContextStore } from '@/providers'
 import { GraphNavigator } from '@/providers/graphNavigator'
 import { injectVisibility } from '@/providers/visibility'
+import { Ok, Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { ToValue } from '@/util/reactivity'
 import { until } from '@vueuse/core'
 import { encoding } from 'lib0'
 import { computed, proxyRefs, ref, toValue } from 'vue'
-import { encodeMethodPointer } from 'ydoc-shared/languageServerTypes'
+import { encodeMethodPointer, MethodPointer } from 'ydoc-shared/languageServerTypes'
 import { GraphStore } from './graph'
 
 export type PersistedStore = ReturnType<typeof usePersisted>
@@ -52,16 +53,17 @@ export const [providePersisted, usePersisted] = createContextStore(
       return nodesCount > 0 && visibleNodeAreas.length == nodesCount
     })
 
-    useSyncLocalStorage<GraphStoredState>({
+    // Client graph state needs to be stored separately for:
+    // - each project
+    // - each function within the project
+    function encodeKey(enc: encoding.Encoder, methodPointer: Result<MethodPointer>) {
+      encoding.writeVarString(enc, toValue(projectId))
+      if (methodPointer.ok) encodeMethodPointer(enc, methodPointer.value)
+    }
+
+    const storageOps = useSyncLocalStorage<GraphStoredState>({
       storageKey: 'enso-graph-state',
-      mapKeyEncoder: (enc) => {
-        // Client graph state needs to be stored separately for:
-        // - each project
-        // - each function within the project
-        encoding.writeVarString(enc, toValue(projectId))
-        const methodPtr = graphStore.currentMethodPointer
-        if (methodPtr.ok) encodeMethodPointer(enc, methodPtr.value)
-      },
+      mapKeyEncoder: (enc) => encodeKey(enc, graphStore.currentMethodPointer),
       debounce: 200,
       captureState() {
         return {
@@ -89,10 +91,21 @@ export const [providePersisted, usePersisted] = createContextStore(
       },
     })
 
+    function handleModifiedMethodPointer(
+      oldMethodPointer: MethodPointer,
+      newMethodPointer: MethodPointer,
+    ) {
+      storageOps.moveToNewKey(
+        (enc) => encodeKey(enc, Ok(oldMethodPointer)),
+        (enc) => encodeKey(enc, Ok(newMethodPointer)),
+      )
+    }
+
     return proxyRefs({
       graphRightDock,
       graphRightDockTab,
       graphRightDockWidth,
+      handleModifiedMethodPointer,
     })
   },
 )

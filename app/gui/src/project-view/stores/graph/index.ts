@@ -51,7 +51,12 @@ import type {
   MethodPointer,
 } from 'ydoc-shared/languageServerTypes'
 import { reachable } from 'ydoc-shared/util/data/graph'
-import type { LocalUserActionOrigin, Origin, VisualizationMetadata } from 'ydoc-shared/yjsModel'
+import type {
+  ExternalId,
+  LocalUserActionOrigin,
+  Origin,
+  VisualizationMetadata,
+} from 'ydoc-shared/yjsModel'
 import { defaultLocalOrigin, visMetadataEquals } from 'ydoc-shared/yjsModel'
 import { UndoManager } from 'yjs'
 
@@ -140,9 +145,32 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       },
     )
 
-    const methodAst = computed<Result<Ast.FunctionDef>>(() =>
+    const immediateMethodAst = computed<Result<Ast.FunctionDef>>(() =>
       syncModule.value ? getExecutedMethodAst(syncModule.value) : Err('AST not yet initialized'),
     )
+
+    // When renaming a function, we temporarily lose track of edited function AST. Ensure that we
+    // still resolve it despite the code change.
+    const lastKnownResolvedMethodExternalId = ref<AstId>()
+    watch(immediateMethodAst, (ast) => {
+      if (ast.ok) lastKnownResolvedMethodExternalId.value = ast.value.id
+    })
+
+    const fallbackMethodAst = computed(() => {
+      const id = lastKnownResolvedMethodExternalId.value
+      const ast = id != null ? syncModule.value?.get(id) : undefined
+      console.log('fallback ast:', ast)
+      if (ast instanceof Ast.FunctionDef) return ast
+      return undefined
+    })
+
+    const methodAst = computed(() => {
+      const imm = immediateMethodAst.value
+      if (imm.ok) return imm
+      const flb = fallbackMethodAst.value
+      if (flb) return Ok(flb)
+      return imm
+    })
 
     const watchContext = useWatchContext()
 
@@ -154,6 +182,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
     }
 
     watchEffect(() => {
+      console.log('methodAst', methodAst.value)
       if (!methodAst.value.ok) return
       db.updateNodes(methodAst.value.value, watchContext)
       for (const cb of afterUpdate) {
