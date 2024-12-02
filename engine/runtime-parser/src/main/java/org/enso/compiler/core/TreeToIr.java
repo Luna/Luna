@@ -492,7 +492,7 @@ final class TreeToIr {
         var location = new Location(identifiedLocation.end(), identifiedLocation.end());
         emptyLocation = new IdentifiedLocation(location, identifiedLocation.uuid());
       }
-      body = new Empty(emptyLocation, meta());
+      body = Empty.createFromLocationAndPassData(emptyLocation, meta());
     }
 
     String functionName = fn.getName().codeRepr();
@@ -1001,7 +1001,7 @@ final class TreeToIr {
             var doc = new Pattern.Documentation(comment.doc(), loc, meta());
             var br = new Case.Branch(
                 doc,
-                new Empty(null, meta()), true, loc, meta()
+                Empty.createEmpty(), true, loc, meta()
             );
             branches = join(br, branches);
           }
@@ -1100,7 +1100,7 @@ final class TreeToIr {
     var locationWithANewLine = getIdentifiedLocation(body, 0, 0, null);
     Expression last;
     if (expressions.isEmpty()) {
-      last = new Empty(locationWithANewLine, meta());
+      last = Empty.createFromLocationAndPassData(locationWithANewLine, meta());
     } else {
       last = expressions.get(expressions.size() - 1);
       expressions.remove(expressions.size() - 1);

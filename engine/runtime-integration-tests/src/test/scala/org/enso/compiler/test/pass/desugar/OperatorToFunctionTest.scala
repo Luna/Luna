@@ -84,9 +84,9 @@ class OperatorToFunctionTest extends MiniPassTest {
   // === The Tests ============================================================
   val opName =
     Name.Literal("=:=", isMethod = true, null)
-  val left     = Empty(null)
-  val right    = Empty(null)
-  val rightArg = CallArgument.Specified(None, Empty(null), false, null)
+  val left     = Empty.createEmpty()
+  val right    = Empty.createEmpty()
+  val rightArg = CallArgument.Specified(None, Empty.createEmpty(), false, null)
 
   val (operator, operatorFn) = genOprAndFn(opName, left, right)
 
@@ -96,11 +96,11 @@ class OperatorToFunctionTest extends MiniPassTest {
   "Operators" should {
     val opName =
       Name.Literal("=:=", isMethod = true, identifiedLocation = null)
-    val left  = Empty(identifiedLocation = null)
-    val right = Empty(identifiedLocation = null)
+    val left  = Empty.createEmpty()
+    val right = Empty.createEmpty()
     val rightArg = CallArgument.Specified(
       None,
-      Empty(identifiedLocation = null),
+      Empty.createEmpty(),
       false,
       identifiedLocation = null
     )

@@ -306,7 +306,7 @@ case object SuspendedArguments extends IRPass {
       } else if (args.length > signatureSegments.length) {
         val additionalSegments = signatureSegments ::: List.fill(
           args.length - signatureSegments.length
-        )(Empty(identifiedLocation = null))
+        )(Empty.createEmpty())
 
         args.zip(additionalSegments)
       } else {
