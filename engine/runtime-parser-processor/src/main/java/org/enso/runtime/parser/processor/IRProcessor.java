@@ -48,8 +48,7 @@ public class IRProcessor extends AbstractProcessor {
     }
     assert irNodeElem instanceof TypeElement;
     var irNodeTypeElem = (TypeElement) irNodeElem;
-    if (!Utils.isSubtypeOfIR(irNodeTypeElem, processingEnv)) {
-      printError("Interface annotated with @IRNode must be a subtype of IR interface", irNodeElem);
+    if (!ensureExtendsSingleIRInterface(irNodeTypeElem)) {
       return false;
     }
     var enclosingElem = irNodeElem.getEnclosingElement();
@@ -100,6 +99,35 @@ public class IRProcessor extends AbstractProcessor {
       }
     } catch (IOException e) {
       printError("Failed to write to source file for IRNode", irNodeElem);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * The interface that is being processed must extend just a single interface that is a subtype of
+   * {@code org.enso.compiler.core.IR}. Otherwise, the code generation would not work correctly as
+   * it would find ambiguous methods to override.
+   *
+   * @param interfaceType The current interface annotated with {@link IRNode} being processed.
+   * @return {@code true} if the interface extends a single IR interface, {@code false} otherwise.
+   */
+  private boolean ensureExtendsSingleIRInterface(TypeElement interfaceType) {
+    var superIfacesExtendingIr =
+        interfaceType.getInterfaces().stream()
+            .filter(
+                superInterface -> {
+                  var superInterfaceType =
+                      (TypeElement) processingEnv.getTypeUtils().asElement(superInterface);
+                  return Utils.isSubtypeOfIR(superInterfaceType, processingEnv);
+                })
+            .toList();
+    if (superIfacesExtendingIr.size() != 1) {
+      printError(
+          "Interface annotated with @IRNode must be a subtype of IR interface, "
+              + "and must extend only a single IR interface. All the IR interfaces found: "
+              + superIfacesExtendingIr,
+          interfaceType);
       return false;
     }
     return true;

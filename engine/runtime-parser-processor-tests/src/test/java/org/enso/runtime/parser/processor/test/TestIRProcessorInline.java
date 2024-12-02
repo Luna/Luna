@@ -78,6 +78,27 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void annotatedInterfaceMustNotExtendTwoIRInterfaces() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "Hello",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+        import org.enso.compiler.core.ir.Expression;
+
+        @IRNode
+        public interface Hello extends IR, Expression {}
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).failed();
+    CompilationSubject.assertThat(compilation).hadErrorCount(1);
+    CompilationSubject.assertThat(compilation)
+        .hadErrorContaining("must extend only a single IR interface");
+  }
+
+  @Test
   public void annotationCanOnlyBeAppliedToInterface() {
     var src =
         JavaFileObjects.forSourceString(
