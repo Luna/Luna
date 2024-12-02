@@ -15,18 +15,13 @@ import org.graalvm.polyglot.Value;
  * `make_return`. See `Standard.Base.Data.Read.Return_As` for examples.
  */
 public abstract class ReadManyReturnSPI extends EnsoService {
-  private static final class ReadManyReturnLoader extends EnsoServiceLoader<ReadManyReturnSPI> {
-    public ReadManyReturnLoader() {
-      super(ReadManyReturnSPI.class);
-    }
-  }
-
-  private static final ReadManyReturnLoader loader = new ReadManyReturnLoader();
+  private static final EnsoServiceLoader<ReadManyReturnSPI> loader =
+      EnsoServiceLoader.make(ReadManyReturnSPI.class);
 
   public static List<Value> get_types(boolean refresh) {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().stream().map(ReadManyReturnSPI::getTypeObject).toList();
+    return loader.getTypeObjects();
   }
 }

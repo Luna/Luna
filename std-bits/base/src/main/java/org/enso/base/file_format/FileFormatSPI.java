@@ -7,14 +7,14 @@ import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
 public abstract class FileFormatSPI extends EnsoService {
-
-  private static final FileFormatLoader loader = new FileFormatLoader();
+  private static final EnsoServiceLoader<FileFormatSPI> loader =
+      EnsoServiceLoader.make(FileFormatSPI.class);
 
   public static List<Value> get_types(boolean refresh) {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().stream().map(EnsoService::getTypeObject).toList();
+    return loader.getTypeObjects();
   }
 
   public static Value findFormatForDataLinkSubType(String subType) {
@@ -27,12 +27,6 @@ public abstract class FileFormatSPI extends EnsoService {
       return null;
     }
     return found.getTypeObject();
-  }
-
-  private static final class FileFormatLoader extends EnsoServiceLoader<FileFormatSPI> {
-    public FileFormatLoader() {
-      super(FileFormatSPI.class);
-    }
   }
 
   /**

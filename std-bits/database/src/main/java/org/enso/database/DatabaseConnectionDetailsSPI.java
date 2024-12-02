@@ -6,8 +6,8 @@ import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
 public abstract class DatabaseConnectionDetailsSPI extends EnsoService {
-  private static final DatabaseConnectionDetailsLoader loader =
-      new DatabaseConnectionDetailsLoader();
+  private static final EnsoServiceLoader<DatabaseConnectionDetailsSPI> loader =
+      EnsoServiceLoader.make(DatabaseConnectionDetailsSPI.class);
 
   /**
    * Returns an array of pairs, where the first element is the user facing connection name and the
@@ -37,14 +37,7 @@ public abstract class DatabaseConnectionDetailsSPI extends EnsoService {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().stream().map(DatabaseConnectionDetailsSPI::getTypeObject).toList();
-  }
-
-  private static final class DatabaseConnectionDetailsLoader
-      extends EnsoServiceLoader<DatabaseConnectionDetailsSPI> {
-    public DatabaseConnectionDetailsLoader() {
-      super(DatabaseConnectionDetailsSPI.class);
-    }
+    return loader.getTypeObjects();
   }
 
   /** Default code that can be used to construct a default instance of the connection details. */

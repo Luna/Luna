@@ -7,14 +7,8 @@ import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
 public abstract class FileSystemSPI extends EnsoService {
-
-  private static final class FileSystemLoader extends EnsoServiceLoader<FileSystemSPI> {
-    public FileSystemLoader() {
-      super(FileSystemSPI.class);
-    }
-  }
-
-  private static final FileSystemLoader loader = new FileSystemLoader();
+  private static final EnsoServiceLoader<FileSystemSPI> loader =
+      EnsoServiceLoader.make(FileSystemSPI.class);
 
   public static Value get_type(String protocol, boolean refresh) {
     Objects.requireNonNull(protocol, "protocol must not be null/Nothing.");
@@ -35,7 +29,7 @@ public abstract class FileSystemSPI extends EnsoService {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().stream().map(FileSystemSPI::getTypeObject).toList();
+    return loader.getTypeObjects();
   }
 
   /**
