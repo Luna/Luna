@@ -1,12 +1,10 @@
-package org.enso.runtime.parser.processor.test.gen.ir;
+package org.enso.runtime.parser.processor.test.gen.ir.core;
 
 import java.util.function.Function;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.Expression;
 import org.enso.runtime.parser.dsl.IRChild;
-import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.dsl.IRNode;
-import scala.Option;
 import scala.collection.immutable.List;
 
 @IRNode

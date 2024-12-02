@@ -2,7 +2,7 @@ package org.enso.runtime.parser.processor.test.gen.ir.module.scope;
 
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
-import org.enso.runtime.parser.processor.test.gen.ir.JName;
+import org.enso.runtime.parser.processor.test.gen.ir.core.JName;
 import org.enso.runtime.parser.processor.test.gen.ir.module.JScope;
 import scala.collection.immutable.List;
 
