@@ -1,6 +1,7 @@
 package org.enso.base.enso_cloud;
 
-import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.enso.base.spi.EnsoService;
+import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
 import java.util.Objects;
@@ -10,8 +11,8 @@ import java.util.Objects;
  * Enso type that defines how to `parse` a specific type of datalink. The `parse` method on that
  * type should return a configured datalink instance that can later be `read`.
  */
-public abstract class DataLinkSPI extends AbstractEnsoTypeSPI {
-  private static final class DataLinkTypeLoader extends Loader<DataLinkSPI> {
+public abstract class DataLinkSPI extends EnsoService {
+  private static final class DataLinkTypeLoader extends EnsoServiceLoader<DataLinkSPI> {
     public DataLinkTypeLoader() {
       super(DataLinkSPI.class);
     }

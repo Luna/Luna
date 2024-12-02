@@ -2,12 +2,13 @@ package org.enso.base.file_system;
 
 import java.util.List;
 import java.util.Objects;
-import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.enso.base.spi.EnsoService;
+import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
-public abstract class FileSystemSPI extends AbstractEnsoTypeSPI {
+public abstract class FileSystemSPI extends EnsoService {
 
-  private static final class FileSystemLoader extends Loader<FileSystemSPI> {
+  private static final class FileSystemLoader extends EnsoServiceLoader<FileSystemSPI> {
     public FileSystemLoader() {
       super(FileSystemSPI.class);
     }

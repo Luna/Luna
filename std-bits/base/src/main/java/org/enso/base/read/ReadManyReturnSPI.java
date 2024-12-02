@@ -1,7 +1,8 @@
 package org.enso.base.read;
 
 import java.util.List;
-import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.enso.base.spi.EnsoService;
+import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
 /**
@@ -13,8 +14,8 @@ import org.graalvm.polyglot.Value;
  * the dropdown. Registered types must provide methods `get_dropdown_options`, `resolve` and
  * `make_return`. See `Standard.Base.Data.Read.Return_As` for examples.
  */
-public abstract class ReadManyReturnSPI extends AbstractEnsoTypeSPI {
-  private static final class ReadManyReturnLoader extends Loader<ReadManyReturnSPI> {
+public abstract class ReadManyReturnSPI extends EnsoService {
+  private static final class ReadManyReturnLoader extends EnsoServiceLoader<ReadManyReturnSPI> {
     public ReadManyReturnLoader() {
       super(ReadManyReturnSPI.class);
     }

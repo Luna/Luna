@@ -1,15 +1,13 @@
 package org.enso.base.spi;
 
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.function.Predicate;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import org.enso.base.polyglot.EnsoMeta;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
-public abstract class AbstractEnsoTypeSPI {
+import java.util.logging.Logger;
+
+/** A base class for an Enso service backed by an Enso type. */
+public abstract class EnsoService {
   private transient Value cachedTypeObject = null;
   private transient boolean wasLoaded = false;
 
@@ -43,7 +41,7 @@ public abstract class AbstractEnsoTypeSPI {
                       + this.getClass().getCanonicalName()
                       + ": "
                       + e.getMessage());
-          cachedTypeObject = null;
+          cachedTypeObject = Value.asValue(null);
         } else {
           throw e;
         }
@@ -60,50 +58,4 @@ public abstract class AbstractEnsoTypeSPI {
     return getTypeObject() != null;
   }
 
-  protected static class Loader<T extends AbstractEnsoTypeSPI> {
-    private final ServiceLoader<T> loader;
-
-    public Loader(Class<T> clazz) {
-      loader = ServiceLoader.load(clazz, clazz.getClassLoader());
-    }
-
-    private transient List<T> cachedProviders = null;
-
-    public final void reload() {
-      cachedProviders = null;
-      loader.reload();
-    }
-
-    public final List<T> getProviders() {
-      if (cachedProviders == null) {
-        cachedProviders =
-            loader.stream()
-                .map(ServiceLoader.Provider::get)
-                .filter(AbstractEnsoTypeSPI::isLoaded)
-                .toList();
-      }
-
-      return cachedProviders;
-    }
-
-    public T findSingleProvider(Predicate<T> predicate, String predicateDescription) {
-      var found = getProviders().stream().filter(predicate).toList();
-      if (found.isEmpty()) {
-        return null;
-      } else if (found.size() > 1) {
-        var modules =
-            found.stream()
-                .map(AbstractEnsoTypeSPI::getModuleName)
-                .collect(Collectors.joining(", "));
-        throw new IllegalStateException(
-            "Multiple providers found for "
-                + predicateDescription
-                + ". The clashing definitions are in the following modules: "
-                + modules
-                + ".");
-      } else {
-        return found.get(0);
-      }
-    }
-  }
 }

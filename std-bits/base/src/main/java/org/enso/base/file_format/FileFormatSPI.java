@@ -2,10 +2,11 @@ package org.enso.base.file_format;
 
 import java.util.List;
 import java.util.Objects;
-import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.enso.base.spi.EnsoService;
+import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
-public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
+public abstract class FileFormatSPI extends EnsoService {
 
   private static final FileFormatLoader loader = new FileFormatLoader();
 
@@ -13,7 +14,7 @@ public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
     if (refresh) {
       loader.reload();
     }
-    return loader.getProviders().stream().map(AbstractEnsoTypeSPI::getTypeObject).toList();
+    return loader.getProviders().stream().map(EnsoService::getTypeObject).toList();
   }
 
   public static Value findFormatForDataLinkSubType(String subType) {
@@ -28,7 +29,7 @@ public abstract class FileFormatSPI extends AbstractEnsoTypeSPI {
     return found.getTypeObject();
   }
 
-  private static final class FileFormatLoader extends Loader<FileFormatSPI> {
+  private static final class FileFormatLoader extends EnsoServiceLoader<FileFormatSPI> {
     public FileFormatLoader() {
       super(FileFormatSPI.class);
     }

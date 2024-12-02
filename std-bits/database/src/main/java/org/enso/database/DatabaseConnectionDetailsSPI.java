@@ -1,10 +1,11 @@
 package org.enso.database;
 
 import java.util.List;
-import org.enso.base.spi.AbstractEnsoTypeSPI;
+import org.enso.base.spi.EnsoService;
+import org.enso.base.spi.EnsoServiceLoader;
 import org.graalvm.polyglot.Value;
 
-public abstract class DatabaseConnectionDetailsSPI extends AbstractEnsoTypeSPI {
+public abstract class DatabaseConnectionDetailsSPI extends EnsoService {
   private static final DatabaseConnectionDetailsLoader loader =
       new DatabaseConnectionDetailsLoader();
 
@@ -40,7 +41,7 @@ public abstract class DatabaseConnectionDetailsSPI extends AbstractEnsoTypeSPI {
   }
 
   private static final class DatabaseConnectionDetailsLoader
-      extends Loader<DatabaseConnectionDetailsSPI> {
+      extends EnsoServiceLoader<DatabaseConnectionDetailsSPI> {
     public DatabaseConnectionDetailsLoader() {
       super(DatabaseConnectionDetailsSPI.class);
     }
