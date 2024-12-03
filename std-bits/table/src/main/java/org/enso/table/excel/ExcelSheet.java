@@ -4,10 +4,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
 /** Wrapper class to handle Excel sheets. */
-public class ExcelSheet {
-  private final int firstRow;
-  private final int lastRow;
-  private final boolean use1904Format;
 public interface ExcelSheet {
   /** Gets the index of the sheet within the workbook (0-based). */
   int getSheetIndex();
@@ -40,20 +36,13 @@ public interface ExcelSheet {
         sheetIndex,
         sheet.getSheetName(),
         sheet.getFirstRowNum() + 1,
-        sheet.getLastRowNum() + 1);
+        sheet.getLastRowNum() + 1,
+        ExcelUtils.is1904DateSystem(workbook));
   }
 
   record ExcelSheetFromWorkbook(
-      Sheet sheet, int sheetIndex, String sheetName, int firstRow, int lastRow)
+      Sheet sheet, int sheetIndex, String sheetName, int firstRow, int lastRow, boolean use1904Format)
       implements ExcelSheet {
-  public ExcelSheet(int firstRow, int lastRow, IntFunction<Row> rowSupplier, Sheet sheet) {
-    this.firstRow = firstRow;
-    this.lastRow = lastRow;
-    this.rowSupplier = rowSupplier;
-    this.use1904Format = ExcelUtils.is1904DateSystem(workbook);
-    this.sheet = sheet;
-  }
-  record ExcelSheetFromWorkbook(Sheet sheet, int sheetIndex, String sheetName, int firstRow, int lastRow) implements ExcelSheet {
     @Override
     public int getSheetIndex() {
       return sheetIndex;
