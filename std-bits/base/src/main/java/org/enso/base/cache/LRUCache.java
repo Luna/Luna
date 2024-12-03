@@ -121,7 +121,8 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
-    // Calculate the largest size we can allow, which is the minimum of the max file size and the max total cache size.
+    // Calculate the largest size we can allow, which is the minimum of the max file size and the
+    // max total cache size.
     long maxAllowedSize = Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
 
     // If we have a content-length, clear up enough space for that. If not,

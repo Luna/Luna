@@ -5,7 +5,11 @@ public class ResponseTooLargeException extends Exception {
   private final long limit;
 
   public ResponseTooLargeException(Long actualSize, long limit) {
-    super("Response too large: repsonse size" + (actualSize==null ? "" : " " + actualSize) + " is over the limit " + limit);
+    super(
+        "Response too large: repsonse size"
+            + (actualSize == null ? "" : " " + actualSize)
+            + " is over the limit "
+            + limit);
 
     this.actualSize = actualSize;
     this.limit = limit;
