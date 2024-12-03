@@ -258,6 +258,17 @@ add_specs suite_builder =
             r2 = Column.from_vector "X" [] (Value_Type.Char size=0 variable_length=True)
             r2.should_fail_with Illegal_Argument
 
+        group_builder.specify "should allow to create a column of repeated items" <|
+            r1 = Column.from_repeated_item "X" 123 3
+            r1.length . should_equal 3
+            r1.to_vector . should_equal [123, 123, 123]
+            r1.value_type . should_equal Value_Type.Integer
+
+            r2 = Column.from_repeated_item "X" Nothing 3
+            r2.length . should_equal 3
+            r2.to_vector . should_equal [Nothing, Nothing, Nothing]
+            r2.value_type . should_equal Value_Type.Null
+
         group_builder.specify "should be able to serialize to Enso code" <|
             c1 = Column.from_vector "X" [1, 2] Value_Type.Float
             c1.pretty . should_equal 'Column.from_vector \'X\' [1.0, 2.0]'
