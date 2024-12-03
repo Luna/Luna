@@ -122,10 +122,10 @@ const DIALOG_STYLES = tv({
       'sticky z-1 top-0 grid grid-cols-[1fr_auto_1fr] items-center border-b border-primary/10 transition-[border-color] duration-150',
     closeButton: 'col-start-1 col-end-1 mr-auto',
     heading: 'col-start-2 col-end-2 my-0 text-center',
-    scroller: 'flex flex-col overflow-y-auto max-h-[inherit]',
-    measurerWrapper: 'inline-grid h-fit max-h-fit min-h-fit w-full grid-rows-[auto]',
-    measurer: 'pointer-events-none block [grid-area:1/1]',
-    content: 'inline-block h-fit max-h-fit min-h-fit [grid-area:1/1] min-w-0',
+    scroller: 'flex flex-col h-full overflow-y-auto max-h-[inherit]',
+    measurerWrapper: 'inline-grid h-full min-h-fit w-full grid-rows-[auto]',
+    measurer: 'pointer-events-none h-auto block [grid-area:1/1]',
+    content: 'inline-block h-auto max-h-fit min-h-fit [grid-area:1/1] min-w-0',
   },
   compoundVariants: [
     { type: 'modal', size: 'small', class: 'max-w-sm' },
@@ -407,8 +407,8 @@ function DialogContent(props: DialogContentProps) {
                    * interfere with the layout.
                    */}
                   {/* eslint-enable jsdoc/check-alignment */}
-                  <div ref={contentDimensionsRef} className={styles.measurer()} />
-                  <div className={styles.content()}>
+                  <div className={styles.measurer()} />
+                  <div ref={contentDimensionsRef} className={styles.content()}>
                     <errorBoundary.ErrorBoundary>
                       <suspense.Suspense
                         loaderProps={{ minHeight: type === 'fullscreen' ? 'full' : 'h32' }}
