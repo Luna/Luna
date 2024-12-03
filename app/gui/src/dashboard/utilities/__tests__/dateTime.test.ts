@@ -7,8 +7,6 @@ import {
   toRfc3339,
 } from 'enso-common/src/utilities/data/dateTime'
 
-/* eslint-disable @typescript-eslint/no-magic-numbers */
-
 /** Remove all UTC offset from a {@link Date}. Daylight savings-aware. */
 function convertUTCToLocal(date: Date) {
   const offsetMins = date.getTimezoneOffset()
