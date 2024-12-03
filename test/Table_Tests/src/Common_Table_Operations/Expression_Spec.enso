@@ -170,7 +170,8 @@ add_expression_specs suite_builder detailed setup =
             nulls = [Nothing, Nothing, Nothing]
             c.not . to_vector . should_equal nulls
 
-            ## Currently some databases (e.g. Postgres) fail on this with "Operator is not unique" so we accept it may fail
+            ## TODO fix behaviour in Postgres and other DBs
+               https://github.com/enso-org/enso/issues/11751
             null_or_sql_fail x =
                 if x.is_error && setup.is_database then x.should_fail_with SQL_Error else
                     x.should_equal nulls
@@ -191,6 +192,9 @@ add_expression_specs suite_builder detailed setup =
             t.evaluate_expression "Nothing + [X]" . to_vector . should_equal nulls
 
             t.evaluate_expression "Nothing * Nothing" . to_vector |> null_or_sql_fail
+            t.evaluate_expression "Nothing / Nothing" . to_vector |> null_or_sql_fail
+            t.evaluate_expression "Nothing ^ Nothing" . to_vector |> null_or_sql_fail
+            t.evaluate_expression "Nothing % Nothing" . to_vector |> null_or_sql_fail
 
     suite_builder.group prefix+"Expression Date and Time literals" group_builder->
         specify_test "should be able to add a date or time column" group_builder pending=pending_datetime expression_test->
