@@ -188,14 +188,14 @@ public class LRUCache<M> {
     boolean successful = false;
     try {
       // Limit the download to getMaxFileSize().
-      long maxFileSize = settings.getMaxFileSize();
-      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxFileSize);
+      long maxAllowedSize = Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
+      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxAllowedSize);
 
       if (sizeOK) {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(null, maxFileSize);
+        throw new ResponseTooLargeException(null, maxAllowedSize);
       }
     } finally {
       outputStream.close();
