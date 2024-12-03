@@ -45,6 +45,8 @@
 - [Pasting tabular data now creates Table.input expressions][11695].
 - [No halo is displayed around components when hovering][11715].
 - [The hover area of the component output port extended twice its size][11715].
+- [The documentation editor and comment documentation support opening links
+  with a key pressed, or via a popup when editing][11753].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -73,6 +75,7 @@
 [11684]: https://github.com/enso-org/enso/pull/11684
 [11695]: https://github.com/enso-org/enso/pull/11695
 [11715]: https://github.com/enso-org/enso/pull/11715
+[11753]: https://github.com/enso-org/enso/pull/11753
 
 #### Enso Standard Library
 
