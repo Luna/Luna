@@ -152,7 +152,7 @@ simple_types_map = Dictionary.from_vector <|
     numerics = [Types.DECIMAL, Types.NUMERIC] . map x-> [x, default_float]
     strings = [Types.CHAR, Types.VARCHAR] . map x-> [x, default_text]
     blobs = [Types.BINARY, Types.BLOB, Types.CLOB] . map x-> [x, Value_Type.Binary]
-    special_types = [[Types.BOOLEAN, Value_Type.Boolean]]
+    special_types = [[Types.BOOLEAN, Value_Type.Boolean], [Types.NULL, Value_Type.Null]]
     ints + floats + numerics + strings + blobs + special_types
 
 ## PRIVATE

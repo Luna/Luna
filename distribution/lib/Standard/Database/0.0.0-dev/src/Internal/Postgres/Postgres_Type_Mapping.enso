@@ -148,7 +148,7 @@ type Postgres_Type_Mapping
 simple_types_map = Dictionary.from_vector <|
     ints = [[Types.SMALLINT, Value_Type.Integer Bits.Bits_16], [Types.BIGINT, Value_Type.Integer Bits.Bits_64], [Types.INTEGER, Value_Type.Integer Bits.Bits_32]]
     floats = [[Types.DOUBLE, Value_Type.Float Bits.Bits_64], [Types.REAL, Value_Type.Float Bits.Bits_32]]
-    other = [[Types.DATE, Value_Type.Date], [Types.TIME, Value_Type.Time]]
+    other = [[Types.DATE, Value_Type.Date], [Types.TIME, Value_Type.Time], [Types.NULL, Value_Type.Null]]
     ints + floats + other
 
 ## PRIVATE

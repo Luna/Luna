@@ -1903,13 +1903,12 @@ add_column_operation_specs suite_builder setup =
             c = empty.make_constant_column 42
             setup.expect_integer_type c
 
-        nulls_db_pending = if setup.is_database then "Empty NULL columns are unsupported in the database backends"
-        group_builder.specify "Should create a column of the correct type on a table with no rows" pending=nulls_db_pending <|
+        group_builder.specify "Should create a column of the correct type on a table with no rows" <|
             t = table_builder [["x", ["1", "2", "3"]]]
             empty = t.take 0
             c = empty.make_constant_column Nothing
-            c.value_type . should_equal Value_Type.Mixed
-            (empty.set c).at c.name . value_type . should_equal Value_Type.Mixed
+            c.value_type . should_equal Value_Type.Null
+            (empty.set c).at c.name . value_type . should_equal Value_Type.Null
 
     decimal_db_pending = if setup.is_database then "Decimals are currently not implemented for the Database backend."
     suite_builder.group prefix+"(Column_Operations_Spec) Decimal" pending=decimal_db_pending group_builder->

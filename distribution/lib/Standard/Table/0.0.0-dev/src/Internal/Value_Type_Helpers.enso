@@ -210,18 +210,27 @@ type Addition_Kind
     ## PRIVATE
     Text_Concat
 
+private resolve_operation_kind arg1:Any arg2:Any operation_name:Text find_operation_kind:(Value_Type -> Any) -> Any | Nothing =
+    kinds = [arg1, arg2]
+        . map on_problems=No_Wrap.Value find_operation_kind
+        . filter ..Not_Nothing
+        . distinct
+    if kinds.is_empty then Nothing else
+        if kinds.length > 1 then Error.throw (Illegal_Argument.Error ("Cannot perform "+operation_name+" on a pair of values of types " + (find_argument_type arg1).to_display_text + " and " + (find_argument_type arg2).to_display_text + ".")) else
+            kinds.first
+
 ## PRIVATE
    A helper which resolves if numeric addition or string concatenation should be
    used when the a `+` operator is used with the two provided types.
    It will return an error if the provided types are incompatible.
-resolve_addition_kind arg1 arg2 =
-    type_1 = find_argument_type arg1
-    type_2 = find_argument_type arg2
-    if type_1.is_numeric && (type_2.is_null || type_2.is_numeric) then Addition_Kind.Numeric_Add else
-        if type_1.is_text && (type_2.is_null || type_2.is_text) then Addition_Kind.Text_Concat else
-            Error.throw <| Illegal_Argument.Error <|
-                if type_2.is_null then "Cannot perform addition on a value of type " + type_1.to_display_text + ". Addition can only be performed if the column is of some numeric type or is text." else
-                    "Cannot perform addition on a pair of values of types " + type_1.to_display_text + " and " + type_2.to_display_text + ". Addition can only be performed if both columns are of some numeric type or are both are text."
+resolve_addition_kind arg1 arg2 -> Addition_Kind | Nothing =
+    find_addition_kind arg =
+        typ = find_argument_type arg
+        if typ.is_null then Nothing else
+            if typ.is_text then Addition_Kind.Text_Concat else
+                if typ.is_numeric then Addition_Kind.Numeric_Add else
+                    raise_unexpected_type "numeric or text" arg
+    resolve_operation_kind arg1 arg2 "addition" find_addition_kind
 
 ## PRIVATE
 type Subtraction_Kind
@@ -235,17 +244,14 @@ type Subtraction_Kind
    A helper which resolves if numeric subtraction or date-time difference should
    be used when the a `-` operator is used with the two provided types.
    It will return an error if the provided types are incompatible.
-resolve_subtraction_kind arg1 arg2 =
-    type_1 = find_argument_type arg1
-    type_2 = find_argument_type arg2
-
-    if type_1.is_numeric && (type_2.is_null || type_2.is_numeric) then Subtraction_Kind.Numeric_Subtract else
-        case type_1.is_date_or_time of
-            True ->
-                if type_2.is_null || (type_2 == type_1) then Subtraction_Kind.Date_Time_Difference else
-                    raise_unexpected_type type_1 arg2
-            False ->
-                raise_unexpected_type "numeric or date/time" arg1
+resolve_subtraction_kind arg1 arg2 -> Subtraction_Kind | Nothing =
+    find_subtraction_kind arg =
+        typ = find_argument_type arg
+        if typ.is_null then Nothing else
+            if typ.is_numeric then Subtraction_Kind.Numeric_Subtract else
+                if typ.is_date_or_time then Subtraction_Kind.Date_Time_Difference else
+                    raise_unexpected_type "numeric or date/time" arg
+    resolve_operation_kind arg1 arg2 "subtraction" find_subtraction_kind
 
 ## PRIVATE
    Checks that both provided arguments have numeric type and runs the action
