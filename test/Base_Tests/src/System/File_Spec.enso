@@ -925,7 +925,8 @@ add_specs suite_builder =
             dir.delete_if_exists recursive=True
             dir.create_directory
 
-            0.up_to 20 . each i->
+            nums = (0.up_to 10 . to_vector) + (30.down_to 20 . to_vector)
+            nums.each i->
                 f = dir / i.to_text
                 "abcd".write f
                 lst = Data.list dir
