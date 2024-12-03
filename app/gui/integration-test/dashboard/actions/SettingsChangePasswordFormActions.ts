@@ -24,7 +24,7 @@ export default class SettingsChangePasswordFormActions<Context> extends Settings
 
   /** Fill the "current password" input of this form. */
   fillCurrentPassword(name: string) {
-    return this.step('', (page) =>
+    return this.step("Fill 'current password' input of 'change password' form", (page) =>
       this.locate(page)
         .getByLabel(TEXT.userCurrentPasswordSettingsInput)
         .getByRole('textbox')
@@ -34,7 +34,7 @@ export default class SettingsChangePasswordFormActions<Context> extends Settings
 
   /** Fill the "new password" input of this form. */
   fillNewPassword(name: string) {
-    return this.step('', (page) =>
+    return this.step("Fill 'new password' input of 'change password' form", (page) =>
       this.locate(page)
         .getByLabel(TEXT.userNewPasswordSettingsInput)
         .getByRole('textbox')
@@ -44,7 +44,7 @@ export default class SettingsChangePasswordFormActions<Context> extends Settings
 
   /** Fill the "confirm new password" input of this form. */
   fillConfirmNewPassword(name: string) {
-    return this.step('', (page) =>
+    return this.step("Fill 'confirm new password' input of 'change password' form", (page) =>
       this.locate(page)
         .getByLabel(TEXT.userConfirmNewPasswordSettingsInput)
         .getByRole('textbox')

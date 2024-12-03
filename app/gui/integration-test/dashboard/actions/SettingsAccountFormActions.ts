@@ -24,7 +24,7 @@ export default class SettingsAccountFormActions<Context> extends SettingsFormAct
 
   /** Fill the "name" input of this form. */
   fillName(name: string) {
-    return this.step('', (page) =>
+    return this.step("Fill 'name' input of 'account' form", (page) =>
       this.locate(page).getByLabel(TEXT.userNameSettingsInput).getByRole('textbox').fill(name),
     )
   }

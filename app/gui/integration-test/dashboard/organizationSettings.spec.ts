@@ -4,103 +4,96 @@ import * as test from '@playwright/test'
 import { Plan } from 'enso-common/src/services/Backend'
 import * as actions from './actions'
 
-test.test('organization settings', async ({ page }) => {
-  const api = await actions.mockAllAndLoginAndExposeAPI({
-    page,
-    setupAPI: (theApi) => {
-      theApi.setPlan(Plan.team)
-    },
-  })
-  const localActions = actions.settings.organization
+const NEW_NAME = 'another organization-name'
+const INVALID_EMAIL = 'invalid@email'
+const NEW_EMAIL = 'organization@email.com'
+const NEW_WEBSITE = 'organization.org'
+const NEW_LOCATION = 'Somewhere, CA'
+const PROFILE_PICTURE_FILENAME = 'bar.jpeg'
+const PROFILE_PICTURE_CONTENT = 'organization profile picture'
+const PROFILE_PICTURE_MIMETYPE = 'image/jpeg'
 
-  // Setup
-  api.setCurrentOrganization(api.defaultOrganization)
-  await test.test.step('Initial state', () => {
-    test.expect(api.currentOrganization()?.name).toBe(api.defaultOrganizationName)
-    test.expect(api.currentOrganization()?.email).toBe(null)
-    test.expect(api.currentOrganization()?.picture).toBe(null)
-    test.expect(api.currentOrganization()?.website).toBe(null)
-    test.expect(api.currentOrganization()?.address).toBe(null)
-  })
-  await test.expect(page.getByText('Logging in to Enso...')).not.toBeVisible()
-
-  await localActions.go(page)
-  const nameInput = localActions.locateNameInput(page)
-  const newName = 'another organization-name'
-  await test.test.step('Set name', async () => {
-    await nameInput.fill(newName)
-    await nameInput.press('Enter')
-    test.expect(api.currentOrganization()?.name).toBe(newName)
-    test.expect(api.currentUser()?.name).not.toBe(newName)
-  })
-
-  await test.test.step('Unset name (should fail)', async () => {
-    await nameInput.fill('')
-    await nameInput.press('Enter')
-    await test.expect(nameInput).toHaveValue('')
-    test.expect(api.currentOrganization()?.name).toBe(newName)
-    await page.getByRole('button', { name: actions.TEXT.cancel }).click()
-  })
-
-  const invalidEmail = 'invalid@email'
-  const emailInput = localActions.locateEmailInput(page)
-
-  await test.test.step('Set invalid email', async () => {
-    await emailInput.fill(invalidEmail)
-    await emailInput.press('Enter')
-    test.expect(api.currentOrganization()?.email).toBe('')
-  })
-
-  const newEmail = 'organization@email.com'
-
-  await test.test.step('Set email', async () => {
-    await emailInput.fill(newEmail)
-    await emailInput.press('Enter')
-    test.expect(api.currentOrganization()?.email).toBe(newEmail)
-    await test.expect(emailInput).toHaveValue(newEmail)
-  })
-
-  const websiteInput = localActions.locateWebsiteInput(page)
-  const newWebsite = 'organization.org'
-
-  // NOTE: It's not yet possible to unset the website or the location.
-  await test.test.step('Set website', async () => {
-    await websiteInput.fill(newWebsite)
-    await websiteInput.press('Enter')
-    test.expect(api.currentOrganization()?.website).toBe(newWebsite)
-    await test.expect(websiteInput).toHaveValue(newWebsite)
-  })
-
-  const locationInput = localActions.locateLocationInput(page)
-  const newLocation = 'Somewhere, CA'
-
-  await test.test.step('Set location', async () => {
-    await locationInput.fill(newLocation)
-    await locationInput.press('Enter')
-    test.expect(api.currentOrganization()?.address).toBe(newLocation)
-    await test.expect(locationInput).toHaveValue(newLocation)
-  })
-})
-
-test.test('upload organization profile picture', async ({ page }) => {
-  const api = await actions.mockAllAndLoginAndExposeAPI({
-    page,
-    setupAPI: (theApi) => {
-      theApi.setPlan(Plan.team)
-    },
-  })
-  const localActions = actions.settings.organizationProfilePicture
-
-  await localActions.go(page)
-  const fileChooserPromise = page.waitForEvent('filechooser')
-  await localActions.locateInput(page).click()
-  const fileChooser = await fileChooserPromise
-  const name = 'bar.jpeg'
-  const content = 'organization profile picture'
-  await fileChooser.setFiles([{ name, buffer: Buffer.from(content), mimeType: 'image/jpeg' }])
-  await test
-    .expect(() => {
-      test.expect(api.currentOrganizationProfilePicture()).toEqual(content)
+test.test('organization settings', async ({ page }) =>
+  actions
+    .mockAllAndLogin({
+      page,
+      setupAPI: (api) => {
+        api.setPlan(Plan.team)
+        api.setCurrentOrganization(api.defaultOrganization)
+      },
     })
-    .toPass()
-})
+    .step('Verify initial organization state', (_, { api }) => {
+      test.expect(api.currentOrganization()?.name).toBe(api.defaultOrganizationName)
+      test.expect(api.currentOrganization()?.email).toBe(null)
+      test.expect(api.currentOrganization()?.picture).toBe(null)
+      test.expect(api.currentOrganization()?.website).toBe(null)
+      test.expect(api.currentOrganization()?.address).toBe(null)
+    })
+    .do(async (page) => {
+      await test.expect(page.getByText('Logging in to Enso...')).not.toBeVisible()
+    })
+    .goToPage.settings()
+    .goToSettingsTab.organization()
+    .organizationForm()
+    .fillName(NEW_NAME)
+    .save()
+    .step('Set organization name', (_, { api }) => {
+      test.expect(api.currentOrganization()?.name).toBe(NEW_NAME)
+      test.expect(api.currentUser()?.name).not.toBe(NEW_NAME)
+    })
+    .organizationForm()
+    .fillName('')
+    .step('Unsetting organization name should fail', (_, { api }) => {
+      test.expect(api.currentOrganization()?.name).toBe(NEW_NAME)
+    })
+    .cancel()
+    .organizationForm()
+    .fillEmail(INVALID_EMAIL)
+    .save()
+    .step('Setting invalid email should fail', (_, { api }) => {
+      test.expect(api.currentOrganization()?.email).toBe('')
+    })
+    .organizationForm()
+    .fillEmail(NEW_EMAIL)
+    .save()
+    .step('Set email', (_, { api }) => {
+      test.expect(api.currentOrganization()?.email).toBe(NEW_EMAIL)
+    })
+    .organizationForm()
+    .fillWebsite(NEW_WEBSITE)
+    .save()
+    // NOTE: It is not yet possible to unset the website or the location.
+    .step('Set website', async (_, { api }) => {
+      test.expect(api.currentOrganization()?.website).toBe(NEW_WEBSITE)
+    })
+    .organizationForm()
+    .fillLocation(NEW_LOCATION)
+    .save()
+    .step('Set website', async (_, { api }) => {
+      test.expect(api.currentOrganization()?.address).toBe(NEW_LOCATION)
+    }),
+)
+
+test.test('upload organization profile picture', ({ page }) =>
+  actions
+    .mockAllAndLogin({
+      page,
+      setupAPI: (theApi) => {
+        theApi.setPlan(Plan.team)
+      },
+    })
+    .goToPage.settings()
+    .goToSettingsTab.organization()
+    .uploadProfilePicture(
+      PROFILE_PICTURE_FILENAME,
+      PROFILE_PICTURE_CONTENT,
+      PROFILE_PICTURE_MIMETYPE,
+    )
+    .step('Profile picture should be updated', async (_, { api }) => {
+      await test
+        .expect(() => {
+          test.expect(api.currentOrganizationProfilePicture()).toEqual(PROFILE_PICTURE_CONTENT)
+        })
+        .toPass()
+    }),
+)

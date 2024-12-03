@@ -7,6 +7,7 @@ const NEW_USERNAME = 'another user-name'
 const NEW_PASSWORD = '1234!' + actions.VALID_PASSWORD
 const PROFILE_PICTURE_FILENAME = 'foo.png'
 const PROFILE_PICTURE_CONTENT = 'a profile picture'
+const PROFILE_PICTURE_MIMETYPE = 'image/png'
 
 test.test('user settings', ({ page }) =>
   actions
@@ -76,7 +77,11 @@ test.test('upload profile picture', ({ page }) =>
   actions
     .mockAllAndLogin({ page })
     .goToPage.settings()
-    .uploadProfilePicture(PROFILE_PICTURE_FILENAME, PROFILE_PICTURE_CONTENT)
+    .uploadProfilePicture(
+      PROFILE_PICTURE_FILENAME,
+      PROFILE_PICTURE_CONTENT,
+      PROFILE_PICTURE_MIMETYPE,
+    )
     .step('Profile picture should be updated', async (_, { api }) => {
       await test
         .expect(() => {

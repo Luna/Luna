@@ -22,7 +22,7 @@ export default class SettingsAccountTabActions<Context> extends BaseSettingsTabA
   uploadProfilePicture(
     name: string,
     content: WithImplicitCoercion<string | Uint8Array | readonly number[]>,
-    mimeType = 'image/png',
+    mimeType: string,
   ) {
     return this.step('Upload account profile picture', async (page) => {
       const fileChooserPromise = page.waitForEvent('filechooser')
