@@ -17,4 +17,18 @@ export default class SettingsAccountTabActions<Context> extends BaseSettingsTabA
   changePasswordForm() {
     return this.into(SettingsChangePasswordFormActions<Context>)
   }
+
+  /** Upload a profile picture. */
+  uploadProfilePicture(
+    name: string,
+    content: WithImplicitCoercion<string | Uint8Array | readonly number[]>,
+    mimeType = 'image/png',
+  ) {
+    return this.step('Upload account profile picture', async (page) => {
+      const fileChooserPromise = page.waitForEvent('filechooser')
+      await page.locator('label').click()
+      const fileChooser = await fileChooserPromise
+      await fileChooser.setFiles([{ name, mimeType, buffer: Buffer.from(content) }])
+    })
+  }
 }

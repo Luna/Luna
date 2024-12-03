@@ -5,6 +5,8 @@ import * as actions from './actions'
 
 const NEW_USERNAME = 'another user-name'
 const NEW_PASSWORD = '1234!' + actions.VALID_PASSWORD
+const PROFILE_PICTURE_FILENAME = 'foo.png'
+const PROFILE_PICTURE_CONTENT = 'a profile picture'
 
 test.test('user settings', ({ page }) =>
   actions
@@ -22,7 +24,7 @@ test.test('user settings', ({ page }) =>
     }),
 )
 
-test.test('change password form', async ({ page }) => {
+test.test('change password form', ({ page }) =>
   actions
     .mockAllAndLogin({ page })
     .do((_, { api }) => {
@@ -34,7 +36,7 @@ test.test('change password form', async ({ page }) => {
     .fillNewPassword(actions.INVALID_PASSWORD)
     .fillConfirmNewPassword(actions.INVALID_PASSWORD)
     .save()
-    .step('Invalid new password', async (page) => {
+    .step('Invalid new password should fail', async (page) => {
       await test
         .expect(
           page
@@ -49,7 +51,7 @@ test.test('change password form', async ({ page }) => {
     .fillNewPassword(actions.VALID_PASSWORD)
     .fillConfirmNewPassword(actions.VALID_PASSWORD + 'a')
     .save()
-    .step('Invalid new password confirmation', async (page) => {
+    .step('Invalid new password confirmation should fail', async (page) => {
       await test
         .expect(
           page
@@ -65,25 +67,21 @@ test.test('change password form', async ({ page }) => {
     .fillConfirmNewPassword(NEW_PASSWORD)
     .save()
     // TODO: consider checking that password inputs are now empty.
-    .step('Successful password change', (_, { api }) => {
+    .step('Password change should be successful', (_, { api }) => {
       test.expect(api.currentPassword()).toBe(NEW_PASSWORD)
-    })
-})
+    }),
+)
 
-test.test('upload profile picture', async ({ page }) => {
-  const api = await actions.mockAllAndLoginAndExposeAPI({ page })
-  const localActions = actions.settings.profilePicture
-
-  await localActions.go(page)
-  const fileChooserPromise = page.waitForEvent('filechooser')
-  await localActions.locateInput(page).click()
-  const fileChooser = await fileChooserPromise
-  const name = 'foo.png'
-  const content = 'a profile picture'
-  await fileChooser.setFiles([{ name, mimeType: 'image/png', buffer: Buffer.from(content) }])
-  await test
-    .expect(() => {
-      test.expect(api.currentProfilePicture()).toEqual(content)
-    })
-    .toPass()
-})
+test.test('upload profile picture', ({ page }) =>
+  actions
+    .mockAllAndLogin({ page })
+    .goToPage.settings()
+    .uploadProfilePicture(PROFILE_PICTURE_FILENAME, PROFILE_PICTURE_CONTENT)
+    .step('Profile picture should be updated', async (_, { api }) => {
+      await test
+        .expect(() => {
+          test.expect(api.currentProfilePicture()).toEqual(PROFILE_PICTURE_CONTENT)
+        })
+        .toPass()
+    }),
+)
