@@ -1,7 +1,6 @@
 package org.enso.base.cache;
 
 import org.enso.base.polyglot.EnsoMeta;
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 /**
@@ -29,7 +28,9 @@ public class ReloadDetector {
   }
 
   private void resetTrigger() {
-    trigger = EnsoMeta.callStaticModuleMethod("Standard.Base.Network.Reload_Detector", "create_reload_detector");
+    trigger =
+        EnsoMeta.callStaticModuleMethod(
+            "Standard.Base.Network.Reload_Detector", "create_reload_detector");
   }
 
   void simulateReloadTestOnly() {
