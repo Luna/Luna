@@ -11,7 +11,7 @@ import org.enso.runtime.parser.processor.field.Field;
  * A context created for the generated class. Everything that is needed for the code generation of a
  * single class is contained in this class.
  */
-final class GeneratedClassContext {
+public final class GeneratedClassContext {
   private final String className;
   private final List<Field> userFields;
   private final List<Parameter> constructorParameters;
@@ -59,32 +59,32 @@ final class GeneratedClassContext {
     }
   }
 
-  ClassField getLocationMetaField() {
+  public ClassField getLocationMetaField() {
     return locationMetaField;
   }
 
-  ClassField getPassDataMetaField() {
+  public ClassField getPassDataMetaField() {
     return passDataMetaField;
   }
 
-  ClassField getDiagnosticsMetaField() {
+  public ClassField getDiagnosticsMetaField() {
     return diagnosticsMetaField;
   }
 
-  ClassField getIdMetaField() {
+  public ClassField getIdMetaField() {
     return idMetaField;
   }
 
-  List<Parameter> getConstructorParameters() {
+  public List<Parameter> getConstructorParameters() {
     return constructorParameters;
   }
 
-  List<Field> getUserFields() {
+  public List<Field> getUserFields() {
     return userFields;
   }
 
   /** Returns simple name of the class that is being generated. */
-  String getClassName() {
+  public String getClassName() {
     return className;
   }
 
@@ -92,7 +92,7 @@ final class GeneratedClassContext {
     return metaFields;
   }
 
-  List<ClassField> getAllFields() {
+  public List<ClassField> getAllFields() {
     var allFields = new ArrayList<ClassField>(metaFields);
     for (var userField : userFields) {
       allFields.add(
@@ -101,11 +101,11 @@ final class GeneratedClassContext {
     return allFields;
   }
 
-  ProcessingEnvironment getProcessingEnvironment() {
+  public ProcessingEnvironment getProcessingEnvironment() {
     return processingEnvironment;
   }
 
-  TypeElement getIrNodeInterface() {
+  public TypeElement getIrNodeInterface() {
     return irNodeInterface;
   }
 
@@ -127,7 +127,7 @@ final class GeneratedClassContext {
    *
    * @param modifiers
    */
-  record ClassField(String modifiers, String type, String name) {
+  public record ClassField(String modifiers, String type, String name) {
     @Override
     public String toString() {
       return modifiers + " " + type + " " + name;

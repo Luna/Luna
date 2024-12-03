@@ -1,13 +1,16 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
-final class EqualsMethodGenerator {
+import org.enso.runtime.parser.processor.GeneratedClassContext;
+import org.enso.runtime.parser.processor.Utils;
+
+public final class EqualsMethodGenerator {
   private final GeneratedClassContext ctx;
 
-  EqualsMethodGenerator(GeneratedClassContext ctx) {
+  public EqualsMethodGenerator(GeneratedClassContext ctx) {
     this.ctx = ctx;
   }
 
-  String generateMethodCode() {
+  public String generateMethodCode() {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public boolean equals(Object o) {").append(System.lineSeparator());

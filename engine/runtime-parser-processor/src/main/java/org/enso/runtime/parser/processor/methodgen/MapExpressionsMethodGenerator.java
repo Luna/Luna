@@ -1,12 +1,14 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.Objects;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
+import org.enso.runtime.parser.processor.Utils;
 import org.enso.runtime.parser.processor.field.Field;
 
-final class MapExpressionsMethodGenerator {
+public final class MapExpressionsMethodGenerator {
   private final ExecutableElement mapExpressionsMethod;
   private final GeneratedClassContext ctx;
   private static final String METHOD_NAME = "mapExpressions";
@@ -16,7 +18,8 @@ final class MapExpressionsMethodGenerator {
    *     which the class is generated.
    * @param ctx
    */
-  MapExpressionsMethodGenerator(ExecutableElement mapExpressionsMethod, GeneratedClassContext ctx) {
+  public MapExpressionsMethodGenerator(
+      ExecutableElement mapExpressionsMethod, GeneratedClassContext ctx) {
     ensureMapExpressionsMethodHasExpectedSignature(mapExpressionsMethod);
     this.mapExpressionsMethod = mapExpressionsMethod;
     this.ctx = Objects.requireNonNull(ctx);
@@ -33,7 +36,7 @@ final class MapExpressionsMethodGenerator {
     }
   }
 
-  String generateMapExpressionsMethodCode() {
+  public String generateMapExpressionsMethodCode() {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public ")

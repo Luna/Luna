@@ -1,13 +1,14 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
+import org.enso.runtime.parser.processor.Utils;
 
-class SetLocationMethodGenerator {
+public class SetLocationMethodGenerator {
   private final ExecutableElement setLocationMethod;
   private final ProcessingEnvironment processingEnv;
 
-  SetLocationMethodGenerator(
+  public SetLocationMethodGenerator(
       ExecutableElement setLocationMethod, ProcessingEnvironment processingEnv) {
     ensureCorrectSignature(setLocationMethod);
     this.processingEnv = processingEnv;
@@ -26,7 +27,7 @@ class SetLocationMethodGenerator {
     }
   }
 
-  String generateMethodCode() {
+  public String generateMethodCode() {
     var code =
         """
         @Override

@@ -1,7 +1,9 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.stream.Collectors;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
+import org.enso.runtime.parser.processor.Utils;
 
 /**
  * Code generator for builder. Builder is a nested static class inside the generated class. Builder
@@ -10,14 +12,14 @@ import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
  * class object and prefills all the fields with the values from the object. This copy constructor
  * is called from either the {@code duplicate} method or from copy methods.
  */
-class BuilderMethodGenerator {
+public class BuilderMethodGenerator {
   private final GeneratedClassContext generatedClassContext;
 
-  BuilderMethodGenerator(GeneratedClassContext generatedClassContext) {
+  public BuilderMethodGenerator(GeneratedClassContext generatedClassContext) {
     this.generatedClassContext = generatedClassContext;
   }
 
-  String generateBuilder() {
+  public String generateBuilder() {
     var fieldDeclarations =
         generatedClassContext.getAllFields().stream()
             .map(

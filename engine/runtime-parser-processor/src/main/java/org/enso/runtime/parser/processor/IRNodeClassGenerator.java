@@ -14,6 +14,13 @@ import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.dsl.IRNode;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.field.FieldCollector;
+import org.enso.runtime.parser.processor.methodgen.BuilderMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.CopyMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.DuplicateMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.EqualsMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.HashCodeMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.MapExpressionsMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.SetLocationMethodGenerator;
 
 /**
  * Generates code for interfaces annotated with {@link org.enso.runtime.parser.dsl.IRNode}.

@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,13 +6,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
+import org.enso.runtime.parser.processor.Utils;
 import org.enso.runtime.parser.processor.field.Field;
 
 /**
  * Code generator for {@code org.enso.compiler.core.ir.IR#duplicate} method or any of its override.
  * Note that in the interface hierarchy, there can be an override with a different return type.
  */
-class DuplicateMethodGenerator {
+public class DuplicateMethodGenerator {
   private final ExecutableElement duplicateMethod;
   private final GeneratedClassContext ctx;
   private static final List<Parameter> parameters =
@@ -25,7 +27,7 @@ class DuplicateMethodGenerator {
   /**
    * @param duplicateMethod ExecutableElement representing the duplicate method (or its override).
    */
-  DuplicateMethodGenerator(ExecutableElement duplicateMethod, GeneratedClassContext ctx) {
+  public DuplicateMethodGenerator(ExecutableElement duplicateMethod, GeneratedClassContext ctx) {
     ensureDuplicateMethodHasExpectedSignature(duplicateMethod);
     this.ctx = Objects.requireNonNull(ctx);
     this.duplicateMethod = Objects.requireNonNull(duplicateMethod);
@@ -45,7 +47,7 @@ class DuplicateMethodGenerator {
     }
   }
 
-  String generateDuplicateMethodCode() {
+  public String generateDuplicateMethodCode() {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public ")

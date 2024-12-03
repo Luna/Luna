@@ -67,7 +67,7 @@ public final class Utils {
     throw new IllegalStateException("Unexpected failure during annotation processing: " + msg);
   }
 
-  static String indent(String code, int indentation) {
+  public static String indent(String code, int indentation) {
     return code.lines()
         .map(line -> " ".repeat(indentation) + line)
         .collect(Collectors.joining(System.lineSeparator()));
@@ -167,7 +167,7 @@ public final class Utils {
     return duplicateMethod;
   }
 
-  static ExecutableElement findMapExpressionsMethod(
+  public static ExecutableElement findMapExpressionsMethod(
       TypeElement interfaceType, ProcessingEnvironment processingEnv) {
     var mapExprsMethod =
         findMethod(
@@ -180,11 +180,11 @@ public final class Utils {
     return mapExprsMethod;
   }
 
-  static void hardAssert(boolean condition) {
+  public static void hardAssert(boolean condition) {
     hardAssert(condition, "Assertion failed");
   }
 
-  static void hardAssert(boolean condition, String msg) {
+  public static void hardAssert(boolean condition, String msg) {
     if (!condition) {
       throw new AssertionError(msg);
     }

@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,15 +7,17 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import org.enso.runtime.parser.dsl.IRCopyMethod;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
+import org.enso.runtime.parser.processor.Utils;
 
 /** Code generator for methods annotated with {@link IRCopyMethod}. */
-class CopyMethodGenerator {
+public class CopyMethodGenerator {
   private final ExecutableElement copyMethod;
   private final GeneratedClassContext ctx;
   private final Map<VariableElement, ClassField> parameterMapping = new HashMap<>();
 
-  CopyMethodGenerator(ExecutableElement copyMethod, GeneratedClassContext ctx) {
+  public CopyMethodGenerator(ExecutableElement copyMethod, GeneratedClassContext ctx) {
     this.ctx = ctx;
     ensureIsAnnotated(copyMethod);
     this.copyMethod = Objects.requireNonNull(copyMethod);
@@ -60,7 +62,7 @@ class CopyMethodGenerator {
         .toString();
   }
 
-  String generateCopyMethod() {
+  public String generateCopyMethod() {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     var argList =

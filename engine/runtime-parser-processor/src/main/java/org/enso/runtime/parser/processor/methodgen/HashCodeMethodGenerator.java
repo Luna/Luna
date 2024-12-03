@@ -1,16 +1,18 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.stream.Collectors;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
+import org.enso.runtime.parser.processor.Utils;
 
-final class HashCodeMethodGenerator {
+public final class HashCodeMethodGenerator {
   private final GeneratedClassContext ctx;
 
-  HashCodeMethodGenerator(GeneratedClassContext ctx) {
+  public HashCodeMethodGenerator(GeneratedClassContext ctx) {
     this.ctx = ctx;
   }
 
-  String generateMethodCode() {
+  public String generateMethodCode() {
     var fieldList =
         ctx.getAllFields().stream().map(ClassField::name).collect(Collectors.joining(", "));
     var code =
