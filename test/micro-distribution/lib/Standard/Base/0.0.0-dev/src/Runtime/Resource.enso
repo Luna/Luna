@@ -9,8 +9,8 @@ bracket ~constructor ~destructor ~action = @Builtin_Method "Resource.bracket"
 type Managed_Resource
     register obj fn system=Boolean.False = register_builtin obj fn system
     finalize self = @Builtin_Method "Managed_Resource.finalize"
-    with self ~action ~on_missing=Nothing = with_builtin self action on_missing
+    with self ~action = with_builtin self action
     take self = @Builtin_Method "Managed_Resource.take"
 
 register_builtin resource function system = @Builtin_Method "Managed_Resource.register_builtin"
-with_builtin r action on_missing = @Builtin_Method "Managed_Resource.with_builtin"
+with_builtin r action = @Builtin_Method "Managed_Resource.with_builtin"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nodeEditBindings } from '@/bindings'
+import { graphBindings, nodeEditBindings } from '@/bindings'
+import ComponentContextMenu from '@/components/ComponentContextMenu.vue'
 import ComponentMenu from '@/components/ComponentMenu.vue'
 import GraphNodeComment from '@/components/GraphEditor/GraphNodeComment.vue'
 import GraphNodeMessage, {
@@ -8,7 +9,6 @@ import GraphNodeMessage, {
   type MessageType,
 } from '@/components/GraphEditor/GraphNodeMessage.vue'
 import GraphNodeOutputPorts from '@/components/GraphEditor/GraphNodeOutputPorts.vue'
-import GraphNodeSelection from '@/components/GraphEditor/GraphNodeSelection.vue'
 import GraphVisualization from '@/components/GraphEditor/GraphVisualization.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import NodeWidgetTree, {
@@ -16,10 +16,12 @@ import NodeWidgetTree, {
   GRAB_HANDLE_X_MARGIN_R,
   ICON_WIDTH,
 } from '@/components/GraphEditor/NodeWidgetTree.vue'
+import PointFloatingMenu from '@/components/PointFloatingMenu.vue'
 import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'
+import { provideComponentButtons } from '@/providers/componentButtons'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
 import { injectNodeColors } from '@/providers/graphNodeColors'
 import { injectGraphSelection } from '@/providers/graphSelection'
@@ -28,7 +30,6 @@ import { useGraphStore, type Node } from '@/stores/graph'
 import { asNodeId } from '@/stores/graph/graphDatabase'
 import { useProjectStore } from '@/stores/project'
 import { useNodeExecution } from '@/stores/project/nodeExecution'
-import { suggestionDocumentationUrl } from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
 import type { AstId } from '@/util/ast/abstract'
 import { prefixes } from '@/util/ast/node'
@@ -58,7 +59,6 @@ const emit = defineEmits<{
   dragging: [offset: Vec2]
   draggingCommited: []
   draggingCancelled: []
-  delete: []
   replaceSelection: []
   outputPortClick: [event: PointerEvent, portId: AstId]
   outputPortDoubleClick: [event: PointerEvent, portId: AstId]
@@ -183,9 +183,6 @@ const selectionHoverPos = ref<Vec2>()
 function updateNodeHover(event: PointerEvent | undefined) {
   nodeHoverPos.value = event && eventScenePos(event)
 }
-function updateSelectionHover(event: PointerEvent | undefined) {
-  selectionHoverPos.value = event && eventScenePos(event)
-}
 
 const menuCloseTimeout = ref<ReturnType<typeof setTimeout>>()
 const menuEnabledByHover = ref(false)
@@ -216,17 +213,19 @@ watch(menuVisible, (visible) => {
   if (!visible) menuFull.value = false
 })
 
-function openFullMenu() {
-  menuFull.value = true
-  setSelected()
+function setSoleSelected() {
+  nodeSelection?.setSelection(new Set([nodeId.value]))
 }
 
-function setSelected() {
-  nodeSelection?.setSelection(new Set([nodeId.value]))
+function ensureSelected() {
+  if (!nodeSelection?.isSelected(nodeId.value)) {
+    setSoleSelected()
+  }
 }
 
 const outputHovered = ref(false)
 const keyboard = injectKeyboard()
+
 const visualizationWidth = computed(() => props.node.vis?.width ?? null)
 const visualizationHeight = computed(() => props.node.vis?.height ?? null)
 const isVisualizationEnabled = computed({
@@ -311,11 +310,7 @@ const isRecordingOverridden = computed({
 
 const expressionInfo = computed(() => graph.db.getExpressionInfo(props.node.innerExpr.externalId))
 const executionState = computed(() => expressionInfo.value?.payload.type ?? 'Unknown')
-const suggestionEntry = computed(() => graph.db.getNodeMainSuggestion(nodeId.value))
 const color = computed(() => graph.db.getNodeColorStyle(nodeId.value))
-const documentationUrl = computed(
-  () => suggestionEntry.value && suggestionDocumentationUrl(suggestionEntry.value),
-)
 
 const nodeEditHandler = nodeEditBindings.handler({
   cancel(e) {
@@ -390,11 +385,6 @@ function updateVisualizationRect(rect: Rect | undefined) {
   emit('update:visualizationRect', rect)
 }
 
-const editingComment = ref(false)
-
-const { getNodeColor, getNodeColors } = injectNodeColors()
-const matchableNodeColors = getNodeColors((node) => node !== nodeId.value)
-
 const graphSelectionSize = computed(() =>
   isVisualizationEnabled.value && visRect.value ? visRect.value.size : nodeSize.value,
 )
@@ -415,18 +405,71 @@ const dataSource = computed(
 
 // === Recompute node expression ===
 
-// The node is considered to be recomputing for at least this time.
-const MINIMAL_EXECUTION_TIMEOUT_MS = 500
-const recomputationTimeout = ref(false)
-const actualRecomputationStatus = nodeExecution.isBeingRecomputed(nodeId.value)
-const isBeingRecomputed = computed(
-  () => recomputationTimeout.value || actualRecomputationStatus.value,
-)
-function recomputeOnce() {
-  nodeExecution.recomputeOnce(nodeId.value, 'Live')
-  recomputationTimeout.value = true
-  setTimeout(() => (recomputationTimeout.value = false), MINIMAL_EXECUTION_TIMEOUT_MS)
+function useRecomputation() {
+  // The node is considered to be recomputing for at least this time.
+  const MINIMAL_EXECUTION_TIMEOUT_MS = 500
+  const recomputationTimeout = ref(false)
+  const actualRecomputationStatus = nodeExecution.isBeingRecomputed(nodeId.value)
+  const isBeingRecomputed = computed(
+    () => recomputationTimeout.value || actualRecomputationStatus.value,
+  )
+  function recomputeOnce() {
+    nodeExecution.recomputeOnce(nodeId.value, 'Live')
+    recomputationTimeout.value = true
+    setTimeout(() => (recomputationTimeout.value = false), MINIMAL_EXECUTION_TIMEOUT_MS)
+  }
+  return { recomputeOnce, isBeingRecomputed }
 }
+
+// === Component actions ===
+
+const { getNodeColor, getNodeColors } = injectNodeColors()
+const { recomputeOnce, isBeingRecomputed } = useRecomputation()
+
+const { editingComment } = provideComponentButtons(
+  {
+    graphBindings: graphBindings.bindings,
+    nodeEditBindings: nodeEditBindings.bindings,
+    onBeforeAction: setSoleSelected,
+  },
+  {
+    enterNode: {
+      action: () => emit('enterNode'),
+      hidden: computed(() => !graph.nodeCanBeEntered(nodeId.value)),
+    },
+    startEditing: {
+      action: startEditingNode,
+    },
+    editingComment: {
+      state: ref(false),
+    },
+    createNewNode: {
+      action: () => emit('createNodes', [{ commit: false, content: undefined }]),
+    },
+    toggleDocPanel: {
+      action: () => emit('toggleDocPanel'),
+    },
+    toggleVisualization: {
+      state: isVisualizationEnabled,
+    },
+    pickColor: {
+      state: ref(false),
+      actionData: {
+        currentColor: computed({
+          get: () => getNodeColor(nodeId.value),
+          set: (color) => emit('setNodeColor', color),
+        }),
+        matchableColors: getNodeColors((node) => node !== nodeId.value),
+      },
+    },
+    recompute: {
+      action: recomputeOnce,
+      disabled: isBeingRecomputed,
+    },
+  },
+)
+
+const showMenuAt = ref<{ x: number; y: number }>()
 </script>
 
 <template>
@@ -456,54 +499,22 @@ function recomputeOnce() {
     @pointerenter="(nodeHovered = true), updateNodeHover($event)"
     @pointerleave="(nodeHovered = false), updateNodeHover(undefined)"
     @pointermove="updateNodeHover"
+    @contextmenu.stop.prevent="ensureSelected(), (showMenuAt = $event)"
   >
-    <Teleport v-if="navigator && !edited && graphNodeSelections" :to="graphNodeSelections">
-      <GraphNodeSelection
-        :data-node-id="nodeId"
-        :nodePosition="nodePosition"
-        :nodeSize="graphSelectionSize"
-        :class="{ draggable: true, dragged: isDragged }"
-        :color
-        :externalHovered="nodeHovered"
-        @visible="selectionVisible = $event"
-        @pointerenter="updateSelectionHover"
-        @pointermove="updateSelectionHover"
-        @pointerleave="updateSelectionHover(undefined)"
-        v-on="dragPointer.events"
-        @click="handleNodeClick"
-      />
-    </Teleport>
     <div class="binding" v-text="node.pattern?.code()" />
     <button
       v-if="!menuVisible && isRecordingOverridden"
       class="overrideRecordButton clickable"
       data-testid="recordingOverriddenButton"
-      @click="(isRecordingOverridden = false), setSelected()"
+      @click="(isRecordingOverridden = false), setSoleSelected()"
     >
       <SvgIcon name="record" />
     </button>
     <ComponentMenu
       v-if="menuVisible"
-      v-model:isVisualizationEnabled="isVisualizationEnabled"
-      :isRecordingEnabledGlobally="projectStore.isRecordingEnabled"
-      :nodeColor="getNodeColor(nodeId)"
-      :matchableNodeColors="matchableNodeColors"
-      :documentationUrl="documentationUrl"
-      :isRemovable="props.node.type === 'component'"
-      :isEnterable="graph.nodeCanBeEntered(nodeId)"
-      :isBeingRecomputed="isBeingRecomputed"
-      @enterNode="emit('enterNode')"
-      @startEditing="startEditingNode"
-      @startEditingComment="editingComment = true"
-      @openFullMenu="openFullMenu"
-      @delete="emit('delete')"
       @pointerenter="menuHovered = true"
       @pointerleave="menuHovered = false"
-      @update:nodeColor="emit('setNodeColor', $event)"
-      @createNewNode="setSelected(), emit('createNodes', [{ commit: false, content: undefined }])"
-      @toggleDocPanel="emit('toggleDocPanel')"
-      @click.capture="setSelected"
-      @recompute="recomputeOnce"
+      @click.capture="ensureSelected"
     />
     <GraphVisualization
       v-if="isVisualizationVisible"
@@ -527,13 +538,13 @@ function recomputeOnce() {
       @update:height="emit('update:visualizationHeight', $event)"
       @update:nodePosition="graph.setNodePosition(nodeId, $event)"
       @createNodes="emit('createNodes', $event)"
-      @click.capture="setSelected"
+      @click.capture="setSoleSelected"
     />
     <GraphNodeComment
-      v-model:editing="editingComment"
+      v-model:editing="editingComment.state"
       :node="node"
       class="beforeNode"
-      @click.capture="setSelected"
+      @click.capture="setSoleSelected"
     />
     <div
       ref="contentNode"
@@ -551,7 +562,6 @@ function recomputeOnce() {
         :potentialSelfArgumentId="potentialSelfArgumentId"
         :conditionalPorts="props.node.conditionalPorts"
         :extended="isOnlyOneSelected"
-        @openFullMenu="openFullMenu"
       />
     </div>
     <div class="statuses">
@@ -572,7 +582,7 @@ function recomputeOnce() {
       <GraphNodeOutputPorts
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
-        :forceVisible="selectionVisible"
+        :forceVisible="nodeHovered"
         @portClick="(...args) => emit('outputPortClick', ...args)"
         @portDoubleClick="(...args) => emit('outputPortDoubleClick', ...args)"
         @update:hoverAnim="emit('update:hoverAnim', $event)"
@@ -582,9 +592,12 @@ function recomputeOnce() {
     <SmallPlusButton
       v-if="menuVisible"
       :class="isVisualizationVisible ? 'afterNode' : 'belowMenu'"
-      @createNodes="setSelected(), emit('createNodes', $event)"
+      @createNodes="setSoleSelected(), emit('createNodes', $event)"
     />
   </div>
+  <PointFloatingMenu v-if="showMenuAt" :point="showMenuAt" @close="showMenuAt = undefined">
+    <ComponentContextMenu @close="showMenuAt = undefined" />
+  </PointFloatingMenu>
 </template>
 
 <style scoped>
@@ -626,7 +639,7 @@ function recomputeOnce() {
   transition: box-shadow 0.2s ease-in-out;
   box-sizing: border-box;
   /** Space between node and component above and below, such as comments and errors. */
-  --node-vertical-gap: 4px;
+  --node-vertical-gap: 5px;
 
   --color-node-primary: var(--node-group-color);
   --node-color-port: color-mix(in oklab, var(--color-node-primary) 85%, white 15%);

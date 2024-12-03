@@ -49,9 +49,7 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
       class="arrow"
     />
     <SizeTransition height :duration="100">
-      <div v-if="open" ref="floatElement" class="DropdownMenuContent" :style="floatingStyles">
-        <slot name="entries" />
-      </div>
+      <div v-if="open" ref="floatElement" :style="floatingStyles"><slot name="menu" /></div>
     </SizeTransition>
   </div>
 </template>
@@ -61,18 +59,6 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
   position: relative;
   outline: 0;
   margin: -4px;
-}
-
-.DropdownMenuContent {
-  display: flex;
-  flex-direction: column;
-  border-radius: 13px;
-  background: var(--color-frame-bg);
-  backdrop-filter: var(--blur-app-bg);
-  margin: 0 -4px;
-  z-index: 1;
-  gap: 4px;
-  padding: 8px;
 }
 
 .arrow {

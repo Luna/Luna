@@ -2,7 +2,7 @@
 
 import project.Any.Any
 import project.Nothing.Nothing
-import project.Data.Boolean.Boolean
+from project.Data.Boolean import Boolean, False
 
 ## Resource provides an API for manual management of computation resources.
 
@@ -52,7 +52,7 @@ type Managed_Resource
        Returns:
        A `Managed_Resource` object that can be used to access the resource.
     register : Any -> (Any -> Nothing) -> Boolean -> Managed_Resource
-    register resource function system_finalization_allowed=Boolean.False =
+    register resource function system_finalization_allowed=False =
         @Tail_Call register_builtin resource function system_finalization_allowed
 
     ## PRIVATE
@@ -67,18 +67,19 @@ type Managed_Resource
        ADVANCED
 
        Executes the provided action on the resource managed by the managed
-       resource object.
+       resource object. The action is invoked with the managed resource only if
+       it has not yet been finalized. If the resource has already been finalized
+       then `Error` with `Uninitialized_State` payload is passed into the
+       action instead of the resource.
 
        Arguments:
        - action: The action that will be applied to the resource managed by
-         resource.
-       - on_missing: Optional action to perform when the value is no longer
-         reachable
+         the `Managed_Resource` (or to `Uninitialized_State` error).
        Returns:
-       Value returned from the `action` or `Nothing` if the managed resource
-       was already finalized
+       Value returned from the `action`
+
     with : (Any -> Any) -> Any -> Any
-    with self ~action ~on_missing=Nothing = with_builtin self action on_missing...
+    with self ~action = @Tail_Call with_builtin self action
 
     ## PRIVATE
        ADVANCED
@@ -90,4 +91,4 @@ type Managed_Resource
     take self = @Builtin_Method "Managed_Resource.take"
 
 register_builtin r fn sys:Boolean = @Builtin_Method "Managed_Resource.register_builtin"
-with_builtin r fn ~on_missing = @Builtin_Method "Managed_Resource.with_builtin"
+with_builtin r fn = @Builtin_Method "Managed_Resource.with_builtin"
