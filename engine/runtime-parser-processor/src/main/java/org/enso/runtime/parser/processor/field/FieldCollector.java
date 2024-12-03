@@ -12,7 +12,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.dsl.IRChild;
-import org.enso.runtime.parser.processor.Utils;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
  * Collects abstract parameterless methods from the given interface and all its superinterfaces -

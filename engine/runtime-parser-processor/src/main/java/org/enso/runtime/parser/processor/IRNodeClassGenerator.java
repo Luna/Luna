@@ -21,6 +21,7 @@ import org.enso.runtime.parser.processor.methodgen.EqualsMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.HashCodeMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.MapExpressionsMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.SetLocationMethodGenerator;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
  * Generates code for interfaces annotated with {@link org.enso.runtime.parser.dsl.IRNode}.

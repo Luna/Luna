@@ -3,7 +3,7 @@ package org.enso.runtime.parser.processor.methodgen;
 import java.util.stream.Collectors;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
-import org.enso.runtime.parser.processor.Utils;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
  * Code generator for builder. Builder is a nested static class inside the generated class. Builder

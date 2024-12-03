@@ -2,7 +2,7 @@ package org.enso.runtime.parser.processor.methodgen;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
-import org.enso.runtime.parser.processor.Utils;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 public class SetLocationMethodGenerator {
   private final ExecutableElement setLocationMethod;

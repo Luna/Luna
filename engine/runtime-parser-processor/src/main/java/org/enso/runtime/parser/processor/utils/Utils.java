@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.utils;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
@@ -126,7 +126,7 @@ public final class Utils {
    * @param methodPredicate Predicate that is called for each method in the hierarchy.
    * @return Method that satisfies the predicate or null if no such method is found.
    */
-  static ExecutableElement findMethod(
+  public static ExecutableElement findMethod(
       TypeElement interfaceType,
       ProcessingEnvironment procEnv,
       Predicate<ExecutableElement> methodPredicate) {
@@ -156,7 +156,7 @@ public final class Utils {
    *     searched transitively.
    * @return not null.
    */
-  static ExecutableElement findDuplicateMethod(
+  public static ExecutableElement findDuplicateMethod(
       TypeElement interfaceType, ProcessingEnvironment procEnv) {
     var duplicateMethod = findMethod(interfaceType, procEnv, Utils::isDuplicateMethod);
     hardAssert(
@@ -190,7 +190,8 @@ public final class Utils {
     }
   }
 
-  static boolean hasAnnotation(Element element, Class<? extends Annotation> annotationClass) {
+  public static boolean hasAnnotation(
+      Element element, Class<? extends Annotation> annotationClass) {
     return element.getAnnotation(annotationClass) != null;
   }
 
@@ -205,7 +206,7 @@ public final class Utils {
    * @param ifaceVisitor Visitor that is called for each interface.
    * @param <T>
    */
-  static <T> T iterateSuperInterfaces(
+  public static <T> T iterateSuperInterfaces(
       TypeElement type,
       ProcessingEnvironment processingEnv,
       InterfaceHierarchyVisitor<T> ifaceVisitor) {

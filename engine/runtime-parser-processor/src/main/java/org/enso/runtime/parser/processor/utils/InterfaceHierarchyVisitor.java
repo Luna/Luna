@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.utils;
 
 import javax.lang.model.element.TypeElement;
 
@@ -9,7 +9,7 @@ import javax.lang.model.element.TypeElement;
  * com.oracle.truffle.api.frame.FrameInstanceVisitor}.
  */
 @FunctionalInterface
-interface InterfaceHierarchyVisitor<T> {
+public interface InterfaceHierarchyVisitor<T> {
   /**
    * Visits the interface hierarchy of the given interface.
    *

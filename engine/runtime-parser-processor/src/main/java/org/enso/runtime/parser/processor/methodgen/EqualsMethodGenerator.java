@@ -1,7 +1,7 @@
 package org.enso.runtime.parser.processor.methodgen;
 
 import org.enso.runtime.parser.processor.GeneratedClassContext;
-import org.enso.runtime.parser.processor.Utils;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 public final class EqualsMethodGenerator {
   private final GeneratedClassContext ctx;
