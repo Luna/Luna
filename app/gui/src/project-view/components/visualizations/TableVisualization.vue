@@ -585,7 +585,7 @@ watchEffect(() => {
       const needsGrouping = rowData.value.some((row) => {
         if (header in row && row[header] != null) {
           const value = typeof row[header] === 'object' ? row[header].value : row[header]
-          return value > 9999 || value < -9999
+          return value > 99999 || value < -99999
         }
       })
       headerGroupingMap.set(header, needsGrouping)
