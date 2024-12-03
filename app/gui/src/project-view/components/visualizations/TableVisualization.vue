@@ -10,7 +10,7 @@ import { Pattern } from '@/util/ast/match'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
 import type {
   CellClassParams,
-  CellClickedEvent,
+  CellDoubleClickedEvent,
   ColDef,
   ICellRendererParams,
   ITooltipParams,
@@ -373,23 +373,25 @@ function toField(
   const getSvgTemplate = (icon: string) =>
     `<svg viewBox="0 0 16 16" width="16" height="16"> <use xlink:href="${icons}#${icon}"/> </svg>`
   const svgTemplateWarning = showDataQuality ? getSvgTemplate('warning') : ''
-  const menu = `<span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
+  const menu = `<span data-ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"> </span>`
+  const filterButton = `<span data-ref="eFilterButton" class="ag-header-icon ag-header-cell-filter-button" aria-hidden="true"></span>`
   const sort = `
-      <span ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
-      <span ref="eSortOrder" class="ag-header-icon ag-sort-order" aria-hidden="true"></span>
-      <span ref="eSortAsc" class="ag-header-icon ag-sort-ascending-icon" aria-hidden="true"></span>
-      <span ref="eSortDesc" class="ag-header-icon ag-sort-descending-icon" aria-hidden="true"></span>
-      <span ref="eSortNone" class="ag-header-icon ag-sort-none-icon" aria-hidden="true"></span>
+      <span data-ref="eFilter" class="ag-header-icon ag-header-label-icon ag-filter-icon" aria-hidden="true"></span>
+      <span data-ref="eSortOrder" class="ag-header-icon ag-sort-order" aria-hidden="true"></span>
+      <span data-ref="eSortAsc" class="ag-header-icon ag-sort-ascending-icon" aria-hidden="true"></span>
+      <span data-ref="eSortDesc" class="ag-header-icon ag-sort-descending-icon" aria-hidden="true"></span>
+      <span data-ref="eSortNone" class="ag-header-icon ag-sort-none-icon" aria-hidden="true"></span>
     `
 
   const styles = 'display:flex; flex-direction:row; justify-content:space-between; width:inherit;'
   const template =
     icon ?
-      `<span style='${styles}'><span ref="eLabel" class="ag-header-cell-label" role="presentation" style='${styles}'> ${name} </span>${menu} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
-    : `<span style='${styles}' ref="eLabel">${name} ${menu} ${sort} ${svgTemplateWarning}</span>`
+      `<span style='${styles}'><span data-ref="eLabel" class="ag-header-cell-label" role="presentation" style='${styles}'><span data-ref="eText" class="ag-header-cell-text"></span></span>${menu} ${filterButton} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
+    : `<span style='${styles}' data-ref="eLabel"><span data-ref="eText" class="ag-header-cell-text"></span> ${menu} ${filterButton} ${sort} ${svgTemplateWarning}</span>`
 
   return {
     field: name,
+    headerName: name, // AGGrid would demangle it its own way if not specified.
     headerComponentParams: {
       template,
       setAriaSort: () => {},
@@ -425,7 +427,7 @@ function getAstPattern(selector?: string | number, action?: string) {
 }
 
 function createNode(
-  params: CellClickedEvent,
+  params: CellDoubleClickedEvent,
   selector: string,
   action?: string,
   castValueTypes?: string,
@@ -672,13 +674,12 @@ const createDateValue = (item: string, module: Ast.MutableModule) => {
 
 function checkSortAndFilter(e: SortChangedEvent) {
   const gridApi = e.api
-  const columnApi = e.columnApi
-  if (gridApi == null || columnApi == null) {
+  if (gridApi == null) {
     console.warn('AG Grid column API does not exist.')
     isCreateNodeEnabled.value = false
     return
   }
-  const colState = columnApi.getColumnState()
+  const colState = gridApi.getColumnState()
   const filter = gridApi.getFilterModel()
   const sort = colState
     .map((cs) => {

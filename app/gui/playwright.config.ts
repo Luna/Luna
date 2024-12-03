@@ -8,8 +8,9 @@
  */
 import { defineConfig } from '@playwright/test'
 import net from 'net'
+import path from 'path'
 
-const DEBUG = process.env.DEBUG_E2E === 'true'
+const DEBUG = process.env.DEBUG_TEST === 'true'
 const isCI = process.env.CI === 'true'
 const isProd = process.env.PROD === 'true'
 
@@ -21,6 +22,8 @@ const TIMEOUT_MS =
 // We tend to use less CPU on CI to reduce the number of failures due to timeouts.
 // Instead of using workers on CI, we use shards to run tests in parallel.
 const WORKERS = isCI ? 2 : '35%'
+
+const dirName = path.dirname(new URL(import.meta.url).pathname)
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
@@ -64,7 +67,7 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  reporter: isCI ? ([['list'], ['blob']] as const) : ([['list']] as const),
+  reporter: isCI ? [['list'], ['blob']] : [['html']],
   retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
@@ -101,7 +104,7 @@ export default defineConfig({
     // Setup project
     {
       name: 'Setup Dashboard',
-      testDir: './e2e/dashboard',
+      testDir: './integration-test/dashboard',
       testMatch: /.*\.setup\.ts/,
       timeout: TIMEOUT_MS,
       use: {
@@ -111,7 +114,7 @@ export default defineConfig({
     },
     {
       name: 'Dashboard',
-      testDir: './e2e/dashboard',
+      testDir: './integration-test/dashboard',
       testMatch: /.*\.spec\.ts/,
       dependencies: ['Setup Dashboard'],
       expect: {
@@ -122,31 +125,20 @@ export default defineConfig({
       use: {
         baseURL: `http://localhost:${ports.dashboard}`,
         actionTimeout: TIMEOUT_MS,
-        storageState: './playwright/.auth/user.json',
-      },
-    },
-    {
-      name: 'Auth',
-      testDir: './e2e/dashboard/auth',
-      expect: {
-        toHaveScreenshot: { threshold: 0 },
-        timeout: TIMEOUT_MS,
-      },
-      timeout: TIMEOUT_MS,
-      use: {
-        baseURL: `http://localhost:${ports.dashboard}`,
-        actionTimeout: TIMEOUT_MS,
+        storageState: path.join(dirName, './playwright/.auth/user.json'),
       },
     },
     {
       name: 'Setup Tests for Project View',
-      testMatch: /e2e\/project-view\/setup\.ts/,
+      testMatch: /integration-test\/project-view\/setup\.ts/,
     },
     {
       name: 'Project View',
       dependencies: ['Setup Tests for Project View'],
-      testDir: './e2e/project-view',
+      testDir: './integration-test/project-view',
       timeout: 60000,
+      repeatEach: 3,
+      retries: 0,
       expect: {
         timeout: 5000,
         toHaveScreenshot: { threshold: 0 },
@@ -159,7 +151,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      env: { E2E: 'true' },
+      env: { INTEGRATION_TEST: 'true' },
       command:
         isCI || isProd ?
           `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
