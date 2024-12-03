@@ -15,6 +15,7 @@ import * as errorModule from '#/utilities/error'
 
 import type * as cognito from '#/authentication/cognito'
 import * as listen from '#/authentication/listen'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 
 // ======================
 // === SessionContext ===
@@ -59,7 +60,10 @@ export interface SessionProviderProps {
 function createSessionQuery(userSession: (() => Promise<cognito.UserSession | null>) | null) {
   return reactQuery.queryOptions({
     queryKey: ['userSession'],
-    queryFn: () => userSession?.().catch(() => null) ?? null,
+    queryFn: async () => {
+      const session = (await userSession?.().catch(() => null)) ?? null
+      return session
+    },
     refetchOnWindowFocus: 'always',
     refetchOnMount: 'always',
     refetchOnReconnect: 'always',
@@ -84,6 +88,7 @@ export default function SessionProvider(props: SessionProviderProps) {
 
   const httpClient = httpClientProvider.useHttpClient()
   const queryClient = reactQuery.useQueryClient()
+  const toastAndLog = useToastAndLog()
 
   const sessionQuery = createSessionQuery(userSession)
 
@@ -95,10 +100,14 @@ export default function SessionProvider(props: SessionProviderProps) {
     onSuccess: (data) => {
       if (data) {
         httpClient?.setSessionToken(data.accessToken)
-        queryClient.setQueryData(sessionQuery.queryKey, data)
       }
+      return queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey })
     },
-    meta: { invalidates: [sessionQuery.queryKey] },
+    onError: (error) => {
+      // Something went wrong with the refresh token, so we need to sign the user out.
+      toastAndLog('sessionExpiredError', error)
+      queryClient.setQueryData(sessionQuery.queryKey, null)
+    },
   })
 
   if (session.data) {
@@ -170,7 +179,7 @@ interface SessionRefresherProps {
   readonly refreshUserSession: () => Promise<cognito.UserSession | null>
 }
 
-const FIVE_MINUTES_MS = 300_000
+const TEN_SECONDS_MS = 10_000
 const SIX_HOURS_MS = 21_600_000
 
 /**
@@ -180,7 +189,7 @@ function SessionRefresher(props: SessionRefresherProps) {
   const { refreshUserSession, session } = props
 
   reactQuery.useQuery({
-    queryKey: ['refreshUserSession', { accessToken: session.accessToken }],
+    queryKey: ['refreshUserSession', { refreshToken: session.refreshToken }] as const,
     queryFn: () => refreshUserSession(),
     meta: { persist: false },
     networkMode: 'online',
@@ -197,8 +206,7 @@ function SessionRefresher(props: SessionRefresherProps) {
         // If the session has not expired, we should refresh it when it is 5 minutes from expiring.
         // We use 1 second to ensure that we refresh even if the time is very close to expiring
         // and value won't be less than 0.
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        Math.max(new Date(expireAt).getTime() - Date.now() - FIVE_MINUTES_MS, 1_000)
+        Math.max(new Date(expireAt).getTime() - Date.now() - TEN_SECONDS_MS, TEN_SECONDS_MS)
 
       return timeUntilRefresh < SIX_HOURS_MS ? timeUntilRefresh : SIX_HOURS_MS
     },
