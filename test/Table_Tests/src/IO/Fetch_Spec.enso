@@ -263,7 +263,7 @@ add_specs suite_builder =
                 url = base_url_with_slash+"test_download?length=200"
                 Data.download url target_file
                 target_file.read.length . should_equal 200
-                Data.fetch url . should_fail_with (Response_Too_Large.Error Nothing 100)
+                Data.fetch url . should_fail_with (Response_Too_Large.Error 200 100)
 
         group_builder.specify "Should not cache for methods other than GET" pending=pending_has_url <| Test.with_retries <|
             with_default_cache <|
