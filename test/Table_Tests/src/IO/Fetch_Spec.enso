@@ -207,7 +207,6 @@ add_specs suite_builder =
                 get_num_response_cache_entries . should_equal 0
 
         group_builder.specify "Cache should handle many entries" pending=pending_has_url <| Test.with_retries <|
-            HTTP.fetch url0 . decode_as_text
             count = 20
 
             with_default_cache <|
