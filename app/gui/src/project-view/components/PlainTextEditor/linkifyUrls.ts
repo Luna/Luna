@@ -1,11 +1,11 @@
 import { linkEditPopup } from '@/util/codemirror/linkEditPopup'
 import {
-  LinkAttributesFactory,
   linkAttributesFactory,
+  linkAttributesFactoryChanged,
   linkDecoratorStateExt,
 } from '@/util/codemirror/links'
 import { LINKABLE_EMAIL_REGEX, LINKABLE_URL_REGEX } from '@/util/link'
-import { RangeSet, RangeSetBuilder, type Extension } from '@codemirror/state'
+import { RangeSetBuilder, type Extension } from '@codemirror/state'
 import {
   Decoration,
   ViewPlugin,
@@ -19,18 +19,12 @@ const viewPlugin = ViewPlugin.fromClass(
     decorations: DecorationSet
 
     constructor(view: EditorView) {
-      const makeAttributes = view.state.facet(linkAttributesFactory)
-      this.decorations = makeAttributes ? decorate(view, makeAttributes) : RangeSet.empty
+      this.decorations = decorate(view)
     }
 
     update(update: ViewUpdate) {
-      const makeAttributes = update.state.facet(linkAttributesFactory)
-      if (
-        update.docChanged ||
-        update.viewportChanged ||
-        update.startState.facet(linkAttributesFactory) !== makeAttributes
-      ) {
-        this.decorations = makeAttributes ? decorate(update.view, makeAttributes) : RangeSet.empty
+      if (update.docChanged || update.viewportChanged || linkAttributesFactoryChanged(update)) {
+        this.decorations = decorate(update.view)
       }
     }
   },
@@ -67,7 +61,9 @@ const MATCHERS = [
   regexpMatcher(LINKABLE_EMAIL_REGEX, (match) => `mailto:${match[0]}`),
 ]
 
-function decorate(view: EditorView, makeAttributes: LinkAttributesFactory): DecorationSet {
+function decorate(view: EditorView): DecorationSet {
+  const makeAttributes = view.state.facet(linkAttributesFactory)
+  if (!makeAttributes) return Decoration.none
   const decorations = new RangeSetBuilder<Decoration>()
   for (const visibleRange of view.visibleRanges) {
     const visibleText = view.state.doc.sliceString(visibleRange.from, visibleRange.to)

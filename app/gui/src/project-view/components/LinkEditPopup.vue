@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { textEditorsBindings } from '@/bindings.ts'
+import { textEditorsBindings } from '@/bindings'
 import { autoUpdate, flip, useFloating } from '@floating-ui/vue'
 import { toRef, useTemplateRef } from 'vue'
 
