@@ -1,7 +1,7 @@
 /** @file Test copying, moving, cutting and pasting. */
-import * as test from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import * as actions from './actions'
+import { locateAssetRowName, locateEditingTick, locateEditor, mockAllAndLogin } from './actions'
 
 /** The name of the uploaded file. */
 const FILE_NAME = 'foo.txt'
@@ -13,57 +13,49 @@ const SECRET_NAME = 'a secret name'
 const SECRET_VALUE = 'a secret value'
 const NEW_NAME = 'some new name'
 
-test.test('rename folder', ({ page }) =>
-  actions
-    .mockAllAndLogin({
-      page,
-      setupAPI: (api) => {
-        api.addDirectory('a directory')
-      },
-    })
+test('rename folder', ({ page }) =>
+  mockAllAndLogin({
+    page,
+    setupAPI: (api) => {
+      api.addDirectory('a directory')
+    },
+  })
     .createFolder()
     .driveTable.withRows(async (rows, _, { api }) => {
-      await test.expect(rows).toHaveCount(1)
+      await expect(rows).toHaveCount(1)
       const row = rows.nth(0)
-      await test.expect(row).toBeVisible()
-      await test.expect(row).toHaveText(/^a directory/)
-      await actions.locateAssetRowName(row).click()
-      await actions.locateAssetRowName(row).click()
+      await expect(row).toBeVisible()
+      await expect(row).toHaveText(/^a directory/)
+      await locateAssetRowName(row).click()
+      await locateAssetRowName(row).click()
       const calls = api.trackCalls()
-      await actions.locateAssetRowName(row).fill(NEW_NAME)
-      await actions.locateEditingTick(row).click()
-      await test.expect(row).toHaveText(new RegExp('^' + NEW_NAME))
-      test.expect(calls.updateDirectory).toBeGreaterThan(0)
-    }),
-)
+      await locateAssetRowName(row).fill(NEW_NAME)
+      await locateEditingTick(row).click()
+      await expect(row).toHaveText(new RegExp('^' + NEW_NAME))
+      expect(calls.updateDirectory).toBeGreaterThan(0)
+    }))
 
-test.test('create project', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('create project', ({ page }) =>
+  mockAllAndLogin({ page })
     .newEmptyProject()
-    .do((thePage) => test.expect(actions.locateEditor(thePage)).toBeAttached())
+    .do((thePage) => expect(locateEditor(thePage)).toBeAttached())
     .goToPage.drive()
-    .driveTable.withRows((rows) => test.expect(rows).toHaveCount(1)),
-)
+    .driveTable.withRows((rows) => expect(rows).toHaveCount(1)))
 
-test.test('upload file', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('upload file', ({ page }) =>
+  mockAllAndLogin({ page })
     .uploadFile(FILE_NAME, FILE_CONTENTS)
     .driveTable.withRows(async (rows) => {
-      await test.expect(rows).toHaveCount(1)
-      await test.expect(rows.nth(0)).toBeVisible()
-      await test.expect(rows.nth(0)).toHaveText(new RegExp('^' + FILE_NAME))
-    }),
-)
+      await expect(rows).toHaveCount(1)
+      await expect(rows.nth(0)).toBeVisible()
+      await expect(rows.nth(0)).toHaveText(new RegExp('^' + FILE_NAME))
+    }))
 
-test.test('create secret', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('create secret', ({ page }) =>
+  mockAllAndLogin({ page })
     .createSecret(SECRET_NAME, SECRET_VALUE)
     .driveTable.withRows(async (rows) => {
-      await test.expect(rows).toHaveCount(1)
-      await test.expect(rows.nth(0)).toBeVisible()
-      await test.expect(rows.nth(0)).toHaveText(new RegExp('^' + SECRET_NAME))
-    }),
-)
+      await expect(rows).toHaveCount(1)
+      await expect(rows.nth(0)).toBeVisible()
+      await expect(rows.nth(0)).toHaveText(new RegExp('^' + SECRET_NAME))
+    }))

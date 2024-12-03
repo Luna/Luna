@@ -1,23 +1,21 @@
 /** @file Test the login flow. */
-import * as test from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import * as actions from './actions'
+import { locateDriveView, locateLoginButton, mockAll } from './actions'
 
 // Reset storage state for this file to avoid being authenticated
-test.test.use({ storageState: { cookies: [], origins: [] } })
+test.use({ storageState: { cookies: [], origins: [] } })
 
-test.test('login and logout', ({ page }) =>
-  actions
-    .mockAll({ page })
+test('login and logout', ({ page }) =>
+  mockAll({ page })
     .login()
     .do(async (thePage) => {
-      await test.expect(actions.locateDriveView(thePage)).toBeVisible()
-      await test.expect(actions.locateLoginButton(thePage)).not.toBeVisible()
+      await expect(locateDriveView(thePage)).toBeVisible()
+      await expect(locateLoginButton(thePage)).not.toBeVisible()
     })
     .openUserMenu()
     .userMenu.logout()
     .do(async (thePage) => {
-      await test.expect(actions.locateDriveView(thePage)).not.toBeVisible()
-      await test.expect(actions.locateLoginButton(thePage)).toBeVisible()
-    }),
-)
+      await expect(locateDriveView(thePage)).not.toBeVisible()
+      await expect(locateLoginButton(thePage)).toBeVisible()
+    }))

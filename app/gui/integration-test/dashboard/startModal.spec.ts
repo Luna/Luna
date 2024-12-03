@@ -1,15 +1,13 @@
 /** @file Test the "change password" modal. */
-import * as test from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import * as actions from './actions'
+import { locateEditor, locateSamples, mockAllAndLogin } from './actions'
 
-test.test('create project from template', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('create project from template', ({ page }) =>
+  mockAllAndLogin({ page })
     .openStartModal()
     .createProjectFromTemplate(0)
     .do(async (thePage) => {
-      await test.expect(actions.locateEditor(thePage)).toBeAttached()
-      await test.expect(actions.locateSamples(page).first()).not.toBeVisible()
-    }),
-)
+      await expect(locateEditor(thePage)).toBeAttached()
+      await expect(locateSamples(page).first()).not.toBeVisible()
+    }))

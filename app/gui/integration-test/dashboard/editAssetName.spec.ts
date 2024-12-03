@@ -1,37 +1,45 @@
 /** @file Test copying, moving, cutting and pasting. */
 import { test } from '@playwright/test'
 
-import * as actions from './actions'
+import {
+  locateAssetRowName,
+  locateAssetRows,
+  locateContextMenus,
+  locateEditingCross,
+  locateEditingTick,
+  locateNewFolderIcon,
+  mockAllAndLogin,
+  press,
+} from './actions'
 
 test('edit name (double click)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
-  const assetRows = actions.locateAssetRows(page)
+  await mockAllAndLogin({ page })
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
   const newName = 'foo bar baz'
 
-  await actions.locateNewFolderIcon(page).click()
-  await actions.locateAssetRowName(row).click()
-  await actions.locateAssetRowName(row).click()
-  await actions.locateAssetRowName(row).fill(newName)
-  await actions.locateEditingTick(row).click()
+  await locateNewFolderIcon(page).click()
+  await locateAssetRowName(row).click()
+  await locateAssetRowName(row).click()
+  await locateAssetRowName(row).fill(newName)
+  await locateEditingTick(row).click()
   await test.expect(row).toHaveText(new RegExp('^' + newName))
 })
 
 test('edit name (context menu)', async ({ page }) => {
-  await actions.mockAllAndLogin({
+  await mockAllAndLogin({
     page,
     setupAPI: (api) => {
       api.addAsset(api.createDirectory('foo'))
     },
   })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
   const newName = 'foo bar baz'
 
-  await actions.locateAssetRowName(row).click({ button: 'right' })
-  await actions
-    .locateContextMenus(page)
+  await locateAssetRowName(row).click({ button: 'right' })
+  await locateContextMenus(page)
     .getByText(/Rename/)
     .click()
 
@@ -50,80 +58,80 @@ test('edit name (context menu)', async ({ page }) => {
 })
 
 test('edit name (keyboard)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
+  await mockAllAndLogin({ page })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
   const newName = 'foo bar baz quux'
 
-  await actions.locateNewFolderIcon(page).click()
-  await actions.locateAssetRowName(row).click()
-  await actions.press(page, 'Mod+R')
-  await actions.locateAssetRowName(row).fill(newName)
-  await actions.locateAssetRowName(row).press('Enter')
+  await locateNewFolderIcon(page).click()
+  await locateAssetRowName(row).click()
+  await press(page, 'Mod+R')
+  await locateAssetRowName(row).fill(newName)
+  await locateAssetRowName(row).press('Enter')
   await test.expect(row).toHaveText(new RegExp('^' + newName))
 })
 
 test('cancel editing name (double click)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
+  await mockAllAndLogin({ page })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
   const newName = 'foo bar baz'
 
-  await actions.locateNewFolderIcon(page).click()
-  const oldName = (await actions.locateAssetRowName(row).textContent()) ?? ''
-  await actions.locateAssetRowName(row).click()
-  await actions.locateAssetRowName(row).click()
+  await locateNewFolderIcon(page).click()
+  const oldName = (await locateAssetRowName(row).textContent()) ?? ''
+  await locateAssetRowName(row).click()
+  await locateAssetRowName(row).click()
 
-  await actions.locateAssetRowName(row).fill(newName)
-  await actions.locateEditingCross(row).click()
+  await locateAssetRowName(row).fill(newName)
+  await locateEditingCross(row).click()
   await test.expect(row).toHaveText(new RegExp('^' + oldName))
 })
 
 test('cancel editing name (keyboard)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
+  await mockAllAndLogin({ page })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
   const newName = 'foo bar baz quux'
 
-  await actions.locateNewFolderIcon(page).click()
-  const oldName = (await actions.locateAssetRowName(row).textContent()) ?? ''
-  await actions.locateAssetRowName(row).click()
-  await actions.press(page, 'Mod+R')
-  await actions.locateAssetRowName(row).fill(newName)
-  await actions.locateAssetRowName(row).press('Escape')
+  await locateNewFolderIcon(page).click()
+  const oldName = (await locateAssetRowName(row).textContent()) ?? ''
+  await locateAssetRowName(row).click()
+  await press(page, 'Mod+R')
+  await locateAssetRowName(row).fill(newName)
+  await locateAssetRowName(row).press('Escape')
   await test.expect(row).toHaveText(new RegExp('^' + oldName))
 })
 
 test('change to blank name (double click)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
+  await mockAllAndLogin({ page })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
 
-  await actions.locateNewFolderIcon(page).click()
-  const oldName = (await actions.locateAssetRowName(row).textContent()) ?? ''
-  await actions.locateAssetRowName(row).click()
-  await actions.locateAssetRowName(row).click()
-  await actions.locateAssetRowName(row).fill('')
-  await test.expect(actions.locateEditingTick(row)).not.toBeVisible()
-  await actions.locateEditingCross(row).click()
+  await locateNewFolderIcon(page).click()
+  const oldName = (await locateAssetRowName(row).textContent()) ?? ''
+  await locateAssetRowName(row).click()
+  await locateAssetRowName(row).click()
+  await locateAssetRowName(row).fill('')
+  await test.expect(locateEditingTick(row)).not.toBeVisible()
+  await locateEditingCross(row).click()
   await test.expect(row).toHaveText(new RegExp('^' + oldName))
 })
 
 test('change to blank name (keyboard)', async ({ page }) => {
-  await actions.mockAllAndLogin({ page })
+  await mockAllAndLogin({ page })
 
-  const assetRows = actions.locateAssetRows(page)
+  const assetRows = locateAssetRows(page)
   const row = assetRows.nth(0)
 
-  await actions.locateNewFolderIcon(page).click()
-  const oldName = (await actions.locateAssetRowName(row).textContent()) ?? ''
-  await actions.locateAssetRowName(row).click()
-  await actions.press(page, 'Mod+R')
-  await actions.locateAssetRowName(row).fill('')
-  await actions.locateAssetRowName(row).press('Enter')
+  await locateNewFolderIcon(page).click()
+  const oldName = (await locateAssetRowName(row).textContent()) ?? ''
+  await locateAssetRowName(row).click()
+  await press(page, 'Mod+R')
+  await locateAssetRowName(row).fill('')
+  await locateAssetRowName(row).press('Enter')
   await test.expect(row).toHaveText(new RegExp('^' + oldName))
 })

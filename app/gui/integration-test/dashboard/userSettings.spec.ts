@@ -1,81 +1,72 @@
 /** @file Test the user settings tab. */
-import * as test from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import * as actions from './actions'
+import { INVALID_PASSWORD, TEXT, VALID_PASSWORD, mockAllAndLogin } from './actions'
 
 const NEW_USERNAME = 'another user-name'
-const NEW_PASSWORD = '1234!' + actions.VALID_PASSWORD
+const NEW_PASSWORD = '1234!' + VALID_PASSWORD
 const PROFILE_PICTURE_FILENAME = 'foo.png'
 const PROFILE_PICTURE_CONTENT = 'a profile picture'
 const PROFILE_PICTURE_MIMETYPE = 'image/png'
 
-test.test('user settings', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('user settings', ({ page }) =>
+  mockAllAndLogin({ page })
     .do((_, { api }) => {
-      test.expect(api.currentUser()?.name).toBe(api.defaultName)
+      expect(api.currentUser()?.name).toBe(api.defaultName)
     })
     .goToPage.settings()
     .accountForm()
     .fillName(NEW_USERNAME)
     .save()
     .do((_, { api }) => {
-      test.expect(api.currentUser()?.name).toBe(NEW_USERNAME)
-      test.expect(api.currentOrganization()?.name).not.toBe(NEW_USERNAME)
-    }),
-)
+      expect(api.currentUser()?.name).toBe(NEW_USERNAME)
+      expect(api.currentOrganization()?.name).not.toBe(NEW_USERNAME)
+    }))
 
-test.test('change password form', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('change password form', ({ page }) =>
+  mockAllAndLogin({ page })
     .do((_, { api }) => {
-      test.expect(api.currentPassword()).toBe(actions.VALID_PASSWORD)
+      expect(api.currentPassword()).toBe(VALID_PASSWORD)
     })
     .goToPage.settings()
     .changePasswordForm()
-    .fillCurrentPassword(actions.VALID_PASSWORD)
-    .fillNewPassword(actions.INVALID_PASSWORD)
-    .fillConfirmNewPassword(actions.INVALID_PASSWORD)
+    .fillCurrentPassword(VALID_PASSWORD)
+    .fillNewPassword(INVALID_PASSWORD)
+    .fillConfirmNewPassword(INVALID_PASSWORD)
     .save()
     .step('Invalid new password should fail', async (page) => {
-      await test
-        .expect(
-          page
-            .getByRole('group', { name: /^New password/, exact: true })
-            .locator('.text-danger')
-            .last(),
-        )
-        .toHaveText(actions.TEXT.passwordValidationError)
+      await expect(
+        page
+          .getByRole('group', { name: /^New password/, exact: true })
+          .locator('.text-danger')
+          .last(),
+      ).toHaveText(TEXT.passwordValidationError)
     })
     .changePasswordForm()
-    .fillCurrentPassword(actions.VALID_PASSWORD)
-    .fillNewPassword(actions.VALID_PASSWORD)
-    .fillConfirmNewPassword(actions.VALID_PASSWORD + 'a')
+    .fillCurrentPassword(VALID_PASSWORD)
+    .fillNewPassword(VALID_PASSWORD)
+    .fillConfirmNewPassword(VALID_PASSWORD + 'a')
     .save()
     .step('Invalid new password confirmation should fail', async (page) => {
-      await test
-        .expect(
-          page
-            .getByRole('group', { name: /^Confirm new password/, exact: true })
-            .locator('.text-danger')
-            .last(),
-        )
-        .toHaveText(actions.TEXT.passwordMismatchError)
+      await expect(
+        page
+          .getByRole('group', { name: /^Confirm new password/, exact: true })
+          .locator('.text-danger')
+          .last(),
+      ).toHaveText(TEXT.passwordMismatchError)
     })
     .changePasswordForm()
-    .fillCurrentPassword(actions.VALID_PASSWORD)
+    .fillCurrentPassword(VALID_PASSWORD)
     .fillNewPassword(NEW_PASSWORD)
     .fillConfirmNewPassword(NEW_PASSWORD)
     .save()
     // TODO: consider checking that password inputs are now empty.
     .step('Password change should be successful', (_, { api }) => {
-      test.expect(api.currentPassword()).toBe(NEW_PASSWORD)
-    }),
-)
+      expect(api.currentPassword()).toBe(NEW_PASSWORD)
+    }))
 
-test.test('upload profile picture', ({ page }) =>
-  actions
-    .mockAllAndLogin({ page })
+test('upload profile picture', ({ page }) =>
+  mockAllAndLogin({ page })
     .goToPage.settings()
     .uploadProfilePicture(
       PROFILE_PICTURE_FILENAME,
@@ -83,10 +74,7 @@ test.test('upload profile picture', ({ page }) =>
       PROFILE_PICTURE_MIMETYPE,
     )
     .step('Profile picture should be updated', async (_, { api }) => {
-      await test
-        .expect(() => {
-          test.expect(api.currentProfilePicture()).toEqual(PROFILE_PICTURE_CONTENT)
-        })
-        .toPass()
-    }),
-)
+      await expect(() => {
+        expect(api.currentProfilePicture()).toEqual(PROFILE_PICTURE_CONTENT)
+      }).toPass()
+    }))
