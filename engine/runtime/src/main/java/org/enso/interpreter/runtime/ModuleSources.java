@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import org.enso.common.LanguageInfo;
 import org.enso.pkg.QualifiedName;
 import org.enso.text.buffer.Rope;
+import org.enso.version.BuildVersion;
 
 /**
  * Keeps information about various kinds of sources associated with a {@link Module}. All the record
@@ -70,7 +71,7 @@ record ModuleSources(TruffleFile file, Rope rope, Source source) {
       return new ModuleSources(file, rope, src);
     } else if (file != null) {
       var b = Source.newBuilder(LanguageInfo.ID, file);
-      assert alternativeFile(b, file) : "Cannot find alternative for " + file;
+      alternativeFile(b, file);
       var src = b.build();
       org.enso.text.buffer.Rope lit = Rope.apply(src.getCharacters().toString());
       return new ModuleSources(file, lit, src);
@@ -92,18 +93,23 @@ record ModuleSources(TruffleFile file, Rope rope, Source source) {
    * {@code -ea} is enabled, then we try to locate library files under the {@code
    * distribution}/{@code lib} directories.
    */
-  private static boolean alternativeFile(Source.SourceBuilder b, TruffleFile file) {
+  private static void alternativeFile(Source.SourceBuilder b, TruffleFile file) {
+    if (!BuildVersion.defaultDevEnsoVersion().equals(BuildVersion.ensoVersion())) {
+      // no changes when not running development version
+      return;
+    }
     var root = file;
     var stack = new LinkedList<String>();
     while (root != null) {
-      if ("0.0.0-dev".equals(root.getName())) {
+      if (BuildVersion.defaultDevEnsoVersion().equals(root.getName())) {
         break;
       }
       stack.addFirst(root.getName());
       root = root.getParent();
     }
     if (root == null) {
-      return true;
+      // give up when we cannot find a root
+      return;
     }
     var libName = root.getParent();
     var libNamespace = libName.getParent();
@@ -124,10 +130,8 @@ record ModuleSources(TruffleFile file, Rope rope, Source source) {
         }
         if (newFile.exists()) {
           b.uri(newFile.toUri());
-          return true;
         }
       }
     }
-    return false;
   }
 }
