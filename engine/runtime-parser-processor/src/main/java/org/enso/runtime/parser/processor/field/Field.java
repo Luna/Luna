@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.field;
 
 import java.util.List;
 import java.util.function.Function;
@@ -9,7 +9,7 @@ import org.enso.runtime.parser.dsl.IRChild;
  * A field of an IR node. Represented by any parameterless method on an interface annotated with
  * {@link org.enso.runtime.parser.dsl.IRNode}.
  */
-interface Field {
+public interface Field {
 
   /** Name (identifier) of the field. */
   String getName();

@@ -14,7 +14,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 
-final class Utils {
+public final class Utils {
 
   private static final String MAP_EXPRESSIONS = "mapExpressions";
   private static final String DUPLICATE = "duplicate";
@@ -22,7 +22,7 @@ final class Utils {
   private Utils() {}
 
   /** Returns true if the given {@code type} is a subtype of {@code org.enso.compiler.core.IR}. */
-  static boolean isSubtypeOfIR(TypeElement type, ProcessingEnvironment processingEnv) {
+  public static boolean isSubtypeOfIR(TypeElement type, ProcessingEnvironment processingEnv) {
     var irIfaceFound =
         iterateSuperInterfaces(
             type,
@@ -42,13 +42,14 @@ final class Utils {
   }
 
   /** Returns true if the given {@code type} is an {@code org.enso.compiler.core.IR} interface. */
-  static boolean isIRInterface(TypeMirror type, ProcessingEnvironment processingEnv) {
+  public static boolean isIRInterface(TypeMirror type, ProcessingEnvironment processingEnv) {
     var elem = processingEnv.getTypeUtils().asElement(type);
     return elem.getKind() == ElementKind.INTERFACE && elem.getSimpleName().toString().equals("IR");
   }
 
   /** Returns true if the given type extends {@link org.enso.compiler.core.ir.Expression} */
-  static boolean isSubtypeOfExpression(TypeMirror type, ProcessingEnvironment processingEnv) {
+  public static boolean isSubtypeOfExpression(
+      TypeMirror type, ProcessingEnvironment processingEnv) {
     var expressionType =
         processingEnv
             .getElementUtils()
@@ -57,11 +58,11 @@ final class Utils {
     return processingEnv.getTypeUtils().isAssignable(type, expressionType);
   }
 
-  static void printError(String msg, Element elem, Messager messager) {
+  public static void printError(String msg, Element elem, Messager messager) {
     messager.printMessage(Kind.ERROR, msg, elem);
   }
 
-  static void printErrorAndFail(String msg, Element elem, Messager messager) {
+  public static void printErrorAndFail(String msg, Element elem, Messager messager) {
     printError(msg, elem, messager);
     throw new IllegalStateException("Unexpected failure during annotation processing: " + msg);
   }
@@ -72,7 +73,7 @@ final class Utils {
         .collect(Collectors.joining(System.lineSeparator()));
   }
 
-  static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
+  public static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
     var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
   }
@@ -89,7 +90,7 @@ final class Utils {
    * @param procEnv
    * @return
    */
-  static boolean hasImplementation(
+  public static boolean hasImplementation(
       ExecutableElement method, TypeElement interfaceType, ProcessingEnvironment procEnv) {
     var defImplFound =
         iterateSuperInterfaces(

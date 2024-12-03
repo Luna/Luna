@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.field;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -12,12 +12,13 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.dsl.IRChild;
+import org.enso.runtime.parser.processor.Utils;
 
 /**
  * Collects abstract parameterless methods from the given interface and all its superinterfaces -
  * these will be represented as fields in the generated classes, hence the name.
  */
-final class FieldCollector {
+public final class FieldCollector {
   private final ProcessingEnvironment processingEnv;
   private final TypeElement irNodeInterface;
   // Mapped by field name
@@ -26,13 +27,13 @@ final class FieldCollector {
   /**
    * @param irNodeInterface For this interface, fields will be collected.
    */
-  FieldCollector(ProcessingEnvironment processingEnv, TypeElement irNodeInterface) {
+  public FieldCollector(ProcessingEnvironment processingEnv, TypeElement irNodeInterface) {
     assert irNodeInterface.getKind() == ElementKind.INTERFACE;
     this.processingEnv = processingEnv;
     this.irNodeInterface = irNodeInterface;
   }
 
-  List<Field> collectFields() {
+  public List<Field> collectFields() {
     var superInterfaces = irNodeInterface.getInterfaces();
     Deque<TypeMirror> toProcess = new ArrayDeque<>();
     toProcess.add(irNodeInterface.asType());

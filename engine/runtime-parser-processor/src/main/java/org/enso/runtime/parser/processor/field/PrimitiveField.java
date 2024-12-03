@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.field;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;

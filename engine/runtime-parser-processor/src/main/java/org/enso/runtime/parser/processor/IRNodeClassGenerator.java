@@ -12,6 +12,8 @@ import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.dsl.IRNode;
+import org.enso.runtime.parser.processor.field.Field;
+import org.enso.runtime.parser.processor.field.FieldCollector;
 
 /**
  * Generates code for interfaces annotated with {@link org.enso.runtime.parser.dsl.IRNode}.

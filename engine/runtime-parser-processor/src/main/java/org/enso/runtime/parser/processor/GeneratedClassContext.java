@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
+import org.enso.runtime.parser.processor.field.Field;
 
 /**
  * A context created for the generated class. Everything that is needed for the code generation of a

@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
+import org.enso.runtime.parser.processor.field.Field;
 
 /**
  * Code generator for {@code org.enso.compiler.core.ir.IR#duplicate} method or any of its override.

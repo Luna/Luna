@@ -1,8 +1,9 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.field;
 
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
+import org.enso.runtime.parser.processor.Utils;
 
 final class ReferenceField implements Field {
   private final ProcessingEnvironment procEnv;

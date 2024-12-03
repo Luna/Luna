@@ -1,4 +1,4 @@
-package org.enso.runtime.parser.processor;
+package org.enso.runtime.parser.processor.field;
 
 import java.util.List;
 import javax.lang.model.element.TypeElement;

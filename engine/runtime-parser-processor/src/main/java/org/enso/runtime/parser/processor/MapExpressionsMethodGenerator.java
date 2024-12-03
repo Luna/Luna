@@ -4,6 +4,7 @@ import java.util.Objects;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import org.enso.runtime.parser.processor.field.Field;
 
 final class MapExpressionsMethodGenerator {
   private final ExecutableElement mapExpressionsMethod;
