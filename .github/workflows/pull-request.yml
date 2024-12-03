@@ -166,6 +166,13 @@ jobs:
     if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
+  engine-checks-optional:
+    name: ⚙️ Engine Checks (Optional)
+    uses: ./.github/workflows/engine-checks-optional.yml
+    needs: [engine-changed-files]
+    if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
+    secrets: inherit
+
   gui-packaging:
     name: 🗐 GUI Packaging
     uses: ./.github/workflows/gui-packaging.yml
@@ -173,8 +180,13 @@ jobs:
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
-  # This job is used to report success if the needed jobs were successful.
-  # This is a workaround to make optional jobs required if they run
+  gui-packaging-optional:
+    name: 🗐 GUI Packaging (Optional)
+    uses: ./.github/workflows/gui-packaging-optional.yml
+    needs: [gui-changed-files, engine-changed-files]
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
+    secrets: inherit
+
   checks-report:
     name: PR Checks Report
     runs-on: ubuntu-latest
