@@ -902,8 +902,8 @@ add_column_operation_specs suite_builder setup =
             y = t.at "Y"
             z = t.at "Z"
 
-            (x + z) . should_fail_with Illegal_Argument
-            (x + False) . should_fail_with Illegal_Argument
+            (x + z) . should_fail_with Invalid_Value_Type
+            (x + False) . should_fail_with Invalid_Value_Type
 
             # Mixing text and integers should not be allowed
             (x + y) . should_fail_with Illegal_Argument

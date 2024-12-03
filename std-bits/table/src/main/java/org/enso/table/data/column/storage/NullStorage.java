@@ -10,7 +10,6 @@ import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.mask.OrderMask;
 import org.enso.table.data.mask.SliceRange;
-import org.enso.table.error.UnexpectedColumnTypeException;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Value;
 
@@ -203,19 +202,17 @@ public class NullStorage extends Storage<Void> {
     @Override
     public Storage<?> runZip(
         NullStorage storage, Storage<?> arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg instanceof BoolStorage boolStorage) {
-        BoolBuilder builder = new BoolBuilder(storage.size());
-        for (int i = 0; i < storage.size(); i++) {
-          if (boolStorage.isNothing(i)) {
-            builder.appendNulls(1);
-          } else {
-            builder.append(doBool(boolStorage.getItem(i)));
-          }
+      BoolBuilder builder = new BoolBuilder(storage.size());
+      for (int i = 0; i < storage.size(); i++) {
+        if (arg.isNothing(i)) {
+          builder.appendNulls(1);
+        } else if (arg.getItemBoxed(i) instanceof Boolean bool) {
+          builder.append(doBool(bool));
+        } else {
+          throw new UnexpectedTypeException("Boolean", arg.getItemBoxed(i).toString());
         }
-        return builder.seal();
-      } else {
-        throw new UnexpectedColumnTypeException("Boolean");
       }
+      return builder.seal();
     }
   }
 
