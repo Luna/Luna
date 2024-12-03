@@ -12,7 +12,12 @@ import * as array from 'lib0/array'
 import { ObservableV2 } from 'lib0/observable'
 import * as random from 'lib0/random'
 import { reactive } from 'vue'
-import { ErrorCode, LsRpcError, RemoteRpcError, type LanguageServer } from 'ydoc-shared/languageServer'
+import {
+  ErrorCode,
+  LsRpcError,
+  RemoteRpcError,
+  type LanguageServer,
+} from 'ydoc-shared/languageServer'
 import {
   methodPointerEquals,
   stackItemsEqual,
@@ -164,11 +169,11 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
       // Connection closed: the created execution context is no longer available
       // There is no point in any scheduled action until resynchronization
       this.queue.clear()
-      // If syncing is at the first step (creating missing execution context), it is 
-      // effectively waiting for reconnection to recreate the execution context. 
+      // If syncing is at the first step (creating missing execution context), it is
+      // effectively waiting for reconnection to recreate the execution context.
       // We should not clear it's outcome, as it's likely the context will be created after
       // reconnection (so it's valid).
-      if (this.syncStatus !== SyncStatus.CREATING) { 
+      if (this.syncStatus !== SyncStatus.CREATING) {
         // In other cases, any created context is destroyed after losing connection.
         // The status should be cleared to 'not-created'.
         this.queue.pushTask(() => {
@@ -500,7 +505,11 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
       const handleError = (error: ResultError): ExecutionContextState => {
         // If error tells us that the execution context is missing, we schedule
         // another sync to re-create it, and set proper state.
-        if (error.payload instanceof LsRpcError && error.payload.cause instanceof RemoteRpcError && error.payload.cause.code === ErrorCode.CONTEXT_NOT_FOUND) {
+        if (
+          error.payload instanceof LsRpcError &&
+          error.payload.cause instanceof RemoteRpcError &&
+          error.payload.cause.code === ErrorCode.CONTEXT_NOT_FOUND
+        ) {
           this.sync()
           return { status: 'not-created' }
         } else {

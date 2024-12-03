@@ -16,9 +16,10 @@ export function useGraphEditorToasts(projectStore: ProjectStore) {
   toastStartup.show('Initializing the project. This can take up to one minute.')
   projectStore.firstExecution.then(toastStartup.dismiss)
 
-  useEvent(document, 'project-manager-loading-failed', () =>
+  projectStore.lsRpcConnection.on('transport/closed', () =>
     toastConnectionLost.show('Lost connection to Language Server.'),
   )
+  projectStore.lsRpcConnection.on('transport/connected', () => toastConnectionLost.dismiss())
 
   projectStore.lsRpcConnection.client.onError((e) =>
     toastLspError.show(`Language server error: ${e}`),
