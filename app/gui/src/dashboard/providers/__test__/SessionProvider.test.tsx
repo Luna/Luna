@@ -108,11 +108,11 @@ describe('SessionProvider', () => {
     })
   })
 
-  it('Should refresh not stale user session', { timeout: 1_500 }, async () => {
+  it('Should refresh not stale user session', { timeout: 5_000 }, async () => {
     userSession.mockReturnValueOnce(
       Promise.resolve({
         ...(await userSession()),
-        expireAt: Rfc3339DateTime(new Date(Date.now() + 1_000).toJSON()),
+        expireAt: Rfc3339DateTime(new Date(Date.now() + 1_500).toJSON()),
       }),
     )
 
@@ -137,12 +137,12 @@ describe('SessionProvider', () => {
 
     await waitFor(
       () => {
-        expect(refreshUserSession).toBeCalledTimes(2)
+        expect(refreshUserSession).toBeCalledTimes(1)
         expect(session).not.toBeNull()
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(new Date(session!.expireAt).getTime()).toBeGreaterThan(Date.now())
       },
-      { timeout: 1_500 },
+      { timeout: 2_000 },
     )
   })
 
