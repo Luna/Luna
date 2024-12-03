@@ -1,5 +1,6 @@
 package org.enso.base.cache;
 
+import org.enso.base.polyglot.EnsoMeta;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
@@ -28,39 +29,7 @@ public class ReloadDetector {
   }
 
   private void resetTrigger() {
-    // The `on_finalize` function and the `clear` method both write `Nothing` to
-    // the ref. This is a signal that a reload has happenend. `on_finalize` is
-    // called by the engine when a reload happens. `clear` is only for testing,
-    // to simulate a reload.
-    //
-    // The `0` value stored in the ref is not used; it just has to be something
-    // other than Nothing.
-    var module =
-        Context.getCurrent()
-            .eval(
-                "enso",
-                """
-      import Standard.Base.Data.Boolean.Boolean
-      import Standard.Base.Nothing.Nothing
-      import Standard.Base.Runtime.Managed_Resource.Managed_Resource
-      import Standard.Base.Runtime.Ref.Ref
-
-      type Trigger
-          private Value mr:Managed_Resource
-
-          new -> Trigger =
-            ref = Ref.new 0
-            on_finalize ref = ref.put Nothing
-            mr = Managed_Resource.register ref on_finalize Boolean.True
-            Trigger.Value mr
-
-          get self = self.mr.with .get
-
-          clear self =
-            self.mr.with (ref-> ref.put Nothing)
-            Nothing
-      """);
-    trigger = module.invokeMember("eval_expression", "Trigger.new");
+    trigger = EnsoMeta.callStaticModuleMethod("Standard.Base.Network.Reload_Detector", "create_reload_detector");
   }
 
   void simulateReloadTestOnly() {

@@ -1,0 +1,32 @@
+import Standard.Base.Data.Boolean.Boolean
+import Standard.Base.Nothing.Nothing
+import Standard.Base.Runtime.Managed_Resource.Managed_Resource
+import Standard.Base.Runtime.Ref.Ref
+
+## PRIVATE
+   This is used by ReloadDetector.java to create a `Managed_Resource` that is
+   finalized when the reload button is pressed.
+
+   The `on_finalize` function and the `clear` method both write `Nothing` to the
+   ref. This is a signal that a reload has happenend. `on_finalize` is called by
+   the engine when a reload happens. `clear` is only for testing, to simulate a
+   reload.
+
+   The `0` value stored in the ref is not used; it just has to be something
+   other than Nothing.
+type Reload_Detector
+    private Value mr:Managed_Resource
+
+    new -> Reload_Detector =
+        ref = Ref.new 0
+        on_finalize ref = ref.put Nothing
+        mr = Managed_Resource.register ref on_finalize Boolean.True
+        Reload_Detector.Value mr
+
+    get self = self.mr.with .get
+
+    clear self =
+        self.mr.with (ref-> ref.put Nothing)
+        Nothing
+
+create_reload_detector = Reload_Detector.new
