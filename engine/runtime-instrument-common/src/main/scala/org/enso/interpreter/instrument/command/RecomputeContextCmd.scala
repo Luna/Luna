@@ -43,7 +43,7 @@ class RecomputeContextCmd(
     ec: ExecutionContext
   ): Future[Boolean] = {
     Future {
-      EnsoContext.get(null).getResourceManager().scheduleFinalization();
+      EnsoContext.get(null).getResourceManager().scheduleFinalizationOfSystemReferences();
       ctx.jobControlPlane.abortJobs(
         request.contextId,
         "recompute context",
