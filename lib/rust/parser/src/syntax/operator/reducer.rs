@@ -48,7 +48,7 @@ impl<'s> OperatorConsumer<'s> for Reduce<'s> {
         // slightly more efficient and can simplify debugging.
         if !arity.expects_rhs() {
             let lhs = self.output.pop();
-            debug_assert!(!lhs.is_none());
+            debug_assert!(lhs.is_some());
             let mut applied = reduce_step(arity, lhs, &mut self.output);
             warnings.apply(&mut applied.value);
             self.push_operand(applied);

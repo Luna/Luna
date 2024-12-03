@@ -1027,7 +1027,7 @@ pub fn apply<'s>(mut func: Tree<'s>, mut arg: Tree<'s>) -> Tree<'s> {
         Spacing::Spaced => None,
         Spacing::Unspaced => Some("Space required between terms."),
     }
-    .or_else(|| match &arg.variant {
+    .or(match &arg.variant {
         Variant::AnnotatedBuiltin(_) => Some("Unexpected expression annotation."),
         _ => None,
     });
