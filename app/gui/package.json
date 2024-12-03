@@ -15,10 +15,13 @@
   "bugs": {
     "url": "https://github.com/enso-org/enso/issues"
   },
-  "//": {},
+  "//": [
+    "--max-old-space-size=4096 is required when sourcemaps are enabled,",
+    "otherwise Rollup runs out of memory when Vite is rendering chunks."
+  ],
   "scripts": {
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json",
-    "build": "vite build",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite build",
     "build-cloud": "cross-env CLOUD_BUILD=true corepack pnpm run build",
     "preview": "vite preview",
     "lint": "eslint . --cache --max-warnings=0",

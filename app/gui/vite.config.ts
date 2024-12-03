@@ -109,6 +109,7 @@ export default defineConfig({
   build: {
     // dashboard chunk size is larger than the default warning limit
     chunkSizeWarningLimit: 700,
+    sourcemap: true,
   },
 })
 async function projectManagerShim(): Promise<Plugin> {
