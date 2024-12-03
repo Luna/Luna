@@ -210,6 +210,8 @@ type Addition_Kind
     ## PRIVATE
     Text_Concat
 
+## Returns the operation kind based on types of the inputs.
+   If both inputs are Null, it is impossible to tell the kind, so Nothing is returned and the caller may decide what to do.
 private resolve_operation_kind arg1:Any arg2:Any operation_name:Text find_operation_kind:(Value_Type -> Any) -> Any | Nothing =
     kinds = [arg1, arg2]
         . map on_problems=No_Wrap.Value find_operation_kind
