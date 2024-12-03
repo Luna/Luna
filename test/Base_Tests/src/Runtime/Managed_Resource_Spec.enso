@@ -99,9 +99,11 @@ add_specs suite_builder = suite_builder.group "Managed_Resource" group_builder->
 
             # operation on finalized resource
             none = mr.with v->
-                # should never be called
-                builder.append "  empty :"+v.to_text
-                "Don't call me!"
+                builder.append "  is_error:"+v.is_error.to_text
+                v.if_not_error <|
+                    # should never be called
+                    builder.append "  empty :"+v.to_text
+                    "Don't call me!"
 
             builder.append none.to_text
             none.is_error . should_be_true
@@ -114,6 +116,7 @@ add_specs suite_builder = suite_builder.group "Managed_Resource" group_builder->
             With finished:6
               finalizing:-1
             Finalized:Managed_Resource -1
+              is_error:True
             (Error: (Uninitialized_State.Error Managed_Resource -1))
 
         msg_text = messages.join '\n'

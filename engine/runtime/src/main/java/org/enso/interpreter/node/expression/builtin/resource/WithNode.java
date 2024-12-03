@@ -40,8 +40,9 @@ public final class WithNode extends Node {
         resourceManager.unpark(mr);
       }
     } else {
-      var err = ctx.getBuiltins().error().makeUninitializedStateError(mr);
-      return DataflowError.withDefaultTrace(err, this);
+      var payload = ctx.getBuiltins().error().makeUninitializedStateError(mr);
+      var err = DataflowError.withDefaultTrace(payload, this);
+      return invokeCallableNode.execute(action, frame, state, new Object[] {err});
     }
   }
 }

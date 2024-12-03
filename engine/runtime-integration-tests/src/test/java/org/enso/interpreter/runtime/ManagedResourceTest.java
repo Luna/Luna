@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -13,6 +14,7 @@ import org.enso.test.utils.ContextUtils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -97,6 +99,13 @@ public class ManagedResourceTest {
     assertTrue("Value was GCed", none.isException());
     assertEquals(
         "It is an error", "Standard.Base.Error.Error", none.getMetaObject().getMetaQualifiedName());
+    assertThat(
+        "Contains Uninitialized_State as payload",
+        none.toString(),
+        Matchers.allOf(
+            Matchers.containsString("Uninitialized_State"),
+            Matchers.containsString("Error"),
+            Matchers.containsString("Managed_Resource")));
   }
 
   private static void assertGC(String msg, boolean expectGC, Reference<?> ref) {
