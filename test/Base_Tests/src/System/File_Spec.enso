@@ -920,6 +920,19 @@ add_specs suite_builder =
             filtered2 = Data.list root name_filter="*di*"
             filtered2.should_equal [root / "subdirectory"]
 
+        group_builder.specify "Data.list should sort its result" <|
+            dir = enso_project.data / "list_sort"
+            dir.delete_if_exists recursive=True
+            dir.create_directory
+
+            0.up_to 20 . each i->
+                f = dir / i.to_text
+                "abcd".write f
+                lst = Data.list dir
+                lst . should_equal (lst.sort on=.path)
+
+            dir.delete recursive=True . should_succeed
+
         group_builder.specify "should list files in a directory recursively" <|
             root = enso_project.data / "tree"
             resolve files = files.map str-> (root / str) . to_text
