@@ -1,7 +1,10 @@
 package org.enso.table.excel.xssfreader;
 
 import java.util.SortedMap;
+
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.enso.table.excel.ExcelRow;
 import org.graalvm.polyglot.Context;
 
@@ -38,6 +41,20 @@ public class XSSFReaderRow implements ExcelRow {
   @Override
   public String getCellText(int column) {
     var cell = data.get((short) column);
+    if (cell == null) {
+      return "";
+    }
+
+    var dataType = cell.dataType();
+    if (dataType == XSSFReaderSheetXMLHandler.XSSDataType.FORMULA) {
+      // Need to get the real type
+    }
+
+    return switch (dataType) {
+      case ERROR ->
+          FormulaError.forInt(cell.getLongValue()).getString();
+    }
+
     return cell == null ? "" : cell.strValue();
   }
 
