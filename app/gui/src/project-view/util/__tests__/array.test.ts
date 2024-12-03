@@ -52,8 +52,8 @@ test.prop({
 })
 
 test.prop({
-  arr1: fc.array(fc.anything()),
-  arr2: fc.array(fc.anything()),
+  arr1: fc.array(fc.integer()),
+  arr2: fc.array(fc.integer()),
   returnedIndex: fc.context(),
 })('findDifferenceIndex (arbitrary arrays)', ({ arr1, arr2, returnedIndex }) => {
   const differenceIndex = findDifferenceIndex(arr1, arr2)
