@@ -37,7 +37,14 @@
 - [Visualizations on components are slightly transparent when not
   focused][11582].
 - [New design for vector-editing widget][11620]
-- [The `:` type operator can now be chained][11671]
+- [The component menu can be opened by right-click; supports operations on
+  multiple components; has a 'Copy Component' button][11690]
+- [New design for vector-editing widget][11620].
+- [Default values on widgets are displayed in italic][11666].
+- [Fixed bug causing Table Visualization to show wrong data][11684].
+- [Pasting tabular data now creates Table.input expressions][11695].
+- [No halo is displayed around components when hovering][11715].
+- [The hover area of the component output port extended twice its size][11715].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -57,11 +64,15 @@
 [11547]: https://github.com/enso-org/enso/pull/11547
 [11523]: https://github.com/enso-org/enso/pull/11523
 [11564]: https://github.com/enso-org/enso/pull/11564
+[11582]: https://github.com/enso-org/enso/pull/11582
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
-[11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
-[11671]: https://github.com/enso-org/enso/pull/11671
+[11666]: https://github.com/enso-org/enso/pull/11666
+[11690]: https://github.com/enso-org/enso/pull/11690
+[11684]: https://github.com/enso-org/enso/pull/11684
+[11695]: https://github.com/enso-org/enso/pull/11695
+[11715]: https://github.com/enso-org/enso/pull/11715
 
 #### Enso Standard Library
 
@@ -75,6 +86,7 @@
   operation.][11490]
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
+- [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -82,12 +94,15 @@
 [11373]: https://github.com/enso-org/enso/pull/11373
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
+[11577]: https://github.com/enso-org/enso/pull/11577
 
 #### Enso Language & Runtime
 
 - [Arguments in constructor definitions may now be on their own lines][11374]
+- [The `:` type operator can now be chained][11671].
 
 [11374]: https://github.com/enso-org/enso/pull/11374
+[11671]: https://github.com/enso-org/enso/pull/11671
 
 # Enso 2024.4
 

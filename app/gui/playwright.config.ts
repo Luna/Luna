@@ -8,6 +8,7 @@
  */
 import { defineConfig } from '@playwright/test'
 import net from 'net'
+import path from 'path'
 
 const DEBUG = process.env.DEBUG_TEST === 'true'
 const isCI = process.env.CI === 'true'
@@ -21,6 +22,8 @@ const TIMEOUT_MS =
 // We tend to use less CPU on CI to reduce the number of failures due to timeouts.
 // Instead of using workers on CI, we use shards to run tests in parallel.
 const WORKERS = isCI ? 2 : '35%'
+
+const dirName = path.dirname(new URL(import.meta.url).pathname)
 
 async function findFreePortInRange(min: number, max: number) {
   for (let i = 0; i < 50; i++) {
@@ -64,7 +67,7 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  reporter: isCI ? ([['list'], ['blob']] as const) : ([['list']] as const),
+  reporter: isCI ? [['list'], ['blob']] : [['html']],
   retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
@@ -122,20 +125,7 @@ export default defineConfig({
       use: {
         baseURL: `http://localhost:${ports.dashboard}`,
         actionTimeout: TIMEOUT_MS,
-        storageState: './playwright/.auth/user.json',
-      },
-    },
-    {
-      name: 'Auth',
-      testDir: './integration-test/dashboard/auth',
-      expect: {
-        toHaveScreenshot: { threshold: 0 },
-        timeout: TIMEOUT_MS,
-      },
-      timeout: TIMEOUT_MS,
-      use: {
-        baseURL: `http://localhost:${ports.dashboard}`,
-        actionTimeout: TIMEOUT_MS,
+        storageState: path.join(dirName, './playwright/.auth/user.json'),
       },
     },
     {
