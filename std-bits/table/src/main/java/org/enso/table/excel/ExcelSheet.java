@@ -58,10 +58,6 @@ public interface ExcelSheet {
       return firstRow;
     }
 
-  public ExcelRow get(int row) {
-    Row underlyingRow = row < firstRow || row > lastRow ? null : rowSupplier.apply(row - 1);
-    return underlyingRow == null ? null : new ExcelRow(underlyingRow, use1904Format);
-  }
     @Override
     public int getLastRow() {
       return lastRow;
@@ -69,7 +65,7 @@ public interface ExcelSheet {
 
     @Override
     public ExcelRow get(int row) {
-      return row < firstRow || row > lastRow ? null : ExcelRow.fromSheet(sheet, row);
+      return row < firstRow || row > lastRow ? null : ExcelRow.fromSheet(sheet, row, use1904Format);
     }
 
     @Override
