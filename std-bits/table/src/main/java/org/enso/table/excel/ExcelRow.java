@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.ExcelNumberFormat;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.graalvm.polyglot.Context;
@@ -137,8 +138,34 @@ public interface ExcelRow {
     }
 
     public String getCellText(int column) {
-      Cell cell = get(column);
-      return cell == null ? "" : formatter.formatCellValue(cell);
+      var cell = get(column);
+      if (cell == null) {
+        return "";
+      }
+
+      var rawCellType = cell.getCellType();
+      var cellType =
+          rawCellType == CellType.FORMULA ? cell.getCachedFormulaResultType() : rawCellType;
+
+      return switch (cellType) {
+        case ERROR ->
+          // Want to show the error message rather than empty.
+            FormulaError.forInt(cell.getErrorCellValue()).getString();
+        case NUMERIC -> {
+          // Special handling for Number or Date cells as want to keep formatting.
+          var format = ExcelNumberFormat.from(cell, null);
+          var value = cell.getNumericCellValue();
+          yield format == null
+              ? Double.toString(value)
+              : formatter.formatRawCellContents(value, format.getIdx(), format.getFormat());
+        }
+        default -> {
+          // Use the default read and then toString.
+          var value = getCellValue(column);
+          yield value == null ? "" : value.toString();
+        }
+      };
+
     }
 
     public boolean isEmpty(int column) {
