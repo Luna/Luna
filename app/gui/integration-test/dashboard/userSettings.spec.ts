@@ -30,7 +30,9 @@ test.test('change password form', async ({ page }) => {
     await localActions.locateCurrentPasswordInput(page).fill(actions.VALID_PASSWORD)
     await localActions.locateNewPasswordInput(page).fill(actions.INVALID_PASSWORD)
     await localActions.locateConfirmNewPasswordInput(page).fill(actions.INVALID_PASSWORD)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await localActions.locateSaveButton(page).click()
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await test
       .expect(
         localActions
@@ -46,7 +48,9 @@ test.test('change password form', async ({ page }) => {
     await localActions.locateCurrentPasswordInput(page).fill(actions.VALID_PASSWORD)
     await localActions.locateNewPasswordInput(page).fill(actions.VALID_PASSWORD)
     await localActions.locateConfirmNewPasswordInput(page).fill(actions.VALID_PASSWORD + 'a')
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await localActions.locateSaveButton(page).click()
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await test
       .expect(
         localActions
@@ -62,7 +66,9 @@ test.test('change password form', async ({ page }) => {
     const newPassword = '1234!' + actions.VALID_PASSWORD
     await localActions.locateNewPasswordInput(page).fill(newPassword)
     await localActions.locateConfirmNewPasswordInput(page).fill(newPassword)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await localActions.locateSaveButton(page).click()
+    await test.expect(localActions.locateSaveButton(page)).toBeDisabled()
     await test.expect(localActions.locateCurrentPasswordInput(page)).toHaveText('')
     await test.expect(localActions.locateNewPasswordInput(page)).toHaveText('')
     await test.expect(localActions.locateConfirmNewPasswordInput(page)).toHaveText('')

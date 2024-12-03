@@ -541,6 +541,11 @@ export namespace settings {
     export function locateLocationInput(page: test.Page) {
       return locate(page).getByLabel(TEXT.organizationLocationSettingsInput).getByRole('textbox')
     }
+
+    /** Find a "save" button. */
+    export function locateSaveButton(page: test.Page) {
+      return locate(page).getByRole('button', { name: 'Save' }).getByText('Save')
+    }
   }
 
   export namespace organizationProfilePicture {

@@ -29,14 +29,18 @@ test.test('organization settings', async ({ page }) => {
   const newName = 'another organization-name'
   await test.test.step('Set name', async () => {
     await nameInput.fill(newName)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await nameInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).toBeDisabled()
     test.expect(api.currentOrganization()?.name).toBe(newName)
     test.expect(api.currentUser()?.name).not.toBe(newName)
   })
 
   await test.test.step('Unset name (should fail)', async () => {
     await nameInput.fill('')
-    await nameInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
+    await localActions.locateSaveButton(page).click()
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await test.expect(nameInput).toHaveValue('')
     test.expect(api.currentOrganization()?.name).toBe(newName)
     await page.getByRole('button', { name: actions.TEXT.cancel }).click()
@@ -47,7 +51,9 @@ test.test('organization settings', async ({ page }) => {
 
   await test.test.step('Set invalid email', async () => {
     await emailInput.fill(invalidEmail)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await emailInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     test.expect(api.currentOrganization()?.email).toBe('')
   })
 
@@ -55,7 +61,9 @@ test.test('organization settings', async ({ page }) => {
 
   await test.test.step('Set email', async () => {
     await emailInput.fill(newEmail)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await emailInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).toBeDisabled()
     test.expect(api.currentOrganization()?.email).toBe(newEmail)
     await test.expect(emailInput).toHaveValue(newEmail)
   })
@@ -66,7 +74,9 @@ test.test('organization settings', async ({ page }) => {
   // NOTE: It's not yet possible to unset the website or the location.
   await test.test.step('Set website', async () => {
     await websiteInput.fill(newWebsite)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await websiteInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).toBeDisabled()
     test.expect(api.currentOrganization()?.website).toBe(newWebsite)
     await test.expect(websiteInput).toHaveValue(newWebsite)
   })
@@ -76,7 +86,9 @@ test.test('organization settings', async ({ page }) => {
 
   await test.test.step('Set location', async () => {
     await locationInput.fill(newLocation)
+    await test.expect(localActions.locateSaveButton(page)).not.toBeDisabled()
     await locationInput.press('Enter')
+    await test.expect(localActions.locateSaveButton(page)).toBeDisabled()
     test.expect(api.currentOrganization()?.address).toBe(newLocation)
     await test.expect(locationInput).toHaveValue(newLocation)
   })
