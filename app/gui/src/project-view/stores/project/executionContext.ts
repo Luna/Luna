@@ -1,3 +1,4 @@
+import { assert } from '@/util/assert'
 import { findIndexOpt } from '@/util/data/array'
 import { isSome, type Opt } from '@/util/data/opt'
 import { Err, Ok, ResultError, type Result } from '@/util/data/result'
@@ -340,7 +341,12 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
   }
 
   private sync() {
-    if (this.syncStatus === SyncStatus.QUEUED || this.abort.signal.aborted) return
+    if (
+      this.syncStatus === SyncStatus.QUEUED ||
+      this.syncStatus === SyncStatus.CREATING ||
+      this.abort.signal.aborted
+    )
+      return
     this.syncStatus = SyncStatus.QUEUED
     this.queue.pushTask(this.syncTask())
   }
@@ -361,7 +367,7 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
     return async (state: ExecutionContextState) => {
       let newState = { ...state }
 
-      const create = () => {
+      const ensureCreated = () => {
         if (newState.status === 'created') return Ok()
         return this.withBackoff(async () => {
           const result = await this.lsRpc.createExecutionContext(this.id)
@@ -520,23 +526,29 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
       this.syncStatus = SyncStatus.CREATING
       try {
         if (this.abort.signal.aborted) return newState
-        const createResult = await create()
+        const createResult = await ensureCreated()
         if (!createResult.ok) return newState
+
+        DEV: assert(this.syncStatus === SyncStatus.CREATING)
         this.syncStatus = SyncStatus.SYNCING
+
         const syncStackResult = await syncStack()
         if (!syncStackResult.ok) return handleError(syncStackResult.error)
+        if (this.syncStatus !== SyncStatus.SYNCING || this.clearScheduled) return newState
+
         const syncEnvResult = await syncEnvironment()
         if (!syncEnvResult.ok) return handleError(syncEnvResult.error)
+        if (this.syncStatus !== SyncStatus.SYNCING || this.clearScheduled) return newState
+
         this.emit('newVisualizationConfiguration', [new Set(this.visualizationConfigs.keys())])
         const syncVisResult = await syncVisualizations()
         this.emit('visualizationsConfigured', [
           new Set(state.status === 'created' ? state.visualizations.keys() : []),
         ])
         if (!syncVisResult.ok) return handleError(syncVisResult.error)
+        if (this.syncStatus !== SyncStatus.SYNCING || this.clearScheduled) return newState
 
-        if (this.syncStatus === SyncStatus.SYNCING) {
-          this.syncStatus = SyncStatus.SYNCED
-        }
+        this.syncStatus = SyncStatus.SYNCED
         return newState
       } finally {
         // On any exception or early return we assme we're not fully synced.
