@@ -169,19 +169,28 @@ add_expression_specs suite_builder detailed setup =
             c = t.evaluate_expression "null"
             nulls = [Nothing, Nothing, Nothing]
             c.not . to_vector . should_equal nulls
+
+            ## Currently some databases (e.g. Postgres) fail on this with "Operator is not unique" so we accept it may fail
+            null_or_sql_fail x =
+                if x.is_error && setup.is_database then x.should_fail_with SQL_Error else
+                    x.should_equal nulls
+
             (c + c) . to_vector . should_equal nulls
             (c - c) . to_vector . should_equal nulls
-            (c.starts_with "X") . to_vector . should_equal nulls
+            (c * c) . to_vector |> null_or_sql_fail
+            (c / c) . to_vector |> null_or_sql_fail
+            (c ^ c) . to_vector |> null_or_sql_fail
+            (c % c) . to_vector |> null_or_sql_fail
+            (c.starts_with c) . to_vector . should_equal nulls
+            (c.ends_with c) . to_vector . should_equal nulls
+            (c.contains c) . to_vector . should_equal nulls
 
             t.evaluate_expression "not(Nothing)" . to_vector . should_equal nulls
             t.evaluate_expression "Nothing + Nothing" . to_vector . should_equal nulls
             t.evaluate_expression "[X] + Nothing" . to_vector . should_equal nulls
             t.evaluate_expression "Nothing + [X]" . to_vector . should_equal nulls
 
-            ## Currently some databases (e.g. Postgres) fail on this with "Operator is not unique" so we accept it may fail
-            r1 = t.evaluate_expression "Nothing * Nothing" . to_vector
-            if r1.is_error && setup.is_database then r1.should_fail_with SQL_Error else
-                r1.should_equal nulls
+            t.evaluate_expression "Nothing * Nothing" . to_vector |> null_or_sql_fail
 
     suite_builder.group prefix+"Expression Date and Time literals" group_builder->
         specify_test "should be able to add a date or time column" group_builder pending=pending_datetime expression_test->
@@ -348,6 +357,9 @@ add_expression_specs suite_builder detailed setup =
             expression_test "True && TRUE" True
             expression_test "True && Nothing" Nothing
             expression_test "True AND False" False
+            expression_test "Nothing && False" False
+            expression_test "Nothing && True" Nothing
+
             expression_test "True && [Bad]] Name]" [True, False, True, False, True]
             expression_test "False AND [Bad]] Name]" False
 
@@ -355,6 +367,9 @@ add_expression_specs suite_builder detailed setup =
             expression_test "True || TRUE" True
             expression_test "True OR False" True
             expression_test "False OR False" False
+            expression_test "Nothing || False" Nothing
+            expression_test "Nothing || True" True
+
             expression_test "True OR [Bad]] Name]" True
             expression_test "False || [Bad]] Name]" [True, False, True, False, True]
 
@@ -377,7 +392,9 @@ add_expression_specs suite_builder detailed setup =
 
         specify_test "should be able to call a variable args function" group_builder expression_test->
             expression_test "min(10, 3, 8)" 3
+            expression_test "min(Nothing, 2)" 2
             expression_test "max([A], [B], 3)" [3, 3, 3, 4, 6]
+            expression_test "max(Nothing, [A], [B], 3)" [3, 3, 3, 4, 6]
 
         specify_test "should be able to use functions with constants" group_builder expression_test->
             expression_test "truncate(3.3)" 3
