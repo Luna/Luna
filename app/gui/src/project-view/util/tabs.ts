@@ -6,7 +6,6 @@ export type ExtractTabs<Buttons> = Buttons extends TabButton<infer T>[] ? T : ne
 
 /**
  * Define type-safe tab button list. Additionally generates a tab name validator funciton.
- * @asserts provided list must contain tabs with unique keys
  */
 export function defineTabButtons<T extends string>(buttons: TabButton<T>[]) {
   const tabs = new Set<T>(buttons.map((b) => b.tab))

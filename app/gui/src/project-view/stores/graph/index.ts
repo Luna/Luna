@@ -51,12 +51,7 @@ import type {
   MethodPointer,
 } from 'ydoc-shared/languageServerTypes'
 import { reachable } from 'ydoc-shared/util/data/graph'
-import type {
-  ExternalId,
-  LocalUserActionOrigin,
-  Origin,
-  VisualizationMetadata,
-} from 'ydoc-shared/yjsModel'
+import type { LocalUserActionOrigin, Origin, VisualizationMetadata } from 'ydoc-shared/yjsModel'
 import { defaultLocalOrigin, visMetadataEquals } from 'ydoc-shared/yjsModel'
 import { UndoManager } from 'yjs'
 
