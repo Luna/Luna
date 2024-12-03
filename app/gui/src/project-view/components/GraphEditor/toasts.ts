@@ -1,4 +1,3 @@
-import { useEvent } from '@/composables/events'
 import { type ProjectStore } from '@/stores/project'
 import { useToast } from '@/util/toast'
 
