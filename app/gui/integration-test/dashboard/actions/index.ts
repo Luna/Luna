@@ -60,11 +60,6 @@ export function locateSecretValueInput(page: Page) {
   return locateUpsertSecretModal(page).getByPlaceholder(TEXT.secretValuePlaceholder)
 }
 
-/** Find a search bar input (if any) on the current page. */
-export function locateSearchBarInput(page: Page) {
-  return locateSearchBar(page).getByPlaceholder(/(?:)/)
-}
-
 /** Find the name column of the given assets table row. */
 export function locateAssetRowName(locator: Locator) {
   return locator.getByTestId('asset-row-name')

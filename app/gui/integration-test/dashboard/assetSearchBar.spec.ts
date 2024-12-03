@@ -4,48 +4,47 @@ import { expect, test } from '@playwright/test'
 import { COLORS } from '#/services/Backend'
 
 import {
-  locateSearchBarInput,
   locateSearchBarLabels,
   locateSearchBarSuggestions,
   locateSearchBarTags,
   mockAllAndLogin,
 } from './actions'
 
-test('tags (positive)', async ({ page }) => {
-  await mockAllAndLogin({ page })
-  const searchBarInput = locateSearchBarInput(page)
-  const tags = locateSearchBarTags(page)
+const FIRST_ASSET_NAME = 'foo'
 
-  await searchBarInput.click()
-  for (const positiveTag of await tags.all()) {
-    await searchBarInput.selectText()
-    await searchBarInput.press('Backspace')
-    const text = (await positiveTag.textContent()) ?? ''
-    expect(text.length).toBeGreaterThan(0)
-    await positiveTag.click()
-    await expect(searchBarInput).toHaveValue(text)
-  }
-})
+test('tags (positive)', ({ page }) =>
+  mockAllAndLogin({ page }).withSearchBar(async (searchBarInput) => {
+    const tags = locateSearchBarTags(page)
 
-test('tags (negative)', async ({ page }) => {
-  await mockAllAndLogin({ page })
-  const searchBarInput = locateSearchBarInput(page)
-  const tags = locateSearchBarTags(page)
+    await searchBarInput.click()
+    for (const positiveTag of await tags.all()) {
+      await searchBarInput.selectText()
+      await searchBarInput.press('Backspace')
+      const text = (await positiveTag.textContent()) ?? ''
+      expect(text.length).toBeGreaterThan(0)
+      await positiveTag.click()
+      await expect(searchBarInput).toHaveValue(text)
+    }
+  }))
 
-  await searchBarInput.click()
-  await page.keyboard.down('Shift')
-  for (const negativeTag of await tags.all()) {
-    await searchBarInput.selectText()
-    await searchBarInput.press('Backspace')
-    const text = (await negativeTag.textContent()) ?? ''
-    expect(text.length).toBeGreaterThan(0)
-    await negativeTag.click()
-    await expect(searchBarInput).toHaveValue(text)
-  }
-})
+test('tags (negative)', ({ page }) =>
+  mockAllAndLogin({ page }).withSearchBar(async (searchBar) => {
+    const tags = locateSearchBarTags(page)
 
-test('labels', async ({ page }) => {
-  await mockAllAndLogin({
+    await searchBar.click()
+    await page.keyboard.down('Shift')
+    for (const negativeTag of await tags.all()) {
+      await searchBar.selectText()
+      await searchBar.press('Backspace')
+      const text = (await negativeTag.textContent()) ?? ''
+      expect(text.length).toBeGreaterThan(0)
+      await negativeTag.click()
+      await expect(searchBar).toHaveValue(text)
+    }
+  }))
+
+test('labels', ({ page }) =>
+  mockAllAndLogin({
     page,
     setupAPI: (api) => {
       api.addLabel('aaaa', COLORS[0])
@@ -53,25 +52,24 @@ test('labels', async ({ page }) => {
       api.addLabel('cccc', COLORS[2])
       api.addLabel('dddd', COLORS[3])
     },
-  })
-  const searchBarInput = locateSearchBarInput(page)
-  const labels = locateSearchBarLabels(page)
+  }).withSearchBar(async (searchBar) => {
+    const labels = locateSearchBarLabels(page)
 
-  await searchBarInput.click()
-  for (const label of await labels.all()) {
-    const name = (await label.textContent()) ?? ''
-    expect(name.length).toBeGreaterThan(0)
-    await label.click()
-    await expect(searchBarInput).toHaveValue('label:' + name)
-    await label.click()
-    await expect(searchBarInput).toHaveValue('-label:' + name)
-    await label.click()
-    await expect(searchBarInput).toHaveValue('')
-  }
-})
+    await searchBar.click()
+    for (const label of await labels.all()) {
+      const name = (await label.textContent()) ?? ''
+      expect(name.length).toBeGreaterThan(0)
+      await label.click()
+      await expect(searchBar).toHaveValue('label:' + name)
+      await label.click()
+      await expect(searchBar).toHaveValue('-label:' + name)
+      await label.click()
+      await expect(searchBar).toHaveValue('')
+    }
+  }))
 
-test('suggestions', async ({ page }) => {
-  await mockAllAndLogin({
+test('suggestions', ({ page }) =>
+  mockAllAndLogin({
     page,
     setupAPI: (api) => {
       api.addDirectory('foo')
@@ -79,25 +77,23 @@ test('suggestions', async ({ page }) => {
       api.addSecret('baz')
       api.addSecret('quux')
     },
-  })
+  }).withSearchBar(async (searchBar) => {
+    const suggestions = locateSearchBarSuggestions(page)
 
-  const searchBarInput = locateSearchBarInput(page)
-  const suggestions = locateSearchBarSuggestions(page)
+    await searchBar.click()
 
-  await searchBarInput.click()
+    for (const suggestion of await suggestions.all()) {
+      const name = (await suggestion.textContent()) ?? ''
+      expect(name.length).toBeGreaterThan(0)
+      await suggestion.click()
+      await expect(searchBar).toHaveValue('name:' + name)
+      await searchBar.selectText()
+      await searchBar.press('Backspace')
+    }
+  }))
 
-  for (const suggestion of await suggestions.all()) {
-    const name = (await suggestion.textContent()) ?? ''
-    expect(name.length).toBeGreaterThan(0)
-    await suggestion.click()
-    await expect(searchBarInput).toHaveValue('name:' + name)
-    await searchBarInput.selectText()
-    await searchBarInput.press('Backspace')
-  }
-})
-
-test('suggestions (keyboard)', async ({ page }) => {
-  await mockAllAndLogin({
+test('suggestions (keyboard)', ({ page }) =>
+  mockAllAndLogin({
     page,
     setupAPI: (api) => {
       api.addDirectory('foo')
@@ -105,40 +101,34 @@ test('suggestions (keyboard)', async ({ page }) => {
       api.addSecret('baz')
       api.addSecret('quux')
     },
-  })
+  }).withSearchBar(async (searchBar) => {
+    const suggestions = locateSearchBarSuggestions(page)
 
-  const searchBarInput = locateSearchBarInput(page)
-  const suggestions = locateSearchBarSuggestions(page)
+    await searchBar.click()
+    for (const suggestion of await suggestions.all()) {
+      const name = (await suggestion.textContent()) ?? ''
+      expect(name.length).toBeGreaterThan(0)
+      await page.press('body', 'ArrowDown')
+      await expect(searchBar).toHaveValue('name:' + name)
+    }
+  }))
 
-  await searchBarInput.click()
-  for (const suggestion of await suggestions.all()) {
-    const name = (await suggestion.textContent()) ?? ''
-    expect(name.length).toBeGreaterThan(0)
+test('complex flows', ({ page }) =>
+  mockAllAndLogin({
+    page,
+    setupAPI: (api) => {
+      api.addDirectory(FIRST_ASSET_NAME)
+      api.addProject('bar')
+      api.addSecret('baz')
+      api.addSecret('quux')
+    },
+  }).withSearchBar(async (searchBar) => {
+    await searchBar.click()
     await page.press('body', 'ArrowDown')
-    await expect(searchBarInput).toHaveValue('name:' + name)
-  }
-})
-
-test('complex flows', async ({ page }) => {
-  const firstName = 'foo'
-
-  await mockAllAndLogin({
-    page,
-    setupAPI: (api) => {
-      api.addDirectory(firstName)
-      api.addProject('bar')
-      api.addSecret('baz')
-      api.addSecret('quux')
-    },
-  })
-  const searchBarInput = locateSearchBarInput(page)
-
-  await searchBarInput.click()
-  await page.press('body', 'ArrowDown')
-  await expect(searchBarInput).toHaveValue('name:' + firstName)
-  await searchBarInput.selectText()
-  await searchBarInput.press('Backspace')
-  await expect(searchBarInput).toHaveValue('')
-  await page.press('body', 'ArrowDown')
-  await expect(searchBarInput).toHaveValue('name:' + firstName)
-})
+    await expect(searchBar).toHaveValue('name:' + FIRST_ASSET_NAME)
+    await searchBar.selectText()
+    await searchBar.press('Backspace')
+    await expect(searchBar).toHaveValue('')
+    await page.press('body', 'ArrowDown')
+    await expect(searchBar).toHaveValue('name:' + FIRST_ASSET_NAME)
+  }))

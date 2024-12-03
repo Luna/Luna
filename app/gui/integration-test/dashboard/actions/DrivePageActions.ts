@@ -81,6 +81,11 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
     }
   }
 
+  /** Interact with the assets search bar. */
+  withSearchBar(callback: LocatorCallback) {
+    callback(this.page.getByTestId('asset-search-bar').getByPlaceholder(/(?:)/))
+  }
+
   /** Actions specific to the Drive table. */
   get driveTable() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
