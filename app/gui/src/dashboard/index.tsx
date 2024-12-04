@@ -37,6 +37,9 @@ import { MotionGlobalConfig } from 'framer-motion'
 
 export type { GraphEditorRunner } from '#/layouts/Editor'
 
+const HTTP_STATUS_BAD_REQUEST = 400
+const API_HOST =
+  process.env.ENSO_CLOUD_API_URL != null ? new URL(process.env.ENSO_CLOUD_API_URL).host : null
 const ARE_ANIMATIONS_DISABLED =
   window.DISABLE_ANIMATIONS === true ||
   localStorage.getItem('disableAnimations') === 'true' ||
@@ -110,6 +113,19 @@ export function run(props: DashboardProps) {
       replaysOnErrorSampleRate: 1.0,
       beforeSend: (event) => {
         console.log('beforeSend', event)
+        if (
+          (event.breadcrumbs ?? []).some(
+            (breadcrumb) =>
+              breadcrumb.type === 'http' &&
+              breadcrumb.category === 'fetch' &&
+              breadcrumb.data &&
+              breadcrumb.data.status_code === HTTP_STATUS_BAD_REQUEST &&
+              typeof breadcrumb.data.url === 'string' &&
+              new URL(breadcrumb.data.url).host === API_HOST,
+          )
+        ) {
+          return undefined
+        }
         return event
       },
     })
