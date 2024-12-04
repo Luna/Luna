@@ -1,5 +1,6 @@
 package org.enso.interpreter.node.expression.builtin;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.ArityException;
@@ -38,7 +39,12 @@ public abstract class BuiltinObject extends EnsoObject {
 
   private final String builtinName;
   private Map<String, Function> methods;
+  private Builtin cachedBuiltinType;
 
+  /**
+   * @param builtinName Simple name of the builtin that should be contained in {@link
+   *     org.enso.interpreter.runtime.builtin.Builtins#builtinsByName}.
+   */
   protected BuiltinObject(String builtinName) {
     this.builtinName = builtinName;
   }
@@ -100,8 +106,12 @@ public abstract class BuiltinObject extends EnsoObject {
 
   @ExportMessage
   public Type getType(@Bind("$node") Node node) {
-    var ctx = EnsoContext.get(node);
-    return ctx.getBuiltins().getBuiltinType(builtinName).getType();
+    if (cachedBuiltinType == null) {
+      CompilerDirectives.transferToInterpreter();
+      var ctx = EnsoContext.get(node);
+      cachedBuiltinType = ctx.getBuiltins().getBuiltinType(builtinName);
+    }
+    return cachedBuiltinType.getType();
   }
 
   @ExportMessage
