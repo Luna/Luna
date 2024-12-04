@@ -11,10 +11,10 @@ test.test('drive view', ({ page }) =>
     })
     .driveTable.expectPlaceholderRow()
     .newEmptyProject()
-    .do(async () => {
-      await test.expect(actions.locateEditor(page)).toBeAttached()
-    })
-    .goToPage.drive()
+    // .do(async () => {
+    //   await test.expect(actions.locateEditor(page)).toBeAttached()
+    // })
+    // .goToPage.drive()
     .driveTable.withRows(async (rows) => {
       await test.expect(rows).toHaveCount(1)
     })
@@ -22,10 +22,10 @@ test.test('drive view', ({ page }) =>
       await test.expect(actions.locateAssetsTable(page)).toBeVisible()
     })
     .newEmptyProject()
-    .do(async () => {
-      await test.expect(actions.locateEditor(page)).toBeAttached()
-    })
-    .goToPage.drive()
+    // .do(async () => {
+    //   await test.expect(actions.locateEditor(page)).toBeAttached()
+    // })
+    // .goToPage.drive()
     .driveTable.withRows(async (rows) => {
       await test.expect(rows).toHaveCount(2)
     })

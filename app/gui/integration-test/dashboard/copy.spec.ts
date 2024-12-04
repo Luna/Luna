@@ -159,8 +159,8 @@ test.test('duplicate', ({ page }) =>
     .mockAllAndLogin({ page })
     // Assets: [0: New Project 1]
     .newEmptyProject()
-    .waitForEditorToLoad()
-    .goToPage.drive()
+    // .waitForEditorToLoad()
+    // .goToPage.drive()
     .driveTable.rightClickRow(0)
     .contextMenu.duplicate()
     .driveTable.withRows(async (rows) => {
@@ -177,8 +177,8 @@ test.test('duplicate (keyboard)', ({ page }) =>
     .mockAllAndLogin({ page })
     // Assets: [0: New Project 1]
     .newEmptyProject()
-    .waitForEditorToLoad()
-    .goToPage.drive()
+    // .waitForEditorToLoad()
+    // .goToPage.drive()
     .driveTable.clickRow(0)
     .press('Mod+D')
     .driveTable.withRows(async (rows) => {

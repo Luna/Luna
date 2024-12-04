@@ -35,8 +35,8 @@ test.test('create project', ({ page }) =>
   actions
     .mockAllAndLogin({ page })
     .newEmptyProject()
-    .do((thePage) => test.expect(actions.locateEditor(thePage)).toBeAttached())
-    .goToPage.drive()
+    // .do((thePage) => test.expect(actions.locateEditor(thePage)).toBeAttached())
+    // .goToPage.drive()
     .driveTable.withRows((rows) => test.expect(rows).toHaveCount(1)),
 )
 

@@ -244,7 +244,7 @@ export default class DrivePageActions extends PageActions {
   newEmptyProject() {
     return this.step('Create empty project', (page) =>
       page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
-    ).into(EditorPageActions)
+    )
   }
 
   /** Interact with the drive view (the main container of this page). */
