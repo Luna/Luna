@@ -1,5 +1,5 @@
 /** @file Metadata for rendering each settings section. */
-import type { HTMLInputAutoCompleteAttribute, ReactNode } from 'react'
+import type { HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute, ReactNode } from 'react'
 
 import type { QueryClient } from '@tanstack/react-query'
 import * as z from 'zod'
@@ -140,17 +140,20 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
                 nameId: 'userCurrentPasswordSettingsInput',
                 name: 'currentPassword',
                 autoComplete: 'current-assword',
+                type: 'password',
               },
               {
                 nameId: 'userNewPasswordSettingsInput',
                 name: 'newPassword',
                 autoComplete: 'new-password',
                 descriptionId: 'passwordValidationMessage',
+                type: 'password',
               },
               {
                 nameId: 'userConfirmNewPasswordSettingsInput',
                 name: 'confirmNewPassword',
                 autoComplete: 'new-password',
+                type: 'password',
               },
             ],
             getVisible: (context) => {
@@ -522,6 +525,13 @@ export interface SettingsContext {
 // === SettingsInputEntryData ===
 // ==============================
 
+/**
+ * Possible values for the `type` property of {@link SettingsInputData}.
+ *
+ * TODO: Add support for other types.
+ */
+export type SettingsInputType = Extract<HTMLInputTypeAttribute, 'email' | 'password' | 'text'>
+
 /** Metadata describing an input in a {@link SettingsFormEntryData}. */
 export interface SettingsInputData<T extends Record<keyof T, string>> {
   readonly nameId: TextId & `${string}SettingsInput`
@@ -532,6 +542,7 @@ export interface SettingsInputData<T extends Record<keyof T, string>> {
   /** Defaults to `true`. */
   readonly editable?: boolean | ((context: SettingsContext) => boolean)
   readonly descriptionId?: TextId
+  readonly type?: SettingsInputType
 }
 
 /** Metadata describing a settings entry that is a form. */

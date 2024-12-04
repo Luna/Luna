@@ -669,7 +669,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       return (
         <>
           {!hidden && (
-            <FocusRing>
+            <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
                 tabIndex={0}
