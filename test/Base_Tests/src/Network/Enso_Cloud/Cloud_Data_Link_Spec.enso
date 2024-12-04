@@ -15,6 +15,8 @@ import project.Network.Enso_Cloud.Cloud_Tests_Setup.Cloud_Tests_Setup
 import project.Network.Enso_Cloud.Cloud_Tests_Setup.Temporary_Directory
 from project.Network.Enso_Cloud.Cloud_Tests_Setup import create_local_datalink_to
 
+type Lazy_Ref
+    Value ~get
 
 add_specs suite_builder setup:Cloud_Tests_Setup =
     suite_builder.group "DataLinks in Enso Cloud" pending=setup.real_cloud_pending group_builder->
@@ -65,7 +67,10 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
             # But we can still read the raw Data Link config:
             Data_Link.read_raw_config datalink . should_contain '{'
 
-        group_builder.specify "does not allow to use  Data_Link to read/write regular files" <|
+        # Testing Enso Cloud data links pointing to Enso Cloud files
+        add_symlink_spec group_builder (test_root.get / "datalink-target") ((test_root.get / "datalink-location") . create_directory)
+
+        group_builder.specify "does not allow to use Data_Link to read/write regular files" <|
             temp_file = File.create_temporary_file "not-a-datalink" ".txt"
             Test.expect_panic Illegal_Argument <|
                 Data_Link.write_raw_config temp_file "{}"
@@ -85,7 +90,7 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
         group_builder.specify "should be able to read a datalink in the Cloud to Enso File" <|
             my_target_enso_file = "Hello Enso Cloud File!".write (test_root.get / "my-file.txt") . should_succeed
             datalink = test_root.get / "TestDataLink-EnsoFile.datalink"
-            Data_Link.write_raw_config datalink (enso_file_data_link_content.replace "<PATH>" my_target_enso_file.path) . should_succeed
+            create_data_link datalink my_target_enso_file . should_succeed
             datalink.read . should_equal "Hello Enso Cloud File!"
 
         group_builder.specify "should be able to write Text to a data link pointing to a Cloud file" <|
@@ -150,6 +155,13 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
             r.should_fail_with File_Error
             r.catch.should_be_a File_Error.Not_Found
 
+        local_temporary_directory = Lazy_Ref.Value <|
+            name = "tmp-" + Random.uuid
+            (enso_project.data / "transient" / name) . create_directory
+
+        # Testing locally stored data links pointing to Enso Cloud files
+        add_symlink_spec group_builder (test_root.get / "datalink-target") (local_temporary_directory.get)
+
 main filter=Nothing =
     setup = Cloud_Tests_Setup.prepare
     suite = Test.build suite_builder->
@@ -195,3 +207,22 @@ enso_file_data_link_content = """
         "libraryName": "Standard.Base",
         "path": "<PATH>"
     }
+
+create_data_link link_location target:Enso_File =
+    Data_Link.write_raw_config link_location (enso_file_data_link_content.replace "<PATH>" target.path) replace_existing=True
+
+add_symlink_spec group_builder ~target_location:Enso_File ~datalink_location =
+    group_builder.specify "allows Data.list to be used to list the target directory of the data link" <|
+        dir = target_location / "symlink-test-subdir"
+        dir.create_directory . should_succeed
+        "foobar".write (dir / "file1.txt") . should_succeed
+        "baz".write (dir / "file2.txt") . should_succeed
+
+        dir_datalink = datalink_location / "to-directory.datalink"
+        create_data_link dir_datalink dir . should_succeed
+
+        file_datalink = datalink_location / "to-file.datalink"
+        create_data_link file_datalink (dir / "file1.txt") . should_succeed
+
+        dir_datalink.list . map .name . should_equal ["file1.txt", "file2.txt"]
+        file_datalink.list . should_fail_with Illegal_Argument
