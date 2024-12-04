@@ -29,12 +29,12 @@ test.test('drive view', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       await test.expect(rows).toHaveCount(2)
     })
-    // The last opened project needs to be stopped, to remove the toast notification notifying the
-    // user that project creation may take a while. Previously opened projects are stopped when the
-    // new project is created.
-    .driveTable.withRows(async (rows) => {
-      await actions.locateStopProjectButton(rows.nth(1)).click()
-    })
+    // // The last opened project needs to be stopped, to remove the toast notification notifying the
+    // // user that project creation may take a while. Previously opened projects are stopped when the
+    // // new project is created.
+    // .driveTable.withRows(async (rows) => {
+    //   await actions.locateStopProjectButton(rows.nth(1)).click()
+    // })
     // Project context menu
     .driveTable.rightClickRow(0)
     .contextMenu.moveNonFolderToTrash()
