@@ -52,6 +52,7 @@ public class BuiltinsExposeMethodsTest {
               .map(val -> new ValueWithType(val, getType(val)))
               .filter(valWithType -> !shouldSkipType(valWithType.type))
               .filter(valWithType -> !isPrimitive(valWithType.value))
+              .filter(valWithType -> !isHostValue(valWithType.value))
               .forEach(builtinObjectsWithTypes::add);
           return null;
         });
@@ -121,9 +122,17 @@ public class BuiltinsExposeMethodsTest {
       return true;
     }
     var builtins = ContextUtils.leakContext(ctx()).getBuiltins();
-    var typesToSkip = List.of(builtins.function(), builtins.dataflowError(), builtins.warning());
+    var typesToSkip =
+        List.of(
+            builtins.function(), builtins.dataflowError(), builtins.warning(), builtins.nothing());
     var shouldBeSkipped = typesToSkip.stream().anyMatch(toSkip -> toSkip == type);
     return shouldBeSkipped;
+  }
+
+  private static boolean isHostValue(Value value) {
+    var unwrapped = ContextUtils.unwrapValue(ctx(), value);
+    var ensoCtx = ContextUtils.leakContext(ctx());
+    return ensoCtx.isJavaPolyglotObject(unwrapped);
   }
 
   public record ValueWithType(Value value, Type type) {}
