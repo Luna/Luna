@@ -320,8 +320,8 @@ describe('Backend', () => {
     expect(sorted).toMatchObject([
       { title: 'Alpha' },
       { title: 'alpha' },
-      { title: 'beta' },
       { title: 'Beta' },
+      { title: 'beta' },
     ])
   })
 
