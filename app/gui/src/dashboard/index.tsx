@@ -3,12 +3,17 @@
  *
  * This module declares the main DOM structure for the authentication/dashboard app.
  */
-import * as React from 'react'
+import { startTransition, StrictMode, useEffect } from 'react'
 
 import * as sentry from '@sentry/react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as reactDOM from 'react-dom/client'
-import * as reactRouter from 'react-router-dom'
+import {
+  createRoutesFromChildren,
+  matchRoutes,
+  useLocation,
+  useNavigationType,
+} from 'react-router-dom'
 import invariant from 'tiny-invariant'
 
 import * as detect from 'enso-common/src/detect'
@@ -85,14 +90,12 @@ export function run(props: DashboardProps) {
       dsn: process.env.ENSO_CLOUD_SENTRY_DSN,
       environment: process.env.ENSO_CLOUD_ENVIRONMENT,
       integrations: [
-        new sentry.BrowserTracing({
-          routingInstrumentation: sentry.reactRouterV6Instrumentation(
-            React.useEffect,
-            reactRouter.useLocation,
-            reactRouter.useNavigationType,
-            reactRouter.createRoutesFromChildren,
-            reactRouter.matchRoutes,
-          ),
+        sentry.reactRouterV6BrowserTracingIntegration({
+          useEffect,
+          useLocation,
+          useNavigationType,
+          createRoutesFromChildren,
+          matchRoutes,
         }),
         sentry.extraErrorDataIntegration({ captureErrorCause: true }),
         sentry.replayIntegration(),
@@ -123,9 +126,9 @@ export function run(props: DashboardProps) {
 
   const httpClient = new HttpClient()
 
-  React.startTransition(() => {
+  startTransition(() => {
     reactDOM.createRoot(root).render(
-      <React.StrictMode>
+      <StrictMode>
         <QueryClientProvider client={queryClient}>
           <UIProviders locale="en-US" portalRoot={portalRoot}>
             <ErrorBoundary>
@@ -143,7 +146,7 @@ export function run(props: DashboardProps) {
             <ReactQueryDevtools />
           </UIProviders>
         </QueryClientProvider>
-      </React.StrictMode>,
+      </StrictMode>,
     )
   })
 }
