@@ -95,7 +95,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
       backend,
     }),
     select: (data) => data.state,
-    enabled: !isPlaceholder && isOpened,
+    enabled: !isPlaceholder && isOpened && !isUnconditionallyDisabled,
   })
 
   const status = projectState?.type

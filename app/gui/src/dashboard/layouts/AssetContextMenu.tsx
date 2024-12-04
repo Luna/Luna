@@ -71,6 +71,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { asset, path: pathRaw, state, setRowState } = innerProps
   const { backend, category, nodeMap } = state
 
+  const canOpenProjects = projectHooks.useCanOpenProjects()
   const { user } = authProvider.useFullUserSession()
   const { setModal } = modalProvider.useSetModal()
   const remoteBackend = backendProvider.useRemoteBackend()
@@ -153,7 +154,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       parentId: asset.parentId,
       backend,
     }),
-    enabled: asset.type === backendModule.AssetType.project,
+    enabled: asset.type === backendModule.AssetType.project && canOpenProjects,
   })
 
   const isRunningProject =
@@ -239,6 +240,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               <ContextMenuEntry
                 hidden={hidden}
                 action="open"
+                isDisabled={!canOpenProjects}
                 doAction={() => {
                   openProject({
                     id: asset.id,
@@ -253,6 +255,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             <ContextMenuEntry
               hidden={hidden}
               action="run"
+              isDisabled={canOpenProjects}
               doAction={() => {
                 openProjectMutation.mutate({
                   id: asset.id,
