@@ -100,7 +100,7 @@ public final class ManagedResource extends BuiltinObject {
   @ExportMessage
   @TruffleBoundary
   public String toDisplayString(boolean allowSideEffects, @Bind("$node") Node node) {
-    var type = getType();
+    var type = getType(node);
     return type.getName()
         + " "
         + InteropLibrary.getUncached().toDisplayString(resource, allowSideEffects);

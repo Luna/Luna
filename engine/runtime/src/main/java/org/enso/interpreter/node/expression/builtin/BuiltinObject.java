@@ -1,5 +1,6 @@
 package org.enso.interpreter.node.expression.builtin;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -23,11 +24,13 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 /**
  * Base class for every Enso builtin object. Not type. Note that base class for a builtin type is
- * {@link Builtin}. TODO: BuiltinTypeProcessor should ensure that all the builtin types are
- * subclasses of BuiltinObject.
+ * {@link Builtin}.
  *
- * <p>The {@link InteropLibrary interop} protocol corresponds to the implementation of the protocol
- * inside {@link org.enso.interpreter.runtime.data.atom.Atom}.
+ * <p>The {@link InteropLibrary interop} protocol roughly corresponds to the implementation of the
+ * protocol inside {@link org.enso.interpreter.runtime.data.atom.Atom}.
+ *
+ * <p>Note that extension methods are not resolved, because they are not defined in builtins module
+ * scope. In other words, extension methods are not reported as members via interop.
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
@@ -46,30 +49,31 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   public Object getMembers(boolean includeInternal, @Bind("$node") Node node) {
-    var ctx = EnsoContext.get(node);
-    var methodNamesArr = methodNames(ctx).toArray(String[]::new);
+    var methodNamesArr = methodNames().toArray(String[]::new);
     return ArrayLikeHelpers.wrapStrings(methodNamesArr);
   }
 
   @ExportMessage
+  @TruffleBoundary
   public boolean isMemberReadable(String member) {
-    var ctx = EnsoContext.get(null);
-    return methodNames(ctx).contains(member);
+    return methodNames().contains(member);
   }
 
   @ExportMessage
+  @TruffleBoundary
   public boolean isMemberInvocable(String member) {
     return isMemberReadable(member);
   }
 
   @ExportMessage
+  @TruffleBoundary
   public Object readMember(String member) throws UnknownIdentifierException {
     if (!isMemberReadable(member)) {
       throw UnknownIdentifierException.create(member);
     }
-    var ctx = EnsoContext.get(null);
-    var func = methods(ctx).get(member);
+    var func = methods().get(member);
     if (func != null) {
       return func;
     }
@@ -77,10 +81,10 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   public Object invokeMember(String member, Object[] args)
       throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
     var ctx = EnsoContext.get(null);
-    var func = methods(ctx).get(member);
     var sym = UnresolvedSymbol.build(member, ctx.getBuiltins().getScope());
     var argsForBuiltin = new Object[args.length + 1];
     argsForBuiltin[0] = this;
@@ -95,8 +99,8 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
-  public Type getType() {
-    var ctx = EnsoContext.get(null);
+  public Type getType(@Bind("$node") Node node) {
+    var ctx = EnsoContext.get(node);
     return ctx.getBuiltins().getBuiltinType(builtinName).getType();
   }
 
@@ -106,35 +110,37 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
-  public Type getMetaObject() {
-    return getType();
+  public Type getMetaObject(@Bind("$node") Node node) {
+    return getType(node);
   }
 
-  private Map<String, Function> methods(EnsoContext ctx) {
+  private Map<String, Function> methods() {
+    var ctx = EnsoContext.get(null);
     if (methods == null) {
       var builtinType = ctx.getBuiltins().getBuiltinType(builtinName);
       assert builtinType != null;
       var defScope = builtinType.getType().getDefinitionScope();
       var methodsFromScope = defScope.getMethodsForType(builtinType.getType());
-      // TODO: If null the methods is empty set
       assert methodsFromScope != null;
       methods = new HashMap<>();
-      for (var m : methodsFromScope) {
-        methods.put(m.getName(), m);
+      for (var method : methodsFromScope) {
+        var methodName = normalizeName(method.getName());
+        methods.put(methodName, method);
       }
     }
     return methods;
   }
 
-  private Set<String> methodNames(EnsoContext ctx) {
+  private Set<String> methodNames() {
     var methodNames =
-        methods(ctx).keySet().stream()
-            .map(
-                funcName -> {
-                  var funcNameItems = funcName.split("\\.");
-                  return funcNameItems[funcNameItems.length - 1];
-                })
+        methods().keySet().stream()
+            .map(BuiltinObject::normalizeName)
             .collect(Collectors.toUnmodifiableSet());
     return methodNames;
+  }
+
+  private static String normalizeName(String funcName) {
+    var funcNameItems = funcName.split("\\.");
+    return funcNameItems[funcNameItems.length - 1];
   }
 }
