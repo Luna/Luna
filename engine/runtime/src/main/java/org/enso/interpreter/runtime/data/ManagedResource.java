@@ -9,9 +9,9 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import java.lang.ref.PhantomReference;
 import org.enso.interpreter.dsl.Builtin;
+import org.enso.interpreter.node.expression.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 /**
  * An Enso runtime representation of a managed resource.
@@ -35,9 +35,8 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
  * ProcessItems} processor.
  */
 @ExportLibrary(InteropLibrary.class)
-@ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "resource", stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource")
-public final class ManagedResource extends EnsoObject {
+public final class ManagedResource extends BuiltinObject {
   private final Object resource;
   private final PhantomReference<ManagedResource> phantomReference;
 
@@ -50,6 +49,7 @@ public final class ManagedResource extends EnsoObject {
   public ManagedResource(
       Object resource,
       java.util.function.Function<ManagedResource, PhantomReference<ManagedResource>> factory) {
+    super("Managed_Resource");
     this.resource = resource;
     this.phantomReference = factory.apply(this);
   }
@@ -98,29 +98,9 @@ public final class ManagedResource extends EnsoObject {
   }
 
   @ExportMessage
-  Type getMetaObject(@Bind("$node") Node node) {
-    return EnsoContext.get(node).getBuiltins().managedResource();
-  }
-
-  @ExportMessage
-  boolean hasMetaObject() {
-    return true;
-  }
-
-  @ExportMessage
-  boolean hasType() {
-    return true;
-  }
-
-  @ExportMessage
-  Type getType(@Bind("$node") Node node) {
-    return EnsoContext.get(node).getBuiltins().managedResource();
-  }
-
-  @ExportMessage
   @TruffleBoundary
   public String toDisplayString(boolean allowSideEffects, @Bind("$node") Node node) {
-    var type = getType(node);
+    var type = getType();
     return type.getName()
         + " "
         + InteropLibrary.getUncached().toDisplayString(resource, allowSideEffects);

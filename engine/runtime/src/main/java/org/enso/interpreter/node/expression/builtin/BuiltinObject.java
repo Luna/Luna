@@ -37,6 +37,7 @@ public abstract class BuiltinObject extends EnsoObject {
   private Map<String, Function> methods;
 
   protected BuiltinObject(String builtinName) {
+    assert assertBuiltinDefined(builtinName);
     this.builtinName = builtinName;
   }
 
@@ -135,5 +136,13 @@ public abstract class BuiltinObject extends EnsoObject {
                 })
             .collect(Collectors.toUnmodifiableSet());
     return methodNames;
+  }
+
+  private static boolean assertBuiltinDefined(String builtinName) {
+    var builtinType = EnsoContext.get(null).getBuiltins().getBuiltinType(builtinName);
+    if (builtinType == null) {
+      throw new AssertionError("Builtin type " + builtinName + " is not defined");
+    }
+    return true;
   }
 }
