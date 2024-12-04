@@ -88,6 +88,14 @@ public class BuiltinsExposeMethodsTest {
                 methodName = items[items.length - 1];
               }
               assertThat(
+                  "Builtin type " + valueWithType.type.getQualifiedName() + " should have members",
+                  valueWithType.value.hasMembers(),
+                  is(true));
+              assertThat(
+                  "Member " + methodName + " should be present",
+                  valueWithType.value.hasMember(methodName),
+                  is(true));
+              assertThat(
                   "Member " + methodName + " should be invocable",
                   valueWithType.value.canInvokeMember(methodName),
                   is(true));
