@@ -75,20 +75,22 @@ export interface DashboardProps extends app.AppProps {
 /**
  * Entrypoint for the authentication/dashboard app.
  *
- * Running this function finds a `div` element with the ID `dashboard`, and renders the
+ * Running this function finds a `div` element with the ID `enso-dashboard`, and renders the
  * authentication/dashboard UI using React. It also handles routing and other interactions (e.g.,
  * for redirecting the user to/from the login page).
  */
 export function run(props: DashboardProps) {
   const { vibrancy, supportsDeepLinks, queryClient, logger } = props
   if (
-    !detect.IS_DEV_MODE &&
+    // !detect.IS_DEV_MODE &&
     process.env.ENSO_CLOUD_SENTRY_DSN != null &&
     process.env.ENSO_CLOUD_API_URL != null
   ) {
+    const version: unknown = import.meta.env.ENSO_IDE_VERSION
     sentry.init({
       dsn: process.env.ENSO_CLOUD_SENTRY_DSN,
       environment: process.env.ENSO_CLOUD_ENVIRONMENT,
+      release: version?.toString() ?? 'dev',
       integrations: [
         sentry.reactRouterV6BrowserTracingIntegration({
           useEffect,
@@ -106,6 +108,10 @@ export function run(props: DashboardProps) {
       tracePropagationTargets: [process.env.ENSO_CLOUD_API_URL.split('//')[1] ?? ''],
       replaysSessionSampleRate: SENTRY_SAMPLE_RATE,
       replaysOnErrorSampleRate: 1.0,
+      beforeSend: (event) => {
+        console.log('beforeSend', event)
+        return event
+      },
     })
   }
 
