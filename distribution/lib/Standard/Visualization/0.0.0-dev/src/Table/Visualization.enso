@@ -54,8 +54,6 @@ prepare_visualization y max_rows=1000 = if y.is_error then (make_json_for_error 
 
     result.to_text
 
-
-
 ## PRIVATE
    Column Limit
 max_columns = 250
