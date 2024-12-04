@@ -40,13 +40,7 @@ export default function Labels(props: LabelsProps) {
   const { getText } = textProvider.useText()
   const dispatchAssetEvent = useDispatchAssetEvent()
   const labels = useBackendQuery(backend, 'listTags', []).data ?? []
-  const deleteTag = useMutation(
-    backendMutationOptions(backend, 'deleteTag', {
-      onSuccess: (_data, [, labelName]) => {
-        dispatchAssetEvent({ type: AssetEventType.deleteLabel, labelName })
-      },
-    }),
-  ).mutate
+  const deleteTag = useMutation(backendMutationOptions(backend, 'deleteTag')).mutate
 
   return (
     <FocusArea direction="vertical">
