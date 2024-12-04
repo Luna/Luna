@@ -18,7 +18,7 @@ import { ACTION_TO_TEXT_ID } from '#/components/MenuEntry'
 import { BINDINGS } from '#/configurations/inputBindings'
 import type { PaywallFeatureName } from '#/hooks/billing'
 import type { ToastAndLogCallback } from '#/hooks/toastAndLogHooks'
-import { passwordSchema, passwordWithPatternSchema } from '#/pages/authentication/schemas'
+import { passwordWithPatternSchema } from '#/pages/authentication/schemas'
 import type { GetText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import {
@@ -103,7 +103,8 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
               z
                 .object({
                   username: z.string().email(getText('invalidEmailValidationError')),
-                  currentPassword: passwordSchema(getText),
+                  // We don't want to validate the current password.
+                  currentPassword: z.string(),
                   newPassword: passwordWithPatternSchema(getText),
                   confirmNewPassword: z.string(),
                 })

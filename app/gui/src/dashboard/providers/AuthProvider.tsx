@@ -426,10 +426,8 @@ export default function AuthProvider(props: AuthProviderProps) {
   const changePassword = useEventCallback(async (oldPassword: string, newPassword: string) => {
     const result = await cognito.changePassword(oldPassword, newPassword)
 
-    if (result.ok) {
-      toastSuccess(getText('changePasswordSuccess'))
-    } else {
-      toastError(result.val.message)
+    if (result.err) {
+      throw new Error(result.val.message)
     }
 
     return result.ok
@@ -525,7 +523,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     signInWithPassword,
     forgotPassword,
     resetPassword,
-    changePassword: withLoadingToast(changePassword),
+    changePassword,
     refetchSession,
     session: userData,
     signOut: logoutMutation.mutateAsync,

@@ -72,7 +72,7 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
         <SettingsInput key={input.name} context={context} data={input} />
       ))}
 
-      <AnimatePresence mode='sync'>
+      <AnimatePresence>
         {shouldShowSaveButton && (
           <motion.div
             // eslint-disable-next-line @typescript-eslint/no-magic-numbers

@@ -3,6 +3,7 @@
  *
  * Component that passes the value of a field to its children.
  */
+import { memo, useDeferredValue } from 'react'
 import { useWatch } from 'react-hook-form'
 import { useFormContext } from './FormProvider'
 import type { FieldPath, FieldValues, FormInstanceValidated, TSchema } from './types'
@@ -26,6 +27,20 @@ export function FieldValue<Schema extends TSchema, TFieldName extends FieldPath<
 
   const formInstance = useFormContext(form)
   const value = useWatch({ control: formInstance.control, name })
+  const deferredValue = useDeferredValue(value)
 
-  return <>{children(value)}</>
+  return <MemoChildren children={children} value={deferredValue} />
 }
+
+// Wrap the childer to make the deferredValue to work
+// see: https://react.dev/reference/react/useDeferredValue#deferring-re-rendering-for-a-part-of-the-ui
+// eslint-disable-next-line no-restricted-syntax
+const MemoChildren = memo(function MemoChildren<T>(props: {
+  children: (value: T) => React.ReactNode
+  value: T
+}) {
+  return props.children(props.value)
+}) as unknown as <T>(props: {
+  children: (value: T) => React.ReactNode
+  value: T
+}) => React.ReactNode
