@@ -8,13 +8,18 @@ order: 8
 
 # Monadic Contexts
 
-Coming from a Haskell background, we have found that Monads provide a great
-abstraction with which to reason about program behaviour, but they have some
-severe usability issues. The main one of these is the lack of automatic lifting,
-requiring users to explicitly lift computations through their monad transformer
-stack.
+> [!WARNING]
+> Reword for people without strong Haskell background. Those who don't
+> know what _lifting_ is?
+>
+> Coming from a Haskell background, we have found that Monads provide a great
+> abstraction with which to reason about program behaviour, but they have some
+> severe usability issues. The main one of these is the lack of automatic lifting,
+> requiring users to explicitly lift computations through their monad transformer
+> stack.
 
-For a language as focused on usability as Enso is this really isn't feasible. To
+For a language as focused on usability as Enso is importing all the **complexity
+of Haskell monads** really isn't feasible. To
 that end, we have created the notion of a 'Monadic Context', which is a monad
 transformer based on Supermonads (see
 [references](./references.md#monadic-contexts)). These have special support in
@@ -53,22 +58,27 @@ There are three main notes about the syntax of contexts:
 
 ## Monadic Bind
 
-It is also important to note that Enso has no equivalent to `<-` in Haskell.
-Instead, pure computations are implicitly placed in the `Pure` monadic context,
-and `=` acts to 'peel off' the outermost layer of contexts. As such, this means
-that `=` _always_ acts as `bind`, greatly simplifying how the type-checker has
-to work.
+> [!WARNING]
+> Who knows what `<-` means in Haskell?
+> 
+> It is also important to note that Enso has no equivalent to `<-` in Haskell.
+> Instead, pure computations are implicitly placed in the `Pure` monadic context,
+> and `=` acts to 'peel off' the outermost layer of contexts. As such, this means
+> that `=` _always_ acts as `bind`, greatly simplifying how the type-checker has
+> to work.
 
 ## Context Definitions
 
 Contexts can be defined by users.
 
+> [!WARNING]
 > The actionables for this section are:
 >
 > - How, what, when and why?
 
 ## Context Lifting
 
+> [!WARNING]
 > The actionables for this section are:
 >
 > - Specify and explain how automated lifting of monadic contexts works.
@@ -79,12 +89,14 @@ Contexts can be defined by users.
 Enso includes a set of commonly-used monadic contexts as part of `Base`, its
 standard library. These are listed below.
 
+> [!WARNING]
 > The actionables for this section are:
 >
 > - Determine the full set of contexts that Enso should provide by default.
 
 ### IO
 
+> [!WARNING]
 > The actionables for this section are:
 >
 > - Determine the granularity of IO (it's not one context, but a lot).
@@ -93,6 +105,7 @@ standard library. These are listed below.
 
 ### State
 
+> [!WARNING]
 > The actionables for this section are:
 >
 > - Determine exactly how state works (the fact that the 'keys' are preset by
