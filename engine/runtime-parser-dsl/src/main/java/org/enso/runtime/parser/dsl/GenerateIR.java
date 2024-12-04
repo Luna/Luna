@@ -58,5 +58,5 @@ public @interface GenerateIR {
    *
    * @return
    */
-  String[] interfaces() default {};
+  String[] interfaces() default {"org.enso.compiler.core.IR"};
 }
