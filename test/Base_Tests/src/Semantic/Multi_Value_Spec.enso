@@ -86,6 +86,17 @@ add_specs suite_builder =
             # method a is available
             (x:A).a . should_equal "a"
 
+            call_a obj:A = obj.a
+
+            # A&X type has attribute a
+            call_a ax . should_equal "a"
+
+            # the following works right now, as value `x` has "extra type" `A`
+            # however, according to "static typing" discussion at
+            # https://github.com/enso-org/enso/pull/11600#discussion_r1867584107
+            # we want the following to fail
+            call_a x . should_equal "a"
+
             # multivalue ax restricted to X cannot be converted to B in to_b_to_c
             Test.expect_panic Type_Error <|
                 to_b_to_c x
