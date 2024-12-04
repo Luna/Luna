@@ -1,4 +1,6 @@
-/** TODO: Add docs */
+/**
+ * Yields elements matching the given CSS selector, out of the hierarchy of elements from the given element to the root.
+ */
 export function* selectorHierarchy(element: Element, selectors: string) {
   for (;;) {
     const match = element.closest(selectors)
