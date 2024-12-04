@@ -64,8 +64,6 @@ class ExpressionAnnotationsTest extends CompilerTest {
   // === The Tests ============================================================
 
   "Annotations resolution" should {
-    implicit val ctx: ModuleContext = mkModuleContext
-
     val ir =
       """
         |foo x =
@@ -131,7 +129,7 @@ class ExpressionAnnotationsTest extends CompilerTest {
     "create an error on a misplaced annotation" in {
       val misplaced = items
         .expressions(4)
-      misplaced shouldBe an[error.Syntax]
+      misplaced shouldBe an[errors.Syntax]
     }
   }
 
