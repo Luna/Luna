@@ -3,10 +3,6 @@ import * as test from '@playwright/test'
 
 import * as actions from './actions'
 
-// =============
-// === Tests ===
-// =============
-
 test.test('copy', ({ page }) =>
   actions
     .mockAllAndLogin({ page })
@@ -159,6 +155,8 @@ test.test('duplicate', ({ page }) =>
     .mockAllAndLogin({ page })
     // Assets: [0: New Project 1]
     .newEmptyProject()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // .waitForEditorToLoad()
     // .goToPage.drive()
     .driveTable.rightClickRow(0)
@@ -177,6 +175,8 @@ test.test('duplicate (keyboard)', ({ page }) =>
     .mockAllAndLogin({ page })
     // Assets: [0: New Project 1]
     .newEmptyProject()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // .waitForEditorToLoad()
     // .goToPage.drive()
     .driveTable.clickRow(0)

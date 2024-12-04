@@ -11,6 +11,8 @@ test.test('drive view', ({ page }) =>
     })
     .driveTable.expectPlaceholderRow()
     .newEmptyProject()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // .do(async () => {
     //   await test.expect(actions.locateEditor(page)).toBeAttached()
     // })
@@ -22,6 +24,8 @@ test.test('drive view', ({ page }) =>
       await test.expect(actions.locateAssetsTable(page)).toBeVisible()
     })
     .newEmptyProject()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // .do(async () => {
     //   await test.expect(actions.locateEditor(page)).toBeAttached()
     // })
@@ -29,6 +33,8 @@ test.test('drive view', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       await test.expect(rows).toHaveCount(2)
     })
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // // The last opened project needs to be stopped, to remove the toast notification notifying the
     // // user that project creation may take a while. Previously opened projects are stopped when the
     // // new project is created.

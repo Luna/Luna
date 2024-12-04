@@ -241,9 +241,12 @@ export default class DrivePageActions extends PageActions {
 
   /** Create a new empty project. */
   newEmptyProject() {
-    return this.step('Create empty project', (page) =>
-      page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
-    )
+    return this.step(
+      'Create empty project',
+      (page) => page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
+      // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+      // Uncomment once cloud execution in the browser is re-enabled.
+    ) /* .into(EditorPageActions) */
   }
 
   /** Interact with the drive view (the main container of this page). */

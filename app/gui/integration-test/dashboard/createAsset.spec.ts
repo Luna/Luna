@@ -35,6 +35,8 @@ test.test('create project', ({ page }) =>
   actions
     .mockAllAndLogin({ page })
     .newEmptyProject()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
     // .do((thePage) => test.expect(actions.locateEditor(thePage)).toBeAttached())
     // .goToPage.drive()
     .driveTable.withRows((rows) => test.expect(rows).toHaveCount(1)),
