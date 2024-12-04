@@ -29,7 +29,7 @@ prepare_visualization y max_rows=1000 = if y.is_error then (make_json_for_error 
         _ : Array -> prepare_visualization x.to_vector max_rows
         _ : Dictionary -> make_json_for_dictionary x max_rows
         _ : JS_Object -> make_json_for_js_object x max_rows
-        _ : Row -> make_json_for_dictionary x.to_dictionary max_rows "column"
+        _ : Row -> make_json_for_row x
         _ : Column -> prepare_visualization x.to_table max_rows
         _ : Table ->
             all_rows_count = x.row_count
@@ -54,6 +54,8 @@ prepare_visualization y max_rows=1000 = if y.is_error then (make_json_for_error 
 
     result.to_text
 
+
+
 ## PRIVATE
    Column Limit
 max_columns = 250
@@ -64,6 +66,19 @@ make_json_for_error : Any -> JS_Object
 make_json_for_error error =
     pairs = [["error", error.to_display_text]]
     JS_Object.from_pairs pairs
+
+## PRIVATE
+   Render Vector to JSON
+make_json_for_row : Row -> JS_Object
+make_json_for_row row =
+    header = ["header", ["column", "value"]]
+    all_rows = ["all_rows_count", row.length]
+    column_names = row.column_names
+    values = ((0.up_to row.length).map idx-> row.get idx)
+    data = ["data", [column_names, values]]
+    links = ["get_child_node_action", "at"]
+    get_child_node_action_link_name = ["get_child_node_link_name", "column"]
+    JS_Object.from_pairs [header, all_rows, data, links, get_child_node_action_link_name, ["type", "Map"]]
 
 ## PRIVATE
    Render Vector to JSON
