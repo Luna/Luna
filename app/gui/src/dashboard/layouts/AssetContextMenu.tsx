@@ -99,6 +99,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
     : pathComputed
   const copyMutation = copyHooks.useCopy({ copyText: path ?? '' })
   const uploadFileToCloudMutation = useUploadFileWithToastMutation(remoteBackend)
+  const disabledTooltip = !canOpenProjects ? getText('downloadToOpenWorkflow') : undefined
 
   const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
@@ -241,6 +242,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                 hidden={hidden}
                 action="open"
                 isDisabled={!canOpenProjects}
+                tooltip={disabledTooltip}
                 doAction={() => {
                   openProject({
                     id: asset.id,
@@ -255,7 +257,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             <ContextMenuEntry
               hidden={hidden}
               action="run"
-              isDisabled={canOpenProjects}
+              isDisabled={!canOpenProjects}
+              tooltip={disabledTooltip}
               doAction={() => {
                 openProjectMutation.mutate({
                   id: asset.id,
