@@ -111,7 +111,7 @@ export class MutableModule implements Module {
       if (rootPointer) {
         rootPointer.expression.replace(newRoot)
       } else {
-        invalidFields(this, this.baseObject('Invalid', undefined, ROOT_ID), {
+        invalidFields(this, this.baseObject('Invalid', ROOT_ID), {
           whitespace: '',
           node: newRoot,
         })
@@ -360,13 +360,13 @@ export class MutableModule implements Module {
   }
 
   /** @internal */
-  baseObject(type: string, externalId?: ExternalId, overrideId?: AstId): FixedMap<AstFields> {
+  baseObject(type: string, overrideId?: AstId): FixedMap<AstFields> {
     const map = new Y.Map()
     const map_ = map as unknown as FixedMap<object>
     const id = overrideId ?? newAstId(type)
     const metadata = new Y.Map() as unknown as FixedMap<object>
     const metadataFields = setAll(metadata, {
-      externalId: externalId ?? newExternalId(),
+      externalId: newExternalId(),
       widget: new Y.Map<unknown>(),
     })
     const fields = setAll(map_, {
