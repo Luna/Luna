@@ -48,6 +48,12 @@ export interface CreateOpenedProjectQueryOptions {
   readonly backend: Backend
 }
 
+/** Whether the user can open projects. */
+export function useCanOpenProjects() {
+  const localBackend = backendProvider.useLocalBackend()
+  return localBackend != null
+}
+
 /** Return a function to update a project asset in the TanStack Query cache. */
 function useSetProjectAsset() {
   const queryClient = reactQuery.useQueryClient()
@@ -296,6 +302,7 @@ export function useRenameProjectMutation() {
 /** A callback to open a project. */
 export function useOpenProject() {
   const client = reactQuery.useQueryClient()
+  const canOpenProjects = useCanOpenProjects()
   const projectsStore = useProjectsStore()
   const addLaunchedProject = useAddLaunchedProject()
   const closeAllProjects = useCloseAllProjects()
@@ -304,6 +311,10 @@ export function useOpenProject() {
   const enableMultitabs = useFeatureFlag('enableMultitabs')
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+    if (!canOpenProjects) {
+      return
+    }
+
     if (!enableMultitabs) {
       // Since multiple tabs cannot be opened at the same time, the opened projects need to be closed first.
       if (projectsStore.getState().launchedProjects.length > 0) {

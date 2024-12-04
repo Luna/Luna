@@ -77,8 +77,7 @@ export interface ProjectIconProps {
 /** An interactive icon indicating the status of a project. */
 export default function ProjectIcon(props: ProjectIconProps) {
   const { backend, item, isOpened, isDisabled: isDisabledRaw, isPlaceholder } = props
-  const localBackend = useLocalBackend()
-  const isUnconditionallyDisabled = localBackend == null
+  const isUnconditionallyDisabled = !projectHooks.useCanOpenProjects()
   const isDisabled = isDisabledRaw || isUnconditionallyDisabled
 
   const openProject = projectHooks.useOpenProject()
