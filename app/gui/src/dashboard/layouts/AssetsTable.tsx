@@ -65,16 +65,15 @@ import {
 } from '#/layouts/AssetPanel'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import { useSetSuggestions } from '#/layouts/AssetSearchBar'
-import { useAssetsTableItems } from '#/layouts/AssetsTable/assetsTableItemsHooks'
-import { useAssetTree, type DirectoryQuery } from '#/layouts/AssetsTable/assetTreeHooks'
-import { useDirectoryIds } from '#/layouts/AssetsTable/directoryIdsHooks'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
 import {
   canTransferBetweenCategories,
   isLocalCategory,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
+import { useAssetsTableItems } from '#/layouts/Drive/assetsTableItemsHooks'
+import { type DirectoryQuery } from '#/layouts/Drive/assetTreeHooks'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import DragModal from '#/modals/DragModal'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
@@ -140,7 +139,6 @@ import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import { IndefiniteSpinner } from '../components/Spinner'
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -163,8 +161,6 @@ const MINIMUM_DROPZONE_INTERSECTION_RATIO = 0.5
  * Tailwind styling.
  */
 const ROW_HEIGHT_PX = 38
-/** The size of the loading spinner. */
-const LOADING_SPINNER_SIZE_PX = 36
 
 const SUGGESTIONS_FOR_NO: assetSearchBar.Suggestion[] = [
   {
@@ -295,6 +291,9 @@ export interface AssetsTableProps {
   readonly category: Category
   readonly initialProjectName: string | null
   readonly assetManagementApiRef: Ref<AssetManagementApi>
+  readonly assetTree: AnyAssetTreeNode
+  readonly expandedDirectoryIds: DirectoryId[]
+  readonly rootDirectoryId: DirectoryId
 }
 
 /** The API for managing assets in the table. */
@@ -305,7 +304,16 @@ export interface AssetManagementApi {
 
 /** The table of project assets. */
 export default function AssetsTable(props: AssetsTableProps) {
-  const { hidden, query, setQuery, category, assetManagementApiRef } = props
+  const {
+    hidden,
+    query,
+    setQuery,
+    category,
+    assetManagementApiRef,
+    assetTree,
+    expandedDirectoryIds,
+    rootDirectoryId,
+  } = props
   const { initialProjectName } = props
 
   const openedProjects = useLaunchedProjects()
@@ -356,8 +364,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
 
-  const nameOfProjectToImmediatelyOpenRef = useRef(initialProjectName)
-
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const uploadFiles = useUploadFiles(backend, category)
@@ -383,13 +389,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     useMemo(() => backendMutationOptions(backend, 'closeProject'), [backend]),
   )
 
-  const { rootDirectoryId, rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
-  const { isLoading, isError, assetTree } = useAssetTree({
-    hidden,
-    category,
-    rootDirectory,
-    expandedDirectoryIds,
-  })
   const { displayItems, visibleItems, visibilities } = useAssetsTableItems({
     assetTree,
     query,
@@ -400,8 +399,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
   const [droppedFilesCount, setDroppedFilesCount] = useState(0)
   const isCloud = backend.type === BackendType.remote
-  /** Events sent when the asset list was still loading. */
-  const queuedAssetListEventsRef = useRef<AssetListEvent[]>([])
   const rootRef = useRef<HTMLDivElement | null>(null)
   const mainDropzoneRef = useRef<HTMLButtonElement | null>(null)
   const lastSelectedIdsRef = useRef<AssetId | ReadonlySet<AssetId> | null>(null)
@@ -750,31 +747,29 @@ export default function AssetsTable(props: AssetsTableProps) {
     [driveStore, isCloud, setCanDownload],
   )
 
-  const initialProjectNameDeps = useSyncRef({ assetTree, doOpenProject, isLoading, toastAndLog })
+  const initialProjectNameDeps = useSyncRef({ assetTree, doOpenProject, toastAndLog })
+
   useEffect(() => {
     const deps = initialProjectNameDeps.current
-    if (deps.isLoading) {
-      nameOfProjectToImmediatelyOpenRef.current = initialProjectName
-    } else {
-      // The project name here might also be a string with project id, e.g. when opening
-      // a project file from explorer on Windows.
-      const isInitialProject = (asset: AnyAsset) =>
-        asset.title === initialProjectName || asset.id === initialProjectName
-      const projectToLoad = deps.assetTree
-        .preorderTraversal()
-        .map((node) => node.item)
-        .filter(assetIsProject)
-        .find(isInitialProject)
-      if (projectToLoad != null) {
-        deps.doOpenProject({
-          type: BackendType.local,
-          id: projectToLoad.id,
-          title: projectToLoad.title,
-          parentId: projectToLoad.parentId,
-        })
-      } else if (initialProjectName != null) {
-        deps.toastAndLog('findProjectError', null, initialProjectName)
-      }
+
+    // The project name here might also be a string with project id, e.g. when opening
+    // a project file from explorer on Windows.
+    const isInitialProject = (asset: AnyAsset) =>
+      asset.title === initialProjectName || asset.id === initialProjectName
+    const projectToLoad = deps.assetTree
+      .preorderTraversal()
+      .map((node) => node.item)
+      .filter(assetIsProject)
+      .find(isInitialProject)
+    if (projectToLoad != null) {
+      deps.doOpenProject({
+        type: BackendType.local,
+        id: projectToLoad.id,
+        title: projectToLoad.title,
+        parentId: projectToLoad.parentId,
+      })
+    } else if (initialProjectName != null) {
+      deps.toastAndLog('findProjectError', null, initialProjectName)
     }
   }, [initialProjectName, initialProjectNameDeps])
 
@@ -1192,11 +1187,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   eventListProvider.useAssetListEventListener((event) => {
-    if (!isLoading) {
-      onAssetListEvent(event)
-    } else {
-      queuedAssetListEventsRef.current.push(event)
-    }
+    onAssetListEvent(event)
   })
 
   const doCopy = useEventCallback(() => {
@@ -1720,50 +1711,41 @@ export default function AssetsTable(props: AssetsTableProps) {
     </tr>
   )
 
-  const itemRows =
-    isLoading ?
-      <tr className="h-row">
-        <td colSpan={columns.length} className="bg-transparent">
-          <div className="grid w-container justify-around">
-            <IndefiniteSpinner size={LOADING_SPINNER_SIZE_PX} />
-          </div>
-        </td>
-      </tr>
-    : displayItems.map((item) => {
-        return (
-          <AssetRow
-            key={item.key + item.path}
-            isPlaceholder={item.isPlaceholder()}
-            isExpanded={
-              item.item.type === AssetType.directory ?
-                expandedDirectoryIds.includes(item.item.id)
-              : false
-            }
-            onCutAndPaste={cutAndPaste}
-            isOpened={openedProjects.some(({ id }) => item.item.id === id)}
-            visibility={visibilities.get(item.key)}
-            columns={columns}
-            id={item.item.id}
-            type={item.item.type}
-            parentId={item.directoryId}
-            path={item.path}
-            initialAssetEvents={item.initialAssetEvents}
-            depth={item.depth}
-            state={state}
-            hidden={visibilities.get(item.key) === Visibility.hidden}
-            isKeyboardSelected={
-              keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
-            }
-            grabKeyboardFocus={grabRowKeyboardFocus}
-            onClick={onRowClick}
-            select={selectRow}
-            onDragStart={onRowDragStart}
-            onDragOver={onRowDragOver}
-            onDragEnd={onRowDragEnd}
-            onDrop={onRowDrop}
-          />
-        )
-      })
+  const itemRows = displayItems.map((item) => {
+    return (
+      <AssetRow
+        key={item.key + item.path}
+        isPlaceholder={item.isPlaceholder()}
+        isExpanded={
+          item.item.type === AssetType.directory ?
+            expandedDirectoryIds.includes(item.item.id)
+          : false
+        }
+        onCutAndPaste={cutAndPaste}
+        isOpened={openedProjects.some(({ id }) => item.item.id === id)}
+        visibility={visibilities.get(item.key)}
+        columns={columns}
+        id={item.item.id}
+        type={item.item.type}
+        parentId={item.directoryId}
+        path={item.path}
+        initialAssetEvents={item.initialAssetEvents}
+        depth={item.depth}
+        state={state}
+        hidden={visibilities.get(item.key) === Visibility.hidden}
+        isKeyboardSelected={
+          keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
+        }
+        grabKeyboardFocus={grabRowKeyboardFocus}
+        onClick={onRowClick}
+        select={selectRow}
+        onDragStart={onRowDragStart}
+        onDragOver={onRowDragOver}
+        onDragEnd={onRowDragEnd}
+        onDrop={onRowDrop}
+      />
+    )
+  })
 
   const dropzoneText =
     isDraggingFiles ?
@@ -1817,13 +1799,8 @@ export default function AssetsTable(props: AssetsTableProps) {
           {itemRows}
           <tr className="hidden h-row first:table-row">
             <td colSpan={columns.length} className="bg-transparent">
-              <Text
-                className={twJoin('px-cell-x placeholder', isError && 'text-danger')}
-                disableLineHeightCompensation
-              >
-                {isError ?
-                  getText('thisFolderFailedToFetch')
-                : category.type === 'trash' ?
+              <Text className={twJoin('px-cell-x placeholder')} disableLineHeightCompensation>
+                {category.type === 'trash' ?
                   query.query !== '' ?
                     getText('noFilesMatchTheCurrentFilters')
                   : getText('yourTrashIsEmpty')

@@ -231,7 +231,16 @@ export function useExpandedDirectoryIds() {
 /** A function to set the expanded directoyIds in the Asset Table. */
 export function useSetExpandedDirectoryIds() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setExpandedDirectoryIds)
+  const privateSetExpandedDirectoryIds = zustand.useStore(
+    store,
+    (state) => state.setExpandedDirectoryIds,
+    { unsafeEnableTransition: true },
+  )
+  return useEventCallback((expandedDirectoryIds: readonly DirectoryId[]) => {
+    React.startTransition(() => {
+      privateSetExpandedDirectoryIds(expandedDirectoryIds)
+    })
+  })
 }
 
 /** The selected keys in the Asset Table. */

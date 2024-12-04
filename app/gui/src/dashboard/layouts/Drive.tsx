@@ -15,7 +15,7 @@ import AssetListEventType from '#/events/AssetListEventType'
 import { AssetPanel } from '#/layouts/AssetPanel'
 import type * as assetsTable from '#/layouts/AssetsTable'
 import AssetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import DriveBar from '#/layouts/DriveBar'
@@ -28,6 +28,11 @@ import AssetQuery from '#/utilities/AssetQuery'
 import * as download from '#/utilities/download'
 import * as github from '#/utilities/github'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { ErrorDisplay } from '../components/ErrorBoundary'
+import { Loader } from '../components/Suspense'
+import { useEventCallback } from '../hooks/eventCallbackHooks'
+import { useAssetTree } from './Drive/assetTreeHooks'
+import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
 // =============
 // === Drive ===
@@ -62,9 +67,35 @@ export default function Drive(props: DriveProps) {
     : isCloud && !user.isEnabled ? 'not-enabled'
     : 'ok'
 
-  const doEmptyTrash = React.useCallback(() => {
+  const doEmptyTrash = useEventCallback(() => {
     dispatchAssetListEvent({ type: AssetListEventType.emptyTrash })
-  }, [dispatchAssetListEvent])
+  })
+
+  const { rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
+  const { assetTree, isLoading, isError, refetchAllDirectories } = useAssetTree({
+    hidden,
+    category,
+    rootDirectory,
+    expandedDirectoryIds,
+  })
+
+  const isEmpty = assetTree.isEmpty()
+  const shouldDisplayStartModal =
+    isEmpty &&
+    (category.type === 'cloud' || category.type === 'local' || category.type === 'local-directory')
+
+  if (isLoading) {
+    return <Loader minHeight="h48" height="full" />
+  }
+
+  if (isError) {
+    return (
+      <ErrorDisplay
+        error={getText('arbitraryErrorTitle')}
+        resetErrorBoundary={refetchAllDirectories}
+      />
+    )
+  }
 
   switch (status) {
     case 'not-enabled': {
@@ -115,6 +146,8 @@ export default function Drive(props: DriveProps) {
               setQuery={setQuery}
               category={category}
               doEmptyTrash={doEmptyTrash}
+              isEmpty={isEmpty}
+              shouldDisplayStartModal={shouldDisplayStartModal}
             />
 
             <div className="flex flex-1 gap-drive overflow-hidden">
@@ -151,6 +184,9 @@ export default function Drive(props: DriveProps) {
                   )}
                 </result.Result>
               : <AssetsTable
+                  assetTree={assetTree}
+                  expandedDirectoryIds={expandedDirectoryIds}
+                  rootDirectoryId={rootDirectory.id}
                   assetManagementApiRef={assetsManagementApiRef}
                   hidden={hidden}
                   query={query}

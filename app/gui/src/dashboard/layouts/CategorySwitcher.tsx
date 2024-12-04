@@ -22,13 +22,13 @@ import SvgMask from '#/components/SvgMask'
 import * as mimeTypes from '#/data/mimeTypes'
 import { useBackendQuery } from '#/hooks/backendHooks'
 import * as offlineHooks from '#/hooks/offlineHooks'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import {
   areCategoriesEqual,
   canTransferBetweenCategories,
   useTransferBetweenCategories,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'

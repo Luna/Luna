@@ -255,17 +255,6 @@ export default function AuthProvider(props: AuthProviderProps) {
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
-  /**
-   * Wrap a function returning a {@link Promise} to display a loading toast notification
-   * until the returned {@link Promise} finishes loading.
-   */
-  const withLoadingToast =
-    <T extends unknown[], R>(action: (...args: T) => Promise<R>) =>
-    async (...args: T) => {
-      toast.toast.loading(getText('pleaseWait'), { toastId })
-      return await action(...args)
-    }
-
   const toastSuccess = (message: string) => {
     toast.toast.update(toastId, {
       isLoading: null,
@@ -274,18 +263,6 @@ export default function AuthProvider(props: AuthProviderProps) {
       closeButton: null,
       draggable: null,
       type: toast.toast.TYPE.SUCCESS,
-      render: message,
-    })
-  }
-
-  const toastError = (message: string) => {
-    toast.toast.update(toastId, {
-      isLoading: null,
-      autoClose: null,
-      closeOnClick: null,
-      closeButton: null,
-      draggable: null,
-      type: toast.toast.TYPE.ERROR,
       render: message,
     })
   }

@@ -26,7 +26,7 @@ import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'

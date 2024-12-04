@@ -6,7 +6,7 @@ import * as z from 'zod'
 import AssetEventType from '#/events/AssetEventType'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import {

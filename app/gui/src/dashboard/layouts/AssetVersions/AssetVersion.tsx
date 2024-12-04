@@ -10,7 +10,7 @@ import * as textProvider from '#/providers/TextProvider'
 import AssetListEventType from '#/events/AssetListEventType'
 
 import * as assetDiffView from '#/layouts/AssetDiffView'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
 

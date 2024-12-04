@@ -29,10 +29,10 @@ import ProjectsProvider, {
 import AssetListEventType from '#/events/AssetListEventType'
 
 import type * as assetTable from '#/layouts/AssetsTable'
-import EventListProvider, * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
+import EventListProvider, * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import type * as editor from '#/layouts/Editor'
 import UserBar from '#/layouts/UserBar'
 

@@ -208,6 +208,17 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
     return backendModule.isPlaceholderId(this.item.id)
   }
 
+  isEmpty(): boolean {
+    if (this.item.type === 'directory') {
+      if (this.children == null) {
+        return true
+      }
+      return this.children.length === 0
+    }
+    
+    return true
+  }
+
   /** Check whether a pending rename is valid. */
   isNewTitleValid(newTitle: string, siblings?: readonly AssetTreeNode[] | null) {
     siblings ??= []
