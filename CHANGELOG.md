@@ -75,6 +75,7 @@
 [11684]: https://github.com/enso-org/enso/pull/11684
 [11695]: https://github.com/enso-org/enso/pull/11695
 [11715]: https://github.com/enso-org/enso/pull/11715
+[11761]: https://github.com/enso-org/enso/pull/11761
 
 #### Enso Standard Library
 
