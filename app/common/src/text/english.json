@@ -421,7 +421,7 @@
   "projectSessionX": "Session $0",
   "onDateX": "on $0",
   "xUsersAndGroupsSelected": "$0 users and groups selected",
-  "allTrashedItemsForever": "all trashed items forever",
+  "allTrashedItemsForever": "delete all trashed items forever",
   "addShortcut": "Add shortcut",
   "removeShortcut": "Remove shortcut",
   "resetShortcut": "Reset shortcut",
