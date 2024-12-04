@@ -1,7 +1,7 @@
 /** @file The tab bar for the dashboard page. */
 import DriveIcon from '#/assets/drive.svg'
-import SettingsIcon from '#/assets/settings.svg'
 import NetworkIcon from '#/assets/network.svg'
+import SettingsIcon from '#/assets/settings.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import TabBar from '#/layouts/TabBar'
