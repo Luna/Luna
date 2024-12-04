@@ -23,9 +23,6 @@ import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
-// ====================================
-// === createGetProjectDetailsQuery ===
-// ====================================
 /** Default interval for refetching project status when the project is opened. */
 const OPENED_INTERVAL_MS = 30_000
 /**
@@ -152,10 +149,6 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const
 
-// ==============================
-// === useOpenProjectMutation ===
-// ==============================
-
 /** A mutation to open a project. */
 export function useOpenProjectMutation() {
   const client = reactQuery.useQueryClient()
@@ -216,10 +209,6 @@ export function useOpenProjectMutation() {
   })
 }
 
-// ===============================
-// === useCloseProjectMutation ===
-// ===============================
-
 /** Mutation to close a project. */
 export function useCloseProjectMutation() {
   const client = reactQuery.useQueryClient()
@@ -261,10 +250,6 @@ export function useCloseProjectMutation() {
   })
 }
 
-// ================================
-// === useRenameProjectMutation ===
-// ================================
-
 /** Mutation to rename a project. */
 export function useRenameProjectMutation() {
   const client = reactQuery.useQueryClient()
@@ -294,10 +279,6 @@ export function useRenameProjectMutation() {
     },
   })
 }
-
-// ======================
-// === useOpenProject ===
-// ======================
 
 /** A callback to open a project. */
 export function useOpenProject() {
@@ -346,10 +327,6 @@ export function useOpenProject() {
   })
 }
 
-// =====================
-// === useOpenEditor ===
-// =====================
-
 /** A function to open the editor. */
 export function useOpenEditor() {
   const setPage = useSetPage()
@@ -357,10 +334,6 @@ export function useOpenEditor() {
     setPage(projectId)
   })
 }
-
-// =======================
-// === useCloseProject ===
-// =======================
 
 /** A function to close a project. */
 export function useCloseProject() {
@@ -400,10 +373,6 @@ export function useCloseProject() {
     setPage(TabType.drive)
   })
 }
-
-// ===========================
-// === useCloseAllProjects ===
-// ===========================
 
 /** A function to close all projects. */
 export function useCloseAllProjects() {
