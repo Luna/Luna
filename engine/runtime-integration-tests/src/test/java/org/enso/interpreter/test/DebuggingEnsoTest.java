@@ -307,10 +307,10 @@ public class DebuggingEnsoTest {
 
         foo _ =
             d_enso = Date.new 2024 12 15
-            d_js = js_date
             d_java = Date.parse "2024-12-15"
             dt_enso = Date_Time.now
             dt_java = Date_Time.parse "2020-05-06 04:30:20" "yyyy-MM-dd HH:mm:ss"
+            dt_js = js_date
             str_enso = "Hello_World"
             str_js = js_str
             str_java = String.new "Hello_World"
@@ -335,13 +335,13 @@ public class DebuggingEnsoTest {
 
                   DebugValue ensoDate = scope.getDeclaredValue("d_enso");
                   DebugValue javaDate = scope.getDeclaredValue("d_java");
-                  DebugValue jsDate = scope.getDeclaredValue("d_js");
                   assertSameProperties(ensoDate.getProperties(), javaDate.getProperties());
-                  assertSameProperties(ensoDate.getProperties(), jsDate.getProperties());
 
                   DebugValue ensoDateTime = scope.getDeclaredValue("dt_enso");
                   DebugValue javaDateTime = scope.getDeclaredValue("dt_java");
+                  DebugValue jsDateTime = scope.getDeclaredValue("dt_js");
                   assertSameProperties(ensoDateTime.getProperties(), javaDateTime.getProperties());
+                  assertSameProperties(ensoDateTime.getProperties(), jsDateTime.getProperties());
 
                   DebugValue ensoString = scope.getDeclaredValue("str_enso");
                   DebugValue javaString = scope.getDeclaredValue("str_java");
