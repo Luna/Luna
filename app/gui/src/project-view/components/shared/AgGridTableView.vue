@@ -296,6 +296,11 @@ if (typeof import.meta.env.ENSO_IDE_AG_GRID_LICENSE_KEY !== 'string') {
   LicenseManager.setLicenseKey(agGridLicenseKey)
 }
 
+function stopIfPrevented(event: Event) {
+  // When AG Grid handles the context menu event it prevents-default, but it doesn't stop propagation.
+  if (event.defaultPrevented) event.stopPropagation()
+}
+
 const { AgGridVue } = await import('ag-grid-vue3')
 </script>
 
@@ -333,6 +338,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       @rowEditingStopped="emit('rowEditingStopped', $event)"
       @sortChanged="emit('sortOrFilterUpdated', $event)"
       @filterChanged="emit('sortOrFilterUpdated', $event)"
+      @contextmenu="stopIfPrevented"
     />
   </div>
 </template>
