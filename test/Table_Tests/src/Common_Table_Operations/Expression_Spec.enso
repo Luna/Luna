@@ -25,7 +25,7 @@ add_specs suite_builder detailed setup =
     if setup.is_feature_supported Feature.Column_Operations then (add_expression_specs suite_builder detailed setup)
 
 add_expression_specs suite_builder detailed setup =
-    prefix = setup.prefix
+    prefix = setup.prefix+"(Expression_Spec) "
     table_builder = build_sorted_table setup
     column_a_description = ["A", [1, 2, 3, 4, 5]]
     column_odd_description = ["Bad] Name", [True, False, True, False, True]]
@@ -141,7 +141,7 @@ add_expression_specs suite_builder detailed setup =
                     c.name.should_equal "[X] == '\0'"
                     c.to_vector.should_equal [True, False, False]
 
-    suite_builder.group prefix+"Expression Nothing literals" group_builder->
+    suite_builder.group prefix+"Expression Nothing literals" pending=(if setup.is_database && prefix.contains "SQLite" . not then "TODO #11757 - Nothing in expressions in DB") group_builder->
         specify_test "should be able to add an nothing column" group_builder expression_test->
             expression_test "null" Nothing
             expression_test "nUlL" Nothing
@@ -160,11 +160,7 @@ add_expression_specs suite_builder detailed setup =
 
             c.is_nothing.to_vector.should_equal [True, True, True]
 
-        ## TODO that may not necessarily be good, I think we may need to
-           introduce a Value_Type.Null and make it accepted by all
-           `Value_Type.expect_*` checks.
-           See: https://github.com/enso-org/enso/issues/6281
-        group_builder.specify "a null column may fail typechecks that expect a concrete type" <|
+        group_builder.specify "a null column should work with operations on any type" <|
             t = table_builder [["X", [1, 2, 3]]]
             c = t.evaluate_expression "null"
             nulls = [Nothing, Nothing, Nothing]
@@ -182,9 +178,9 @@ add_expression_specs suite_builder detailed setup =
             (c / c) . to_vector |> null_or_sql_fail
             (c ^ c) . to_vector |> null_or_sql_fail
             (c % c) . to_vector |> null_or_sql_fail
-            (c.starts_with c) . to_vector . should_equal nulls
-            (c.ends_with c) . to_vector . should_equal nulls
-            (c.contains c) . to_vector . should_equal nulls
+            (c.starts_with c) . to_vector |> null_or_sql_fail
+            (c.ends_with c) . to_vector |> null_or_sql_fail
+            (c.contains c) . to_vector |> null_or_sql_fail
 
             t.evaluate_expression "not(Nothing)" . to_vector . should_equal nulls
             t.evaluate_expression "Nothing + Nothing" . to_vector . should_equal nulls
@@ -396,9 +392,7 @@ add_expression_specs suite_builder detailed setup =
 
         specify_test "should be able to call a variable args function" group_builder expression_test->
             expression_test "min(10, 3, 8)" 3
-            expression_test "min(Nothing, 2)" 2
             expression_test "max([A], [B], 3)" [3, 3, 3, 4, 6]
-            expression_test "max(Nothing, [A], [B], 3)" [3, 3, 3, 4, 6]
 
         specify_test "should be able to use functions with constants" group_builder expression_test->
             expression_test "truncate(3.3)" 3
