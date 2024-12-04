@@ -1210,7 +1210,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doCut = useEventCallback(() => {
     unsetModal()
-    const { selectedKeys, pasteData } = driveStore.getState()
+    const { selectedKeys } = driveStore.getState()
     setPasteData({
       type: 'move',
       data: { backendType: backend.type, category, ids: selectedKeys },

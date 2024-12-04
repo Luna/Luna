@@ -15,7 +15,6 @@ import {
 } from '.'
 import type * as baseActions from './BaseActions'
 import * as contextMenuActions from './contextMenuActions'
-import EditorPageActions from './EditorPageActions'
 import * as goToPageActions from './goToPageActions'
 import NewDataLinkModalActions from './NewDataLinkModalActions'
 import PageActions from './PageActions'

@@ -22,7 +22,6 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { useMemo } from 'react'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useLocalBackend } from '#/providers/BackendProvider'
 
 // =================
 // === Constants ===
