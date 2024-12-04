@@ -64,6 +64,8 @@ class ExpressionAnnotationsTest extends CompilerTest {
   // === The Tests ============================================================
 
   "Annotations resolution" should {
+    implicit val ctx: ModuleContext = mkModuleContext
+
     val ir =
       """
         |foo x =
