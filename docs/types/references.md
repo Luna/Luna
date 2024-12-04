@@ -8,6 +8,8 @@ order: 15
 
 # References
 
+<!-- Well, these references seem quite useful. Thanks! -->
+
 This file contains a variety of useful references for those wanting to
 understand the concepts and research that underlie Enso's type system and type
 theory.
