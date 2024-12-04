@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.ArrayList;
 import java.util.List;
 import org.enso.interpreter.runtime.data.Type;
@@ -99,6 +100,13 @@ public class BuiltinsExposeMethodsTest {
               assertThat(
                   "Member " + methodName + " should be invocable",
                   valueWithType.value.canInvokeMember(methodName),
+                  is(true));
+              var interop = InteropLibrary.getUncached();
+              var unwrappedValue = ContextUtils.unwrapValue(ctx(), valueWithType.value);
+              var memberViaInterop = interop.readMember(unwrappedValue, methodName);
+              assertThat(
+                  "Member via interop should be the same as in scope, but was: " + memberViaInterop,
+                  memberViaInterop == methodInScope,
                   is(true));
             }
           }
