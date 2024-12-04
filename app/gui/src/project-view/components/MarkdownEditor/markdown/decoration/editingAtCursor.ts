@@ -11,16 +11,17 @@ export function cursorDecoratorExt(): Extension {
 function cursorDecorations(selection: EditorSelection, doc: Text): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>()
   for (const range of selection.ranges) {
-    const line = doc.lineAt(range.from)
-    builder.add(
-      line.from,
-      line.from,
-      Decoration.line({
-        class: 'cm-has-cursor',
-      }),
-    )
-    if (range.to != range.from) {
-      // TODO: Add decorations to each line
+    const lineFrom = doc.lineAt(range.from)
+    const lineTo = doc.lineAt(range.to)
+    for (let i = lineFrom.number; i <= lineTo.number; i++) {
+      const line = doc.line(i)
+      builder.add(
+        line.from,
+        line.from,
+        Decoration.line({
+          class: 'cm-has-cursor',
+        }),
+      )
     }
   }
   return builder.finish()
