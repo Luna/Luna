@@ -1434,18 +1434,22 @@ export function compareAssets(a: AnyAsset, b: AnyAsset) {
   if (relativeTypeOrder !== 0) {
     return relativeTypeOrder
   } else {
-    // We sort by modified date, because the running/recent projects should be at the top.
-    // but above the all folders
+    // We sort by modified date, because the running/recent projects should be at the top,
+    // but below the folders.
     const aModified = Number(new Date(a.modifiedAt))
     const bModified = Number(new Date(b.modifiedAt))
     const modifiedDelta = aModified - bModified
+
+    const aTitle = a.title.toLowerCase()
+    const bTitle = b.title.toLowerCase()
+
     if (modifiedDelta !== 0) {
       // Sort by date descending, rather than ascending.
       return -modifiedDelta
     } else {
       return (
-        a.title > b.title ? 1
-        : a.title < b.title ? -1
+        aTitle > bTitle ? 1
+        : aTitle < bTitle ? -1
         : 0
       )
     }
