@@ -25,7 +25,7 @@ import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindVariants from '#/utilities/tailwindVariants'
 
 const MENU_ENTRY_VARIANTS = tailwindVariants.tv({
-  base: 'flex h-row grow place-content-between items-center rounded-inherit p-menu-entry text-left selectable group-enabled:active group-enabled:hover:bg-hover-bg',
+  base: 'flex h-row grow place-content-between items-center rounded-inherit p-menu-entry text-left group-disabled:opacity-30 group-enabled:active group-enabled:hover:bg-hover-bg',
   variants: {
     variant: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
