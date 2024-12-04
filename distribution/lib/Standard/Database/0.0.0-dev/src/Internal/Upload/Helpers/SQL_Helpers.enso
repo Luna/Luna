@@ -35,7 +35,7 @@ prepare_create_table_statement connection table_name columns primary_key tempora
     column_descriptors = columns.map on_problems=No_Wrap.Value def->
         sql_type = type_mapping.value_type_to_sql def.value_type on_problems
             . catch Unsupported_Database_Type error->
-                Error.throw (Illegal_Argument.Error "Column definition for column ["+def.name+"] is invalid: "+error.to_display_text)
+                Error.throw (Illegal_Argument.Error "Definition for column ["+def.name+"] is invalid: "+error.to_display_text)
 
         sql_type_text = type_mapping.sql_type_to_text sql_type
         Create_Column_Descriptor.Value def.name sql_type_text def.constraints
