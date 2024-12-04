@@ -4,11 +4,13 @@ import { useDocumentationImages } from '@/components/DocumentationEditor/images'
 import { transformPastedText } from '@/components/DocumentationEditor/textPaste'
 import FullscreenButton from '@/components/FullscreenButton.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import { htmlToMarkdown } from '@/components/MarkdownEditor/htmlToMarkdown'
 import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { useProjectFiles } from '@/stores/projectFiles'
 import { ComponentInstance, ref, toRef, watch } from 'vue'
+import { normalizeMarkdown } from 'ydoc-shared/ast/documentation'
 import * as Y from 'yjs'
 
 const { yText } = defineProps<{
@@ -41,6 +43,15 @@ function handlePaste(raw: boolean) {
   window.navigator.clipboard.read().then(async (items) => {
     if (!markdownEditor.value) return
     for (const item of items) {
+      if (tryUploadPastedImage(item)) return
+      const htmlType = item.types.find((type) => type === 'text/html')
+      if (htmlType) {
+        const blob = await item.getType(htmlType)
+        const html = await blob.text()
+        const markdown = normalizeMarkdown(await htmlToMarkdown(html))
+        markdownEditor.value.putText(markdown)
+        return
+      }
       const textType = item.types.find((type) => type === 'text/plain')
       if (textType) {
         const blob = await item.getType(textType)
@@ -48,7 +59,6 @@ function handlePaste(raw: boolean) {
         markdownEditor.value.putText(raw ? rawText : transformPastedText(rawText))
         break
       }
-      if (tryUploadPastedImage(item)) break
     }
   })
 }
