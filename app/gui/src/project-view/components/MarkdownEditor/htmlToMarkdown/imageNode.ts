@@ -78,8 +78,10 @@ export class ImageNode extends DecoratorNode<void> {
     return this.__altText
   }
 
+  /** Not used, but required by API */
+  override decorate() {}
+
   static override importJSON = notImplemented
-  override decorate = notImplemented
   override exportDOM = notImplemented
   override createDOM = notImplemented
   override updateDOM = notImplemented

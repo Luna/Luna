@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`htmlToMarkdown: google_docs1.html 1`] = `
+exports[`htmlToMarkdown: google_docs1.html.bin 1`] = `
 "# Title
 
 Subtitle
@@ -34,10 +34,10 @@ Link: [Text](http://example.com)
 ![](https://lh7-rt.googleusercontent.com/docsz/AD_4nXeCL-N-bkbZ3JKJqp86wjPGiXe0hSlYQVnr6nqfI4k37Mrf0USAOhbXyIyXzdIVhuD60vPN4BHHWf64F5b80nonbX63keL0BJRe2KsBQMInXS_Sn6Elj-SdB34CUc3d1xOllHf7WA?key=oYRu0j12MJwt-XgjX8Oamy3V)"
 `;
 
-exports[`htmlToMarkdown: preppin_data_2024w1.html 1`] = `
+exports[`htmlToMarkdown: preppin_data_2024w1.html.bin 1`] = `
 "### 2024: Week 1 - Prep Air's Flow Card
 
-[January 03, 2024](https://preppindata.blogspot.com/2024/01/2024-week-1-prep-airs-flow-card.html)
+[January 03, 2024](https://preppindata.blogspot.com/2024/01/2024-week-1-prep-airs-flow-card.html "permanent link")
 
 Created by: Carl Allchin
 
