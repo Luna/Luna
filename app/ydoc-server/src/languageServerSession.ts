@@ -664,7 +664,9 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
         astRoot.visitRecursive(ast => {
-          if (!externalIdToAst.has(ast.externalId)) externalIdToAst.set(ast.externalId, ast)
+          const ancestorEntry = externalIdToAst.get(ast.externalId)
+          if (!ancestorEntry || ancestorEntry instanceof Ast.ExpressionStatement)
+            externalIdToAst.set(ast.externalId, ast)
         })
         const missing = new Set<string>()
         for (const [id, meta] of nodeMeta) {
@@ -791,7 +793,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
               const reloading = this.ls.closeTextFile(this.path).then(async closing => {
                 if (!closing.ok) closing.error.log('Could not close file after write error:')
                 return exponentialBackoff(
-                  async () => {
+                  async (): Promise<Result<response.OpenTextFile>> => {
                     const result = await this.ls.openTextFile(this.path)
                     if (!result.ok) return result
                     if (!result.value.writeCapability) {

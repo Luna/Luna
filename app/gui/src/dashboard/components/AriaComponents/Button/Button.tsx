@@ -317,6 +317,8 @@ export const BUTTON_STYLES = tv({
     { variant: 'link', size: 'medium', class: 'font-medium' },
     { variant: 'link', size: 'large', class: 'font-medium' },
     { variant: 'link', size: 'hero', class: 'font-medium' },
+
+    { variant: 'icon', isDisabled: true, class: 'opacity-50' },
   ],
 })
 
