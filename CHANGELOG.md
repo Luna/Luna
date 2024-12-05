@@ -1,3 +1,11 @@
+# Next Next Release
+
+#### Enso Language & Runtime
+
+- [Propagate Error ASAP instead of ignoring it][11777].
+
+[11777]: https://github.com/enso-org/enso/pull/11777
+
 # Next Release
 
 #### Enso IDE

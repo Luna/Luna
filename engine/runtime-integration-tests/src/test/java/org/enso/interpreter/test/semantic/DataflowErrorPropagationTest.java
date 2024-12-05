@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.enso.common.MethodNames;
 import org.enso.test.utils.ContextUtils;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -59,9 +60,13 @@ public class DataflowErrorPropagationTest {
   @Test
   public void propagateErrorImmediatelly() {
     var value = suppressError.execute(true, 42);
-    assertTrue("It is a number", value.isNumber());
-    assertFalse("Not an error", value.isException());
-    assertEquals(42, value.asInt());
+    assertFalse("It is not a number", value.isNumber());
+    assertTrue("It is an error", value.isException());
+    try {
+      throw value.throwException();
+    } catch (PolyglotException ex) {
+      assertEquals("Yielding an error", ex.getMessage());
+    }
   }
 
   @Test
