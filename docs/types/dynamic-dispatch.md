@@ -13,7 +13,7 @@ for usability, as users can write very flexible code that still plays nicely
 with the GUI.
 
 The current implementation of Enso supports single dispatch (dispatch purely on
-the type of `this`) when calling function. When calling (binary) operators Enso
+the type of `self`) when calling function. When calling (binary) operators Enso
 may perform more complicated dispatch when searching for the right operator
 implementation to invoke.
 
