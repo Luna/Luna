@@ -44,8 +44,11 @@
 - [New design for vector-editing widget][11620].
 - [Default values on widgets are displayed in italic][11666].
 - [Fixed bug causing Table Visualization to show wrong data][11684].
+- [Pasting tabular data now creates Table.input expressions][11695].
 - [No halo is displayed around components when hovering][11715].
 - [The hover area of the component output port extended twice its size][11715].
+- [Fix some UI elements drawing on top of visualization toolbar dropdown
+  menus][11768].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -74,7 +77,9 @@
 [11666]: https://github.com/enso-org/enso/pull/11666
 [11690]: https://github.com/enso-org/enso/pull/11690
 [11684]: https://github.com/enso-org/enso/pull/11684
+[11695]: https://github.com/enso-org/enso/pull/11695
 [11715]: https://github.com/enso-org/enso/pull/11715
+[11768]: https://github.com/enso-org/enso/pull/11768
 
 #### Enso Standard Library
 
