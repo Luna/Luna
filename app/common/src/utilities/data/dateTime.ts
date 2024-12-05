@@ -47,6 +47,21 @@ export const DAY_TEXT_IDS = [
   'sunday',
 ] satisfies TextId[]
 
+export const MONTH_3_LETTER_TEXT_IDS = [
+  'january3',
+  'february3',
+  'march3',
+  'april3',
+  'may3',
+  'june3',
+  'july3',
+  'august3',
+  'september3',
+  'october3',
+  'november3',
+  'december3',
+] satisfies TextId[]
+
 /** A string with date and time, following the RFC3339 specification. */
 export type Rfc3339DateTime = Newtype<string, 'Rfc3339DateTime'>
 /** Create a {@link Rfc3339DateTime}. */

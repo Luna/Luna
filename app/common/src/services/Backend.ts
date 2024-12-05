@@ -354,12 +354,11 @@ export const PARALLEL_MODE_TO_DESCRIPTION_ID = {
  */
 export type ProjectParallelMode = (typeof PROJECT_PARALLEL_MODES)[number]
 
-export const PROJECT_REPEAT_INTERVALS = ['hourly', 'daily', 'weekly', 'monthly'] as const
+export const PROJECT_REPEAT_INTERVALS = ['hourly', 'daily', 'monthly'] as const
 
 export const REPEAT_INTERVAL_TO_TEXT_ID = {
   hourly: 'hourlyRepeatInterval',
   daily: 'dailyRepeatInterval',
-  weekly: 'weeklyRepeatInterval',
   monthly: 'monthlyRepeatInterval',
 } satisfies {
   [K in ProjectRepeatInterval]: TextId & `${K}RepeatInterval`
@@ -368,19 +367,52 @@ export const REPEAT_INTERVAL_TO_TEXT_ID = {
 /** The interval at which a project schedule repeats. */
 export type ProjectRepeatInterval = (typeof PROJECT_REPEAT_INTERVALS)[number]
 
-/** The times during each interval to trigger executions. */
-export interface ProjectScheduleTime {
-  readonly dates?: readonly number[]
-  readonly days?: readonly number[]
-  readonly hours?: readonly number[]
+/** Details for a project execution that repeats hourly. */
+export interface ProjectExecutionHourlyRepeatInfo {
+  readonly type: 'hourly'
   readonly minute: number
+  readonly startHour: number
+  readonly endHour: number
 }
+
+/** Details for a project execution that repeats daily. */
+export interface ProjectExecutionDailyRepeatInfo {
+  readonly type: 'daily'
+  readonly minute: number
+  readonly daysOfWeek: readonly number[]
+}
+
+/** Details for a project execution that repeats monthly on a specific date. */
+export interface ProjectExecutionMonthlyDateRepeatInfo {
+  readonly type: 'monthly-date'
+  readonly minute: number
+  readonly date: number
+  readonly months: readonly number[]
+}
+
+/**
+ * Details for a project execution that repeats monthly on a specific weekday of a specific week
+ * of a specific month.
+ */
+export interface ProjectExecutionMonthlyWeekdayRepeatInfo {
+  readonly type: 'monthly-weekday'
+  readonly minute: number
+  readonly weekNumber: number
+  readonly dayOfWeek: number
+  readonly months: readonly number[]
+}
+
+export type ProjectExecutionRepeatInfo =
+  | ProjectExecutionHourlyRepeatInfo
+  | ProjectExecutionDailyRepeatInfo
+  | ProjectExecutionMonthlyDateRepeatInfo
+  | ProjectExecutionMonthlyWeekdayRepeatInfo
 
 /** Metadata for a {@link ProjectExecution}. */
 export interface ProjectExecutionInfo {
   readonly projectId: ProjectId
-  readonly repeatInterval: ProjectRepeatInterval
-  readonly time: ProjectScheduleTime
+  readonly timeZone: string
+  readonly repeat: ProjectExecutionRepeatInfo
   readonly parallelMode: ProjectParallelMode
   readonly maxDurationMinutes: number
   readonly startDate: dateTime.Rfc3339DateTime | null
