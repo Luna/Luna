@@ -1,6 +1,6 @@
 # This file is not auto-generated. Feel free to edit it.
 
-name: ✨ Engine Pull Request
+name: ✨ Engine PR
 
 on:
   push:
@@ -25,14 +25,14 @@ jobs:
     name: ⚙️ Engine Checks
     uses: ./.github/workflows/engine-checks.yml
     needs: [engine-changed-files]
-    if: needs.engine-changed-files.outputs.any_changed == 'true-disable' || github.ref == 'refs/heads/develop'
+    if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   engine-checks-optional:
     name: ⚙️ Engine Checks (Optional)
     uses: ./.github/workflows/engine-checks-optional.yml
     needs: [engine-changed-files]
-    if: needs.engine-changed-files.outputs.any_changed == 'true-disable' || github.ref == 'refs/heads/develop'
+    if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   required-checks:

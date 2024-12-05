@@ -1,6 +1,6 @@
 # This file is not auto-generated. Feel free to edit it.
 
-name: ✨ WASM Pull Request
+name: ✨ WASM PR
 
 on:
   push:

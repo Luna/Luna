@@ -1,6 +1,6 @@
 # This file is not auto-generated. Feel free to edit it.
 
-name: ✨ GUI Packaging Pull Request
+name: ✨ GUI Packaging PR
 
 on:
   push:
@@ -27,14 +27,14 @@ jobs:
     name: 🗐 GUI Packaging
     uses: ./.github/workflows/gui-packaging.yml
     needs: [gui-changed-files, engine-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true-disable' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   gui-packaging-optional:
     name: 🗐 GUI Packaging (Optional)
     uses: ./.github/workflows/gui-packaging-optional.yml
     needs: [gui-changed-files, engine-changed-files]
-    if: needs.gui-changed-files.outputs.any_changed == 'true-disable' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
+    if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   required-checks:
