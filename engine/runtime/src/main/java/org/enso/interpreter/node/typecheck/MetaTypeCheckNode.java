@@ -11,7 +11,7 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /**
  * Node for checking {@code polyglot java import} types. This class (and its subclasses)
- * are an implementation detail. The API to perform the is in {@link TypeCheckValueNode}.
+ * are an implementation detail. The API to perform the is in {@link TypeCheckNode}.
  */
 non-sealed abstract class MetaTypeCheckNode extends AbstractTypeCheckNode {
   private final CachingSupplier<? extends Object> expectedSupplier;

@@ -299,7 +299,7 @@ public abstract class InvokeMethodNode extends BaseNode {
       @Cached EnsoMultiValue.CastToNode castTo) {
     var fnAndType = self.resolveSymbol(methodResolverNode, symbol);
     if (fnAndType != null) {
-      var unwrapSelf = castTo.findTypeOrNull(fnAndType.getRight(), self, false, false);
+      var unwrapSelf = castTo.executeCast(fnAndType.getRight(), self);
       if (unwrapSelf != null) {
         assert arguments[0] == self;
         arguments[0] = unwrapSelf;

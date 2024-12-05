@@ -11,7 +11,7 @@ import org.enso.interpreter.runtime.error.DataflowError;
 
 /**
  * Root of hierarchy of nodes checking types. This class (and its subclasses) are an implementation
- * detail. The API to perform the check or conversion is in {@link TypeCheckValueNode}.
+ * detail. The API to perform the is in {@link TypeCheckNode}.
  */
 abstract sealed class AbstractTypeCheckNode extends Node
     permits OneOfTypesCheckNode, AllOfTypesCheckNode, SingleTypeCheckNode, MetaTypeCheckNode {

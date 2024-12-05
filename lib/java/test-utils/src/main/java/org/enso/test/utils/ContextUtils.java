@@ -23,7 +23,6 @@ import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 /** A collection of classes and methods useful for testing {@link Context} related stuff. */
 public final class ContextUtils {
-
   private ContextUtils() {}
 
   public static Context createDefaultContext() {
@@ -61,15 +60,12 @@ public final class ContextUtils {
   }
 
   /**
-   * Executes the given callable in the given context.A necessity for executing artificially created
-   * Truffle ASTs.
+   * Executes the given callable in the given context. A necessity for executing artificially
+   * created Truffle ASTs.
    *
-   * @param <T> type of the return value
-   * @param ctx context to execute at
-   * @param callable action to invoke with given return type
    * @return Object returned from {@code callable} wrapped in {@link Value}.
    */
-  public static <T> Value executeInContext(Context ctx, Callable<T> callable) {
+  public static Value executeInContext(Context ctx, Callable<Object> callable) {
     // Force initialization of the context
     ctx.eval("enso", "value = 0");
     var err = new Exception[1];
@@ -212,7 +208,6 @@ public final class ContextUtils {
 
   @ExportLibrary(InteropLibrary.class)
   static final class Unwrapper implements TruffleObject {
-
     Object[] args;
 
     @ExportMessage
