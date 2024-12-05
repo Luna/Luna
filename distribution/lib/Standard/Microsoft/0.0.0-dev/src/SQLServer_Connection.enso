@@ -304,4 +304,4 @@ type SQLServer_Connection
        Converts this value to a JSON serializable object.
     to_js_object : JS_Object
     to_js_object self =
-        JS_Object.from_pairs [["type", "SQLServer_Connection"], ["links", self.tables.at "Name" . to_vector]]
+        JS_Object.from_pairs [["type", "SQLServer_Connection"], ["links", self.tables.at "Name" . to_vector], ["get_child_node_action", "query"], ["child_label", "table"]]
