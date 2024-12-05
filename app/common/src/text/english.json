@@ -321,6 +321,7 @@
   "localCategoryButtonLabel": "Local",
   "cloudCategoryDropZoneLabel": "Move to your organization's home directory",
   "cloudCategoryBadgeContent": "Beta",
+  "uploadToCloudUnavailableForFreePlan": "",
   "myFilesCategoryDropZoneLabel": "Move to My Files",
   "recentCategoryDropZoneLabel": "Move to Recent category",
   "trashCategoryDropZoneLabel": "Move to Trash category",
@@ -941,6 +942,10 @@
   "shareFullFeatureBulletPoints": "Share unlimited assets with other users;Manage shared assets;Assign shared assets to user groups",
   "shareFullFeatureDescription": "Share unlimited assets with other users and manage shared assets. Assign shared assets to user groups to manage their permissions.",
   "shareFullPaywallMessage": "You can only share assets with a single user group. Upgrade to share assets with multiple user groups and users.",
+
+  "uploadToCloudFeatureLabel": "Upload to Cloud",
+  "uploadToCloudFeatureBulletPoints": "Upload assets to the Cloud;Manage Cloud assets;Run projects in the Cloud",
+  "uploadToCloudFeatureDescription": "Upload assets to the cloud and manage them in the cloud. Run projects in the cloud.",
 
   "ensoDevtoolsButtonLabel": "Open Enso Devtools",
   "ensoDevtoolsPopoverHeading": "Enso Devtools",
