@@ -46,7 +46,7 @@ theory.
 
 ## Monadic Contexts
 
-- [Supermonads](http://eprints.nottingham.ac.uk/36156/1/paper.pdf)
+- [Supermonads](https://web.archive.org/web/20180719132706/http://eprints.nottingham.ac.uk/36156/1/paper.pdf)
 
 ## Refinement Typing and Compiler Assistance
 
