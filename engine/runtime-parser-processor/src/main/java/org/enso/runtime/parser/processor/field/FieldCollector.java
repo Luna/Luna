@@ -49,7 +49,14 @@ public final class FieldCollector {
       } else if (irChildAnnot != null) {
         field = processIrChild(param, irChildAnnot);
       } else {
-        throw new IllegalStateException("Unexpected annotation on constructor parameter " + param);
+        var errMsg =
+            "Unexpected annotation on constructor parameter "
+                + param
+                + ". "
+                + "All annotations: "
+                + param.getAnnotationMirrors();
+        Utils.printError(errMsg, param, processingEnv.getMessager());
+        throw new IllegalStateException(errMsg);
       }
 
       if (field != null) {
