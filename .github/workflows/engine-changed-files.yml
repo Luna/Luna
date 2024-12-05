@@ -15,7 +15,7 @@ on:
 jobs:
   engine-changed-files:
     runs-on: ubuntu-latest
-    name: 🔍 Changed Files
+    name: Changed Files
     outputs:
       all_changed_files: ${{ steps.engine-changed-files.outputs.all_changed_files }}
       any_changed: ${{ steps.engine-changed-files.outputs.any_changed }}
@@ -39,8 +39,10 @@ jobs:
             Cargo.lock
             Cargo.toml
             rust-toolchain.toml
+            .github/workflows/engine-changed-files.yml
+            .github/workflows/engine-checks-optional.yml
             .github/workflows/engine-checks.yml
-            .github/workflows/pull-request.yml
+            .github/workflows/engine-pull-request.yml
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.engine-changed-files.outputs.all_changed_files }}

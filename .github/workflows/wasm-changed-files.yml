@@ -38,8 +38,7 @@ jobs:
             Cargo.toml
             rust-toolchain.toml
             rustfmt.toml
-            .github/workflows/wasm-checks.yml
-            .github/workflows/pull-request.yml
+            .github/workflows/wasm*
       - name: List all changed files
         env:
           ALL_CHANGED_FILES: ${{ steps.wasm-changed-files.outputs.all_changed_files }}
