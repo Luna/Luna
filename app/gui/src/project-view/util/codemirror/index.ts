@@ -25,6 +25,7 @@ import * as Y from 'yjs'
 function disableEditContextApi() {
   ;(EditorView as any).EDIT_CONTEXT = false
 }
+
 /* Disable EditContext API because of https://github.com/codemirror/dev/issues/1458. */
 disableEditContextApi()
 
@@ -113,6 +114,7 @@ function useBindings({
   contentDOM: HTMLElement
 }) {
   const keyboard = injectKeyboard()
+
   function openLink(event: Event) {
     let element: HTMLAnchorElement | undefined = undefined
     for (const el of elementHierarchy(event.target)) {
@@ -128,6 +130,7 @@ function useBindings({
     window.open(element.href, '_blank', 'noopener,noreferrer')
     return true
   }
+
   const bindingsHandler = textEditorsBindings.handler({
     openLink,
   })
@@ -146,6 +149,7 @@ function useBindings({
 function useSync(content: ToValue<string | Y.Text>) {
   const syncCompartment = new Compartment()
   const awareness = new Awareness(new Y.Doc())
+
   function sync() {
     const contentValue = toValue(content)
     if (typeof contentValue === 'string') {
@@ -156,19 +160,30 @@ function useSync(content: ToValue<string | Y.Text>) {
       return { text: contentValue.toString(), extensions: [yCollab(yTextWithDoc, awareness)] }
     }
   }
+
   return {
     syncExt: syncCompartment.of([]),
     connectSync: (editorView: EditorView) => {
       function setDocText(text: string) {
         return { from: 0, to: editorView.state.doc.length, insert: text }
       }
-      useDispatch(editorView, () => {
-        const { text, extensions } = sync()
-        return {
-          changes: setDocText(text),
-          effects: syncCompartment.reconfigure(extensions),
-        }
-      })
+
+      useDispatch(
+        editorView,
+        () => {
+          const { text, extensions } = sync()
+          return {
+            changes: setDocText(text),
+            effects: syncCompartment.reconfigure(extensions),
+          }
+        },
+        // The y-sync plugin breaks if it is reconfigured directly (it never unobserves the original yText), but can
+        // handle being removed and reinstalled.
+        () =>
+          editorView.dispatch({
+            effects: syncCompartment.reconfigure([]),
+          }),
+      )
     },
   }
 }
