@@ -69,7 +69,7 @@ export const SELECTOR_STYLES = tv({
   },
   defaultVariants: {
     size: 'medium',
-    rounded: 'xxxlarge',
+    rounded: 'xxlarge',
     variant: 'outline',
   },
   slots: {

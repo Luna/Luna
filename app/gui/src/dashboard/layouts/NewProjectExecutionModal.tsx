@@ -1,7 +1,7 @@
 /** @file Modal for confirming delete of any type of asset. */
 import * as z from 'zod'
 
-import { ZonedDateTime, getLocalTimeZone, now, toCalendarDate } from '@internationalized/date'
+import { ZonedDateTime, getLocalTimeZone, now } from '@internationalized/date'
 import { useMutation } from '@tanstack/react-query'
 
 import type Backend from '#/services/Backend'
@@ -33,6 +33,10 @@ import {
 import { backendMutationOptions } from '#/hooks/backendHooks'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
+import {
+  firstProjectExecutionOnOrAfter,
+  nextProjectExecutionDate,
+} from 'enso-common/src/services/Backend/projectExecution'
 import {
   DAY_3_LETTER_TEXT_IDS,
   MONTH_3_LETTER_TEXT_IDS,
@@ -208,8 +212,9 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   const { backend, item, defaultDate } = props
   const { getText } = useText()
   const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
+  const timeZone = preferredTimeZone ?? getLocalTimeZone()
 
-  const nowZonedDateTime = now(getLocalTimeZone())
+  const nowZonedDateTime = now(timeZone)
   const minFirstOccurrence = nowZonedDateTime
   const form = Form.useForm({
     method: 'dialog',
@@ -225,6 +230,8 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       date: 1,
       days: [],
       months: [],
+      dayOfWeek: 0,
+      weekNumber: 1,
       startHour: 0,
       endHour: HOURS_PER_DAY - 1,
       minute: 0,
@@ -255,19 +262,20 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     }
   })()
 
-  const repeatTimes = Array.from({ length: REPEAT_TIMES_COUNT }, (_, i) => {
-    switch (repeatInterval) {
-      case 'hourly': {
-        return date.add({ hours: i })
-      }
-      case 'daily': {
-        return date.add({ days: i })
-      }
-      case 'monthly': {
-        return date.add({ months: i })
-      }
+  const repeatTimes = (() => {
+    const parsed = form.schema.safeParse(form.getValues())
+    const projectExecution = parsed.data
+    if (!projectExecution) {
+      return []
     }
-  })
+    let nextDate = firstProjectExecutionOnOrAfter(projectExecution, date.toDate())
+    const dates = [nextDate]
+    while (dates.length < REPEAT_TIMES_COUNT) {
+      nextDate = nextProjectExecutionDate(projectExecution, nextDate)
+      dates.push(nextDate)
+    }
+    return dates
+  })()
 
   return (
     <Form form={form} className="w-full">
@@ -313,9 +321,12 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         <Text>
           {getText(
             'repeatsAtX',
-            repeatTimes
-              .map((time) => toCalendarDate(time).toDate(getLocalTimeZone()).toLocaleDateString())
-              .join(', '),
+            (repeatInterval === 'hourly' ?
+              // eslint-disable-next-line @typescript-eslint/unbound-method
+              repeatTimes.map(Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format)
+              // eslint-disable-next-line @typescript-eslint/unbound-method
+            : repeatTimes.map(Intl.DateTimeFormat(undefined, { dateStyle: 'short' }).format)
+            ).join(', '),
           )}
         </Text>
       </div>

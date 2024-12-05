@@ -1,16 +1,16 @@
 import { EMPTY_ARRAY } from '../../utilities/data/array'
-import { ProjectExecution } from '../Backend'
+import { ProjectExecutionInfo } from '../Backend'
 
 const DAYS_PER_WEEK = 7
 const MONTHS_PER_YEAR = 12
 
 /** The first execution date of the given {@link ProjectExecution} on or after the given date. */
 export function firstProjectExecutionOnOrAfter(
-  projectExecution: ProjectExecution,
+  projectExecution: ProjectExecutionInfo,
   startDate: Date,
 ): Date {
   // TODO: Account for timezone.
-  const nextDate = startDate
+  const nextDate = new Date(startDate)
   const { repeat } = projectExecution
   nextDate.setMinutes(repeat.minute)
   switch (repeat.type) {
@@ -35,14 +35,14 @@ export function firstProjectExecutionOnOrAfter(
     case 'monthly-weekday': {
       const currentDate = nextDate.getDate()
       nextDate.setDate(1)
-      nextDate.setDate(1 + repeat.weekNumber * DAYS_PER_WEEK)
+      nextDate.setDate(1 + (repeat.weekNumber - 1) * DAYS_PER_WEEK)
       const currentDay = nextDate.getDay()
       const dayOffset = (repeat.dayOfWeek - currentDay + 7) % 7
       nextDate.setDate(nextDate.getDate() + dayOffset)
       if (nextDate.getDate() < currentDate) {
         nextDate.setDate(1)
         nextDate.setMonth(nextDate.getMonth() + 1)
-        nextDate.setDate(1 + repeat.weekNumber * DAYS_PER_WEEK)
+        nextDate.setDate(1 + (repeat.weekNumber - 1) * DAYS_PER_WEEK)
         const currentDay = nextDate.getDay()
         const dayOffset = (repeat.dayOfWeek - currentDay + 7) % 7
         nextDate.setDate(nextDate.getDate() + dayOffset)
@@ -68,9 +68,9 @@ export function firstProjectExecutionOnOrAfter(
 }
 
 /** The next scheduled execution date of given {@link ProjectExecution}. */
-export function nextProjectExecutionDate(projectExecution: ProjectExecution, date: Date): Date {
+export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo, date: Date): Date {
   // TODO: Account for timezone.
-  const nextDate = date
+  const nextDate = new Date(date)
   const { repeat } = projectExecution
   nextDate.setMinutes(repeat.minute)
   switch (repeat.type) {
@@ -93,7 +93,7 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecution, dat
     case 'monthly-weekday': {
       nextDate.setDate(1)
       nextDate.setMonth(nextDate.getMonth() + 1)
-      nextDate.setDate(1 + repeat.weekNumber * DAYS_PER_WEEK)
+      nextDate.setDate(1 + (repeat.weekNumber - 1) * DAYS_PER_WEEK)
       const currentDay = nextDate.getDay()
       const dayOffset = (repeat.dayOfWeek - currentDay + 7) % 7
       nextDate.setDate(nextDate.getDate() + dayOffset)
@@ -117,7 +117,7 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecution, dat
  * This is to prevent UI from being overly cluttered.
  */
 export function getProjectExecutionRepetitionsForDateRange(
-  projectExecution: ProjectExecution,
+  projectExecution: ProjectExecutionInfo,
   startDate: Date,
   endDate: Date,
 ): readonly Date[] {
