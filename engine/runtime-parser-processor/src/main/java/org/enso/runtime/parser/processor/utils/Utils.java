@@ -77,6 +77,11 @@ public final class Utils {
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
   }
 
+  public static boolean isScalaList(TypeMirror type, ProcessingEnvironment procEnv) {
+    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
+    return procEnv.getTypeUtils().isSameType(type, scalaListType.asType());
+  }
+
   /**
    * Finds a method in the interface hierarchy. The interface hierarchy processing starts from
    * {@code interfaceType} and iterates until {@code org.enso.compiler.core.IR} interface type is

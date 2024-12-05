@@ -83,10 +83,10 @@ public final class FieldCollector {
     var type = getParamType(param);
     var isNullable = !irChildAnnot.required();
     if (Utils.isScalaList(type, processingEnv)) {
-      assert type instanceof DeclaredType;
-      var declaredRetType = (DeclaredType) type;
-      assert declaredRetType.getTypeArguments().size() == 1;
-      var typeArg = declaredRetType.getTypeArguments().get(0);
+      assert param.asType() instanceof DeclaredType;
+      var declaredType = (DeclaredType) param.asType();
+      assert declaredType.getTypeArguments().size() == 1;
+      var typeArg = declaredType.getTypeArguments().get(0);
       var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
       ensureIsSubtypeOfIR(typeArgElem);
       return new ListField(name, type, typeArgElem);
