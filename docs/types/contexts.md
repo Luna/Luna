@@ -9,8 +9,7 @@ order: 8
 # Monadic Contexts
 
 > [!WARNING]
-> Reword for people without strong Haskell background. Those who don't
-> know what _lifting_ is?
+> Reword for people without Haskell background who don't know what _lifting_ is.
 >
 > Coming from a Haskell background, we have found that Monads provide a great
 > abstraction with which to reason about program behaviour, but they have some
