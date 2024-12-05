@@ -133,9 +133,57 @@ public class TestIRProcessorInline {
         """;
     var genClass = generatedClass("JName", src);
     assertThat(genClass, containsString("class JNameGen"));
-    assertThat("Generate class has protected constructor",
+    assertThat(
+        "Generate class has protected constructor", genClass, containsString("protected JNameGen"));
+  }
+
+  /** The default generated protected constructor has meta parameters */
+  @Test
+  public void generatedClassHasConstructor_WithMetaFields() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("class JNameGen"));
+    assertThat(
+        "Generate class has protected constructor with meta parameters",
         genClass,
-        containsString("protected JNameGen"));
+        containsString(
+            "protected JNameGen(DiagnosticStorage diagnostics, MetadataStorage passData,"
+                + " IdentifiedLocation location, UUID id)"));
+  }
+
+  /**
+   * The second generated protected constructor has user fields as parameters. In this case, it will
+   * be an empty constructor.
+   */
+  @Test
+  public void generatedClassHasConstructor_WithUserFields() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("class JNameGen"));
+    assertThat(
+        "Generate class has protected constructor with user fields as parameters",
+        genClass,
+        containsString("protected JNameGen()"));
   }
 
   @Test

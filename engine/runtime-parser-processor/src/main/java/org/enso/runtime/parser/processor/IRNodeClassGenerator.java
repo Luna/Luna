@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
+import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
+import org.enso.runtime.parser.processor.GeneratedClassContext.Parameter;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.field.FieldCollector;
 import org.enso.runtime.parser.processor.methodgen.BuilderMethodGenerator;
@@ -106,7 +108,9 @@ final class IRNodeClassGenerator {
         """
         $fields
 
-        $constructor
+        $defaultCtor
+
+        $ctorWithUserFields
 
         public static Builder builder() {
           return new Builder();
@@ -125,7 +129,8 @@ final class IRNodeClassGenerator {
         $builder
         """
             .replace("$fields", fieldsCode())
-            .replace("$constructor", constructor())
+            .replace("$defaultCtor", defaultConstructor())
+            .replace("$ctorWithUserFields", constructorForUserFields())
             .replace("$userDefinedGetters", userDefinedGetters())
             .replace("$overrideIRMethods", overrideIRMethods())
             .replace("$mapExpressionsMethod", mapExpressions())
@@ -163,13 +168,43 @@ final class IRNodeClassGenerator {
   }
 
   /**
-   * Returns string representation of the protected constructor of the generated class.
+   * Returns string representation of the protected constructor of the generated class. The default
+   * constructor has parameters for both meta fields and user-defined fields.
    */
-  private String constructor() {
+  private String defaultConstructor() {
+    return constructorForFields(generatedClassContext.getConstructorParameters(), List.of());
+  }
+
+  /**
+   * Returns string representation of the second protected constructor of the generated class. This
+   * constructor accepts only user defined fields as parameters. Meta fields are initialized to
+   * null.
+   */
+  private String constructorForUserFields() {
+    var userFieldsAsParameters =
+        generatedClassContext.getUserFields().stream()
+            .map(field -> new Parameter(field.getSimpleTypeName(), field.getName()))
+            .toList();
+    return constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
+  }
+
+  /**
+   * The caller must ensure that parameters and {@code initializeToNull} are disjoint sets and that
+   * the union of them is equal to the set of all fields in the generated class.
+   *
+   * @param parameters Fields that will be parameters of the constructor. Can be empty list.
+   * @param initializeToNull Rest of the fields that will be initialized to null in the constructor.
+   *     Can be empty list.
+   */
+  private String constructorForFields(
+      List<Parameter> parameters, List<ClassField> initializeToNull) {
+    Utils.hardAssert(
+        !(parameters.isEmpty() && initializeToNull.isEmpty()),
+        "At least one of the list must be non empty");
     var sb = new StringBuilder();
     sb.append("protected ").append(className).append("(");
     var inParens =
-        generatedClassContext.getConstructorParameters().stream()
+        parameters.stream()
             .map(
                 consParam ->
                     "$consType $consName"
@@ -177,11 +212,24 @@ final class IRNodeClassGenerator {
                         .replace("$consName", consParam.name()))
             .collect(Collectors.joining(", "));
     sb.append(inParens).append(") {").append(System.lineSeparator());
-    var ctorBody =
-        generatedClassContext.getAllFields().stream()
-            .map(field -> "  this.$fieldName = $fieldName;".replace("$fieldName", field.name()))
-            .collect(Collectors.joining(System.lineSeparator()));
-    sb.append(indent(ctorBody, 2));
+
+    if (!parameters.isEmpty()) {
+      var ctorBody =
+          parameters.stream()
+              .map(field -> "  this.$fieldName = $fieldName;".replace("$fieldName", field.name()))
+              .collect(Collectors.joining(System.lineSeparator()));
+      sb.append(indent(ctorBody, 2));
+    }
+
+    // The rest of the constructor body initializes the rest of the fields to null.
+    if (!initializeToNull.isEmpty()) {
+      var initToNullBody =
+          initializeToNull.stream()
+              .map(field -> "  this.$fieldName = null;".replace("$fieldName", field.name()))
+              .collect(Collectors.joining(System.lineSeparator()));
+      sb.append(indent(initToNullBody, 2));
+    }
+
     sb.append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
     return indent(sb.toString(), 2);
