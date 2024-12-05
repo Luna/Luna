@@ -9,7 +9,7 @@ order: 4
 # Access Modifiers
 
 > [!WARNING]
-> Everybody who ever maintained a large system knows **encapsulation is essential**.
+> Everybody who ever maintained a large system knows [encapsulation is essential](../semantics/encapsulation.md).
 >
 > While we don't usually like making things private in a programming language, it
 > sometimes the case that it is necessary to indicate that certain fields should
@@ -17,13 +17,13 @@ order: 4
 > provides an explicit mechanism for access modification.
 
 Enso targets large user base of _non-programmers_. They are mostly focused on
-getting their job done and **encapsulation** of their own code is the last thing
+getting their job done and [encapsulation](../semantics/encapsulation.md) of their own code is the last thing
 that comes to their mind.
 
-On the other hand, Enso supports and encourages creation of **sharable libraries**.
+On the other hand, Enso supports and encourages creation of *sharable libraries*.
 Maintainers of such libraries are likely to treat API design and its
-backward compatibility seriously. As such they need a way to **encapsulate**
-internals of their libraries and clearly **differentiate public API** and
+backward compatibility seriously. As such they need a way to [encapsulate](../semantics/encapsulation.md)
+internals of their libraries and clearly *differentiate public API* and
 implementations details.
 
 <!-- MarkdownTOC levels="2,3" autolink="true" -->
@@ -35,8 +35,8 @@ implementations details.
 
 ## Access Modification
 
-**By default** Enso elements (functions, types, methods) are **public**.
-One has to use an access modifier to hide and **encapsulate** them. The
+*By default* Enso elements (functions, types, methods) are *public*.
+One has to use an access modifier to hide and [encapsulate](../semantics/encapsulation.md) them. The
 reasoning is: those who don't care can access everything they create without
 any restriction. Those who care can make things `private` with an additional
 effort.
@@ -53,9 +53,9 @@ Avoid using it in production.
 
 Encapsulation is an effective _communication mechanism_ among _distributed
 groups_ of developers. The `private` modifier hides implementation details from clients of the API.
-The primary groups in the Enso case are those who **publish a library**
-and those who **consume such a library**.
+The primary groups in the Enso case are those who *publish a library*
+and those who *consume such a library*.
 
 As such Enso supports _library private_ encapsulation.
 To hide any element (module, type, constructor, function) away
-from **library consumers** prefix such an element with `private` keyword.
+from *library consumers* prefix such an element with `private` keyword.
