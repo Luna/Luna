@@ -9,7 +9,16 @@ import { Button } from './Button'
 
 type Story = StoryObj<BaseButtonProps<aria.ButtonRenderProps>>
 
-const variants = ['primary', 'accent', 'delete', 'ghost-fading', 'ghost', 'link'] as const
+const variants = [
+  'primary',
+  'accent',
+  'delete',
+  'ghost-fading',
+  'ghost',
+  'link',
+  'submit',
+  'outline',
+] as const
 const sizes = ['hero', 'large', 'medium', 'small', 'xsmall', 'xxsmall'] as const
 
 export default {
