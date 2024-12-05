@@ -35,7 +35,7 @@ jobs:
         run: |
           echo "WASM Checks: ${{ needs.wasm-checks.result }}"
 
-          if [[ "${{ needs.wasm-checks.result }}" == "failure"]]; then
+          if [[ "${{ needs.wasm-checks.result }}" == "failure" ]]; then
             exit 1
           fi
 

@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "GUI Packaging: ${{ needs.gui-packaging.result }}"
 
-          if [[ "${{ needs.gui-packaging.result }}" == "failure"]]; then
+          if [[ "${{ needs.gui-packaging.result }}" == "failure" ]]; then
             exit 1
           fi
 

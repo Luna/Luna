@@ -45,7 +45,7 @@ jobs:
         run: |
           echo "Engine Checks: ${{ needs.engine-checks.result }}"
 
-          if [[ "${{ needs.engine-checks.result }}" == "failure"]]; then
+          if [[ "${{ needs.engine-checks.result }}" == "failure" ]]; then
             exit 1
           fi
 
