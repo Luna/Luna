@@ -55,6 +55,7 @@ import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { AssetPanelToggle } from './AssetPanel'
+import { useFullUserSession } from '../providers/AuthProvider'
 
 // ================
 // === DriveBar ===
@@ -69,6 +70,7 @@ export interface DriveBarProps {
   readonly doEmptyTrash: () => void
   readonly isEmpty: boolean
   readonly shouldDisplayStartModal: boolean
+  readonly isDisabled: boolean
 }
 
 /**
@@ -76,8 +78,16 @@ export interface DriveBarProps {
  * and a column display mode switcher.
  */
 export default function DriveBar(props: DriveBarProps) {
-  const { backend, query, setQuery, category, doEmptyTrash, isEmpty, shouldDisplayStartModal } =
-    props
+  const {
+    backend,
+    query,
+    setQuery,
+    category,
+    doEmptyTrash,
+    isEmpty,
+    shouldDisplayStartModal,
+    isDisabled,
+  } = props
 
   const { unsetModal } = useSetModal()
   const { getText } = useText()
@@ -88,8 +98,11 @@ export default function DriveBar(props: DriveBarProps) {
   const createAssetButtonsRef = React.useRef<HTMLDivElement>(null)
   const isCloud = isCloudCategory(category)
   const { isOffline } = useOffline()
+  const { user } = useFullUserSession()
   const canDownload = useCanDownload()
-  const shouldBeDisabled = (isCloud && isOffline) || !canCreateAssets
+
+  const shouldBeDisabled = (isCloud && isOffline) || !canCreateAssets || isDisabled
+
   const error =
     !shouldBeDisabled ? null
     : isCloud && isOffline ? getText('youAreOffline')
@@ -104,7 +117,7 @@ export default function DriveBar(props: DriveBarProps) {
   const effectivePasteData =
     (
       pasteData?.data.backendType === backend.type &&
-      canTransferBetweenCategories(pasteData.data.category, category)
+      canTransferBetweenCategories(pasteData.data.category, category, user)
     ) ?
       pasteData
     : null

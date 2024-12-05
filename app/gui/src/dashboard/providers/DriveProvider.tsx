@@ -153,13 +153,13 @@ export function useDriveStore() {
 /** The category of the Asset Table. */
 export function useCategory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.category)
+  return zustand.useStore(store, (state) => state.category, { unsafeEnableTransition: true })
 }
 
 /** A function to set the category of the Asset Table. */
 export function useSetCategory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCategory)
+  return zustand.useStore(store, (state) => state.setCategory, { unsafeEnableTransition: true })
 }
 
 /** The target directory of the Asset Table selection. */

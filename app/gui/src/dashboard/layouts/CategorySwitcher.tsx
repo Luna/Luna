@@ -18,7 +18,6 @@ import Trash2Icon from '#/assets/trash2.svg'
 import * as aria from '#/components/aria'
 import * as ariaComponents from '#/components/AriaComponents'
 import { Badge } from '#/components/Badge'
-import SvgMask from '#/components/SvgMask'
 import * as mimeTypes from '#/data/mimeTypes'
 import { useBackendQuery } from '#/hooks/backendHooks'
 import * as offlineHooks from '#/hooks/offlineHooks'
@@ -41,8 +40,7 @@ import { newDirectoryId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { twMerge } from 'tailwind-merge'
+import { useEventCallback } from '../hooks/eventCallbackHooks'
 
 // ============================
 // === Global configuration ===
@@ -88,7 +86,9 @@ interface InternalCategorySwitcherItemProps extends CategoryMetadata {
 function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
   const { currentCategory, setCategory, badgeContent } = props
   const { isNested = false, category, icon, label, buttonLabel, dropZoneLabel } = props
-  const { iconClassName } = props
+
+  const [isTransitioning, startTransition] = React.useTransition()
+
   const { user } = authProvider.useFullUserSession()
   const { unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
@@ -96,7 +96,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
   const { isOffline } = offlineHooks.useOffline()
   const isCurrent = areCategoriesEqual(currentCategory, category)
   const transferBetweenCategories = useTransferBetweenCategories(currentCategory)
-  const getCategoryError = (otherCategory: Category) => {
+  const getCategoryError = useEventCallback((otherCategory: Category) => {
     switch (otherCategory.type) {
       case 'local':
       case 'local-directory': {
@@ -120,23 +120,25 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
         }
       }
     }
-  }
+  })
   const error = getCategoryError(category)
   const isDisabled = error != null
   const tooltip = error ?? false
 
   const isDropTarget =
     !areCategoriesEqual(currentCategory, category) &&
-    canTransferBetweenCategories(currentCategory, category)
+    canTransferBetweenCategories(currentCategory, category, user)
   const acceptedDragTypes = isDropTarget ? [mimeTypes.ASSETS_MIME_TYPE] : []
 
-  const onPress = () => {
+  const onPress = useEventCallback(() => {
     if (error == null && !areCategoriesEqual(category, currentCategory)) {
-      setCategory(category)
+      startTransition(() => {
+        setCategory(category)
+      })
     }
-  }
+  })
 
-  const onDrop = (event: aria.DropEvent) => {
+  const onDrop = useEventCallback((event: aria.DropEvent) => {
     unsetModal()
     void Promise.all(
       event.items.flatMap(async (item) => {
@@ -158,7 +160,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
     ).then((keys) => {
       transferBetweenCategories(currentCategory, category, keys.flat(1))
     })
-  }
+  })
 
   const element = (
     <aria.DropZone
@@ -170,36 +172,27 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       onDrop={onDrop}
     >
       <ariaComponents.Button
-        size="custom"
-        variant="custom"
+        size="medium"
+        variant="ghost"
         tooltip={tooltip}
         tooltipPlacement="right"
-        className={tailwindMerge.twJoin(
-          'min-w-0 flex-auto grow-0',
-          isCurrent && 'focus-default',
-          isDisabled && 'cursor-not-allowed hover:bg-transparent',
-        )}
+        isDisabled={isDisabled}
         aria-label={buttonLabel}
+        isActive={isCurrent}
         onPress={onPress}
-      >
-        <div
-          className={tailwindMerge.twJoin(
-            'group flex h-row min-w-0 flex-auto items-center gap-icon-with-text rounded-full px-button-x selectable',
-            isCurrent && 'disabled active',
-            !isCurrent && !isDisabled && 'hover:bg-selected-frame',
-          )}
-        >
-          <SvgMask src={icon} className={twMerge('shrink-0', iconClassName)} />
-
-          <ariaComponents.Text slot="description" truncate="1" className="flex-auto">
-            {label}
-          </ariaComponents.Text>
-          {badgeContent != null && (
+        loaderPosition="icon"
+        loading={isTransitioning}
+        className={'min-w-20'}
+        icon={icon}
+        addonEnd={
+          badgeContent != null && (
             <Badge color="accent" variant="solid">
               {badgeContent}
             </Badge>
-          )}
-        </div>
+          )
+        }
+      >
+        {label}
       </ariaComponents.Button>
       <div className="absolute left-full ml-2 hidden group-focus-visible:block">
         {getText('drop')}

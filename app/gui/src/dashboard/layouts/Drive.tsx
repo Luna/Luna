@@ -15,9 +15,9 @@ import AssetListEventType from '#/events/AssetListEventType'
 import { AssetPanel } from '#/layouts/AssetPanel'
 import type * as assetsTable from '#/layouts/AssetsTable'
 import AssetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import DriveBar from '#/layouts/DriveBar'
 import Labels from '#/layouts/Labels'
 
@@ -28,10 +28,12 @@ import AssetQuery from '#/utilities/AssetQuery'
 import * as download from '#/utilities/download'
 import * as github from '#/utilities/github'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { ErrorDisplay } from '../components/ErrorBoundary'
-import { Loader } from '../components/Suspense'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { listDirectoryQueryOptions } from '../hooks/backendHooks'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
-import { useAssetTree } from './Drive/assetTreeHooks'
+import { useTargetDirectory } from '../providers/DriveProvider'
+import { Plan } from '../services/Backend'
+import { tryFindSelfPermission } from '../utilities/permissions'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
 // =============
@@ -46,6 +48,8 @@ export interface DriveProps {
   readonly initialProjectName: string | null
   readonly assetsManagementApiRef: React.Ref<assetsTable.AssetManagementApi>
 }
+
+const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 export default function Drive(props: DriveProps) {
@@ -62,6 +66,8 @@ export default function Drive(props: DriveProps) {
   const isCloud = categoryModule.isCloudCategory(category)
   const supportLocalBackend = localBackend != null
 
+  const targetDirectory = useTargetDirectory()
+
   const status =
     isCloud && isOffline ? 'offline'
     : isCloud && !user.isEnabled ? 'not-enabled'
@@ -71,31 +77,29 @@ export default function Drive(props: DriveProps) {
     dispatchAssetListEvent({ type: AssetListEventType.emptyTrash })
   })
 
-  const { rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
-  const { assetTree, isLoading, isError, refetchAllDirectories } = useAssetTree({
-    hidden,
-    category,
-    rootDirectory,
-    expandedDirectoryIds,
+  const { rootDirectoryId } = useDirectoryIds({ category })
+
+  const { data: isEmpty } = useSuspenseQuery({
+    ...listDirectoryQueryOptions({
+      backend,
+      parentId: rootDirectoryId,
+      category,
+    }),
+    select: (data) => data.length === 0,
   })
 
-  const isEmpty = assetTree.isEmpty()
+  const hasPermissionToCreateAssets = tryFindSelfPermission(
+    user,
+    targetDirectory?.item.permissions ?? [],
+  )
+
   const shouldDisplayStartModal =
-    isEmpty &&
-    (category.type === 'cloud' || category.type === 'local' || category.type === 'local-directory')
+    isEmpty && CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type)
 
-  if (isLoading) {
-    return <Loader minHeight="h48" height="full" />
-  }
-
-  if (isError) {
-    return (
-      <ErrorDisplay
-        error={getText('arbitraryErrorTitle')}
-        resetErrorBoundary={refetchAllDirectories}
-      />
-    )
-  }
+  const shouldDisableActions =
+    category.type === 'cloud' &&
+    (user.plan === Plan.enterprise || user.plan === Plan.team) &&
+    !hasPermissionToCreateAssets
 
   switch (status) {
     case 'not-enabled': {
@@ -148,11 +152,13 @@ export default function Drive(props: DriveProps) {
               doEmptyTrash={doEmptyTrash}
               isEmpty={isEmpty}
               shouldDisplayStartModal={shouldDisplayStartModal}
+              isDisabled={shouldDisableActions}
             />
 
             <div className="flex flex-1 gap-drive overflow-hidden">
               <div className="flex w-36 flex-col gap-drive-sidebar overflow-y-auto py-drive-sidebar-y">
                 <CategorySwitcher category={category} setCategory={setCategory} />
+
                 {isCloud && (
                   <Labels
                     backend={backend}
@@ -162,6 +168,7 @@ export default function Drive(props: DriveProps) {
                   />
                 )}
               </div>
+
               {status === 'offline' ?
                 <result.Result
                   status="info"
@@ -184,9 +191,6 @@ export default function Drive(props: DriveProps) {
                   )}
                 </result.Result>
               : <AssetsTable
-                  assetTree={assetTree}
-                  expandedDirectoryIds={expandedDirectoryIds}
-                  rootDirectoryId={rootDirectory.id}
                   assetManagementApiRef={assetsManagementApiRef}
                   hidden={hidden}
                   query={query}
@@ -197,6 +201,7 @@ export default function Drive(props: DriveProps) {
               }
             </div>
           </div>
+
           <AssetPanel backendType={backend.type} category={category} />
         </div>
       )

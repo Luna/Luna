@@ -82,7 +82,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     const effectivePasteData =
       (
         pasteData?.data.backendType === backend.type &&
-        canTransferBetweenCategories(pasteData.data.category, category)
+        canTransferBetweenCategories(pasteData.data.category, category, user)
       ) ?
         pasteData
       : null
