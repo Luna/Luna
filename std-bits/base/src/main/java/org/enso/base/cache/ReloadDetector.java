@@ -20,7 +20,7 @@ public class ReloadDetector {
   }
 
   public boolean hasReloadOccurred() {
-    var reloadHasOccurred = trigger.invokeMember("get").isNull();
+    var reloadHasOccurred = trigger.invokeMember("has_reload_occurred").asBoolean();
     if (reloadHasOccurred) {
       resetTrigger();
     }
@@ -34,6 +34,6 @@ public class ReloadDetector {
   }
 
   void simulateReloadTestOnly() {
-    trigger.invokeMember("clear");
+    trigger.invokeMember("simulate_reload_test_only");
   }
 }

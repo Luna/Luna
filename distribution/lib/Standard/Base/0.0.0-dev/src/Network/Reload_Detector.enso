@@ -1,32 +1,36 @@
-import Standard.Base.Data.Boolean.Boolean
+import Standard.Base.Error.Error
 import Standard.Base.Nothing.Nothing
 import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 import Standard.Base.Runtime.Ref.Ref
+from Standard.Base.Data.Boolean import Boolean, True, False
+
+## PRIVATE
+type Reload_Detector_Fake
+    Value
 
 ## PRIVATE
    This is used by ReloadDetector.java to create a `Managed_Resource` that is
-   finalized when the reload button is pressed.
+   garbage collected when the reload button is pressed.
 
-   The `on_finalize` function and the `clear` method both write `Nothing` to the
-   ref. This is a signal that a reload has happenend. `on_finalize` is called by
-   the engine when a reload happens. `clear` is only for testing, to simulate a
-   reload.
+   The managed resource contains a Ref containing a 0 (the value is
+   unimportant). When the reload button is pressed, the ref is removed and
+   attempting to access it using `with` throws an `Uninitialized_State`. When
+   the `Uninitialized_State` is detected, it indicates that the reload has been
+   initiated.
 
-   The `0` value stored in the ref is not used; it just has to be something
-   other than Nothing.
+   For standard library testing, a special fake value is stored in the ref to
+   indicate a reload.
 type Reload_Detector
     private Value mr:Managed_Resource
 
     new -> Reload_Detector =
-        ref = Ref.new 0
-        on_finalize ref = ref.put Nothing
-        mr = Managed_Resource.register ref on_finalize Boolean.True
+        mr = Managed_Resource.register (Ref.new 0) (x-> Nothing) True
         Reload_Detector.Value mr
 
-    get self = self.mr.with .get
+    has_reload_occurred self =
+        self.mr.has_been_collected || self.mr.with (ref-> ref.get.is_a Reload_Detector_Fake)
 
-    clear self =
-        self.mr.with (ref-> ref.put Nothing)
-        Nothing
+    simulate_reload_test_only self =
+        self.mr.with ref-> ref.put Reload_Detector_Fake.Value
 
 create_reload_detector = Reload_Detector.new
