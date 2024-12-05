@@ -8,9 +8,9 @@ import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { useAutoBlur } from '@/util/autoBlur'
-import { indentWithTab } from '@codemirror/commands'
 import { useCodeMirror } from '@/util/codemirror'
 import { testSupport } from '@/util/codemirror/testSupport'
+import { indentWithTab } from '@codemirror/commands'
 import {
   bracketMatching,
   defaultHighlightStyle,
