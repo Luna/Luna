@@ -245,7 +245,7 @@ dynamic language, having two types with the same operations means they can be
 used interchangingly.
 
 > [!NOTE]
-> A work on _type classes_ support is under way
+> A work on [type classes](https://github.com/orgs/enso-org/discussions/11366) support is under way
 
 > [!WARNING]
 >  **Doesn't match reality:**
