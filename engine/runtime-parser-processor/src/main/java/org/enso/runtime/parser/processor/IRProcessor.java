@@ -16,7 +16,6 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 import org.enso.runtime.parser.dsl.GenerateFields;
 import org.enso.runtime.parser.dsl.GenerateIR;
-import org.enso.runtime.parser.dsl.IRNode;
 import org.enso.runtime.parser.processor.utils.Utils;
 
 @SupportedAnnotationTypes({

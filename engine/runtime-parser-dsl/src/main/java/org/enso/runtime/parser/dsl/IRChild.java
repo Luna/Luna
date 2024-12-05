@@ -6,11 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Abstract methods annotated with this annotation will return the <emph>child</emph> of the current
- * IR element (the current IR element is the interface annotated with {@link IRNode} that encloses
- * this method). Children of IR elements form a tree. A child will be part of the methods traversing
- * the tree, like {@code mapExpression} and {@code children}. The method must have no parameters and
- * return a subtype of {@code org.enso.compiler.ir.IR}.
+ * Constructor parameter annotated with this annotation will be represented as a child field in the
+ * generated super class. Children of IR elements for a tree. A child will be part of the methods
+ * traversing the tree, like {@code mapExpression} and {@code children}. The parameter type must be
+ * a subtype of {@code org.enso.compiler.ir.IR}.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.PARAMETER)

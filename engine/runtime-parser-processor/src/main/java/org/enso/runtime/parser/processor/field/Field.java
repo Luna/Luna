@@ -5,10 +5,7 @@ import java.util.function.Function;
 import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
 
-/**
- * A field of an IR node. Represented by any parameterless method on an interface annotated with
- * {@link org.enso.runtime.parser.dsl.IRNode}.
- */
+/** Represents a field in the generated super class. */
 public interface Field {
 
   /** Name (identifier) of the field. */
