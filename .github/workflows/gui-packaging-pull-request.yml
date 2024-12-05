@@ -1,6 +1,6 @@
 # This file is not auto-generated. Feel free to edit it.
 
-name: ✨ GUI Packaging PR
+name: ✨ GUI Packaging
 
 on:
   push:
