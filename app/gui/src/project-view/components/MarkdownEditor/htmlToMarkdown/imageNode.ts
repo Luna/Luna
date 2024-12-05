@@ -85,6 +85,7 @@ export class ImageNode extends DecoratorNode<void> {
   override updateDOM = notImplemented
 }
 
+/** Type predicate for {@link ImageNode} */
 export function $isImageNode(node: unknown): node is ImageNode {
   return node instanceof ImageNode
 }
