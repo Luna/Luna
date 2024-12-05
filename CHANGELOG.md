@@ -47,6 +47,8 @@
 - [The hover area of the component output port extended twice its size][11715].
 - [Fixed a rare bug where the component position wasn't persisted after closing
   project][11761]
+- [Fix some UI elements drawing on top of visualization toolbar dropdown
+  menus][11768].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -76,6 +78,7 @@
 [11695]: https://github.com/enso-org/enso/pull/11695
 [11715]: https://github.com/enso-org/enso/pull/11715
 [11761]: https://github.com/enso-org/enso/pull/11761
+[11768]: https://github.com/enso-org/enso/pull/11768
 
 #### Enso Standard Library
 
