@@ -73,7 +73,7 @@ export const SELECTOR_STYLES = tv({
     variant: 'outline',
   },
   slots: {
-    radioGroup: 'flex',
+    radioGroup: 'grid',
   },
 })
 
@@ -144,8 +144,7 @@ export const Selector = forwardRef(function Selector<
                     isRequired,
                     isDisabled,
                     isInvalid,
-                    style:
-                      columns != null ? { gridTemplateColumns: `repeat(${columns}, 1fr)` } : {},
+                    style: { gridTemplateColumns: `repeat(${columns ?? items.length}, 1fr)` },
                     ...(defaultValue != null ? { defaultValue } : {}),
                   },
                   inputProps,

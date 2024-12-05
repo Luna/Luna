@@ -224,6 +224,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
       date: 1,
       days: [],
+      months: [],
       startHour: 0,
       endHour: HOURS_PER_DAY - 1,
       minute: 0,
@@ -357,7 +358,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           form={form}
           isRequired
           name="date"
-          label={getText('datesLabel')}
+          label={getText('dateLabel')}
           items={DATES}
           columns={10}
         >
@@ -365,16 +366,16 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         </Selector>
       )}
       {repeatInterval === 'monthly' && (
-        <Selector
+        <MultiSelector
           form={form}
           isRequired
-          name="date"
+          name="months"
           label={getText('monthsLabel')}
           items={MONTHS}
-          columns={10}
+          columns={6}
         >
           {(n) => getText(MONTH_3_LETTER_TEXT_IDS[n] ?? 'january3')}
-        </Selector>
+        </MultiSelector>
       )}
       <Input
         form={form}
