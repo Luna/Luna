@@ -45,32 +45,6 @@ public class IRProcessor extends AbstractProcessor {
     return true;
   }
 
-  private TypeElement findInterface(TypeElement processedClassElem, String interfaceName) {
-    if (isBinaryName(interfaceName)) {
-      var iface = processingEnv.getElementUtils().getTypeElement(interfaceName);
-      return iface;
-    } else {
-      var enclosingElem = processedClassElem.getEnclosingElement();
-      if (enclosingElem.getKind() == ElementKind.INTERFACE) {
-        if (enclosingElem.getSimpleName().toString().equals(interfaceName)) {
-          return (TypeElement) enclosingElem;
-        }
-      } else if (enclosingElem.getKind() == ElementKind.PACKAGE) {
-        return (TypeElement)
-            enclosingElem.getEnclosedElements().stream()
-                .filter(pkgElem -> pkgElem.getKind() == ElementKind.INTERFACE)
-                .filter(ifaceElem -> ifaceElem.getSimpleName().toString().equals(interfaceName))
-                .findFirst()
-                .orElse(null);
-      }
-    }
-    return null;
-  }
-
-  private static boolean isBinaryName(String name) {
-    return name.contains(".");
-  }
-
   /**
    * @param processedClassElem Class annotated with {@link GenerateIR}.
    * @return true if processing was successful, false otherwise.
@@ -124,12 +98,42 @@ public class IRProcessor extends AbstractProcessor {
     return true;
   }
 
+  private TypeElement findInterface(TypeElement processedClassElem, String interfaceName) {
+    if (isBinaryName(interfaceName)) {
+      var iface = processingEnv.getElementUtils().getTypeElement(interfaceName);
+      return iface;
+    } else {
+      var enclosingElem = processedClassElem.getEnclosingElement();
+      if (enclosingElem.getKind() == ElementKind.INTERFACE) {
+        if (enclosingElem.getSimpleName().toString().equals(interfaceName)) {
+          return (TypeElement) enclosingElem;
+        }
+      } else if (enclosingElem.getKind() == ElementKind.PACKAGE) {
+        return (TypeElement)
+            enclosingElem.getEnclosedElements().stream()
+                .filter(pkgElem -> pkgElem.getKind() == ElementKind.INTERFACE)
+                .filter(ifaceElem -> ifaceElem.getSimpleName().toString().equals(interfaceName))
+                .findFirst()
+                .orElse(null);
+      }
+    }
+    return null;
+  }
+
+  private static boolean isBinaryName(String name) {
+    return name.contains(".");
+  }
+
   private ProcessedClass constructProcessedClass(TypeElement processedClassElem) {
     var generateIrAnnot = processedClassElem.getAnnotation(GenerateIR.class);
     var ifaceToImplement = findInterface(processedClassElem, generateIrAnnot.interfaces());
     if (ifaceToImplement == null) {
       printError(
           "Could not find interface '" + generateIrAnnot.interfaces() + "'", processedClassElem);
+      return null;
+    }
+    if (!Utils.isSubtypeOfIR(ifaceToImplement, processingEnv)) {
+      printError("Interface to implement must be a subtype of IR interface", ifaceToImplement);
       return null;
     }
     var annotatedCtor = getAnnotatedCtor(processedClassElem);
