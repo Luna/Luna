@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * return a subtype of {@code org.enso.compiler.ir.IR}.
  */
 @Retention(RetentionPolicy.SOURCE)
-@Target(ElementType.METHOD)
+@Target(ElementType.PARAMETER)
 public @interface IRChild {
   /** If true, the child will always be non-null. Otherwise, it can be null. */
   boolean required() default true;

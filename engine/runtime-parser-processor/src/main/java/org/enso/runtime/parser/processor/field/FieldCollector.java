@@ -1,17 +1,15 @@
 package org.enso.runtime.parser.processor.field;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.dsl.IRChild;
+import org.enso.runtime.parser.dsl.IRField;
+import org.enso.runtime.parser.processor.ProcessedClass;
 import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
@@ -20,90 +18,88 @@ import org.enso.runtime.parser.processor.utils.Utils;
  */
 public final class FieldCollector {
   private final ProcessingEnvironment processingEnv;
-  private final TypeElement irNodeInterface;
+  private final ProcessedClass processedClass;
   // Mapped by field name
-  private final Map<String, Field> fields = new LinkedHashMap<>();
+  private Map<String, Field> fields;
 
-  /**
-   * @param irNodeInterface For this interface, fields will be collected.
-   */
-  public FieldCollector(ProcessingEnvironment processingEnv, TypeElement irNodeInterface) {
-    assert irNodeInterface.getKind() == ElementKind.INTERFACE;
+  public FieldCollector(ProcessingEnvironment processingEnv, ProcessedClass processedClass) {
     this.processingEnv = processingEnv;
-    this.irNodeInterface = irNodeInterface;
+    this.processedClass = processedClass;
   }
 
   public List<Field> collectFields() {
-    var superInterfaces = irNodeInterface.getInterfaces();
-    Deque<TypeMirror> toProcess = new ArrayDeque<>();
-    toProcess.add(irNodeInterface.asType());
-    toProcess.addAll(superInterfaces);
-    // Process transitively all the super interface until the parent IR is reached.
-    while (!toProcess.isEmpty()) {
-      var current = toProcess.pop();
-      // Skip processing of IR root interface.
-      if (Utils.isIRInterface(current, processingEnv)) {
-        continue;
-      }
-      var currentElem = processingEnv.getTypeUtils().asElement(current);
-      if (currentElem instanceof TypeElement currentTypeElem) {
-        collectFromSingleInterface(currentTypeElem);
-        // Add all super interfaces to the processing queue, if they are not there already.
-        for (var superInterface : currentTypeElem.getInterfaces()) {
-          if (!toProcess.contains(superInterface)) {
-            toProcess.add(superInterface);
-          }
-        }
-      }
+    if (fields == null) {
+      fields = new LinkedHashMap<>();
+      collectFromCtor();
     }
     return fields.values().stream().toList();
   }
 
-  /** Collect only parameterless methods without default implementation. */
-  private void collectFromSingleInterface(TypeElement typeElem) {
-    assert typeElem.getKind() == ElementKind.INTERFACE;
-    for (var childElem : typeElem.getEnclosedElements()) {
-      if (childElem instanceof ExecutableElement methodElement) {
-        if (methodElement.getParameters().isEmpty()
-            && !Utils.hasImplementation(methodElement, irNodeInterface, processingEnv)) {
-          var name = methodElement.getSimpleName().toString();
-          if (!fields.containsKey(name)) {
-            var field = methodToField(methodElement);
-            fields.put(name, field);
-          }
-        }
+  private void collectFromCtor() {
+    var ctor = processedClass.getCtor();
+    for (var param : ctor.getParameters()) {
+      var paramName = param.getSimpleName().toString();
+      var irFieldAnnot = param.getAnnotation(IRField.class);
+      var irChildAnnot = param.getAnnotation(IRChild.class);
+      Field field;
+      if (Utils.hasNoAnnotations(param)) {
+        field = null;
+      } else if (irFieldAnnot != null) {
+        field = processIrField(param, irFieldAnnot);
+      } else if (irChildAnnot != null) {
+        field = processIrChild(param, irChildAnnot);
+      } else {
+        throw new IllegalStateException("Unexpected annotation on constructor parameter " + param);
+      }
+
+      if (field != null) {
+        fields.put(paramName, field);
       }
     }
   }
 
-  private Field methodToField(ExecutableElement methodElement) {
-    var name = methodElement.getSimpleName().toString();
-    var retType = methodElement.getReturnType();
-    if (retType.getKind().isPrimitive()) {
-      return new PrimitiveField(retType, name);
+  private Field processIrField(VariableElement param, IRField irFieldAnnot) {
+    var isNullable = !irFieldAnnot.required();
+    var name = param.getSimpleName().toString();
+    var type = getParamType(param);
+    if (isPrimitiveType(param)) {
+      return new PrimitiveField(param.asType(), name);
+    } else {
+      // TODO: Assert that type is simple reference type - does not extend IR, is not generic
+      Utils.hardAssert(type != null);
+      return new ReferenceField(processingEnv, type, name, isNullable, false);
     }
+  }
 
-    var retTypeElem = (TypeElement) processingEnv.getTypeUtils().asElement(retType);
-    assert retTypeElem != null;
-    var childAnnot = methodElement.getAnnotation(IRChild.class);
-    if (childAnnot == null) {
-      return new ReferenceField(processingEnv, retTypeElem, name, false, false);
-    }
-
-    assert childAnnot != null;
-    if (Utils.isScalaList(retTypeElem, processingEnv)) {
-      assert retType instanceof DeclaredType;
-      var declaredRetType = (DeclaredType) retType;
+  private Field processIrChild(VariableElement param, IRChild irChildAnnot) {
+    var name = param.getSimpleName().toString();
+    var type = getParamType(param);
+    var isNullable = !irChildAnnot.required();
+    if (Utils.isScalaList(type, processingEnv)) {
+      assert type instanceof DeclaredType;
+      var declaredRetType = (DeclaredType) type;
       assert declaredRetType.getTypeArguments().size() == 1;
       var typeArg = declaredRetType.getTypeArguments().get(0);
       var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
       ensureIsSubtypeOfIR(typeArgElem);
-      return new ListField(name, retTypeElem, typeArgElem);
+      return new ListField(name, type, typeArgElem);
+    } else {
+      if (!Utils.isSubtypeOfIR(type, processingEnv)) {
+        Utils.printError(
+            "Constructor parameter annotated with @IRChild must be a subtype of IR interface",
+            param,
+            processingEnv.getMessager());
+      }
+      return new ReferenceField(processingEnv, type, name, isNullable, true);
     }
+  }
 
-    boolean isNullable = !childAnnot.required();
-    ensureIsSubtypeOfIR(retTypeElem);
-    return new ReferenceField(processingEnv, retTypeElem, name, isNullable, true);
+  private static boolean isPrimitiveType(VariableElement ctorParam) {
+    return ctorParam.asType().getKind().isPrimitive();
+  }
+
+  private TypeElement getParamType(VariableElement param) {
+    return (TypeElement) processingEnv.getTypeUtils().asElement(param.asType());
   }
 
   private void ensureIsSubtypeOfIR(TypeElement typeElem) {

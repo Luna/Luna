@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.processor.field.Field;
 
 /**
@@ -16,7 +15,7 @@ public final class GeneratedClassContext {
   private final List<Field> userFields;
   private final List<Parameter> constructorParameters;
   private final ProcessingEnvironment processingEnvironment;
-  private final TypeElement irNodeInterface;
+  private final ProcessedClass processedClass;
 
   private static final ClassField diagnosticsMetaField =
       new ClassField("private", "DiagnosticStorage", "diagnostics");
@@ -34,18 +33,16 @@ public final class GeneratedClassContext {
    * @param className Simple name of the generated class
    * @param userFields List of user defined fields. These fields are collected from parameterless
    *     abstract methods in the interface.
-   * @param irNodeInterface Type element of the interface annotated with {@link
-   *     org.enso.runtime.parser.dsl.IRNode} - for this interface the class is generated.
    */
   GeneratedClassContext(
       String className,
       List<Field> userFields,
       ProcessingEnvironment processingEnvironment,
-      TypeElement irNodeInterface) {
+      ProcessedClass processedClass) {
     this.className = Objects.requireNonNull(className);
     this.userFields = Objects.requireNonNull(userFields);
     this.processingEnvironment = Objects.requireNonNull(processingEnvironment);
-    this.irNodeInterface = irNodeInterface;
+    this.processedClass = processedClass;
     ensureSimpleName(className);
     this.constructorParameters =
         getAllFields().stream()
@@ -103,10 +100,6 @@ public final class GeneratedClassContext {
 
   public ProcessingEnvironment getProcessingEnvironment() {
     return processingEnvironment;
-  }
-
-  public TypeElement getIrNodeInterface() {
-    return irNodeInterface;
   }
 
   /**

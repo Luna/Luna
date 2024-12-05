@@ -9,7 +9,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
@@ -76,44 +75,6 @@ public final class Utils {
   public static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
     var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
-  }
-
-  /**
-   * Returns true if the method has an implementation (is default or static) in some of the super
-   * interfaces.
-   *
-   * <p>If the method is implemented in some of the super interfaces, there must not be generated an
-   * override for it - that would result in compilation error.
-   *
-   * @param method the method to check
-   * @param interfaceType the interface that declares the method to check for the implementation.
-   * @param procEnv
-   * @return
-   */
-  public static boolean hasImplementation(
-      ExecutableElement method, TypeElement interfaceType, ProcessingEnvironment procEnv) {
-    var defImplFound =
-        iterateSuperInterfaces(
-            interfaceType,
-            procEnv,
-            (TypeElement superInterface) -> {
-              for (var enclosedElem : superInterface.getEnclosedElements()) {
-                if (enclosedElem instanceof ExecutableElement executableElem) {
-                  if (executableElem.getSimpleName().equals(method.getSimpleName())) {
-                    if (hasModifier(executableElem, Modifier.DEFAULT)
-                        || hasModifier(executableElem, Modifier.STATIC)) {
-                      return true;
-                    }
-                  }
-                }
-              }
-              return null;
-            });
-    return defImplFound != null;
-  }
-
-  static boolean hasModifier(ExecutableElement method, Modifier modifier) {
-    return method.getModifiers().contains(modifier);
   }
 
   /**
@@ -188,6 +149,10 @@ public final class Utils {
     if (!condition) {
       throw new AssertionError(msg);
     }
+  }
+
+  public static boolean hasNoAnnotations(Element element) {
+    return element.getAnnotationMirrors().isEmpty();
   }
 
   public static boolean hasAnnotation(

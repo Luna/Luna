@@ -52,8 +52,13 @@ public class TestIRProcessorInline {
             "JName",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
         @GenerateIR
-        public final class JName {}
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
         """);
     var compiler = Compiler.javac().withProcessors(new IRProcessor());
     var compilation = compiler.compile(src);
@@ -75,6 +80,23 @@ public class TestIRProcessorInline {
     CompilationSubject.assertThat(compilation).failed();
     CompilationSubject.assertThat(compilation).hadErrorCount(1);
     CompilationSubject.assertThat(compilation).hadErrorContaining("final");
+  }
+
+  @Test
+  public void annotatedClassMustHaveAnnotatedConstructor() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        @GenerateIR
+        public final class JName {}
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).failed();
+    CompilationSubject.assertThat(compilation)
+        .hadErrorContaining("must have exactly one constructor annotated with @GenerateFields");
   }
 
   @Test
@@ -100,11 +122,13 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.ir.Expression;
 
         @GenerateIR
         public final class MyIR {
+          @GenerateFields
           public MyIR(@IRChild Expression expression) {}
         }
         """);
@@ -118,10 +142,12 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.runtime.parser.dsl.IRChild;
 
         @GenerateIR
         public final class MyIR {
+          @GenerateFields
           public MyIR(boolean suspended) {}
         }
         """);
@@ -135,13 +161,17 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
 
         interface MySuperIR {
           boolean suspended();
         }
 
-        @GenerateIR(interfaces = {"MySuperIR"})
-        public final class MyIR { }
+        @GenerateIR(interfaces = "MySuperIR")
+        public final class MyIR {
+          @GenerateFields
+          public MyIR() {}
+        }
   """);
     var compiler = Compiler.javac().withProcessors(new IRProcessor());
     var compilation = compiler.compile(src);
@@ -156,15 +186,18 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.compiler.core.IR;
 
         interface MySuperIR extends IR {
           boolean suspended();
         }
 
-        @GenerateIR(interfaces = {"MySuperIR"})
-        public final class MyIR { }
-
+        @GenerateIR(interfaces = "MySuperIR")
+        public final class MyIR {
+          @GenerateFields
+          public MyIR() {}
+        }
         """);
     assertThat(src, containsString("boolean suspended()"));
   }
@@ -176,6 +209,8 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
         import org.enso.compiler.core.IR;
 
         interface MySuperIR extends IR {
@@ -184,7 +219,8 @@ public class TestIRProcessorInline {
 
         @GenerateIR
         public final class MyIR {
-          public MyIR(boolean suspended) {}
+          @GenerateFields
+          public MyIR(@IRField boolean suspended) {}
         }
 
         """);
@@ -198,6 +234,8 @@ public class TestIRProcessorInline {
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
         import org.enso.compiler.core.IR;
 
         interface MySuperSuperIR extends IR {
@@ -207,8 +245,10 @@ public class TestIRProcessorInline {
         interface MySuperIR extends MySuperSuperIR {
         }
 
-        @GenerateIR
+        @GenerateIR(interfaces = "MySuperIR")
         public final class MyIR {
+          @GenerateFields
+          public MyIR(@IRField boolean suspended) {}
         }
         """);
     assertThat(src, containsString("boolean suspended()"));
@@ -221,16 +261,21 @@ public class TestIRProcessorInline {
             "JName",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.compiler.core.IR;
 
         public interface JName extends IR {
           String name();
 
-          @GenerateIR(interfaces = {"JName"})
-          final class JBlank {}
+          @GenerateIR(interfaces = "JName")
+          public final class JBlank {
+            @GenerateFields
+            public JBlank(@IRField String name) {}
+          }
         }
         """);
     assertThat(src, containsString("class JBlankGen implements JName"));
+    assertThat(src, containsString("String name()"));
   }
 
   @Test

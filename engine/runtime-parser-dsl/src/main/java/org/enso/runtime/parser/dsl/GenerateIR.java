@@ -14,38 +14,7 @@ import java.lang.annotation.Target;
  *
  * <p>The class can be enclosed (nested inside) an interface.
  *
- * <h2>Fields</h2>
- *
- * The generated class will contain 4 <b>meta</b> fields that are required to be present inside
- * every IR element:
- *
- * <ul>
- *   <li>{@code private DiagnosticStorage diagnostics}
- *   <li>{@code private MetadataStorage passData}
- *   <li>{@code private IdentifiedLocation location}
- *   <li>{@code private UUID id}
- * </ul>
- *
- * Apart from these <b>meta</b> fields, the generated class will also contain <b>user-defined</b>
- * fields. User-defined fields are inferred from all the parameters of the constructor. The
- * parameter of the constructor can be one of the following:
- *
- * <ul>
- *   <li>Any reference, or primitive type without annotation
- *   <li>A subtype of {@code org.enso.compiler.ir.IR} annotated with {@link IRChild}
- *   <li>One of the <emph>meta</emph> types mentioned above
- * </ul>
- *
- * A user-defined field generated out of constructor parameter annotated with {@link IRChild} is a
- * child element of this IR element. That means that it will be included in generated implementation
- * of IR methods that iterate over the IR tree. For example {@code mapExpressions} or {@code
- * children}.
- *
- * <p>A user-defined field generated out of constructor parameter that is not annotated with {@link
- * IRChild} will be just a field for which there will be generated a getter.
- *
- * <p>For a constructor parameter of a meta type, there will be no user-defined field generated, as
- * the meta fields are always generated.
+ * <p>The class must contain a single constructor annotated with {@link GenerateFields}.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
@@ -58,5 +27,5 @@ public @interface GenerateIR {
    *
    * @return
    */
-  String[] interfaces() default {"org.enso.compiler.core.IR"};
+  String interfaces() default "org.enso.compiler.core.IR";
 }
