@@ -101,7 +101,7 @@ export function applyDocumentUpdates(
     const { code, info } = printWithSpans(root)
     if (codeChanged) newCode = code
     const idMap = spanMapToIdMap(info)
-    if (codeChanged || idsChanged || synced.idMapJson) newIdMap = idMap
+    if (codeChanged || idsChanged || synced.idMapJson == null) newIdMap = idMap
     newPersistedIdMap = newMetadata && getIdMapToPersist(idMap, newMetadata)
   }
 

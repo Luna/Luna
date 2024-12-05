@@ -45,7 +45,7 @@
 - [Pasting tabular data now creates Table.input expressions][11695].
 - [No halo is displayed around components when hovering][11715].
 - [The hover area of the component output port extended twice its size][11715].
-- [Fixed a rare bug where the node position wasn't persisted after closing
+- [Fixed a rare bug where the component position wasn't persisted after closing
   project][11761]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
