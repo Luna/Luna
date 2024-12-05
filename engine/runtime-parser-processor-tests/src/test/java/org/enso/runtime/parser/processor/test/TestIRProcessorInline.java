@@ -262,6 +262,7 @@ public class TestIRProcessorInline {
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
         import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
         import org.enso.compiler.core.IR;
 
         public interface JName extends IR {
