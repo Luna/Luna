@@ -47,6 +47,8 @@
 - [The hover area of the component output port extended twice its size][11715].
 - [The documentation editor and comment documentation support opening links with
   a key pressed, or via a popup when editing][11753].
+- [In the table visualization and table widget, the table context menu can now
+  be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
 
