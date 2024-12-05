@@ -10,12 +10,19 @@ export function firstProjectExecutionOnOrAfter(
   startDate: Date,
 ): Date {
   // TODO: Account for timezone.
-  const nextDate = new Date(startDate)
+  let nextDate = new Date(startDate)
   const { repeat } = projectExecution
-  nextDate.setMinutes(repeat.minute)
+  const executionStartDate = new Date(projectExecution.startDate)
+  if (nextDate < executionStartDate) {
+    nextDate = new Date(executionStartDate)
+  }
+  nextDate.setMinutes(executionStartDate.getMinutes())
+  if (repeat.type !== 'hourly') {
+    nextDate.setHours(executionStartDate.getHours())
+  }
   switch (repeat.type) {
     case 'hourly': {
-      if (nextDate < startDate) {
+      while (nextDate < startDate) {
         nextDate.setHours(nextDate.getHours() + 1)
       }
       const currentHours = nextDate.getHours()
@@ -72,14 +79,16 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo,
   // TODO: Account for timezone.
   const nextDate = new Date(date)
   const { repeat } = projectExecution
-  nextDate.setMinutes(repeat.minute)
   switch (repeat.type) {
     case 'hourly': {
       nextDate.setHours(nextDate.getHours() + 1)
       const currentHours = nextDate.getHours()
-      if (currentHours < repeat.startHour || currentHours > repeat.endHour) {
+      if (currentHours < repeat.startHour) {
         nextDate.setHours(repeat.startHour)
+      }
+      if (currentHours > repeat.endHour) {
         nextDate.setDate(nextDate.getDate() + 1)
+        nextDate.setHours(repeat.startHour)
       }
       break
     }

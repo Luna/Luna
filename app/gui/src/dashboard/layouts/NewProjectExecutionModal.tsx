@@ -102,7 +102,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         .int()
         .min(0)
         .max(HOURS_PER_DAY - 1),
-      minute: z.number(),
       startDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
       endDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
       maxDurationMinutes: z
@@ -128,17 +127,16 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         months,
         startHour,
         endHour,
-        minute,
       }): ProjectExecutionInfo => {
         timeZone ??= getLocalTimeZone()
-        const startDateTime = startDate != null ? toRfc3339(startDate.toDate()) : startDate
+        startDate ??= now(timeZone)
+        const startDateTime = toRfc3339(startDate.toDate())
         const endDateTime = endDate != null ? toRfc3339(endDate.toDate()) : endDate
         const repeat = ((): ProjectExecutionRepeatInfo => {
           switch (repeatInterval) {
             case 'hourly': {
               return {
                 type: 'hourly',
-                minute,
                 startHour: startHour,
                 endHour: endHour,
               }
@@ -146,7 +144,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
             case 'daily': {
               return {
                 type: 'daily',
-                minute,
                 daysOfWeek: days,
               }
             }
@@ -155,7 +152,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
                 case 'date': {
                   return {
                     type: 'monthly-date',
-                    minute,
                     date,
                     months,
                   }
@@ -163,7 +159,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
                 case 'weekday': {
                   return {
                     type: 'monthly-weekday',
-                    minute,
                     dayOfWeek,
                     weekNumber,
                     months,
@@ -234,7 +229,6 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       weekNumber: 1,
       startHour: 0,
       endHour: HOURS_PER_DAY - 1,
-      minute: 0,
     },
     onSubmit: async (values) => {
       await createProjectExecution([values, item.title])
@@ -388,15 +382,6 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           {(n) => getText(MONTH_3_LETTER_TEXT_IDS[n] ?? 'january3')}
         </MultiSelector>
       )}
-      <Input
-        form={form}
-        required
-        name="minute"
-        label={getText('minuteLabel')}
-        type="number"
-        min={0}
-        max={59}
-      />
 
       <Form.FormError />
       <ButtonGroup>

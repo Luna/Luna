@@ -370,7 +370,6 @@ export type ProjectRepeatInterval = (typeof PROJECT_REPEAT_INTERVALS)[number]
 /** Details for a project execution that repeats hourly. */
 export interface ProjectExecutionHourlyRepeatInfo {
   readonly type: 'hourly'
-  readonly minute: number
   readonly startHour: number
   readonly endHour: number
 }
@@ -378,14 +377,12 @@ export interface ProjectExecutionHourlyRepeatInfo {
 /** Details for a project execution that repeats daily. */
 export interface ProjectExecutionDailyRepeatInfo {
   readonly type: 'daily'
-  readonly minute: number
   readonly daysOfWeek: readonly number[]
 }
 
 /** Details for a project execution that repeats monthly on a specific date. */
 export interface ProjectExecutionMonthlyDateRepeatInfo {
   readonly type: 'monthly-date'
-  readonly minute: number
   readonly date: number
   readonly months: readonly number[]
 }
@@ -396,7 +393,6 @@ export interface ProjectExecutionMonthlyDateRepeatInfo {
  */
 export interface ProjectExecutionMonthlyWeekdayRepeatInfo {
   readonly type: 'monthly-weekday'
-  readonly minute: number
   readonly weekNumber: number
   readonly dayOfWeek: number
   readonly months: readonly number[]
@@ -415,7 +411,7 @@ export interface ProjectExecutionInfo {
   readonly repeat: ProjectExecutionRepeatInfo
   readonly parallelMode: ProjectParallelMode
   readonly maxDurationMinutes: number
-  readonly startDate: dateTime.Rfc3339DateTime | null
+  readonly startDate: dateTime.Rfc3339DateTime
   readonly endDate: dateTime.Rfc3339DateTime | null
 }
 
