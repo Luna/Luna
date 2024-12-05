@@ -9,31 +9,30 @@ import org.graalvm.polyglot.Value;
  * <p>.hasReloadOccurred() returns true if the reload button was pressed since the last call to
  * .hasReloadOccurred().
  *
- * <p>This uses a weak reference (created in eval'd Enso code) that is cleared on reload.
+ * <p>This uses a `Managed_Resource` (created in eval'd Enso code) that is cleared on reload.
  */
 public class ReloadDetector {
-  // Weak reference that is set to null on reload.
-  private Value trigger;
+  private Value ensoReloadDetector;
 
   public ReloadDetector() {
-    resetTrigger();
+    resetEnsoReloadDetector();
   }
 
   public boolean hasReloadOccurred() {
-    var reloadHasOccurred = trigger.invokeMember("has_reload_occurred").asBoolean();
+    var reloadHasOccurred = ensoReloadDetector.invokeMember("has_reload_occurred").asBoolean();
     if (reloadHasOccurred) {
-      resetTrigger();
+      resetEnsoReloadDetector();
     }
     return reloadHasOccurred;
   }
 
-  private void resetTrigger() {
-    trigger =
+  private void resetEnsoReloadDetector() {
+    ensoReloadDetector =
         EnsoMeta.callStaticModuleMethod(
             "Standard.Base.Network.Reload_Detector", "create_reload_detector");
   }
 
   void simulateReloadTestOnly() {
-    trigger.invokeMember("simulate_reload_test_only");
+    ensoReloadDetector.invokeMember("simulate_reload_test_only");
   }
 }
