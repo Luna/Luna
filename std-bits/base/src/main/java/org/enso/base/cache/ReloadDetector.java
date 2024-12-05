@@ -9,7 +9,7 @@ import org.graalvm.polyglot.Value;
  * <p>.hasReloadOccurred() returns true if the reload button was pressed since the last call to
  * .hasReloadOccurred().
  *
- * <p>This uses a weak reference (created in eval'd Enso code) that is set to null on reload.
+ * <p>This uses a weak reference (created in eval'd Enso code) that is cleared on reload.
  */
 public class ReloadDetector {
   // Weak reference that is set to null on reload.

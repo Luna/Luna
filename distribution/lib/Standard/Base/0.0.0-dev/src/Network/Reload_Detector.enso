@@ -22,7 +22,7 @@ type Reload_Detector
         Reload_Detector.Value mr
 
     has_reload_occurred self =
-        self.mr.has_been_finalized || self.mr.with (ref-> ref.get.is_a Reload_Detector_Fake)
+        self.mr.has_been_finalized
 
     simulate_reload_test_only self =
         self.mr.finalize
