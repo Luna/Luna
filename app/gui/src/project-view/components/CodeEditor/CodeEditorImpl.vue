@@ -8,6 +8,7 @@ import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { useAutoBlur } from '@/util/autoBlur'
+import { indentWithTab } from '@codemirror/commands'
 import { useCodeMirror } from '@/util/codemirror'
 import { testSupport } from '@/util/codemirror/testSupport'
 import {
@@ -18,6 +19,7 @@ import {
 } from '@codemirror/language'
 import { lintGutter } from '@codemirror/lint'
 import { highlightSelectionMatches } from '@codemirror/search'
+import { keymap } from '@codemirror/view'
 import { type Highlighter } from '@lezer/highlight'
 import { minimalSetup } from 'codemirror'
 import { computed, onMounted, useTemplateRef, type ComponentInstance } from 'vue'
@@ -39,6 +41,7 @@ const { editorView, setExtraExtensions } = useCodeMirror(editorRoot, {
     highlightSelectionMatches(),
     ensoSyntax(),
     ensoHoverTooltip(graphStore, suggestionDbStore),
+    keymap.of([indentWithTab]),
   ],
 })
 ;(window as any).__codeEditorApi = testSupport(editorView)
@@ -57,7 +60,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <CodeMirror ref="editorRoot" class="CodeEditor" />
+  <CodeMirror ref="editorRoot" class="CodeEditor" @keydown.tab.stop.prevent />
 </template>
 
 <style scoped>
