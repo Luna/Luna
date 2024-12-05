@@ -214,7 +214,9 @@ make_json_for_other x =
                 if js_value.contains_key 'links' then [["links", js_value.get 'links']] else []
             additional_fields = if js_value.is_a JS_Object . not then [] else
                 if js_value.contains_key 'get_child_node_action' then [["get_child_node_action", js_value.get 'get_child_node_action']] else []
-            JS_Object.from_pairs <| [["json", value]] + additional_fields + link_fields
+            label = if js_value.is_a JS_Object . not then [] else
+                if js_value.contains_key 'child_label' then [["child_label", js_value.get 'child_label']] else []
+            JS_Object.from_pairs <| [["json", value]] + additional_fields + link_fields + label
 
         # Fallback for objects that fail to be serialized through `to_js_object`.
         False ->
