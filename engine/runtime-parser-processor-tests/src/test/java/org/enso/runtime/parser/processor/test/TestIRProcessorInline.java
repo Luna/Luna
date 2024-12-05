@@ -144,11 +144,12 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateIR;
         import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.runtime.parser.dsl.IRChild;
+        import org.enso.runtime.parser.dsl.IRField;
 
         @GenerateIR
         public final class MyIR {
           @GenerateFields
-          public MyIR(boolean suspended) {}
+          public MyIR(@IRField boolean suspended) {}
         }
         """);
     assertThat(genSrc, containsString("boolean suspended()"));
