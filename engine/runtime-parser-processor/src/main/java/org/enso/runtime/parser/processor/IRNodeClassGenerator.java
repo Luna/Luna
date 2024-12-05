@@ -172,13 +172,15 @@ final class IRNodeClassGenerator {
    * constructor has parameters for both meta fields and user-defined fields.
    */
   private String defaultConstructor() {
-    var docs = """
+    var docs =
+        """
         /**
          * Default constructor for all the fields inside the generated class - both meta and
          * user defined.
          */
         """;
-    var ctorCode = constructorForFields(generatedClassContext.getConstructorParameters(), List.of());
+    var ctorCode =
+        constructorForFields(generatedClassContext.getConstructorParameters(), List.of());
     return Utils.indent(docs + ctorCode, 2);
   }
 
@@ -188,7 +190,8 @@ final class IRNodeClassGenerator {
    * null.
    */
   private String constructorForUserFields() {
-    var docs = """
+    var docs =
+        """
         /**
          * Second generated constructor only for user-defined fields. All the meta fields will
          * be initialized to the default value ({@code null}).
@@ -198,7 +201,8 @@ final class IRNodeClassGenerator {
         generatedClassContext.getUserFields().stream()
             .map(field -> new Parameter(field.getSimpleTypeName(), field.getName()))
             .toList();
-    var ctorCode = constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
+    var ctorCode =
+        constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
     return Utils.indent(docs + ctorCode, 2);
   }
 
