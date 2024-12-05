@@ -22,7 +22,7 @@ that comes to their mind.
 
 On the other hand, Enso supports and encourages creation of **sharable libraries**.
 Maintainers of such libraries are likely to treat API design and its
-backward compatibility seriously. As such then need a way to **encapsulate**
+backward compatibility seriously. As such they need a way to **encapsulate**
 internals of their libraries and clearly **differentiate public API** and
 implementations details.
 
