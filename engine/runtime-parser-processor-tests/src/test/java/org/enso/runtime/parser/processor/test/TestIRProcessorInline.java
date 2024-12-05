@@ -104,10 +104,13 @@ public class TestIRProcessorInline {
     var src =
         """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
 
         @GenerateIR
         public final class JName {
-          public JName(String name) {}
+          @GenerateFields
+          public JName(@IRField String name) {}
         }
         """;
     var genClass = generatedClass("JName", src);
@@ -188,6 +191,7 @@ public class TestIRProcessorInline {
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
         import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
         import org.enso.compiler.core.IR;
 
         interface MySuperIR extends IR {
@@ -197,7 +201,7 @@ public class TestIRProcessorInline {
         @GenerateIR(interfaces = "MySuperIR")
         public final class MyIR {
           @GenerateFields
-          public MyIR() {}
+          public MyIR(@IRField boolean suspended) {}
         }
         """);
     assertThat(src, containsString("boolean suspended()"));
@@ -287,12 +291,14 @@ public class TestIRProcessorInline {
             "JName",
             """
         import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
         import scala.collection.immutable.List;
 
         @GenerateIR
         public final class JName {
+          @GenerateFields
           public JName(@IRChild List<IR> expressions) {}
         }
         """);
