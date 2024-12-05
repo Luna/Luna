@@ -42,23 +42,23 @@ import org.graalvm.polyglot.Language;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.io.IOAccess;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 public class DebuggingEnsoTest {
-  private Context context;
-  private Engine engine;
-  private Debugger debugger;
-  private final ByteArrayOutputStream out = new ByteArrayOutputStream();
+  private static Context context;
+  private static Engine engine;
+  private static Debugger debugger;
+  private static final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-  @Before
-  public void initContext() {
-    out.reset();
+  @BeforeClass
+  public static void initContext() {
     engine =
         Engine.newBuilder()
             .allowExperimentalOptions(true)
@@ -85,12 +85,18 @@ public class DebuggingEnsoTest {
     Assert.assertNotNull("Enso found: " + langs, langs.get("enso"));
   }
 
-  @After
-  public void disposeContext() throws IOException {
+  @AfterClass
+  public static void disposeContext() throws IOException {
     context.close();
     context = null;
     engine.close();
     engine = null;
+    debugger = null;
+  }
+
+  @Before
+  public void resetOut() {
+    out.reset();
   }
 
   /** Only print warnings from the compiler if a test fails. */
