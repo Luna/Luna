@@ -679,11 +679,14 @@ describe('Code edit', () => {
     const edit = beforeRoot.module.edit()
     const newCode = 'main = func 10 2\n'
     let changes: Record<string, number> | undefined = undefined
-    edit.observe((update) => (changes = {
-      added: update.nodesAdded.size,
-      deleted: update.nodesDeleted.size,
-      updated: update.nodesUpdated.size,
-    }))
+    edit.observe(
+      (update) =>
+        (changes = {
+          added: update.nodesAdded.size,
+          deleted: update.nodesDeleted.size,
+          updated: update.nodesUpdated.size,
+        }),
+    )
     edit.syncToCode(newCode)
     expect(edit.root()?.code()).toBe(newCode)
     expect(edit.root()?.id).toBe(beforeRoot.id)
