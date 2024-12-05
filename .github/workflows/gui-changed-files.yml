@@ -15,6 +15,7 @@ on:
 jobs:
   gui-changed-files:
     runs-on: ubuntu-latest
+    name: 🔍 Changed Files
     outputs:
       all_changed_files: ${{ steps.gui-changed-files.outputs.all_changed_files }}
       any_changed: ${{ steps.gui-changed-files.outputs.any_changed }}
