@@ -163,12 +163,11 @@ final class IRNodeClassGenerator {
   }
 
   /**
-   * Returns string representation of the package-private constructor of the generated class. Note
-   * that the constructor is meant to be invoked only by the internal Builder class.
+   * Returns string representation of the protected constructor of the generated class.
    */
   private String constructor() {
     var sb = new StringBuilder();
-    sb.append("private ").append(className).append("(");
+    sb.append("protected ").append(className).append("(");
     var inParens =
         generatedClassContext.getConstructorParameters().stream()
             .map(

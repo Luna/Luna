@@ -119,6 +119,26 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void generatedClassHasProtectedConstructor() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("class JNameGen"));
+    assertThat("Generate class has protected constructor",
+        genClass,
+        containsString("protected JNameGen"));
+  }
+
+  @Test
   public void simpleIRNodeWithChild() {
     var genSrc =
         generatedClass(
