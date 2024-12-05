@@ -254,7 +254,6 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
    */
   set desiredStack(stack: StackItem[]) {
     this._desiredStack.length = 0
-    console.log(stack)
     this._desiredStack.push(...stack)
     this.sync()
   }
@@ -283,40 +282,6 @@ export class ExecutionContext extends ObservableV2<ExecutionContextNotification>
     }
     this.sync()
   }
-
-  // /**
-  //  * Update the execution context stack items by replacing a name of specific method with a new value.
-  //  */
-  // updateMethodName(modPath: string, oldName: string, newName: string) {
-  //   // FIXME: This is a hack in order to make function renaming from within that function work correctly.
-  //   // Execution contexts don't send expression updates about their parent frames, so we end up with an
-  //   // outdated methodPointer concerning the parent expression. We have to inject a synthetic
-  //   // expressionUpdate, to keep it working correctly. Eventually this should be fixed by ensuring that
-  //   // parent frames are
-  //   const syntheticExpressionUpdates: ExpressionUpdate[] = []
-
-  //   this.desiredStack = this.desiredStack.map((item) => {
-  //     if (
-  //       item.type == 'ExplicitCall' &&
-  //       item.methodPointer.module == modPath &&
-  //       item.methodPointer.name == oldName
-  //     ) {
-  //       const oldMethodPointer = item.methodPointer
-  //       const newMethodPointer = {
-  //         ...item.methodPointer,
-  //         name: newName,
-  //       }
-
-  //       return { ...item, methodPointer: newMethodPointer }
-  //     } else if (item.type === 'LocalCall') {
-  //       syntheticExpressionUpdates.push({
-  //         expressionId: item.
-  //       })
-  //     }
-  //     return item
-  //   })
-  //   // TODO: send "fake" expression updates
-  // }
 
   /** See {@link LanguageServer.recomputeExecutionContext}. */
   recompute(

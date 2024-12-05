@@ -146,13 +146,13 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
 
     // When renaming a function, we temporarily lose track of edited function AST. Ensure that we
     // still resolve it before the refactor code change is received.
-    const lastKnownResolvedMethodExternalId = ref<AstId>()
+    const lastKnownResolvedMethodAstId = ref<AstId>()
     watch(immediateMethodAst, (ast) => {
-      if (ast.ok) lastKnownResolvedMethodExternalId.value = ast.value.id
+      if (ast.ok) lastKnownResolvedMethodAstId.value = ast.value.id
     })
 
     const fallbackMethodAst = computed(() => {
-      const id = lastKnownResolvedMethodExternalId.value
+      const id = lastKnownResolvedMethodAstId.value
       const ast = id != null ? syncModule.value?.get(id) : undefined
       if (ast instanceof Ast.FunctionDef) return ast
       return undefined

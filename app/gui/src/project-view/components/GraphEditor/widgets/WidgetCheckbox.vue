@@ -36,10 +36,10 @@ const value = computed({
   set(value) {
     const edit = graph.startEdit()
     const theImport = value ? trueImport.value : falseImport.value
-    const ast: Ast.Expression | string | undefined = props.input.value
-    if (ast instanceof Ast.Ast) {
+    const inputValue: Ast.Expression | string | undefined = props.input.value
+    if (inputValue instanceof Ast.Ast) {
       const { requiresImport } = setBoolNode(
-        edit.getVersion(ast),
+        edit.getVersion(inputValue),
         value ? ('True' as Identifier) : ('False' as Identifier),
       )
       if (requiresImport) graph.addMissingImports(edit, theImport)

@@ -224,7 +224,6 @@ export const WidgetInputIsSpecificMethodCall =
     input: WidgetInput,
   ): input is WidgetInput & { value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp } => {
     const callInfo = input[CallInfo]
-    console.log('callInfo', callInfo)
     // No need to check for AST type, since CallInfo depends on WidgetFunction being matched first.
     return callInfo != null && methodPointerEquals(callInfo.methodCall.methodPointer, methodPointer)
   }
