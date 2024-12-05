@@ -159,34 +159,34 @@ const selectableRowLimits = computed(() => {
   return defaults
 })
 
-const newNodeSelectorValues = computed(() => {
-  let tooltipValue
-  let headerName
-  switch (config.nodeType) {
-    case COLUMN_NODE_TYPE:
-    case VECTOR_NODE_TYPE:
-    case ROW_NODE_TYPE:
-      tooltipValue = 'value'
-      break
-    case EXCEL_WORKBOOK_NODE_TYPE:
-      tooltipValue = 'sheet'
-      headerName = 'Sheets'
-      break
-    case SQLITE_CONNECTIONS_NODE_TYPE:
-    case POSTGRES_CONNECTIONS_NODE_TYPE:
-    case SNOWFLAKE_CONNECTIONS_NODE_TYPE:
-      tooltipValue = 'table'
-      headerName = 'Tables'
-      break
-    case TABLE_NODE_TYPE:
-    case DB_TABLE_NODE_TYPE:
-      tooltipValue = 'row'
-  }
-  return {
-    tooltipValue,
-    headerName,
-  }
-})
+// const newNodeSelectorValues = computed(() => {
+//   let tooltipValue
+//   let headerName
+//   switch (config.nodeType) {
+//     case COLUMN_NODE_TYPE:
+//     case VECTOR_NODE_TYPE:
+//     case ROW_NODE_TYPE:
+//       tooltipValue = 'value'
+//       break
+//     case EXCEL_WORKBOOK_NODE_TYPE:
+//       tooltipValue = 'sheet'
+//       headerName = 'Sheets'
+//       break
+//     case SQLITE_CONNECTIONS_NODE_TYPE:
+//     case POSTGRES_CONNECTIONS_NODE_TYPE:
+//     case SNOWFLAKE_CONNECTIONS_NODE_TYPE:
+//       tooltipValue = 'table'
+//       headerName = 'Tables'
+//       break
+//     case TABLE_NODE_TYPE:
+//     case DB_TABLE_NODE_TYPE:
+//       tooltipValue = 'row'
+//   }
+//   return {
+//     tooltipValue,
+//     headerName,
+//   }
+// })
 
 const isFilterSortNodeEnabled = computed(
   () => config.nodeType === TABLE_NODE_TYPE || config.nodeType === DB_TABLE_NODE_TYPE,
