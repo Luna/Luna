@@ -1,4 +1,5 @@
 import { type GraphStore } from '@/stores/graph'
+import { type ProjectStore } from '@/stores/project'
 import { Annotation, ChangeSet, type ChangeSpec, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { createDebouncer } from 'lib0/eventloop'
@@ -6,7 +7,6 @@ import { onUnmounted, watch } from 'vue'
 import { MutableModule } from 'ydoc-shared/ast'
 import { SourceRangeEdit, textChangeToEdits } from 'ydoc-shared/util/data/text'
 import { type Origin } from 'ydoc-shared/yjsModel'
-import { type ProjectStore } from '@/stores/project'
 
 function changeSetToTextEdits(changes: ChangeSet) {
   const textEdits = new Array<SourceRangeEdit>()

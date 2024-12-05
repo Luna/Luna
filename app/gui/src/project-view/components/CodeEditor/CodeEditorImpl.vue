@@ -42,7 +42,11 @@ const { editorView, setExtraExtensions } = useCodeMirror(editorRoot, {
   ],
 })
 ;(window as any).__codeEditorApi = testSupport(editorView)
-const { updateListener, connectModuleListener } = useEnsoSourceSync(projectStore, graphStore, editorView)
+const { updateListener, connectModuleListener } = useEnsoSourceSync(
+  projectStore,
+  graphStore,
+  editorView,
+)
 const ensoDiagnostics = useEnsoDiagnostics(projectStore, graphStore, editorView)
 setExtraExtensions([updateListener, ensoDiagnostics])
 connectModuleListener()
