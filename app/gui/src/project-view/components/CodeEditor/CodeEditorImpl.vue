@@ -20,7 +20,7 @@ import { lintGutter } from '@codemirror/lint'
 import { highlightSelectionMatches } from '@codemirror/search'
 import { type Highlighter } from '@lezer/highlight'
 import { minimalSetup } from 'codemirror'
-import { computed, onMounted, useTemplateRef, watch, type ComponentInstance } from 'vue'
+import { computed, onMounted, useTemplateRef, type ComponentInstance } from 'vue'
 
 const projectStore = useProjectStore()
 const graphStore = useGraphStore()
@@ -42,17 +42,10 @@ const { editorView, setExtraExtensions } = useCodeMirror(editorRoot, {
   ],
 })
 ;(window as any).__codeEditorApi = testSupport(editorView)
-const { updateListener, connectModuleListener } = useEnsoSourceSync(graphStore, editorView)
+const { updateListener, connectModuleListener } = useEnsoSourceSync(projectStore, graphStore, editorView)
 const ensoDiagnostics = useEnsoDiagnostics(projectStore, graphStore, editorView)
 setExtraExtensions([updateListener, ensoDiagnostics])
-watch(
-  () => projectStore.module,
-  (module) => {
-    if (!module) return
-    connectModuleListener()
-  },
-  { immediate: true },
-)
+connectModuleListener()
 
 onMounted(() => {
   editorView.focus()
