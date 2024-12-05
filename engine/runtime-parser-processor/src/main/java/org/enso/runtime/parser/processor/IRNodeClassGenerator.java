@@ -220,6 +220,7 @@ final class IRNodeClassGenerator {
               .collect(Collectors.joining(System.lineSeparator()));
       sb.append(indent(ctorBody, 2));
     }
+    sb.append(System.lineSeparator());
 
     // The rest of the constructor body initializes the rest of the fields to null.
     if (!initializeToNull.isEmpty()) {
