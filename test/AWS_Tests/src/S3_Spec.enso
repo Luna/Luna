@@ -19,7 +19,9 @@ import enso_dev.Table_Tests.Util
 from Standard.Test import all
 
 import enso_dev.Base_Tests.Network.Enso_Cloud.Cloud_Tests_Setup.Cloud_Tests_Setup
+import enso_dev.Base_Tests.Network.Enso_Cloud.Cloud_Tests_Setup.Temporary_Directory
 import enso_dev.Base_Tests.System.File_Spec as Local_File_Spec
+from enso_dev.Base_Tests.Network.Enso_Cloud.Cloud_Data_Link_Spec import create_data_link_to_cloud, add_symlink_spec
 
 test_credentials -> AWS_Credential ! Illegal_State =
     access_key_id = Environment.get "ENSO_LIB_S3_AWS_ACCESS_KEY_ID" ""
@@ -533,6 +535,9 @@ add_specs suite_builder =
         Local_File_Spec.add_copy_edge_cases_specs group_builder my_writable_dir file_from_path=(S3_File.new _ test_credentials)
 
     suite_builder.group "DataLinks to S3_File" pending=api_pending group_builder->
+        assert my_writable_dir.is_directory
+        group_builder.teardown (my_writable_dir.delete_if_exists recursive=True)
+
         group_builder.specify "should be able to read a data link of an S3 File" <| with_default_credentials <|
             # It reads the datalink description and then reads the actual S3 file contents:
             (enso_project.data / "simple.datalink") . read . should_equal "Hello WORLD!"
@@ -561,6 +566,19 @@ add_specs suite_builder =
             Data_Link.write_raw_config s3_link raw_content replace_existing=True . should_succeed
             Panic.with_finalizer s3_link.delete <|
                 s3_link.read . should_equal "Hello WORLD!"
+
+        assert_directory f =
+            if f.is_directory then f else Panic.throw (Illegal_Argument.Error f.to_display_text+" is not a valid S3 directory.")
+        s3_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (my_writable_dir / "datalink-dir") create_data_link_to_s3 create_directory=assert_directory
+        add_symlink_spec group_builder "S3 -> S3" s3_to_s3_datalinks
+
+        cloud_test_root = Temporary_Directory.make "DataLinks-from-3S-to-Cloud"
+        group_builder.teardown cloud_test_root.cleanup
+        s3_to_cloud_datalinks = Symlink_Test_Setup.make (cloud_test_root / "target-link-dir") (my_writable_dir / "datalink-dir") create_data_link_to_cloud
+        add_symlink_spec group_builder "S3 -> Cloud" s3_to_cloud_datalinks pending=cloud_setup.real_cloud_pending
+
+        cloud_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (cloud_test_root / "datalink-dir") create_data_link_to_s3 create_directory=assert_directory
+        add_symlink_spec group_builder "Cloud -> S3" cloud_to_s3_datalinks pending=cloud_setup.real_cloud_pending
 
         group_builder.specify "should be able to read an S3 data link overriding the format" <| with_default_credentials <|
             s3_link = my_writable_dir / "my-simple.datalink"

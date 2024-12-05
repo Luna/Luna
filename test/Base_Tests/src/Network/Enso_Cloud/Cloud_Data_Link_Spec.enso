@@ -68,7 +68,8 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
             Data_Link.read_raw_config datalink . should_contain '{'
 
         # Testing Enso Cloud data links pointing to Enso Cloud files
-        add_symlink_spec group_builder (test_root.get / "datalink-target") ((test_root.get / "datalink-location") . create_directory)
+        cloud_data_link_to_cloud = Symlink_Test_Setup.make (test_root.get / "datalink-target") (test_root.get / "datalink-location") create_data_link_to_cloud
+        add_symlink_spec group_builder "Cloud -> Cloud" cloud_data_link_to_cloud
 
         group_builder.specify "does not allow to use Data_Link to read/write regular files" <|
             temp_file = File.create_temporary_file "not-a-datalink" ".txt"
@@ -90,7 +91,7 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
         group_builder.specify "should be able to read a datalink in the Cloud to Enso File" <|
             my_target_enso_file = "Hello Enso Cloud File!".write (test_root.get / "my-file.txt") . should_succeed
             datalink = test_root.get / "TestDataLink-EnsoFile.datalink"
-            create_data_link datalink my_target_enso_file . should_succeed
+            create_data_link_to_cloud datalink my_target_enso_file . should_succeed
             datalink.read . should_equal "Hello Enso Cloud File!"
 
         group_builder.specify "should be able to write Text to a data link pointing to a Cloud file" <|
@@ -157,10 +158,16 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
 
         local_temporary_directory = Lazy_Ref.Value <|
             name = "tmp-" + Random.uuid
-            (enso_project.data / "transient" / name) . create_directory
+            dir = (enso_project.data / "transient" / name) . create_directory
+            group_builder.teardown <| dir.delete recursive=True
+            dir
 
-        # Testing locally stored data links pointing to Enso Cloud files
-        add_symlink_spec group_builder (test_root.get / "datalink-target") (local_temporary_directory.get)
+        group_builder.teardown <| IO.println "Tear 1"
+        group_builder.teardown <| IO.println "Tear 2"
+        group_builder.teardown <| IO.println "Tear 3"
+
+        local_data_link_to_cloud = Symlink_Test_Setup.make (test_root.get / "datalink-target") (local_temporary_directory.get) create_data_link_to_cloud
+        add_symlink_spec group_builder "Local -> Cloud" local_data_link_to_cloud
 
 main filter=Nothing =
     setup = Cloud_Tests_Setup.prepare
@@ -208,21 +215,48 @@ enso_file_data_link_content = """
         "path": "<PATH>"
     }
 
-create_data_link link_location target:Enso_File =
+create_data_link_to_cloud link_location target:Enso_File =
     Data_Link.write_raw_config link_location (enso_file_data_link_content.replace "<PATH>" target.path) replace_existing=True
 
-add_symlink_spec group_builder ~target_location:Enso_File ~datalink_location =
-    group_builder.specify "allows Data.list to be used to list the target directory of the data link" <|
-        dir = target_location / "symlink-test-subdir"
-        dir.create_directory . should_succeed
-        "foobar".write (dir / "file1.txt") . should_succeed
-        "baz".write (dir / "file2.txt") . should_succeed
-
-        dir_datalink = datalink_location / "to-directory.datalink"
-        create_data_link dir_datalink dir . should_succeed
-
-        file_datalink = datalink_location / "to-file.datalink"
-        create_data_link file_datalink (dir / "file1.txt") . should_succeed
-
+add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
+    full_prefix = "("+prefix+") "
+    group_builder.specify full_prefix+"allows Data.list to be used to list the target directory of the data link" pending=pending <|
+        dir_datalink = setup.get.dir_datalink
         dir_datalink.list . map .name . should_equal ["file1.txt", "file2.txt"]
+
+        # But if called on a file data link, it's an error like locally
+        file_datalink = setup.get.file_datalink
         file_datalink.list . should_fail_with Illegal_Argument
+
+    group_builder.specify full_prefix+"allows to cross file-systems through the directory datalink using `/`" pending=pending <|
+        dir_datalink = setup.get.dir_datalink
+        (dir_datalink / "file1.txt").read . should_equal setup.get.file1_content
+        (dir_datalink / "file1.txt").path . should_equal (setup.get.target_subdir / "file1.txt").path
+
+    group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" <| pending=pending <|
+        file_datalink = setup.get.file_datalink
+        file_datalink.size . should_equal setup.get.file1_content.length
+
+type Symlink_Test_Setup
+    Value ~target_location ~datalink_location
+
+    target_subdir self = self.target_location / "symlink-test-subdir"
+    dir_datalink self = self.datalink_location / "to-directory.datalink"
+    file_datalink self = self.datalink_location / "to-file.datalink"
+
+    # We create a string of length 1234 to ensure that the size is predictable and unlikely to clash with the size of the JSON definition of the datalink.
+    file1_content self -> Text =
+        expected_size = 1234
+        Vector.fill expected_size "a" . join
+
+    make ~target_location ~datalink_location create_data_link create_directory=(f-> f.create_directory) create_text_file=(f-> c-> c.write f) -> Lazy_Ref =
+        Lazy_Ref.Value <|
+            setup = Symlink_Test_Setup.Value target_location datalink_location
+            create_directory setup.target_subdir . should_succeed
+            file1 = (setup.target_subdir / "file1.txt")
+            create_text_file file1 setup.file1_content . should_succeed
+            create_text_file (setup.target_subdir / "file2.txt") "baz" . should_succeed
+
+            create_data_link setup.dir_datalink setup.target_subdir . should_succeed
+            create_data_link setup.file_datalink file1 . should_succeed
+            setup
