@@ -218,7 +218,12 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
     full_prefix = "("+prefix+") "
     group_builder.specify full_prefix+"allows Data.list to be used to list the target directory of the data link" pending=pending <|
         dir_datalink = setup.get.dir_datalink
-        dir_datalink.list . map .name . should_equal ["file1.txt", "file2.txt"]
+
+        # Data.list sorts on its own
+        Data.list dir_datalink . map .name . should_equal ["file1.txt", "file2.txt"]
+
+        # Normal list needs to be sorted
+        dir_datalink.list . map .name . sort . should_equal ["file1.txt", "file2.txt"]
 
         # But if called on a file data link, it's an error like locally
         file_datalink = setup.get.file_datalink
