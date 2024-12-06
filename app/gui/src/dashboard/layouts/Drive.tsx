@@ -178,7 +178,8 @@ function DriveAssetsView(props: DriveProps) {
       category,
       parentId: rootDirectoryId,
     }),
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    staleTime: ({ state }) => (state.error ? 0 : Infinity),
     select: (data) => data.length === 0,
   })
 
@@ -218,7 +219,7 @@ function DriveAssetsView(props: DriveProps) {
         />
 
         <div className="flex flex-1 gap-drive overflow-hidden">
-          <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto py-drive-sidebar-y">
+          <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
             <CategorySwitcher category={category} setCategory={setCategory} />
 
             {isCloud && (

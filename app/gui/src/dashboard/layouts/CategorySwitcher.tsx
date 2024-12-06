@@ -173,10 +173,14 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       getDropOperation={(types) =>
         acceptedDragTypes.some((type) => types.has(type)) ? 'move' : 'cancel'
       }
-      className="group relative flex min-w-0 flex-auto items-start rounded-full drop-target-after"
+      className="group relative flex w-full min-w-full flex-auto items-start rounded-full drop-target-after"
       onDrop={onDrop}
     >
-      <AnimatedBackground.Item isSelected={isCurrent} animationClassName="bg-invert rounded-full">
+      <AnimatedBackground.Item
+        isSelected={isCurrent}
+        className="max-w-[calc(100%-24px)]"
+        animationClassName="bg-invert rounded-full"
+      >
         <ariaComponents.Button
           size="medium"
           variant="icon"
@@ -200,7 +204,9 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
             )
           }
         >
-          {label}
+          <ariaComponents.Text weight="semibold" color="current" truncate="1">
+            {label}
+          </ariaComponents.Text>
         </ariaComponents.Button>
       </AnimatedBackground.Item>
       <div className="absolute left-full ml-2 hidden group-focus-visible:block">
@@ -210,7 +216,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
   )
 
   return isNested ?
-      <div className="flex min-w-0 flex-auto">
+      <div className="flex min-w-full flex-auto">
         <div className="ml-[15px] mr-1.5 rounded-full border-r border-primary/20" />
         {element}
       </div>
