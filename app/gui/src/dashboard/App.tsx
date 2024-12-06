@@ -538,17 +538,15 @@ function AppRouter(props: AppRouterProps) {
                 {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
                  * due to modals being in `TheModal`. */}
                 <DriveProvider>
-                  <errorBoundary.ErrorBoundary>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    <suspense.Suspense>
-                      <errorBoundary.ErrorBoundary>
-                        <devtools.EnsoDevtools />
-                      </errorBoundary.ErrorBoundary>
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
-                </DriveProvider>
+                  <LocalBackendPathSynchronizer />
+                  <VersionChecker />
+                  {routes}
+                  <suspense.Suspense>
+                    <errorBoundary.ErrorBoundary>
+                      <devtools.EnsoDevtools />
+                    </errorBoundary.ErrorBoundary>
+                  </suspense.Suspense>
+                </DriveProvider> 
               </InputBindingsProvider>
             </AuthProvider>
           </BackendProvider>

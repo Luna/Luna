@@ -305,7 +305,6 @@ function DialogContent(props: DialogContentProps) {
     size,
     padding,
     fitContent,
-    layout,
   })
 
   const getDialogHeight = () => {
@@ -356,7 +355,7 @@ function DialogContent(props: DialogContentProps) {
         {...ariaDialogProps}
       >
         {(opts) => (
-          <errorBoundary.ErrorBoundary>
+          <>
             <motion.div layout className="w-full" transition={{ duration: 0 }}>
               <DialogHeader
                 closeButton={closeButton}
@@ -395,7 +394,7 @@ function DialogContent(props: DialogContentProps) {
                 {children}
               </DialogBody>
             </motion.div>
-          </errorBoundary.ErrorBoundary>
+          </>
         )}
       </MotionDialog>
 
@@ -437,11 +436,13 @@ const DialogBody = React.memo(function DialogBody(props: DialogBodyProps) {
   return (
     <div className={measurerWrapperClassName}>
       <div ref={contentDimensionsRef} className={contentClassName}>
-        <suspense.Suspense loaderProps={{ minHeight: type === 'fullscreen' ? 'full' : 'h32' }}>
-          <dialogProvider.DialogProvider close={close} dialogId={dialogId}>
-            {typeof children === 'function' ? children({ close }) : children}
-          </dialogProvider.DialogProvider>
-        </suspense.Suspense>
+        <errorBoundary.ErrorBoundary>
+          <suspense.Suspense loaderProps={{ minHeight: type === 'fullscreen' ? 'full' : 'h32' }}>
+            <dialogProvider.DialogProvider close={close} dialogId={dialogId}>
+              {typeof children === 'function' ? children({ close }) : children}
+            </dialogProvider.DialogProvider>
+          </suspense.Suspense>
+        </errorBoundary.ErrorBoundary>
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ import * as aria from '#/components/aria'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
-import { Text, TEXT_STYLE, useVisualTooltip } from '#/components/AriaComponents/Text'
+import { TEXT_STYLE, useVisualTooltip } from '#/components/AriaComponents/Text'
 import { Tooltip, TooltipTrigger } from '#/components/AriaComponents/Tooltip'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { forwardRef } from '#/utilities/react'

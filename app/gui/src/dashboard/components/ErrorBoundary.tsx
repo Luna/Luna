@@ -38,6 +38,8 @@ export interface ErrorBoundaryProps
     > {
   /** Called before the fallback is shown. */
   readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
+  readonly title?: string
+  readonly subtitle?: string
 }
 
 /**
@@ -51,6 +53,8 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
     onError = () => {},
     onReset = () => {},
     onBeforeFallbackShown = () => {},
+    title,
+    subtitle,
     ...rest
   } = props
 
@@ -63,6 +67,8 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
               {...fallbackProps}
               onBeforeFallbackShown={onBeforeFallbackShown}
               resetQueries={reset}
+              title={title}
+              subtitle={subtitle}
             />
           )}
           onError={(error, info) => {
@@ -85,8 +91,8 @@ export interface ErrorDisplayProps extends errorBoundary.FallbackProps {
   readonly status?: result.ResultProps['status']
   readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
   readonly resetQueries?: () => void
-  readonly title?: string
-  readonly subtitle?: string
+  readonly title?: string | undefined
+  readonly subtitle?: string | undefined
   readonly error: unknown
 }
 
@@ -98,7 +104,7 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
   const {
     error,
     resetErrorBoundary,
-    title = getText('appErroredMessage'),
+    title = getText('somethingWentWrong'),
     subtitle = isOffline ? getText('offlineErrorMessage') : getText('arbitraryErrorSubtitle'),
     status = isOffline ? 'info' : 'error',
     onBeforeFallbackShown,
@@ -112,10 +118,6 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
 
   return (
     <result.Result className="h-full" status={status} title={title} subtitle={subtitle}>
-      <ariaComponents.Text color="danger" variant="body">
-        {getText('errorColon')}
-        {message}
-      </ariaComponents.Text>
       <ariaComponents.ButtonGroup align="center">
         <ariaComponents.Button
           variant="submit"
@@ -131,19 +133,32 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
       </ariaComponents.ButtonGroup>
 
       {detect.IS_DEV_MODE && stack != null && (
-        <ariaComponents.Alert
-          className="mx-auto mt-4 max-h-[80vh] max-w-screen-lg overflow-auto"
-          variant="neutral"
-        >
-          <ariaComponents.Text
-            elementType="pre"
-            className="whitespace-pre-wrap text-left"
-            color="primary"
-            variant="body"
-          >
-            {stack}
+        <div className="mt-6">
+          <ariaComponents.Separator className="my-2" />
+
+          <ariaComponents.Text color="primary" variant="h1" className="text-start">
+            {getText('developerInfo')}
           </ariaComponents.Text>
-        </ariaComponents.Alert>
+
+          <ariaComponents.Text color="danger" variant="body">
+            {getText('errorColon')}
+            {message}
+          </ariaComponents.Text>
+
+          <ariaComponents.Alert
+            className="mx-auto mt-2 max-h-[80vh] max-w-screen-lg overflow-auto"
+            variant="neutral"
+          >
+            <ariaComponents.Text
+              elementType="pre"
+              className="whitespace-pre-wrap text-left"
+              color="primary"
+              variant="body"
+            >
+              {stack}
+            </ariaComponents.Text>
+          </ariaComponents.Alert>
+        </div>
       )}
     </result.Result>
   )

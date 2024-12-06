@@ -417,6 +417,7 @@
   "version": "Version",
   "build": "Build",
   "errorColon": "Error: ",
+  "developerInfo": "Dev mode info",
   "electronVersion": "Electron",
   "chromeVersion": "Chrome",
   "userAgent": "User Agent",
@@ -823,6 +824,7 @@
   "arbitraryFieldNotContainAny": "This field does not contain any of the fields",
 
   "arbitraryErrorTitle": "An error occurred",
+  "somethingWentWrong": "Something went wrong",
   "arbitraryErrorSubtitle": "Please try again or contact the administrators.",
   "arbitraryFormErrorMessage": "Something went wrong while submitting the form. Please try again or contact the administrators.",
 
