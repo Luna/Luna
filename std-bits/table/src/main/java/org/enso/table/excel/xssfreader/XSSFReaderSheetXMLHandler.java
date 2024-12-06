@@ -1,15 +1,14 @@
 package org.enso.table.excel.xssfreader;
 
+import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
+
+import java.time.temporal.Temporal;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.enso.table.excel.ExcelUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
-
-import java.time.temporal.Temporal;
-
-import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 /** Based on the XSSFSheetXMLHandler class from Apache POI. */
 public class XSSFReaderSheetXMLHandler extends DefaultHandler {
@@ -92,22 +91,23 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
             cellType = "n"; // Number is default
           }
 
-          dataType = switch (cellType) {
-            case "b" -> XSSDataType.BOOL;
-            case "e" -> XSSDataType.ERROR;
-            case "d" -> XSSDataType.DATE; // Date in ISO 8601 format.
-            case "inlineStr" -> XSSDataType.INLINE_STRING;
-            case "s" -> XSSDataType.SST_STRING;
-            case "str" -> XSSDataType.FORMULA_STRING; // String formula
-            default -> XSSDataType.NUMBER;
-          };
+          dataType =
+              switch (cellType) {
+                case "b" -> XSSDataType.BOOL;
+                case "e" -> XSSDataType.ERROR;
+                case "d" -> XSSDataType.DATE; // Date in ISO 8601 format.
+                case "inlineStr" -> XSSDataType.INLINE_STRING;
+                case "s" -> XSSDataType.SST_STRING;
+                case "str" -> XSSDataType.FORMULA_STRING; // String formula
+                default -> XSSDataType.NUMBER;
+              };
 
           // Read the format for NUMBER
           numberFormat = null;
           if (dataType == XSSDataType.NUMBER) {
             String cellStyleStr = attributes.getValue("s");
             if (cellStyleStr != null) {
-              short styleIndex = (short)Integer.parseInt(cellStyleStr);
+              short styleIndex = (short) Integer.parseInt(cellStyleStr);
               numberFormat = styles.getNumberFormatAt(styleIndex);
             }
           }
@@ -119,9 +119,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     }
   }
 
-  /**
-   * Captures characters if a suitable element is open.
-   */
+  /** Captures characters if a suitable element is open. */
   @Override
   public void characters(char[] ch, int start, int length) {
     if (vIsOpen) {
@@ -192,7 +190,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     var stringValue = getStringValue();
     if (dataType == XSSDataType.NUMBER) {
       boolean isInteger = !stringValue.contains(".");
-      boolean isDate= DateUtil.isADateFormat(-1, numberFormat);
+      boolean isDate = DateUtil.isADateFormat(-1, numberFormat);
       if (isInteger && isDate) {
         dataType = XSSDataType.OLE_DATE;
       } else if (isInteger) {
@@ -206,7 +204,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     int i = 0;
     char c;
     while (i < cellRef.length() && (c = cellRef.charAt(i)) >= 'A' && c <= 'Z') {
-      columnNumber = (short)(columnNumber * 26 + (c - 'A' + 1));
+      columnNumber = (short) (columnNumber * 26 + (c - 'A' + 1));
       i++;
     }
 
@@ -214,15 +212,11 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     onCell(rowNumber, columnNumber, cellRef, cellValue);
   }
 
-  protected void onDimensions(String dimension) {
-  }
+  protected void onDimensions(String dimension) {}
 
-  protected void onStartRow(int rowNumber) {
-  }
+  protected void onStartRow(int rowNumber) {}
 
-  protected void onCell(int rowNumber, short columnNumber, String ref, CellValue cellValue) {
-  }
+  protected void onCell(int rowNumber, short columnNumber, String ref, CellValue cellValue) {}
 
-  protected void onSheetEnd() {
-  }
+  protected void onSheetEnd() {}
 }

@@ -1,5 +1,20 @@
 package org.enso.table.excel.xssfreader;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -13,22 +28,13 @@ import org.enso.table.excel.ExcelWorkbook;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Consumer;
-
 public class XSSFReaderWorkbook implements ExcelWorkbook {
   private static final XPathFactory xpathFactory = XPathFactory.newInstance();
   private static final NamespaceContext namespaceContext = new SpreadsheetContext();
   private static final Map<String, XPathExpression> xpathCache = new HashMap<>();
 
-  private static XPathExpression compileXPathWithNamespace(String xpath) throws XPathExpressionException {
+  private static XPathExpression compileXPathWithNamespace(String xpath)
+      throws XPathExpressionException {
     if (!xpathCache.containsKey(xpath)) {
       var newXPath = xpathFactory.newXPath();
       newXPath.setNamespaceContext(namespaceContext);
@@ -44,9 +50,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
       if (prefix == null) {
         throw new IllegalArgumentException("prefix cannot be null");
       }
-      return prefix.equals("ss")
-          ? XSSFRelation.NS_SPREADSHEETML
-          : XMLConstants.NULL_NS_URI;
+      return prefix.equals("ss") ? XSSFRelation.NS_SPREADSHEETML : XMLConstants.NULL_NS_URI;
     }
 
     @Override
@@ -54,9 +58,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
       if (namespaceURI == null) {
         throw new IllegalArgumentException("namespaceURI cannot be null");
       }
-      return namespaceURI.equals(XSSFRelation.NS_SPREADSHEETML)
-          ? "ss"
-          : null;
+      return namespaceURI.equals(XSSFRelation.NS_SPREADSHEETML) ? "ss" : null;
     }
 
     @Override
@@ -101,55 +103,58 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
     }
   }
 
-  private record SheetInfo(int index, String name, String relID, boolean visible) {
-  }
+  private record SheetInfo(int index, String name, String relID, boolean visible) {}
 
-  private record NamedRange(String name, String formula) {
-  }
+  private record NamedRange(String name, String formula) {}
 
   private synchronized void readWorkbookData() {
     if (readWorkbookData) {
       return;
     }
 
-    withReader(rdr -> {
-      try {
-        var workbookData = rdr.getWorkbookData();
-        var workbookDoc = DocumentHelper.readDocument(workbookData);
+    withReader(
+        rdr -> {
+          try {
+            var workbookData = rdr.getWorkbookData();
+            var workbookDoc = DocumentHelper.readDocument(workbookData);
 
-        // Read the Sheets
-        var sheetXPath = compileXPathWithNamespace(SHEET_NAME_XPATH);
-        var sheetNodes = (NodeList) sheetXPath.evaluate(workbookDoc, XPathConstants.NODESET);
-        sheetInfos = new ArrayList<>(sheetNodes.getLength());
-        sheetInfoMap = new HashMap<>();
-        for (int i = 0; i < sheetNodes.getLength(); i++) {
-          var node = sheetNodes.item(i);
-          var sheetName = node.getAttributes().getNamedItem("name").getNodeValue();
-          var sheetId = Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
-          var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
-          var visible = node.getAttributes().getNamedItem("state") == null;
-          var sheetInfo = new SheetInfo(sheetId, sheetName, relId, visible);
-          sheetInfos.add(sheetInfo);
-          sheetInfoMap.put(sheetName, sheetInfo);
-        }
+            // Read the Sheets
+            var sheetXPath = compileXPathWithNamespace(SHEET_NAME_XPATH);
+            var sheetNodes = (NodeList) sheetXPath.evaluate(workbookDoc, XPathConstants.NODESET);
+            sheetInfos = new ArrayList<>(sheetNodes.getLength());
+            sheetInfoMap = new HashMap<>();
+            for (int i = 0; i < sheetNodes.getLength(); i++) {
+              var node = sheetNodes.item(i);
+              var sheetName = node.getAttributes().getNamedItem("name").getNodeValue();
+              var sheetId =
+                  Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
+              var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
+              var visible = node.getAttributes().getNamedItem("state") == null;
+              var sheetInfo = new SheetInfo(sheetId, sheetName, relId, visible);
+              sheetInfos.add(sheetInfo);
+              sheetInfoMap.put(sheetName, sheetInfo);
+            }
 
-        // Read the Named Ranges
-        var namesXPath = compileXPathWithNamespace(NAMED_RANGE_XPATH);
-        var nameNodes = (NodeList) namesXPath.evaluate(workbookDoc, XPathConstants.NODESET);
-        namedRangeMap = new HashMap<>();
-        for (int i = 0; i < nameNodes.getLength(); i++) {
-          var node = nameNodes.item(i);
-          var name = node.getAttributes().getNamedItem("name").getNodeValue();
-          var formula = node.getTextContent();
-          namedRangeMap.put(name, new NamedRange(name, formula));
-        }
+            // Read the Named Ranges
+            var namesXPath = compileXPathWithNamespace(NAMED_RANGE_XPATH);
+            var nameNodes = (NodeList) namesXPath.evaluate(workbookDoc, XPathConstants.NODESET);
+            namedRangeMap = new HashMap<>();
+            for (int i = 0; i < nameNodes.getLength(); i++) {
+              var node = nameNodes.item(i);
+              var name = node.getAttributes().getNamedItem("name").getNodeValue();
+              var formula = node.getTextContent();
+              namedRangeMap.put(name, new NamedRange(name, formula));
+            }
 
-        // Mark as read
-        readWorkbookData = true;
-      } catch (SAXException | IOException | InvalidFormatException | XPathExpressionException e) {
-        throw new RuntimeException(e);
-      }
-    });
+            // Mark as read
+            readWorkbookData = true;
+          } catch (SAXException
+              | IOException
+              | InvalidFormatException
+              | XPathExpressionException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private synchronized void readShared() {
@@ -157,38 +162,40 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
       return;
     }
 
-    withReader(rdr -> {
-      try {
-        rdr.setUseReadOnlySharedStringsTable(true);
-        sharedStrings = rdr.getSharedStringsTable();
-        if (sharedStrings == null) {
-          sharedStrings = new SharedStrings() {
-            @Override
-            public RichTextString getItemAt(int idx) {
-              return null;
+    withReader(
+        rdr -> {
+          try {
+            rdr.setUseReadOnlySharedStringsTable(true);
+            sharedStrings = rdr.getSharedStringsTable();
+            if (sharedStrings == null) {
+              sharedStrings =
+                  new SharedStrings() {
+                    @Override
+                    public RichTextString getItemAt(int idx) {
+                      return null;
+                    }
+
+                    @Override
+                    public int getCount() {
+                      return 0;
+                    }
+
+                    @Override
+                    public int getUniqueCount() {
+                      return 0;
+                    }
+                  };
             }
 
-            @Override
-            public int getCount() {
-              return 0;
-            }
+            // Read the styles table and attach the format data
+            var stylesTable = rdr.getStylesTable();
+            styles = new XSSFReaderFormats(stylesTable);
 
-            @Override
-            public int getUniqueCount() {
-              return 0;
-            }
-          };
-        }
-
-        // Read the styles table and attach the format data
-        var stylesTable = rdr.getStylesTable();
-        styles = new XSSFReaderFormats(stylesTable);
-
-        readShared = true;
-      } catch (InvalidFormatException | IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+            readShared = true;
+          } catch (InvalidFormatException | IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private Map<String, SheetInfo> getSheetInfoMap() {

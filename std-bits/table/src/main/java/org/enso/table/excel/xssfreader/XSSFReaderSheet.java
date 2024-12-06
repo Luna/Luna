@@ -1,5 +1,11 @@
 package org.enso.table.excel.xssfreader;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import javax.xml.parsers.ParserConfigurationException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.util.XMLHelper;
@@ -7,13 +13,6 @@ import org.enso.table.excel.ExcelRow;
 import org.enso.table.excel.ExcelSheet;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class XSSFReaderSheet implements ExcelSheet {
   private final int sheetIdx;
@@ -27,8 +26,7 @@ public class XSSFReaderSheet implements ExcelSheet {
   private int lastRow;
   private Map<Integer, SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue>> rowData;
 
-  public XSSFReaderSheet(int sheetIdx, String sheetName, String relId, XSSFReaderWorkbook parent)
-  {
+  public XSSFReaderSheet(int sheetIdx, String sheetName, String relId, XSSFReaderWorkbook parent) {
     this.sheetIdx = sheetIdx;
     this.sheetName = sheetName;
     this.relId = relId;
@@ -36,44 +34,45 @@ public class XSSFReaderSheet implements ExcelSheet {
   }
 
   private synchronized void readSheetData() {
-    if (readSheetData)
-    {
+    if (readSheetData) {
       return;
     }
 
     try {
       var strings = parent.getSharedStrings();
       var styles = parent.getStyles();
-      var handler = new XSSFReaderSheetXMLHandler(styles, strings) {
-        @Override
-        protected void onDimensions(String dimension) {
-          handleOnDimensions(dimension);
-        }
+      var handler =
+          new XSSFReaderSheetXMLHandler(styles, strings) {
+            @Override
+            protected void onDimensions(String dimension) {
+              handleOnDimensions(dimension);
+            }
 
-        @Override
-        protected void onStartRow(int rowNum) {
-          handleOnStartRow(rowNum);
-        }
+            @Override
+            protected void onStartRow(int rowNum) {
+              handleOnStartRow(rowNum);
+            }
 
-        @Override
-        protected void onCell(int rowNumber, short columnNumber, String ref, CellValue value) {
-          handleOnCell(rowNumber, columnNumber, value);
-        }
-      };
+            @Override
+            protected void onCell(int rowNumber, short columnNumber, String ref, CellValue value) {
+              handleOnCell(rowNumber, columnNumber, value);
+            }
+          };
 
       var xmlReader = XMLHelper.newXMLReader();
       xmlReader.setContentHandler(handler);
 
       rowData = new HashMap<>();
 
-      parent.withReader(reader -> {
-        try {
-          var sheet = reader.getSheet(relId);
-          xmlReader.parse(new InputSource(sheet));
-        } catch (SAXException | InvalidFormatException | IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      parent.withReader(
+          reader -> {
+            try {
+              var sheet = reader.getSheet(relId);
+              xmlReader.parse(new InputSource(sheet));
+            } catch (SAXException | InvalidFormatException | IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
 
       readSheetData = true;
     } catch (SAXException | ParserConfigurationException e) {
@@ -92,8 +91,7 @@ public class XSSFReaderSheet implements ExcelSheet {
   }
 
   public String getDimensions() {
-    if (!readSheetData)
-    {
+    if (!readSheetData) {
       readSheetData();
     }
     return dimensions;
@@ -101,8 +99,7 @@ public class XSSFReaderSheet implements ExcelSheet {
 
   @Override
   public int getFirstRow() {
-    if (!readSheetData)
-    {
+    if (!readSheetData) {
       readSheetData();
     }
     return firstRow;
@@ -110,8 +107,7 @@ public class XSSFReaderSheet implements ExcelSheet {
 
   @Override
   public int getLastRow() {
-    if (!readSheetData)
-    {
+    if (!readSheetData) {
       readSheetData();
     }
     return lastRow;
@@ -146,7 +142,8 @@ public class XSSFReaderSheet implements ExcelSheet {
     }
   }
 
-  private void handleOnCell(int rowNumber, short columnNumber, XSSFReaderSheetXMLHandler.CellValue value) {
+  private void handleOnCell(
+      int rowNumber, short columnNumber, XSSFReaderSheetXMLHandler.CellValue value) {
     if (rowData.containsKey(rowNumber)) {
       rowData.get(rowNumber).put(columnNumber, value);
     } else {

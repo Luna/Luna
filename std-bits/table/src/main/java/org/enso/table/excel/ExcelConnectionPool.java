@@ -239,9 +239,10 @@ public class ExcelConnectionPool {
         }
 
         try {
-          workbook = format == ExcelFileFormat.XLSX
-              ? new XSSFReaderWorkbook(file.getAbsolutePath())
-              : ExcelWorkbook.forWorkbook(openWorkbook(file, format, false));
+          workbook =
+              format == ExcelFileFormat.XLSX
+                  ? new XSSFReaderWorkbook(file.getAbsolutePath())
+                  : ExcelWorkbook.forWorkbook(openWorkbook(file, format, false));
         } catch (IOException e) {
           initializationException = e;
           if (throwOnFailure) {

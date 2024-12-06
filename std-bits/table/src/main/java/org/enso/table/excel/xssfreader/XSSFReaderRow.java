@@ -1,9 +1,9 @@
 package org.enso.table.excel.xssfreader;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.enso.table.excel.ExcelRow;
 import java.time.LocalDateTime;
 import java.util.SortedMap;
+import org.apache.poi.ss.usermodel.Cell;
+import org.enso.table.excel.ExcelRow;
 
 public class XSSFReaderRow implements ExcelRow {
   private final SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data;
@@ -73,8 +73,8 @@ public class XSSFReaderRow implements ExcelRow {
   public boolean isEmpty(int start, int end) {
     int currentEnd = end == -1 ? getLastColumn() : end;
     for (int column = Math.max(getFirstColumn(), start);
-         column <= Math.min(getLastColumn(), currentEnd);
-         column++) {
+        column <= Math.min(getLastColumn(), currentEnd);
+        column++) {
       if (!isEmpty(column)) {
         return false;
       }

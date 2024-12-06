@@ -43,7 +43,12 @@ public interface ExcelSheet {
   }
 
   record ExcelSheetFromWorkbook(
-      Sheet sheet, int sheetIndex, String sheetName, int firstRow, int lastRow, boolean use1904Format)
+      Sheet sheet,
+      int sheetIndex,
+      String sheetName,
+      int firstRow,
+      int lastRow,
+      boolean use1904Format)
       implements ExcelSheet {
     @Override
     public int getSheetIndex() {

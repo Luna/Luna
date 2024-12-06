@@ -1,9 +1,8 @@
 package org.enso.table.excel.xssfreader;
 
-import org.apache.poi.xssf.model.StylesTable;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.poi.xssf.model.StylesTable;
 
 /** Provides the format strings for number formats in an XSSF workbook. */
 public class XSSFReaderFormats {

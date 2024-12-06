@@ -44,7 +44,8 @@ public interface ExcelRow {
     var row = sheet.getRow(rowIndex - 1);
     return row == null
         ? null
-        : new ExcelRowFromSheet(row, row.getFirstCellNum() + 1, row.getLastCellNum(), use1904Format);
+        : new ExcelRowFromSheet(
+            row, row.getFirstCellNum() + 1, row.getLastCellNum(), use1904Format);
   }
 
   static boolean isEmptyHelper(ExcelRow row, int start, int end) {
@@ -62,7 +63,8 @@ public interface ExcelRow {
     return true;
   }
 
-  record ExcelRowFromSheet(Row row, int firstColumn, int lastColumn, boolean use1904Format) implements ExcelRow {
+  record ExcelRowFromSheet(Row row, int firstColumn, int lastColumn, boolean use1904Format)
+      implements ExcelRow {
     private static final DataFormatter formatter = new DataFormatter();
 
     public int getFirstColumn() {
@@ -107,8 +109,8 @@ public interface ExcelRow {
                 }
                 var dateFormat = cell.getCellStyle().getDataFormatString();
                 yield (dateFormat.contains("y")
-                    || dateFormat.contains("M")
-                    || dateFormat.contains("d"))
+                        || dateFormat.contains("M")
+                        || dateFormat.contains("d"))
                     ? zdt
                     : zdt.toLocalTime();
               }
@@ -142,8 +144,8 @@ public interface ExcelRow {
 
       return switch (cellType) {
         case ERROR ->
-          // Want to show the error message rather than empty.
-            FormulaError.forInt(cell.getErrorCellValue()).getString();
+        // Want to show the error message rather than empty.
+        FormulaError.forInt(cell.getErrorCellValue()).getString();
         case NUMERIC -> {
           // Special handling for Number or Date cells as want to keep formatting.
           var format = ExcelNumberFormat.from(cell, null);
@@ -158,7 +160,6 @@ public interface ExcelRow {
           yield value == null ? "" : value.toString();
         }
       };
-
     }
 
     public boolean isEmpty(int column) {
