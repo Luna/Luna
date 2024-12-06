@@ -40,7 +40,9 @@ import { newDirectoryId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
+import { AnimatedBackground } from '../components/AnimatedBackground'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
+import { twJoin } from 'tailwind-merge'
 
 // ============================
 // === Global configuration ===
@@ -132,6 +134,9 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
 
   const onPress = useEventCallback(() => {
     if (error == null && !areCategoriesEqual(category, currentCategory)) {
+      // We use startTransition to trigger a background transition between categories.
+      // and to not invoke the Suspense boundary.
+      // This makes the transition feel more responsive and natural.
       startTransition(() => {
         setCategory(category)
       })
@@ -171,29 +176,30 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       className="group relative flex min-w-0 flex-auto items-center rounded-full drop-target-after"
       onDrop={onDrop}
     >
-      <ariaComponents.Button
-        size="medium"
-        variant="ghost"
-        tooltip={tooltip}
-        tooltipPlacement="right"
-        isDisabled={isDisabled}
-        aria-label={buttonLabel}
-        isActive={isCurrent}
-        onPress={onPress}
-        loaderPosition="icon"
-        loading={isTransitioning}
-        className={'min-w-20'}
-        icon={icon}
-        addonEnd={
-          badgeContent != null && (
-            <Badge color="accent" variant="solid">
-              {badgeContent}
-            </Badge>
-          )
-        }
-      >
-        {label}
-      </ariaComponents.Button>
+      <AnimatedBackground.Item isSelected={isCurrent} animationClassName="bg-invert rounded-full">
+        <ariaComponents.Button
+          size="medium"
+          variant="custom"
+          tooltip={tooltip}
+          tooltipPlacement="right"
+          isDisabled={isDisabled}
+          aria-label={buttonLabel}
+          onPress={onPress}
+          loaderPosition="icon"
+          loading={isTransitioning}
+          className={twJoin('min-w-20 opacity-50 transition-opacity group-hover:opacity-100', isCurrent && 'opacity-100')}
+          icon={icon}
+          addonEnd={
+            badgeContent != null && (
+              <Badge color="accent" variant="solid">
+                {badgeContent}
+              </Badge>
+            )
+          }
+        >
+          {label}
+        </ariaComponents.Button>
+      </AnimatedBackground.Item>
       <div className="absolute left-full ml-2 hidden group-focus-visible:block">
         {getText('drop')}
       </div>
@@ -287,194 +293,198 @@ function CategorySwitcher(props: CategorySwitcherProps) {
 
   return (
     <div className="flex flex-col gap-2 py-1">
-      <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
-        {getText('category')}
-      </ariaComponents.Text>
+      <AnimatedBackground>
+        <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
+          {getText('category')}
+        </ariaComponents.Text>
 
-      <div
-        aria-label={getText('categorySwitcherMenuLabel')}
-        role="grid"
-        className="flex flex-col items-start"
-      >
-        <CategorySwitcherItem
-          {...itemProps}
-          category={{ type: 'cloud' }}
-          icon={CloudIcon}
-          label={getText('cloudCategory')}
-          buttonLabel={getText('cloudCategoryButtonLabel')}
-          dropZoneLabel={getText('cloudCategoryDropZoneLabel')}
-          badgeContent={getText('cloudCategoryBadgeContent')}
-        />
-        {(user.plan === backend.Plan.team || user.plan === backend.Plan.enterprise) && (
+        <div
+          aria-label={getText('categorySwitcherMenuLabel')}
+          role="grid"
+          className="flex flex-col items-start"
+        >
+          <CategorySwitcherItem
+            {...itemProps}
+            category={{ type: 'cloud' }}
+            icon={CloudIcon}
+            label={getText('cloudCategory')}
+            buttonLabel={getText('cloudCategoryButtonLabel')}
+            dropZoneLabel={getText('cloudCategoryDropZoneLabel')}
+            badgeContent={getText('cloudCategoryBadgeContent')}
+          />
+          {(user.plan === backend.Plan.team || user.plan === backend.Plan.enterprise) && (
+            <CategorySwitcherItem
+              {...itemProps}
+              isNested
+              category={{
+                type: 'user',
+                rootPath: backend.Path(`enso://Users/${user.name}`),
+                homeDirectoryId: selfDirectoryId,
+              }}
+              icon={PersonIcon}
+              label={getText('myFilesCategory')}
+              buttonLabel={getText('myFilesCategoryButtonLabel')}
+              dropZoneLabel={getText('myFilesCategoryDropZoneLabel')}
+            />
+          )}
+          {usersDirectoryQuery.data?.map((userDirectory) => {
+            if (userDirectory.type !== backend.AssetType.directory) {
+              return null
+            } else {
+              const otherUser = usersById.get(userDirectory.id)
+              return !otherUser || otherUser.userId === user.userId ?
+                  null
+                : <CategorySwitcherItem
+                    key={otherUser.userId}
+                    {...itemProps}
+                    isNested
+                    category={{
+                      type: 'user',
+                      rootPath: backend.Path(`enso://Users/${otherUser.name}`),
+                      homeDirectoryId: userDirectory.id,
+                    }}
+                    icon={PersonIcon}
+                    label={getText('userCategory', otherUser.name)}
+                    buttonLabel={getText('userCategoryButtonLabel', otherUser.name)}
+                    dropZoneLabel={getText('userCategoryDropZoneLabel', otherUser.name)}
+                  />
+            }
+          })}
+          {teamsDirectoryQuery.data?.map((teamDirectory) => {
+            if (teamDirectory.type !== backend.AssetType.directory) {
+              return null
+            } else {
+              const team = teamsById.get(teamDirectory.id)
+              return !team ? null : (
+                  <CategorySwitcherItem
+                    key={team.id}
+                    {...itemProps}
+                    isNested
+                    category={{
+                      type: 'team',
+                      team,
+                      rootPath: backend.Path(`enso://Teams/${team.groupName}`),
+                      homeDirectoryId: teamDirectory.id,
+                    }}
+                    icon={PeopleIcon}
+                    label={getText('teamCategory', team.groupName)}
+                    buttonLabel={getText('teamCategoryButtonLabel', team.groupName)}
+                    dropZoneLabel={getText('teamCategoryDropZoneLabel', team.groupName)}
+                  />
+                )
+            }
+          })}
           <CategorySwitcherItem
             {...itemProps}
             isNested
-            category={{
-              type: 'user',
-              rootPath: backend.Path(`enso://Users/${user.name}`),
-              homeDirectoryId: selfDirectoryId,
-            }}
-            icon={PersonIcon}
-            label={getText('myFilesCategory')}
-            buttonLabel={getText('myFilesCategoryButtonLabel')}
-            dropZoneLabel={getText('myFilesCategoryDropZoneLabel')}
+            category={{ type: 'recent' }}
+            icon={RecentIcon}
+            label={getText('recentCategory')}
+            buttonLabel={getText('recentCategoryButtonLabel')}
+            dropZoneLabel={getText('recentCategoryDropZoneLabel')}
+            iconClassName="-ml-0.5"
           />
-        )}
-        {usersDirectoryQuery.data?.map((userDirectory) => {
-          if (userDirectory.type !== backend.AssetType.directory) {
-            return null
-          } else {
-            const otherUser = usersById.get(userDirectory.id)
-            return !otherUser || otherUser.userId === user.userId ?
-                null
-              : <CategorySwitcherItem
-                  key={otherUser.userId}
-                  {...itemProps}
-                  isNested
-                  category={{
-                    type: 'user',
-                    rootPath: backend.Path(`enso://Users/${otherUser.name}`),
-                    homeDirectoryId: userDirectory.id,
-                  }}
-                  icon={PersonIcon}
-                  label={getText('userCategory', otherUser.name)}
-                  buttonLabel={getText('userCategoryButtonLabel', otherUser.name)}
-                  dropZoneLabel={getText('userCategoryDropZoneLabel', otherUser.name)}
-                />
-          }
-        })}
-        {teamsDirectoryQuery.data?.map((teamDirectory) => {
-          if (teamDirectory.type !== backend.AssetType.directory) {
-            return null
-          } else {
-            const team = teamsById.get(teamDirectory.id)
-            return !team ? null : (
-                <CategorySwitcherItem
-                  key={team.id}
-                  {...itemProps}
-                  isNested
-                  category={{
-                    type: 'team',
-                    team,
-                    rootPath: backend.Path(`enso://Teams/${team.groupName}`),
-                    homeDirectoryId: teamDirectory.id,
-                  }}
-                  icon={PeopleIcon}
-                  label={getText('teamCategory', team.groupName)}
-                  buttonLabel={getText('teamCategoryButtonLabel', team.groupName)}
-                  dropZoneLabel={getText('teamCategoryDropZoneLabel', team.groupName)}
-                />
-              )
-          }
-        })}
-        <CategorySwitcherItem
-          {...itemProps}
-          isNested
-          category={{ type: 'recent' }}
-          icon={RecentIcon}
-          label={getText('recentCategory')}
-          buttonLabel={getText('recentCategoryButtonLabel')}
-          dropZoneLabel={getText('recentCategoryDropZoneLabel')}
-          iconClassName="-ml-0.5"
-        />
-        <CategorySwitcherItem
-          {...itemProps}
-          isNested
-          category={{ type: 'trash' }}
-          icon={Trash2Icon}
-          label={getText('trashCategory')}
-          buttonLabel={getText('trashCategoryButtonLabel')}
-          dropZoneLabel={getText('trashCategoryDropZoneLabel')}
-        />
-        {localBackend && (
-          <div className="group flex items-center justify-between self-stretch">
-            <CategorySwitcherItem
-              {...itemProps}
-              category={{ type: 'local' }}
-              icon={ComputerIcon}
-              label={getText('localCategory')}
-              buttonLabel={getText('localCategoryButtonLabel')}
-              dropZoneLabel={getText('localCategoryDropZoneLabel')}
-            />
-            <ariaComponents.Button
-              size="medium"
-              variant="icon"
-              extraClickZone={false}
-              icon={SettingsIcon}
-              aria-label={getText('changeLocalRootDirectoryInSettings')}
-              className="opacity-0 transition-opacity group-hover:opacity-100"
-              onPress={() => {
-                setSearchParams({
-                  [`${SEARCH_PARAMS_PREFIX}SettingsTab`]: JSON.stringify('local'),
-                  [`${SEARCH_PARAMS_PREFIX}page`]: JSON.stringify(TabType.settings),
-                })
-              }}
-            />
-          </div>
-        )}
-        {localBackend &&
-          localRootDirectories?.map((directory) => (
-            <div key={directory} className="group flex items-center self-stretch">
+          <CategorySwitcherItem
+            {...itemProps}
+            isNested
+            category={{ type: 'trash' }}
+            icon={Trash2Icon}
+            label={getText('trashCategory')}
+            buttonLabel={getText('trashCategoryButtonLabel')}
+            dropZoneLabel={getText('trashCategoryDropZoneLabel')}
+          />
+          {localBackend && (
+            <div className="group flex items-center justify-between self-stretch">
               <CategorySwitcherItem
                 {...itemProps}
-                isNested
-                category={{
-                  type: 'local-directory',
-                  rootPath: backend.Path(directory),
-                  homeDirectoryId: newDirectoryId(backend.Path(directory)),
-                }}
-                icon={FolderIcon}
-                label={getFileName(directory)}
+                category={{ type: 'local' }}
+                icon={ComputerIcon}
+                label={getText('localCategory')}
                 buttonLabel={getText('localCategoryButtonLabel')}
                 dropZoneLabel={getText('localCategoryDropZoneLabel')}
               />
-              <div className="grow" />
-              <ariaComponents.DialogTrigger>
-                <ariaComponents.Button
-                  size="medium"
-                  variant="icon"
-                  extraClickZone={false}
-                  icon={Minus2Icon}
-                  aria-label={getText('removeDirectoryFromFavorites')}
-                  className="hidden group-hover:block"
-                />
-                <ConfirmDeleteModal
-                  actionText={getText(
-                    'removeTheLocalDirectoryXFromFavorites',
-                    getFileName(directory),
-                  )}
-                  actionButtonLabel={getText('remove')}
-                  doDelete={() => {
-                    setLocalRootDirectories(
-                      localRootDirectories.filter((otherDirectory) => otherDirectory !== directory),
-                    )
-                  }}
-                />
-              </ariaComponents.DialogTrigger>
+              <ariaComponents.Button
+                size="medium"
+                variant="icon"
+                extraClickZone={false}
+                icon={SettingsIcon}
+                aria-label={getText('changeLocalRootDirectoryInSettings')}
+                className="opacity-0 transition-opacity group-hover:opacity-100"
+                onPress={() => {
+                  setSearchParams({
+                    [`${SEARCH_PARAMS_PREFIX}SettingsTab`]: JSON.stringify('local'),
+                    [`${SEARCH_PARAMS_PREFIX}page`]: JSON.stringify(TabType.settings),
+                  })
+                }}
+              />
             </div>
-          ))}
-        {localBackend && window.fileBrowserApi && (
-          <div className="flex">
-            <div className="ml-[15px] mr-1 border-r border-primary/20" />
-            <ariaComponents.Button
-              size="xsmall"
-              variant="outline"
-              icon={PlusIcon}
-              loaderPosition="icon"
-              className="ml-0.5 rounded-full px-2 selectable"
-              onPress={async () => {
-                const [newDirectory] =
-                  (await window.fileBrowserApi?.openFileBrowser('directory')) ?? []
-                if (newDirectory != null) {
-                  setLocalRootDirectories([...(localRootDirectories ?? []), newDirectory])
-                }
-              }}
-            >
-              <div className="ml-1.5">{getText('addLocalDirectory')}</div>
-            </ariaComponents.Button>
-          </div>
-        )}
-      </div>
+          )}
+          {localBackend &&
+            localRootDirectories?.map((directory) => (
+              <div key={directory} className="group flex items-center self-stretch">
+                <CategorySwitcherItem
+                  {...itemProps}
+                  isNested
+                  category={{
+                    type: 'local-directory',
+                    rootPath: backend.Path(directory),
+                    homeDirectoryId: newDirectoryId(backend.Path(directory)),
+                  }}
+                  icon={FolderIcon}
+                  label={getFileName(directory)}
+                  buttonLabel={getText('localCategoryButtonLabel')}
+                  dropZoneLabel={getText('localCategoryDropZoneLabel')}
+                />
+                <div className="grow" />
+                <ariaComponents.DialogTrigger>
+                  <ariaComponents.Button
+                    size="medium"
+                    variant="icon"
+                    extraClickZone={false}
+                    icon={Minus2Icon}
+                    aria-label={getText('removeDirectoryFromFavorites')}
+                    className="hidden group-hover:block"
+                  />
+                  <ConfirmDeleteModal
+                    actionText={getText(
+                      'removeTheLocalDirectoryXFromFavorites',
+                      getFileName(directory),
+                    )}
+                    actionButtonLabel={getText('remove')}
+                    doDelete={() => {
+                      setLocalRootDirectories(
+                        localRootDirectories.filter(
+                          (otherDirectory) => otherDirectory !== directory,
+                        ),
+                      )
+                    }}
+                  />
+                </ariaComponents.DialogTrigger>
+              </div>
+            ))}
+          {localBackend && window.fileBrowserApi && (
+            <div className="flex">
+              <div className="ml-[15px] mr-1 border-r border-primary/20" />
+              <ariaComponents.Button
+                size="xsmall"
+                variant="outline"
+                icon={PlusIcon}
+                loaderPosition="icon"
+                className="ml-0.5 rounded-full px-2 selectable"
+                onPress={async () => {
+                  const [newDirectory] =
+                    (await window.fileBrowserApi?.openFileBrowser('directory')) ?? []
+                  if (newDirectory != null) {
+                    setLocalRootDirectories([...(localRootDirectories ?? []), newDirectory])
+                  }
+                }}
+              >
+                <div className="ml-1.5">{getText('addLocalDirectory')}</div>
+              </ariaComponents.Button>
+            </div>
+          )}
+        </div>
+      </AnimatedBackground>
     </div>
   )
 }
