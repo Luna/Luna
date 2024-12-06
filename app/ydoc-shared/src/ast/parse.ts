@@ -538,7 +538,7 @@ export function setExternalIds(edit: MutableModule, spans: SpanMap, ids: IdMap):
 export function parseInSameContext(
   code: string,
   ast: Ast,
-  { module }: { module?: MutableModule } = {},
+  module?: MutableModule,
 ): { root: Owned; spans: SpanMap } {
   const rawParsed = rawParseInContext(code, getParseContext(ast))
   return abstract(module ?? MutableModule.Transient(), rawParsed, code)
