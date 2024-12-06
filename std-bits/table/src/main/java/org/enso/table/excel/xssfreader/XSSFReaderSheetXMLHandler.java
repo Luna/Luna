@@ -1,9 +1,13 @@
 package org.enso.table.excel.xssfreader;
 
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.enso.table.excel.ExcelUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
+
+import java.time.temporal.Temporal;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -19,6 +23,9 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     INLINE_STRING,
     SST_STRING,
     NUMBER,
+    INTEGER,
+    OLE_DATE,
+    OLE_DATETIME,
     FORMULA_STRING,
     TEXT // Resolved Text Value
   }
@@ -152,6 +159,18 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     public double getNumberValue() {
       return Double.parseDouble(strValue);
     }
+
+    public long getIntegerValue() {
+      return Long.parseLong(strValue);
+    }
+
+    public Temporal getDateValue() {
+      return ExcelUtils.fromExcelDateTime(getIntegerValue());
+    }
+
+    public Temporal getDateTimeValue() {
+      return ExcelUtils.fromExcelDateTime(getNumberValue());
+    }
   }
 
   public String getStringValue() {
@@ -172,6 +191,15 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
   private void outputCellValue() {
     var stringValue = getStringValue();
     if (dataType == XSSDataType.NUMBER) {
+      boolean isInteger = !stringValue.contains(".");
+      boolean isDate= DateUtil.isADateFormat(-1, numberFormat);
+      if (isInteger && isDate) {
+        dataType = XSSDataType.OLE_DATE;
+      } else if (isInteger) {
+        dataType = XSSDataType.INTEGER;
+      } else if (isDate) {
+        dataType = XSSDataType.DATE;
+      }
     }
 
     short columnNumber = 0;

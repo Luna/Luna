@@ -41,6 +41,9 @@ public class XSSFReaderRow implements ExcelRow {
       case DATE -> LocalDateTime.parse(cell.strValue()); // Don't believe used by Excel.
       case INLINE_STRING, SST_STRING, FORMULA_STRING, TEXT -> cell.strValue();
       case NUMBER -> cell.getNumberValue();
+      case INTEGER -> cell.getIntegerValue();
+      case OLE_DATE -> cell.getDateValue();
+      case OLE_DATETIME -> cell.getDateTimeValue();
       case ERROR -> null;
     };
   }
