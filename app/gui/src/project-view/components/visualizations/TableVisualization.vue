@@ -50,6 +50,8 @@ interface Matrix {
   json: unknown[][]
   value_type: ValueType[]
   get_child_node_action: string
+  child_lable: string
+  visualization_header: string
 }
 
 interface Excel_Workbook {
@@ -59,6 +61,8 @@ interface Excel_Workbook {
   sheet_names: string[]
   json: unknown[][]
   get_child_node_action: string
+  child_lable: string
+  visualization_header: string
 }
 
 interface ObjectMatrix {
@@ -68,6 +72,8 @@ interface ObjectMatrix {
   json: object[]
   value_type: ValueType[]
   get_child_node_action: string
+  child_lable: string
+  visualization_header: string
 }
 
 interface UnknownTable {
@@ -85,6 +91,8 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
+  child_lable: string
+  visualization_header: string
   data_quality_metrics?: DataQualityMetric[]
 }
 
@@ -105,14 +113,7 @@ const TABLE_NODE_TYPE = 'Standard.Table.Table.Table'
 const DB_TABLE_NODE_TYPE = 'Standard.Database.DB_Table.DB_Table'
 const VECTOR_NODE_TYPE = 'Standard.Base.Data.Vector.Vector'
 const COLUMN_NODE_TYPE = 'Standard.Table.Column.Column'
-const EXCEL_WORKBOOK_NODE_TYPE = 'Standard.Table.Excel.Excel_Workbook.Excel_Workbook'
 const ROW_NODE_TYPE = 'Standard.Table.Row.Row'
-const SQLITE_CONNECTIONS_NODE_TYPE =
-  'Standard.Database.Internal.SQLite.SQLite_Connection.SQLite_Connection'
-const POSTGRES_CONNECTIONS_NODE_TYPE =
-  'Standard.Database.Internal.Postgres.Postgres_Connection.Postgres_Connection'
-const SNOWFLAKE_CONNECTIONS_NODE_TYPE =
-  'Standard.Snowflake.Snowflake_Connection.Snowflake_Connection'
 
 const rowLimit = ref(0)
 const page = ref(0)
@@ -158,35 +159,6 @@ const selectableRowLimits = computed(() => {
   }
   return defaults
 })
-
-// const newNodeSelectorValues = computed(() => {
-//   let tooltipValue
-//   let headerName
-//   switch (config.nodeType) {
-//     case COLUMN_NODE_TYPE:
-//     case VECTOR_NODE_TYPE:
-//     case ROW_NODE_TYPE:
-//       tooltipValue = 'value'
-//       break
-//     case EXCEL_WORKBOOK_NODE_TYPE:
-//       tooltipValue = 'sheet'
-//       headerName = 'Sheets'
-//       break
-//     case SQLITE_CONNECTIONS_NODE_TYPE:
-//     case POSTGRES_CONNECTIONS_NODE_TYPE:
-//     case SNOWFLAKE_CONNECTIONS_NODE_TYPE:
-//       tooltipValue = 'table'
-//       headerName = 'Tables'
-//       break
-//     case TABLE_NODE_TYPE:
-//     case DB_TABLE_NODE_TYPE:
-//       tooltipValue = 'row'
-//   }
-//   return {
-//     tooltipValue,
-//     headerName,
-//   }
-// })
 
 const isFilterSortNodeEnabled = computed(
   () => config.nodeType === TABLE_NODE_TYPE || config.nodeType === DB_TABLE_NODE_TYPE,
@@ -451,16 +423,16 @@ function createNode(
   }
 }
 
-function toLinkField(fieldName: string, getChildAction?: string, castValueTypes?: string): ColDef {
+function toLinkField(fieldName: string, tooltipValue?: string, headerName?: string, getChildAction?: string, castValueTypes?: string): ColDef {
   return {
     headerName:
-      newNodeSelectorValues.value.headerName ? newNodeSelectorValues.value.headerName : fieldName,
+      headerName ? headerName : fieldName,
     field: fieldName,
     onCellDoubleClicked: (params) => createNode(params, fieldName, getChildAction, castValueTypes),
     tooltipValueGetter: (params: ITooltipParams) =>
       params.node?.rowPinned === 'top' ?
         null
-      : `Double click to view this ${newNodeSelectorValues.value.tooltipValue} in a separate component`,
+      : `Double click to view this ${tooltipValue} in a separate component`,
     cellRenderer: (params: ICellRendererParams) =>
       params.node.rowPinned === 'top' ?
         `<div> ${params.value}</div>`
@@ -494,6 +466,10 @@ watchEffect(() => {
         // eslint-disable-next-line camelcase
         get_child_node_link_name: undefined,
         // eslint-disable-next-line camelcase
+        child_lable: undefined,
+        // eslint-disable-next-line camelcase
+        visualization_header: undefined,
+        // eslint-disable-next-line camelcase
         link_value_type: undefined,
       }
   if ('error' in data_) {
@@ -505,14 +481,14 @@ watchEffect(() => {
     ]
     rowData.value = [{ Error: data_.error }]
   } else if (data_.type === 'Matrix') {
-    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
+    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.child_lable, data_.visualization_header, data_.get_child_node_action)]
     for (let i = 0; i < data_.column_count; i++) {
       columnDefs.value.push(toField(i.toString()))
     }
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
   } else if (data_.type === 'Object_Matrix') {
-    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
+    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.child_lable, data_.visualization_header,data_.get_child_node_action)]
     const keys = new Set<string>()
     for (const val of data_.json) {
       if (val != null) {
@@ -527,18 +503,18 @@ watchEffect(() => {
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
   } else if (data_.type === 'Excel_Workbook') {
-    columnDefs.value = [toLinkField('Value', data_.get_child_node_action)]
+    columnDefs.value = [toLinkField('Value',data_.child_lable, data_.visualization_header, data_.get_child_node_action)]
     rowData.value = data_.sheet_names.map((name) => ({ Value: name }))
   } else if (Array.isArray(data_.json)) {
     columnDefs.value = [
-      toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action),
+      toLinkField(INDEX_FIELD_NAME, data_.child_lable, data_.visualization_header,data_.get_child_node_action),
       toField('Value'),
     ]
     rowData.value = data_.json.map((row, i) => ({ [INDEX_FIELD_NAME]: i, Value: toRender(row) }))
     isTruncated.value = data_.all_rows_count ? data_.all_rows_count !== data_.json.length : false
   } else if (data_.json !== undefined) {
     columnDefs.value =
-      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value')]
+      data_.links ? [toLinkField('Value', data_.child_lable, data_.visualization_header, data_.get_child_node_action)] : [toField('Value')]
     rowData.value =
       data_.links ?
         data_.links.map((link) => ({
@@ -560,7 +536,7 @@ watchEffect(() => {
 
     columnDefs.value =
       data_.has_index_col ?
-        [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action), ...dataHeader]
+        [toLinkField(INDEX_FIELD_NAME, data_.child_lable, data_.visualization_header,data_.get_child_node_action), ...dataHeader]
       : dataHeader
     const rows = data_.data && data_.data.length > 0 ? data_.data[0]?.length ?? 0 : 0
     rowData.value = Array.from({ length: rows }, (_, i) => {
