@@ -162,10 +162,6 @@ add_specs suite_builder setup:Cloud_Tests_Setup =
             group_builder.teardown <| dir.delete recursive=True
             dir
 
-        group_builder.teardown <| IO.println "Tear 1"
-        group_builder.teardown <| IO.println "Tear 2"
-        group_builder.teardown <| IO.println "Tear 3"
-
         local_data_link_to_cloud = Symlink_Test_Setup.make (test_root.get / "datalink-target") (local_temporary_directory.get) create_data_link_to_cloud
         add_symlink_spec group_builder "Local -> Cloud" local_data_link_to_cloud
 
