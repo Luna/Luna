@@ -63,6 +63,9 @@ a `No_Such_Method` panic is raised.
 Multiple dispatch is currently used for
 [binary operators](../syntax/functions.md#type-ascriptions-and-operator-resolution).
 
+Multiple dispatch is also used on `from` conversions, because in
+expression `T.from x` the function to use is based on both `T` and `x`.
+
 > [!WARNING]
 > Supporting general _multiple dispatch is unlikely_
 >
