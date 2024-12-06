@@ -91,7 +91,7 @@ Enso 2024.5.1 version. Users cannot define their own.
 ## Context Lifting
 
 > [!WARNING]
-> The actionables for this section are:
+> Is there any meaning of _lifting_ when there is no special support in type system?
 >
 > - Specify and explain how automated lifting of monadic contexts works.
 > - It depends on the order of `runCtx`
@@ -103,10 +103,22 @@ contects.
 
 ### State
 
-> [!WARNING]
-> The actionables for this section are:
+State acts as a _thread local_ variable (well, it will when #7117 gets fixed): 
+- one can set it up
+- execute some code
+- a code somewhere deep the stack
+- may pick the state up
+
+It is an example of _tunnelling a value_ from one side (e.g. code) of the "tunnel" to another,
+without the "tunnel" (e.g. thee code in between) knowing about it.
+
+<!--
+> There has to be some Haskell monad concept for it all... but we don't need it
+> as Enso is dynamicly typed language.
 >
-> - Determine exactly how state works (the fact that the 'keys' are preset by
->   the `runState`)
 > - Describe how dependently-typed maps allow us to provide more flexible
 >   interfaces in future.
+-->
+
+The _state_ concept is implement by standard libraries with _no support in the type system_.
+See `Standard.Base.Runtime.State` for more details.
