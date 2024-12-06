@@ -34,6 +34,8 @@
 - [Table Input Widget is now matched for Table.input method instead of
   Table.new. Values must be string literals, and their content is parsed to the
   suitable type][11612].
+- [Added dedicated function signature viewer and editor in the right-side
+  panel][11655].
 - [Visualizations on components are slightly transparent when not
   focused][11582].
 - [New design for vector-editing widget][11620]
@@ -47,6 +49,8 @@
 - [The hover area of the component output port extended twice its size][11715].
 - [Fixed a rare bug where the component position wasn't persisted after closing
   project][11761]
+- [In the table visualization and table widget, the table context menu can now
+  be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
 
@@ -71,6 +75,8 @@
 [11582]: https://github.com/enso-org/enso/pull/11582
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
+[11655]: https://github.com/enso-org/enso/pull/11655
+[11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
 [11666]: https://github.com/enso-org/enso/pull/11666
 [11690]: https://github.com/enso-org/enso/pull/11690
