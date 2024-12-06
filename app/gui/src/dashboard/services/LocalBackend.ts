@@ -92,7 +92,6 @@ export function extractTypeAndId<Id extends backend.AssetId>(id: Id): AssetTypeA
   }
 }
 
-
 // ====================
 // === LocalBackend ===
 // ====================

@@ -87,8 +87,9 @@ interface InternalCategorySwitcherItemProps extends CategoryMetadata {
 
 const CATEGORY_SWITCHER_VARIANTS = tv({
   extend: ariaComponents.BUTTON_STYLES,
-  base: 'opacity-50 transition-opacity group-hover:opacity-100 w-auto max-w-full',
+  base: 'group opacity-50 transition-opacity group-hover:opacity-100 w-auto max-w-full',
   slots: {
+    wrapper: 'w-full',
     text: 'flex-1 min-w-0 w-auto items-start justify-start',
   },
 })
@@ -192,7 +193,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       >
         <ariaComponents.Button
           size="medium"
-          variant="icon"
+          variant="custom"
           tooltip={tooltip}
           tooltipPlacement="right"
           variants={CATEGORY_SWITCHER_VARIANTS}
@@ -211,7 +212,12 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
             )
           }
         >
-          <ariaComponents.Text weight="semibold" color="current" truncate="1">
+          <ariaComponents.Text
+            disableLineHeightCompensation
+            weight="semibold"
+            color="current"
+            truncate="1"
+          >
             {label}
           </ariaComponents.Text>
         </ariaComponents.Button>

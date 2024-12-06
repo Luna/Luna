@@ -284,5 +284,12 @@ export function useAssetTree(options: UseAssetTreeOptions) {
     user,
   ])
 
-  return { isLoading, isError, assetTree, isFetching, refetchDirectory, refetchAllDirectories } as const
+  return {
+    isLoading,
+    isError,
+    assetTree,
+    isFetching,
+    refetchDirectory,
+    refetchAllDirectories,
+  } as const
 }

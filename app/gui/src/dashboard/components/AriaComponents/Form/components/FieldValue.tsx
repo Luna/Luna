@@ -43,7 +43,4 @@ const MemoChildren = memo(function MemoChildren<T>(props: {
   value: T
 }) {
   return props.children(props.value)
-}) as unknown as <T>(props: {
-  children: (value: T) => ReactNode
-  value: T
-}) => ReactNode
+}) as unknown as <T>(props: { children: (value: T) => ReactNode; value: T }) => ReactNode

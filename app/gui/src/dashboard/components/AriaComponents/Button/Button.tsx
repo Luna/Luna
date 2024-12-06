@@ -13,7 +13,7 @@ import * as aria from '#/components/aria'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
-import { TEXT_STYLE, useVisualTooltip } from '#/components/AriaComponents/Text'
+import { Text, TEXT_STYLE, useVisualTooltip } from '#/components/AriaComponents/Text'
 import { Tooltip, TooltipTrigger } from '#/components/AriaComponents/Tooltip'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { forwardRef } from '#/utilities/react'
@@ -272,9 +272,8 @@ export const BUTTON_STYLES = tv({
     content: 'flex items-center',
     text: 'inline-flex items-center justify-center gap-1 w-full',
     icon: 'h-[1.906cap] w-[1.906cap] flex-none aspect-square flex items-center justify-center',
-    // specified in the compoundSlots
-    addonStart: '',
-    addonEnd: '',
+    addonStart: 'flex items-center justify-center macos:-mb-0.5',
+    addonEnd: 'flex items-center justify-center macos:-mb-0.5',
   },
   defaultVariants: {
     isActive: 'none',
@@ -288,12 +287,6 @@ export const BUTTON_STYLES = tv({
     isDisabled: false,
     extraClickZone: true,
   },
-  compoundSlots: [
-    {
-      slots: ['addonStart', 'addonEnd'],
-      className: 'flex items-center justify-center macos:-mb-0.5',
-    },
-  ],
   compoundVariants: [
     { isFocused: true, iconOnly: true, class: 'focus-visible:outline-offset-[3px]' },
     { size: 'custom', iconOnly: true, class: { icon: 'w-full h-full' } },
