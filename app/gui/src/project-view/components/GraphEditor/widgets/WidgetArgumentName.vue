@@ -80,8 +80,9 @@ export const ArgumentNameShownKey: unique symbol = Symbol.for('WidgetInput:Argum
   border-radius: var(--node-port-border-radius);
   transition:
     background-color,
-    color 0.2s ease;
+    color, opacity 0.2s ease;
   .missing & {
+    opacity: 1;
     background-color: var(--color-node-port-missing-value);
     color: var(--color-node-text-missing-value);
   }
