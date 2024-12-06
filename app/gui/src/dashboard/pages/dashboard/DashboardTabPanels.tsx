@@ -2,6 +2,8 @@
 
 import * as aria from '#/components/aria'
 
+import { ErrorBoundary } from '#/components/ErrorBoundary'
+import { Suspense } from '#/components/Suspense'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProjectMutation, useRenameProjectMutation } from '#/hooks/projectHooks'
 import type { AssetManagementApi } from '#/layouts/AssetsTable'
@@ -99,7 +101,13 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
 
   return (
     <Collection items={tabPanels}>
-      {(tabPanelProps) => <aria.TabPanel {...tabPanelProps} />}
+      {(tabPanelProps) => (
+        <Suspense>
+          <ErrorBoundary>
+            <aria.TabPanel {...tabPanelProps} />
+          </ErrorBoundary>
+        </Suspense>
+      )}
     </Collection>
   )
 }

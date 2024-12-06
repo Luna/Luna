@@ -38,6 +38,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { useDeferredValue } from 'react'
 import { toast } from 'react-toastify'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
+import { Suspense } from '../components/Suspense'
 
 // =============
 // === Drive ===
@@ -123,7 +124,9 @@ function Drive(props: DriveProps) {
             }
           }}
         >
-          <DriveAssetsView {...props} />
+          <Suspense>
+            <DriveAssetsView {...props} />
+          </Suspense>
         </ErrorBoundary>
       )
     }
