@@ -24,14 +24,14 @@ jobs:
     secrets: inherit
 
   gui-packaging:
-    name: 🗐 GUI Packaging
+    name: 📦 Package
     uses: ./.github/workflows/gui-packaging.yml
     needs: [gui-changed-files, engine-changed-files]
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   gui-packaging-optional:
-    name: 🗐 GUI Packaging (Optional)
+    name: 📦 Package (Optional)
     uses: ./.github/workflows/gui-packaging-optional.yml
     needs: [gui-changed-files, engine-changed-files]
     if: needs.gui-changed-files.outputs.any_changed == 'true' || needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'

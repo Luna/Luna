@@ -14,12 +14,12 @@ concurrency:
 
 jobs:
   wasm-changed-files:
-    name: 🔍 WASM Files Changed
+    name: 🔍 Files Changed
     uses: ./.github/workflows/wasm-changed-files.yml
     secrets: inherit
 
   wasm-checks:
-    name: 🦀 WASM Checks
+    name: 🦀 Checks
     uses: ./.github/workflows/wasm-checks.yml
     needs: [wasm-changed-files]
     if: needs.wasm-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'

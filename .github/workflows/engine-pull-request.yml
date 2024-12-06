@@ -17,19 +17,19 @@ permissions:
 
 jobs:
   engine-changed-files:
-    name: 🔍 Engine Files Changed
+    name: 🔍 Files Changed
     uses: ./.github/workflows/engine-changed-files.yml
     secrets: inherit
 
   engine-checks:
-    name: ⚙️ Engine Checks
+    name: ⚙️ Checks
     uses: ./.github/workflows/engine-checks.yml
     needs: [engine-changed-files]
     if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
     secrets: inherit
 
   engine-checks-optional:
-    name: ⚙️ Engine Checks (Optional)
+    name: ⚙️ Checks (Optional)
     uses: ./.github/workflows/engine-checks-optional.yml
     needs: [engine-changed-files]
     if: needs.engine-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'

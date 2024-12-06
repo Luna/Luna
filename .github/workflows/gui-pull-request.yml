@@ -21,12 +21,12 @@ permissions:
 
 jobs:
   gui-changed-files:
-    name: 🔍 GUI Files Changed
+    name: 🔍 Files Changed
     uses: ./.github/workflows/gui-changed-files.yml
     secrets: inherit
 
   gui-checks:
-    name: 🧰 GUI Checks
+    name: 🧰 Checks
     uses: ./.github/workflows/gui-checks.yml
     needs: [gui-changed-files]
     if: needs.gui-changed-files.outputs.any_changed == 'true' || github.ref == 'refs/heads/develop'
