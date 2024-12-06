@@ -1430,19 +1430,26 @@ export function detectVersionLifecycle(version: string) {
 /** Return a positive number if `a > b`, a negative number if `a < b`, and zero if `a === b`. */
 export function compareAssets(a: AnyAsset, b: AnyAsset) {
   const relativeTypeOrder = ASSET_TYPE_ORDER[a.type] - ASSET_TYPE_ORDER[b.type]
+
   if (relativeTypeOrder !== 0) {
     return relativeTypeOrder
   } else {
+    // We sort by modified date, because the running/recent projects should be at the top,
+    // but below the folders.
     const aModified = Number(new Date(a.modifiedAt))
     const bModified = Number(new Date(b.modifiedAt))
     const modifiedDelta = aModified - bModified
+
+    const aTitle = a.title.toLowerCase()
+    const bTitle = b.title.toLowerCase()
+
     if (modifiedDelta !== 0) {
       // Sort by date descending, rather than ascending.
       return -modifiedDelta
     } else {
       return (
-        a.title > b.title ? 1
-        : a.title < b.title ? -1
+        aTitle > bTitle ? 1
+        : aTitle < bTitle ? -1
         : 0
       )
     }

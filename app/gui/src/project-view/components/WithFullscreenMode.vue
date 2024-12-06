@@ -1,9 +1,11 @@
 <script setup lang="ts">
 /** @file Provides a fullscreen mode to its slot, based on conditional teleport and conditional styling. */
 
-import { useFullscreenContext } from '@/providers/fullscreenContext'
+import { useGraphEditorLayers } from '@/providers/graphEditorLayers'
 import { Rect } from '@/util/data/rect'
 import { computed, ref, toRef, watch } from 'vue'
+
+export type SavedSize = Keyframe
 
 const props = defineProps<{
   fullscreen: boolean
@@ -41,7 +43,7 @@ const emit = defineEmits<{
 
 const content = ref<HTMLElement>()
 
-const { fullscreenContainer } = useFullscreenContext()
+const { fullscreen: fullscreenContainer } = useGraphEditorLayers()
 
 const fullscreenSize: Keyframe = {
   top: 0,
@@ -89,10 +91,6 @@ watch(
 )
 
 const active = computed(() => props.fullscreen || animating.value)
-</script>
-
-<script lang="ts">
-export type SavedSize = Keyframe
 </script>
 
 <!-- The outer `div` is to avoid having a dynamic root. A component whose root may change cannot be passed to a `slot`,

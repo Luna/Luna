@@ -37,8 +37,8 @@ export function Ok<T>(data?: T): Result<T | undefined, never> {
 }
 
 /** Constructor of error {@link Result}. */
-export function Err<E>(error: E): Result<never, E> {
-  return { ok: false, error: new ResultError(error) }
+export function Err<E>(error: E) {
+  return { ok: false, error: new ResultError(error) } as const satisfies Result<never, E>
 }
 
 /** Helper function for converting optional value to {@link Result}. */
@@ -75,6 +75,15 @@ export function unwrapOrWithLog<T, A>(
 /** Maps the {@link Result} value. */
 export function mapOk<T, U, E>(result: Result<T, E>, f: (value: T) => U): Result<U, E> {
   if (result.ok) return Ok(f(result.value))
+  else return result
+}
+
+/** Maps the {@link Result} value with a function that returns a result. */
+export function andThen<T, U, E>(
+  result: Result<T, E>,
+  f: (value: T) => Result<U, E>,
+): Result<U, E> {
+  if (result.ok) return f(result.value)
   else return result
 }
 
