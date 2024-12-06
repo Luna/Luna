@@ -15,9 +15,6 @@ import org.graalvm.polyglot.Context;
 
 /** Wrapper class to handle Excel rows. */
 public interface ExcelRow {
-  /** Gets the index of the row within the sheet (1-based). */
-  int getRowIndex();
-
   /** Gets the initial column index within the row (1-based). */
   int getFirstColumn();
 
@@ -67,10 +64,6 @@ public interface ExcelRow {
 
   record ExcelRowFromSheet(Row row, int firstColumn, int lastColumn, boolean use1904Format) implements ExcelRow {
     private static final DataFormatter formatter = new DataFormatter();
-
-    public int getRowIndex() {
-      return row.getRowNum() + 1;
-    }
 
     public int getFirstColumn() {
       return firstColumn;

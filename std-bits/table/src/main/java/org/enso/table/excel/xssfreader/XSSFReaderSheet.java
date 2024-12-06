@@ -1,11 +1,5 @@
 package org.enso.table.excel.xssfreader;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import javax.xml.parsers.ParserConfigurationException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.util.XMLHelper;
@@ -14,6 +8,13 @@ import org.enso.table.excel.ExcelSheet;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 public class XSSFReaderSheet implements ExcelSheet {
   private final int sheetIdx;
   private final String sheetName;
@@ -21,11 +22,13 @@ public class XSSFReaderSheet implements ExcelSheet {
   private final XSSFReaderWorkbook parent;
 
   private boolean readSheetData = false;
+  private String dimensions;
   private int firstRow;
   private int lastRow;
   private Map<Integer, SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue>> rowData;
 
-  public XSSFReaderSheet(int sheetIdx, String sheetName, String relId, XSSFReaderWorkbook parent) {
+  public XSSFReaderSheet(int sheetIdx, String sheetName, String relId, XSSFReaderWorkbook parent)
+  {
     this.sheetIdx = sheetIdx;
     this.sheetName = sheetName;
     this.relId = relId;
@@ -33,40 +36,44 @@ public class XSSFReaderSheet implements ExcelSheet {
   }
 
   private synchronized void readSheetData() {
-    if (readSheetData) {
+    if (readSheetData)
+    {
       return;
     }
 
     try {
       var strings = parent.getSharedStrings();
       var styles = parent.getStyles();
-      var handler =
-          new XSSFReaderSheetXMLHandler(styles, strings) {
-            @Override
-            protected void onStartRow(int rowNum) {
-              handleOnStartRow(rowNum);
-            }
+      var handler = new XSSFReaderSheetXMLHandler(styles, strings) {
+        @Override
+        protected void onDimensions(String dimension) {
+          handleOnDimensions(dimension);
+        }
 
-            @Override
-            protected void onCell(int rowNumber, String ref, CellValue value) {
-              handleOnCell(rowNumber, ref, value);
-            }
-          };
+        @Override
+        protected void onStartRow(int rowNum) {
+          handleOnStartRow(rowNum);
+        }
+
+        @Override
+        protected void onCell(int rowNumber, short columnNumber, String ref, CellValue value) {
+          handleOnCell(rowNumber, columnNumber, value);
+        }
+      };
 
       var xmlReader = XMLHelper.newXMLReader();
       xmlReader.setContentHandler(handler);
 
       rowData = new HashMap<>();
 
-      parent.withReader(
-          reader -> {
-            try {
-              var sheet = reader.getSheet(relId);
-              xmlReader.parse(new InputSource(sheet));
-            } catch (SAXException | InvalidFormatException | IOException e) {
-              throw new RuntimeException(e);
-            }
-          });
+      parent.withReader(reader -> {
+        try {
+          var sheet = reader.getSheet(relId);
+          xmlReader.parse(new InputSource(sheet));
+        } catch (SAXException | InvalidFormatException | IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
 
       readSheetData = true;
     } catch (SAXException | ParserConfigurationException e) {
@@ -84,9 +91,18 @@ public class XSSFReaderSheet implements ExcelSheet {
     return sheetName;
   }
 
+  public String getDimensions() {
+    if (!readSheetData)
+    {
+      readSheetData();
+    }
+    return dimensions;
+  }
+
   @Override
   public int getFirstRow() {
-    if (!readSheetData) {
+    if (!readSheetData)
+    {
       readSheetData();
     }
     return firstRow;
@@ -94,7 +110,8 @@ public class XSSFReaderSheet implements ExcelSheet {
 
   @Override
   public int getLastRow() {
-    if (!readSheetData) {
+    if (!readSheetData)
+    {
       readSheetData();
     }
     return lastRow;
@@ -106,12 +123,17 @@ public class XSSFReaderSheet implements ExcelSheet {
       return null;
     }
 
-    return new XSSFReaderRow(row, rowData.get(row));
+    return new XSSFReaderRow(rowData.get(row));
   }
 
   @Override
   public Sheet getSheet() {
+    // Not supported as we don't have the underlying Apache POI Sheet object.
     return null;
+  }
+
+  protected void handleOnDimensions(String dimension) {
+    dimensions = dimension;
   }
 
   private void handleOnStartRow(int rowNum) {
@@ -124,26 +146,13 @@ public class XSSFReaderSheet implements ExcelSheet {
     }
   }
 
-  private static boolean isColumnRef(char c) {
-    return c >= 'A' && c <= 'Z';
-  }
-
-  private static short getColumn(String ref) {
-    int column = 0;
-    int idx = 0;
-    while (idx < ref.length() && isColumnRef(ref.charAt(idx))) {
-      column = column * 26 + (ref.charAt(idx) - 'A' + 1);
-      idx++;
+  private void handleOnCell(int rowNumber, short columnNumber, XSSFReaderSheetXMLHandler.CellValue value) {
+    if (rowData.containsKey(rowNumber)) {
+      rowData.get(rowNumber).put(columnNumber, value);
+    } else {
+      var map = new TreeMap<Short, XSSFReaderSheetXMLHandler.CellValue>();
+      map.put(columnNumber, value);
+      rowData.put(rowNumber, map);
     }
-    return (short) column;
-  }
-
-  private void handleOnCell(int rowNumber, String ref, XSSFReaderSheetXMLHandler.CellValue value) {
-    short column = getColumn(ref);
-
-    if (!rowData.containsKey(rowNumber)) {
-      rowData.put(rowNumber, new TreeMap<>());
-    }
-    rowData.get(rowNumber).put(column, value);
   }
 }

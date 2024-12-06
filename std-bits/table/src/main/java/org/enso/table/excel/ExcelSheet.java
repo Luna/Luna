@@ -1,5 +1,6 @@
 package org.enso.table.excel;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
@@ -31,6 +32,7 @@ public interface ExcelSheet {
   /** Gets the underlying Apache POI Sheet object. */
   static ExcelSheet fromWorkbook(Workbook workbook, int sheetIndex) {
     var sheet = workbook.getSheetAt(sheetIndex);
+    HSSFCell cell = null;
     return new ExcelSheetFromWorkbook(
         sheet,
         sheetIndex,

@@ -1,25 +1,15 @@
 package org.enso.table.excel.xssfreader;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.enso.table.excel.ExcelRow;
+import java.time.LocalDateTime;
 import java.util.SortedMap;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.FormulaError;
-import org.enso.table.excel.ExcelRow;
-import org.graalvm.polyglot.Context;
-
 public class XSSFReaderRow implements ExcelRow {
-  private final int index;
   private final SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data;
 
-  public XSSFReaderRow(int index, SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data) {
-    this.index = index;
+  public XSSFReaderRow(SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data) {
     this.data = data;
-  }
-
-  @Override
-  public int getRowIndex() {
-    return index;
   }
 
   @Override
@@ -33,9 +23,26 @@ public class XSSFReaderRow implements ExcelRow {
   }
 
   @Override
+  public Cell get(int column) {
+    // Not supported as we don't have the underlying Apache POI Cell object.
+    return null;
+  }
+
+  @Override
   public Object getCellValue(int column) {
     var cell = data.get((short) column);
-    return (cell == null ? null : cell.getValue(true));
+    if (cell == null) {
+      return null;
+    }
+
+    var dataType = cell.dataType();
+    return switch (dataType) {
+      case BOOL -> cell.getBooleanValue();
+      case DATE -> LocalDateTime.parse(cell.strValue()); // Don't believe used by Excel.
+      case INLINE_STRING, SST_STRING, FORMULA_STRING, TEXT -> cell.strValue();
+      case NUMBER -> cell.getNumberValue();
+      case ERROR -> null;
+    };
   }
 
   @Override
@@ -46,21 +53,11 @@ public class XSSFReaderRow implements ExcelRow {
     }
 
     var dataType = cell.dataType();
-    if (dataType == XSSFReaderSheetXMLHandler.XSSDataType.FORMULA) {
-      // Need to get the real type
-    }
-
     return switch (dataType) {
-      case ERROR ->
-          FormulaError.forInt(cell.getLongValue()).getString();
-    }
-
-    return cell == null ? "" : cell.strValue();
-  }
-
-  @Override
-  public Cell get(int column) {
-    return null;
+      case BOOL -> cell.getBooleanValue() ? "TRUE" : "FALSE";
+      case NUMBER -> String.valueOf(cell.getNumberValue());
+      default -> cell.strValue();
+    };
   }
 
   @Override
@@ -71,12 +68,19 @@ public class XSSFReaderRow implements ExcelRow {
 
   @Override
   public boolean isEmpty(int start, int end) {
-    return ExcelRow.isEmptyHelper(this, start, end);
+    int currentEnd = end == -1 ? getLastColumn() : end;
+    for (int column = Math.max(getFirstColumn(), start);
+         column <= Math.min(getLastColumn(), currentEnd);
+         column++) {
+      if (!isEmpty(column)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
   public String[] getCellsAsText(int startCol, int endCol) {
-    Context context = Context.getCurrent();
     int currentEndCol = endCol == -1 ? getLastColumn() : endCol;
 
     String[] output = new String[currentEndCol - startCol + 1];
@@ -92,7 +96,6 @@ public class XSSFReaderRow implements ExcelRow {
       }
 
       output[col - startCol] = cell == null ? "" : cell.strValue();
-      context.safepoint();
     }
 
     return output;
