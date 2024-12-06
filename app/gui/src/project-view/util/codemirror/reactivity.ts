@@ -39,6 +39,17 @@ export function useCompartment({ dispatch }: HasDispatch, extension: WatchSource
 }
 
 /** Dispatch a transaction when the provided watch source changes. */
-export function useDispatch({ dispatch }: HasDispatch, transaction: WatchSource<TransactionSpec>) {
-  watch(transaction, (transaction) => dispatch(transaction), { immediate: true })
+export function useDispatch(
+  { dispatch }: HasDispatch,
+  transaction: WatchSource<TransactionSpec>,
+  onCleanup?: () => void,
+) {
+  watch(
+    transaction,
+    (transaction, _old, setCleanupHook) => {
+      dispatch(transaction)
+      if (onCleanup) setCleanupHook(onCleanup)
+    },
+    { immediate: true },
+  )
 }
