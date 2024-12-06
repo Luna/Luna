@@ -23,9 +23,10 @@ needs to be as unobtrusive as possible.
 
 The high-level goals for the Enso type system are as follows:
 
-> [!WARNING] > **Not a goal anymore**: Enso is a dynamic language. Static type
+> [!WARNING] 
+> _Not a goal anymore_: Enso is a dynamic language. Static type
 > inference is _not needed for execution_. As such _static typing_ is an
-> optional component - more a **linter** than essential part of the system.
+> optional component - more a _linter_ than essential part of the system.
 >
 > Inference should have maximal power. We want users to be _forced_ to write
 > type annotations in as few situations as possible. This means that, ideally,
@@ -51,7 +52,7 @@ error.
 
 #### Powerful Enough Type System
 
-Enso aim is to provide a powerful **enough** type system to support development
+Enso aim is to provide a powerful _enough_ type system to support development
 done by _non-technical audience_. The type system shouldn't require master
 degree in computer science to be used properly. As such the types are fully
 optional and can be added gradually - usually only when a sample project is

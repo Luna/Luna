@@ -17,7 +17,7 @@ powerful type system.
 > [!WARNING]
 > The actionables for this section are:
 >
-> - Just **delete it all**?
+> - Just _delete it all_!?
 > - Examine what other ways we can exploit type information to aid development.
 
 <!-- MarkdownTOC levels="2,3" autolink="true" -->

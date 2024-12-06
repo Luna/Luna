@@ -17,8 +17,8 @@ order: 8
 > requiring users to explicitly lift computations through their monad transformer
 > stack.
 
-For a language as focused on usability as Enso is importing all the **complexity
-of Haskell monads** really isn't feasible. To
+For a language as focused on usability as Enso is importing all the _complexity
+of Haskell monads_ really isn't feasible. To
 that end, we have created the notion of a 'Monadic Context', which is a monad
 transformer based on Supermonads (see
 [references](./references.md#monadic-contexts)). These have special support in

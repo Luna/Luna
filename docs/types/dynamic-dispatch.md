@@ -32,7 +32,7 @@ effectively an algorithm for determining which candidate is more specific than
 another.
 
 > [!WARNING]
-> Compiler needs to do nothing. The right method to invoke is **selected in the runtime**. 
+> Static compiler selects nothing. The right method to invoke is _selected in the runtime_.
 >
 > - Always prefer a member function for both `x.f y` and `f y x` notations.
 > - Only member functions, current module's functions, and imported functions are
@@ -64,7 +64,7 @@ Multiple dispatch is currently used for
 [binary operators](../syntax/functions.md#type-ascriptions-and-operator-resolution).
 
 > [!WARNING]
-> Supporting general **multiple dispatch is unlikely**
+> Supporting general _multiple dispatch is unlikely_
 >
 > Supporting it for general functions remains an open question as to whether we
 > want to support proper multiple dispatch in Enso. Multiple dispatch refers to

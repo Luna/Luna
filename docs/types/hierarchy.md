@@ -15,7 +15,7 @@ has the type `Any`. All operations defined on type `Any` can be performed on any
 value in the system.
 
 > [!WARNING] 
-> **Typeset theory is far from current state of affairs**:
+> _Typeset theory is far from current state of affairs_:
 >
 > Enso is a statically typed language based upon a theory of set-based typing,
 > what we call `typesets`. This is a novel approach, and it is key to our intent
@@ -40,7 +40,7 @@ possible to query/inspect these types during runtime and thus decide what
 operations are available for a particular value at hand.
 
 > [!WARNING]
-> **Probably not true in current system at all**
+> _Probably not true in current system at all_
 >
 > A brief note on naming (for more, please see the
 > [naming syntax](../syntax/naming.md)):
@@ -88,7 +88,7 @@ v.value:Text
 ```
 
 > [!WARNING]
-> There are no **Typesets** in Enso anymore
+> There are no _Typesets_ in Enso anymore
 >
 > Typesets in Enso are an entity unique to Enso's type system. They are a
 > fundamental recognition of types as 'sets of values' in Enso, and while they
@@ -145,7 +145,7 @@ They are as follows:
   members in the intersection of its operands.
 
 > [!WARNING]
-> These operators **don't seem to be supported**. There is no plan to
+> These operators _don't seem to be supported_. There is no plan to
 > support following operators now:
 >
 > - **Subsumption - `<:`:** This operator asserts that the left hand operand is
@@ -170,7 +170,7 @@ design documentation.
 > - Are `<:` and `:` equivalent in the surface syntax?
 
 > [!WARNING]
-> **Typeset Subsumption** isn't relevant
+> _Typeset Subsumption_ isn't relevant
 >
 > For two typesets `a` and `b`, `a` is said to be subsumed by `b` (written using
 > the notation `a <: b`) if the following hold recursively. This can be thought
@@ -214,7 +214,7 @@ design documentation.
 
 > The actionables for this section are as follows:
 >
-> - Just **delete it**
+> - Just _delete it_!?
 > - Fix the above. It isn't 100% correct, but should convey a general gist. Use
 >   examples including all the operators.
 > - Ensure that co- and contra-variance are handled properly. They are a bit odd
@@ -248,7 +248,7 @@ used interchangingly.
 > A work on [type classes](https://github.com/orgs/enso-org/discussions/11366) support is under way
 
 > [!WARNING]
->  **Doesn't match reality:**
+>  _Doesn't match reality:_
 >
 > Because typesets can be matched _structurally_, all typesets implicitly define
 > interfaces. A type `t` conforming to an interface `i` in Enso is as simple as
@@ -287,7 +287,7 @@ used interchangingly.
 > it is easy to express far more general interfaces than Haskell's typeclasses
 > can.
 
-<!-- There are no **Special Interfaces**
+<!-- There are no Special Interfaces
 
 In order to aid usability we include a few special interfaces in the standard
 library that have special support in the compiler.
@@ -324,7 +324,7 @@ denoted by the expression `b`.
 >   `>>=` and `fix`.
 
 > [!WARNING]
-> There are **no projections** right now and none are planned
+> There are _no projections_ right now and none are planned
 >
 > In order to work efficiently with typesets, we need the ability to seamlessly
 > access and modify (immutably) their properties. In the context of our type
