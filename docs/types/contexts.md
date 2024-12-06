@@ -37,8 +37,6 @@ the compiler, and hence can be automatically lifted to aid usability.
 
 - [Context Syntax](#context-syntax)
 - [Monadic Bind](#monadic-bind)
-- [Context Definitions](#context-definitions)
-- [Context Lifting](#context-lifting)
 - [Inbuilt Contexts](#inbuilt-contexts)
   - [IO](#io)
   - [State](#state)
@@ -83,31 +81,24 @@ compiler only verifies the referenced types are valid.
 > that `=` _always_ acts as `bind`, greatly simplifying how the type-checker has
 > to work.
 
-## Context Definitions
-
-The supported contexts are `Input`, `Output` and `Dataflow_Stack_Trace` as of
-Enso 2024.5.1 version. Users cannot define their own.
-
-## Context Lifting
-
-> [!WARNING]
-> Is there any meaning of _lifting_ when there is no special support in type system?
->
-> - Specify and explain how automated lifting of monadic contexts works.
-> - It depends on the order of `runCtx`
-
 ## Inbuilt Contexts
 
 Enso standard library defines `Input`, `Output` and `Dataflow_Stack_Trace` 
-contects.
+contects as of Enso 2024.5.1 version. Users cannot define their own.
 
 ### State
 
-State acts as a _thread local_ variable (well, it will when #7117 gets fixed): 
-- one can set it up
+The _state_ concept is implement by standard libraries with _no support in the type system_.
+
+State acts as a [thread local](https://en.wikipedia.org/wiki/Thread-local_storage) variable
+of operating system:
+<!-- (well, it will when #7117 gets fixed)  -->
+- an _initializing code_ can set `State` up
 - execute some code
-- a code somewhere deep the stack
+- a code somewhere deep the stack (while _initializing code_ is still on the stack)
 - may pick the state up
+- once the _initializing code_ finishes execution
+- the state is gone
 
 It is an example of _tunnelling a value_ from one side (e.g. code) of the "tunnel" to another,
 without the "tunnel" (e.g. thee code in between) knowing about it.
@@ -120,5 +111,4 @@ without the "tunnel" (e.g. thee code in between) knowing about it.
 >   interfaces in future.
 -->
 
-The _state_ concept is implement by standard libraries with _no support in the type system_.
 See `Standard.Base.Runtime.State` for more details.
