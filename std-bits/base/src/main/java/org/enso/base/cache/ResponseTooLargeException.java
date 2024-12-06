@@ -6,7 +6,7 @@ public class ResponseTooLargeException extends Exception {
 
   public ResponseTooLargeException(Long actualSize, long limit) {
     super(
-        "Response too large: repsonse size"
+        "Response too large: response size"
             + (actualSize == null ? "" : " " + actualSize)
             + " is over the limit "
             + limit);
