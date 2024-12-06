@@ -124,8 +124,7 @@ const DIALOG_STYLES = tv({
     heading: 'col-start-2 col-end-2 my-0 text-center',
     scroller: 'flex flex-col h-full overflow-y-auto max-h-[inherit]',
     measurerWrapper: 'inline-grid h-full min-h-fit w-full grid-rows-[auto]',
-    measurer: 'pointer-events-none h-auto block [grid-area:1/1]',
-    content: 'inline-block h-auto max-h-fit min-h-fit [grid-area:1/1] min-w-0',
+    content: 'inline-block h-full max-h-fit min-h-fit [grid-area:1/1] min-w-0',
   },
   compoundVariants: [
     { type: 'modal', size: 'small', class: 'max-w-sm' },
@@ -394,20 +393,6 @@ function DialogContent(props: DialogContentProps) {
                 transition={{ duration: 0 }}
               >
                 <div className={styles.measurerWrapper()}>
-                  {/* eslint-disable jsdoc/check-alignment */}
-                  {/**
-                   * This div is used to measure the content dimensions.
-                   * It's takes the same grid area as the content, thus
-                   * resizes together with the content.
-                   *
-                   * We use grid + grid-area to avoid setting `position: relative`
-                   * on the element, which would interfere with the layout.
-                   *
-                   * It's set to `pointer-events-none` so that it doesn't
-                   * interfere with the layout.
-                   */}
-                  {/* eslint-enable jsdoc/check-alignment */}
-                  <div className={styles.measurer()} />
                   <div ref={contentDimensionsRef} className={styles.content()}>
                     <errorBoundary.ErrorBoundary>
                       <suspense.Suspense

@@ -40,6 +40,7 @@ import { newDirectoryId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
+import { tv } from '#/utilities/tailwindVariants'
 import { twJoin } from 'tailwind-merge'
 import { AnimatedBackground } from '../components/AnimatedBackground'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
@@ -83,6 +84,14 @@ interface InternalCategorySwitcherItemProps extends CategoryMetadata {
   readonly setCategory: (category: Category) => void
   readonly badgeContent?: React.ReactNode
 }
+
+const CATEGORY_SWITCHER_VARIANTS = tv({
+  extend: ariaComponents.BUTTON_STYLES,
+  base: 'opacity-50 transition-opacity group-hover:opacity-100 w-auto max-w-full',
+  slots: {
+    text: 'flex-1 min-w-0 w-auto items-start justify-start',
+  },
+})
 
 /** An entry in a {@link CategorySwitcher}. */
 function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
@@ -178,7 +187,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
     >
       <AnimatedBackground.Item
         isSelected={isCurrent}
-        className="max-w-[calc(100%-24px)]"
+        className="w-auto max-w-[calc(100%-24px)]"
         animationClassName="bg-invert rounded-full"
       >
         <ariaComponents.Button
@@ -186,15 +195,13 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
           variant="icon"
           tooltip={tooltip}
           tooltipPlacement="right"
+          variants={CATEGORY_SWITCHER_VARIANTS}
           isDisabled={isDisabled}
           aria-label={buttonLabel}
           onPress={onPress}
           loaderPosition="icon"
           loading={isTransitioning}
-          className={twJoin(
-            'opacity-50 transition-opacity group-hover:opacity-100',
-            isCurrent && 'opacity-100',
-          )}
+          className={twJoin(isCurrent && 'opacity-100')}
           icon={icon}
           addonEnd={
             badgeContent != null && (
@@ -216,7 +223,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
   )
 
   return isNested ?
-      <div className="flex min-w-full flex-auto">
+      <div className="flex w-full min-w-0 max-w-full flex-1">
         <div className="ml-[15px] mr-1.5 rounded-full border-r border-primary/20" />
         {element}
       </div>
@@ -391,7 +398,6 @@ function CategorySwitcher(props: CategorySwitcherProps) {
             label={getText('recentCategory')}
             buttonLabel={getText('recentCategoryButtonLabel')}
             dropZoneLabel={getText('recentCategoryDropZoneLabel')}
-            iconClassName="-ml-0.5"
           />
           <CategorySwitcherItem
             {...itemProps}
@@ -404,7 +410,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
           />
 
           {localBackend && (
-            <div className="group mt-1 flex items-start justify-between gap-2 self-start">
+            <div className="group relative flex w-full min-w-full flex-auto items-start rounded-full drop-target-after">
               <CategorySwitcherItem
                 {...itemProps}
                 category={{ type: 'local' }}
