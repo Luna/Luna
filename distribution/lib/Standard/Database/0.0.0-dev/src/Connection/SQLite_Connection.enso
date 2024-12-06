@@ -18,6 +18,7 @@ import project.Internal.SQLite.SQLite_Entity_Naming_Properties
 import project.SQL_Query.SQL_Query
 import project.SQL_Statement.SQL_Statement
 import project.SQL_Type.SQL_Type
+import project.Internal.Common.Connections_Helpers
 from project.Connection.Connection import make_schema_selector, make_structure_creator, make_table_name_selector, make_table_types_selector
 from project.Errors import SQL_Error, Table_Already_Exists, Table_Not_Found
 from project.Internal.Upload.Helpers.Default_Arguments import first_column_name_in_structure
@@ -287,4 +288,5 @@ type SQLite_Connection
        Converts this value to a JSON serializable object.
     to_js_object : JS_Object
     to_js_object self =
-        JS_Object.from_pairs [["type", "SQLite_Connection"], ["links", self.connection.tables.at "Name" . to_vector], ["get_child_node_action", "query"], ["child_label", "table"], ["visualization_header", "Table"]]
+        additional_visualization_fields = Connections_Helpers.get_data_viz_pairs
+        JS_Object.from_pairs <| [["type", "SQLite_Connection"], ["links", self.connection.tables.at "Name" . to_vector]] + additional_visualization_fields
