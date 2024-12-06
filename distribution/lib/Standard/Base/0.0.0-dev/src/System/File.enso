@@ -38,6 +38,7 @@ import project.Warning.Warning
 from project.Data.Boolean import Boolean, False, True
 from project.Metadata.Choice import Option
 from project.System.File_Format import Auto_Detect, File_Format
+from project.Enso_Cloud.Data_Link_Capabilities import File_Like_Data_Link
 
 polyglot java import java.io.File as Java_File
 polyglot java import java.io.InputStream as Java_Input_Stream
@@ -793,7 +794,7 @@ type File
                  Examples.data_dir.list name_filter="**.{txt,md}" recursive=True
     @name_filter File_Format.name_filter_widget
     list : Text -> Boolean -> Vector File
-    list self name_filter:Text="" recursive:Boolean=False =
+    list self name_filter:Text="" recursive:Boolean=False = if Data_Link.is_data_link self then (File_Like_Data_Link.find (Data_Link_Helpers.read_and_interpret_data_link self)).as_file.list else
         if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory.") else
             all_files = if recursive then list_descendants self else self.list_immediate_children
             case name_filter of
