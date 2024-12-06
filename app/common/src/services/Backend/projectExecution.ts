@@ -83,12 +83,17 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo,
     case 'hourly': {
       nextDate.setHours(nextDate.getHours() + 1)
       const currentHours = nextDate.getHours()
-      if (currentHours < repeat.startHour) {
-        nextDate.setHours(repeat.startHour)
-      }
-      if (currentHours > repeat.endHour) {
-        nextDate.setDate(nextDate.getDate() + 1)
-        nextDate.setHours(repeat.startHour)
+      if (repeat.startHour < repeat.endHour) {
+        if (currentHours < repeat.startHour) {
+          nextDate.setHours(repeat.startHour)
+        } else if (currentHours > repeat.endHour) {
+          nextDate.setDate(nextDate.getDate() + 1)
+          nextDate.setHours(repeat.startHour)
+        }
+      } else {
+        if (currentHours > repeat.endHour && currentHours < repeat.startHour) {
+          nextDate.setHours(repeat.startHour)
+        }
       }
       break
     }

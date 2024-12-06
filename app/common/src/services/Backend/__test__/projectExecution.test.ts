@@ -63,8 +63,15 @@ v.test.each([
     info: HOURLY_EXECUTION_2,
     current: new Date(2018, 4, 11, 3, 33),
     next1: new Date(2018, 4, 11, 4, 33),
-    next2: new Date(2018, 4, 12, 20, 33),
-    next3: new Date(2018, 4, 12, 21, 33),
+    next2: new Date(2018, 4, 11, 20, 33),
+    next3: new Date(2018, 4, 11, 21, 33),
+  },
+  {
+    info: HOURLY_EXECUTION_2,
+    current: new Date(2018, 4, 11, 23, 33),
+    next1: new Date(2018, 4, 12, 0, 33),
+    next2: new Date(2018, 4, 12, 1, 33),
+    next3: new Date(2018, 4, 12, 2, 33),
   },
 ] satisfies readonly {
   info: ProjectExecutionInfo
