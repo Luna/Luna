@@ -224,12 +224,12 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         file_datalink = setup.get.file_datalink
         file_datalink.list . should_fail_with Illegal_Argument
 
-    group_builder.specify full_prefix+"allows to cross file-systems through the directory datalink using `/`" pending=pending <|
+    group_builder.specify full_prefix+"allows to cross file-systems through the directory datalink using `/`" pending=(pending.if_nothing "TODO later") <|
         dir_datalink = setup.get.dir_datalink
         (dir_datalink / "file1.txt").read . should_equal setup.get.file1_content
         (dir_datalink / "file1.txt").path . should_equal (setup.get.target_subdir / "file1.txt").path
 
-    group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" pending=pending <|
+    group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" pending=(pending.if_nothing "TODO later") <|
         file_datalink = setup.get.file_datalink
         file_datalink.size . should_equal setup.get.file1_content.length
 
