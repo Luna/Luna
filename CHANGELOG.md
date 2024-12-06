@@ -55,6 +55,7 @@
   be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
+- [Highlight missing required arguments][11803].
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -88,6 +89,7 @@
 [11753]: https://github.com/enso-org/enso/pull/11753
 [11761]: https://github.com/enso-org/enso/pull/11761
 [11768]: https://github.com/enso-org/enso/pull/11768
+[11803]: https://github.com/enso-org/enso/pull/11803
 
 #### Enso Standard Library
 
