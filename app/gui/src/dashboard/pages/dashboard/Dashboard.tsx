@@ -113,7 +113,7 @@ function DashboardInner(props: DashboardProps) {
     initialProjectNameRaw != null ? fileURLToPath(initialProjectNameRaw) : null
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
-  const [category, setCategoryRaw] =
+  const [category, setCategoryRaw, resetCategory] =
     searchParamsState.useSearchParamsState<categoryModule.Category>(
       'driveCategory',
       () => (localBackend != null ? { type: 'local' } : { type: 'cloud' }),
@@ -295,6 +295,7 @@ function DashboardInner(props: DashboardProps) {
             assetManagementApiRef={assetManagementApiRef}
             category={category}
             setCategory={setCategory}
+            resetCategory={resetCategory}
           />
         </aria.Tabs>
 

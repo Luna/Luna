@@ -54,8 +54,8 @@ import type Backend from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import { AssetPanelToggle } from './AssetPanel'
 import { useFullUserSession } from '../providers/AuthProvider'
+import { AssetPanelToggle } from './AssetPanel'
 
 // ================
 // === DriveBar ===
@@ -220,6 +220,7 @@ export default function DriveBar(props: DriveBarProps) {
             <Button size="medium" variant="outline" isDisabled={shouldBeDisabled || isEmpty}>
               {getText('clearTrash')}
             </Button>
+
             <ConfirmDeleteModal
               actionText={getText('allTrashedItemsForever')}
               doDelete={doEmptyTrash}

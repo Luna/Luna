@@ -20,6 +20,13 @@ import * as errorUtils from '#/utilities/error'
 // === ErrorBoundary ===
 // =====================
 
+/** Arguments for the {@link ErrorBoundaryProps.onBeforeFallbackShown} callback. */
+export interface OnBeforeFallbackShownArgs {
+  readonly error: unknown
+  readonly resetErrorBoundary: () => void
+  readonly resetQueries: () => void
+}
+
 /** Props for an {@link ErrorBoundary}. */
 export interface ErrorBoundaryProps
   extends Readonly<React.PropsWithChildren>,
@@ -28,7 +35,10 @@ export interface ErrorBoundaryProps
         errorBoundary.ErrorBoundaryProps,
         'FallbackComponent' | 'onError' | 'onReset' | 'resetKeys'
       >
-    > {}
+    > {
+  /** Called before the fallback is shown. */
+  readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
+}
 
 /**
  * Catches errors in child components
@@ -40,6 +50,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
     FallbackComponent = ErrorDisplay,
     onError = () => {},
     onReset = () => {},
+    onBeforeFallbackShown = () => {},
     ...rest
   } = props
 
@@ -47,7 +58,13 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
     <reactQuery.QueryErrorResetBoundary>
       {({ reset }) => (
         <errorBoundary.ErrorBoundary
-          FallbackComponent={FallbackComponent}
+          FallbackComponent={(fallbackProps) => (
+            <FallbackComponent
+              {...fallbackProps}
+              onBeforeFallbackShown={onBeforeFallbackShown}
+              resetQueries={reset}
+            />
+          )}
           onError={(error, info) => {
             sentry.captureException(error, { extra: { info } })
             onError(error, info)
@@ -66,6 +83,8 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 /** Props for a {@link ErrorDisplay}. */
 export interface ErrorDisplayProps extends errorBoundary.FallbackProps {
   readonly status?: result.ResultProps['status']
+  readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
+  readonly resetQueries?: () => void
   readonly title?: string
   readonly subtitle?: string
   readonly error: unknown
@@ -82,10 +101,14 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
     title = getText('appErroredMessage'),
     subtitle = isOffline ? getText('offlineErrorMessage') : getText('arbitraryErrorSubtitle'),
     status = isOffline ? 'info' : 'error',
+    onBeforeFallbackShown,
+    resetQueries = () => {},
   } = props
 
   const message = errorUtils.getMessageOrToString(error)
   const stack = errorUtils.tryGetStack(error)
+
+  onBeforeFallbackShown?.({ error, resetErrorBoundary, resetQueries })
 
   return (
     <result.Result className="h-full" status={status} title={title} subtitle={subtitle}>

@@ -92,6 +92,7 @@ export function extractTypeAndId<Id extends backend.AssetId>(id: Id): AssetTypeA
   }
 }
 
+
 // ====================
 // === LocalBackend ===
 // ====================
@@ -221,9 +222,10 @@ export default class LocalBackend extends Backend {
         if (parentIdRaw === this.projectManager.rootDirectory) {
           // Auto create the root directory
           await this.projectManager.createDirectory(this.projectManager.rootDirectory)
+
           result = []
         } else {
-          throw new Error('Directory does not exist.')
+          throw new backend.DirectoryDoesNotExistError()
         }
       }
     }

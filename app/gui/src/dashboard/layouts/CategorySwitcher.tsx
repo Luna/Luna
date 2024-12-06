@@ -7,11 +7,11 @@ import * as z from 'zod'
 import { SEARCH_PARAMS_PREFIX } from '#/appUtils'
 import CloudIcon from '#/assets/cloud.svg'
 import ComputerIcon from '#/assets/computer.svg'
-import FolderIcon from '#/assets/folder.svg'
+import FolderAddIcon from '#/assets/folder_add.svg'
+import FolderFilledIcon from '#/assets/folder_filled.svg'
 import Minus2Icon from '#/assets/minus2.svg'
 import PeopleIcon from '#/assets/people.svg'
 import PersonIcon from '#/assets/person.svg'
-import PlusIcon from '#/assets/plus.svg'
 import RecentIcon from '#/assets/recent.svg'
 import SettingsIcon from '#/assets/settings.svg'
 import Trash2Icon from '#/assets/trash2.svg'
@@ -40,9 +40,9 @@ import { newDirectoryId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
+import { twJoin } from 'tailwind-merge'
 import { AnimatedBackground } from '../components/AnimatedBackground'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
-import { twJoin } from 'tailwind-merge'
 
 // ============================
 // === Global configuration ===
@@ -173,13 +173,13 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       getDropOperation={(types) =>
         acceptedDragTypes.some((type) => types.has(type)) ? 'move' : 'cancel'
       }
-      className="group relative flex min-w-0 flex-auto items-center rounded-full drop-target-after"
+      className="group relative flex min-w-0 flex-auto items-start rounded-full drop-target-after"
       onDrop={onDrop}
     >
       <AnimatedBackground.Item isSelected={isCurrent} animationClassName="bg-invert rounded-full">
         <ariaComponents.Button
           size="medium"
-          variant="custom"
+          variant="icon"
           tooltip={tooltip}
           tooltipPlacement="right"
           isDisabled={isDisabled}
@@ -187,7 +187,10 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
           onPress={onPress}
           loaderPosition="icon"
           loading={isTransitioning}
-          className={twJoin('min-w-20 opacity-50 transition-opacity group-hover:opacity-100', isCurrent && 'opacity-100')}
+          className={twJoin(
+            'opacity-50 transition-opacity group-hover:opacity-100',
+            isCurrent && 'opacity-100',
+          )}
           icon={icon}
           addonEnd={
             badgeContent != null && (
@@ -208,7 +211,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
 
   return isNested ?
       <div className="flex min-w-0 flex-auto">
-        <div className="ml-[15px] mr-1 border-r border-primary/20" />
+        <div className="ml-[15px] mr-1.5 rounded-full border-r border-primary/20" />
         {element}
       </div>
     : element
@@ -294,7 +297,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   return (
     <div className="flex flex-col gap-2 py-1">
       <AnimatedBackground>
-        <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
+        <ariaComponents.Text variant="subtitle" weight="semibold" className="px-2">
           {getText('category')}
         </ariaComponents.Text>
 
@@ -393,8 +396,9 @@ function CategorySwitcher(props: CategorySwitcherProps) {
             buttonLabel={getText('trashCategoryButtonLabel')}
             dropZoneLabel={getText('trashCategoryDropZoneLabel')}
           />
+
           {localBackend && (
-            <div className="group flex items-center justify-between self-stretch">
+            <div className="group mt-1 flex items-start justify-between gap-2 self-start">
               <CategorySwitcherItem
                 {...itemProps}
                 category={{ type: 'local' }}
@@ -403,13 +407,14 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                 buttonLabel={getText('localCategoryButtonLabel')}
                 dropZoneLabel={getText('localCategoryDropZoneLabel')}
               />
+
               <ariaComponents.Button
                 size="medium"
                 variant="icon"
-                extraClickZone={false}
+                extraClickZone="small"
                 icon={SettingsIcon}
                 aria-label={getText('changeLocalRootDirectoryInSettings')}
-                className="opacity-0 transition-opacity group-hover:opacity-100"
+                className="my-auto opacity-0 transition-opacity group-hover:opacity-100"
                 onPress={() => {
                   setSearchParams({
                     [`${SEARCH_PARAMS_PREFIX}SettingsTab`]: JSON.stringify('local'),
@@ -421,7 +426,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
           )}
           {localBackend &&
             localRootDirectories?.map((directory) => (
-              <div key={directory} className="group flex items-center self-stretch">
+              <div key={directory} className="group flex items-center gap-2 self-stretch">
                 <CategorySwitcherItem
                   {...itemProps}
                   isNested
@@ -430,12 +435,11 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                     rootPath: backend.Path(directory),
                     homeDirectoryId: newDirectoryId(backend.Path(directory)),
                   }}
-                  icon={FolderIcon}
+                  icon={FolderFilledIcon}
                   label={getFileName(directory)}
                   buttonLabel={getText('localCategoryButtonLabel')}
                   dropZoneLabel={getText('localCategoryDropZoneLabel')}
                 />
-                <div className="grow" />
                 <ariaComponents.DialogTrigger>
                   <ariaComponents.Button
                     size="medium"
@@ -466,11 +470,10 @@ function CategorySwitcher(props: CategorySwitcherProps) {
             <div className="flex">
               <div className="ml-[15px] mr-1 border-r border-primary/20" />
               <ariaComponents.Button
-                size="xsmall"
-                variant="outline"
-                icon={PlusIcon}
+                size="medium"
+                variant="icon"
+                icon={FolderAddIcon}
                 loaderPosition="icon"
-                className="ml-0.5 rounded-full px-2 selectable"
                 onPress={async () => {
                   const [newDirectory] =
                     (await window.fileBrowserApi?.openFileBrowser('directory')) ?? []
@@ -479,7 +482,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                   }
                 }}
               >
-                <div className="ml-1.5">{getText('addLocalDirectory')}</div>
+                {getText('addLocalDirectory')}
               </ariaComponents.Button>
             </div>
           )}

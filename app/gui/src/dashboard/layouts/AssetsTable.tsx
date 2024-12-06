@@ -304,7 +304,7 @@ export interface AssetManagementApi {
 }
 
 /** The table of project assets. */
-export default function AssetsTable(props: AssetsTableProps) {
+function AssetsTable(props: AssetsTableProps) {
   const { hidden, query, setQuery, category, assetManagementApiRef } = props
   const { initialProjectName } = props
 
@@ -2030,3 +2030,5 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
     />
   )
 })
+
+export default memo(AssetsTable)

@@ -12,6 +12,7 @@ import Editor from '#/layouts/Editor'
 import Settings from '#/layouts/Settings'
 import { TabType, useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
 import type { ProjectId } from '#/services/Backend'
+import { useDeferredValue } from 'react'
 import { Collection } from 'react-aria-components'
 
 /** The props for the {@link DashboardTabPanels} component. */
@@ -22,11 +23,12 @@ export interface DashboardTabPanelsProps {
   readonly assetManagementApiRef: React.RefObject<AssetManagementApi> | null
   readonly category: Category
   readonly setCategory: (category: Category) => void
+  readonly resetCategory: () => void
 }
 
 /** The tab panels for the dashboard page. */
 export function DashboardTabPanels(props: DashboardTabPanelsProps) {
-  const { appRunner, initialProjectName, ydocUrl, assetManagementApiRef, category, setCategory } =
+  const { appRunner, initialProjectName, ydocUrl, assetManagementApiRef, category, setCategory, resetCategory } =
     props
 
   const page = usePage()
@@ -45,6 +47,8 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
     await renameProjectMutation.mutateAsync({ newName, project })
   })
 
+  const hidden = useDeferredValue(page !== TabType.drive)
+
   const tabPanels = [
     {
       id: TabType.drive,
@@ -55,7 +59,8 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
           assetsManagementApiRef={assetManagementApiRef}
           category={category}
           setCategory={setCategory}
-          hidden={page !== TabType.drive}
+          resetCategory={resetCategory}
+          hidden={hidden}
           initialProjectName={initialProjectName}
         />
       ),
@@ -68,8 +73,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
       children: (
         <Editor
           // There is no shared enum type, but the other union member is the same type.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-          hidden={page !== project.id}
+          hidden={hidden}
           ydocUrl={ydocUrl}
           project={project}
           projectId={project.id}
