@@ -33,7 +33,7 @@ test('Load Table Visualisation', async ({ page }) => {
   await expect(tableVisualization).toContainText('3,0')
 })
 
-test.only('Copy/paste from Table Visualization', async ({ page, context }) => {
+test('Copy/paste from Table Visualization', async ({ page, context }) => {
   const expectClipboard = expect.poll(() =>
     page.evaluate(() => window.navigator.clipboard.readText()),
   )
