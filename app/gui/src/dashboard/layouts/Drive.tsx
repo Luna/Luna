@@ -175,9 +175,10 @@ function DriveAssetsView(props: DriveProps) {
   } = useSuspenseQuery({
     ...listDirectoryQueryOptions({
       backend,
-      parentId: rootDirectoryId,
       category,
+      parentId: rootDirectoryId,
     }),
+    refetchOnMount: true,
     select: (data) => data.length === 0,
   })
 

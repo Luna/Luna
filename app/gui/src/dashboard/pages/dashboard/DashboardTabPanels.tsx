@@ -12,7 +12,6 @@ import Editor from '#/layouts/Editor'
 import Settings from '#/layouts/Settings'
 import { TabType, useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
 import type { ProjectId } from '#/services/Backend'
-import { useDeferredValue } from 'react'
 import { Collection } from 'react-aria-components'
 
 /** The props for the {@link DashboardTabPanels} component. */
@@ -28,8 +27,15 @@ export interface DashboardTabPanelsProps {
 
 /** The tab panels for the dashboard page. */
 export function DashboardTabPanels(props: DashboardTabPanelsProps) {
-  const { appRunner, initialProjectName, ydocUrl, assetManagementApiRef, category, setCategory, resetCategory } =
-    props
+  const {
+    appRunner,
+    initialProjectName,
+    ydocUrl,
+    assetManagementApiRef,
+    category,
+    setCategory,
+    resetCategory,
+  } = props
 
   const page = usePage()
 
@@ -47,12 +53,9 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
     await renameProjectMutation.mutateAsync({ newName, project })
   })
 
-  const hidden = useDeferredValue(page !== TabType.drive)
-
   const tabPanels = [
     {
       id: TabType.drive,
-      shouldForceMount: true,
       className: 'flex min-h-0 grow [&[data-inert]]:hidden',
       children: (
         <Drive
@@ -60,7 +63,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
           category={category}
           setCategory={setCategory}
           resetCategory={resetCategory}
-          hidden={hidden}
+          hidden={page !== TabType.drive}
           initialProjectName={initialProjectName}
         />
       ),
@@ -73,7 +76,8 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
       children: (
         <Editor
           // There is no shared enum type, but the other union member is the same type.
-          hidden={hidden}
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+          hidden={page !== project.id}
           ydocUrl={ydocUrl}
           project={project}
           projectId={project.id}
