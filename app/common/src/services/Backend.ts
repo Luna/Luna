@@ -1724,7 +1724,11 @@ export default abstract class Backend {
   /** Change the name of a file. */
   abstract updateFile(fileId: FileId, body: UpdateFileRequestBody, title: string): Promise<void>
   /** Return file details. */
-  abstract getFileDetails(fileId: FileId, title: string, getPresignedUrl?: boolean): Promise<FileDetails>
+  abstract getFileDetails(
+    fileId: FileId,
+    title: string,
+    getPresignedUrl?: boolean,
+  ): Promise<FileDetails>
   /** Create a Datalink. */
   abstract createDatalink(body: CreateDatalinkRequestBody): Promise<DatalinkInfo>
   /** Return a Datalink. */
