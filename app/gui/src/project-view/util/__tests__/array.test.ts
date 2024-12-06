@@ -69,3 +69,8 @@ test.prop({
     expect(arr1[differenceIndex]).not.toEqual(arr2[differenceIndex])
   }
 })
+
+test('findDifferenceIndex (NaN bug)', () => {
+  const array = [NaN]
+  expect(findDifferenceIndex(array, array)).toEqual(array.length)
+})
