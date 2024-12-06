@@ -47,13 +47,30 @@ the compiler, and hence can be automatically lifted to aid usability.
 
 ## Context Syntax
 
-There are three main notes about the syntax of contexts:
+> [!WARNING]
+> There used to be three main notes about the syntax of contexts:
+>
+> 1. Monadic contexts are defined using the `in` keyword (e.g. `Int in IO`).
+> 2. We have a symbol `!`, which is short-hand for putting something into the
+>   `Exception` monadic context. This is related to broken values.
+> 3. Contexts can be combined by using the standard typeset operators, or nested
+>   through repeated uses of `in`.
 
-1. Monadic contexts are defined using the `in` keyword (e.g. `Int in IO`).
-2. We have a symbol `!`, which is short-hand for putting something into the
-   `Exception` monadic context. This is related to broken values.
-3. Contexts can be combined by using the standard typeset operators, or nested
-   through repeated uses of `in`.
+There is no special syntax for contexts anymore.
+Since [#3828](https://github.com/enso-org/enso/pull/3828) 
+Enso is no longer relaying on a haskelly solution. 
+Rather than that _contexts_ are being manupulated by
+_standard library_ functions grouped around 
+`Standard.Base.Runtime.Context` & co.
+```ruby
+Runtime.Context.Output.with_enabled <|
+    File.new "c:\trash.txt" . delete
+```
+
+There is still the `!` symbol signaling [presence of errors](./errors.md)
+- e.g. _broken values_. However the runtime can handle _broken values_ 
+even without presence of these _exception type signatures_. Thus the
+compiler only verifies the referenced types are valid.
 
 ## Monadic Bind
 
@@ -68,12 +85,8 @@ There are three main notes about the syntax of contexts:
 
 ## Context Definitions
 
-Contexts can be defined by users.
-
-> [!WARNING]
-> The actionables for this section are:
->
-> - How, what, when and why?
+The supported contexts are `Input`, `Output` and `Dataflow_Stack_Trace` as of
+Enso 2024.5.1 version. Users cannot define their own.
 
 ## Context Lifting
 
@@ -85,22 +98,8 @@ Contexts can be defined by users.
 
 ## Inbuilt Contexts
 
-Enso includes a set of commonly-used monadic contexts as part of `Base`, its
-standard library. These are listed below.
-
-> [!WARNING]
-> The actionables for this section are:
->
-> - Determine the full set of contexts that Enso should provide by default.
-
-### IO
-
-> [!WARNING]
-> The actionables for this section are:
->
-> - Determine the granularity of IO (it's not one context, but a lot).
-> - Explain how there is no `runIO`, and IO is just run at the program boundary,
->   as well as the impacts of this.
+Enso standard library defines `Input`, `Output` and `Dataflow_Stack_Trace` 
+contects.
 
 ### State
 
