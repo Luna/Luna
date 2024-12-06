@@ -74,6 +74,7 @@ const handler = documentationEditorBindings.handler({
       <div ref="toolbarElement" class="toolbar">
         <FullscreenButton v-model="fullscreen" />
       </div>
+      <slot name="belowToolbar" />
       <div
         class="scrollArea"
         @keydown="handler"
