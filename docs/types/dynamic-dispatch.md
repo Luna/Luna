@@ -58,6 +58,8 @@ implementation of `method_name` to invoke. Should there be no method of given
 name in the value's type (or its supertypes like `Any`) to invoke,
 a `No_Such_Method` panic is raised.
 
+There is a special dispatch for [broken values & warnings](../semantics/errors.md).
+
 ## Multiple Dispatch
 
 Multiple dispatch is currently used for
