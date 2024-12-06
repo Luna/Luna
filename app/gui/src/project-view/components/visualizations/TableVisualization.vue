@@ -307,6 +307,7 @@ function cellRenderer(params: ICellRendererParams) {
   else if (typeof params.value === 'object') {
     const valueType = params.value?.type
     if (valueType === 'BigInt') return formatNumber(params)
+    else if (valueType === 'Integer') return formatNumber(params)
     else if (valueType === 'Decimal') return formatNumber(params)
     else if (valueType === 'Float')
       return `<span style="color:grey; font-style: italic;">${params.value?.value ?? 'Unknown'}</span>`
