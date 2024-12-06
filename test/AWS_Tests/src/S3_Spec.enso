@@ -569,7 +569,7 @@ add_specs suite_builder =
 
         assert_directory f =
             if f.is_directory then f else Panic.throw (Illegal_Argument.Error f.to_display_text+" is not a valid S3 directory.")
-        s3_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (my_writable_dir / "datalink-dir") create_data_link_to_s3 create_directory=assert_directory
+        s3_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (my_writable_dir / "datalink-dir") create_data_link_to_s3 create_target_directory=assert_directory create_datalink_location_directory=assert_directory
         add_symlink_spec group_builder "S3 -> S3" s3_to_s3_datalinks
 
         cloud_test_root = Temporary_Directory.make "DataLinks-from-3S-to-Cloud"
@@ -577,7 +577,7 @@ add_specs suite_builder =
         s3_to_cloud_datalinks = Symlink_Test_Setup.make (cloud_test_root / "target-link-dir") (my_writable_dir / "datalink-dir") create_data_link_to_cloud
         add_symlink_spec group_builder "S3 -> Cloud" s3_to_cloud_datalinks pending=cloud_setup.real_cloud_pending
 
-        cloud_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (cloud_test_root / "datalink-dir") create_data_link_to_s3 create_directory=assert_directory
+        cloud_to_s3_datalinks = Symlink_Test_Setup.make (my_writable_dir / "target-link-dir") (cloud_test_root / "datalink-dir") create_data_link_to_s3 create_target_directory=assert_directory
         add_symlink_spec group_builder "Cloud -> S3" cloud_to_s3_datalinks pending=cloud_setup.real_cloud_pending
 
         group_builder.specify "should be able to read an S3 data link overriding the format" <| with_default_credentials <|

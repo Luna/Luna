@@ -229,7 +229,7 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         (dir_datalink / "file1.txt").read . should_equal setup.get.file1_content
         (dir_datalink / "file1.txt").path . should_equal (setup.get.target_subdir / "file1.txt").path
 
-    group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" <| pending=pending <|
+    group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" pending=pending <|
         file_datalink = setup.get.file_datalink
         file_datalink.size . should_equal setup.get.file1_content.length
 
@@ -245,14 +245,16 @@ type Symlink_Test_Setup
         expected_size = 1234
         Vector.fill expected_size "a" . join
 
-    make ~target_location ~datalink_location create_data_link create_directory=(f-> f.create_directory) create_text_file=(f-> c-> c.write f) -> Lazy_Ref =
+    make ~target_location ~datalink_location create_data_link create_datalink_location_directory=(f-> f.create_directory) create_target_directory=(f-> f.create_directory) create_text_file=(f-> c-> c.write f) -> Lazy_Ref =
         Lazy_Ref.Value <|
             setup = Symlink_Test_Setup.Value target_location datalink_location
-            create_directory setup.target_subdir . should_succeed
+            create_target_directory setup.target_subdir . should_succeed
             file1 = (setup.target_subdir / "file1.txt")
             create_text_file file1 setup.file1_content . should_succeed
             create_text_file (setup.target_subdir / "file2.txt") "baz" . should_succeed
 
+            if setup.datalink_location.exists.not then
+                create_datalink_location_directory setup.datalink_location . should_succeed
             create_data_link setup.dir_datalink setup.target_subdir . should_succeed
             create_data_link setup.file_datalink file1 . should_succeed
             setup
