@@ -532,6 +532,13 @@ interface ButtonContentProps {
 }
 
 /**
+ * Checks if an addon is present.
+ */
+function hasAddon(addon: ButtonContentProps['addonEnd']): boolean {
+  return addon != null && addon !== false && addon !== ''
+}
+
+/**
  * Renders the content of a button.
  */
 // eslint-disable-next-line no-restricted-syntax
@@ -543,7 +550,9 @@ const ButtonContent = memo(function ButtonContent(props: ButtonContentProps) {
   if (isIconOnly) {
     return (
       <span className={styles.extraClickZone()}>
+        {hasAddon(addonStart) && <div className={styles.addonStart()}>{addonStart}</div>}
         <Icon isLoading={isLoading} loaderPosition={loaderPosition} icon={icon} styles={styles} />
+        {hasAddon(addonEnd) && <div className={styles.addonEnd()}>{addonEnd}</div>}
       </span>
     )
   }
@@ -551,10 +560,10 @@ const ButtonContent = memo(function ButtonContent(props: ButtonContentProps) {
   // Default button
   return (
     <>
-      {addonStart != null && <div className={styles.addonStart()}>{addonStart}</div>}
+      {hasAddon(addonStart) && <div className={styles.addonStart()}>{addonStart}</div>}
       <Icon isLoading={isLoading} loaderPosition={loaderPosition} icon={icon} styles={styles} />
       <span className={styles.text()}>{children}</span>
-      {addonEnd != null && <div className={styles.addonEnd()}>{addonEnd}</div>}
+      {hasAddon(addonEnd) && <div className={styles.addonEnd()}>{addonEnd}</div>}
     </>
   )
 })

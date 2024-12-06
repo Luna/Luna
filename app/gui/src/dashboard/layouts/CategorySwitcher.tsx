@@ -468,7 +468,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
             ))}
           {localBackend && window.fileBrowserApi && (
             <div className="flex">
-              <div className="ml-[15px] mr-1 border-r border-primary/20" />
+              <div className="ml-[15px] mr-1.5 rounded-full border-r border-primary/20" />
               <ariaComponents.Button
                 size="medium"
                 variant="icon"
