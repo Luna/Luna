@@ -1,3 +1,4 @@
+import Dependencies.Versions
 import JPMSPlugin.autoImport.{javaModuleName, modulePath}
 import sbt._
 import sbt.Keys._
@@ -19,8 +20,8 @@ import scala.collection.mutable
   * @see
   */
 object JPMSUtils {
-  val slf4jVersion          = "2.0.9"
-  val logbackClassicVersion = "1.3.7"
+  val slf4jVersion          = Versions.slf4j
+  val logbackClassicVersion = Versions.logbackClassic
 
   /** Filters modules by their IDs from the given classpath.
     *
