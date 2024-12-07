@@ -937,10 +937,10 @@ lazy val `scala-yaml` = (project in file("lib/scala/yaml"))
     scalaModuleDependencySetting,
     mixedJavaScalaProjectSetting,
     libraryDependencies ++= Seq(
-      "org.yaml" % "snakeyaml" % snakeyamlVersion % "provided"
+      Dependencies.Compile.snakeyaml % "provided"
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.yaml" % "snakeyaml" % snakeyamlVersion
+      Dependencies.Compile.snakeyaml
     ),
     Compile / internalModuleDependencies := Seq(
       (`scala-libs-wrapper` / Compile / exportedModule).value

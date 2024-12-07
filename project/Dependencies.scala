@@ -8,6 +8,7 @@ object Dependencies {
     val scalacheck = "1.18.1"
     val scalatest = "3.2.19"
     val slf4j = "2.0.9"
+    val snakeyaml = "2.3"
   }
 
   object Compile {
@@ -16,6 +17,8 @@ object Dependencies {
       "org.bouncycastle" % "bcpkix-jdk18on" % Versions.bouncyCastle,
       "org.bouncycastle" % "bcprov-jdk18on" % Versions.bouncyCastle
     )
+    val snakeyaml = "org.yaml" % "snakeyaml" % Versions.snakeyaml
+
   }
 
   object Test {
@@ -23,10 +26,4 @@ object Dependencies {
     val scalatest: ModuleID = "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
     val scalacheck: ModuleID = "org.scalacheck" %% "scalacheck" % Versions.scalacheck % "test"
   }
-
-  import Compile._
-
-  lazy val `text-buffer` = Seq(Test.scalatest, Test.scalacheck)
-
-  lazy val dependencies = bouncyCastle
 }
