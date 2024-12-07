@@ -114,7 +114,16 @@ case class Config(
 
   /** Converts the configuration into a YAML representation. */
   def toYaml: String = {
-    val node          = implicitly[YamlEncoder[Config]].encode(this)
+    val config: Config = this
+    val noDevEdition: Config =
+      if (
+        config.edition.isDefined && config.edition.get.parent.get.toString == "0.0.0-dev"
+      ) {
+        config.copy(edition = None)
+      } else {
+        config
+      }
+    val node          = implicitly[YamlEncoder[Config]].encode(noDevEdition)
     val dumperOptions = new DumperOptions()
     dumperOptions.setIndent(2)
     dumperOptions.setPrettyFlow(true)
