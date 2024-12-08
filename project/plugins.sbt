@@ -12,7 +12,11 @@ libraryDependencies += "com.softwaremill.retry"     %% "retry"              % "0
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-lazy val sbtDependencyUpdates = RootProject(uri("git:http://github.com/4e6/sbt-dependency-updates#search-dependencies-file"))
+lazy val sbtDependencyUpdates =
+  RootProject(
+    uri(
+      "git:http://github.com/4e6/sbt-dependency-updates#search-dependencies-file"
+    )
+  )
 
-lazy val root = (project in file(".")).
-  dependsOn(sbtDependencyUpdates)
+lazy val root = (project in file(".")).dependsOn(sbtDependencyUpdates)

@@ -960,11 +960,11 @@ lazy val pkg = (project in file("lib/scala/pkg"))
       Dependencies.Compile.circeCore % "provided",
       Dependencies.Compile.snakeyaml % "provided",
       Dependencies.Compile.apacheCommonsCompress,
-      Dependencies.Test.scalatest,
+      Dependencies.Test.scalatest
     ),
     Compile / moduleDependencies ++= Seq(
       Dependencies.Compile.apacheCommonsCompress,
-      Dependencies.Compile.snakeyaml,
+      Dependencies.Compile.snakeyaml
     ),
     Compile / internalModuleDependencies := Seq(
       (`editions` / Compile / exportedModule).value,
