@@ -7,11 +7,6 @@ object Dependencies {
     "slf4j-simple" -> "slf4j"
   )
 
-  object Todo {
-    val slf4j = "2.0.9"
-    val logbackClassic = "1.3.7"
-  }
-
   /** Manually updated versions. */
   object VersionsPinned {
     // Akka

@@ -19,8 +19,8 @@ import scala.collection.mutable
   * @see
   */
 object JPMSUtils {
-  val slf4jVersion          = Dependencies.Todo.slf4j
-  val logbackClassicVersion = Dependencies.Todo.logbackClassic
+  val slf4jVersion          = Dependencies.Versions.slf4jApi
+  val logbackClassicVersion = Dependencies.Versions.logbackClassic
 
   /** Filters modules by their IDs from the given classpath.
     *
