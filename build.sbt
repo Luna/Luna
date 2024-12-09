@@ -1127,12 +1127,12 @@ lazy val `logging-utils-akka` = project
     version := "0.1",
     compileOrder := CompileOrder.ScalaThenJava,
     libraryDependencies ++= Seq(
-      "org.slf4j"          % "slf4j-api"  % slf4jVersion,
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.akkaActor
     ),
     Compile / moduleDependencies ++=
       Seq(
-        "org.slf4j" % "slf4j-api" % slf4jVersion
+        Dependencies.Compile.slf4jApi,
       ),
     Compile / internalModuleDependencies := Seq(
       (`akka-wrapper` / Compile / exportedModule).value
