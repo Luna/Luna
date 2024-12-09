@@ -37,6 +37,7 @@ import {
   firstProjectExecutionOnOrAfter,
   nextProjectExecutionDate,
 } from 'enso-common/src/services/Backend/projectExecution'
+import type { TextId } from 'enso-common/src/text'
 import {
   DAY_3_LETTER_TEXT_IDS,
   MONTH_3_LETTER_TEXT_IDS,
@@ -52,6 +53,14 @@ const DAYS_PER_WEEK = 7
 const HOURS_PER_DAY = 24
 const MAX_WEEKS_PER_MONTH = 5
 const MONTHS_PER_YEAR = 12
+const MONTHLY_REPEAT_TYPES = ['date', 'weekday'] as const
+
+const MONTHLY_REPEAT_TYPE_TO_TEXT_ID = {
+  date: 'dateMonthlyRepeatType',
+  weekday: 'weekdayMonthlyRepeatType',
+} satisfies {
+  readonly [K in (typeof MONTHLY_REPEAT_TYPES)[number]]: TextId & `${K}MonthlyRepeatType`
+}
 
 const DATES = [...Array(MAX_DAYS_PER_MONTH).keys()] as const
 const DAYS = [...Array(DAYS_PER_WEEK).keys()] as const
@@ -64,7 +73,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
     .object({
       projectId: z.string().refine((x: unknown): x is ProjectId => true),
       repeatInterval: z.enum(PROJECT_REPEAT_INTERVALS),
-      monthlyRepeatType: z.enum(['date', 'weekday']),
+      monthlyRepeatType: z.enum(MONTHLY_REPEAT_TYPES),
       date: z
         .number()
         .int()
@@ -223,8 +232,8 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       endDate: null,
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
       date: 1,
-      days: [],
-      months: [],
+      days: [1],
+      months: [0],
       dayOfWeek: 0,
       weekNumber: 1,
       startHour: 0,
@@ -235,6 +244,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     },
   })
   const repeatInterval = form.watch('repeatInterval', 'daily')
+  const monthlyRepeatType = form.watch('monthlyRepeatType', 'date')
   const parallelMode = form.watch('parallelMode', 'restart')
   const date = form.watch('startDate', nowZonedDateTime) ?? nowZonedDateTime
 
@@ -282,6 +292,17 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       >
         {(interval) => getText(REPEAT_INTERVAL_TO_TEXT_ID[interval])}
       </Selector>
+      {repeatInterval === 'monthly' && (
+        <Selector
+          form={form}
+          isRequired
+          name="monthlyRepeatType"
+          label={getText('monthlyRepeatTypeLabel')}
+          items={MONTHLY_REPEAT_TYPES}
+        >
+          {(interval) => getText(MONTHLY_REPEAT_TYPE_TO_TEXT_ID[interval])}
+        </Selector>
+      )}
       <div className="flex w-full flex-col">
         <Selector
           form={form}
@@ -358,7 +379,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           {(n) => getText(DAY_3_LETTER_TEXT_IDS[n] ?? 'monday3')}
         </MultiSelector>
       )}
-      {repeatInterval === 'monthly' && (
+      {repeatInterval === 'monthly' && monthlyRepeatType === 'date' && (
         <Selector
           form={form}
           isRequired
@@ -369,6 +390,26 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         >
           {(n) => String(n + 1)}
         </Selector>
+      )}
+      {repeatInterval === 'monthly' && monthlyRepeatType === 'weekday' && (
+        <>
+          <Selector
+            form={form}
+            isRequired
+            name="dayOfWeek"
+            label={getText('dayOfWeekLabel')}
+            items={DAYS}
+          >
+            {(n) => getText(DAY_3_LETTER_TEXT_IDS[n] ?? 'monday3')}
+          </Selector>
+          <Input
+            form={form}
+            isRequired
+            name="weekNumber"
+            label={getText('weekOfMonthLabel')}
+            type="number"
+          />
+        </>
       )}
       {repeatInterval === 'monthly' && (
         <MultiSelector

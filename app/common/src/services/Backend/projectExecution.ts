@@ -143,6 +143,19 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo,
       break
     }
   }
+  switch (repeat.type) {
+    case 'hourly':
+    case 'daily': {
+      break
+    }
+    case 'monthly-date':
+    case 'monthly-weekday': {
+      const currentMonth = nextDate.getMonth()
+      const month = repeat.months.find(month => month >= currentMonth) ?? repeat.months[0] ?? 0
+      const monthOffset = (month - currentMonth + MONTHS_PER_YEAR) % MONTHS_PER_YEAR
+      nextDate.setMonth(nextDate.getMonth() + monthOffset)
+    }
+  }
   return nextDate
 }
 
