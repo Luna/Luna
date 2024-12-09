@@ -1631,8 +1631,8 @@ lazy val `refactoring-utils` = project
     commands += WithDebugCommand.withDebug,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "junit"          % "junit"           % junitVersion   % Test,
-      "com.github.sbt" % "junit-interface" % junitIfVersion % Test
+      Dependencies.Compile.junit % Test,
+      Dependencies.Compile.sbtJunitInterface % Test,
     ),
     Compile / internalModuleDependencies := Seq(
       (`text-buffer` / Compile / exportedModule).value,
