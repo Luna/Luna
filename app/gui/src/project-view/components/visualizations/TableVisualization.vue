@@ -423,15 +423,14 @@ function createNode(
   }
 }
 
-function toLinkField(
-  fieldName: string,
-  options: {
-    tooltipValue?: string | undefined
-    headerName?: string | undefined
-    getChildAction?: string | undefined
-    castValueTypes?: string | undefined
-  } = {},
-): ColDef {
+interface LinkFieldOptions {
+  tooltipValue?: string | undefined
+  headerName?: string | undefined
+  getChildAction?: string | undefined
+  castValueTypes?: string | undefined
+}
+
+function toLinkField(fieldName: string, options: LinkFieldOptions = {}): ColDef {
   const { tooltipValue, headerName, getChildAction, castValueTypes } = options
   return {
     headerName: headerName ? headerName : fieldName,
