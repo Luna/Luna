@@ -222,8 +222,8 @@ object JPMSPlugin extends AutoPlugin {
             (config / internalModuleDependencies).value,
             (config / dependencyClasspath).value,
             streams.value.log,
-            moduleName.value,
-            scalaBinaryVersion.value
+            scalaBinaryVersion.value,
+            moduleName.value
           )
         },
         // Returns the reference to target/classes directory and ensures that module-info
