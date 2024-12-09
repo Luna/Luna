@@ -117,6 +117,10 @@ type Enso_File
     ## GROUP Metadata
        ICON metadata
        Gets the size of a file in bytes.
+
+       ? Data Links
+         If the file is a data link, the size of the target file will be 
+         returned.
     size : Integer
     size self -> Integer = if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . size else
         asset = Existing_Enso_Asset.get_asset_reference_for self
@@ -435,7 +439,7 @@ type Enso_File
 
     ## GROUP Input
        ICON data_input
-       Gets a list of assets within self.
+       Lists assets contained in this directory.
     list : Text -> Boolean -> Vector Enso_File
     list self (name_filter:Text="") recursive:Boolean=False =
         if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else

@@ -489,6 +489,10 @@ type S3_File
 
        Returns the size of a file in bytes.
 
+       ? Data Links
+         If the file is a data link, the size of the target file will be 
+         returned.
+
        ! Error Conditions
        - If the `S3_File` represents a directory, an `S3_Error` error is thrown.
        - If the bucket or object does not exist, a `File_Error.Not_Found` is
