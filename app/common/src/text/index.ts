@@ -152,9 +152,11 @@ interface PlaceholderOverrides {
   readonly xItemsCut: [count: number]
   readonly ordinalFallback: [number: number]
   readonly dateXTimeX: [date: string, time: string]
-  readonly xWeek: [weekOrdinal: string]
   readonly hourlyBetweenX: [startTime: string, endTime: string]
   readonly projectSessionsOnX: [date: string]
+  readonly xthDayOfMonth: [dateOrdinal: string]
+  readonly xthXDayOfMonth: [weekOrdinal: string, dayOfWeek: string]
+  readonly lastXDayOfMonth: [dayOfWeek: string]
 
   readonly arbitraryFieldTooLarge: [maxSize: string]
   readonly arbitraryFieldTooSmall: [minSize: string]

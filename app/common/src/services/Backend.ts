@@ -354,28 +354,16 @@ export const PARALLEL_MODE_TO_DESCRIPTION_ID = {
  */
 export type ProjectParallelMode = (typeof PROJECT_PARALLEL_MODES)[number]
 
-export const PROJECT_REPEAT_INTERVALS = ['hourly', 'daily', 'monthly'] as const
-
-export const REPEAT_INTERVAL_TO_TEXT_ID = {
-  hourly: 'hourlyRepeatInterval',
-  daily: 'dailyRepeatInterval',
-  monthly: 'monthlyRepeatInterval',
-} satisfies {
-  [K in ProjectRepeatInterval]: TextId & `${K}RepeatInterval`
-}
-
-export const PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID = {
-  hourly: 'hourlyProjectExecutionRepeatType',
-  daily: 'dailyProjectExecutionRepeatType',
-  'monthly-date': 'monthlyDateProjectExecutionRepeatType',
-  'monthly-weekday': 'monthlyWeekdayProjectExecutionRepeatType',
-} satisfies Record<
-  ProjectExecutionRepeatInfo['type'],
-  TextId & `${string}ProjectExecutionRepeatType`
->
+export const PROJECT_EXECUTION_REPEAT_TYPES = [
+  'hourly',
+  'daily',
+  'monthly-date',
+  'monthly-weekday',
+  'monthly-last-weekday',
+] as const
 
 /** The interval at which a project schedule repeats. */
-export type ProjectRepeatInterval = (typeof PROJECT_REPEAT_INTERVALS)[number]
+export type ProjectExecutionRepeatType = ProjectExecutionRepeatInfo['type']
 
 /** Details for a project execution that repeats hourly. */
 export interface ProjectExecutionHourlyRepeatInfo {
@@ -408,11 +396,22 @@ export interface ProjectExecutionMonthlyWeekdayRepeatInfo {
   readonly months: readonly number[]
 }
 
+/**
+ * Details for a project execution that repeats monthly on a specific weekday of the last week
+ * of a specific month.
+ */
+export interface ProjectExecutionMonthlyLastWeekdayRepeatInfo {
+  readonly type: 'monthly-last-weekday'
+  readonly dayOfWeek: number
+  readonly months: readonly number[]
+}
+
 export type ProjectExecutionRepeatInfo =
   | ProjectExecutionHourlyRepeatInfo
   | ProjectExecutionDailyRepeatInfo
   | ProjectExecutionMonthlyDateRepeatInfo
   | ProjectExecutionMonthlyWeekdayRepeatInfo
+  | ProjectExecutionMonthlyLastWeekdayRepeatInfo
 
 /** Metadata for a {@link ProjectExecution}. */
 export interface ProjectExecutionInfo {
@@ -422,7 +421,6 @@ export interface ProjectExecutionInfo {
   readonly parallelMode: ProjectParallelMode
   readonly maxDurationMinutes: number
   readonly startDate: dateTime.Rfc3339DateTime
-  readonly endDate: dateTime.Rfc3339DateTime | null
 }
 
 /** A specific execution schedule of a project. */

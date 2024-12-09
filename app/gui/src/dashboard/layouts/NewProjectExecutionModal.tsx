@@ -1,21 +1,21 @@
 /** @file Modal for confirming delete of any type of asset. */
 import * as z from 'zod'
 
-import { ZonedDateTime, getLocalTimeZone, now } from '@internationalized/date'
+import { ZonedDateTime, getDayOfWeek, getLocalTimeZone, now } from '@internationalized/date'
 import { useMutation } from '@tanstack/react-query'
 
 import type Backend from '#/services/Backend'
 import type {
   ProjectExecutionInfo,
   ProjectExecutionRepeatInfo,
+  ProjectExecutionRepeatType,
   ProjectId,
 } from '#/services/Backend'
 import {
   PARALLEL_MODE_TO_DESCRIPTION_ID,
   PARALLEL_MODE_TO_TEXT_ID,
+  PROJECT_EXECUTION_REPEAT_TYPES,
   PROJECT_PARALLEL_MODES,
-  PROJECT_REPEAT_INTERVALS,
-  REPEAT_INTERVAL_TO_TEXT_ID,
   type ProjectAsset,
 } from 'enso-common/src/services/Backend'
 
@@ -31,15 +31,17 @@ import {
   Text,
 } from '#/components/AriaComponents'
 import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useGetOrdinal } from '#/hooks/ordinalHooks'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import {
   firstProjectExecutionOnOrAfter,
   nextProjectExecutionDate,
 } from 'enso-common/src/services/Backend/projectExecution'
-import type { TextId } from 'enso-common/src/text'
 import {
   DAY_3_LETTER_TEXT_IDS,
+  DAY_TEXT_IDS,
   MONTH_3_LETTER_TEXT_IDS,
   toRfc3339,
 } from 'enso-common/src/utilities/data/dateTime'
@@ -53,18 +55,8 @@ const DAYS_PER_WEEK = 7
 const HOURS_PER_DAY = 24
 const MAX_WEEKS_PER_MONTH = 5
 const MONTHS_PER_YEAR = 12
-const MONTHLY_REPEAT_TYPES = ['date', 'weekday'] as const
 
-const MONTHLY_REPEAT_TYPE_TO_TEXT_ID = {
-  date: 'dateMonthlyRepeatType',
-  weekday: 'weekdayMonthlyRepeatType',
-} satisfies {
-  readonly [K in (typeof MONTHLY_REPEAT_TYPES)[number]]: TextId & `${K}MonthlyRepeatType`
-}
-
-const DATES = [...Array(MAX_DAYS_PER_MONTH).keys()] as const
 const DAYS = [...Array(DAYS_PER_WEEK).keys()] as const
-const HOURS = [...Array(HOURS_PER_DAY).keys()] as const
 const MONTHS = [...Array(MONTHS_PER_YEAR).keys()] as const
 
 /** Create the form schema for this page. */
@@ -72,8 +64,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
   return z
     .object({
       projectId: z.string().refine((x: unknown): x is ProjectId => true),
-      repeatInterval: z.enum(PROJECT_REPEAT_INTERVALS),
-      monthlyRepeatType: z.enum(MONTHLY_REPEAT_TYPES),
+      repeatType: z.enum(PROJECT_EXECUTION_REPEAT_TYPES),
       date: z
         .number()
         .int()
@@ -112,7 +103,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         .min(0)
         .max(HOURS_PER_DAY - 1),
       startDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
-      endDate: z.instanceof(ZonedDateTime).or(z.null()).optional(),
       maxDurationMinutes: z
         .number()
         .int()
@@ -124,9 +114,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
       ({
         projectId,
         startDate = null,
-        endDate = null,
-        repeatInterval,
-        monthlyRepeatType,
+        repeatType,
         maxDurationMinutes,
         parallelMode,
         date,
@@ -140,41 +128,42 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         timeZone ??= getLocalTimeZone()
         startDate ??= now(timeZone)
         const startDateTime = toRfc3339(startDate.toDate())
-        const endDateTime = endDate != null ? toRfc3339(endDate.toDate()) : endDate
         const repeat = ((): ProjectExecutionRepeatInfo => {
-          switch (repeatInterval) {
+          switch (repeatType) {
             case 'hourly': {
               return {
-                type: 'hourly',
+                type: repeatType,
                 startHour: startHour,
                 endHour: endHour,
               }
             }
             case 'daily': {
               return {
-                type: 'daily',
+                type: repeatType,
                 daysOfWeek: days,
               }
             }
-            case 'monthly': {
-              switch (monthlyRepeatType) {
-                case 'date': {
-                  return {
-                    type: 'monthly-date',
-                    date,
-                    months,
-                  }
-                }
-                case 'weekday': {
-                  return {
-                    type: 'monthly-weekday',
-                    dayOfWeek,
-                    weekNumber,
-                    months,
-                  }
-                }
+            case 'monthly-date': {
+              return {
+                type: repeatType,
+                date,
+                months,
               }
-              break
+            }
+            case 'monthly-weekday': {
+              return {
+                type: repeatType,
+                dayOfWeek,
+                weekNumber,
+                months,
+              }
+            }
+            case 'monthly-last-weekday': {
+              return {
+                type: repeatType,
+                dayOfWeek,
+                months,
+              }
             }
           }
         })()
@@ -185,7 +174,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
           maxDurationMinutes,
           parallelMode,
           startDate: startDateTime,
-          endDate: endDateTime,
         }
       },
     )
@@ -216,6 +204,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   const { backend, item, defaultDate } = props
   const { getText } = useText()
   const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
+  const getOrdinal = useGetOrdinal()
   const timeZone = preferredTimeZone ?? getLocalTimeZone()
 
   const nowZonedDateTime = now(timeZone)
@@ -225,11 +214,9 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     schema: createUpsertExecutionSchema(preferredTimeZone),
     defaultValues: {
       projectId: item.id,
-      repeatInterval: 'daily',
-      monthlyRepeatType: 'date',
+      repeatType: 'daily',
       parallelMode: 'restart',
       startDate: defaultDate ?? minFirstOccurrence,
-      endDate: null,
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
       date: 1,
       days: [1],
@@ -243,28 +230,13 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       await createProjectExecution([values, item.title])
     },
   })
-  const repeatInterval = form.watch('repeatInterval', 'daily')
-  const monthlyRepeatType = form.watch('monthlyRepeatType', 'date')
+  const repeatType = form.watch('repeatType', 'daily')
   const parallelMode = form.watch('parallelMode', 'restart')
   const date = form.watch('startDate', nowZonedDateTime) ?? nowZonedDateTime
 
   const createProjectExecution = useMutation(
     backendMutationOptions(backend, 'createProjectExecution'),
   ).mutateAsync
-
-  const maxFirstOccurrence = (() => {
-    switch (repeatInterval) {
-      case 'hourly': {
-        return minFirstOccurrence.add({ hours: 1 })
-      }
-      case 'daily': {
-        return minFirstOccurrence.add({ days: 1 })
-      }
-      case 'monthly': {
-        return minFirstOccurrence.add({ months: 1 })
-      }
-    }
-  })()
 
   const repeatTimes = (() => {
     const parsed = form.schema.safeParse(form.getValues())
@@ -281,40 +253,40 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     return dates
   })()
 
+  const repeatText = useEventCallback((otherRepeatType: ProjectExecutionRepeatType) => {
+    // Use `en-US` locale because it matches JavaScript conventions.
+    const dayOfWeekNumber = getDayOfWeek(date, 'en-US')
+    const dayOfWeek = getText(DAY_TEXT_IDS[dayOfWeekNumber] ?? 'monday')
+    switch (otherRepeatType) {
+      case 'hourly': {
+        return getText('hourly')
+      }
+      case 'daily': {
+        return getText('daily')
+      }
+      case 'monthly-date': {
+        return getText('xthDayOfMonth', getOrdinal(date.day))
+      }
+      case 'monthly-weekday': {
+        return getText('xthXDayOfMonth', getOrdinal(1), dayOfWeek)
+      }
+      case 'monthly-last-weekday': {
+        return getText('lastXDayOfMonth', dayOfWeek)
+      }
+    }
+  })
+
   return (
     <Form form={form} className="w-full">
       <Selector
         form={form}
         isRequired
-        name="repeatInterval"
+        name="repeatType"
         label={getText('repeatIntervalLabel')}
-        items={PROJECT_REPEAT_INTERVALS}
+        items={PROJECT_EXECUTION_REPEAT_TYPES}
       >
-        {(interval) => getText(REPEAT_INTERVAL_TO_TEXT_ID[interval])}
+        {(otherRepeatType) => repeatText(otherRepeatType)}
       </Selector>
-      {repeatInterval === 'monthly' && (
-        <Selector
-          form={form}
-          isRequired
-          name="monthlyRepeatType"
-          label={getText('monthlyRepeatTypeLabel')}
-          items={MONTHLY_REPEAT_TYPES}
-        >
-          {(interval) => getText(MONTHLY_REPEAT_TYPE_TO_TEXT_ID[interval])}
-        </Selector>
-      )}
-      <div className="flex w-full flex-col">
-        <Selector
-          form={form}
-          isRequired
-          name="parallelMode"
-          label={getText('parallelModeLabel')}
-          items={PROJECT_PARALLEL_MODES}
-        >
-          {(interval) => getText(PARALLEL_MODE_TO_TEXT_ID[interval])}
-        </Selector>
-        <Text>{getText(PARALLEL_MODE_TO_DESCRIPTION_ID[parallelMode])}</Text>
-      </div>
       <div className="flex flex-col">
         <DatePicker
           form={form}
@@ -324,19 +296,11 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           granularity="minute"
           label={getText('firstOccurrenceLabel')}
           minValue={minFirstOccurrence}
-          maxValue={maxFirstOccurrence}
-        />
-        <DatePicker
-          form={form}
-          noCalendarHeader
-          name="endDate"
-          granularity="minute"
-          label={getText('endAtLabel')}
         />
         <Text>
           {getText(
             'repeatsAtX',
-            (repeatInterval === 'hourly' ?
+            (repeatType === 'hourly' ?
               // eslint-disable-next-line @typescript-eslint/unbound-method
               repeatTimes.map(Intl.DateTimeFormat(undefined, { timeStyle: 'short' }).format)
               // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -345,73 +309,34 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           )}
         </Text>
       </div>
-      <Input
-        form={form}
-        name="maxDurationMinutes"
-        type="number"
-        defaultValue={MAX_DURATION_DEFAULT_MINUTES}
-        min={MAX_DURATION_MINIMUM_MINUTES}
-        max={MAX_DURATION_MAXIMUM_MINUTES}
-        label={getText('maxDurationMinutesLabel')}
-      />
-      {repeatInterval === 'hourly' && (
-        <Selector
+      {repeatType === 'hourly' && (
+        <Input
           form={form}
           isRequired
           name="startHour"
           label={getText('startHourLabel')}
-          items={HOURS}
-          columns={12}
+          type="number"
+          min={0}
+          max={HOURS_PER_DAY - 1}
         />
       )}
-      {repeatInterval === 'hourly' && (
-        <Selector
+      {repeatType === 'hourly' && (
+        <Input
           form={form}
           isRequired
           name="endHour"
           label={getText('endHourLabel')}
-          items={HOURS}
-          columns={12}
+          type="number"
+          min={0}
+          max={HOURS_PER_DAY - 1}
         />
       )}
-      {repeatInterval === 'daily' && (
+      {repeatType === 'daily' && (
         <MultiSelector form={form} isRequired name="days" label={getText('daysLabel')} items={DAYS}>
           {(n) => getText(DAY_3_LETTER_TEXT_IDS[n] ?? 'monday3')}
         </MultiSelector>
       )}
-      {repeatInterval === 'monthly' && monthlyRepeatType === 'date' && (
-        <Selector
-          form={form}
-          isRequired
-          name="date"
-          label={getText('dateLabel')}
-          items={DATES}
-          columns={10}
-        >
-          {(n) => String(n + 1)}
-        </Selector>
-      )}
-      {repeatInterval === 'monthly' && monthlyRepeatType === 'weekday' && (
-        <>
-          <Selector
-            form={form}
-            isRequired
-            name="dayOfWeek"
-            label={getText('dayOfWeekLabel')}
-            items={DAYS}
-          >
-            {(n) => getText(DAY_3_LETTER_TEXT_IDS[n] ?? 'monday3')}
-          </Selector>
-          <Input
-            form={form}
-            isRequired
-            name="weekNumber"
-            label={getText('weekOfMonthLabel')}
-            type="number"
-          />
-        </>
-      )}
-      {repeatInterval === 'monthly' && (
+      {(repeatType === 'monthly-date' || repeatType === 'monthly-weekday') && (
         <MultiSelector
           form={form}
           isRequired
@@ -423,6 +348,30 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           {(n) => getText(MONTH_3_LETTER_TEXT_IDS[n] ?? 'january3')}
         </MultiSelector>
       )}
+      <details className="w-full">
+        <summary>{getText('advancedOptions')}</summary>
+        <div className="flex w-full flex-col">
+          <Selector
+            form={form}
+            isRequired
+            name="parallelMode"
+            label={getText('parallelModeLabel')}
+            items={PROJECT_PARALLEL_MODES}
+          >
+            {(interval) => getText(PARALLEL_MODE_TO_TEXT_ID[interval])}
+          </Selector>
+          <Text>{getText(PARALLEL_MODE_TO_DESCRIPTION_ID[parallelMode])}</Text>
+        </div>
+        <Input
+          form={form}
+          name="maxDurationMinutes"
+          type="number"
+          defaultValue={MAX_DURATION_DEFAULT_MINUTES}
+          min={MAX_DURATION_MINIMUM_MINUTES}
+          max={MAX_DURATION_MAXIMUM_MINUTES}
+          label={getText('maxDurationMinutesLabel')}
+        />
+      </details>
 
       <Form.FormError />
       <ButtonGroup>
