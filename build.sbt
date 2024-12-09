@@ -26,7 +26,7 @@ import java.nio.file.Paths
 // === Global Configuration ===================================================
 // ============================================================================
 
-val scalacVersion = "2.13.15"
+val scalacVersion = Dependencies.VersionsPinned.scala
 // source version of the Java language
 val javaVersion = "21"
 // version of the GraalVM JDK
@@ -34,7 +34,7 @@ val graalVersion = "21.0.2"
 // Version used for the Graal/Truffle related Maven packages
 // Keep in sync with GraalVM.version. Do not change the name of this variable,
 // it is used by the Rust build script via regex matching.
-val graalMavenPackagesVersion = "24.0.0"
+val graalMavenPackagesVersion = Dependencies.VersionsPinned.graalMavenPackages
 val targetJavaVersion         = "17"
 val defaultDevEnsoVersion     = "0.0.0-dev"
 val ensoVersion = sys.env.getOrElse(
@@ -455,8 +455,11 @@ val jawnParserVersion = "1.5.1"
 
 val circeVersion              = "0.14.7"
 val circeGenericExtrasVersion = "0.14.3"
-val circe = Seq("circe-core", "circe-generic", "circe-parser")
-  .map("io.circe" %% _ % circeVersion)
+val circe = Seq(
+  Dependencies.Compile.circeGeneric,
+  Dependencies.Compile.circeCore,
+  Dependencies.Compile.circeParser
+)
 val snakeyamlVersion = "2.3"
 
 // === Commons ================================================================
@@ -540,11 +543,11 @@ val jmh = Seq(
 // === Scala Compiler =========================================================
 
 val scalaCompiler = Seq(
-  "org.scala-lang" % "scala-reflect"  % scalacVersion,
-  "org.scala-lang" % "scala-compiler" % scalacVersion
+  Dependencies.Compile.scalaReflect,
+  Dependencies.Compile.scalaCompiler,
 )
 val scalaLibrary = Seq(
-  "org.scala-lang" % "scala-library" % scalacVersion
+  Dependencies.Compile.scalaLibrary,
 )
 val scalaParserCombinatorsVersion = "1.1.2"
 val scalaJavaCompatVersion        = "1.0.0"
@@ -1012,13 +1015,13 @@ lazy val `profiling-utils` = project
       exclude ("org.netbeans.api", "org-openide-awt")
       exclude ("org.netbeans.api", "org-openide-modules")
       exclude ("org.netbeans.api", "org-netbeans-api-annotations-common"),
-      Dependencies.Compile.slf4j,
+      Dependencies.Compile.slf4jApi,
       Dependencies.Test.junit,
       Dependencies.Test.sbtJunitInterface
     ),
     Compile / moduleDependencies ++= {
       Seq(
-        Dependencies.Compile.slf4j,
+        Dependencies.Compile.slf4jApi,
         Dependencies.Compile.netbeansModulesSampler
       )
     }
@@ -1198,17 +1201,17 @@ lazy val `scala-libs-wrapper` = project
     scalaModuleDependencySetting,
     javaModuleName := "org.enso.scala.wrapper",
     libraryDependencies ++= circe ++ scalaCompiler ++ Seq(
-      "com.typesafe.scala-logging"            %% "scala-logging"         % scalaLoggingVersion,
-      "org.slf4j"                              % "slf4j-api"             % slf4jVersion,
-      "org.typelevel"                         %% "cats-core"             % catsVersion,
-      "org.jline"                              % "jline"                 % jlineVersion,
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion,
-      "net.java.dev.jna"                       % "jna"                   % jnaVersion
+      Dependencies.Compile.scalaLogging,
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.catsCore,
+      Dependencies.Compile.jline,
+      Dependencies.Compile.jsoniterScalaMacros,
+      Dependencies.Compile.jna
     ),
     Compile / moduleDependencies ++= scalaLibrary ++ Seq(
-      "org.scala-lang" % "scala-reflect" % scalacVersion,
-      "org.jline"      % "jline"         % jlineVersion,
-      "org.slf4j"      % "slf4j-api"     % slf4jVersion
+      Dependencies.Compile.scalaReflect,
+      Dependencies.Compile.jline,
+      Dependencies.Compile.slf4jApi
     ),
     assembly / assemblyExcludedJars := {
       JPMSUtils.filterModulesFromClasspath(
@@ -1216,11 +1219,10 @@ lazy val `scala-libs-wrapper` = project
         scalaLibrary ++
         scalaCompiler ++
         Seq(
-          "org.scala-lang"            % "scala-reflect"   % scalacVersion,
-          "org.slf4j"                 % "slf4j-api"       % slf4jVersion,
-          "io.github.java-diff-utils" % "java-diff-utils" % javaDiffVersion,
-          "org.jline"                 % "jline"           % jlineVersion,
-          "net.java.dev.jna"          % "jna"             % jnaVersion
+          Dependencies.Compile.slf4jApi,
+          Dependencies.Compile.javaDiffUtils,
+          Dependencies.Compile.jline,
+          Dependencies.Compile.jna
         ),
         streams.value.log,
         moduleName.value,
@@ -1234,18 +1236,14 @@ lazy val `scala-libs-wrapper` = project
       val scalaLibs = JPMSUtils.filterModulesFromUpdate(
         update.value,
         Seq(
-          "com.typesafe.scala-logging"            %% "scala-logging"         % scalaLoggingVersion,
-          "io.circe"                              %% "circe-core"            % circeVersion,
-          "io.circe"                              %% "circe-generic"         % circeVersion,
-          "io.circe"                              %% "circe-parser"          % circeVersion,
-          "io.circe"                              %% "circe-jawn"            % circeVersion,
-          "io.circe"                              %% "circe-numbers"         % circeVersion,
-          "org.typelevel"                         %% "cats-core"             % catsVersion,
-          "org.typelevel"                         %% "cats-kernel"           % catsVersion,
-          "org.typelevel"                         %% "jawn-parser"           % jawnParserVersion,
-          "com.chuusai"                           %% "shapeless"             % shapelessVersion,
-          "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion,
-          "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % jsoniterVersion
+          Dependencies.Compile.scalaLogging,
+          Dependencies.Compile.circeCore,
+          Dependencies.Compile.circeGeneric,
+          Dependencies.Compile.circeParser,
+          Dependencies.Compile.circeJawn,
+          Dependencies.Compile.circeNumbers,
+          Dependencies.Compile.catsCore,
+          Dependencies.Compile.jsoniterScalaMacros,
         ),
         streams.value.log,
         moduleName.value,
