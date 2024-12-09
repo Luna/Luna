@@ -1509,17 +1509,19 @@ lazy val `zio-wrapper` = project
     scalaModuleDependencySetting,
     javaModuleName := "org.enso.zio.wrapper",
     libraryDependencies ++= zio ++ Seq(
-      "dev.zio" %% "zio-internal-macros"                       % zioVersion,
-      "dev.zio" %% "zio-stacktracer"                           % zioVersion,
-      "dev.zio" %% "izumi-reflect"                             % zioIzumiReflectVersion,
-      "dev.zio" %% "izumi-reflect-thirdparty-boopickle-shaded" % zioIzumiReflectVersion
+      Dependencies.Compile.zioInternalMacros,
+      Dependencies.Compile.zioStacktracer,
+      Dependencies.Compile.zioIzumiReflect,
+      Dependencies.Compile.zioIzumiReflectThirdpartyBoopickleShaded,
     ),
     assembly / assemblyExcludedJars := {
       val excludedJars = JPMSUtils.filterModulesFromUpdate(
         update.value,
         scalaLibrary ++
         scalaCompiler ++
-        Seq("dev.zio" %% "zio-interop-cats" % zioInteropCatsVersion),
+        Seq(
+          Dependencies.Compile.zioInteropCats
+        ),
         streams.value.log,
         moduleName.value,
         scalaBinaryVersion.value,
@@ -1533,11 +1535,11 @@ lazy val `zio-wrapper` = project
         update.value,
         scalaLibrary ++
         Seq(
-          "dev.zio" %% "zio"                                       % zioVersion,
-          "dev.zio" %% "zio-internal-macros"                       % zioVersion,
-          "dev.zio" %% "zio-stacktracer"                           % zioVersion,
-          "dev.zio" %% "izumi-reflect"                             % zioIzumiReflectVersion,
-          "dev.zio" %% "izumi-reflect-thirdparty-boopickle-shaded" % zioIzumiReflectVersion
+          Dependencies.Compile.zio,
+          Dependencies.Compile.zioInternalMacros,
+          Dependencies.Compile.zioStacktracer,
+          Dependencies.Compile.zioIzumiReflect,
+          Dependencies.Compile.zioIzumiReflectThirdpartyBoopickleShaded,
         ),
         streams.value.log,
         moduleName.value,

@@ -114,7 +114,11 @@ object Dependencies {
     val truffleRuntime = "24.1.1"
     val word = "24.1.1"
     val zio = "2.0.14"
+    val zioInternalMacros = "2.0.14"
     val zioInteropCats = "23.0.0.6"
+    val izumiReflect = "2.3.8"
+    val izumiReflectThirdpartyBoopickleShaded = "2.3.8"
+    val zioStacktracer = "2.0.14"
   }
 
   object Pinned {
@@ -228,7 +232,12 @@ object Dependencies {
     val tikaCore = "org.apache.tika" % "tika-core" % Versions.tikaCore
     val typesafeConfig = "com.typesafe" % "config" % Versions.config
     val zio = "dev.zio" %% "zio" % Versions.zio
+    val zioInternalMacros = "dev.zio" %% "zio-internal-macros" % Versions.zioInternalMacros
     val zioInteropCats = "dev.zio" %% "zio-interop-cats" % Versions.zioInteropCats
+    val zioIzumiReflect = "dev.zio" %% "izumi-reflect" % Versions.izumiReflect
+    val zioIzumiReflectThirdpartyBoopickleShaded =
+      "dev.zio" %% "izumi-reflect-thirdparty-boopickle-shaded" % Versions.izumiReflectThirdpartyBoopickleShaded
+    val zioStacktracer = "dev.zio" %% "zio-stacktracer" % Versions.zioStacktracer
   }
 
   object Test {
