@@ -4119,12 +4119,12 @@ lazy val editions = project
     scalaModuleDependencySetting,
     compileOrder := CompileOrder.ScalaThenJava, // Note [JPMS Compile order]
     libraryDependencies ++= Seq(
-      "io.circe"      %% "circe-core" % circeVersion     % "provided",
-      "org.yaml"       % "snakeyaml"  % snakeyamlVersion % "provided",
-      "org.scalatest" %% "scalatest"  % scalatestVersion % Test
+      Dependencies.Compile.circeCore % "provided",
+      Dependencies.Compile.snakeyaml % "provided",
+      Dependencies.Compile.scalatest % Test,
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.yaml" % "snakeyaml" % snakeyamlVersion
+      Dependencies.Compile.snakeyaml,
     ),
     Compile / internalModuleDependencies := Seq(
       (`scala-yaml` / Compile / exportedModule).value,
