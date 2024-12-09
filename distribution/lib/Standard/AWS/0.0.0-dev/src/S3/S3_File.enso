@@ -495,7 +495,7 @@ type S3_File
          thrown.
        - If the object is not accessible, an `S3_Error` is thrown.
     size : Integer
-    size self =
+    size self = if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . size else
         if self.is_directory then Error.throw (S3_Error.Error "size can only be called on files." self.uri) else
             content_length = translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . contentLength
             if content_length.is_nothing then Error.throw (S3_Error.Error "ContentLength header is missing." self.uri) else content_length
