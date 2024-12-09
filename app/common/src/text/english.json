@@ -729,6 +729,10 @@
   "downloadToOpenWorkflow": "Download Enso to open workflows.",
   "downloadToExecuteWorkflow": "Download Enso to execute workflows.",
   "advancedOptions": "Advanced options",
+  "hourlyProjectExecutionRepeatType": "Hourly",
+  "dailyProjectExecutionRepeatType": "Daily",
+  "monthlyProjectExecutionRepeatType": "Monthly",
+  "xthWeek": "$0 week",
 
   "someAgreementsHaveBeenUpdated": "Some agreements have been updated. Please re-read and agree to continue.",
   "licenseAgreementTitle": "Enso Terms of Service",

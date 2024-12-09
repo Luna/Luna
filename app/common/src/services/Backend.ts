@@ -362,6 +362,16 @@ export const PROJECT_EXECUTION_REPEAT_TYPES = [
   'monthly-last-weekday',
 ] as const
 
+export const PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID = {
+  hourly: 'hourlyProjectExecutionRepeatType',
+  daily: 'dailyProjectExecutionRepeatType',
+  'monthly-date': 'monthlyProjectExecutionRepeatType',
+  'monthly-weekday': 'monthlyProjectExecutionRepeatType',
+  'monthly-last-weekday': 'monthlyProjectExecutionRepeatType',
+} satisfies {
+  readonly [K in ProjectExecutionRepeatType]: TextId & `${string}ProjectExecutionRepeatType`
+}
+
 /** The interval at which a project schedule repeats. */
 export type ProjectExecutionRepeatType = ProjectExecutionRepeatInfo['type']
 
