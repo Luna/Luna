@@ -1311,7 +1311,7 @@ lazy val `jna-wrapper` = project
     modularFatJarWrapperSettings,
     autoScalaLibrary := false,
     libraryDependencies ++= Seq(
-      "net.java.dev.jna" % "jna" % jnaVersion
+      Dependencies.Compile.jna
     ),
     javaModuleName := "org.enso.jna.wrapper",
     Compile / patchModules := {
@@ -1319,7 +1319,7 @@ lazy val `jna-wrapper` = project
         update.value,
         scalaLibrary ++
         Seq(
-          "net.java.dev.jna" % "jna" % jnaVersion
+          Dependencies.Compile.jna
         ),
         streams.value.log,
         moduleName.value,
