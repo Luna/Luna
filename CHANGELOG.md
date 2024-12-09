@@ -56,6 +56,7 @@
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
 - [Edges are now colored based on their source component.][11810]
+- [Highlight missing required arguments][11803].
 - [Arrows in some drop-down buttons are now clearly visible][11800]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
@@ -91,6 +92,7 @@
 [11761]: https://github.com/enso-org/enso/pull/11761
 [11768]: https://github.com/enso-org/enso/pull/11768
 [11810]: https://github.com/enso-org/enso/pull/11810
+[11803]: https://github.com/enso-org/enso/pull/11803
 [11800]: https://github.com/enso-org/enso/pull/11800
 
 #### Enso Standard Library
