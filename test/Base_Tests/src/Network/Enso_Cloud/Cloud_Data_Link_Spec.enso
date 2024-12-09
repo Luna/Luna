@@ -241,7 +241,8 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
 type Symlink_Test_Setup
     Value ~target_location ~datalink_location
 
-    target_subdir self = self.target_location / "symlink-test-subdir"
+    # The trailing slash is needed e.g. for the S3 backend to treat the path as directory.
+    target_subdir self = self.target_location / "symlink-test-subdir/"
     dir_datalink self = self.datalink_location / "to-directory.datalink"
     file_datalink self = self.datalink_location / "to-file.datalink"
 
@@ -255,11 +256,11 @@ type Symlink_Test_Setup
             setup = Symlink_Test_Setup.Value target_location datalink_location
             create_target_directory setup.target_subdir . should_succeed
             file1 = (setup.target_subdir / "file1.txt")
-            create_text_file file1 setup.file1_content . should_succeed
+            create_text_file file1 setup.file1_content . should_equal file1
             create_text_file (setup.target_subdir / "file2.txt") "baz" . should_succeed
 
             if setup.datalink_location.exists.not then
                 create_datalink_location_directory setup.datalink_location . should_succeed
-            create_data_link setup.dir_datalink setup.target_subdir . should_succeed
-            create_data_link setup.file_datalink file1 . should_succeed
+            create_data_link setup.dir_datalink setup.target_subdir . should_equal setup.dir_datalink
+            create_data_link setup.file_datalink file1 . should_equal setup.file_datalink
             setup
