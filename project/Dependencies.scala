@@ -53,6 +53,7 @@ object Dependencies {
     val commonsIo = "2.18.0"
     val commonsLang3 = "3.17.0"
     val config = "1.4.3"
+    val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
@@ -80,6 +81,11 @@ object Dependencies {
     val snakeyaml = "2.3"
     val sprayJson = "1.3.6"
     val svm = "24.1.1"
+  }
+
+  object Pinned {
+    // io.methvin % directory-watcher % 0.18.0
+    val `slf4jApi-1.7.36` = "org.slf4j" % "slf4j-api" % "1.7.36"
   }
 
   /** Compile dependencies of the project.
@@ -115,6 +121,7 @@ object Dependencies {
     val commonsCompress = "org.apache.commons" % "commons-compress" % Versions.commonsCompress
     val commonsIo = "commons-io" % "commons-io" % Versions.commonsIo
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
+    val directoryWatcher = "io.methvin" % "directory-watcher" % Versions.directoryWatcher
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
     val jline = "org.jline" % "jline" % Versions.jline

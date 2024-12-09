@@ -1339,9 +1339,9 @@ lazy val `directory-watcher-wrapper` = project
     modularFatJarWrapperSettings,
     scalaModuleDependencySetting,
     libraryDependencies ++= Seq(
-      "io.methvin"       % "directory-watcher" % directoryWatcherVersion,
-      "org.slf4j"        % "slf4j-api"         % "1.7.36",
-      "net.java.dev.jna" % "jna"               % jnaVersion
+      Dependencies.Compile.directoryWatcher,
+      Dependencies.Pinned.`slf4jApi-1.7.36`,
+      Dependencies.Compile.jna,
     ),
     javaModuleName := "org.enso.directory.watcher.wrapper",
     assembly / assemblyExcludedJars := {
@@ -1349,8 +1349,8 @@ lazy val `directory-watcher-wrapper` = project
         (Compile / dependencyClasspath).value,
         scalaLibrary ++
         Seq(
-          "org.slf4j"        % "slf4j-api" % "1.7.36",
-          "net.java.dev.jna" % "jna"       % jnaVersion
+          Dependencies.Pinned.`slf4jApi-1.7.36`,
+          Dependencies.Compile.jna,
         ),
         streams.value.log,
         moduleName.value,
@@ -1359,7 +1359,7 @@ lazy val `directory-watcher-wrapper` = project
       )
     },
     Compile / moduleDependencies ++= Seq(
-      "org.slf4j" % "slf4j-api" % "1.7.36"
+      Dependencies.Pinned.`slf4jApi-1.7.36`,
     ),
     Compile / internalModuleDependencies := Seq(
       (`jna-wrapper` / Compile / exportedModule).value
