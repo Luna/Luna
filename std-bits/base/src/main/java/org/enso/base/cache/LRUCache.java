@@ -315,12 +315,12 @@ public class LRUCache<M> {
     return Long.min(upperBound, totalCacheSize);
   }
 
-    /**
-     * Calculate the largest size we can allow, which is the minimum of the max
-     * file size and the max total cache size.
-     */
+  /**
+   * Calculate the largest size we can allow, which is the minimum of the max file size and the max
+   * total cache size.
+   */
   private long getMaxAllowedDownloadSize() {
-      return Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
+    return Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
   }
 
   /** For testing. */
