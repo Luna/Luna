@@ -49,23 +49,32 @@ object Dependencies {
     val circeJawn = "0.14.10"
     val circeNumbers = "0.14.10"
     val circeParser = "0.14.10"
+    val collections = "24.1.1"
+    val commonsCodec = "1.17.1"
     val commonsCompress = "1.27.1"
     val commonsIo = "2.18.0"
     val commonsLang3 = "3.17.0"
+    val commonsText = "1.12.0"
     val config = "1.4.3"
     val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
     val flatbuffersJava = "24.3.25"
     val guava = "33.3.1-jre"
+    val hamcrestAll = "1.3"
+    val httpclient = "4.5.14"
+    val icu4j = "73.1"
+    val jacksonDatabind = "2.18.2"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
     val jna = "5.15.0"
+    val jniutils = "24.1.1"
     val jsoniterScalaCore = "2.31.3"
     val jsoniterScalaMacros = "2.31.3"
     val junit = "4.13.2"
     val junitInterface = "0.13.3"
     val logbackClassic = "1.5.12"
     val logbackCore = "1.5.12"
+    val nativeimage = "24.1.1"
     val orgNetbeansModulesSampler = "RELEASE230"
     val orgOpenideUtilLookup = "RELEASE230"
     val polyglot = "24.1.1"
@@ -80,6 +89,7 @@ object Dependencies {
     val scalaLogging = "3.9.5"
     val scalaParserCombinators = "2.4.0"
     val scalacheck = "1.18.1"
+    val scalactic = "3.2.19"
     val scalatest = "3.2.19"
     val sentry = "7.18.1"
     val sentryLogback = "7.18.1"
@@ -88,7 +98,12 @@ object Dependencies {
     val snakeyaml = "2.3"
     val sprayJson = "1.3.6"
     val svm = "24.1.1"
+    val tikaCore = "2.4.1"
     val truffleApi = "24.1.1"
+    val truffleCompiler = "24.1.1"
+    val truffleDslProcessor = "24.1.1"
+    val truffleRuntime = "24.1.1"
+    val word = "24.1.1"
   }
 
   object Pinned {
@@ -119,6 +134,7 @@ object Dependencies {
     val akkaParsing = "com.typesafe.akka" %% "akka-parsing" % VersionsPinned.akkaHttp
     val akkaProtobufV3 = "com.typesafe.akka" %% "akka-protobuf-v3" % VersionsPinned.akkaActor
     val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % VersionsPinned.akkaHttp
+    val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
     val catsCore = "org.typelevel" %% "cats-core" % Versions.catsCore
     val catsKernel = "org.typelevel" %% "cats-kernel" % Versions.catsKernel
     val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeGeneric
@@ -126,9 +142,11 @@ object Dependencies {
     val circeParser = "io.circe" %% "circe-parser" % Versions.circeParser
     val circeJawn = "io.circe" %% "circe-jawn" % Versions.circeJawn
     val circeNumbers = "io.circe" %% "circe-numbers" % Versions.circeNumbers
+    val commonsCodec = "commons-codec" % "commons-codec" % Versions.commonsCodec
     val commonsCompress = "org.apache.commons" % "commons-compress" % Versions.commonsCompress
     val commonsIo = "commons-io" % "commons-io" % Versions.commonsIo
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
+    val commonsText = "org.apache.commons" % "commons-text" % Versions.commonsText
     val directoryWatcher = "io.methvin" % "directory-watcher" % Versions.directoryWatcher
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
     val flatbuffersJava = "com.google.flatbuffers" % "flatbuffers-java" % Versions.flatbuffersJava
@@ -136,10 +154,15 @@ object Dependencies {
     val graalvmNativeimage = "org.graalvm.sdk" % "nativeimage" % VersionsPinned.graalMavenPackages
     val graalvmPolyglot = "org.graalvm.polyglot" % "polyglot" % VersionsPinned.graalMavenPackages
     val graalvmPolyglotTck = "org.graalvm.sdk" % "polyglot-tck" % VersionsPinned.graalMavenPackages
+    val graalvmRegex = "org.graalvm.regex" % "regex" % VersionsPinned.graalMavenPackages
     val graalvmTruffleApi = "org.graalvm.truffle" % "truffle-api" % VersionsPinned.graalMavenPackages
+    val graalvmTruffleDslProcessor = "org.graalvm.truffle" % "truffle-dsl-processor" % VersionsPinned.graalMavenPackages
     val graalvmWord = "org.graalvm.sdk" % "word" % VersionsPinned.graalMavenPackages
     val guava = "com.google.guava" % "guava" % Versions.guava
+    val hamcrestAll = "org.hamcrest" % "hamcrest-all" % Versions.hamcrestAll
+    val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Versions.jacksonDatabind
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
+    val icu4j = "com.ibm.icu" % "icu4j" % Versions.icu4j
     val jline = "org.jline" % "jline" % Versions.jline
     val jna = "net.java.dev.jna" % "jna" % Versions.jna
     val jsoniterScalaMacros =
@@ -160,6 +183,7 @@ object Dependencies {
     val reactiveStreams = "org.reactivestreams" % "reactive-streams" % VersionsPinned.reactiveStreams
     val sbtJunitInterface = "com.github.sbt" % "junit-interface" % Versions.junitInterface
     val scalacheck = "org.scalacheck" %% "scalacheck" % Versions.scalacheck
+    val scalactic = "org.scalactic" %% "scalactic" % Versions.scalactic
     val scalaCompiler = "org.scala-lang" % "scala-compiler" % VersionsPinned.scala
     val scalaLibrary = "org.scala-lang" % "scala-library" % VersionsPinned.scala
     val scalaReflect = "org.scala-lang" % "scala-reflect" % VersionsPinned.scala
@@ -174,6 +198,7 @@ object Dependencies {
     val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4jApi
     val snakeyaml = "org.yaml" % "snakeyaml" % Versions.snakeyaml
     val sprayJson = "io.spray" %% "spray-json" % VersionsPinned.sprayJson
+    val tikaCore = "org.apache.tika" % "tika-core" % Versions.tikaCore
     val typesafeConfig = "com.typesafe" % "config" % Versions.config
   }
 
