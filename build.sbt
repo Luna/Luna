@@ -1149,13 +1149,13 @@ lazy val filewatcher = project
     compileOrder := CompileOrder.ScalaThenJava,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "io.methvin"     % "directory-watcher" % directoryWatcherVersion,
-      "commons-io"     % "commons-io"        % commonsIoVersion,
-      "org.slf4j"      % "slf4j-api"         % slf4jVersion,
-      "org.scalatest" %% "scalatest"         % scalatestVersion % Test
+      Dependencies.Compile.directoryWatcher,
+      Dependencies.Compile.commonsIo,
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.scalatest % Test,
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.slf4jApi,
     ),
     Compile / internalModuleDependencies := Seq(
       (`directory-watcher-wrapper` / Compile / exportedModule).value
@@ -1369,7 +1369,7 @@ lazy val `directory-watcher-wrapper` = project
         update.value,
         scalaLibrary ++
         Seq(
-          "io.methvin" % "directory-watcher" % directoryWatcherVersion
+          Dependencies.Compile.directoryWatcher
         ),
         streams.value.log,
         moduleName.value,
