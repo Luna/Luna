@@ -441,9 +441,9 @@ val akkaHttp    = akkaHTTPPkg("http")
 val logbackTest = logbackPkg.map(_ % Test)
 val akka =
   Seq(
-    akkaActor,
-    akkaStream,
-    akkaHttp
+    Dependencies.Compile.akkaActor,
+    Dependencies.Compile.akkaStream,
+    Dependencies.Compile.akkaHttp,
   )
 
 // === Cats ===================================================================
@@ -1654,26 +1654,29 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     (Test / fork) := true,
     (Compile / run / connectInput) := true,
     commands += WithDebugCommand.withDebug,
-    libraryDependencies ++= akka ++ Seq(akkaSLF4J, akkaTestkit % Test),
+    libraryDependencies ++= akka ++ Seq(
+      Dependencies.Compile.akkaSlf4j,
+      Dependencies.Compile.akkaTestkit % Test,
+    ),
     libraryDependencies ++= circe ++ helidon,
     libraryDependencies ++= Seq(
-      "com.typesafe"                % "config"                       % typesafeConfigVersion,
-      "com.github.pureconfig"      %% "pureconfig"                   % pureconfigVersion,
-      "com.typesafe.scala-logging" %% "scala-logging"                % scalaLoggingVersion,
-      "dev.zio"                    %% "zio"                          % zioVersion,
-      "dev.zio"                    %% "zio-interop-cats"             % zioInteropCatsVersion,
-      "commons-cli"                 % "commons-cli"                  % commonsCliVersion,
-      "commons-io"                  % "commons-io"                   % commonsIoVersion,
-      "org.apache.commons"          % "commons-lang3"                % commonsLangVersion,
-      "com.miguno.akka"            %% "akka-mock-scheduler"          % akkaMockSchedulerVersion % Test,
-      "org.mockito"                %% "mockito-scala"                % mockitoScalaVersion      % Test,
-      "junit"                       % "junit"                        % junitVersion             % Test,
-      "com.github.sbt"              % "junit-interface"              % junitIfVersion           % Test,
-      "org.hamcrest"                % "hamcrest-all"                 % hamcrestVersion          % Test,
-      "org.netbeans.api"            % "org-netbeans-modules-sampler" % netbeansApiVersion       % Test
+      Dependencies.Compile.typesafeConfig,
+      Dependencies.Compile.pureconfig,
+      Dependencies.Compile.scalaLogging,
+      Dependencies.Compile.zio,
+      Dependencies.Compile.zioInteropCats,
+      Dependencies.Compile.commonsCli,
+      Dependencies.Compile.commonsIo,
+      Dependencies.Compile.commonsLang3,
+      Dependencies.Compile.akkaMockScheduler % Test,
+      Dependencies.Compile.mockitoScala % Test,
+      Dependencies.Compile.junit % Test,
+      Dependencies.Compile.sbtJunitInterface % Test,
+      Dependencies.Compile.hamcrestAll % Test,
+      Dependencies.Compile.netbeansModulesSampler % Test,
     ),
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % kindProjectorVersion cross CrossVersion.full
+      Dependencies.Compile.kindProjector cross CrossVersion.full
     )
   )
   /** Fat jar assembly settings
@@ -1727,8 +1730,8 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
     ),
     Test / moduleDependencies := {
       GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ Seq(
-        "org.slf4j"        % "slf4j-api"                    % slf4jVersion,
-        "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion
+        Dependencies.Compile.slf4jApi,
+        Dependencies.Compile.netbeansModulesSampler,
       )
     },
     Test / internalModuleDependencies := Seq(

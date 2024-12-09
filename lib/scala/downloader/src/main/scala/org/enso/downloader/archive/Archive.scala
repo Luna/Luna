@@ -305,7 +305,7 @@ object Archive {
     * The `action` can throw an exception, in which case a failure is returned.
     */
   private def withOpenArchive[R](path: Path, format: ArchiveFormat)(
-    action: (ArchiveInputStream[_ <: ApacheArchiveEntry], ReadProgress) => R
+    action: (ArchiveInputStream, ReadProgress) => R
   ): Try[R] = {
     Using(FileProgressInputStream(path)) { progressInputStream =>
       Using(new BufferedInputStream(progressInputStream)) { buffered =>

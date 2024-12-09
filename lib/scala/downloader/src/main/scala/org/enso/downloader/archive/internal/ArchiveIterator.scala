@@ -5,8 +5,8 @@ import org.apache.commons.compress.archivers.{ArchiveEntry, ArchiveInputStream}
 /** Wraps an [[ArchiveInputStream]] to get an [[Iterator]] which produces
   * non-null archive entries.
   */
-case class ArchiveIterator[E <: ArchiveEntry](
-  archiveInputStream: ArchiveInputStream[E]
+case class ArchiveIterator(
+  archiveInputStream: ArchiveInputStream
 ) extends Iterator[ArchiveEntry] {
 
   /** @inheritdoc

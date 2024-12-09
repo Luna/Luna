@@ -11,12 +11,19 @@ object Dependencies {
   object VersionsPinned {
     // Akka
     val akkaActor = "2.6.20"
+    val akkaMockScheduler = "0.5.5"
     val akkaHttp = "10.2.10"
     val javaDiffUtils = "4.12"
     val protobufJava = "3.25.1"
     val reactiveStreams = "1.0.3"
     val scalaParserCombinators = "1.1.2"
     val sprayJson = "1.3.6"
+    // scala-logging version 3.9.5 does not work with
+    // org.pojectmanager.infrastructure.log.Slf4jLogging.scala:13:42:
+    // Sequence argument type annotation `: _*` cannot be used here
+    // such annotations are only allowed in arguments to *-parameters
+    //   Sync[F].effect(logger.debug(msg, args: _*))
+    val scalaLogging = "3.9.4"
     // jaxb
     val jaxbVersion = "4.0.0"
     // GraalVM
@@ -83,8 +90,10 @@ object Dependencies {
     val jsoniterScalaMacros = "2.31.3"
     val junit = "4.13.2"
     val junitInterface = "0.13.3"
+    val kindProjector = "0.13.3"
     val logbackClassic = "1.5.12"
     val logbackCore = "1.5.12"
+    val mockitoScala = "1.17.14"
     val nativeimage = "24.1.1"
     val orgEclipseJgit = "6.7.0.202309050840-r"
     val orgNetbeansModulesSampler = "RELEASE230"
@@ -98,7 +107,7 @@ object Dependencies {
     val reactiveStreams = "1.0.4"
     val scalaCompiler = "2.13.15"
     val scalaJava8Compat = "1.0.2"
-    val scalaLogging = "3.9.5"
+    val scalaLogging = "3.9.4"
     val scalaParserCombinators = "2.4.0"
     val scalacheck = "1.18.1"
     val scalactic = "3.2.19"
@@ -148,12 +157,13 @@ object Dependencies {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % VersionsPinned.akkaActor
     val akkaHttp = "com.typesafe.akka" %% "akka-http" % VersionsPinned.akkaHttp
     val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % VersionsPinned.akkaHttp
-    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % VersionsPinned.akkaActor
-    val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % VersionsPinned.akkaActor
-    val akkaStream = "com.typesafe.akka" %% "akka-stream" % VersionsPinned.akkaActor
+    val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % VersionsPinned.akkaHttp
+    val akkaMockScheduler = "com.miguno.akka" %% "akka-mock-scheduler" % VersionsPinned.akkaMockScheduler
     val akkaParsing = "com.typesafe.akka" %% "akka-parsing" % VersionsPinned.akkaHttp
     val akkaProtobufV3 = "com.typesafe.akka" %% "akka-protobuf-v3" % VersionsPinned.akkaActor
-    val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % VersionsPinned.akkaHttp
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % VersionsPinned.akkaActor
+    val akkaStream = "com.typesafe.akka" %% "akka-stream" % VersionsPinned.akkaActor
+    val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % VersionsPinned.akkaActor
     val apacheArrowVector = "org.apache.arrow" % "arrow-vector" % Versions.arrowVector
     val apacheArrowMemoryNetty = "org.apache.arrow" % "arrow-memory-netty" % Versions.arrowMemoryNetty
     val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
@@ -208,8 +218,10 @@ object Dependencies {
     val jsoniterScalaCore =
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % Versions.jsoniterScalaCore
     val junit = "junit" % "junit" % Versions.junit
+    val kindProjector = "org.typelevel" %% "kind-projector" % Versions.kindProjector
     val logbackClassic = "ch.qos.logback" % "logback-classic" % Versions.logbackClassic
     val logbackCore = "ch.qos.logback" % "logback-core" % Versions.logbackCore
+    val mockitoScala = "org.mockito" %% "mockito-scala" % Versions.mockitoScala
     val nativeimageSvm = "org.graalvm.nativeimage" % "svm" % VersionsPinned.graalMavenPackages
     val netbeansModulesSampler =
       "org.netbeans.api" % "org-netbeans-modules-sampler" % Versions.orgNetbeansModulesSampler
@@ -225,7 +237,7 @@ object Dependencies {
     val scalaCompiler = "org.scala-lang" % "scala-compiler" % VersionsPinned.scala
     val scalaLibrary = "org.scala-lang" % "scala-library" % VersionsPinned.scala
     val scalaReflect = "org.scala-lang" % "scala-reflect" % VersionsPinned.scala
-    val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging
+    val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % VersionsPinned.scalaLogging
     val scalaParserCombinators =
       "org.scala-lang.modules" %% "scala-parser-combinators" % VersionsPinned.scalaParserCombinators
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaJava8Compat
