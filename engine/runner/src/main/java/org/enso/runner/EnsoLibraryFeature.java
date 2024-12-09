@@ -105,13 +105,13 @@ public final class EnsoLibraryFeature implements Feature {
 
   private static void registerOpenCV(ClassLoader cl) throws ReflectiveOperationException {
     var moduleOpenCV = cl.getUnnamedModule();
-    var currentOS = System.getProperty("os.name").toUpperCase().replace(" ", "");
+    var currentOS = System.getProperty("os.name").toUpperCase().replaceAll(" .*$", "");
 
     var libOpenCV =
         switch (currentOS) {
           case "LINUX" -> "nu/pattern/opencv/linux/x86_64/libopencv_java470.so";
           case "WINDOWS" -> "nu/pattern/opencv/windows/x86_64/opencv_java470.dll";
-          case "MACOSX" -> {
+          case "MAC" -> {
             var arch = System.getProperty("os.arch").toUpperCase();
             yield switch (arch) {
               case "X86_64" -> "nu/pattern/opencv/osx/x86_64/libopencv_java470.dylib";
