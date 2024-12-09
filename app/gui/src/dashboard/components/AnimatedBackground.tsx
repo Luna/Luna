@@ -145,7 +145,7 @@ const AnimatedBackgroundItemUnderlay = memo(function AnimatedBackgroundItemUnder
   const { isActive, underlayElement, layoutId, transition } = props
 
   return (
-    <AnimatePresence initial={!isActive}>
+    <AnimatePresence mode="wait" initial={!isActive}>
       {isActive && (
         <motion.div
           layout
