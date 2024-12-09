@@ -594,7 +594,7 @@ watchEffect(() => {
       const needsGrouping = rowData.value.some((row) => {
         if (header in row && row[header] != null) {
           const value = typeof row[header] === 'object' ? row[header].value : row[header]
-          return value > 9999
+          return value > 999999 || value < -999999
         }
       })
       headerGroupingMap.set(header, needsGrouping)
@@ -786,15 +786,15 @@ config.setToolbar(
 
 .table-visualization-status-bar {
   height: 20px;
-  background-color: white;
   font-size: 14px;
   white-space: nowrap;
   padding: 0 5px;
   overflow: hidden;
 }
 
-.TableVisualization > .ag-theme-alpine > :deep(.ag-root-wrapper.ag-layout-normal) {
-  border-radius: 0 0 var(--radius-default) var(--radius-default);
+.TableVisualization:deep(.ag-root-wrapper) {
+  --ag-wrapper-border-radius: 0 0 var(--radius-default) var(--radius-default);
+  border: none;
 }
 
 /* Tag selectors are inefficient to compute, and should be replaced with a class selector

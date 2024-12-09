@@ -296,6 +296,11 @@ if (typeof import.meta.env.ENSO_IDE_AG_GRID_LICENSE_KEY !== 'string') {
   LicenseManager.setLicenseKey(agGridLicenseKey)
 }
 
+function stopIfPrevented(event: Event) {
+  // When AG Grid handles the context menu event it prevents-default, but it doesn't stop propagation.
+  if (event.defaultPrevented) event.stopPropagation()
+}
+
 const { AgGridVue } = await import('ag-grid-vue3')
 </script>
 
@@ -322,6 +327,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       :suppressDragLeaveHidesColumns="suppressDragLeaveHidesColumns"
       :suppressMoveWhenColumnDragging="suppressMoveWhenColumnDragging"
       :processDataFromClipboard="processDataFromClipboard"
+      :allowContextMenuWithControlKey="true"
       @gridReady="onGridReady"
       @firstDataRendered="updateColumnWidths"
       @rowDataUpdated="updateColumnWidths($event), emit('rowDataUpdated', $event)"
@@ -332,6 +338,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       @rowEditingStopped="emit('rowEditingStopped', $event)"
       @sortChanged="emit('sortOrFilterUpdated', $event)"
       @filterChanged="emit('sortOrFilterUpdated', $event)"
+      @contextmenu="stopIfPrevented"
     />
   </div>
 </template>
@@ -344,9 +351,25 @@ const { AgGridVue } = await import('ag-grid-vue3')
   height: 100%;
 }
 
+/*
+ * FIXME: This style should apply when using this component both in visualization and in widget.
+ * Right now, it appear to only have an effect on visualization, so we have a copy of it inside
+ * WidgetTableEditor.
+ */
 .ag-theme-alpine {
   --ag-grid-size: 3px;
   --ag-list-item-height: 20px;
+  --ag-background-color: var(--color-visualization-bg);
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-visualization-bg) 98%, black);
+  --ag-header-background-color: var(--color-visualization-bg);
   font-family: var(--font-mono);
+
+  :deep(.ag-header) {
+    background: linear-gradient(
+      to top,
+      var(--ag-odd-row-background-color),
+      var(--ag-background-color)
+    );
+  }
 }
 </style>
