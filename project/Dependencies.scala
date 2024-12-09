@@ -12,12 +12,21 @@ object Dependencies {
     val logbackClassic = "2.0.9"
   }
 
+  /** Manually updated versions. */
+  object VersionsPinned {
+    val akkaActor = "2.6.20"
+    val graalMavenPackages = "24.0.0"
+  }
+
+  /** Versions updated automatically by running the `dependencyUpgrade` command. */
   object Versions {
+    val akkaActor = "2.8.8"
     val circeCore = "0.14.10"
     val commonsCompress = "1.27.1"
     val scalacheck = "1.18.1"
     val scalatest = "3.2.19"
     val snakeyaml = "2.3"
+    val svm = "24.1.1"
   }
 
   /** Compile dependencies of the project.
@@ -38,6 +47,8 @@ object Dependencies {
     val snakeyaml = "org.yaml" % "snakeyaml" % Versions.snakeyaml
     val circeCore = "io.circe" %% "circe-core" % Versions.circeCore
     val apacheCommonsCompress = "org.apache.commons" % "commons-compress" % Versions.commonsCompress
+    val akkaActor = "com.typesafe.akka" %% "akka-actor" % VersionsPinned.akkaActor
+    val nativeimageSvm = "org.graalvm.nativeimage" % "svm" % VersionsPinned.graalMavenPackages
   }
 
   object Test {

@@ -982,10 +982,10 @@ lazy val `akka-native` = project
     frgaalJavaCompilerSetting,
     version := "0.1",
     libraryDependencies ++= Seq(
-      akkaActor
+      Dependencies.Compile.akkaActor
     ),
     // Note [Native Image Workaround for GraalVM 20.2]
-    libraryDependencies += "org.graalvm.nativeimage" % "svm" % graalMavenPackagesVersion % "provided"
+    libraryDependencies += Dependencies.Compile.nativeimageSvm % "provided"
   )
 
 lazy val `profiling-utils` = project
