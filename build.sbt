@@ -327,7 +327,7 @@ lazy val enso = (project in file("."))
     `json-rpc-server-test`,
     `json-rpc-server`,
     `language-server`,
-    //`language-server-deps-wrapper`,
+    `language-server-deps-wrapper`,
     launcher,
     `library-manager`,
     `library-manager-test`,
@@ -472,12 +472,12 @@ val commonsMathVersion        = "3.6.1"
 val commonsCompressVersion    = "1.23.0"
 val commonsCliVersion         = "1.5.0"
 val commons = Seq(
-  "org.apache.commons" % "commons-collections4" % commonsCollectionsVersion,
-  "org.apache.commons" % "commons-lang3"        % commonsLangVersion,
-  "commons-io"         % "commons-io"           % commonsIoVersion,
-  "org.apache.commons" % "commons-text"         % commonsTextVersion,
-  "org.apache.commons" % "commons-math3"        % commonsMathVersion,
-  "commons-cli"        % "commons-cli"          % commonsCliVersion
+  Dependencies.Compile.commonsCollections4,
+  Dependencies.Compile.commonsLang3,
+  Dependencies.Compile.commonsIo,
+  Dependencies.Compile.commonsText,
+  Dependencies.Compile.commonsMath3,
+  Dependencies.Compile.commonsCli,
 )
 
 // === Helidon ================================================================
@@ -527,8 +527,8 @@ val jacksonVersion = "2.15.2"
 
 val jaxbVersion = "4.0.0"
 val jaxb = Seq(
-  "jakarta.xml.bind" % "jakarta.xml.bind-api" % jaxbVersion % Benchmark,
-  "com.sun.xml.bind" % "jaxb-impl"            % jaxbVersion % Benchmark
+  Dependencies.Compile.jakartaXmlBindApi % Benchmark,
+  Dependencies.Compile.jaxbImpl % Benchmark,
 )
 val jaActivationVersion = "2.1.0"
 
@@ -536,8 +536,8 @@ val jaActivationVersion = "2.1.0"
 
 val jmhVersion = "1.36"
 val jmh = Seq(
-  "org.openjdk.jmh" % "jmh-core"                 % jmhVersion % Benchmark,
-  "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhVersion % Benchmark
+  Dependencies.Compile.jmhCore % Benchmark,
+  Dependencies.Compile.jmhGeneratorAnnprocess % Benchmark,
 )
 
 // === Scala Compiler =========================================================
@@ -571,25 +571,25 @@ val zioVersion             = "2.0.14"
 val zioInteropCatsVersion  = "23.0.0.6"
 val zioIzumiReflectVersion = "2.3.8"
 val zio = Seq(
-  "dev.zio" %% "zio"              % zioVersion,
-  "dev.zio" %% "zio-interop-cats" % zioInteropCatsVersion
+  Dependencies.Compile.zio,
+  Dependencies.Compile.zioInteropCats,
 )
 
 // === Sentry =================================================================
 
 val ioSentryVersion = "6.28.0"
 val ioSentry = Seq(
-  "io.sentry" % "sentry-logback" % ioSentryVersion,
-  "io.sentry" % "sentry"         % ioSentryVersion
+  Dependencies.Compile.sentryLogback,
+  Dependencies.Compile.sentry,
 )
 
 // === Bouncy Castle ==========================================================
 
 val bouncyCastleVersion = "1.76"
 val bouncyCastle = Seq(
-  "org.bouncycastle" % "bcutil-jdk18on" % bouncyCastleVersion,
-  "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleVersion,
-  "org.bouncycastle" % "bcprov-jdk18on" % bouncyCastleVersion
+  Dependencies.Compile.bouncycastleBcutil,
+  Dependencies.Compile.bouncycastleBcpkix,
+  Dependencies.Compile.bouncycastleBcprov,
 )
 
 // === Google =================================================================
@@ -679,24 +679,24 @@ lazy val componentModulesPaths =
     ioSentry ++
     logbackPkg ++
     Seq(
-      "org.scala-lang"         % "scala-reflect"                % scalacVersion,
-      "org.netbeans.api"       % "org-openide-util-lookup"      % netbeansApiVersion,
-      "org.netbeans.api"       % "org-netbeans-modules-sampler" % netbeansApiVersion,
-      "com.google.flatbuffers" % "flatbuffers-java"             % flatbuffersVersion,
-      "com.google.protobuf"    % "protobuf-java"                % googleProtobufVersion,
-      "commons-cli"            % "commons-cli"                  % commonsCliVersion,
-      "commons-io"             % "commons-io"                   % commonsIoVersion,
-      "org.yaml"               % "snakeyaml"                    % snakeyamlVersion,
-      "org.eclipse.jgit"       % "org.eclipse.jgit"             % jgitVersion,
-      "com.typesafe"           % "config"                       % typesafeConfigVersion,
-      "org.reactivestreams"    % "reactive-streams"             % reactiveStreamsVersion,
-      "org.jline"              % "jline"                        % jlineVersion,
-      "org.apache.commons"     % "commons-lang3"                % commonsLangVersion,
-      "org.apache.commons"     % "commons-compress"             % commonsCompressVersion,
-      "org.apache.tika"        % "tika-core"                    % tikaVersion,
-      "org.slf4j"              % "slf4j-api"                    % slf4jVersion,
-      "org.yaml"               % "snakeyaml"                    % snakeyamlVersion,
-      "com.ibm.icu"            % "icu4j"                        % icuVersion
+      Dependencies.Compile.scalaReflect,
+      Dependencies.Compile.openideUtilLookup,
+      Dependencies.Compile.netbeansModulesSampler,
+      Dependencies.Compile.flatbuffersJava,
+      Dependencies.Compile.protobufJava,
+      Dependencies.Compile.commonsCli,
+      Dependencies.Compile.commonsIo,
+      Dependencies.Compile.snakeyaml,
+      Dependencies.Compile.eclipseJgit,
+      Dependencies.Compile.typesafeConfig,
+      Dependencies.Compile.reactiveStreams,
+      Dependencies.Compile.jline,
+      Dependencies.Compile.commonsLang3,
+      Dependencies.Compile.commonsCompress,
+      Dependencies.Compile.tikaCore,
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.snakeyaml, // TODO: second time
+      Dependencies.Compile.icu4j,
     )
   val thirdPartyMods = JPMSUtils.filterModulesFromClasspath(
     fullCp,
@@ -739,7 +739,7 @@ lazy val componentModulesPaths =
     (`library-manager` / Compile / exportedModuleBin).value,
     (`akka-wrapper` / Compile / exportedModuleBin).value,
     (`zio-wrapper` / Compile / exportedModuleBin).value,
-    //(`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
+    (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
     (`jna-wrapper` / Compile / exportedModuleBin).value,
     (`ydoc-polyfill` / Compile / exportedModuleBin).value,
@@ -1254,7 +1254,6 @@ lazy val `scala-libs-wrapper` = project
     }
   )
 
-// TODO: Figure out
 /** Wrapper project for dependencies of `language-server` that cannot be used as
   * JPMS modules (cannot be put directly on module-path).
   */
@@ -2290,7 +2289,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`zio-wrapper` / Compile / exportedModule).value,
       (`scala-libs-wrapper` / Compile / exportedModule).value,
       (`connected-lock-manager-server` / Compile / exportedModule).value,
-      //(`language-server-deps-wrapper` / Compile / exportedModule).value,
+      (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`directory-watcher-wrapper` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
       (`ydoc-polyfill` / Compile / exportedModule).value,
@@ -2387,7 +2386,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`scala-libs-wrapper` / Compile / exportedModule).value,
       (`jna-wrapper` / Compile / exportedModule).value,
       (`akka-wrapper` / Compile / exportedModule).value,
-      //(`language-server-deps-wrapper` / Compile / exportedModule).value,
+      (`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`fansi-wrapper` / Compile / exportedModule).value,
       (`text-buffer` / Compile / exportedModule).value,
       (`runtime-suggestions` / Compile / exportedModule).value,

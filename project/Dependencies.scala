@@ -17,6 +17,8 @@ object Dependencies {
     val reactiveStreams = "1.0.3"
     val scalaParserCombinators = "1.1.2"
     val sprayJson = "1.3.6"
+    // jaxb
+    val jaxbVersion = "4.0.0"
     // GraalVM
     val graalMavenPackages = "24.0.0"
     // Scala
@@ -39,6 +41,9 @@ object Dependencies {
     val akkaStream = "2.8.8"
     val arrowVector = "14.0.1"
     val arrowMemoryNetty = "14.0.1"
+    val bcutilJdk18on = "1.76"
+    val bcpkixJdk18on = "1.76"
+    val bcprovJdk18on = "1.76"
     val catsCore = "2.12.0"
     val catsKernel = "2.10.0"
     val circeCore = "0.14.10"
@@ -47,11 +52,14 @@ object Dependencies {
     val circeNumbers = "0.14.10"
     val circeParser = "0.14.10"
     val collections = "24.1.1"
+    val commonsCli = "1.5.0"
     val commonsCodec = "1.17.1"
-    val commonsCompress = "1.27.1"
-    val commonsIo = "2.18.0"
-    val commonsLang3 = "3.17.0"
-    val commonsText = "1.12.0"
+    val commonsCollections4 = "4.4"
+    val commonsCompress = "1.23.0"
+    val commonsIo = "2.12.0"
+    val commonsLang3 = "3.12.0"
+    val commonsMath3 = "3.6.1"
+    val commonsText = "1.10.0"
     val config = "1.4.3"
     val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
@@ -63,6 +71,8 @@ object Dependencies {
     val jacksonDatabind = "2.18.2"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
+    val jmhCore = "1.36"
+    val jmhGeneratorAnnprocess = "1.36"
     val jna = "5.15.0"
     val jniutils = "24.1.1"
     val jsoniterScalaCore = "2.31.3"
@@ -72,12 +82,13 @@ object Dependencies {
     val logbackClassic = "1.5.12"
     val logbackCore = "1.5.12"
     val nativeimage = "24.1.1"
+    val orgEclipseJgit = "6.7.0.202309050840-r"
     val orgNetbeansModulesSampler = "RELEASE230"
     val orgOpenideUtilLookup = "RELEASE230"
     val polyglot = "24.1.1"
     val polyglotTck = "24.1.1"
     val protobufJava = "4.29.1"
-    val pureconfig = "0.17.8"
+    val pureconfig = "0.17.4"
     val pureconfigCore = "0.17.4"
     val pureconfigGeneric = "0.17.4"
     val reactiveStreams = "1.0.4"
@@ -102,6 +113,8 @@ object Dependencies {
     val truffleDslProcessor = "24.1.1"
     val truffleRuntime = "24.1.1"
     val word = "24.1.1"
+    val zio = "2.0.14"
+    val zioInteropCats = "23.0.0.6"
   }
 
   object Pinned {
@@ -135,6 +148,9 @@ object Dependencies {
     val apacheArrowVector = "org.apache.arrow" % "arrow-vector" % Versions.arrowVector
     val apacheArrowMemoryNetty = "org.apache.arrow" % "arrow-memory-netty" % Versions.arrowMemoryNetty
     val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
+    val bouncycastleBcutil = "org.bouncycastle" % "bcutil-jdk18on" % Versions.bcutilJdk18on
+    val bouncycastleBcpkix = "org.bouncycastle" % "bcpkix-jdk18on" % Versions.bcpkixJdk18on
+    val bouncycastleBcprov = "org.bouncycastle" % "bcprov-jdk18on" % Versions.bcprovJdk18on
     val catsCore = "org.typelevel" %% "cats-core" % Versions.catsCore
     val catsKernel = "org.typelevel" %% "cats-kernel" % Versions.catsKernel
     val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeGeneric
@@ -142,12 +158,16 @@ object Dependencies {
     val circeParser = "io.circe" %% "circe-parser" % Versions.circeParser
     val circeJawn = "io.circe" %% "circe-jawn" % Versions.circeJawn
     val circeNumbers = "io.circe" %% "circe-numbers" % Versions.circeNumbers
+    val commonsCli = "commons-cli" % "commons-cli" % Versions.commonsCli
     val commonsCodec = "commons-codec" % "commons-codec" % Versions.commonsCodec
+    val commonsCollections4 = "org.apache.commons" % "commons-collections4" % Versions.commonsCollections4
     val commonsCompress = "org.apache.commons" % "commons-compress" % Versions.commonsCompress
     val commonsIo = "commons-io" % "commons-io" % Versions.commonsIo
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
+    val commonsMath3 = "org.apache.commons" % "commons-math3" % Versions.commonsMath3
     val commonsText = "org.apache.commons" % "commons-text" % Versions.commonsText
     val directoryWatcher = "io.methvin" % "directory-watcher" % Versions.directoryWatcher
+    val eclipseJgit = "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.orgEclipseJgit
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
     val flatbuffersJava = "com.google.flatbuffers" % "flatbuffers-java" % Versions.flatbuffersJava
     val graalvmCollections = "org.graalvm.sdk" % "collections" % VersionsPinned.graalMavenPackages
@@ -163,7 +183,11 @@ object Dependencies {
     val guava = "com.google.guava" % "guava" % Versions.guava
     val hamcrestAll = "org.hamcrest" % "hamcrest-all" % Versions.hamcrestAll
     val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Versions.jacksonDatabind
+    val jakartaXmlBindApi = "jakarta.xml.bind" % "jakarta.xml.bind-api" % VersionsPinned.jaxbVersion
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
+    val jaxbImpl = "com.sun.xml.bind" % "jaxb-impl" % VersionsPinned.jaxbVersion
+    val jmhCore = "org.openjdk.jmh" % "jmh-core" % Versions.jmhCore
+    val jmhGeneratorAnnprocess = "org.openjdk.jmh" % "jmh-generator-annprocess" % Versions.jmhGeneratorAnnprocess
     val icu4j = "com.ibm.icu" % "icu4j" % Versions.icu4j
     val jline = "org.jline" % "jline" % Versions.jline
     val jna = "net.java.dev.jna" % "jna" % Versions.jna
@@ -203,6 +227,8 @@ object Dependencies {
     val sprayJson = "io.spray" %% "spray-json" % VersionsPinned.sprayJson
     val tikaCore = "org.apache.tika" % "tika-core" % Versions.tikaCore
     val typesafeConfig = "com.typesafe" % "config" % Versions.config
+    val zio = "dev.zio" %% "zio" % Versions.zio
+    val zioInteropCats = "dev.zio" %% "zio-interop-cats" % Versions.zioInteropCats
   }
 
   object Test {
