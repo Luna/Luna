@@ -213,7 +213,7 @@ function DriveAssetsView(props: DriveProps) {
   // if the directory is empty.
   useEffect(() => {
     setShouldForceHideStartModal(false)
-  }, [rootDirectoryId])
+  }, [category.type])
 
   const hasPermissionToCreateAssets = tryFindSelfPermission(
     user,

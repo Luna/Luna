@@ -183,7 +183,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       getDropOperation={(types) =>
         acceptedDragTypes.some((type) => types.has(type)) ? 'move' : 'cancel'
       }
-      className="group relative flex w-full min-w-full flex-auto items-start rounded-full drop-target-after"
+      className="group relative flex w-full min-w-0 flex-auto items-start rounded-full drop-target-after"
       onDrop={onDrop}
     >
       <AnimatedBackground.Item
@@ -416,7 +416,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
           />
 
           {localBackend && (
-            <div className="group relative flex w-full min-w-full flex-auto items-start rounded-full drop-target-after">
+            <div className="group flex items-center gap-2 self-stretch drop-target-after">
               <CategorySwitcherItem
                 {...itemProps}
                 category={{ type: 'local' }}

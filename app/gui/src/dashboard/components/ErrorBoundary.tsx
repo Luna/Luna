@@ -14,6 +14,7 @@ import * as textProvider from '#/providers/TextProvider'
 import * as ariaComponents from '#/components/AriaComponents'
 import * as result from '#/components/Result'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as errorUtils from '#/utilities/error'
 
 // =====================
@@ -116,6 +117,10 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
 
   onBeforeFallbackShown?.({ error, resetErrorBoundary, resetQueries })
 
+  const onReset = useEventCallback(() => {
+    resetErrorBoundary()
+  })
+
   return (
     <result.Result className="h-full" status={status} title={title} subtitle={subtitle}>
       <ariaComponents.ButtonGroup align="center">
@@ -124,9 +129,7 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
           size="small"
           rounded="full"
           className="w-24"
-          onPress={() => {
-            resetErrorBoundary()
-          }}
+          onPress={onReset}
         >
           {getText('tryAgain')}
         </ariaComponents.Button>
