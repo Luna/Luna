@@ -999,7 +999,7 @@ lazy val `profiling-utils` = project
     Compile / exportJars := true,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion
+      Dependencies.Compile.netbeansModulesSampler
       exclude ("org.netbeans.api", "org-openide-loaders")
       exclude ("org.netbeans.api", "org-openide-nodes")
       exclude ("org.netbeans.api", "org-netbeans-api-progress-nb")
@@ -1012,14 +1012,14 @@ lazy val `profiling-utils` = project
       exclude ("org.netbeans.api", "org-openide-awt")
       exclude ("org.netbeans.api", "org-openide-modules")
       exclude ("org.netbeans.api", "org-netbeans-api-annotations-common"),
-      "org.slf4j"      % "slf4j-api"       % slf4jVersion,
-      "junit"          % "junit"           % junitVersion   % Test,
-      "com.github.sbt" % "junit-interface" % junitIfVersion % Test
+      Dependencies.Compile.slf4j,
+      Dependencies.Test.junit,
+      Dependencies.Test.sbtJunitInterface
     ),
     Compile / moduleDependencies ++= {
       Seq(
-        "org.slf4j"        % "slf4j-api"                    % slf4jVersion,
-        "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion
+        Dependencies.Compile.slf4j,
+        Dependencies.Compile.netbeansModulesSampler
       )
     }
   )

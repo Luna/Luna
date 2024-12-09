@@ -20,7 +20,7 @@ import org.slf4j.spi.SLF4JServiceProvider;
 @org.openide.util.lookup.ServiceProvider(service = SLF4JServiceProvider.class)
 public class TruffleLoggerWrapperProvider implements SLF4JServiceProvider {
 
-  public static String REQUESTED_API_VERSION = "2.0.9";
+  public static String REQUESTED_API_VERSION = "2.0.16";
 
   private static final TruffleLoggerWrapperFactory factory = new TruffleLoggerWrapperFactory();
   private static final MDCAdapter adapter = new NOPMDCAdapter();
