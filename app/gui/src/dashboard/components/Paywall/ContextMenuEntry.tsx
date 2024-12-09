@@ -35,7 +35,7 @@ export function ContextMenuEntry(props: ContextMenuEntryProps) {
     <ContextMenuEntryBase
       {...rest}
       icon={isUnderPaywall ? LockIcon : icon}
-      tooltip={isUnderPaywall ? getText('upgradeToUseCloud') : ''}
+      tooltip={isUnderPaywall ? getText('upgradeToUseCloud') : null}
       doAction={() => {
         if (isUnderPaywall) {
           setModal(
