@@ -103,7 +103,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
     }
   }
 
-  private record SheetInfo(int index, String name, String relID, boolean visible) {}
+  private record SheetInfo(int index, int sheetId, String name, String relID, boolean visible) {}
 
   private record NamedRange(String name, String formula) {}
 
@@ -130,7 +130,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
                   Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
               var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
               var visible = node.getAttributes().getNamedItem("state") == null;
-              var sheetInfo = new SheetInfo(sheetId, sheetName, relId, visible);
+              var sheetInfo = new SheetInfo(i, sheetId, sheetName, relId, visible);
               sheetInfos.add(sheetInfo);
               sheetInfoMap.put(sheetName, sheetInfo);
             }
@@ -236,10 +236,10 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   @Override
   public String getSheetName(int sheet) {
     var list = getSheetInfos();
-    if (sheet < 1 || sheet > list.size()) {
+    if (sheet < 0 || sheet >= list.size()) {
       throw new IllegalArgumentException("Sheet index out of range: " + sheet);
     }
-    return list.get(sheet - 1).name;
+    return list.get(sheet).name;
   }
 
   @Override
@@ -276,10 +276,10 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   @Override
   public ExcelSheet getSheetAt(int sheetIndex) {
     var sheetInfos = getSheetInfos();
-    if (sheetIndex < 1 || sheetIndex > sheetInfos.size()) {
+    if (sheetIndex < 0 || sheetIndex >= sheetInfos.size()) {
       throw new IllegalArgumentException("Sheet index out of range: " + sheetIndex);
     }
-    var sheetInfo = sheetInfos.get(sheetIndex - 1);
+    var sheetInfo = sheetInfos.get(sheetIndex);
     return new XSSFReaderSheet(sheetIndex, sheetInfo.name, sheetInfo.relID, this);
   }
 
