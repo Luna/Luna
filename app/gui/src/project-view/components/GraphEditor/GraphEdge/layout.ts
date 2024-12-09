@@ -180,7 +180,9 @@ type Line = { axis: 'h' | 'v'; length: number }
 type Arc = { radius: number; signX: number; signY: number; sweep: 0 | 1 }
 type Element = Arc | Line
 
-/** TODO: docs */
+/**
+ * Convert calculated path junction points to an array of rounded horizontal/vertical path elements.
+ */
 export function pathElements(junctions: JunctionPoints): { start: Vec2; elements: Element[] } {
   const elements: Element[] = []
   const pushLine = (line: Line) => {
