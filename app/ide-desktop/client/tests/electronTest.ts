@@ -1,6 +1,7 @@
 /** @file Commonly used functions for electron tests */
 
-import { _electron, ElectronApplication, expect, type Page, test } from '@playwright/test'
+import { expect, test } from '@chromatic-com/playwright'
+import { _electron, ElectronApplication, TestInfo, type Page } from '@playwright/test'
 import { TEXTS } from 'enso-common/src/text'
 import * as random from 'lib0/random'
 import os from 'node:os'
@@ -17,13 +18,16 @@ export const CONTROL_KEY = os.platform() === 'darwin' ? 'Meta' : 'Control'
  */
 export function electronTest(
   name: string,
-  body: (args: {
-    page: Page
-    app: ElectronApplication
-    projectsDir: string
-  }) => Promise<void> | void,
+  body: (
+    args: {
+      page: Page
+      app: ElectronApplication
+      projectsDir: string
+    },
+    testInfo: TestInfo,
+  ) => Promise<void> | void,
 ) {
-  test(name, async () => {
+  test(name, async ({ page: _page }, testInfo) => {
     const uuid = random.uuidv4()
     const projectsDir = pathModule.join(os.tmpdir(), 'enso-test-projects', `${name}-${uuid}`)
     console.log('Running Application; projects dir is', projectsDir)
@@ -38,7 +42,7 @@ export function electronTest(
     // There's bigger timeout, because the page may load longer on CI machines.
     await expect(page.getByText('Login to your account')).toBeVisible({ timeout: LOADING_TIMEOUT })
     try {
-      await body({ page, app, projectsDir })
+      await body({ page, app, projectsDir }, testInfo)
     } finally {
       await app.context().tracing.stop({ path: `test-traces/${name}.zip` })
       await app.close()

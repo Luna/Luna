@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@babel/plugin-syntax-import-attributes": "^7.24.7",
+    "@chromatic-com/playwright": "^0.10.1",
     "@electron/notarize": "2.1.0",
     "@playwright/test": "^1.45.0",
     "@types/mime-types": "^2.1.1",
@@ -40,6 +41,7 @@
     "@types/tar": "^6.1.4",
     "@types/yargs": "^17.0.30",
     "babel-plugin-react-compiler": "19.0.0-beta-6fc168f-20241025",
+    "chromatic": "^11.20.0",
     "cross-env": "^7.0.3",
     "electron": "31.2.0",
     "electron-builder": "^24.13.3",

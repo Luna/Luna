@@ -1,11 +1,11 @@
 /** @file A test for basic flow of the application: open project and see if nodes appear. */
 
-import { expect } from '@playwright/test'
+import { expect, takeSnapshot } from '@chromatic-com/playwright'
 import fs from 'node:fs/promises'
 import pathModule from 'node:path'
 import { CONTROL_KEY, electronTest, loginAsTestUser } from './electronTest'
 
-electronTest('Local Workflow', async ({ page, app, projectsDir }) => {
+electronTest('Local Workflow', async ({ page, app, projectsDir }, testInfo) => {
   const PROJECT_PATH = pathModule.join(projectsDir, 'NewProject1')
   const OUTPUT_FILE = 'output.txt'
   const TEXT_TO_WRITE = 'Some text'
@@ -19,6 +19,8 @@ electronTest('Local Workflow', async ({ page, app, projectsDir }) => {
   await expect(page.locator('.node-type')).toHaveText('Table', { timeout: 30000 })
   await expect(page.locator('.TableVisualization')).toBeVisible({ timeout: 30000 })
   await expect(page.locator('.TableVisualization')).toContainText('Welcome To Enso!')
+
+  takeSnapshot(page, testInfo)
 
   // Create node connected to the first node by picking suggestion.
   await page.locator('.GraphNode').click()
@@ -44,6 +46,8 @@ electronTest('Local Workflow', async ({ page, app, projectsDir }) => {
   await input.fill(`'${TEXT_TO_WRITE}'`)
   await page.keyboard.press('Enter')
   await expect(page.locator('.GraphNode'), {}).toHaveCount(3)
+
+  takeSnapshot(page, testInfo)
 
   // Create write node
   await page.keyboard.press('Enter')
@@ -106,6 +110,8 @@ electronTest('Local Workflow', async ({ page, app, projectsDir }) => {
   expect(projectFiles).toContain('images')
   const images = await fs.readdir(pathModule.join(PROJECT_PATH, 'images'))
   expect(images).toContain('image.png')
+
+  takeSnapshot(page, testInfo)
 })
 
 async function readFile(projectDir: string, fileName: string): Promise<string> {
