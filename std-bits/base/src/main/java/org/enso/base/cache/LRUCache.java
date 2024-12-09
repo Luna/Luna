@@ -121,20 +121,18 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
-    // Calculate the largest size we can allow, which is the minimum of the max file size and the
-    // max total cache size.
-    long maxAllowedSize = Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
+    long maxAllowedDownloadSize = getMaxAllowedDownloadSize();
 
     // If we have a content-length, clear up enough space for that. If not,
     // then clear up enough space for the largest allowed size.
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
-      if (size > maxAllowedSize) {
-        throw new ResponseTooLargeException(size, maxAllowedSize);
+      if (size > maxAllowedDownloadSize) {
+        throw new ResponseTooLargeException(size, maxAllowedDownloadSize);
       }
       makeRoomFor(size);
     } else {
-      makeRoomFor(maxAllowedSize);
+      makeRoomFor(maxAllowedDownloadSize);
     }
 
     try {
@@ -188,15 +186,14 @@ public class LRUCache<M> {
     var outputStream = new FileOutputStream(temp);
     boolean successful = false;
     try {
-      // Limit the download to getMaxFileSize().
-      long maxAllowedSize = Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
-      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxAllowedSize);
+      long maxAllowedDownloadSize = getMaxAllowedDownloadSize();
+      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxAllowedDownloadSize);
 
       if (sizeOK) {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(null, maxAllowedSize);
+        throw new ResponseTooLargeException(null, maxAllowedDownloadSize);
       }
     } finally {
       outputStream.close();
@@ -316,6 +313,14 @@ public class LRUCache<M> {
         };
     long upperBound = (long) (freeSpace * MAX_PERCENTAGE);
     return Long.min(upperBound, totalCacheSize);
+  }
+
+    /**
+     * Calculate the largest size we can allow, which is the minimum of the max
+     * file size and the max total cache size.
+     */
+  private long getMaxAllowedDownloadSize() {
+      return Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
   }
 
   /** For testing. */
