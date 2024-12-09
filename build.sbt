@@ -2078,14 +2078,14 @@ lazy val `interpreter-dsl` = (project in file("lib/scala/interpreter-dsl"))
       "org.netbeans.modules.openide.util.ServiceProviderProcessor"
     )),
     libraryDependencies ++= Seq(
-      "org.apache.commons" % "commons-lang3"           % commonsLangVersion,
-      "org.netbeans.api"   % "org-openide-util-lookup" % netbeansApiVersion % "provided",
-      "com.google.guava"   % "guava"                   % guavaVersion exclude ("com.google.code.findbugs", "jsr305")
+      Dependencies.Compile.commonsLang3,
+      Dependencies.Compile.openideUtilLookup,
+      Dependencies.Compile.guava exclude ("com.google.code.findbugs", "jsr305"),
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.apache.commons" % "commons-lang3"           % commonsLangVersion,
-      "org.netbeans.api"   % "org-openide-util-lookup" % netbeansApiVersion,
-      "com.google.guava"   % "guava"                   % guavaVersion
+      Dependencies.Compile.commonsLang3,
+      Dependencies.Compile.openideUtilLookup,
+      Dependencies.Compile.guava
     )
   )
 

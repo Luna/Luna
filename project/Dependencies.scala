@@ -56,6 +56,7 @@ object Dependencies {
     val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
     val flatbuffersJava = "24.3.25"
+    val guava = "33.3.1-jre"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
     val jna = "5.15.0"
@@ -137,6 +138,7 @@ object Dependencies {
     val graalvmPolyglotTck = "org.graalvm.sdk" % "polyglot-tck" % VersionsPinned.graalMavenPackages
     val graalvmTruffleApi = "org.graalvm.truffle" % "truffle-api" % VersionsPinned.graalMavenPackages
     val graalvmWord = "org.graalvm.sdk" % "word" % VersionsPinned.graalMavenPackages
+    val guava = "com.google.guava" % "guava" % Versions.guava
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
     val jline = "org.jline" % "jline" % Versions.jline
     val jna = "net.java.dev.jna" % "jna" % Versions.jna
