@@ -1389,7 +1389,7 @@ lazy val `fansi-wrapper` = project
     modularFatJarWrapperSettings,
     scalaModuleDependencySetting,
     libraryDependencies ++= Seq(
-      "com.lihaoyi" %% "fansi" % fansiVersion
+      Dependencies.Compile.fansi
     ),
     javaModuleName := "org.enso.fansi.wrapper",
     Compile / patchModules := {
@@ -1397,7 +1397,7 @@ lazy val `fansi-wrapper` = project
         update.value,
         scalaLibrary ++
         Seq(
-          "com.lihaoyi" %% "fansi" % fansiVersion
+          Dependencies.Compile.fansi
         ),
         streams.value.log,
         moduleName.value,

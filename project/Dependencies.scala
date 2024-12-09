@@ -53,6 +53,7 @@ object Dependencies {
     val commonsIo = "2.18.0"
     val commonsLang3 = "3.17.0"
     val config = "1.4.3"
+    val fansi = "0.5.0"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
     val jna = "5.15.0"
@@ -114,6 +115,7 @@ object Dependencies {
     val commonsCompress = "org.apache.commons" % "commons-compress" % Versions.commonsCompress
     val commonsIo = "commons-io" % "commons-io" % Versions.commonsIo
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
+    val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
     val jline = "org.jline" % "jline" % Versions.jline
     val jna = "net.java.dev.jna" % "jna" % Versions.jna
