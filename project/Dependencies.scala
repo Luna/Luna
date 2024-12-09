@@ -55,10 +55,11 @@ object Dependencies {
     val config = "1.4.3"
     val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
+    val flatbuffersJava = "24.3.25"
     val javaDiffUtils = "4.15"
     val jline = "3.27.1"
     val jna = "5.15.0"
-    val jsoniterScalaCore = "2.28.5"
+    val jsoniterScalaCore = "2.31.3"
     val jsoniterScalaMacros = "2.31.3"
     val junit = "4.13.2"
     val junitInterface = "0.13.3"
@@ -66,6 +67,8 @@ object Dependencies {
     val logbackCore = "1.5.12"
     val orgNetbeansModulesSampler = "RELEASE230"
     val orgOpenideUtilLookup = "RELEASE230"
+    val polyglot = "24.1.1"
+    val polyglotTck = "24.1.1"
     val protobufJava = "4.29.1"
     val pureconfig = "0.17.8"
     val pureconfigCore = "0.17.4"
@@ -84,6 +87,7 @@ object Dependencies {
     val snakeyaml = "2.3"
     val sprayJson = "1.3.6"
     val svm = "24.1.1"
+    val truffleApi = "24.1.1"
   }
 
   object Pinned {
@@ -126,6 +130,13 @@ object Dependencies {
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
     val directoryWatcher = "io.methvin" % "directory-watcher" % Versions.directoryWatcher
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
+    val flatbuffersJava = "com.google.flatbuffers" % "flatbuffers-java" % Versions.flatbuffersJava
+    val graalvmCollections = "org.graalvm.sdk" % "collections" % VersionsPinned.graalMavenPackages
+    val graalvmNativeimage = "org.graalvm.sdk" % "nativeimage" % VersionsPinned.graalMavenPackages
+    val graalvmPolyglot = "org.graalvm.polyglot" % "polyglot" % VersionsPinned.graalMavenPackages
+    val graalvmPolyglotTck = "org.graalvm.sdk" % "polyglot-tck" % VersionsPinned.graalMavenPackages
+    val graalvmTruffleApi = "org.graalvm.truffle" % "truffle-api" % VersionsPinned.graalMavenPackages
+    val graalvmWord = "org.graalvm.sdk" % "word" % VersionsPinned.graalMavenPackages
     val javaDiffUtils = "io.github.java-diff-utils" % "java-diff-utils" % VersionsPinned.javaDiffUtils
     val jline = "org.jline" % "jline" % Versions.jline
     val jna = "net.java.dev.jna" % "jna" % Versions.jna
@@ -146,6 +157,7 @@ object Dependencies {
     val pureconfigGeneric = "com.github.pureconfig" %% "pureconfig-generic" % Versions.pureconfigGeneric
     val reactiveStreams = "org.reactivestreams" % "reactive-streams" % VersionsPinned.reactiveStreams
     val sbtJunitInterface = "com.github.sbt" % "junit-interface" % Versions.junitInterface
+    val scalacheck = "org.scalacheck" %% "scalacheck" % Versions.scalacheck
     val scalaCompiler = "org.scala-lang" % "scala-compiler" % VersionsPinned.scala
     val scalaLibrary = "org.scala-lang" % "scala-library" % VersionsPinned.scala
     val scalaReflect = "org.scala-lang" % "scala-reflect" % VersionsPinned.scala

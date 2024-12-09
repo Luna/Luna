@@ -2163,12 +2163,12 @@ lazy val `engine-common` = project
     commands += WithDebugCommand.withDebug,
     Test / envVars ++= distributionEnvironmentOverrides,
     libraryDependencies ++= Seq(
-      "org.graalvm.polyglot" % "polyglot" % graalMavenPackagesVersion % "provided"
+      Dependencies.Compile.graalvmPolyglot % "provided"
     ),
     Compile / moduleDependencies ++= {
       Seq(
-        "org.graalvm.polyglot" % "polyglot"  % graalMavenPackagesVersion,
-        "org.slf4j"            % "slf4j-api" % slf4jVersion
+        Dependencies.Compile.graalvmPolyglot,
+        Dependencies.Compile.slf4jApi,
       )
     },
     Compile / internalModuleDependencies := Seq(
@@ -2195,22 +2195,22 @@ lazy val `polyglot-api` = project
       "-Dpolyglotimpl.DisableClassPathIsolation=true"
     ),
     libraryDependencies ++= Seq(
-      "io.circe"                              %% "circe-core"            % circeVersion              % "provided",
-      "org.graalvm.sdk"                        % "polyglot-tck"          % graalMavenPackagesVersion % "provided",
-      "org.graalvm.truffle"                    % "truffle-api"           % graalMavenPackagesVersion % "provided",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion,
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % jsoniterVersion,
-      "com.google.flatbuffers"                 % "flatbuffers-java"      % flatbuffersVersion,
-      "org.scalatest"                         %% "scalatest"             % scalatestVersion          % Test,
-      "org.scalacheck"                        %% "scalacheck"            % scalacheckVersion         % Test
+      Dependencies.Compile.circeCore % "provided",
+      Dependencies.Compile.graalvmPolyglotTck % "provided",
+      Dependencies.Compile.graalvmTruffleApi % "provided",
+      Dependencies.Compile.jsoniterScalaMacros,
+      Dependencies.Compile.jsoniterScalaCore,
+      Dependencies.Compile.flatbuffersJava,
+      Dependencies.Compile.scalatest % Test,
+      Dependencies.Compile.scalacheck % Test,
     ),
     Compile / moduleDependencies ++= Seq(
-      "com.google.flatbuffers" % "flatbuffers-java" % flatbuffersVersion,
-      "org.graalvm.sdk"        % "word"             % graalMavenPackagesVersion,
-      "org.graalvm.polyglot"   % "polyglot"         % graalMavenPackagesVersion,
-      "org.graalvm.sdk"        % "collections"      % graalMavenPackagesVersion,
-      "org.graalvm.sdk"        % "nativeimage"      % graalMavenPackagesVersion,
-      "org.graalvm.truffle"    % "truffle-api"      % graalMavenPackagesVersion
+      Dependencies.Compile.flatbuffersJava,
+      Dependencies.Compile.graalvmWord,
+      Dependencies.Compile.graalvmPolyglot,
+      Dependencies.Compile.graalvmCollections,
+      Dependencies.Compile.graalvmNativeimage,
+      Dependencies.Compile.graalvmTruffleApi,
     ),
     Compile / internalModuleDependencies := Seq(
       (`scala-libs-wrapper` / Compile / exportedModule).value,
@@ -2239,8 +2239,8 @@ lazy val `polyglot-api-macros` = project
     scalaModuleDependencySetting,
     mixedJavaScalaProjectSetting,
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % jsoniterVersion % "provided",
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion % "provided"
+      Dependencies.Compile.jsoniterScalaCore,
+      Dependencies.Compile.jsoniterScalaMacros,
     ),
     Compile / internalModuleDependencies := Seq(
       (`scala-libs-wrapper` / Compile / exportedModule).value
