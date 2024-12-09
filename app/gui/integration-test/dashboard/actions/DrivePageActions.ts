@@ -383,6 +383,8 @@ export default class DrivePageActions extends PageActions {
 
   /** Close the "get started" modal. */
   closeGetStartedModal() {
-    return new StartModalActions(this.page).close()
+    return this.step('Close "get started" modal', async (page) => {
+      await new StartModalActions(page).close()
+    })
   }
 }
