@@ -33,6 +33,7 @@ public class ReloadDetector {
   }
 
   void simulateReloadTestOnly() {
-    ensoReloadDetector.invokeMember("simulate_reload_test_only");
+    EnsoMeta.callStaticModuleMethod(
+        "Standard.Base.Network.Reload_Detector", "simulate_reload_test_only", ensoReloadDetector);
   }
 }
