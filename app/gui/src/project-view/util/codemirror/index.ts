@@ -1,5 +1,5 @@
 import { textEditorsBindings } from '@/bindings'
-import CodeMirror from '@/components/CodeMirror.vue'
+import CodeMirrorRoot from '@/components/CodeMirrorRoot.vue'
 import { type VueHost } from '@/components/VueComponentHost.vue'
 import { injectKeyboard } from '@/providers/keyboard'
 import { useCompartment, useDispatch, useStateEffect } from '@/util/codemirror/reactivity'
@@ -10,14 +10,7 @@ import { ToValue } from '@/util/reactivity'
 import { Compartment, EditorState, Extension, Text } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
-import {
-  type ComponentInstance,
-  computed,
-  type Ref,
-  toValue,
-  watchEffect,
-  type WatchSource,
-} from 'vue'
+import { computed, type Ref, toValue, watchEffect, type WatchSource } from 'vue'
 import { Awareness } from 'y-protocols/awareness.js'
 import { assert } from 'ydoc-shared/util/assert'
 import * as Y from 'yjs'
@@ -31,7 +24,7 @@ disableEditContextApi()
 
 /** Creates a CodeMirror editor instance, and sets its initial state. */
 export function useCodeMirror(
-  editorRoot: ToValue<ComponentInstance<typeof CodeMirror> | null>,
+  editorRoot: ToValue<InstanceType<typeof CodeMirrorRoot> | null>,
   {
     content,
     extensions,

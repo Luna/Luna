@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CodeMirror from '@/components/CodeMirror.vue'
+import CodeMirrorRoot from '@/components/CodeMirrorRoot.vue'
 import { transformPastedText } from '@/components/DocumentationEditor/textPaste'
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
 import VueComponentHost from '@/components/VueComponentHost.vue'
@@ -21,7 +21,7 @@ const focused = ref(false)
 const editing = computed(() => !readonly.value && focused.value)
 
 const vueHost = useTemplateRef<InstanceType<typeof VueComponentHost>>('vueHost')
-const editorRoot = useTemplateRef<InstanceType<typeof CodeMirror>>('editorRoot')
+const editorRoot = useTemplateRef<InstanceType<typeof CodeMirrorRoot>>('editorRoot')
 const { editorView, readonly, putTextAt } = useCodeMirror(editorRoot, {
   content: () => content,
   extensions: [
@@ -59,7 +59,12 @@ defineExpose({
 </script>
 
 <template>
-  <CodeMirror ref="editorRoot" v-bind="$attrs" :class="{ editing }" @focusout="focused = false" />
+  <CodeMirrorRoot
+    ref="editorRoot"
+    v-bind="$attrs"
+    :class="{ editing }"
+    @focusout="focused = false"
+  />
   <VueComponentHost ref="vueHost" />
 </template>
 
