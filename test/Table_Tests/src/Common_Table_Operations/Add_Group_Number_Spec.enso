@@ -1,0 +1,56 @@
+from Standard.Base import all
+
+import Standard.Database.Feature.Feature
+from Standard.Database.Errors import all
+
+from Standard.Table import all
+from Standard.Table.Errors import Missing_Input_Columns, Duplicate_Output_Column_Names
+
+from Standard.Test import all
+
+from project.Common_Table_Operations.Util import run_default_backend
+import project.Util
+
+main filter=Nothing = run_default_backend add_specs filter
+
+add_specs suite_builder setup =
+    if setup.is_feature_supported Feature.Add_Group_Number then (add_group_number_specs suite_builder setup) else
+        suite_builder.group setup.prefix+"Table.add_group_number" group_builder->
+            group_builder.specify "add_group_number should report unsupported" <|
+                table_builder = setup.light_table_builder
+                t = table_builder [["ix", [1, 2, 3, 4, 5]], ["X", [100, 3, Nothing, 4, 12]], ["Y", [100, 4, 2, Nothing, 11]]]
+                t2 = t.add_group_number
+                t2.should_fail_with (Unsupported_Database_Operation.Error "add_group_number")
+
+add_group_number_specs suite_builder setup =
+    prefix = setup.prefix
+    # materialize = setup.materialize
+    # create_connection_fn = setup.create_connection_func
+
+    suite_builder.group prefix+"Table.add_group_number (common)" group_builder->
+        table_builder = setup.table_builder
+        table_builder_from_rows column_names rows = table_builder (column_names.zip rows.transpose c-> col-> [c, col])
+
+        group_builder.specify "should add group number on unique values" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            g0 = t.add_group_number ..Unique "g" group_by=['x', 'y']
+            g0.at 'g' . to_vector . should_equal [0, 1, 2, 1, 0, 2]
+
+            g1 = t.add_group_number "g" group_by=['x', 'z']
+            g1.at 'g' . to_vector . should_equal [0, 1, 2, 3, 4, 4]
+
+            g2 = t.add_group_number "g" group_by=['y', 'z']
+            g2.at 'g' . to_vector . should_equal [0, 1, 2, 3, 4, 5]
+
+    ##
+        from + step
+        as deafult
+        unique with order_by: err
+        fp equality
+        ====
+        unique requires group_by
+        equal_count with group_by: err
+        equal_count with order_by
+        inccomparable values
+        add_row_number handle_arithmetic_exception?

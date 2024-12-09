@@ -1,0 +1,39 @@
+from Standard.Base import all
+import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+
+import project.Column.Column
+import project.Grouping_Method.Grouping_Method
+import project.Internal.Java_Problems
+import project.Internal.Problem_Builder.Problem_Builder
+import project.Internal.Table_Helpers
+import project.Set_Mode.Set_Mode
+import project.Table.Table
+from project.Internal.Add_Row_Number import rename_columns_if_needed
+
+polyglot java import org.enso.table.operations.AddGroupNumber
+
+add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:Text="Group") (from:Integer=0) (step:Integer=1) (group_by:(Vector | Text | Integer | Regex)=[]) (order_by:(Vector | Text)=[]) (on_problems:Problem_Behavior=..Report_Warning) -> Table =
+    problem_builder = Problem_Builder.new error_on_missing_columns=True
+    grouping_columns = table.columns_helper.select_columns_helper group_by Case_Sensitivity.Default True problem_builder
+    ordering = Table_Helpers.resolve_order_by table.columns order_by problem_builder
+
+    new_column = create_column grouping_method name from step grouping_columns ordering on_problems
+    renamed_table = rename_columns_if_needed table name on_problems Table.new
+    renamed_table.set new_column name set_mode=Set_Mode.Add
+
+## PRIVATE
+create_column grouping_method name from step grouping_columns ordering on_problems =
+    check_arguments grouping_method grouping_columns ordering <|
+        ordering_columns = ordering.map c->c.column.java_column
+        directions = ordering.map c->c.associated_selector.direction.to_sign
+        grouping_java_columns = grouping_columns.map c->c.java_column
+        new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
+            AddGroupNumber.numberGroups grouping_method.to_java from step grouping_java_columns ordering_columns directions java_problem_aggregator
+        Column.from_storage name new_storage
+
+check_arguments (grouping_method:Grouping_Method=..Unique) (grouping_column:(Vector | Text | Integer | Regex)=[]) (ordering:(Vector | Text)=[]) ~x =
+    case grouping_method of
+        Grouping_Method.Unique -> if grouping_column.is_empty.not && ordering.is_empty then x else
+            Error.throw (Illegal_Argument.Error "add_group_number with ..Unique requires a non-empty 'group_by' and cannot take an 'order_by' parameter")
+        Grouping_Method.Equal_Count _ -> if grouping_column.is_empty then x else
+            Error.throw (Illegal_Argument.Error "add_group_number with ..Equal_Count cannot take a 'group_by' parameter")
