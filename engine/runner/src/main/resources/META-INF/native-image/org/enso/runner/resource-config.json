@@ -5,14 +5,6 @@
   }, {
     "pattern":"\\QMETA-INF/org/enso/interpreter/node/expression/builtin/BuiltinMethods.metadata\\E"
   }, {
-    "pattern":"\\Qnu/pattern/opencv/linux/x86_64/libopencv_java470.so\\E"
-  }, {
-    "pattern":"\\Qnu/pattern/opencv/windows/x86_64/opencv_java470.dll\\E"
-  }, {
-    "pattern":"\\Qnu/pattern/opencv/osx/x86_64/libopencv_java470.dylib\\E"
-  }, {
-    "pattern":"\\Qnu/pattern/opencv/osx/ARMv8/libopencv_java470.dylib\\E"
-  }, {
     "pattern":"\\QMETA-INF/org/enso/interpreter/node/expression/builtin/BuiltinTypes.metadata\\E"
   }, {
     "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
