@@ -1,5 +1,6 @@
 from Standard.Base import all
 
+polyglot java import org.enso.table.operations.AddGroupNumber
 polyglot java import org.enso.table.operations.AddGroupNumber.GroupingMethod
 
 ## Specifies a method for grouping rows in `add_group_number`.
@@ -12,5 +13,5 @@ type Grouping_Method
     Equal_Count bucket_count:Integer
 
     to_java self -> GroupingMethod = case self of
-        Grouping_Method.Unique -> GroupingMethod.Unique
-        Grouping_Method.Equal_Count _ -> GroupingMethod.Equal_Count
+        Grouping_Method.Unique -> AddGroupNumber.Unique.new
+        Grouping_Method.Equal_Count bucket_count -> AddGroupNumber.EqualCount.new bucket_count

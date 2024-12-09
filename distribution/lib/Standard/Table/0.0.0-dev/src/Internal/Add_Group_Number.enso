@@ -17,18 +17,18 @@ add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:
     grouping_columns = table.columns_helper.select_columns_helper group_by Case_Sensitivity.Default True problem_builder
     ordering = Table_Helpers.resolve_order_by table.columns order_by problem_builder
 
-    new_column = create_column grouping_method name from step grouping_columns ordering on_problems
+    new_column = create_column table grouping_method name from step grouping_columns ordering on_problems
     renamed_table = rename_columns_if_needed table name on_problems Table.new
     renamed_table.set new_column name set_mode=Set_Mode.Add
 
 ## PRIVATE
-create_column grouping_method name from step grouping_columns ordering on_problems =
+create_column table grouping_method name from step grouping_columns ordering on_problems =
     check_arguments grouping_method grouping_columns ordering <|
         ordering_columns = ordering.map c->c.column.java_column
         directions = ordering.map c->c.associated_selector.direction.to_sign
         grouping_java_columns = grouping_columns.map c->c.java_column
         new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
-            AddGroupNumber.numberGroups grouping_method.to_java from step grouping_java_columns ordering_columns directions java_problem_aggregator
+            AddGroupNumber.numberGroups table.row_count grouping_method.to_java from step grouping_java_columns ordering_columns directions java_problem_aggregator
         Column.from_storage name new_storage
 
 check_arguments (grouping_method:Grouping_Method=..Unique) (grouping_column:(Vector | Text | Integer | Regex)=[]) (ordering:(Vector | Text)=[]) ~x =

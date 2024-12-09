@@ -31,7 +31,7 @@ add_group_number_specs suite_builder setup =
         table_builder = setup.table_builder
         table_builder_from_rows column_names rows = table_builder (column_names.zip rows.transpose c-> col-> [c, col])
 
-        group_builder.specify "should add group number on unique values" <|
+        group_builder.specify "should add group number by unique values" <|
             t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
 
             g0 = t.add_group_number ..Unique "g" group_by=['x', 'y']
@@ -43,9 +43,39 @@ add_group_number_specs suite_builder setup =
             g2 = t.add_group_number ..Unique "g" group_by=['y', 'z']
             g2.at 'g' . to_vector . should_equal [0, 1, 2, 3, 4, 5]
 
+        group_builder.specify "should add group number by equal counts" <|
+            t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
+
+            g0 = t.add_group_number (..Equal_Count 3) "g"
+            g0.at 'g' . to_vector . should_equal [0, 0, 1, 1, 2]
+
+            g1 = t.add_group_number (..Equal_Count 3) "g" order_by=['x']
+            g1.at 'g' . to_vector . should_equal [0, 0, 1, 1, 2]
+
+            g2 = t.add_group_number (..Equal_Count 3) "g" order_by=['y']
+            g2.at 'g' . to_vector . should_equal [2, 1, 1, 0, 0]
+
+            g3 = t.add_group_number (..Equal_Count 3) "g" order_by='z'
+            g3.at 'g' . to_vector . should_equal [0, 2, 1, 0, 1]
+
+            g4 = t.add_group_number (..Equal_Count 2) "g"
+            g4.at 'g' . to_vector . should_equal [0, 0, 0, 1, 1]
+
+            g5 = t.add_group_number (..Equal_Count 2) "g" order_by=['x']
+            g5.at 'g' . to_vector . should_equal [0, 0, 0, 1, 1]
+
+            g6 = t.add_group_number (..Equal_Count 2) "g" order_by=['y']
+            g6.at 'g' . to_vector . should_equal [1, 1, 0, 0, 0]
+
+            g7 = t.add_group_number (..Equal_Count 2) "g" order_by='z'
+            g7.at 'g' . to_vector . should_equal [0, 1, 1, 0, 0]
+
     ##
-        from + step
+        few different lengths
+        ec with and without order
         as deafult
+        ====
+        from + step
         unique with order_by: err
         fp equality
         ====

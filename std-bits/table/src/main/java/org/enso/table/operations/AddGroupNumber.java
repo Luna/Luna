@@ -20,6 +20,7 @@ import org.enso.table.util.ConstantList;
 
 public class AddGroupNumber {
   public static Storage<?> numberGroups(
+      long numRows,
       GroupingMethod groupingMethod,
       long start,
       long step,
@@ -27,24 +28,59 @@ public class AddGroupNumber {
       Column[] orderingColumns,
       int[] directions,
       ProblemAggregator problemAggregator) {
-    var groupNumberIterator = new StepIterator(start, step);
     return switch (groupingMethod) {
-        case Unique -> numberGroupsUnique(groupNumberIterator, groupingColumns, problemAggregator);
-        case Equal_Count -> numberGroupsUnique(groupNumberIterator, groupingColumns, problemAggregator);
+        case Unique u -> numberGroupsUnique(numRows, start, step, groupingColumns, problemAggregator);
+        case EqualCount ec -> numberGroupsEqualCount(numRows, ec.bucketCount, start, step, orderingColumns, directions, problemAggregator);
     };
   }
 
+  public static Storage<?> numberGroupsEqualCount(
+      long numRows,
+      int bucketCount,
+      long start,
+      long step,
+      Column[] orderingColumns,
+      int[] directions,
+      ProblemAggregator problemAggregator) {
+    long[] numbers = new long[(int) numRows];
+
+    var equalCountGenerator = new EqualCountGenerator(start, step, numRows, bucketCount);
+
+    if (orderingColumns.length == 0) {
+      for (int i = 0; i < numRows; ++i) {
+        numbers[i] = equalCountGenerator.next();
+      }
+    } else {
+      Storage<?>[] orderingStorages =
+        Arrays.stream(orderingColumns).map(Column::getStorage).toArray(Storage[]::new);
+      List<OrderedMultiValueKey> keys =
+        new ArrayList<>(
+            IntStream.range(0, (int) numRows)
+                .mapToObj(i -> new OrderedMultiValueKey(orderingStorages, i, directions))
+                .toList());
+      keys.sort(null);
+      for (var key : keys) {
+        var i = key.getRowIndex();
+        numbers[i] = equalCountGenerator.next();
+      }
+    }
+
+    return new LongStorage(numbers, IntegerType.INT_64);
+  }
+
   public static Storage<?> numberGroupsUnique(
-      StepIterator stepIterator,
+      long numRows,
+      long start,
+      long step,
       Column[] groupingColumns,
       ProblemAggregator problemAggregator) {
     if (groupingColumns.length == 0) {
       throw new IllegalArgumentException("At least one grouping column is required.");
     }
 
-    int numRows = groupingColumns[0].getSize();
+    var groupNumberIterator = new StepIterator(start, step);
 
-    long[] numbers = new long[numRows];
+    long[] numbers = new long[(int) numRows];
 
     Storage<?>[] groupingStorages =
         Arrays.stream(groupingColumns).map(Column::getStorage).toArray(Storage[]::new);
@@ -57,7 +93,7 @@ public class AddGroupNumber {
       var key = new UnorderedMultiValueKey(groupingStorages, i, textFoldingStrategy);
       key.checkAndReportFloatingEquality(
           groupingProblemAggregator, columnIx -> groupingColumns[columnIx].getName());
-      var groupNumber = groupNumbers.computeIfAbsent(key, k -> stepIterator.next());
+      var groupNumber = groupNumbers.computeIfAbsent(key, k -> groupNumberIterator.next());
       numbers[i] = groupNumber;
     }
 
@@ -81,8 +117,26 @@ public class AddGroupNumber {
     }
   }
 
-  public enum GroupingMethod {
-    Unique,
-    Equal_Count
+  private static class EqualCountGenerator {
+    private final long start;
+    private final long step;
+    private long current = 0;
+    private final long bucketSize;
+
+    public EqualCountGenerator(long start, long step, long totalCount, long numBuckets) {
+        this.start = start;
+        this.step = step;
+        bucketSize = (long) Math.ceil((double) totalCount / (double) numBuckets);
+    }
+
+    public long next() {
+        long toReturn = start + step * (current / bucketSize);
+        current += step;
+        return toReturn;
+    }
   }
+
+  public sealed interface GroupingMethod permits Unique, EqualCount {}
+  public record Unique() implements GroupingMethod {}
+  public record EqualCount(int bucketCount) implements GroupingMethod {}
 }
