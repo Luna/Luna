@@ -570,5 +570,5 @@ html.disable-animations * {
 }
 
 .Toastify--animate {
-  animation-duration: 200ms;
+  /* animation-duration: 200ms; */
 }

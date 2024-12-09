@@ -34,8 +34,8 @@ import * as download from '#/utilities/download'
 import * as github from '#/utilities/github'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { useDeferredValue } from 'react'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useDeferredValue, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { Suspense } from '../components/Suspense'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
@@ -154,7 +154,10 @@ function DriveAssetsView(props: DriveProps) {
   const backend = backendProvider.useBackend(category)
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
+
   const [query, setQuery] = React.useState(() => AssetQuery.fromString(''))
+  const [shouldForceHideStartModal, setShouldForceHideStartModal] = React.useState(false)
+
   const isCloud = categoryModule.isCloudCategory(category)
   const supportLocalBackend = localBackend != null
 
@@ -171,16 +174,19 @@ function DriveAssetsView(props: DriveProps) {
 
   const { rootDirectoryId } = useDirectoryIds({ category })
 
+  const queryClient = useQueryClient()
+  const rootDirectoryQuery = listDirectoryQueryOptions({
+    backend,
+    category,
+    parentId: rootDirectoryId,
+  })
+
   const {
     data: isEmpty,
     error,
     isFetching,
   } = useSuspenseQuery({
-    ...listDirectoryQueryOptions({
-      backend,
-      category,
-      parentId: rootDirectoryId,
-    }),
+    ...rootDirectoryQuery,
     refetchOnMount: 'always',
     staleTime: ({ state }) => (state.error ? 0 : Infinity),
     select: (data) => data.length === 0,
@@ -189,7 +195,25 @@ function DriveAssetsView(props: DriveProps) {
   // Show the error boundary if the query failed, but has data.
   if (error != null && !isFetching) {
     showBoundary(error)
+    // Remove the query from the cache.
+    // This will force the query to be refetched when the user navigates again.
+    queryClient.removeQueries({ queryKey: rootDirectoryQuery.queryKey })
   }
+
+  // When the directory is no longer empty, we need to hide the start modal.
+  // This includes the cases when the directory wasn't empty before, but it's now empty
+  // (e.g. when the user deletes the last asset).
+  useEffect(() => {
+    if (!isEmpty) {
+      setShouldForceHideStartModal(true)
+    }
+  }, [isEmpty])
+
+  // When the root directory changes, we need to show the start modal
+  // if the directory is empty.
+  useEffect(() => {
+    setShouldForceHideStartModal(false)
+  }, [rootDirectoryId])
 
   const hasPermissionToCreateAssets = tryFindSelfPermission(
     user,
@@ -197,7 +221,17 @@ function DriveAssetsView(props: DriveProps) {
   )
 
   const shouldDisplayStartModal =
-    isEmpty && CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type)
+    isEmpty &&
+    CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type) &&
+    !shouldForceHideStartModal
+
+  console.log('isEmpty', {
+    isEmpty,
+    shouldForceHideStartModal,
+    CATEGORIES_TO_DISPLAY_START_MODAL,
+    category,
+    shouldDisplayStartModal,
+  })
 
   const shouldDisableActions =
     category.type === 'cloud' &&
@@ -211,6 +245,7 @@ function DriveAssetsView(props: DriveProps) {
         className="mt-4 flex flex-1 flex-col gap-4 overflow-visible px-page-x"
       >
         <DriveBar
+          key={rootDirectoryId}
           backend={backend}
           query={query}
           setQuery={setQuery}

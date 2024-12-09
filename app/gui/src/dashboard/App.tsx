@@ -247,7 +247,7 @@ export default function App(props: AppProps) {
         closeOnClick={false}
         draggable={false}
         toastClassName="text-sm leading-cozy bg-selected-frame rounded-lg backdrop-blur-default"
-        transition={toastify.Zoom}
+        transition={toastify.Slide}
         limit={3}
       />
       <router.BrowserRouter basename={getMainPageUrl().pathname}>
@@ -546,7 +546,7 @@ function AppRouter(props: AppRouterProps) {
                       <devtools.EnsoDevtools />
                     </errorBoundary.ErrorBoundary>
                   </suspense.Suspense>
-                </DriveProvider> 
+                </DriveProvider>
               </InputBindingsProvider>
             </AuthProvider>
           </BackendProvider>

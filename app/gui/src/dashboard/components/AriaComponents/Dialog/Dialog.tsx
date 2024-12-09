@@ -305,6 +305,7 @@ function DialogContent(props: DialogContentProps) {
     size,
     padding,
     fitContent,
+    layout,
   })
 
   const getDialogHeight = () => {
@@ -346,7 +347,7 @@ function DialogContent(props: DialogContentProps) {
               // This is a temporary solution until we refactor the Dialog component
               // to use `useDialog` hook from the 'react-aria-components' library.
               // this will allow us to set the `data-testid` attribute on the dialog
-              element.dataset.testId = testId
+              element.dataset.testid = testId
             }
           })(ref)
         }}
@@ -479,6 +480,7 @@ const DialogHeader = React.memo(function DialogHeader(props: DialogHeaderProps) 
     type,
     variants = DIALOG_STYLES,
     close,
+    layout,
   } = props
 
   const styles = variants({
@@ -489,6 +491,7 @@ const DialogHeader = React.memo(function DialogHeader(props: DialogHeaderProps) 
     padding,
     rounded,
     size,
+    layout,
   })
 
   const [isScrolledToTop, privateSetIsScrolledToTop] = React.useState(true)

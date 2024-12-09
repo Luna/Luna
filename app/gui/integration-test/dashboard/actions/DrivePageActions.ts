@@ -380,4 +380,9 @@ export default class DrivePageActions extends PageActions {
       await callback(locateContextMenus(page))
     })
   }
+
+  /** Close the "get started" modal. */
+  closeGetStartedModal() {
+    return new StartModalActions(this.page).close()
+  }
 }

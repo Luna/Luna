@@ -557,7 +557,14 @@ export function ProtectedLayout() {
   } else if (session.type === UserSessionType.partial) {
     return <router.Navigate to={appUtils.SETUP_PATH} />
   } else {
-    return <router.Outlet context={session} />
+    return (
+      <>
+        {/* This div is used as a flag to indicate that the dashboard has been loaded and the user is authenticated. */}
+        {/* also it guarantees that the top-level suspense boundary is already resolved */}
+        <div data-testid="after-auth-layout" aria-hidden />
+        <router.Outlet context={session} />
+      </>
+    )
   }
 }
 
@@ -610,7 +617,14 @@ export function GuestLayout() {
       return <router.Navigate to={appUtils.DASHBOARD_PATH} />
     }
   } else {
-    return <router.Outlet />
+    return (
+      <>
+        {/* This div is used as a flag to indicate that the user is not logged in. */}
+        {/* also it guarantees that the top-level suspense boundary is already resolved */}
+        <div data-testid="before-auth-layout" aria-hidden />
+        <router.Outlet />
+      </>
+    )
   }
 }
 
