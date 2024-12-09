@@ -41,7 +41,7 @@ class EnsoProjectArchiveSpec extends AnyWordSpec with Matchers {
     val tarIn = new TarArchiveInputStream(gzIn)
     try {
       Iterator
-        .continually(tarIn.getNextTarEntry)
+        .continually(tarIn.getNextEntry)
         .takeWhile(_ ne null)
         .toSeq
     } finally {
