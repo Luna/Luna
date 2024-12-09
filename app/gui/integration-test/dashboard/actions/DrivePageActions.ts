@@ -387,4 +387,11 @@ export default class DrivePageActions extends PageActions {
       await new StartModalActions(page).close()
     })
   }
+
+  /** Interact with the "start" modal. */
+  withStartModal(callback: baseActions.LocatorCallback) {
+    return this.step('Interact with start modal', async (page) => {
+      await callback(new StartModalActions(page).locateStartModal())
+    })
+  }
 }
