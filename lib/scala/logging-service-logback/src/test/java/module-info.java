@@ -8,7 +8,7 @@ module org.enso.logging.service.logback.test.provider {
   requires org.enso.logging.service.logback;
   requires org.enso.logging.config;
   requires org.slf4j;
-  requires org.openide.util.lookup.RELEASE180;
+  requires org.openide.util.lookup.RELEASE230;
 
   provides SLF4JServiceProvider with
       org.enso.logging.service.logback.test.provider.TestLogProvider;

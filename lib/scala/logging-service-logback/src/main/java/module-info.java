@@ -9,7 +9,7 @@ module org.enso.logging.service.logback {
   requires org.enso.logging.service;
   requires org.enso.logging.config;
   requires org.slf4j;
-  requires org.openide.util.lookup.RELEASE180;
+  requires org.openide.util.lookup.RELEASE230;
 
   exports org.enso.logging.service.logback;
 

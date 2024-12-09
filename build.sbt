@@ -430,8 +430,8 @@ val sprayJsonVersion          = "1.3.6"
 val logbackClassicVersion     = JPMSUtils.logbackClassicVersion
 val javaDiffVersion           = "4.12"
 val logbackPkg = Seq(
-  "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
-  "ch.qos.logback" % "logback-core"    % logbackClassicVersion
+  Dependencies.Compile.logbackClassic,
+  Dependencies.Compile.logbackCore
 )
 val akkaActor   = akkaPkg("actor")
 val akkaStream  = akkaPkg("stream")
@@ -962,11 +962,11 @@ lazy val pkg = (project in file("lib/scala/pkg"))
     libraryDependencies ++= Seq(
       Dependencies.Compile.circeCore % "provided",
       Dependencies.Compile.snakeyaml % "provided",
-      Dependencies.Compile.apacheCommonsCompress,
+      Dependencies.Compile.commonsCompress,
       Dependencies.Test.scalatest
     ),
     Compile / moduleDependencies ++= Seq(
-      Dependencies.Compile.apacheCommonsCompress,
+      Dependencies.Compile.commonsCompress,
       Dependencies.Compile.snakeyaml
     ),
     Compile / internalModuleDependencies := Seq(
@@ -1037,13 +1037,11 @@ lazy val `logging-utils` = project
     compileOrder := CompileOrder.ScalaThenJava, // Note [JPMS Compile order]
     version := "0.1",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
-      "org.slf4j"      % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.scalatest % Test,
     ) ++ logbackTest,
     Compile / moduleDependencies ++=
-      Seq(
-        "org.slf4j" % "slf4j-api" % slf4jVersion
-      )
+      Seq(Dependencies.Compile.slf4jApi)
   )
 
 lazy val `logging-service` = project
@@ -1055,12 +1053,12 @@ lazy val `logging-service` = project
     scalaModuleDependencySetting,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "org.slf4j"      % "slf4j-api" % slf4jVersion,
-      "com.typesafe"   % "config"    % typesafeConfigVersion,
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.typesafeConfig,
+      Dependencies.Compile.scalatest % Test,
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.slf4jApi
     ),
     Compile / internalModuleDependencies := Seq(
       (`logging-config` / Compile / exportedModule).value,
@@ -1078,12 +1076,12 @@ lazy val `logging-config` = project
     frgaalJavaCompilerSetting,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"    % typesafeConfigVersion,
-      "org.slf4j"    % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.typesafeConfig,
+      Dependencies.Compile.slf4jApi,
     ),
     Compile / moduleDependencies ++= Seq(
-      "com.typesafe" % "config"    % typesafeConfigVersion,
-      "org.slf4j"    % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.typesafeConfig,
+      Dependencies.Compile.slf4jApi,
     )
   )
 
@@ -1095,13 +1093,13 @@ lazy val `logging-service-logback` = project
     frgaalJavaCompilerSetting,
     version := "0.1",
     libraryDependencies ++= Seq(
-      "org.slf4j"        % "slf4j-api"               % slf4jVersion,
-      "org.scalatest"   %% "scalatest"               % scalatestVersion   % Test,
-      "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion % "provided"
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.openideUtilLookup % "provided",
+      Dependencies.Compile.scalatest % Test,
     ) ++ logbackPkg ++ ioSentry,
     Compile / moduleDependencies ++= logbackPkg ++ ioSentry ++ Seq(
-      "org.slf4j"        % "slf4j-api"               % slf4jVersion,
-      "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion % "provided"
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.openideUtilLookup % "provided",
     ),
     Compile / javaModuleName := "org.enso.logging.service.logback",
     Compile / shouldCompileModuleInfoManually := true,
@@ -1840,12 +1838,12 @@ lazy val testkit = project
     compileOrder := CompileOrder.ScalaThenJava,
     javaModuleName := "org.enso.testkit",
     libraryDependencies ++= logbackPkg ++ Seq(
-      "org.apache.commons" % "commons-lang3"   % commonsLangVersion,
-      "commons-io"         % "commons-io"      % commonsIoVersion,
-      "org.scalatest"     %% "scalatest"       % scalatestVersion,
-      "junit"              % "junit"           % junitVersion,
-      "com.github.sbt"     % "junit-interface" % junitIfVersion,
-      "org.slf4j"          % "slf4j-api"       % slf4jVersion
+      Dependencies.Compile.commonsLang3,
+      Dependencies.Compile.commonsIo,
+      Dependencies.Compile.scalatest,
+      Dependencies.Compile.junit,
+      Dependencies.Compile.sbtJunitInterface,
+      Dependencies.Compile.slf4jApi,
     ),
     packageOptions := Seq(
       Package.ManifestAttributes(
@@ -4166,14 +4164,13 @@ lazy val semver = project
     compileOrder := CompileOrder.JavaThenScala,
     javaModuleName := "org.enso.semver",
     libraryDependencies ++= Seq(
-      "io.circe"      %% "circe-core"      % circeVersion     % "provided",
-      "org.yaml"       % "snakeyaml"       % snakeyamlVersion % "provided",
-      "org.scalatest" %% "scalatest"       % scalatestVersion % Test,
-      "junit"          % "junit"           % junitVersion     % Test,
-      "com.github.sbt" % "junit-interface" % junitIfVersion   % Test
+      Dependencies.Compile.circeCore % "provided",
+      Dependencies.Compile.snakeyaml % "provided",
+      Dependencies.Compile.scalatest % Test,
+      Dependencies.Compile.junit % Test,
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.yaml" % "snakeyaml" % snakeyamlVersion
+      Dependencies.Compile.snakeyaml,
     ),
     Compile / internalModuleDependencies := Seq(
       (`scala-yaml` / Compile / exportedModule).value
