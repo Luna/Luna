@@ -39,6 +39,7 @@ object Dependencies {
     val akkaProtobufV3 = "2.8.8"
     val akkaSlf4j = "2.8.8"
     val akkaStream = "2.8.8"
+    val akkaTestkit = "2.8.8"
     val arrowVector = "14.0.1"
     val arrowMemoryNetty = "14.0.1"
     val bcutilJdk18on = "1.76"
@@ -47,6 +48,7 @@ object Dependencies {
     val catsCore = "2.12.0"
     val catsKernel = "2.10.0"
     val circeCore = "0.14.10"
+    val circeLiteral = "0.14.10"
     val circeGeneric = "0.14.10"
     val circeJawn = "0.14.10"
     val circeNumbers = "0.14.10"
@@ -61,12 +63,14 @@ object Dependencies {
     val commonsMath3 = "3.6.1"
     val commonsText = "1.10.0"
     val config = "1.4.3"
+    val diffsonCirce = "4.4.0"
     val directoryWatcher = "0.18.0"
     val fansi = "0.5.0"
     val flatbuffersJava = "24.3.25"
     val guava = "33.3.1-jre"
     val hamcrestAll = "1.3"
-    val httpclient = "4.5.14"
+    val httpclient = "4.4.1"
+    val httpcore = "4.4.1"
     val icu4j = "73.1"
     val jacksonDatabind = "2.18.2"
     val javaDiffUtils = "4.15"
@@ -145,6 +149,7 @@ object Dependencies {
     val akkaHttp = "com.typesafe.akka" %% "akka-http" % VersionsPinned.akkaHttp
     val akkaHttpCore = "com.typesafe.akka" %% "akka-http-core" % VersionsPinned.akkaHttp
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % VersionsPinned.akkaActor
+    val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % VersionsPinned.akkaActor
     val akkaStream = "com.typesafe.akka" %% "akka-stream" % VersionsPinned.akkaActor
     val akkaParsing = "com.typesafe.akka" %% "akka-parsing" % VersionsPinned.akkaHttp
     val akkaProtobufV3 = "com.typesafe.akka" %% "akka-protobuf-v3" % VersionsPinned.akkaActor
@@ -152,6 +157,7 @@ object Dependencies {
     val apacheArrowVector = "org.apache.arrow" % "arrow-vector" % Versions.arrowVector
     val apacheArrowMemoryNetty = "org.apache.arrow" % "arrow-memory-netty" % Versions.arrowMemoryNetty
     val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
+    val apacheHttpcore = "org.apache.httpcomponents" % "httpcore" % Versions.httpcore
     val bouncycastleBcutil = "org.bouncycastle" % "bcutil-jdk18on" % Versions.bcutilJdk18on
     val bouncycastleBcpkix = "org.bouncycastle" % "bcpkix-jdk18on" % Versions.bcpkixJdk18on
     val bouncycastleBcprov = "org.bouncycastle" % "bcprov-jdk18on" % Versions.bcprovJdk18on
@@ -159,6 +165,7 @@ object Dependencies {
     val catsKernel = "org.typelevel" %% "cats-kernel" % Versions.catsKernel
     val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeGeneric
     val circeCore = "io.circe" %% "circe-core" % Versions.circeCore
+    val circeLiteral = "io.circe" %% "circe-literal" % Versions.circeLiteral
     val circeParser = "io.circe" %% "circe-parser" % Versions.circeParser
     val circeJawn = "io.circe" %% "circe-jawn" % Versions.circeJawn
     val circeNumbers = "io.circe" %% "circe-numbers" % Versions.circeNumbers
@@ -170,6 +177,7 @@ object Dependencies {
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % Versions.commonsLang3
     val commonsMath3 = "org.apache.commons" % "commons-math3" % Versions.commonsMath3
     val commonsText = "org.apache.commons" % "commons-text" % Versions.commonsText
+    val diffsonCirce = "org.gnieh" %% "diffson-circe" % Versions.diffsonCirce
     val directoryWatcher = "io.methvin" % "directory-watcher" % Versions.directoryWatcher
     val eclipseJgit = "org.eclipse.jgit" % "org.eclipse.jgit" % Versions.orgEclipseJgit
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi

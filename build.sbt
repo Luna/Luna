@@ -1583,7 +1583,7 @@ lazy val `task-progress-notifications` = project
     version := "0.1",
     compileOrder := CompileOrder.ScalaThenJava,
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+      Dependencies.Compile.scalatest % Test
     ),
     Compile / internalModuleDependencies := Seq(
       (`cli` / Compile / exportedModule).value,
@@ -1795,20 +1795,20 @@ lazy val `json-rpc-server` = project
     libraryDependencies ++= akka ++ logbackTest,
     libraryDependencies ++= circe,
     libraryDependencies ++= Seq(
-      "io.circe"                   %% "circe-literal"   % circeVersion,
-      "com.typesafe.scala-logging" %% "scala-logging"   % scalaLoggingVersion,
-      "org.slf4j"                   % "slf4j-api"       % slf4jVersion,
-      akkaTestkit                   % Test,
-      "org.scalatest"              %% "scalatest"       % scalatestVersion      % Test,
-      "junit"                       % "junit"           % junitVersion          % Test,
-      "com.github.sbt"              % "junit-interface" % junitIfVersion        % Test,
-      "org.apache.httpcomponents"   % "httpclient"      % httpComponentsVersion % Test,
-      "org.apache.httpcomponents"   % "httpcore"        % httpComponentsVersion % Test,
-      "commons-io"                  % "commons-io"      % commonsIoVersion      % Test
+      Dependencies.Compile.circeLiteral,
+      Dependencies.Compile.scalaLogging,
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.akkaTestkit,
+      Dependencies.Compile.scalatest % Test,
+      Dependencies.Compile.junit % Test,
+      Dependencies.Compile.sbtJunitInterface % Test,
+      Dependencies.Compile.apacheHttpclient % Test,
+      Dependencies.Compile.apacheHttpcore % Test,
+      Dependencies.Compile.commonsIo % Test,
     ),
     Compile / moduleDependencies ++=
       Seq(
-        "org.slf4j" % "slf4j-api" % slf4jVersion
+        Dependencies.Compile.slf4jApi,
       ),
     Compile / internalModuleDependencies := Seq(
       (`scala-libs-wrapper` / Compile / exportedModule).value,
@@ -1823,10 +1823,10 @@ lazy val `json-rpc-server-test` = project
     libraryDependencies ++= akka,
     libraryDependencies ++= circe,
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-literal" % circeVersion,
-      akkaTestkit,
-      "org.scalatest" %% "scalatest"     % scalatestVersion,
-      "org.gnieh"     %% "diffson-circe" % diffsonVersion
+      Dependencies.Compile.circeLiteral,
+      Dependencies.Compile.akkaTestkit,
+      Dependencies.Compile.scalatest,
+      Dependencies.Compile.diffsonCirce,
     )
   )
   .dependsOn(`json-rpc-server`)
