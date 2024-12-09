@@ -225,14 +225,6 @@ function DriveAssetsView(props: DriveProps) {
     CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type) &&
     !shouldForceHideStartModal
 
-  console.log('isEmpty', {
-    isEmpty,
-    shouldForceHideStartModal,
-    CATEGORIES_TO_DISPLAY_START_MODAL,
-    category,
-    shouldDisplayStartModal,
-  })
-
   const shouldDisableActions =
     category.type === 'cloud' &&
     (user.plan === Plan.enterprise || user.plan === Plan.team) &&
