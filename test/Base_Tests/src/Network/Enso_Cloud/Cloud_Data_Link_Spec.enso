@@ -251,16 +251,17 @@ type Symlink_Test_Setup
         expected_size = 1234
         Vector.fill expected_size "a" . join
 
-    make ~target_location ~datalink_location create_data_link create_datalink_location_directory=(f-> f.create_directory) create_target_directory=(f-> f.create_directory) create_text_file=(f-> c-> c.write f) -> Lazy_Ref =
+    make ~target_location ~datalink_location create_data_link -> Lazy_Ref =
         Lazy_Ref.Value <|
             setup = Symlink_Test_Setup.Value target_location datalink_location
-            create_target_directory setup.target_subdir . should_succeed
+            setup.target_subdir.create_directory . should_equal setup.target_subdir
             file1 = (setup.target_subdir / "file1.txt")
-            create_text_file file1 setup.file1_content . should_equal file1
-            create_text_file (setup.target_subdir / "file2.txt") "baz" . should_succeed
+            file2 = (setup.target_subdir / "file2.txt")
+            setup.file1_content.write file1 . should_equal file1
+            "baz".write file2 . should_equal file2
 
             if setup.datalink_location.exists.not then
-                create_datalink_location_directory setup.datalink_location . should_succeed
+                setup.datalink_location.create_directory . should_succeed
             create_data_link setup.dir_datalink setup.target_subdir . should_equal setup.dir_datalink
             create_data_link setup.file_datalink file1 . should_equal setup.file_datalink
             setup
