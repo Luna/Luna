@@ -34,6 +34,8 @@
 - [Table Input Widget is now matched for Table.input method instead of
   Table.new. Values must be string literals, and their content is parsed to the
   suitable type][11612].
+- [Added dedicated function signature viewer and editor in the right-side
+  panel][11655].
 - [Visualizations on components are slightly transparent when not
   focused][11582].
 - [New design for vector-editing widget][11620]
@@ -45,8 +47,17 @@
 - [Pasting tabular data now creates Table.input expressions][11695].
 - [No halo is displayed around components when hovering][11715].
 - [The hover area of the component output port extended twice its size][11715].
+- [The documentation editor and comment documentation support opening links with
+  a key pressed, or via a popup when editing][11753].
+- [Fixed a rare bug where the component position wasn't persisted after closing
+  project][11761]
+- [In the table visualization and table widget, the table context menu can now
+  be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
+- [Edges are now colored based on their source component.][11810]
+- [Highlight missing required arguments][11803].
+- [Arrows in some drop-down buttons are now clearly visible][11800]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -69,13 +80,20 @@
 [11582]: https://github.com/enso-org/enso/pull/11582
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
+[11655]: https://github.com/enso-org/enso/pull/11655
+[11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
 [11666]: https://github.com/enso-org/enso/pull/11666
 [11690]: https://github.com/enso-org/enso/pull/11690
 [11684]: https://github.com/enso-org/enso/pull/11684
 [11695]: https://github.com/enso-org/enso/pull/11695
 [11715]: https://github.com/enso-org/enso/pull/11715
+[11753]: https://github.com/enso-org/enso/pull/11753
+[11761]: https://github.com/enso-org/enso/pull/11761
 [11768]: https://github.com/enso-org/enso/pull/11768
+[11810]: https://github.com/enso-org/enso/pull/11810
+[11803]: https://github.com/enso-org/enso/pull/11803
+[11800]: https://github.com/enso-org/enso/pull/11800
 
 #### Enso Standard Library
 
