@@ -67,6 +67,8 @@
   "passwordValidationMessage": "Your password must include numbers, letters (both lowercase and uppercase) and symbols ( ^$*.[]{}()?\"!@#%&/,><':;|_~`=+-).",
   "passwordValidationError": "Your password does not meet the security requirements.",
 
+  "sessionExpiredError": "Your session has expired. Please sign in again.",
+
   "confirmSignUpError": "Incorrect email or confirmation code.",
   "confirmRegistration": "Sign Up Successful!",
   "confirmRegistrationSubtitle": "Please confirm your email to complete registration",
@@ -729,6 +731,8 @@
   "downgradeInfo": "to downgrade",
   "xItemsCopied": "$0 item(s) copied",
   "xItemsCut": "$0 item(s) cut",
+  "downloadToOpenWorkflow": "Download Enso to open workflows.",
+  "downloadToExecuteWorkflow": "Download Enso to execute workflows.",
 
   "someAgreementsHaveBeenUpdated": "Some agreements have been updated. Please re-read and agree to continue.",
   "licenseAgreementTitle": "Enso Terms of Service",

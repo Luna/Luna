@@ -36,6 +36,7 @@ import * as Y from 'yjs'
 import {
   applyDiffAsTextEdits,
   applyDocumentUpdates,
+  getIdMapToPersist,
   prettyPrintDiff,
   translateVisualizationFromFile,
 } from './edits'
@@ -349,7 +350,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       // @ts-expect-error This is SAFE. `this.state` is only `readonly` to ensure that
       // this is the only place where it is mutated.
       this.state = state
-      if (state === LsSyncState.Synchronized) this.trySyncRemoveUpdates()
+      if (state === LsSyncState.Synchronized) this.trySyncRemoteUpdates()
     } else {
       throw new Error('LsSync disposed')
     }
@@ -449,10 +450,10 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     } else {
       this.updateToApply = update
     }
-    this.trySyncRemoveUpdates()
+    this.trySyncRemoteUpdates()
   }
 
-  trySyncRemoveUpdates() {
+  trySyncRemoteUpdates() {
     if (this.updateToApply == null) return
     // apply updates to the ls-representation doc if we are already in sync with the LS.
     if (!this.inState(LsSyncState.Synchronized)) return
@@ -463,26 +464,12 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     const moduleUpdate = syncModule.applyUpdate(update, 'remote')
     if (moduleUpdate && this.syncedContent) {
       const synced = splitFileContents(this.syncedContent)
-      const { newCode, newIdMap, newMetadata } = applyDocumentUpdates(
+      const { newCode, newIdMap, newPersistedIdMap, newMetadata } = applyDocumentUpdates(
         this.doc,
         synced,
         moduleUpdate,
       )
-      this.sendLsUpdate(synced, newCode, newIdMap, newMetadata)
-    }
-  }
-
-  private static getIdMapToPersist(
-    idMap: IdMap | undefined,
-    metadata: fileFormat.IdeMetadata,
-  ): IdMap | undefined {
-    if (idMap === undefined) {
-      return
-    } else {
-      const entriesIntersection = idMap
-        .entries()
-        .filter(([, id]) => id in metadata.node || id in (metadata.widget ?? {}))
-      return new IdMap(entriesIntersection)
+      this.sendLsUpdate(synced, newCode, newIdMap, newPersistedIdMap, newMetadata)
     }
   }
 
@@ -508,6 +495,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
     synced: EnsoFileParts,
     newCode: string | undefined,
     newIdMap: IdMap | undefined,
+    newPersistedIdMap: IdMap | undefined,
     newMetadata: fileFormat.IdeMetadata | undefined,
   ) {
     if (this.syncedContent == null || this.syncedVersion == null) return
@@ -525,10 +513,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
           ...newSnapshot,
         },
       })
-    const idMapToPersist =
-      (newIdMap || newMetadata) &&
-      ModulePersistence.getIdMapToPersist(newIdMap, newMetadata ?? this.syncedMeta.ide)
-    const newIdMapToPersistJson = idMapToPersist && serializeIdMap(idMapToPersist)
+    const newIdMapToPersistJson = newPersistedIdMap && serializeIdMap(newPersistedIdMap)
     const code = newCode ?? synced.code
     const newContent = combineFileParts({
       code,
@@ -664,7 +649,9 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
       ) {
         const externalIdToAst = new Map<ExternalId, Ast.Ast>()
         astRoot.visitRecursive(ast => {
-          if (!externalIdToAst.has(ast.externalId)) externalIdToAst.set(ast.externalId, ast)
+          const ancestorEntry = externalIdToAst.get(ast.externalId)
+          if (!ancestorEntry || ancestorEntry instanceof Ast.ExpressionStatement)
+            externalIdToAst.set(ast.externalId, ast)
         })
         const missing = new Set<string>()
         for (const [id, meta] of nodeMeta) {
@@ -711,6 +698,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
         contentsReceived,
         this.syncedCode ?? undefined,
         unsyncedIdMap,
+        this.syncedMeta && getIdMapToPersist(unsyncedIdMap, this.syncedMeta.ide),
         this.syncedMeta?.ide,
       )
   }
@@ -791,7 +779,7 @@ class ModulePersistence extends ObservableV2<{ removed: () => void }> {
               const reloading = this.ls.closeTextFile(this.path).then(async closing => {
                 if (!closing.ok) closing.error.log('Could not close file after write error:')
                 return exponentialBackoff(
-                  async () => {
+                  async (): Promise<Result<response.OpenTextFile>> => {
                     const result = await this.ls.openTextFile(this.path)
                     if (!result.ok) return result
                     if (!result.value.writeCapability) {

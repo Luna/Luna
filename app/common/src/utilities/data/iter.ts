@@ -193,6 +193,8 @@ export function some<T>(iter: Iterable<T>, f: (value: T) => boolean): boolean {
   return false
 }
 
+export function find<T, S extends T>(iter: Iterable<T>, f: (value: T) => value is S): S | undefined
+export function find<T>(iter: Iterable<T>, f: (value: T) => boolean): T | undefined
 /** Return the first element returned by the iterable which meets the condition. */
 export function find<T>(iter: Iterable<T>, f: (value: T) => boolean): T | undefined {
   for (const value of iter) {
@@ -217,4 +219,12 @@ export function last<T>(iter: Iterable<T>): T | undefined {
   let last
   for (const el of iter) last = el
   return last
+}
+
+/** Yields items of the iterable with their index. */
+export function* enumerate<T>(items: Iterable<T>): Generator<[T, number]> {
+  let index = 0
+  for (const item of items) {
+    yield [item, index++]
+  }
 }

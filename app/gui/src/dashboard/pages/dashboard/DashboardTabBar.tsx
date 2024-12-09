@@ -1,7 +1,7 @@
 /** @file The tab bar for the dashboard page. */
 import DriveIcon from '#/assets/drive.svg'
+import NetworkIcon from '#/assets/network.svg'
 import SettingsIcon from '#/assets/settings.svg'
-import WorkspaceIcon from '#/assets/workspace.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import TabBar, { ProjectTab, type ProjectTabProps, type TabProps } from '#/layouts/TabBar'
@@ -59,7 +59,7 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
           ({
             type: 'project',
             id: project.id,
-            icon: WorkspaceIcon,
+            icon: NetworkIcon,
             'data-testid': 'editor-tab-button',
             labelId: 'editorPageName' satisfies TextId,
             isActive: page === project.id,
