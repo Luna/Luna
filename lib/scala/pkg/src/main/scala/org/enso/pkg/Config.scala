@@ -117,9 +117,7 @@ case class Config(
     val config: Config = this
     val noDevEdition: Config =
       if (
-        config.edition
-          .filter(_.parent.filter(p => p.toString == "0.0.0-dev").isDefined)
-          .isDefined
+        config.edition.exists(_.parent.exists(p => p.toString == "0.0.0-dev"))
       ) {
         config.copy(edition = None)
       } else {
