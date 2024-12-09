@@ -114,7 +114,7 @@ export function ProjectExecution(props: ProjectExecutionProps) {
         case 'daily': {
           const dayNames =
             repeat.daysOfWeek.length === DAYS_PER_WEEK ?
-              getText('everyDay')
+              getText('everyDaySuffix')
             : repeat.daysOfWeek
                 .map((day) => getText(DAY_3_LETTER_TEXT_IDS[day] ?? 'monday3'))
                 .join(', ')

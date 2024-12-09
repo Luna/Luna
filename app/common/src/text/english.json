@@ -676,7 +676,7 @@
   "restartParallelModeDescription": "Stop the old execution before starting the new execution.",
   "parallelParallelModeDescription": "Run the new execution as well as the old execution.",
   "hourlyBetweenX": "Hourly between $0-$1",
-  "everyDay": "Every day",
+  "everyDaySuffix": "every day",
   "everyMonth": "Every month",
   "monday": "Monday",
   "tuesday": "Tuesday",
