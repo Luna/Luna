@@ -37,10 +37,10 @@ add_group_number_specs suite_builder setup =
             g0 = t.add_group_number ..Unique "g" group_by=['x', 'y']
             g0.at 'g' . to_vector . should_equal [0, 1, 2, 1, 0, 2]
 
-            g1 = t.add_group_number "g" group_by=['x', 'z']
+            g1 = t.add_group_number ..Unique "g" group_by=['x', 'z']
             g1.at 'g' . to_vector . should_equal [0, 1, 2, 3, 4, 4]
 
-            g2 = t.add_group_number "g" group_by=['y', 'z']
+            g2 = t.add_group_number ..Unique "g" group_by=['y', 'z']
             g2.at 'g' . to_vector . should_equal [0, 1, 2, 3, 4, 5]
 
     ##

@@ -75,8 +75,9 @@ public class AddGroupNumber {
     }
 
     public long next() {
+        var toReturn = current;
         current += step;
-        return current;
+        return toReturn;
     }
   }
 
