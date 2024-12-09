@@ -26,9 +26,17 @@ export function firstProjectExecutionOnOrAfter(
         nextDate.setHours(nextDate.getHours() + 1)
       }
       const currentHours = nextDate.getHours()
-      if (currentHours < repeat.startHour || currentHours > repeat.endHour) {
-        nextDate.setHours(repeat.startHour)
-        nextDate.setDate(nextDate.getDate() + 1)
+      if (repeat.startHour < repeat.endHour) {
+        if (currentHours < repeat.startHour) {
+          nextDate.setHours(repeat.startHour)
+        } else if (currentHours > repeat.endHour) {
+          nextDate.setHours(repeat.startHour)
+          nextDate.setDate(nextDate.getDate() + 1)
+        }
+      } else {
+        if (currentHours > repeat.endHour && currentHours < repeat.startHour) {
+          nextDate.setHours(repeat.startHour)
+        }
       }
       break
     }

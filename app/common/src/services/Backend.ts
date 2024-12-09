@@ -364,6 +364,16 @@ export const REPEAT_INTERVAL_TO_TEXT_ID = {
   [K in ProjectRepeatInterval]: TextId & `${K}RepeatInterval`
 }
 
+export const PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID = {
+  hourly: 'hourlyProjectExecutionRepeatType',
+  daily: 'dailyProjectExecutionRepeatType',
+  'monthly-date': 'monthlyDateProjectExecutionRepeatType',
+  'monthly-weekday': 'monthlyWeekdayProjectExecutionRepeatType',
+} satisfies Record<
+  ProjectExecutionRepeatInfo['type'],
+  TextId & `${string}ProjectExecutionRepeatType`
+>
+
 /** The interval at which a project schedule repeats. */
 export type ProjectRepeatInterval = (typeof PROJECT_REPEAT_INTERVALS)[number]
 

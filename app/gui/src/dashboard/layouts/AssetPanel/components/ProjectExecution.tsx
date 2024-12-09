@@ -2,10 +2,13 @@
 import { useMutation } from '@tanstack/react-query'
 
 import {
+  DAY_3_LETTER_TEXT_IDS,
   DAY_TEXT_IDS,
+  DAYS_PER_WEEK,
   HOUR_MINUTE,
   HOURS_PER_DAY,
   MINUTE_MS,
+  MONTH_3_LETTER_TEXT_IDS,
 } from 'enso-common/src/utilities/data/dateTime'
 
 import ParallelIcon from '#/assets/parallel.svg'
@@ -15,7 +18,7 @@ import Stop2Icon from '#/assets/stop2.svg'
 import TimeIcon from '#/assets/time.svg'
 import UpgradeIcon from '#/assets/upgrade.svg'
 import { DialogTrigger } from '#/components/aria'
-import { Button, ButtonGroup, CloseButton, Text } from '#/components/AriaComponents'
+import { Button, ButtonGroup, CloseButton } from '#/components/AriaComponents'
 import { backendMutationOptions } from '#/hooks/backendHooks'
 import { useGetOrdinal } from '#/hooks/ordinalHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
@@ -25,6 +28,8 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 import { tv } from '#/utilities/tailwindVariants'
 import { getLocalTimeZone, now } from '@internationalized/date'
+
+const MONTHS_IN_YEAR = 12
 
 const PROJECT_EXECUTION_STYLES = tv({
   base: 'group flex flex-row gap-1 w-full rounded-default items-center odd:bg-primary/5 p-2',
@@ -56,48 +61,85 @@ export interface ProjectExecutionProps {
 
 /** Displays information describing a specific version of an asset. */
 export function ProjectExecution(props: ProjectExecutionProps) {
-  const { hideDay = false, backend, item, projectExecution, date } = props
+  const { backend, item, projectExecution, date } = props
   const { getText } = useText()
   const getOrdinal = useGetOrdinal()
   const [timeZone] = useLocalStorageState('preferredTimeZone')
-  const time = { ...projectExecution.time }
+  const repeat = { ...projectExecution.repeat }
 
-  const timeZoneOffsetMs = now(timeZone ?? getLocalTimeZone()).offset
+  const timeZoneOffsetMs =
+    now(timeZone ?? getLocalTimeZone()).offset - now(projectExecution.timeZone).offset
   const timeZoneOffsetMinutesTotal = Math.trunc(timeZoneOffsetMs / MINUTE_MS)
   let timeZoneOffsetHours = Math.floor(timeZoneOffsetMinutesTotal / HOUR_MINUTE)
   const timeZoneOffsetMinutes = timeZoneOffsetMinutesTotal - timeZoneOffsetHours * HOUR_MINUTE
-  time.minute += timeZoneOffsetMinutes
-  while (time.minute < 0) {
-    time.minute += HOUR_MINUTE
+
+  const startDate = new Date(projectExecution.startDate)
+  let minute = startDate.getMinutes()
+  minute += timeZoneOffsetMinutes
+  while (minute < 0) {
+    minute += HOUR_MINUTE
     timeZoneOffsetHours += 1
   }
-  while (time.minute > HOUR_MINUTE) {
-    time.minute -= HOUR_MINUTE
+  while (minute > HOUR_MINUTE) {
+    minute -= HOUR_MINUTE
     timeZoneOffsetHours -= 1
   }
-  if (time.hours) {
-    time.hours = time.hours.map(
-      (hour) => (hour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY,
-    )
-  }
-
-  const dateStrings = time.dates?.map((otherDate) => getOrdinal(otherDate + 1)) ??
-    time.days?.map((day) => getText(DAY_TEXT_IDS[day] ?? 'monday')) ?? [
-      getText(projectExecution.repeatInterval === 'hourly' ? 'everyHour' : 'everyDay'),
-    ]
-  const minuteString = time.minute === 0 ? '' : `:${String(time.minute).padStart(2, '0')}`
-  const hours =
-    date && projectExecution.repeatInterval !== 'hourly' ? [date.getHours()] : time.hours
-  const timeStrings = hours?.map((hour) =>
+  const minuteString = String(minute).padStart(2, '0')
+  const startDateHour = (startDate.getHours() + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
+  const startDateDailyRepeat = getText(
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}${minuteString}`),
-  ) ?? [getText('everyHourXMinute', minuteString.replace(/^:/, '') || '00')]
-  const dateTimeStrings =
-    hideDay && projectExecution.repeatInterval !== 'hourly' ?
-      timeStrings
-    : dateStrings.flatMap((dateString) =>
-        timeStrings.map((timeString) => getText('dateXTimeX', dateString, timeString)),
-      )
+    startDateHour > 11 ? 'xPm' : 'xAm',
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    `${startDateHour % 12 || 12}:${minuteString}`,
+  )
+
+  const repeatString = (() => {
+    if (date) {
+      const hour = (date.getHours() + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      return getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}:${minuteString}`)
+    } else {
+      switch (repeat.type) {
+        case 'hourly': {
+          const startHour = (repeat.startHour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
+          const endHour = (repeat.endHour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
+          return getText(
+            'hourlyBetweenX',
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+            getText(startHour > 11 ? 'xPm' : 'xAm', `${startHour % 12 || 12}:${minuteString}`),
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+            getText(endHour > 11 ? 'xPm' : 'xAm', `${endHour % 12 || 12}:${minuteString}`),
+          )
+        }
+        case 'daily': {
+          const dayNames =
+            repeat.daysOfWeek.length === DAYS_PER_WEEK ?
+              getText('everyDay')
+            : repeat.daysOfWeek
+                .map((day) => getText(DAY_3_LETTER_TEXT_IDS[day] ?? 'monday3'))
+                .join(', ')
+          return `${startDateDailyRepeat} ${dayNames}`
+        }
+        case 'monthly-date':
+        case 'monthly-weekday': {
+          const monthNames =
+            repeat.months.length === MONTHS_IN_YEAR ?
+              getText('everyMonth')
+            : repeat.months
+                .map((month) => getText(MONTH_3_LETTER_TEXT_IDS[month] ?? 'january3'))
+                .join(', ')
+          switch (repeat.type) {
+            case 'monthly-date': {
+              return `${startDateDailyRepeat} ${monthNames} ${getOrdinal(repeat.date)}`
+            }
+            case 'monthly-weekday': {
+              return `${startDateDailyRepeat} ${monthNames} ${getText(DAY_TEXT_IDS[repeat.dayOfWeek] ?? 'monday')} ${getText('xWeek', getOrdinal(repeat.weekNumber))}`
+            }
+          }
+        }
+      }
+    }
+  })()
 
   const styles = PROJECT_EXECUTION_STYLES({
     isEnabled: projectExecution.enabled,
@@ -118,13 +160,7 @@ export function ProjectExecution(props: ProjectExecutionProps) {
   return (
     <div className={styles.base()}>
       <div className={styles.timeContainer()}>
-        <div className={styles.times()}>
-          {dateTimeStrings.map((dateTimeString) => (
-            <Text elementType="time" className={styles.time()}>
-              {dateTimeString}
-            </Text>
-          ))}
-        </div>
+        <div className={styles.times()}>{repeatString}</div>
         <Button
           variant="icon"
           tooltip={
@@ -184,7 +220,9 @@ export function ProjectExecution(props: ProjectExecutionProps) {
           tooltipPlacement="left"
           className={styles.repeatInterval()}
         >
-          {getText(backendModule.REPEAT_INTERVAL_TO_TEXT_ID[projectExecution.repeatInterval])}
+          {getText(
+            backendModule.PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID[projectExecution.repeat.type],
+          )}
         </Button>
         <Button
           size="xsmall"
