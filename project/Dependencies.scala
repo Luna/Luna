@@ -67,6 +67,9 @@ object Dependencies {
     val orgNetbeansModulesSampler = "RELEASE230"
     val orgOpenideUtilLookup = "RELEASE230"
     val protobufJava = "4.29.1"
+    val pureconfig = "0.17.8"
+    val pureconfigCore = "0.17.4"
+    val pureconfigGeneric = "0.17.4"
     val reactiveStreams = "1.0.4"
     val scalaCompiler = "2.13.15"
     val scalaJava8Compat = "1.0.2"
@@ -76,7 +79,7 @@ object Dependencies {
     val scalatest = "3.2.19"
     val sentry = "7.18.1"
     val sentryLogback = "7.18.1"
-    val shapeless = "2.3.10"
+    val shapeless = "2.3.12"
     val slf4jApi = "2.0.16"
     val snakeyaml = "2.3"
     val sprayJson = "1.3.6"
@@ -138,6 +141,9 @@ object Dependencies {
       "org.netbeans.api" % "org-netbeans-modules-sampler" % Versions.orgNetbeansModulesSampler
     val openideUtilLookup = "org.netbeans.api" % "org-openide-util-lookup" % Versions.orgOpenideUtilLookup
     val protobufJava = "com.google.protobuf" % "protobuf-java" % VersionsPinned.protobufJava
+    val pureconfig = "com.github.pureconfig" %% "pureconfig" % Versions.pureconfig
+    val pureconfigCore = "com.github.pureconfig" %% "pureconfig-core" % Versions.pureconfigCore
+    val pureconfigGeneric = "com.github.pureconfig" %% "pureconfig-generic" % Versions.pureconfigGeneric
     val reactiveStreams = "org.reactivestreams" % "reactive-streams" % VersionsPinned.reactiveStreams
     val sbtJunitInterface = "com.github.sbt" % "junit-interface" % Versions.junitInterface
     val scalaCompiler = "org.scala-lang" % "scala-compiler" % VersionsPinned.scala

@@ -327,7 +327,7 @@ lazy val enso = (project in file("."))
     `json-rpc-server-test`,
     `json-rpc-server`,
     `language-server`,
-    `language-server-deps-wrapper`,
+    //`language-server-deps-wrapper`,
     launcher,
     `library-manager`,
     `library-manager-test`,
@@ -739,7 +739,7 @@ lazy val componentModulesPaths =
     (`library-manager` / Compile / exportedModuleBin).value,
     (`akka-wrapper` / Compile / exportedModuleBin).value,
     (`zio-wrapper` / Compile / exportedModuleBin).value,
-    (`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
+    //(`language-server-deps-wrapper` / Compile / exportedModuleBin).value,
     (`directory-watcher-wrapper` / Compile / exportedModuleBin).value,
     (`jna-wrapper` / Compile / exportedModuleBin).value,
     (`ydoc-polyfill` / Compile / exportedModuleBin).value,
@@ -1254,6 +1254,7 @@ lazy val `scala-libs-wrapper` = project
     }
   )
 
+// TODO: Figure out
 /** Wrapper project for dependencies of `language-server` that cannot be used as
   * JPMS modules (cannot be put directly on module-path).
   */
@@ -1264,9 +1265,9 @@ lazy val `language-server-deps-wrapper` = project
     modularFatJarWrapperSettings,
     scalaModuleDependencySetting,
     libraryDependencies ++= Seq(
-      "com.github.pureconfig" %% "pureconfig" % pureconfigVersion,
-      "com.chuusai"           %% "shapeless"  % shapelessVersion,
-      "com.typesafe"           % "config"     % typesafeConfigVersion
+      Dependencies.Compile.pureconfig,
+      Dependencies.Compile.shapeless,
+      Dependencies.Compile.typesafeConfig,
     ),
     javaModuleName := "org.enso.language.server.deps.wrapper",
     Compile / internalModuleDependencies := Seq(
@@ -1277,8 +1278,8 @@ lazy val `language-server-deps-wrapper` = project
         (Compile / fullClasspath).value,
         scalaLibrary ++
         Seq(
-          "com.chuusai" %% "shapeless" % shapelessVersion,
-          "com.typesafe" % "config"    % typesafeConfigVersion
+          Dependencies.Compile.shapeless,
+          Dependencies.Compile.typesafeConfig,
         ),
         streams.value.log,
         moduleName.value,
@@ -1290,8 +1291,8 @@ lazy val `language-server-deps-wrapper` = project
       val scalaLibs = JPMSUtils.filterModulesFromUpdate(
         update.value,
         Seq(
-          "com.github.pureconfig" %% "pureconfig-core"    % pureconfigVersion,
-          "com.github.pureconfig" %% "pureconfig-generic" % pureconfigVersion
+          Dependencies.Compile.pureconfigCore,
+          Dependencies.Compile.pureconfigGeneric,
         ),
         streams.value.log,
         moduleName.value,
@@ -2289,7 +2290,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`zio-wrapper` / Compile / exportedModule).value,
       (`scala-libs-wrapper` / Compile / exportedModule).value,
       (`connected-lock-manager-server` / Compile / exportedModule).value,
-      (`language-server-deps-wrapper` / Compile / exportedModule).value,
+      //(`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`directory-watcher-wrapper` / Compile / exportedModule).value,
       (`engine-runner-common` / Compile / exportedModule).value,
       (`ydoc-polyfill` / Compile / exportedModule).value,
@@ -2386,7 +2387,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       (`scala-libs-wrapper` / Compile / exportedModule).value,
       (`jna-wrapper` / Compile / exportedModule).value,
       (`akka-wrapper` / Compile / exportedModule).value,
-      (`language-server-deps-wrapper` / Compile / exportedModule).value,
+      //(`language-server-deps-wrapper` / Compile / exportedModule).value,
       (`fansi-wrapper` / Compile / exportedModule).value,
       (`text-buffer` / Compile / exportedModule).value,
       (`runtime-suggestions` / Compile / exportedModule).value,
