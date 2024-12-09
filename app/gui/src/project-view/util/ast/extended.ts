@@ -16,7 +16,8 @@ import * as map from 'lib0/map'
 import { markRaw } from 'vue'
 import * as Ast from 'ydoc-shared/ast/generated/ast'
 import { Token, Tree } from 'ydoc-shared/ast/generated/ast'
-import type { ExternalId, IdMap, SourceRange } from 'ydoc-shared/yjsModel'
+import { type SourceRange } from 'ydoc-shared/util/data/text'
+import { type ExternalId, type IdMap } from 'ydoc-shared/yjsModel'
 
 export { AstExtended as RawAstExtended }
 
@@ -194,7 +195,7 @@ class AstExtendedCtx<HasIdMap extends boolean> {
   }
 
   static getHashKey(ast: AstExtended<Tree | Token, boolean>) {
-    return `${ast.isToken() ? 'T.' : ''}${ast.inner.type}.${ast.span()[0]}`
+    return `${ast.isToken() ? 'T.' : ''}${ast.inner.type}.${ast.span().from}`
   }
 
   getHash(ast: AstExtended<Tree | Token, boolean>) {
