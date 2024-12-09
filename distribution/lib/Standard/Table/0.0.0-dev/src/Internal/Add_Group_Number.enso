@@ -31,9 +31,9 @@ create_column table grouping_method name from step grouping_columns ordering on_
             AddGroupNumber.numberGroups table.row_count grouping_method.to_java from step grouping_java_columns ordering_columns directions java_problem_aggregator
         Column.from_storage name new_storage
 
-check_arguments (grouping_method:Grouping_Method=..Unique) (grouping_column:(Vector | Text | Integer | Regex)=[]) (ordering:(Vector | Text)=[]) ~x =
+check_arguments (grouping_method:Grouping_Method=..Unique) (grouping_columns:(Vector | Text | Integer | Regex)=[]) (ordering:(Vector | Text)=[]) ~x =
     case grouping_method of
-        Grouping_Method.Unique -> if grouping_column.is_empty.not && ordering.is_empty then x else
+        Grouping_Method.Unique -> if grouping_columns.is_empty.not && ordering.is_empty then x else
             Error.throw (Illegal_Argument.Error "add_group_number with ..Unique requires a non-empty 'group_by' and cannot take an 'order_by' parameter")
-        Grouping_Method.Equal_Count _ -> if grouping_column.is_empty then x else
+        Grouping_Method.Equal_Count _ -> if grouping_columns.is_empty then x else
             Error.throw (Illegal_Argument.Error "add_group_number with ..Equal_Count cannot take a 'group_by' parameter")
