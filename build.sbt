@@ -649,8 +649,8 @@ lazy val componentModulesIds =
   )
 (ThisBuild / componentModulesIds) := {
   GraalVM.modules ++ GraalVM.langsPkgs ++ GraalVM.toolsPkgs ++ helidon ++ logbackPkg ++ Seq(
-    "org.slf4j"        % "slf4j-api"                    % slf4jVersion,
-    "org.netbeans.api" % "org-netbeans-modules-sampler" % netbeansApiVersion,
+    Dependencies.Compile.slf4jApi,
+    Dependencies.Compile.netbeansModulesSampler,
     (`runtime-language-arrow` / projectID).value,
     (`syntax-rust-definition` / projectID).value,
     (`ydoc-polyfill` / projectID).value,
@@ -920,10 +920,10 @@ lazy val `syntax-rust-definition` = project
     autoScalaLibrary := false,
     crossPaths := false,
     libraryDependencies ++= Seq(
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.slf4jApi
     ),
     Compile / moduleDependencies ++= Seq(
-      "org.slf4j" % "slf4j-api" % slf4jVersion
+      Dependencies.Compile.slf4jApi
     ),
     javaModuleName := "org.enso.syntax",
     Compile / sourceGenerators += generateParserJavaSources,
@@ -1897,21 +1897,21 @@ lazy val `ydoc-polyfill` = project
     commands += WithDebugCommand.withDebug,
     Compile / moduleDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon ++ Seq(
-        "org.slf4j" % "slf4j-api" % slf4jVersion
+        Dependencies.Compile.slf4jApi
       )
     },
     Compile / internalModuleDependencies := Seq(
       (`syntax-rust-definition` / Compile / exportedModule).value
     ),
     libraryDependencies ++= Seq(
-      "org.graalvm.truffle"  % "truffle-api"                 % graalMavenPackagesVersion % "provided",
-      "org.graalvm.polyglot" % "inspect-community"           % graalMavenPackagesVersion % "runtime",
-      "org.graalvm.polyglot" % "js-community"                % graalMavenPackagesVersion % "runtime",
-      "org.slf4j"            % "slf4j-api"                   % slf4jVersion,
+      Dependencies.Compile.graalvmTruffleApi % "provided",
+      Dependencies.Compile.graalvmInspectCommunity % "runtime",
+      Dependencies.Compile.graalvmJsCommunity % "runtime",
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.junit % Test,
+      Dependencies.Compile.sbtJunitInterface % Test,
       "io.helidon.webclient" % "helidon-webclient-websocket" % helidonVersion,
       "io.helidon.webserver" % "helidon-webserver-websocket" % helidonVersion,
-      "junit"                % "junit"                       % junitVersion              % Test,
-      "com.github.sbt"       % "junit-interface"             % junitIfVersion            % Test
     ),
     libraryDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon
@@ -1933,7 +1933,7 @@ lazy val `ydoc-server` = project
     commands += WithDebugCommand.withDebug,
     Compile / moduleDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon ++ logbackPkg ++ Seq(
-        "org.slf4j" % "slf4j-api" % slf4jVersion
+        Dependencies.Compile.slf4jApi
       )
     },
     Compile / internalModuleDependencies := Seq(
@@ -1941,17 +1941,17 @@ lazy val `ydoc-server` = project
       (`syntax-rust-definition` / Compile / exportedModule).value
     ),
     libraryDependencies ++= Seq(
-      "org.graalvm.truffle"        % "truffle-api"                 % graalMavenPackagesVersion % "provided",
-      "org.graalvm.sdk"            % "nativeimage"                 % graalMavenPackagesVersion % "provided",
-      "org.graalvm.polyglot"       % "inspect-community"           % graalMavenPackagesVersion % "runtime",
-      "org.graalvm.polyglot"       % "js-community"                % graalMavenPackagesVersion % "runtime",
-      "org.slf4j"                  % "slf4j-api"                   % slf4jVersion,
+      Dependencies.Compile.graalvmTruffleApi % "provided",
+      Dependencies.Compile.graalvmNativeimage % "provided",
+      Dependencies.Compile.graalvmInspectCommunity % "runtime",
+      Dependencies.Compile.graalvmJsCommunity % "runtime",
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.junit % Test,
+      Dependencies.Compile.sbtJunitInterface % Test,
+      Dependencies.Compile.jacksonDatabind % Test,
       "io.helidon.common"          % "helidon-common"              % helidonVersion,
       "io.helidon.webclient"       % "helidon-webclient-websocket" % helidonVersion            % Test,
-      "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion            % Test,
-      "junit"                      % "junit"                       % junitVersion              % Test,
-      "com.github.sbt"             % "junit-interface"             % junitIfVersion            % Test,
-      "com.fasterxml.jackson.core" % "jackson-databind"            % jacksonVersion            % Test
+      "io.helidon.webserver"       % "helidon-webserver-websocket" % helidonVersion            % Test
     ),
     libraryDependencies ++= {
       GraalVM.modules ++ GraalVM.jsPkgs ++ GraalVM.chromeInspectorPkgs ++ helidon
@@ -2659,12 +2659,12 @@ lazy val `runtime-language-arrow` =
       inConfig(Compile)(truffleRunOptionsSettings),
       instrumentationSettings,
       libraryDependencies ++= GraalVM.modules ++ Seq(
-        "junit"            % "junit"              % junitVersion       % Test,
-        "com.github.sbt"   % "junit-interface"    % junitIfVersion     % Test,
-        "org.slf4j"        % "slf4j-nop"          % slf4jVersion       % Test,
-        "org.slf4j"        % "slf4j-api"          % slf4jVersion       % Test,
-        "org.apache.arrow" % "arrow-vector"       % apacheArrowVersion % Test,
-        "org.apache.arrow" % "arrow-memory-netty" % apacheArrowVersion % Test
+        Dependencies.Compile.junit % Test,
+        Dependencies.Compile.sbtJunitInterface % Test,
+        Dependencies.Compile.slf4jNop % Test,
+        Dependencies.Compile.slf4jApi % Test,
+        Dependencies.Compile.apacheArrowVector % Test,
+        Dependencies.Compile.apacheArrowMemoryNetty % Test,
       ),
       javaModuleName := "org.enso.interpreter.arrow",
       Compile / moduleDependencies ++= GraalVM.modules,

@@ -37,6 +37,8 @@ object Dependencies {
     val akkaProtobufV3 = "2.8.8"
     val akkaSlf4j = "2.8.8"
     val akkaStream = "2.8.8"
+    val arrowVector = "14.0.1"
+    val arrowMemoryNetty = "14.0.1"
     val catsCore = "2.12.0"
     val catsKernel = "2.10.0"
     val circeCore = "0.14.10"
@@ -90,6 +92,7 @@ object Dependencies {
     val sentryLogback = "7.18.1"
     val shapeless = "2.3.12"
     val slf4jApi = "2.0.16"
+    val slf4jNop = "2.0.16"
     val snakeyaml = "2.3"
     val sprayJson = "1.3.6"
     val svm = "24.1.1"
@@ -114,7 +117,7 @@ object Dependencies {
     * To work correctly, the dependency definition should have the following structure:
     *
     * {{{
-    *   val arbitraryName = "ppppgroup.id" % "artifact-id" % Versions.artifactId
+    *   val arbitraryName = "group.id" % "artifact-id" % Versions.artifactId
     * }}}
     *
     * i.e the `Versions.artifactId` identifier should be the camel case translation of the corresponding `artifact-id`.
@@ -129,6 +132,8 @@ object Dependencies {
     val akkaParsing = "com.typesafe.akka" %% "akka-parsing" % VersionsPinned.akkaHttp
     val akkaProtobufV3 = "com.typesafe.akka" %% "akka-protobuf-v3" % VersionsPinned.akkaActor
     val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % VersionsPinned.akkaHttp
+    val apacheArrowVector = "org.apache.arrow" % "arrow-vector" % Versions.arrowVector
+    val apacheArrowMemoryNetty = "org.apache.arrow" % "arrow-memory-netty" % Versions.arrowMemoryNetty
     val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
     val catsCore = "org.typelevel" %% "cats-core" % Versions.catsCore
     val catsKernel = "org.typelevel" %% "cats-kernel" % Versions.catsKernel
@@ -146,6 +151,8 @@ object Dependencies {
     val fansi = "com.lihaoyi" %% "fansi" % Versions.fansi
     val flatbuffersJava = "com.google.flatbuffers" % "flatbuffers-java" % Versions.flatbuffersJava
     val graalvmCollections = "org.graalvm.sdk" % "collections" % VersionsPinned.graalMavenPackages
+    val graalvmJsCommunity = "org.graalvm.polyglot" % "js-community" % VersionsPinned.graalMavenPackages
+    val graalvmInspectCommunity = "org.graalvm.polyglot" % "inspect-community" % VersionsPinned.graalMavenPackages
     val graalvmNativeimage = "org.graalvm.sdk" % "nativeimage" % VersionsPinned.graalMavenPackages
     val graalvmPolyglot = "org.graalvm.polyglot" % "polyglot" % VersionsPinned.graalMavenPackages
     val graalvmPolyglotTck = "org.graalvm.sdk" % "polyglot-tck" % VersionsPinned.graalMavenPackages
@@ -191,6 +198,7 @@ object Dependencies {
     val sentry = "io.sentry" % "sentry" % Versions.sentry
     val shapeless = "com.chuusai" %% "shapeless" % Versions.shapeless
     val slf4jApi = "org.slf4j" % "slf4j-api" % Versions.slf4jApi
+    val slf4jNop = "org.slf4j" % "slf4j-nop" % Versions.slf4jNop
     val snakeyaml = "org.yaml" % "snakeyaml" % Versions.snakeyaml
     val sprayJson = "io.spray" %% "spray-json" % VersionsPinned.sprayJson
     val tikaCore = "org.apache.tika" % "tika-core" % Versions.tikaCore
