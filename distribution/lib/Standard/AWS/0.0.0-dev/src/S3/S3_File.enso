@@ -601,7 +601,7 @@ type S3_File
     to_display_text self = "S3_File {" + self.to_text + "}"
 
 ## PRIVATE
-File_Format_Metadata.from (that : S3_File) = File_Format_Metadata.Value that.uri that.name (that.extension.catch _->Nothing)
+File_Format_Metadata.from (that : S3_File) = File_Format_Metadata.Value that.uri that.name (that.extension.catch S3_Error _->Nothing)
 
 ## PRIVATE
 File_Like.from (that : S3_File) = File_Like.Value that
