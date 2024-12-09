@@ -5,6 +5,7 @@ import org.enso.semver.SemVer
 import org.enso.editions.{EditionName, Editions}
 import org.enso.pkg.validation.NameValidation
 import org.enso.scala.yaml.{YamlDecoder, YamlEncoder}
+import org.enso.version.BuildVersion
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
 import org.yaml.snakeyaml.error.YAMLException
 import org.yaml.snakeyaml.nodes.{MappingNode, Node}
@@ -117,7 +118,10 @@ case class Config(
     val config: Config = this
     val noDevEdition: Config =
       if (
-        config.edition.exists(_.parent.exists(p => p.toString == "0.0.0-dev"))
+        config.edition.exists(
+          _.parent
+            .exists(p => p.toString == BuildVersion.defaultDevEnsoVersion())
+        )
       ) {
         config.copy(edition = None)
       } else {
