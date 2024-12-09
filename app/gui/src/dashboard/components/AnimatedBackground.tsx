@@ -120,9 +120,7 @@ AnimatedBackground.Item = memo(function AnimatedBackgroundItem(props: AnimatedBa
   )
 })
 
-/**
- * Props for {@link AnimatedBackgroundItemUnderlay}.
- */
+/** Props for {@link AnimatedBackgroundItemUnderlay}. */
 interface AnimatedBackgroundItemUnderlayProps {
   readonly isActive: boolean
   readonly underlayElement: React.ReactNode
@@ -135,9 +133,7 @@ const VARIANTS: Variants = {
   visible: { opacity: 1 },
 }
 
-/**
- * Underlay for {@link AnimatedBackground.Item}.
- */
+/** Underlay for {@link AnimatedBackground.Item}. */
 // eslint-disable-next-line no-restricted-syntax
 const AnimatedBackgroundItemUnderlay = memo(function AnimatedBackgroundItemUnderlay(
   props: AnimatedBackgroundItemUnderlayProps,
