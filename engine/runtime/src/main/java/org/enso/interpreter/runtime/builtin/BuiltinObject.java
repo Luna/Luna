@@ -1,19 +1,25 @@
 package org.enso.interpreter.runtime.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -39,8 +45,15 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 public abstract class BuiltinObject extends EnsoObject {
 
   private final String builtinName;
-  private Map<String, Function> methods;
+
+  @CompilationFinal
   private Builtin cachedBuiltinType;
+
+  @CompilationFinal(dimensions = 1)
+  private String[] methodNames;
+
+  @CompilationFinal(dimensions = 1)
+  private Function[] methods;
 
   /**
    * @param builtinName Simple name of the builtin that should be contained in {@link
@@ -56,48 +69,85 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
-  @TruffleBoundary
-  public final Object getMembers(boolean includeInternal, @Bind("$node") Node node) {
-    var methodNamesArr = methodNames().toArray(String[]::new);
-    return ArrayLikeHelpers.wrapStrings(methodNamesArr);
+  public final Object getMembers(boolean includeInternal) {
+    return ArrayLikeHelpers.wrapStrings(methodNames());
   }
 
   @ExportMessage
-  @TruffleBoundary
-  public final boolean isMemberReadable(String member) {
-    return methodNames().contains(member);
-  }
-
-  @ExportMessage
-  @TruffleBoundary
-  public final boolean isMemberInvocable(String member) {
-    return isMemberReadable(member);
-  }
-
-  @ExportMessage
-  @TruffleBoundary
-  public final Object readMember(String member) throws UnknownIdentifierException {
-    if (!isMemberReadable(member)) {
-      throw UnknownIdentifierException.create(member);
+  public final boolean isMemberReadable(
+      String member, @Shared @Cached LoopConditionProfile loopProfile) {
+    var size = methodNames().length;
+    loopProfile.profileCounted(size);
+    for (var i = 0; loopProfile.inject(i < methodNames.length); i++) {
+      var methodName = methodNames[i];
+      if (member.compareTo(methodName) == 0) {
+        return true;
+      }
     }
-    var func = methods().get(member);
-    if (func != null) {
-      return func;
+    return false;
+  }
+
+  @ExportMessage
+  public final boolean isMemberInvocable(
+      String member, @Shared @Cached LoopConditionProfile loopProfile) {
+    return isMemberReadable(member, loopProfile);
+  }
+
+  @ExportMessage
+  public final Object readMember(String member, @Shared @Cached LoopConditionProfile loopProfile)
+      throws UnknownIdentifierException {
+    var methodNames = methodNames();
+    var methods = methods();
+    loopProfile.profileCounted(methodNames.length);
+    for (var i = 0; loopProfile.inject(i < methodNames.length); i++) {
+      var methodName = methodNames[i];
+      if (methodName.compareTo(member) == 0) {
+        return methods[i];
+      }
     }
     throw UnknownIdentifierException.create(member);
   }
 
   @ExportMessage
-  @TruffleBoundary
-  public final Object invokeMember(String member, Object[] args)
-      throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
-    var ctx = EnsoContext.get(null);
-    var sym = UnresolvedSymbol.build(member, ctx.getBuiltins().getScope());
-    var argsForBuiltin = new Object[args.length + 1];
-    argsForBuiltin[0] = this;
-    java.lang.System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
-    var interop = InteropLibrary.getUncached();
-    return interop.execute(sym, argsForBuiltin);
+  public static final class InvokeMember {
+    @Specialization(
+        guards = {"cachedMember.equals(member)"},
+        limit = "3")
+    public static Object doCached(
+        BuiltinObject receiver,
+        String member,
+        Object[] args,
+        @Cached("member") String cachedMember,
+        @Cached("buildSymbol(cachedMember)") UnresolvedSymbol cachedSymbol,
+        @CachedLibrary("cachedSymbol") InteropLibrary interop)
+        throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
+      var argsForBuiltin = new Object[args.length + 1];
+      argsForBuiltin[0] = receiver;
+      java.lang.System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
+      return interop.execute(cachedSymbol, argsForBuiltin);
+    }
+
+    @Specialization(replaces = "doCached")
+    public static Object doUncached(
+        BuiltinObject receiver,
+        String member,
+        Object[] args,
+        @CachedLibrary(limit = "3") InteropLibrary interop)
+        throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
+      var ctx = EnsoContext.get(interop);
+      var symbol = buildSymbol(member, ctx);
+      return doCached(receiver, member, args, member, symbol, interop);
+    }
+
+    private static UnresolvedSymbol buildSymbol(String symbol, EnsoContext ctx) {
+      return UnresolvedSymbol.build(symbol, ctx.getBuiltins().getScope());
+    }
+
+    @NeverDefault
+    public static UnresolvedSymbol buildSymbol(String symbol) {
+      var ctx = EnsoContext.get(null);
+      return buildSymbol(symbol, ctx);
+    }
   }
 
   @ExportMessage
@@ -125,29 +175,41 @@ public abstract class BuiltinObject extends EnsoObject {
     return getType(node);
   }
 
-  private Map<String, Function> methods() {
+  @TruffleBoundary
+  private Map<String, Function> findMethods() {
     var ctx = EnsoContext.get(null);
-    if (methods == null) {
-      var builtinType = ctx.getBuiltins().getBuiltinType(builtinName);
-      assert builtinType != null;
-      var defScope = builtinType.getType().getDefinitionScope();
-      var methodsFromScope = defScope.getMethodsForType(builtinType.getType());
-      assert methodsFromScope != null;
-      methods = new HashMap<>();
-      for (var method : methodsFromScope) {
-        var methodName = normalizeName(method.getName());
-        methods.put(methodName, method);
-      }
+    var builtinType = ctx.getBuiltins().getBuiltinType(builtinName);
+    assert builtinType != null;
+    var defScope = builtinType.getType().getDefinitionScope();
+    var methodsFromScope = defScope.getMethodsForType(builtinType.getType());
+    assert methodsFromScope != null;
+    var methods = new HashMap<String, Function>();
+    for (var method : methodsFromScope) {
+      var methodName = normalizeName(method.getName());
+      methods.put(methodName, method);
     }
     return methods;
   }
 
-  private Set<String> methodNames() {
-    var methodNames =
-        methods().keySet().stream()
-            .map(BuiltinObject::normalizeName)
-            .collect(Collectors.toUnmodifiableSet());
+  private String[] methodNames() {
+    if (methodNames == null) {
+      CompilerDirectives.transferToInterpreter();
+      var methods = findMethods();
+      var namesSet =
+          methods.keySet().stream()
+              .map(BuiltinObject::normalizeName)
+              .collect(Collectors.toUnmodifiableSet());
+      methodNames = namesSet.toArray(String[]::new);
+    }
     return methodNames;
+  }
+
+  private Function[] methods() {
+    if (methods == null) {
+      CompilerDirectives.transferToInterpreter();
+      methods = findMethods().values().toArray(Function[]::new);
+    }
+    return methods;
   }
 
   private static String normalizeName(String funcName) {
