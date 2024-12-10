@@ -109,3 +109,20 @@ add_group_number_specs suite_builder setup =
             t = table_builder_from_rows ['x', 'y', 'z'] [[1.0, 0.0, 2.0], [0.0, 1.0, 0.0], [1.0, 2.0, 0.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 2.0, 1.0]]
             g0 = t.add_group_number ..Unique "g" group_by=['x', 'y']
             Problems.expect_warning Floating_Point_Equality g0
+
+        group_builder.specify "should fail if columns provided in group_by do not exist" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            t.add_group_number ..Unique group_by=['x', 'q'] . should_fail_with Missing_Input_Columns
+
+        group_builder.specify "should fail if columns provided in order_by do not exist" <|
+            t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
+
+            t.add_group_number (..Equal_Count 3) "g" order_by=['q'] . should_fail_with Missing_Input_Columns
+
+        group_builder.specify "should rename existing column upon a name clash, and attach a warning" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            g0 = t.add_group_number ..Unique "y" group_by=['x', 'y']
+            g0.at 'y 1' . to_vector . should_equal [0, 1, 2, 1, 0, 2]
+            Problems.expect_warning Duplicate_Output_Column_Names g0

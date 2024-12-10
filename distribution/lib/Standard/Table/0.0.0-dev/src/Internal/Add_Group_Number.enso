@@ -17,9 +17,10 @@ add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:
     grouping_columns = table.columns_helper.select_columns_helper group_by Case_Sensitivity.Default True problem_builder
     ordering = Table_Helpers.resolve_order_by table.columns order_by problem_builder
 
-    new_column = create_column table grouping_method name from step grouping_columns ordering on_problems
-    renamed_table = rename_columns_if_needed table name on_problems Table.new
-    renamed_table.set new_column name set_mode=Set_Mode.Add
+    problem_builder.attach_problems_before on_problems <|
+        new_column = create_column table grouping_method name from step grouping_columns ordering on_problems
+        renamed_table = rename_columns_if_needed table name on_problems Table.new
+        renamed_table.set new_column name set_mode=Set_Mode.Add
 
 ## PRIVATE
 create_column table grouping_method name from step grouping_columns ordering on_problems =
