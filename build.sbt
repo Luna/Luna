@@ -1873,7 +1873,7 @@ lazy val searcher = project
     compileOrder := CompileOrder.ScalaThenJava,
     annotationProcSetting,
     libraryDependencies ++= jmh ++ Seq(
-      "org.scalatest" %% "scalatest" % scalatestVersion % Test
+      Dependencies.Compile.scalatest % Test
     ) ++ logbackTest,
     Compile / internalModuleDependencies := Seq(
       (`polyglot-api` / Compile / exportedModule).value
@@ -2107,10 +2107,10 @@ lazy val `interpreter-dsl-test` =
       ),
       commands += WithDebugCommand.withDebug,
       libraryDependencies ++= Seq(
-        "org.graalvm.truffle" % "truffle-api"           % graalMavenPackagesVersion % "provided",
-        "org.graalvm.truffle" % "truffle-dsl-processor" % graalMavenPackagesVersion % "provided",
-        "junit"               % "junit"                 % junitVersion              % Test,
-        "com.github.sbt"      % "junit-interface"       % junitIfVersion            % Test
+        Dependencies.Compile.graalvmTruffleApi % "provided",
+        Dependencies.Compile.graalvmTruffleDslProcessor % "provided",
+        Dependencies.Compile.junit % Test,
+        Dependencies.Compile.sbtJunitInterface % Test,
       )
     )
     .dependsOn(`interpreter-dsl`)
