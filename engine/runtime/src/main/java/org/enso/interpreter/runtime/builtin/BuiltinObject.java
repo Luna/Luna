@@ -51,32 +51,32 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
-  public boolean hasMembers() {
+  public final boolean hasMembers() {
     return true;
   }
 
   @ExportMessage
   @TruffleBoundary
-  public Object getMembers(boolean includeInternal, @Bind("$node") Node node) {
+  public final Object getMembers(boolean includeInternal, @Bind("$node") Node node) {
     var methodNamesArr = methodNames().toArray(String[]::new);
     return ArrayLikeHelpers.wrapStrings(methodNamesArr);
   }
 
   @ExportMessage
   @TruffleBoundary
-  public boolean isMemberReadable(String member) {
+  public final boolean isMemberReadable(String member) {
     return methodNames().contains(member);
   }
 
   @ExportMessage
   @TruffleBoundary
-  public boolean isMemberInvocable(String member) {
+  public final boolean isMemberInvocable(String member) {
     return isMemberReadable(member);
   }
 
   @ExportMessage
   @TruffleBoundary
-  public Object readMember(String member) throws UnknownIdentifierException {
+  public final Object readMember(String member) throws UnknownIdentifierException {
     if (!isMemberReadable(member)) {
       throw UnknownIdentifierException.create(member);
     }
@@ -89,24 +89,24 @@ public abstract class BuiltinObject extends EnsoObject {
 
   @ExportMessage
   @TruffleBoundary
-  public Object invokeMember(String member, Object[] args)
+  public final Object invokeMember(String member, Object[] args)
       throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
     var ctx = EnsoContext.get(null);
     var sym = UnresolvedSymbol.build(member, ctx.getBuiltins().getScope());
     var argsForBuiltin = new Object[args.length + 1];
     argsForBuiltin[0] = this;
-    System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
+    java.lang.System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
     var interop = InteropLibrary.getUncached();
     return interop.execute(sym, argsForBuiltin);
   }
 
   @ExportMessage
-  public boolean hasType() {
+  public final boolean hasType() {
     return true;
   }
 
   @ExportMessage
-  public Type getType(@Bind("$node") Node node) {
+  public final Type getType(@Bind("$node") Node node) {
     if (cachedBuiltinType == null) {
       CompilerDirectives.transferToInterpreter();
       var ctx = EnsoContext.get(node);
@@ -116,12 +116,12 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
-  public boolean hasMetaObject() {
+  public final boolean hasMetaObject() {
     return true;
   }
 
   @ExportMessage
-  public Type getMetaObject(@Bind("$node") Node node) {
+  public final Type getMetaObject(@Bind("$node") Node node) {
     return getType(node);
   }
 
