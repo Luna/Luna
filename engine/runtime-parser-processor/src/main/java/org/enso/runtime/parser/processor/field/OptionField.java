@@ -3,17 +3,13 @@ package org.enso.runtime.parser.processor.field;
 import java.util.List;
 import javax.lang.model.element.TypeElement;
 
-/** Represents a {@code scala.collection.immutable.List} field in the IR node. */
-final class ListField implements Field {
+/** Field representing {@code scala.Option} */
+public class OptionField implements Field {
   private final String name;
   private final TypeElement typeArgElement;
   private final TypeElement type;
 
-  /**
-   * @param name Name of the field
-   * @param typeArgElement TypeElement of the type argument. Must be subtype of IR.
-   */
-  ListField(String name, TypeElement type, TypeElement typeArgElement) {
+  public OptionField(String name, TypeElement type, TypeElement typeArgElement) {
     this.name = name;
     this.type = type;
     this.typeArgElement = typeArgElement;
@@ -32,7 +28,7 @@ final class ListField implements Field {
   @Override
   public String getSimpleTypeName() {
     var typeArg = typeArgElement.getSimpleName().toString();
-    return "List<" + typeArg + ">";
+    return "Option<" + typeArg + ">";
   }
 
   @Override
@@ -43,11 +39,11 @@ final class ListField implements Field {
   @Override
   public List<String> getImportedTypes() {
     var typePar = typeArgElement.getQualifiedName().toString();
-    return List.of("scala.collection.immutable.List", typePar);
+    return List.of("scala.Option", typePar);
   }
 
   @Override
-  public boolean isList() {
+  public boolean isOption() {
     return true;
   }
 

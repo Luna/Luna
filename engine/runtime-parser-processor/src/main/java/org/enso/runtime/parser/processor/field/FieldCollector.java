@@ -83,22 +83,37 @@ public final class FieldCollector {
     var type = getParamType(param);
     var isNullable = !irChildAnnot.required();
     if (Utils.isScalaList(type, processingEnv)) {
-      assert param.asType() instanceof DeclaredType;
-      var declaredType = (DeclaredType) param.asType();
-      assert declaredType.getTypeArguments().size() == 1;
-      var typeArg = declaredType.getTypeArguments().get(0);
-      var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
-      ensureIsSubtypeOfIR(typeArgElem);
+      var typeArgElem = getGenericType(param);
       return new ListField(name, type, typeArgElem);
+    } else if (Utils.isScalaOption(type, processingEnv)) {
+      var typeArgElem = getGenericType(param);
+      return new OptionField(name, type, typeArgElem);
     } else {
       if (!Utils.isSubtypeOfIR(type, processingEnv)) {
-        Utils.printError(
+        Utils.printErrorAndFail(
             "Constructor parameter annotated with @IRChild must be a subtype of IR interface",
             param,
             processingEnv.getMessager());
       }
       return new ReferenceField(processingEnv, type, name, isNullable, true);
     }
+  }
+
+  /**
+   * Returns the generic type parameter. Assumes that the given {@code param} is declared with some
+   * generic type, and has exactly one type parameter.
+   *
+   * @param param the parameter to get the generic type from
+   * @return the generic type parameter
+   */
+  private TypeElement getGenericType(VariableElement param) {
+    assert param.asType() instanceof DeclaredType;
+    var declaredType = (DeclaredType) param.asType();
+    assert declaredType.getTypeArguments().size() == 1;
+    var typeArg = declaredType.getTypeArguments().get(0);
+    var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
+    ensureIsSubtypeOfIR(typeArgElem);
+    return typeArgElem;
   }
 
   private static boolean isPrimitiveType(VariableElement ctorParam) {

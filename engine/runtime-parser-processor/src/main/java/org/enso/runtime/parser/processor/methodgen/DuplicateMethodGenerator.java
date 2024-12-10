@@ -104,15 +104,21 @@ public class DuplicateMethodGenerator {
           sb.append(System.lineSeparator());
           duplicatedVars.add(
               new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), true));
-        } else if (!field.isNullable() && !field.isList()) {
-          sb.append(Utils.indent(notNullableChildCode(field), 2));
-          sb.append(System.lineSeparator());
-          duplicatedVars.add(
-              new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), true));
-        } else if (field.isList()) {
-          sb.append(Utils.indent(listChildCode(field), 2));
-          sb.append(System.lineSeparator());
-          duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
+        } else {
+          if (field.isList()) {
+            sb.append(Utils.indent(listChildCode(field), 2));
+            sb.append(System.lineSeparator());
+            duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
+          } else if (field.isOption()) {
+            sb.append(Utils.indent(optionChildCode(field), 2));
+            sb.append(System.lineSeparator());
+            duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
+          } else {
+            sb.append(Utils.indent(notNullableChildCode(field), 2));
+            sb.append(System.lineSeparator());
+            duplicatedVars.add(
+                new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), true));
+          }
         }
       } else {
         sb.append(Utils.indent(nonChildCode(field), 2));
@@ -150,7 +156,7 @@ public class DuplicateMethodGenerator {
   }
 
   private static String notNullableChildCode(Field child) {
-    assert child.isChild() && !child.isNullable() && !child.isList();
+    assert child.isChild() && !child.isNullable() && !child.isList() && !child.isOption();
     return """
           IR $dupName = $childName.duplicate($parameterNames);
           if (!($dupName instanceof $childType)) {
@@ -164,7 +170,7 @@ public class DuplicateMethodGenerator {
   }
 
   private static String listChildCode(Field listChild) {
-    assert listChild.isChild() && listChild.isList();
+    Utils.hardAssert(listChild.isChild() && listChild.isList());
     return """
           $childListType $dupName =
             $childName.map(child -> {
@@ -176,14 +182,33 @@ public class DuplicateMethodGenerator {
             });
           """
         .replace("$childListType", listChild.getSimpleTypeName())
-        .replace("$childType", listChild.getTypeParameter())
+        .replace("$childType", listChild.getTypeParameter().getSimpleName())
         .replace("$childName", listChild.getName())
         .replace("$dupName", dupFieldName(listChild))
         .replace("$parameterNames", String.join(", ", parameterNames()));
   }
 
+  private static String optionChildCode(Field optionChild) {
+    Utils.hardAssert(optionChild.isOption() && optionChild.isChild());
+    return """
+        $childOptType $dupName = $childName;
+        if ($childName.isDefined()) {
+          var duplicated = $childName.get().duplicate($parameterNames);
+          if (!(duplicated instanceof $childType)) {
+            throw new IllegalStateException("Duplicated child is not of the expected type: " + $dupName);
+          }
+          $dupName = Option.apply(duplicated);
+        }
+        """
+        .replace("$childOptType", optionChild.getSimpleTypeName())
+        .replace("$childType", optionChild.getTypeParameter().getSimpleName())
+        .replace("$childName", optionChild.getName())
+        .replace("$dupName", dupFieldName(optionChild))
+        .replace("$parameterNames", String.join(", ", parameterNames()));
+  }
+
   private static String nonChildCode(Field field) {
-    assert !field.isChild();
+    Utils.hardAssert(!field.isChild());
     return """
         $childType $dupName = $childName;
         """

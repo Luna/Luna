@@ -48,25 +48,39 @@ public final class MapExpressionsMethodGenerator {
         .append(") {")
         .append(System.lineSeparator());
 
-    var children = ctx.getUserFields().stream().filter(field -> field.isChild() && !field.isList());
+    var children = ctx.getUserFields().stream().filter(Field::isChild);
     var newChildren =
         children.map(
             child -> {
-              Utils.hardAssert(!child.isList());
-              var childsMapExprMethod =
-                  Utils.findMapExpressionsMethod(child.getType(), ctx.getProcessingEnvironment());
+              ExecutableElement childsMapExprMethod;
+              if (child.isList() || child.isOption()) {
+                childsMapExprMethod =
+                    Utils.findMapExpressionsMethod(
+                        child.getTypeParameter(), ctx.getProcessingEnvironment());
+              } else {
+                childsMapExprMethod =
+                    Utils.findMapExpressionsMethod(child.getType(), ctx.getProcessingEnvironment());
+              }
+
               var typeUtils = ctx.getProcessingEnvironment().getTypeUtils();
               var childsMapExprMethodRetType =
                   typeUtils.asElement(childsMapExprMethod.getReturnType());
               var shouldCast =
                   !typeUtils.isSameType(
                       child.getType().asType(), childsMapExprMethodRetType.asType());
+              if (child.isList() || child.isOption()) {
+                shouldCast = false;
+              }
+
+              String newChildType = typeName(childsMapExprMethodRetType);
+              if (child.isList()) {
+                newChildType = "List<" + newChildType + ">";
+              } else if (child.isOption()) {
+                newChildType = "Option<" + newChildType + ">";
+              }
 
               var newChildName = child.getName() + "Mapped";
-              sb.append("  ")
-                  .append(typeName(childsMapExprMethodRetType))
-                  .append(" ")
-                  .append(newChildName);
+              sb.append("  ").append(newChildType).append(" ").append(newChildName);
               if (child.isNullable()) {
                 sb.append(" = null;").append(System.lineSeparator());
                 sb.append("  if (")
@@ -82,7 +96,7 @@ public final class MapExpressionsMethodGenerator {
                     .append(System.lineSeparator());
                 sb.append("  }").append(System.lineSeparator());
               } else {
-                if (!child.isList()) {
+                if (!child.isList() && !child.isOption()) {
                   // ChildType childMapped = child.mapExpressions(fn);
                   sb.append(" = ")
                       .append(child.getName())
@@ -91,7 +105,7 @@ public final class MapExpressionsMethodGenerator {
                       .append("(fn);")
                       .append(System.lineSeparator());
                 } else {
-                  Utils.hardAssert(child.isList() && !child.isNullable());
+                  Utils.hardAssert(child.isList() || child.isOption());
                   // List<ChildType> childMapped = child.map(e -> e.mapExpressions(fn));
                   sb.append(" = ")
                       .append(child.getName())

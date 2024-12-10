@@ -263,15 +263,24 @@ final class IRNodeClassGenerator {
         .forEach(
             childField -> {
               String addToListCode;
-              if (!childField.isList()) {
-                addToListCode = "list.add(" + childField.getName() + ");";
-              } else {
+              if (childField.isList()) {
                 addToListCode =
                     """
                     $childName.foreach(list::add);
                     """
                         .replace("$childName", childField.getName());
+              } else if (childField.isOption()) {
+                addToListCode =
+                    """
+                    if ($childName.isDefined()) {
+                      list.add($childName.get());
+                    }
+                    """
+                        .replace("$childName", childField.getName());
+              } else {
+                addToListCode = "list.add(" + childField.getName() + ");";
               }
+
               var childName = childField.getName();
               if (childField.isNullable()) {
                 sb.append(

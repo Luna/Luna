@@ -33,6 +33,11 @@ public interface Field {
     return false;
   }
 
+  /** Returns true if this field is {@code scala.Option}. */
+  default boolean isOption() {
+    return false;
+  }
+
   /**
    * Returns true if this field is annotated with {@link org.enso.runtime.parser.dsl.IRChild}.
    *
@@ -62,7 +67,7 @@ public interface Field {
   boolean isExpression();
 
   /** Returns the type parameter, if this field is a generic type. Otherwise null. */
-  default String getTypeParameter() {
+  default TypeElement getTypeParameter() {
     return null;
   }
 }

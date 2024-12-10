@@ -77,6 +77,11 @@ public final class Utils {
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
   }
 
+  public static boolean isScalaOption(TypeElement type, ProcessingEnvironment procEnv) {
+    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.Option");
+    return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
+  }
+
   public static boolean isScalaList(TypeMirror type, ProcessingEnvironment procEnv) {
     var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
     return procEnv.getTypeUtils().isSameType(type, scalaListType.asType());

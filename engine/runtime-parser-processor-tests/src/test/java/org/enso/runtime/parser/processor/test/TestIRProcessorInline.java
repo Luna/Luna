@@ -374,6 +374,28 @@ public class TestIRProcessorInline {
     assertThat(src, containsString("List<IR> expressions"));
   }
 
+  @Test
+  public void fieldCanBeScalaOption() {
+    var src =
+        generatedClass(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRChild;
+        import org.enso.compiler.core.IR;
+        import scala.Option;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName(@IRChild Option<IR> expression) {}
+        }
+        """);
+    assertThat(src, containsString("class JNameGen"));
+    assertThat("has getter method for expression", src, containsString("Option<IR> expression()"));
+  }
+
   // TODO: Can contain multiple GenerateIR annotations in single source
 
   // TODO: Multiple interfaces in the annotation
