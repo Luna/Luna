@@ -24,17 +24,19 @@ add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:
 
 ## PRIVATE
 create_column table grouping_method name from step grouping_columns ordering on_problems =
-    check_arguments grouping_method grouping_columns ordering <|
-        ordering_columns = ordering.map c->c.column.java_column
-        directions = ordering.map c->c.associated_selector.direction.to_sign
-        grouping_java_columns = grouping_columns.map c->c.java_column
-        new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
-            AddGroupNumber.numberGroups table.row_count grouping_method.to_java from step grouping_java_columns ordering_columns directions java_problem_aggregator
-        Column.from_storage name new_storage
+    ordering_columns = ordering.map c->c.column.java_column
+    directions = ordering.map c->c.associated_selector.direction.to_sign
+    grouping_java_columns = grouping_columns.map c->c.java_column
+    new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
+        create_column_with_method table.row_count grouping_method from step grouping_java_columns ordering_columns directions java_problem_aggregator
+    Column.from_storage name new_storage
 
-check_arguments (grouping_method:Grouping_Method=..Unique) (grouping_columns:(Vector | Text | Integer | Regex)=[]) (ordering:(Vector | Text)=[]) ~x =
+## PRIVATE
+create_column_with_method row_count grouping_method from step grouping_java_columns ordering_columns directions java_problem_aggregator =
     case grouping_method of
-        Grouping_Method.Unique -> if grouping_columns.is_empty.not && ordering.is_empty then x else
-            Error.throw (Illegal_Argument.Error "add_group_number with ..Unique requires a non-empty 'group_by' and cannot take an 'order_by' parameter")
-        Grouping_Method.Equal_Count _ -> if grouping_columns.is_empty then x else
-            Error.throw (Illegal_Argument.Error "add_group_number with ..Equal_Count cannot take a 'group_by' parameter")
+        Grouping_Method.Unique ->
+            if grouping_java_columns.is_empty || ordering_columns.is_empty.not then Error.throw (Illegal_Argument.Error "add_group_number with ..Unique requires a non-empty 'group_by' and cannot take an 'order_by' parameter") else
+                AddGroupNumber.numberGroupsUnique row_count from step grouping_java_columns java_problem_aggregator
+        Grouping_Method.Equal_Count bucket_count ->
+            if grouping_java_columns.is_empty.not then Error.throw (Illegal_Argument.Error "add_group_number with ..Equal_Count cannot take a 'group_by' parameter") else
+                AddGroupNumber.numberGroupsEqualCount row_count bucket_count from step ordering_columns directions java_problem_aggregator

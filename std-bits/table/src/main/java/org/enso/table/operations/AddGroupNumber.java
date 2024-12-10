@@ -19,19 +19,36 @@ import org.enso.table.problems.ProblemAggregator;
 import org.enso.table.util.ConstantList;
 
 public class AddGroupNumber {
-  public static Storage<?> numberGroups(
+  public static Storage<?> numberGroupsUnique(
       long numRows,
-      GroupingMethod groupingMethod,
       long start,
       long step,
       Column[] groupingColumns,
-      Column[] orderingColumns,
-      int[] directions,
       ProblemAggregator problemAggregator) {
-    return switch (groupingMethod) {
-        case Unique u -> numberGroupsUnique(numRows, start, step, groupingColumns, problemAggregator);
-        case EqualCount ec -> numberGroupsEqualCount(numRows, ec.bucketCount, start, step, orderingColumns, directions, problemAggregator);
-    };
+    if (groupingColumns.length == 0) {
+      throw new IllegalArgumentException("At least one grouping column is required.");
+    }
+
+    var groupNumberIterator = new StepIterator(start, step);
+
+    long[] numbers = new long[(int) numRows];
+
+    Storage<?>[] groupingStorages =
+        Arrays.stream(groupingColumns).map(Column::getStorage).toArray(Storage[]::new);
+    ColumnAggregatedProblemAggregator groupingProblemAggregator = new ColumnAggregatedProblemAggregator(problemAggregator);
+    List<TextFoldingStrategy> textFoldingStrategy =
+        ConstantList.make(TextFoldingStrategy.unicodeNormalizedFold, groupingStorages.length);
+    Map<UnorderedMultiValueKey, Long> groupNumbers = new HashMap<>();
+
+    for (int i = 0; i < numRows; i++) {
+      var key = new UnorderedMultiValueKey(groupingStorages, i, textFoldingStrategy);
+      key.checkAndReportFloatingEquality(
+          groupingProblemAggregator, columnIx -> groupingColumns[columnIx].getName());
+      var groupNumber = groupNumbers.computeIfAbsent(key, k -> groupNumberIterator.next());
+      numbers[i] = groupNumber;
+    }
+
+    return new LongStorage(numbers, IntegerType.INT_64);
   }
 
   public static Storage<?> numberGroupsEqualCount(
@@ -63,38 +80,6 @@ public class AddGroupNumber {
         var i = key.getRowIndex();
         numbers[i] = equalCountGenerator.next();
       }
-    }
-
-    return new LongStorage(numbers, IntegerType.INT_64);
-  }
-
-  public static Storage<?> numberGroupsUnique(
-      long numRows,
-      long start,
-      long step,
-      Column[] groupingColumns,
-      ProblemAggregator problemAggregator) {
-    if (groupingColumns.length == 0) {
-      throw new IllegalArgumentException("At least one grouping column is required.");
-    }
-
-    var groupNumberIterator = new StepIterator(start, step);
-
-    long[] numbers = new long[(int) numRows];
-
-    Storage<?>[] groupingStorages =
-        Arrays.stream(groupingColumns).map(Column::getStorage).toArray(Storage[]::new);
-    ColumnAggregatedProblemAggregator groupingProblemAggregator = new ColumnAggregatedProblemAggregator(problemAggregator);
-    List<TextFoldingStrategy> textFoldingStrategy =
-        ConstantList.make(TextFoldingStrategy.unicodeNormalizedFold, groupingStorages.length);
-    Map<UnorderedMultiValueKey, Long> groupNumbers = new HashMap<>();
-
-    for (int i = 0; i < numRows; i++) {
-      var key = new UnorderedMultiValueKey(groupingStorages, i, textFoldingStrategy);
-      key.checkAndReportFloatingEquality(
-          groupingProblemAggregator, columnIx -> groupingColumns[columnIx].getName());
-      var groupNumber = groupNumbers.computeIfAbsent(key, k -> groupNumberIterator.next());
-      numbers[i] = groupNumber;
     }
 
     return new LongStorage(numbers, IntegerType.INT_64);
@@ -135,8 +120,4 @@ public class AddGroupNumber {
         return toReturn;
     }
   }
-
-  public sealed interface GroupingMethod permits Unique, EqualCount {}
-  public record Unique() implements GroupingMethod {}
-  public record EqualCount(int bucketCount) implements GroupingMethod {}
 }
