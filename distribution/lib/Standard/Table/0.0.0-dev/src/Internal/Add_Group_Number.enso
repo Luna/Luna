@@ -1,4 +1,5 @@
 from Standard.Base import all
+import Standard.Base.Errors.Common.Unsupported_Argument_Types
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Column.Column
@@ -10,6 +11,7 @@ import project.Set_Mode.Set_Mode
 import project.Table.Table
 from project.Internal.Add_Row_Number import rename_columns_if_needed
 
+polyglot java import java.lang.ArithmeticException
 polyglot java import org.enso.table.operations.AddGroupNumber
 
 add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:Text="Group") (from:Integer=0) (step:Integer=1) (group_by:(Vector | Text | Integer | Regex)=[]) (order_by:(Vector | Text)=[]) (on_problems:Problem_Behavior=..Report_Warning) -> Table =
@@ -17,7 +19,10 @@ add_group_number (table:Table) (grouping_method:Grouping_Method=..Unique) (name:
     grouping_columns = table.columns_helper.select_columns_helper group_by Case_Sensitivity.Default True problem_builder
     ordering = Table_Helpers.resolve_order_by table.columns order_by problem_builder
 
-    problem_builder.attach_problems_before on_problems <|
+    handle_arithmetic_exception _ =
+        Error.throw (Illegal_Argument.Error "The row number has exceeded the 64-bit integer range. BigInteger numbering is currently not supported. Please use a smaller start/step.")
+
+    problem_builder.attach_problems_before on_problems <| Panic.catch ArithmeticException handler=handle_arithmetic_exception <| Panic.catch Unsupported_Argument_Types handler=handle_arithmetic_exception <|
         new_column = create_column table grouping_method name from step grouping_columns ordering on_problems
         renamed_table = rename_columns_if_needed table name on_problems Table.new
         renamed_table.set new_column name set_mode=Set_Mode.Add

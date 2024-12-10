@@ -91,13 +91,12 @@ public class AddGroupNumber {
 
     public StepIterator(long start, long step) {
         this.step = step;
-
         this.current = start;
     }
 
     public long next() {
         var toReturn = current;
-        current += step;
+        current = Math.addExact(current, step);
         return toReturn;
     }
   }
@@ -115,8 +114,8 @@ public class AddGroupNumber {
     }
 
     public long next() {
-        long toReturn = start + step * (current / bucketSize);
-        current++;
+        long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / bucketSize)));
+        current = Math.addExact(current, 1L);
         return toReturn;
     }
   }

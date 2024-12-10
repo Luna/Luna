@@ -13,6 +13,8 @@ from Standard.Test import all
 from project.Common_Table_Operations.Util import run_default_backend
 import project.Util
 
+polyglot java import java.lang.Long as Java_Long
+
 main filter=Nothing = run_default_backend add_specs filter
 
 add_specs suite_builder setup =
@@ -119,6 +121,17 @@ add_group_number_specs suite_builder setup =
             t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
 
             t.add_group_number (..Equal_Count 3) "g" order_by=['q'] . should_fail_with Missing_Input_Columns
+
+        group_builder.specify "will fail if the row number exceeds Long range" <|
+            max_long = Java_Long.MAX_VALUE
+
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            Problems.assume_no_problems <| t.add_group_number ..Unique "g" from=(max_long - 10) group_by=['x', 'y']
+
+            t2 = t.add_group_number ..Unique "g" from=(max_long - 1) group_by=['x', 'y']
+            t2.should_fail_with Illegal_Argument
+            t2.catch.to_display_text . should_contain "The row number has exceeded the 64-bit integer range"
 
         group_builder.specify "should rename existing column upon a name clash, and attach a warning" <|
             t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
