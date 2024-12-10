@@ -1,5 +1,5 @@
 addSbtPlugin("com.eed3si9n"    % "sbt-assembly"       % "2.1.3")
-addSbtPlugin("ch.epfl.scala"   % "sbt-bloop"          % "1.5.6")
+addSbtPlugin("ch.epfl.scala"   % "sbt-bloop"          % "1.5.13")
 addSbtPlugin("com.github.sbt"  % "sbt-license-report" % "1.5.0")
 addSbtPlugin("org.scalameta"   % "sbt-scalafmt"       % "2.5.0")
 addSbtPlugin("com.simplytyped" % "sbt-antlr4"         % "0.8.3")
@@ -11,3 +11,12 @@ libraryDependencies += "com.google.googlejavaformat" % "google-java-format" % "1
 libraryDependencies += "com.softwaremill.retry"     %% "retry"              % "0.3.6"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
+
+lazy val sbtDependencyUpdates =
+  RootProject(
+    uri(
+      "git:http://github.com/4e6/sbt-dependency-updates#search-dependencies-file"
+    )
+  )
+
+lazy val root = (project in file(".")).dependsOn(sbtDependencyUpdates)

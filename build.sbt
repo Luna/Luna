@@ -1,3 +1,4 @@
+import Dependencies.Versions
 import LibraryManifestGenerator.BundledLibrary
 import org.enso.build.BenchTasks._
 import org.enso.build.WithDebugCommand
@@ -26,7 +27,7 @@ import java.nio.file.Paths
 // === Global Configuration ===================================================
 // ============================================================================
 
-val scalacVersion = "2.13.11"
+val scalacVersion = "2.13.15"
 // source version of the Java language
 val javaVersion = "21"
 // version of the GraalVM JDK
@@ -610,11 +611,11 @@ val mockitoScalaVersion     = "1.17.14"
 val newtypeVersion          = "0.4.4"
 val pprintVersion           = "0.8.1"
 val pureconfigVersion       = "0.17.4"
-val scalacheckVersion       = "1.17.0"
+val scalacheckVersion       = Versions.scalacheck
 val scalacticVersion        = "3.3.0-SNAP4"
 val scalaLoggingVersion     = "3.9.4"
 val scalameterVersion       = "0.19"
-val scalatestVersion        = "3.3.0-SNAP4"
+val scalatestVersion        = Versions.scalatest
 val slf4jVersion            = JPMSUtils.slf4jVersion
 val sqliteVersion           = "3.46.1.0"
 val tikaVersion             = "2.4.1"
