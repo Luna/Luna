@@ -355,6 +355,7 @@ export const PARALLEL_MODE_TO_DESCRIPTION_ID = {
 export type ProjectParallelMode = (typeof PROJECT_PARALLEL_MODES)[number]
 
 export const PROJECT_EXECUTION_REPEAT_TYPES = [
+  'none',
   'hourly',
   'daily',
   'monthly-date',
@@ -363,6 +364,7 @@ export const PROJECT_EXECUTION_REPEAT_TYPES = [
 ] as const
 
 export const PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID = {
+  none: 'noneProjectExecutionRepeatType',
   hourly: 'hourlyProjectExecutionRepeatType',
   daily: 'dailyProjectExecutionRepeatType',
   'monthly-date': 'monthlyProjectExecutionRepeatType',
@@ -374,6 +376,11 @@ export const PROJECT_EXECUTION_REPEAT_TYPE_TO_TEXT_ID = {
 
 /** The interval at which a project schedule repeats. */
 export type ProjectExecutionRepeatType = ProjectExecutionRepeatInfo['type']
+
+/** Details for a project execution that repeats hourly. */
+export interface ProjectExecutionNoneRepeatInfo {
+  readonly type: 'none'
+}
 
 /** Details for a project execution that repeats hourly. */
 export interface ProjectExecutionHourlyRepeatInfo {
@@ -422,6 +429,7 @@ export type ProjectExecutionRepeatInfo =
   | ProjectExecutionMonthlyDateRepeatInfo
   | ProjectExecutionMonthlyWeekdayRepeatInfo
   | ProjectExecutionMonthlyLastWeekdayRepeatInfo
+  | ProjectExecutionNoneRepeatInfo
 
 /** Metadata for a {@link ProjectExecution}. */
 export interface ProjectExecutionInfo {

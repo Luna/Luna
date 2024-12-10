@@ -124,6 +124,11 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         const startDateTime = toRfc3339(startDate.toDate())
         const repeat = ((): ProjectExecutionRepeatInfo => {
           switch (repeatType) {
+            case 'none': {
+              return {
+                type: repeatType,
+              }
+            }
             case 'hourly': {
               return {
                 type: repeatType,
@@ -271,6 +276,9 @@ export function NewProjectExecutionForm(props: NewProjectExecutionFormProps) {
     const dayOfWeekNumber = getDayOfWeek(date, 'en-US')
     const dayOfWeek = getText(DAY_TEXT_IDS[dayOfWeekNumber] ?? 'monday')
     switch (otherRepeatType) {
+      case 'none': {
+        return getText('doesNotRepeat')
+      }
       case 'hourly': {
         return getText('hourly')
       }
