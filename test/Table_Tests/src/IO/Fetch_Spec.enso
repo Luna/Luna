@@ -472,14 +472,14 @@ add_specs suite_builder =
                 url = base_url_with_slash+'test_download?length=10'
                 err = Data.fetch url . catch
                 err . should_equal (Response_Too_Large.Error 10 5)
-                err.to_display_text . starts_with "Response too large: repsonse size 10 is over the limit 5." . should_be_true
+                err.to_display_text . starts_with "Response too large: response size 10 is over the limit 5." . should_be_true
 
         group_builder.specify "Throws Response_Too_Large without a content-length header" pending=pending_has_url <| Test.with_retries <|
             with_config 5 (TotalCacheLimit.Bytes.new 1000000) _-> _->
                 url = base_url_with_slash+'test_download?omit-content-length=1&length=10'
                 err = Data.fetch url . catch
                 err . should_equal (Response_Too_Large.Error Nothing 5)
-                err.to_display_text . starts_with "Response too large: repsonse size is over the limit 5." . should_be_true
+                err.to_display_text . starts_with "Response too large: response size is over the limit 5." . should_be_true
 
         group_builder.specify "Cache limits should have defaults" <|
             lru_cache = LRUCache.new
