@@ -10,5 +10,7 @@ object Dependencies {
   object Versions {
     val scalacheck = "1.17.0"
     val scalatest = "3.2.19"
+    val scalactic = "3.2.19"
+    val kindProjector = "0.13.3"
   }
 }
