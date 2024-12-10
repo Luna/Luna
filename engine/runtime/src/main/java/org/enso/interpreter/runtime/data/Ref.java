@@ -6,7 +6,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import org.enso.interpreter.dsl.Builtin;
-import org.enso.interpreter.node.expression.builtin.BuiltinObject;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /** A mutable reference type. */
 @ExportLibrary(InteropLibrary.class)

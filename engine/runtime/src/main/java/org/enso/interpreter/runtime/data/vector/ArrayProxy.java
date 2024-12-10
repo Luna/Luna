@@ -13,7 +13,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import org.enso.interpreter.node.expression.builtin.BuiltinObject;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /**
  * A wrapper that allows to turn an Enso callback providing elements into a polyglot Array.

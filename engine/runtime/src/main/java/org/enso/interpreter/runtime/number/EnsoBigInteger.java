@@ -6,7 +6,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.math.BigInteger;
-import org.enso.interpreter.node.expression.builtin.BuiltinObject;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /** Internal wrapper for a {@link BigInteger}. */
 @ExportLibrary(InteropLibrary.class)

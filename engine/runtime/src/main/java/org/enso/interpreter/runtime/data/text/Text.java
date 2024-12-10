@@ -13,8 +13,8 @@ import java.util.Deque;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.enso.interpreter.dsl.Builtin;
-import org.enso.interpreter.node.expression.builtin.BuiltinObject;
 import org.enso.interpreter.node.expression.builtin.text.util.ToJavaStringNode;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.polyglot.common_utils.Core_Text_Utils;
 
 /** The main runtime type for Enso's Text. */
