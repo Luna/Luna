@@ -352,7 +352,7 @@ public class BuiltinsProcessor extends AbstractProcessor {
    * @param builtinClass Class annotated with {@link Builtin}.
    */
   private void ensureBuiltinClassExtendsBuiltinObject(TypeElement builtinClass) {
-    var builtinObjectBinName = "org.enso.interpreter.node.expression.builtin.BuiltinObject";
+    var builtinObjectBinName = "org.enso.interpreter.runtime.builtin.BuiltinObject";
     if (!isSubtype(builtinClass, builtinObjectBinName)) {
       processingEnv
           .getMessager()
