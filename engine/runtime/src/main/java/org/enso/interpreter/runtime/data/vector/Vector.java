@@ -17,14 +17,18 @@ import org.enso.interpreter.runtime.warning.AppendWarningNode;
 import org.enso.interpreter.runtime.warning.WarningsLibrary;
 
 @ExportLibrary(InteropLibrary.class)
-@Builtin(pkg = "immutable", stdlibName = "Standard.Base.Data.Vector.Vector")
+@Builtin(
+    pkg = "immutable",
+    stdlibName = "Standard.Base.Data.Vector.Vector",
+    name = Vector.builtinName)
 abstract class Vector extends BuiltinObject {
+  static final String builtinName = "Vector";
   private static final Vector EMPTY_LONG = new Long(new long[0]);
   private static final Vector EMPTY_DOUBLE = new Double(new double[0]);
   private static final Vector EMPTY_VECTOR = new EnsoOnly(new Object[0]);
 
   protected Vector() {
-    super("Vector");
+    super(builtinName);
   }
 
   @ExportMessage

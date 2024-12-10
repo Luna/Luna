@@ -18,13 +18,14 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(
     pkg = "date",
-    name = "TimeZone",
+    name = EnsoTimeZone.builtinName,
     stdlibName = "Standard.Base.Data.Time.Time_Zone.Time_Zone")
 public final class EnsoTimeZone extends BuiltinObject {
+  static final String builtinName = "Time_Zone";
   private final ZoneId zone;
 
   public EnsoTimeZone(ZoneId zone) {
-    super("Time_Zone");
+    super(builtinName);
     this.zone = zone;
   }
 

@@ -13,12 +13,16 @@ import org.enso.interpreter.node.expression.builtin.BuiltinObject;
 import org.enso.polyglot.common_utils.Core_Date_Utils;
 
 @ExportLibrary(InteropLibrary.class)
-@Builtin(pkg = "date", name = "Date", stdlibName = "Standard.Base.Data.Time.Date.Date")
+@Builtin(
+    pkg = "date",
+    name = EnsoDate.builtinName,
+    stdlibName = "Standard.Base.Data.Time.Date.Date")
 public final class EnsoDate extends BuiltinObject {
+  static final String builtinName = "Date";
   private final LocalDate date;
 
   public EnsoDate(LocalDate date) {
-    super("Date");
+    super(builtinName);
     this.date = date;
   }
 

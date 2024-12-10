@@ -30,8 +30,9 @@ import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
  * as it works in Enso.
  */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(stdlibName = "Standard.Base.Data.Dictionary.Dictionary", name = "Dictionary")
+@Builtin(stdlibName = "Standard.Base.Data.Dictionary.Dictionary", name = EnsoHashMap.builtinName)
 public final class EnsoHashMap extends BuiltinObject {
+  static final String builtinName = "Dictionary";
   private final EnsoHashMapBuilder mapBuilder;
   private final int generation;
   private final int size;
@@ -39,7 +40,7 @@ public final class EnsoHashMap extends BuiltinObject {
   private Object cachedVectorRepresentation;
 
   private EnsoHashMap(EnsoHashMapBuilder mapBuilder) {
-    super("Dictionary");
+    super(builtinName);
     this.mapBuilder = mapBuilder;
     this.generation = mapBuilder.generation();
     this.size = mapBuilder.size();

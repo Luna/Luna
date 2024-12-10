@@ -18,13 +18,14 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(
     pkg = "date",
-    name = "DateTime",
+    name = EnsoDateTime.builtinName,
     stdlibName = "Standard.Base.Data.Time.Date_Time.Date_Time")
 public final class EnsoDateTime extends BuiltinObject {
+  static final String builtinName = "Date_Time";
   private final ZonedDateTime dateTime;
 
   public EnsoDateTime(ZonedDateTime dateTime) {
-    super("Date_Time");
+    super(builtinName);
     this.dateTime = dateTime;
   }
 

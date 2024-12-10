@@ -14,15 +14,16 @@ import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
 import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
 
-@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
+@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning", name = Warning.builtinName)
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
 public final class Warning extends BuiltinObject {
+  static final String builtinName = "Warning";
   final Object value;
   private final Object origin;
   private final long sequenceId;
 
   private Warning(Object value, Object origin, long sequenceId) {
-    super("Warning");
+    super(builtinName);
     this.value = value;
     this.origin = origin;
     this.sequenceId = sequenceId;
