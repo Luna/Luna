@@ -42,7 +42,7 @@ test.prop({
 test.prop({
   array: fc.array(fc.anything()),
 })('findDifferenceIndex (same array)', ({ array }) => {
-  expect(findDifferenceIndex(array, array)).toEqual(array.length)
+  expect(findDifferenceIndex(array, array, Object.is)).toEqual(array.length)
 })
 
 test.prop({
@@ -70,7 +70,7 @@ test.prop({
   }
 })
 
-test('findDifferenceIndex (NaN bug)', () => {
+test('findDifferenceIndex (NaN)', () => {
   const array = [NaN]
-  expect(findDifferenceIndex(array, array)).toEqual(array.length)
+  expect(findDifferenceIndex(array, array)).toEqual(0)
 })
