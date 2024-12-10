@@ -1,5 +1,5 @@
 /** @file A calendar showing executions of a project. */
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import {
   CalendarDate,
@@ -24,12 +24,12 @@ import {
   CalendarHeaderCell,
   Heading,
 } from '#/components/aria'
-import { Button, ButtonGroup, DialogTrigger, Form, Text } from '#/components/AriaComponents'
+import { Button, ButtonGroup, Form, Text } from '#/components/AriaComponents'
 import { useStore } from '#/hooks/storeHooks'
 import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
 import { AssetPanelPlaceholder } from '#/layouts/AssetPanel/components/AssetPanelPlaceholder'
 import { ProjectExecution } from '#/layouts/AssetPanel/components/ProjectExecution'
-import { NewProjectExecutionModal } from '#/layouts/NewProjectExecutionModal'
+import { NewProjectExecutionForm } from '#/layouts/NewProjectExecutionModal'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -38,7 +38,9 @@ import {
   BackendType,
   type ProjectExecution as BackendProjectExecution,
   type ProjectAsset,
+  type ProjectExecutionInfo,
 } from '#/services/Backend'
+import { EMPTY_SET } from '#/utilities/set'
 import { tv } from '#/utilities/tailwindVariants'
 
 const PROJECT_EXECUTIONS_CALENDAR_STYLES = tv({
@@ -92,6 +94,9 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
   const { getText } = useText()
   const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
 
+  const [isCreatingExecution, setIsCreatingExecution] = useState(false)
+  const [newProjectExecutionInfo, setNewProjectExecutionInfo] =
+    useState<ProjectExecutionInfo | null>(null)
   const form = Form.useForm({ schema: (z) => z.object({ date: z.instanceof(CalendarDate) }) })
   const timeZone = preferredTimeZone ?? getLocalTimeZone()
   const [focusedMonth, setFocusedMonth] = useState(() => startOfMonth(today(timeZone)))
@@ -110,52 +115,49 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
     },
   })
   const projectExecutions = projectExecutionsQuery.data
-  const projectExecutionsByDate = useMemo<
-    Readonly<
-      Record<
-        string,
-        readonly { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
-      >
-    >
-  >(() => {
-    const start = startOfMonth(focusedMonth)
-    const startDate = start.toDate(timeZone)
-    const end = startOfMonth(focusedMonth.add({ months: 1 }))
-    const endDate = end.toDate(timeZone)
-    const result: Record<
-      string,
-      { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
-    > = {}
-    for (const projectExecution of projectExecutions) {
-      for (const date of getProjectExecutionRepetitionsForDateRange(
+
+  const start = startOfMonth(focusedMonth)
+  const startDate = start.toDate(timeZone)
+  const end = startOfMonth(focusedMonth.add({ months: 1 }))
+  const endDate = end.toDate(timeZone)
+  const projectExecutionsByDate: Record<
+    string,
+    { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
+  > = {}
+  for (const projectExecution of projectExecutions) {
+    for (const date of getProjectExecutionRepetitionsForDateRange(
+      projectExecution,
+      startDate,
+      endDate,
+    )) {
+      const dateString = toCalendarDate(parseAbsolute(date.toISOString(), timeZone)).toString()
+      ;(projectExecutionsByDate[dateString] ??= []).push({ date, projectExecution })
+    }
+  }
+  for (const key in projectExecutionsByDate) {
+    projectExecutionsByDate[key]?.sort((a, b) => Number(a.date) - Number(b.date))
+  }
+
+  const projectExecutionsForToday = projectExecutions
+    .flatMap((projectExecution) =>
+      getProjectExecutionRepetitionsForDateRange(
         projectExecution,
-        startDate,
-        endDate,
-      )) {
-        const dateString = toCalendarDate(parseAbsolute(date.toISOString(), timeZone)).toString()
-        ;(result[dateString] ??= []).push({ date, projectExecution })
-      }
-    }
-    for (const key in result) {
-      result[key]?.sort((a, b) => Number(a.date) - Number(b.date))
-    }
-    return result
-  }, [focusedMonth, projectExecutions, timeZone])
-  const projectExecutionsForToday = useMemo<
-    readonly { readonly date: Date; readonly projectExecution: BackendProjectExecution }[]
-  >(
-    () =>
-      projectExecutions
-        .flatMap((projectExecution) =>
-          getProjectExecutionRepetitionsForDateRange(
-            projectExecution,
-            selectedDate.toDate(timeZone),
-            selectedDate.add({ days: 1 }).toDate(timeZone),
-          ).flatMap((date) => ({ date, projectExecution })),
-        )
-        .sort((a, b) => Number(a.date) - Number(b.date)),
-    [projectExecutions, selectedDate, timeZone],
-  )
+        selectedDate.toDate(timeZone),
+        selectedDate.add({ days: 1 }).toDate(timeZone),
+      ).flatMap((date) => ({ date, projectExecution })),
+    )
+    .sort((a, b) => Number(a.date) - Number(b.date))
+
+  const repeatDaysForCurrentProjectExecution: ReadonlySet<string> =
+    isCreatingExecution && newProjectExecutionInfo ?
+      new Set(
+        getProjectExecutionRepetitionsForDateRange(
+          newProjectExecutionInfo,
+          startOfMonth(focusedMonth).toDate(timeZone),
+          startOfMonth(focusedMonth.add({ months: 1 })).toDate(timeZone),
+        ).map((date) => toCalendarDate(parseAbsolute(date.toISOString(), timeZone)).toString()),
+      )
+    : EMPTY_SET
 
   const styles = PROJECT_EXECUTIONS_CALENDAR_STYLES({})
 
@@ -164,16 +166,6 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
       form={form}
       className="pointer-events-auto flex w-full flex-col items-center gap-2 self-start overflow-y-auto overflow-x-hidden"
     >
-      <ButtonGroup>
-        <DialogTrigger>
-          <Button variant="outline">{getText('newProjectExecution')}</Button>
-          <NewProjectExecutionModal
-            backend={backend}
-            item={item}
-            defaultDate={toZoned(selectedDate, timeZone)}
-          />
-        </DialogTrigger>
-      </ButtonGroup>
       <Form.Controller
         control={form.control}
         name="date"
@@ -201,7 +193,12 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
                       <div className="flex flex-col items-center">
                         <Text
                           weight={isToday ? 'bold' : 'medium'}
-                          color={isToday ? 'success' : 'current'}
+                          color={
+                            isToday ? 'success'
+                            : repeatDaysForCurrentProjectExecution.has(date.toString()) ?
+                              'danger'
+                            : 'current'
+                          }
                         >
                           {date.day}
                         </Text>
@@ -217,20 +214,43 @@ function ProjectExecutionsCalendarInternal(props: ProjectExecutionsCalendarInter
           </Calendar>
         )}
       />
-      <Text>
-        {getText('projectSessionsOnX', Intl.DateTimeFormat().format(selectedDate.toDate(timeZone)))}
-      </Text>
-      {projectExecutionsForToday.length === 0 ?
-        <Text color="disabled">{getText('noProjectExecutions')}</Text>
-      : projectExecutionsForToday.map(({ projectExecution, date }) => (
-          <ProjectExecution
-            hideDay
-            backend={backend}
-            item={item}
-            projectExecution={projectExecution}
-            date={date}
-          />
-        ))
+      <ButtonGroup>
+        <Button
+          variant="outline"
+          onPress={() => {
+            setIsCreatingExecution(!isCreatingExecution)
+          }}
+        >
+          {getText('newProjectExecution')}
+        </Button>
+      </ButtonGroup>
+      {isCreatingExecution ?
+        <NewProjectExecutionForm
+          backend={backend}
+          item={item}
+          defaultDate={toZoned(selectedDate, timeZone)}
+          onChange={setNewProjectExecutionInfo}
+        />
+      : <>
+          <Text>
+            {getText(
+              'projectSessionsOnX',
+              Intl.DateTimeFormat().format(selectedDate.toDate(timeZone)),
+            )}
+          </Text>
+          {projectExecutionsForToday.length === 0 ?
+            <Text color="disabled">{getText('noProjectExecutions')}</Text>
+          : projectExecutionsForToday.map(({ projectExecution, date }) => (
+              <ProjectExecution
+                hideDay
+                backend={backend}
+                item={item}
+                projectExecution={projectExecution}
+                date={date}
+              />
+            ))
+          }
+        </>
       }
     </Form>
   )

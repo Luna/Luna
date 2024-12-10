@@ -52,6 +52,7 @@ import {
   MONTH_3_LETTER_TEXT_IDS,
   toRfc3339,
 } from 'enso-common/src/utilities/data/dateTime'
+import { useEffect } from 'react'
 
 const MAX_DURATION_DEFAULT_MINUTES = 60
 const MAX_DURATION_MINIMUM_MINUTES = 1
@@ -76,6 +77,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         .min(0)
         .max(DAYS_PER_WEEK - 1)
         .array()
+        .min(1)
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
       months: z
@@ -84,6 +86,7 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         .min(0)
         .max(MONTHS_PER_YEAR - 1)
         .array()
+        .min(1)
         .transform((arr) => arr.sort((a, b) => a - b))
         .readonly(),
       startHour: z
@@ -185,14 +188,19 @@ export function NewProjectExecutionModal(props: NewProjectExecutionModalProps) {
 
   return (
     <Dialog title={getText('newProjectExecution')} {...(defaultOpen != null && { defaultOpen })}>
-      <NewProjectExecutionModalInner {...props} />
+      <NewProjectExecutionForm {...props} />
     </Dialog>
   )
 }
 
+/** Props for a {@link NewProjectExecutionForm}. */
+export interface NewProjectExecutionFormProps extends NewProjectExecutionModalProps {
+  readonly onChange?: (value: ProjectExecutionInfo) => void
+}
+
 /** A modal for confirming the deletion of an asset. */
-function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
-  const { backend, item, defaultDate } = props
+export function NewProjectExecutionForm(props: NewProjectExecutionFormProps) {
+  const { backend, item, defaultDate, onChange } = props
   const { getText } = useText()
   const [preferredTimeZone] = useLocalStorageState('preferredTimeZone')
   const getOrdinal = useGetOrdinal()
@@ -229,6 +237,15 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
     daysToEndOfMonth >= DAYS_PER_WEEK ?
       PROJECT_EXECUTION_REPEAT_TYPES.filter((type) => type !== 'monthly-last-weekday')
     : PROJECT_EXECUTION_REPEAT_TYPES
+
+  useEffect(() => {
+    if (onChange) {
+      const parsed = form.schema.safeParse(form.getValues())
+      if (parsed.success) {
+        onChange(parsed.data)
+      }
+    }
+  })
 
   const createProjectExecution = useMutation(
     backendMutationOptions(backend, 'createProjectExecution'),

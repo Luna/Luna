@@ -34,6 +34,7 @@ export const TEXT_STYLE = twv.tv({
       primary: 'text-primary',
       danger: 'text-danger',
       success: 'text-accent-dark',
+      accent: 'text-accent-dark',
       disabled: 'text-primary/30',
       invert: 'text-invert',
       inherit: 'text-inherit',
