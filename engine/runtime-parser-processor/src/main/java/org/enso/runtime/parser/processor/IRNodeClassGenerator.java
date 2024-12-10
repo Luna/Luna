@@ -292,7 +292,7 @@ final class IRNodeClassGenerator {
                         .replace("$childName", childName)
                         .replace("$addToListCode", addToListCode));
               } else {
-                sb.append(addToListCode);
+                sb.append(addToListCode).append(nl);
               }
             });
     sb.append("return scala.jdk.javaapi.CollectionConverters.asScala(list).toList();").append(nl);
