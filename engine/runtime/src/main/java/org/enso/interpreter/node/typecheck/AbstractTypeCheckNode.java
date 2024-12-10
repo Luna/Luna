@@ -29,6 +29,16 @@ abstract sealed class AbstractTypeCheckNode extends Node
 
   abstract String expectedTypeMessage();
 
+  final boolean isAllTypes() {
+    Node p = this;
+    for (; ; ) {
+      if (p instanceof TypeCheckValueNode vn) {
+        return vn.isAllTypes();
+      }
+      p = p.getParent();
+    }
+  }
+
   /**
    * The error message for this node's check. Ready for being used at "fast path".
    *
