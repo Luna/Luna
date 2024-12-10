@@ -2,7 +2,7 @@
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
-import { computed } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 
 export const name = 'Warnings'
 export const icon = 'exclamation'
@@ -20,7 +20,7 @@ const removeWarnings = computed(() =>
 </script>
 
 <script setup lang="ts">
-type Data = {
+type Error = {
   type?: string
   content?: {
     argument_name?: string
@@ -32,15 +32,33 @@ type Data = {
   message?: string
 }
 
+type Warning = string[]
+
+type Data = Error | Warning
+
 const props = defineProps<{ data: Data }>()
+const messages = ref<string[]>([])
+const isRemoveWarningsDisabled = ref<boolean>(false)
 
 const config = useVisualizationConfig()
+
+watchEffect(() => {
+  const data = props.data
+  if (Array.isArray(data)) {
+    data.map((m) => messages.value.push(m))
+    isRemoveWarningsDisabled.value = messages.value.length === 0
+  }
+  if (typeof data === 'object' && data !== null && 'message' in data) {
+    messages.value.push(data.message)
+    isRemoveWarningsDisabled.value = true
+  }
+})
 
 config.setToolbar([
   {
     icon: 'not_exclamation',
     title: 'Remove Warnings',
-    disabled: () => !!props.data.message,
+    disabled: isRemoveWarningsDisabled,
     onClick: () => config.createNodes({ content: removeWarnings.value, commit: true }),
     dataTestid: 'remove-warnings-button',
   },
@@ -50,8 +68,8 @@ config.setToolbar([
 <template>
   <div class="WarningsVisualization">
     <ul>
-      <li v-if="!props.data.message">There are no warnings.</li>
-      <li v-else v-text="data.message"></li>
+      <li v-if="messages.length === 0">There are no warnings.</li>
+      <li v-for="(warning, index) in messages" :key="index" v-text="warning"></li>
     </ul>
   </div>
 </template>
