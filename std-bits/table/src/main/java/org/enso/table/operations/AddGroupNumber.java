@@ -34,7 +34,8 @@ public class AddGroupNumber {
 
     Storage<?>[] groupingStorages =
         Arrays.stream(groupingColumns).map(Column::getStorage).toArray(Storage[]::new);
-    ColumnAggregatedProblemAggregator groupingProblemAggregator = new ColumnAggregatedProblemAggregator(problemAggregator);
+    ColumnAggregatedProblemAggregator groupingProblemAggregator =
+        new ColumnAggregatedProblemAggregator(problemAggregator);
     List<TextFoldingStrategy> textFoldingStrategy =
         ConstantList.make(TextFoldingStrategy.unicodeNormalizedFold, groupingStorages.length);
     Map<UnorderedMultiValueKey, Long> groupNumbers = new HashMap<>();
@@ -68,12 +69,12 @@ public class AddGroupNumber {
       }
     } else {
       Storage<?>[] orderingStorages =
-        Arrays.stream(orderingColumns).map(Column::getStorage).toArray(Storage[]::new);
+          Arrays.stream(orderingColumns).map(Column::getStorage).toArray(Storage[]::new);
       List<OrderedMultiValueKey> keys =
-        new ArrayList<>(
-            IntStream.range(0, (int) numRows)
-                .mapToObj(i -> new OrderedMultiValueKey(orderingStorages, i, directions))
-                .toList());
+          new ArrayList<>(
+              IntStream.range(0, (int) numRows)
+                  .mapToObj(i -> new OrderedMultiValueKey(orderingStorages, i, directions))
+                  .toList());
       keys.sort(null);
       for (var key : keys) {
         var i = key.getRowIndex();
@@ -89,14 +90,14 @@ public class AddGroupNumber {
     private long current;
 
     public StepIterator(long start, long step) {
-        this.step = step;
-        this.current = start;
+      this.step = step;
+      this.current = start;
     }
 
     public long next() {
-        var toReturn = current;
-        current = Math.addExact(current, step);
-        return toReturn;
+      var toReturn = current;
+      current = Math.addExact(current, step);
+      return toReturn;
     }
   }
 
@@ -107,15 +108,15 @@ public class AddGroupNumber {
     private final long bucketSize;
 
     public EqualCountGenerator(long start, long step, long totalCount, long numBuckets) {
-        this.start = start;
-        this.step = step;
-        bucketSize = (long) Math.ceil((double) totalCount / (double) numBuckets);
+      this.start = start;
+      this.step = step;
+      bucketSize = (long) Math.ceil((double) totalCount / (double) numBuckets);
     }
 
     public long next() {
-        long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / bucketSize)));
-        current = Math.addExact(current, 1L);
-        return toReturn;
+      long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / bucketSize)));
+      current = Math.addExact(current, 1L);
+      return toReturn;
     }
   }
 }
