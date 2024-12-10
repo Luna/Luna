@@ -1,7 +1,13 @@
 /** @file Modal for confirming delete of any type of asset. */
 import * as z from 'zod'
 
-import { ZonedDateTime, getDayOfWeek, getLocalTimeZone, now } from '@internationalized/date'
+import {
+  ZonedDateTime,
+  endOfMonth,
+  getDayOfWeek,
+  getLocalTimeZone,
+  now,
+} from '@internationalized/date'
 import { useMutation } from '@tanstack/react-query'
 
 import type Backend from '#/services/Backend'
@@ -50,10 +56,8 @@ const MAX_DURATION_DEFAULT_MINUTES = 60
 const MAX_DURATION_MINIMUM_MINUTES = 1
 const MAX_DURATION_MAXIMUM_MINUTES = 180
 const REPEAT_TIMES_COUNT = 5
-const MAX_DAYS_PER_MONTH = 31
 const DAYS_PER_WEEK = 7
 const HOURS_PER_DAY = 24
-const MAX_WEEKS_PER_MONTH = 5
 const MONTHS_PER_YEAR = 12
 
 const DAYS = [...Array(DAYS_PER_WEEK).keys()] as const
@@ -65,17 +69,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
     .object({
       projectId: z.string().refine((x: unknown): x is ProjectId => true),
       repeatType: z.enum(PROJECT_EXECUTION_REPEAT_TYPES),
-      date: z
-        .number()
-        .int()
-        .min(0)
-        .max(MAX_DAYS_PER_MONTH - 1),
-      dayOfWeek: z
-        .number()
-        .int()
-        .min(0)
-        .max(DAYS_PER_WEEK - 1),
-      weekNumber: z.number().int().min(1).max(MAX_WEEKS_PER_MONTH),
       days: z
         .number()
         .int()
@@ -117,9 +110,6 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
         repeatType,
         maxDurationMinutes,
         parallelMode,
-        date,
-        dayOfWeek,
-        weekNumber,
         days,
         months,
         startHour,
@@ -146,22 +136,22 @@ function createUpsertExecutionSchema(timeZone: string | undefined) {
             case 'monthly-date': {
               return {
                 type: repeatType,
-                date,
+                date: startDate.day,
                 months,
               }
             }
             case 'monthly-weekday': {
               return {
                 type: repeatType,
-                dayOfWeek,
-                weekNumber,
+                dayOfWeek: getDayOfWeek(startDate, 'en-US'),
+                weekNumber: Math.floor(startDate.day / DAYS_PER_WEEK) + 1,
                 months,
               }
             }
             case 'monthly-last-weekday': {
               return {
                 type: repeatType,
-                dayOfWeek,
+                dayOfWeek: getDayOfWeek(startDate, 'en-US'),
                 months,
               }
             }
@@ -218,11 +208,8 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
       parallelMode: 'restart',
       startDate: defaultDate ?? minFirstOccurrence,
       maxDurationMinutes: MAX_DURATION_DEFAULT_MINUTES,
-      date: 1,
       days: [1],
       months: [0],
-      dayOfWeek: 0,
-      weekNumber: 1,
       startHour: 0,
       endHour: HOURS_PER_DAY - 1,
     },
@@ -233,6 +220,14 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
   const repeatType = form.watch('repeatType', 'daily')
   const parallelMode = form.watch('parallelMode', 'restart')
   const date = form.watch('startDate', nowZonedDateTime) ?? nowZonedDateTime
+  // Reactively watch for `days` and `months` so that repeat dates are kept up to date.
+  form.watch('days')
+  form.watch('months')
+  const daysToEndOfMonth = endOfMonth(date).day - date.day
+  const validRepeatTypes =
+    daysToEndOfMonth >= DAYS_PER_WEEK ?
+      PROJECT_EXECUTION_REPEAT_TYPES.filter((type) => type !== 'monthly-last-weekday')
+    : PROJECT_EXECUTION_REPEAT_TYPES
 
   const createProjectExecution = useMutation(
     backendMutationOptions(backend, 'createProjectExecution'),
@@ -287,7 +282,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         isRequired
         name="repeatType"
         label={getText('repeatIntervalLabel')}
-        items={PROJECT_EXECUTION_REPEAT_TYPES}
+        items={validRepeatTypes}
       >
         {(otherRepeatType) => repeatText(otherRepeatType)}
       </Selector>
@@ -353,7 +348,7 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         </MultiSelector>
       )}
       <details className="w-full">
-        <summary>{getText('advancedOptions')}</summary>
+        <summary className="cursor-pointer">{getText('advancedOptions')}</summary>
         <div className="flex w-full flex-col">
           <Selector
             form={form}

@@ -121,7 +121,7 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo,
     case 'daily': {
       const currentDay = nextDate.getDay()
       const day = repeat.daysOfWeek.find(day => day > currentDay) ?? repeat.daysOfWeek[0] ?? 0
-      const dayOffset = (day - currentDay + 7) % 7
+      const dayOffset = ((day - currentDay + 6) % 7) + 1
       nextDate.setDate(nextDate.getDate() + dayOffset)
       break
     }
@@ -130,7 +130,7 @@ export function nextProjectExecutionDate(projectExecution: ProjectExecutionInfo,
       nextDate.setMonth(nextDate.getMonth() + 1)
       nextDate.setDate(1 + (repeat.weekNumber - 1) * DAYS_PER_WEEK)
       const currentDay = nextDate.getDay()
-      const dayOffset = (repeat.dayOfWeek - currentDay + 7) % 7
+      const dayOffset = ((repeat.dayOfWeek - currentDay + 6) % 7) + 1
       nextDate.setDate(nextDate.getDate() + dayOffset)
       break
     }
