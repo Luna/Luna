@@ -1,4 +1,6 @@
 from Standard.Base import all
+import Standard.Base.Errors.Common.Floating_Point_Equality
+import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import Standard.Database.Feature.Feature
 from Standard.Database.Errors import all
@@ -70,17 +72,40 @@ add_group_number_specs suite_builder setup =
             g7 = t.add_group_number (..Equal_Count 2) "g" order_by='z'
             g7.at 'g' . to_vector . should_equal [0, 1, 1, 0, 0]
 
-    ##
-        few different lengths
-        ec with and without order
-        as deafult
-        ====
-        from + step
-        unique with order_by: err
-        fp equality
-        ====
-        unique requires group_by
-        equal_count with group_by: err
-        equal_count with order_by
-        inccomparable values
-        add_row_number handle_arithmetic_exception?
+        group_builder.specify "should add group number by unique values" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            g0 = t.add_group_number ..Unique group_by=['x', 'y']
+            g0.at 'Group' . to_vector . should_equal [0, 1, 2, 1, 0, 2]
+
+        group_builder.specify "should add group number by unique values, with from and step" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            g0 = t.add_group_number ..Unique "g" from=10 step=3 group_by=['x', 'y']
+            g0.at 'g' . to_vector . should_equal [10, 13, 16, 13, 10, 16]
+
+        group_builder.specify "should add group number by equal counts, with from and step" <|
+            t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
+
+            g0 = t.add_group_number (..Equal_Count 3) "g" from=10 step=3
+            g0.at 'g' . to_vector . should_equal [10, 10, 13, 13, 16]
+
+        group_builder.specify "must specify group_by with Unique" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            t.add_group_number ..Unique "g" . should_fail_with Illegal_Argument
+
+        group_builder.specify "should not allow order_by with Unique" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1, 0, 2], [0, 1, 0], [1, 2, 0], [0, 1, 1], [1, 0, 1], [1, 2, 1]]
+
+            t.add_group_number ..Unique "g" group_by=['x', 'y'] order_by=['z'] . should_fail_with Illegal_Argument
+
+        group_builder.specify "should not allow group_by with Equal_Count" <|
+            t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
+
+            t.add_group_number (..Equal_Count 3) "g" group_by=['x'] . should_fail_with Illegal_Argument
+
+        group_builder.specify "should report floating point equality warning when grouping on float columns" <|
+            t = table_builder_from_rows ['x', 'y', 'z'] [[1.0, 0.0, 2.0], [0.0, 1.0, 0.0], [1.0, 2.0, 0.0], [0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 2.0, 1.0]]
+            g0 = t.add_group_number ..Unique "g" group_by=['x', 'y']
+            Problems.expect_warning Floating_Point_Equality g0

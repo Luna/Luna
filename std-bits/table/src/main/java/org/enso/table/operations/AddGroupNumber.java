@@ -131,7 +131,7 @@ public class AddGroupNumber {
 
     public long next() {
         long toReturn = start + step * (current / bucketSize);
-        current += step;
+        current++;
         return toReturn;
     }
   }
