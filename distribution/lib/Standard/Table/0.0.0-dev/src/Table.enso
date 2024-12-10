@@ -1853,7 +1853,8 @@ type Table
         Warning.attach (Deprecated.Warning "Standard.Table.Table.Table" "auto_value_types" "Deprecated: `auto_value_types` has been replaced by `auto_cast`.") <|
             self.auto_cast columns shrink_types error_on_missing_columns on_problems
 
-    ## GROUP Standard.Base.Conversions
+    ## ALIAS tokenize, parse
+       GROUP Standard.Base.Conversions
        ICON split
        Creates a new table by splitting the chosen column of text, by the
        specified delimiter into a set of new columns. The original column will
@@ -1883,7 +1884,8 @@ type Table
     split_to_columns self column delimiter="," (column_count : Columns_To_Add = ..All_Columns) on_problems:Problem_Behavior=..Report_Warning =
         Split_Tokenize.split_to_columns self column delimiter column_count=column_count on_problems
 
-    ## GROUP Standard.Base.Conversions
+    ## ALIAS tokenize, parse
+       GROUP Standard.Base.Conversions
        ICON split
        Creates a new table by splitting the chosen column of text, by the
        specified delimiter into a set of new rows.
@@ -1902,7 +1904,8 @@ type Table
     split_to_rows self column delimiter="," =
         Split_Tokenize.split_to_rows self column delimiter
 
-    ## GROUP Standard.Base.Conversions
+    ## ALIAS split, parse, regex
+       GROUP Standard.Base.Conversions
        ICON split
 
        Creates a new Table with the chosen column of Text split by the `pattern`
@@ -1934,7 +1937,8 @@ type Table
     tokenize_to_columns self column pattern="." case_sensitivity:Case_Sensitivity=..Sensitive (column_count : Columns_To_Add = ..All_Columns) on_problems:Problem_Behavior=..Report_Warning =
         Split_Tokenize.tokenize_to_columns self column pattern case_sensitivity column_count on_problems
 
-    ## GROUP Standard.Base.Conversions
+    ## ALIAS split, parse, regex
+       GROUP Standard.Base.Conversions
        ICON split
 
        Creates a new Table with the chosen column of Text split by the `pattern`
@@ -1962,7 +1966,8 @@ type Table
     tokenize_to_rows self column pattern="." case_sensitivity:Case_Sensitivity=..Sensitive at_least_one_row:Boolean=False =
         Split_Tokenize.tokenize_to_rows self column pattern case_sensitivity at_least_one_row
 
-    ## GROUP Standard.Base.Conversions
+    ## ALIAS split, tokenize, regex
+       GROUP Standard.Base.Conversions
        ICON split
        Converts a Text column into new columns using a regular expression
        pattern.
