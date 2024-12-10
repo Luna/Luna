@@ -65,16 +65,16 @@ import {
 } from '#/layouts/AssetPanel'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import { useSetSuggestions } from '#/layouts/AssetSearchBar'
-import { useAssetsTableItems } from '#/layouts/AssetsTable/assetsTableItemsHooks'
-import { useAssetTree, type DirectoryQuery } from '#/layouts/AssetsTable/assetTreeHooks'
-import { useDirectoryIds } from '#/layouts/AssetsTable/directoryIdsHooks'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
 import {
   canTransferBetweenCategories,
   isLocalCategory,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
+import { useAssetsTableItems } from '#/layouts/Drive/assetsTableItemsHooks'
+import { useAssetTree, type DirectoryQuery } from '#/layouts/Drive/assetTreeHooks'
+import { useDirectoryIds } from '#/layouts/Drive/directoryIdsHooks'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import DragModal from '#/modals/DragModal'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
@@ -304,7 +304,7 @@ export interface AssetManagementApi {
 }
 
 /** The table of project assets. */
-export default function AssetsTable(props: AssetsTableProps) {
+function AssetsTable(props: AssetsTableProps) {
   const { hidden, query, setQuery, category, assetManagementApiRef } = props
   const { initialProjectName } = props
 
@@ -710,7 +710,6 @@ export default function AssetsTable(props: AssetsTableProps) {
           if (pasteData == null) {
             return false
           } else {
-            dispatchAssetEvent({ type: AssetEventType.cancelCut, ids: pasteData.data.ids })
             setPasteData(null)
             return
           }
@@ -1211,15 +1210,11 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doCut = useEventCallback(() => {
     unsetModal()
-    const { selectedKeys, pasteData } = driveStore.getState()
-    if (pasteData != null) {
-      dispatchAssetEvent({ type: AssetEventType.cancelCut, ids: pasteData.data.ids })
-    }
+    const { selectedKeys } = driveStore.getState()
     setPasteData({
       type: 'move',
       data: { backendType: backend.type, category, ids: selectedKeys },
     })
-    dispatchAssetEvent({ type: AssetEventType.cut, ids: selectedKeys })
     setSelectedKeys(EMPTY_SET)
   })
 
@@ -1231,7 +1226,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 
     if (
       pasteData?.data.backendType === backend.type &&
-      canTransferBetweenCategories(pasteData.data.category, category)
+      canTransferBetweenCategories(pasteData.data.category, category, user)
     ) {
       if (pasteData.data.ids.has(newParentKey)) {
         toast.error('Cannot paste a folder into itself.')
@@ -1900,9 +1895,36 @@ export default function AssetsTable(props: AssetsTableProps) {
         resetErrorBoundary={reconnectToProjectManager}
       />
     : <div className="relative grow contain-strict">
+        <div
+          data-testid="extra-columns"
+          className="absolute right-3 top-0.5 isolate z-1 flex self-end p-2"
+        >
+          <FocusArea direction="horizontal">
+            {(columnsBarProps) => (
+              <div
+                {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
+                  className: 'inline-flex gap-icons',
+                  onFocus: () => {
+                    setKeyboardSelectedIndex(null)
+                  },
+                })}
+              >
+                {hiddenColumns.map((column) => (
+                  <HiddenColumn
+                    key={column}
+                    column={column}
+                    enabledColumns={enabledColumns}
+                    onColumnClick={setEnabledColumns}
+                  />
+                ))}
+              </div>
+            )}
+          </FocusArea>
+        </div>
+
         <FocusArea direction="vertical">
           {(innerProps) => (
-            <IsolateLayout className="h-full w-full">
+            <IsolateLayout className="isolate h-full w-full">
               <div
                 {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
                   className:
@@ -1943,34 +1965,6 @@ export default function AssetsTable(props: AssetsTableProps) {
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex-0 sticky top-0 flex h-0 flex-col">
-                    <div
-                      data-testid="extra-columns"
-                      className="sticky right-0 flex self-end px-2 py-3"
-                    >
-                      <FocusArea direction="horizontal">
-                        {(columnsBarProps) => (
-                          <div
-                            {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
-                              className: 'inline-flex gap-icons',
-                              onFocus: () => {
-                                setKeyboardSelectedIndex(null)
-                              },
-                            })}
-                          >
-                            {hiddenColumns.map((column) => (
-                              <HiddenColumn
-                                key={column}
-                                column={column}
-                                enabledColumns={enabledColumns}
-                                onColumnClick={setEnabledColumns}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </FocusArea>
-                    </div>
-                  </div>
                   <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
                 </div>
               </div>
@@ -1999,7 +1993,7 @@ export default function AssetsTable(props: AssetsTableProps) {
 }
 
 /**
- *
+ * Props for the HiddenColumn component.
  */
 interface HiddenColumnProps {
   readonly column: Column
@@ -2027,8 +2021,8 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
 
   return (
     <Button
-      size="custom"
-      variant="custom"
+      size="medium"
+      variant="icon"
       key={column}
       icon={COLUMN_ICONS[column]}
       aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
@@ -2036,3 +2030,5 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
     />
   )
 })
+
+export default memo(AssetsTable)

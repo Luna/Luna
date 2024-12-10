@@ -138,7 +138,7 @@ const displayedChildren = computed(() => {
 
 const rootNode = ref<HTMLElement>()
 
-const cssPropsToCopy = ['--color-node-primary', '--node-color-port', '--node-border-radius']
+const cssPropsToCopy = ['--color-node-primary', '--color-node-port', '--node-border-radius']
 
 function onDragStart(event: DragEvent, index: number) {
   if (!event.dataTransfer) return
@@ -445,6 +445,7 @@ function deleteItem(index: number) {
           <template v-else>
             <li
               :ref="patchBoundingClientRectScaling"
+              data-testid="dragPlaceholder"
               class="placeholder"
               :style="{ '--placeholder-width': entry.width + 'px' }"
             ></li>

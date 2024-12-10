@@ -6,11 +6,13 @@ const config = mergeConfig(
   viteConfig,
   defineConfig({
     test: {
+      reporters: process.env.CI ? ['dot', 'github-actions'] : ['default'],
       environment: 'jsdom',
-      includeSource: ['./src/**/*.{ts,vue}'],
-      exclude: [...configDefaults.exclude, 'e2e/**/*'],
+      includeSource: ['./src/**/*.{ts,tsx,vue}'],
+      exclude: [...configDefaults.exclude, 'integration-test/**/*'],
       root: fileURLToPath(new URL('./', import.meta.url)),
       restoreMocks: true,
+      setupFiles: './src/dashboard/test/setup.ts',
     },
   }),
 )

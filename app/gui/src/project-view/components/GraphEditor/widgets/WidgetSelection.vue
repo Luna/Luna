@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConditionalTeleport from '@/components/ConditionalTeleport.vue'
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { enclosingTopLevelArgument } from '@/components/GraphEditor/widgets/WidgetTopLevelArgument.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
@@ -52,7 +53,7 @@ const activity = shallowRef<VNode>()
 const MAX_DROPDOWN_OVERSIZE_PX = 390
 
 const floatReference = computed(
-  () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
+  () => enclosingTopLevelArgument(widgetRoot.value, tree.rootElement) ?? widgetRoot.value,
 )
 
 function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidth: boolean) {
@@ -84,7 +85,7 @@ function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidt
           },
         })),
         // Try to keep the dropdown within node's bounds.
-        shift(() => (tree.nodeElement ? { boundary: tree.nodeElement } : {})),
+        shift(() => (tree.rootElement ? { boundary: tree.rootElement } : {})),
         shift(), // Always keep within screen bounds, overriding node bounds.
       ]
     }),
@@ -463,14 +464,14 @@ declare module '@/providers/widgetRegistry' {
     @pointerout="isHovered = false"
   >
     <NodeWidget :input="innerWidgetInput" />
-    <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
+    <ConditionalTeleport v-if="showArrow" :disabled="!arrowLocation" :to="arrowLocation">
       <SvgIcon
         name="arrow_right_head_only"
         class="arrow widgetOutOfLayout"
         :class="{ hovered: isHovered }"
       />
-    </Teleport>
-    <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
+    </ConditionalTeleport>
+    <Teleport v-if="tree.rootElement" :to="tree.rootElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
         <SizeTransition height :duration="100">
           <DropdownWidget

@@ -92,7 +92,7 @@ import project.System.System_Spec
 import project.System.Temporary_File_Spec
 
 import project.Random_Spec
-import project.Widget_Helpers_Spec
+
 
 main filter=Nothing =
     suite = Test.build suite_builder->
@@ -177,6 +177,5 @@ main filter=Nothing =
         Random_Spec.add_specs suite_builder
         XML_Spec.add_specs suite_builder
         Decimal_Spec.add_specs suite_builder
-        Widget_Helpers_Spec.add_specs suite_builder
 
     suite.run_with_filter filter
