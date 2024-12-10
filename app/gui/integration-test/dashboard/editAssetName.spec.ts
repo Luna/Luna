@@ -21,7 +21,7 @@ test('edit name (context menu)', async ({ page }) => {
   await actions.mockAllAndLogin({
     page,
     setupAPI: (api) => {
-      api.addAsset(api.createDirectory('foo'))
+      api.addAsset(api.createDirectory({ title: 'foo' }))
     },
   })
 
@@ -31,7 +31,7 @@ test('edit name (context menu)', async ({ page }) => {
 
   await actions.locateAssetRowName(row).click({ button: 'right' })
   await actions
-    .locateContextMenus(page)
+    .locateContextMenu(page)
     .getByText(/Rename/)
     .click()
 

@@ -32,7 +32,7 @@ export default forwardRef(function ContextMenu(
         }}
       >
         <div
-          data-testid="context-menus"
+          data-testid="context-menu"
           ref={ref}
           style={{ left: event.pageX, top: event.pageY }}
           className={tailwindMerge.twMerge(
