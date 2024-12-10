@@ -31,6 +31,7 @@ import {
   Dialog,
   DialogDismiss,
   Form,
+  FormDropdown,
   Input,
   MultiSelector,
   Selector,
@@ -277,15 +278,15 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
 
   return (
     <Form form={form} className="w-full">
-      <Selector
+      <FormDropdown
         form={form}
         isRequired
         name="repeatType"
         label={getText('repeatIntervalLabel')}
         items={validRepeatTypes}
       >
-        {(otherRepeatType) => repeatText(otherRepeatType)}
-      </Selector>
+        {({ item: otherItem }) => repeatText(otherItem)}
+      </FormDropdown>
       <div className="flex flex-col">
         <DatePicker
           form={form}
