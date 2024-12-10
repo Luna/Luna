@@ -268,7 +268,11 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
         return getText('xthDayOfMonth', getOrdinal(date.day))
       }
       case 'monthly-weekday': {
-        return getText('xthXDayOfMonth', getOrdinal(1), dayOfWeek)
+        return getText(
+          'xthXDayOfMonth',
+          getOrdinal(Math.floor(date.day / DAYS_PER_WEEK) + 1),
+          dayOfWeek,
+        )
       }
       case 'monthly-last-weekday': {
         return getText('lastXDayOfMonth', dayOfWeek)
