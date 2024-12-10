@@ -205,6 +205,9 @@ object Dependencies {
     val graalvmRegex = "org.graalvm.regex" % "regex" % VersionsPinned.graalMavenPackages
     val graalvmTruffleApi = "org.graalvm.truffle" % "truffle-api" % VersionsPinned.graalMavenPackages
     val graalvmTruffleDslProcessor = "org.graalvm.truffle" % "truffle-dsl-processor" % VersionsPinned.graalMavenPackages
+    val graalvmTruffleTck = "org.graalvm.truffle" % "truffle-tck" % VersionsPinned.graalMavenPackages
+    val graalvmTruffleTckCommon = "org.graalvm.truffle" % "truffle-tck-common" % VersionsPinned.graalMavenPackages
+    val graalvmTruffleTckTests = "org.graalvm.truffle" % "truffle-tck-tests" % VersionsPinned.graalMavenPackages
     val graalvmWord = "org.graalvm.sdk" % "word" % VersionsPinned.graalMavenPackages
     val guava = "com.google.guava" % "guava" % Versions.guava
     val hamcrestAll = "org.hamcrest" % "hamcrest-all" % Versions.hamcrestAll

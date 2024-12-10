@@ -1,6 +1,6 @@
 module org.enso.runtime.test {
   requires org.graalvm.truffle;
-  requires org.openide.util.lookup.RELEASE180;
+  requires org.openide.util.lookup.RELEASE230;
   requires org.graalvm.polyglot;
   requires org.graalvm.polyglot_tck;
 
