@@ -278,15 +278,6 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
 
   return (
     <Form form={form} className="w-full">
-      <FormDropdown
-        form={form}
-        isRequired
-        name="repeatType"
-        label={getText('repeatIntervalLabel')}
-        items={validRepeatTypes}
-      >
-        {({ item: otherItem }) => repeatText(otherItem)}
-      </FormDropdown>
       <div className="flex flex-col">
         <DatePicker
           form={form}
@@ -309,6 +300,15 @@ function NewProjectExecutionModalInner(props: NewProjectExecutionModalProps) {
           )}
         </Text>
       </div>
+      <FormDropdown
+        form={form}
+        isRequired
+        name="repeatType"
+        label={getText('repeatIntervalLabel')}
+        items={validRepeatTypes}
+      >
+        {({ item: otherItem }) => repeatText(otherItem)}
+      </FormDropdown>
       {repeatType === 'hourly' && (
         <Input
           form={form}
