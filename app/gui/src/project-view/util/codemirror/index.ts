@@ -10,7 +10,14 @@ import { ToValue } from '@/util/reactivity'
 import { Compartment, EditorState, Extension, Text } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
-import { computed, type Ref, toValue, watchEffect, type WatchSource } from 'vue'
+import {
+  type ComponentInstance,
+  computed,
+  type Ref,
+  toValue,
+  watchEffect,
+  type WatchSource,
+} from 'vue'
 import { Awareness } from 'y-protocols/awareness.js'
 import { assert } from 'ydoc-shared/util/assert'
 import * as Y from 'yjs'
@@ -24,7 +31,7 @@ disableEditContextApi()
 
 /** Creates a CodeMirror editor instance, and sets its initial state. */
 export function useCodeMirror(
-  editorRoot: ToValue<InstanceType<typeof CodeMirrorRoot> | null>,
+  editorRoot: ToValue<ComponentInstance<typeof CodeMirrorRoot> | null>,
   {
     content,
     extensions,

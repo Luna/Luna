@@ -1,6 +1,6 @@
-import { useErrorNotifications } from '@/providers/errorNotifications'
 import { type GraphStore } from '@/stores/graph'
 import { type ProjectStore } from '@/stores/project'
+import { useToast } from '@/util/toast.ts'
 import {
   Annotation,
   ChangeSet,
@@ -42,7 +42,8 @@ export function useEnsoSourceSync(
     | undefined
   let currentModule: MutableModule | undefined
 
-  const notifyError = useErrorNotifications()
+  const notifyErrorToast = useToast.error()
+  const notifyError = notifyErrorToast.show.bind(notifyErrorToast)
 
   const debounceUpdates = createDebouncer(0)
   const updateListener: Extension = EditorView.updateListener.of((update) => {

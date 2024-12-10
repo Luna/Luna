@@ -9,7 +9,7 @@ import { useLinkTitles } from '@/util/codemirror/links'
 import { Vec2 } from '@/util/data/vec2'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
-import { computed, onMounted, ref, useCssModule, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useCssModule, useTemplateRef, type ComponentInstance } from 'vue'
 import * as Y from 'yjs'
 
 const { content } = defineProps<{
@@ -20,8 +20,8 @@ const { content } = defineProps<{
 const focused = ref(false)
 const editing = computed(() => !readonly.value && focused.value)
 
-const vueHost = useTemplateRef<InstanceType<typeof VueComponentHost>>('vueHost')
-const editorRoot = useTemplateRef<InstanceType<typeof CodeMirrorRoot>>('editorRoot')
+const vueHost = useTemplateRef<ComponentInstance<typeof VueComponentHost>>('vueHost')
+const editorRoot = useTemplateRef<ComponentInstance<typeof CodeMirrorRoot>>('editorRoot')
 const { editorView, readonly, putTextAt } = useCodeMirror(editorRoot, {
   content: () => content,
   extensions: [

@@ -29,7 +29,6 @@ import { useDoubleClick } from '@/composables/doubleClick'
 import { keyboardBusy, keyboardBusyExceptIn, unrefElement, useEvent } from '@/composables/events'
 import { groupColorVar } from '@/composables/nodeColors'
 import type { PlacementStrategy } from '@/composables/nodeCreation'
-import { provideErrorNotifications } from '@/providers/errorNotifications'
 import { provideGraphEditorLayers } from '@/providers/graphEditorLayers'
 import type { GraphNavigator } from '@/providers/graphNavigator'
 import { provideGraphNavigator } from '@/providers/graphNavigator'
@@ -167,7 +166,6 @@ const graphMissing = computed(() => graphStore.moduleRoot != null && !graphStore
 // === Toasts ===
 
 const toasts = useGraphEditorToasts(projectStore)
-provideErrorNotifications(toasts.userActionFailed.show.bind(toasts.userActionFailed))
 
 // === Selection ===
 

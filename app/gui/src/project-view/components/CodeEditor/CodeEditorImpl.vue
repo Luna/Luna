@@ -22,12 +22,12 @@ import { highlightSelectionMatches } from '@codemirror/search'
 import { keymap } from '@codemirror/view'
 import { type Highlighter } from '@lezer/highlight'
 import { minimalSetup } from 'codemirror'
-import { computed, onMounted, useTemplateRef } from 'vue'
+import { computed, onMounted, useTemplateRef, type ComponentInstance } from 'vue'
 
 const projectStore = useProjectStore()
 const graphStore = useGraphStore()
 const suggestionDbStore = useSuggestionDbStore()
-const editorRoot = useTemplateRef<InstanceType<typeof CodeMirrorRoot>>('editorRoot')
+const editorRoot = useTemplateRef<ComponentInstance<typeof CodeMirrorRoot>>('editorRoot')
 const rootElement = computed(() => editorRoot.value?.rootElement)
 useAutoBlur(rootElement)
 
