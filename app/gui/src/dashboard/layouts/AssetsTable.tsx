@@ -140,7 +140,7 @@ import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import { IndefiniteSpinner } from '../components/Spinner'
+import { IndefiniteSpinner } from '#/components/Spinner'
 
 declare module '#/utilities/LocalStorage' {
   /** */
