@@ -2260,34 +2260,34 @@ lazy val `language-server` = (project in file("engine/language-server"))
     scalaModuleDependencySetting,
     mixedJavaScalaProjectSetting,
     libraryDependencies ++= akka ++ circe ++ bouncyCastle.map(_ % Test) ++ Seq(
-      "org.slf4j"                   % "slf4j-api"            % slf4jVersion,
-      "com.typesafe.scala-logging" %% "scala-logging"        % scalaLoggingVersion,
-      "io.circe"                   %% "circe-generic-extras" % circeGenericExtrasVersion,
-      "io.circe"                   %% "circe-literal"        % circeVersion,
-      "dev.zio"                    %% "zio"                  % zioVersion,
-      "com.google.flatbuffers"      % "flatbuffers-java"     % flatbuffersVersion,
-      "commons-io"                  % "commons-io"           % commonsIoVersion,
-      "com.github.pureconfig"      %% "pureconfig"           % pureconfigVersion,
-      akkaSLF4J,
-      akkaTestkit           % Test,
-      "com.typesafe.akka"  %% "akka-http-testkit"       % akkaHTTPVersion           % Test,
-      "org.scalatest"      %% "scalatest"               % scalatestVersion          % Test,
-      "org.scalacheck"     %% "scalacheck"              % scalacheckVersion         % Test,
-      "org.graalvm.truffle" % "truffle-api"             % graalMavenPackagesVersion % "provided",
-      "org.graalvm.sdk"     % "polyglot-tck"            % graalMavenPackagesVersion % "provided",
-      "org.netbeans.api"    % "org-openide-util-lookup" % netbeansApiVersion        % "provided",
-      "org.eclipse.jgit"    % "org.eclipse.jgit"        % jgitVersion,
-      "org.apache.tika"     % "tika-core"               % tikaVersion               % Test
+      Dependencies.Compile.slf4jApi,
+      Dependencies.Compile.scalaLogging,
+      Dependencies.Compile.circeGenericExtras,
+      Dependencies.Compile.circeLiteral,
+      Dependencies.Compile.zio,
+      Dependencies.Compile.flatbuffersJava,
+      Dependencies.Compile.commonsIo,
+      Dependencies.Compile.pureconfig,
+      Dependencies.Compile.akkaSlf4j,
+      Dependencies.Compile.akkaTestkit % Test,
+      Dependencies.Compile.akkaHttpTestkit % Test,
+      Dependencies.Compile.scalatest % Test,
+      Dependencies.Compile.scalacheck % Test,
+      Dependencies.Compile.graalvmTruffleApi % "provided",
+      Dependencies.Compile.graalvmPolyglotTck % "provided",
+      Dependencies.Compile.openideUtilLookup % "provided",
+      Dependencies.Compile.eclipseJgit,
+      Dependencies.Compile.tikaCore % Test,
     ),
     javaModuleName := "org.enso.language.server",
     Compile / moduleDependencies ++=
       Seq(
-        "org.graalvm.polyglot"   % "polyglot"         % graalMavenPackagesVersion,
-        "org.slf4j"              % "slf4j-api"        % slf4jVersion,
-        "commons-cli"            % "commons-cli"      % commonsCliVersion,
-        "commons-io"             % "commons-io"       % commonsIoVersion,
-        "com.google.flatbuffers" % "flatbuffers-java" % flatbuffersVersion,
-        "org.eclipse.jgit"       % "org.eclipse.jgit" % jgitVersion
+        Dependencies.Compile.graalvmPolyglot,
+        Dependencies.Compile.slf4jApi,
+        Dependencies.Compile.commonsCli,
+        Dependencies.Compile.commonsIo,
+        Dependencies.Compile.flatbuffersJava,
+        Dependencies.Compile.eclipseJgit,
       ),
     Compile / internalModuleDependencies := Seq(
       (`akka-wrapper` / Compile / exportedModule).value,
@@ -2329,7 +2329,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
     inConfig(Compile)(truffleRunOptionsSettings),
     inConfig(Benchmark)(Defaults.testSettings),
     bench := (Benchmark / test).value,
-    libraryDependencies += "com.storm-enroute" %% "scalameter" % scalameterVersion % "bench",
+    libraryDependencies += Dependencies.Compile.scalameter % "bench",
     testFrameworks ++= List(
       new TestFramework("org.scalameter.ScalaMeterFramework")
     )
@@ -2345,33 +2345,33 @@ lazy val `language-server` = (project in file("engine/language-server"))
     },
     // More dependencies needed for modules for testing
     libraryDependencies ++= ioSentry.map(_ % Test) ++ logbackTest ++ Seq(
-      "com.google.protobuf"    % "protobuf-java"                % googleProtobufVersion  % Test,
-      "org.reactivestreams"    % "reactive-streams"             % reactiveStreamsVersion % Test,
-      "org.jline"              % "jline"                        % jlineVersion           % Test,
-      "org.apache.tika"        % "tika-core"                    % tikaVersion            % Test,
-      "com.google.flatbuffers" % "flatbuffers-java"             % flatbuffersVersion     % Test,
-      "org.netbeans.api"       % "org-netbeans-modules-sampler" % netbeansApiVersion     % Test,
-      "org.apache.commons"     % "commons-lang3"                % commonsLangVersion     % Test,
-      "org.apache.commons"     % "commons-compress"             % commonsCompressVersion % Test,
-      "org.yaml"               % "snakeyaml"                    % snakeyamlVersion       % Test,
-      "com.ibm.icu"            % "icu4j"                        % icuVersion             % Test
+      Dependencies.Compile.protobufJava % Test,
+      Dependencies.Compile.reactiveStreams % Test,
+      Dependencies.Compile.jline % Test,
+      Dependencies.Compile.tikaCore % Test,
+      Dependencies.Compile.flatbuffersJava % Test,
+      Dependencies.Compile.netbeansModulesSampler % Test,
+      Dependencies.Compile.commonsLang3 % Test,
+      Dependencies.Compile.commonsCompress % Test,
+      Dependencies.Compile.snakeyaml % Test,
+      Dependencies.Compile.icu4j % Test,
     ),
     Test / moduleDependencies := {
       GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ ioSentry ++ bouncyCastle ++ scalaLibrary ++ scalaCompiler ++ Seq(
-        "org.slf4j"              % "slf4j-api"                    % slf4jVersion,
-        "org.netbeans.api"       % "org-netbeans-modules-sampler" % netbeansApiVersion,
-        "com.google.flatbuffers" % "flatbuffers-java"             % flatbuffersVersion,
-        "org.yaml"               % "snakeyaml"                    % snakeyamlVersion,
-        "com.typesafe"           % "config"                       % typesafeConfigVersion,
-        "org.apache.commons"     % "commons-lang3"                % commonsLangVersion,
-        "org.apache.commons"     % "commons-compress"             % commonsCompressVersion,
-        "commons-io"             % "commons-io"                   % commonsIoVersion,
-        "com.google.protobuf"    % "protobuf-java"                % googleProtobufVersion,
-        "org.reactivestreams"    % "reactive-streams"             % reactiveStreamsVersion,
-        "org.jline"              % "jline"                        % jlineVersion,
-        "org.apache.tika"        % "tika-core"                    % tikaVersion,
-        "com.ibm.icu"            % "icu4j"                        % icuVersion,
-        "org.netbeans.api"       % "org-openide-util-lookup"      % netbeansApiVersion
+        Dependencies.Compile.slf4jApi,
+        Dependencies.Compile.netbeansModulesSampler,
+        Dependencies.Compile.flatbuffersJava,
+        Dependencies.Compile.snakeyaml,
+        Dependencies.Compile.typesafeConfig,
+        Dependencies.Compile.commonsLang3,
+        Dependencies.Compile.commonsCompress,
+        Dependencies.Compile.commonsIo,
+        Dependencies.Compile.protobufJava,
+        Dependencies.Compile.reactiveStreams,
+        Dependencies.Compile.jline,
+        Dependencies.Compile.tikaCore,
+        Dependencies.Compile.icu4j,
+        Dependencies.Compile.openideUtilLookup,
       )
     },
     Test / internalModuleDependencies := Seq(
@@ -2622,8 +2622,8 @@ lazy val instrumentationSettings =
       "--enable-preview"
     ),
     libraryDependencies ++= Seq(
-      "org.graalvm.truffle" % "truffle-api"           % graalMavenPackagesVersion % "provided",
-      "org.graalvm.truffle" % "truffle-dsl-processor" % graalMavenPackagesVersion % "provided"
+      Dependencies.Compile.graalvmTruffleApi % "provided",
+      Dependencies.Compile.graalvmTruffleDslProcessor % "provided",
     )
   )
 
@@ -2639,17 +2639,17 @@ lazy val `runtime-language-epb` =
       Test / javaOptions ++= Seq(),
       instrumentationSettings,
       libraryDependencies ++= Seq(
-        "junit"               % "junit"                 % junitVersion              % Test,
-        "com.github.sbt"      % "junit-interface"       % junitIfVersion            % Test,
-        "org.graalvm.truffle" % "truffle-api"           % graalMavenPackagesVersion % "provided",
-        "org.graalvm.truffle" % "truffle-dsl-processor" % graalMavenPackagesVersion % "provided"
+        Dependencies.Compile.junit % Test,
+        Dependencies.Compile.sbtJunitInterface % Test,
+        Dependencies.Compile.graalvmTruffleApi % "provided",
+        Dependencies.Compile.graalvmTruffleDslProcessor % "provided",
       ),
       Compile / moduleDependencies ++= Seq(
-        "org.graalvm.truffle"  % "truffle-api" % graalMavenPackagesVersion,
-        "org.graalvm.polyglot" % "polyglot"    % graalMavenPackagesVersion,
-        "org.graalvm.sdk"      % "collections" % graalMavenPackagesVersion,
-        "org.graalvm.sdk"      % "word"        % graalMavenPackagesVersion,
-        "org.graalvm.sdk"      % "nativeimage" % graalMavenPackagesVersion
+        Dependencies.Compile.graalvmTruffleApi,
+        Dependencies.Compile.graalvmPolyglot,
+        Dependencies.Compile.graalvmCollections,
+        Dependencies.Compile.graalvmWord,
+        Dependencies.Compile.graalvmNativeimage,
       )
     )
 

@@ -57,6 +57,7 @@ object Dependencies {
     val circeCore = "0.14.10"
     val circeLiteral = "0.14.10"
     val circeGeneric = "0.14.10"
+    val circeGenericExtras = "0.14.3"
     val circeJawn = "0.14.10"
     val circeNumbers = "0.14.10"
     val circeParser = "0.14.10"
@@ -111,6 +112,7 @@ object Dependencies {
     val scalaParserCombinators = "2.4.0"
     val scalacheck = "1.18.1"
     val scalactic = "3.2.19"
+    val scalameter = "0.19"
     val scalatest = "3.2.19"
     val sentry = "7.18.1"
     val sentryLogback = "7.18.1"
@@ -164,6 +166,7 @@ object Dependencies {
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % VersionsPinned.akkaActor
     val akkaStream = "com.typesafe.akka" %% "akka-stream" % VersionsPinned.akkaActor
     val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % VersionsPinned.akkaActor
+    val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % VersionsPinned.akkaActor
     val apacheArrowVector = "org.apache.arrow" % "arrow-vector" % Versions.arrowVector
     val apacheArrowMemoryNetty = "org.apache.arrow" % "arrow-memory-netty" % Versions.arrowMemoryNetty
     val apacheHttpclient = "org.apache.httpcomponents" % "httpclient" % Versions.httpclient
@@ -174,6 +177,7 @@ object Dependencies {
     val catsCore = "org.typelevel" %% "cats-core" % Versions.catsCore
     val catsKernel = "org.typelevel" %% "cats-kernel" % Versions.catsKernel
     val circeGeneric = "io.circe" %% "circe-generic" % Versions.circeGeneric
+    val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Versions.circeGenericExtras
     val circeCore = "io.circe" %% "circe-core" % Versions.circeCore
     val circeLiteral = "io.circe" %% "circe-literal" % Versions.circeLiteral
     val circeParser = "io.circe" %% "circe-parser" % Versions.circeParser
@@ -236,6 +240,7 @@ object Dependencies {
     val scalactic = "org.scalactic" %% "scalactic" % Versions.scalactic
     val scalaCompiler = "org.scala-lang" % "scala-compiler" % VersionsPinned.scala
     val scalaLibrary = "org.scala-lang" % "scala-library" % VersionsPinned.scala
+    val scalameter = "com.storm-enroute" %% "scalameter" % Versions.scalameter
     val scalaReflect = "org.scala-lang" % "scala-reflect" % VersionsPinned.scala
     val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % VersionsPinned.scalaLogging
     val scalaParserCombinators =
