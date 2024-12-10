@@ -477,6 +477,10 @@ type S3_File
        ! Error Conditions
        - If the credential is invalid, an `AWS_SDK_Error` is thrown.
        - If access is denied to the bucket, an `S3_Error` is thrown.
+
+       ? Data Links
+         If the file is a data link, this checks if the data link itself exists. 
+         It does not tell anything about existence of the data link target.
     exists : Boolean
     exists self = if self.s3_path.bucket == "" then True else
         raw_result = if self.s3_path.is_root then translate_file_errors self <| S3.head self.s3_path.bucket "" self.credentials . is_error . not else
@@ -490,8 +494,8 @@ type S3_File
        Returns the size of a file in bytes.
 
        ? Data Links
-         If the file is a data link, the size of the target file will be 
-         returned.
+         If the file is a data link that points to a file, the size of the 
+         target file will be returned.
 
        ! Error Conditions
        - If the `S3_File` represents a directory, an `S3_Error` error is thrown.
@@ -512,6 +516,10 @@ type S3_File
        Returns:
        - An `S3_Error` error as only the last modified time is available for S3
          objects.
+
+       ? Data Links
+         If the file is a data link, this returns the creation time of the data 
+         link.
     creation_time : Date_Time ! File_Error
     creation_time self =
         Error.throw (S3_Error.Error "Creation time is not available for S3 files, consider using `last_modified_time` instead." self.uri)
@@ -526,6 +534,10 @@ type S3_File
        - If the bucket or object does not exist, a `File_Error.Not_Found` is
          thrown.
        - If the object is not accessible, an `S3_Error` is thrown.
+
+       ? Data Links
+         If the file is a data link, this returns the modification time of the 
+         data link.
     last_modified_time : Date_Time ! File_Error
     last_modified_time self =
         if self.is_directory then Error.throw (S3_Error.Error "`last_modified_time` can only be called on files." self.uri) else
@@ -548,6 +560,10 @@ type S3_File
 
          The trailing slash determines if the given path is treated as a
          directory or as a regular file.
+
+       ? Data Links
+         If the file is a data link, this checks whether the target of the data 
+         link is a directory.
     is_directory : Boolean
     is_directory self = self.s3_path.is_directory
 
@@ -566,6 +582,10 @@ type S3_File
 
          The trailing slash determines if the given path is treated as a
          directory or as a regular file.
+       
+       ? Data Links
+         If the file is a data link, this checks whether the target of the data 
+         link is a regular file.
     is_regular_file : Boolean
     is_regular_file self = self.is_directory.not
 
