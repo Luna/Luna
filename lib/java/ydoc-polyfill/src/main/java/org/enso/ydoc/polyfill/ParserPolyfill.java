@@ -1,15 +1,14 @@
 package org.enso.ydoc.polyfill;
 
+import java.net.URL;
+import java.util.function.Function;
 import org.enso.syntax2.Parser;
-import org.enso.ydoc.Polyfill;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class ParserPolyfill implements ProxyExecutable, Polyfill {
+public final class ParserPolyfill implements ProxyExecutable {
 
   private static final Logger log = LoggerFactory.getLogger(ParserPolyfill.class);
 
@@ -22,12 +21,9 @@ public final class ParserPolyfill implements ProxyExecutable, Polyfill {
 
   public ParserPolyfill() {}
 
-  @Override
-  public void initialize(Context ctx) {
-    Source parserJs =
-        Source.newBuilder("js", ParserPolyfill.class.getResource(PARSER_JS)).buildLiteral();
-
-    ctx.eval(parserJs).execute(this);
+  final void initialize(Function<URL, Value> eval) {
+    var fn = eval.apply(ParserPolyfill.class.getResource(PARSER_JS));
+    fn.execute(this);
   }
 
   @Override
