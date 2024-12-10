@@ -26,7 +26,7 @@ public class ParserPolyfillTest extends ExecutorSetup {
         CompletableFuture.supplyAsync(
                 () -> {
                   var ctx = contextBuilder.build();
-                  parser.initialize(eval(ctx));
+                  parser.initialize(ctx);
                   return ctx;
                 },
                 executor)
