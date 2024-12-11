@@ -360,7 +360,7 @@ class UpgradeSpec
 
         val secondFailed = run(Seq("upgrade", "0.0.0"))
 
-        secondFailed.stderr should include("Another upgrade is in progress")
+        secondFailed.stdout should include("Another upgrade is in progress")
         secondFailed.exitCode shouldEqual 1
       } catch {
         case e: TimeoutException =>
