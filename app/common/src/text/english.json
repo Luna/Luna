@@ -53,7 +53,8 @@
   "localBackendNotDetectedError": "Could not detect the local backend",
 
   "invalidInput": "Invalid input",
-
+  "nameShouldBeUnique": "Name must be unique",
+  "nameShouldNotContainInvalidCharacters": "Name should not contain invalid characters",
   "invalidEmailValidationError": "Please enter a valid email address",
 
   "projectHasNoSourceFilesPhrase": "project has no source files",

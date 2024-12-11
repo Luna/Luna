@@ -9,12 +9,12 @@ import * as textProvider from '#/providers/TextProvider'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 import { useInteractOutside } from '#/components/aria'
-import { Form } from '#/components/AriaComponents'
+import { Form, Underlay } from '#/components/AriaComponents'
 import { useAutoFocus } from '#/hooks/autoFocusHooks'
+import { useMeasure } from '#/hooks/measureHooks'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { useLayoutEffect } from 'react'
-import { useMeasure } from '../hooks/measureHooks'
-import { Underlay } from './AriaComponents/Underlay'
+import type { z } from 'zod'
 
 /**
  * Props for {@link EditableSpan}.
@@ -23,10 +23,13 @@ export interface EditableSpanProps {
   readonly 'data-testid'?: string
   readonly className?: string
   readonly editable?: boolean
-  readonly checkSubmittable?: (value: string) => boolean
   readonly onSubmit: (value: string) => Promise<void>
   readonly onCancel: () => void
   readonly children: string
+  /**
+   * Additional schema to validate the value.
+   */
+  readonly schema?: (schema: typeof z) => z.ZodType<string>
 }
 
 /** A `<span>` that can turn into an `<input type="text">`. */
@@ -76,7 +79,7 @@ const TRANSITION_OPTIONS = { stiffness: 300, damping: 150, mass: 1 }
  * Edit form for {@link EditableSpan}.
  */
 function EditForm(props: EditFormProps) {
-  const { className = '', children, checkSubmittable, onSubmit, onCancel } = props
+  const { className = '', children, onSubmit, onCancel, schema } = props
 
   const { getText } = textProvider.useText()
 
@@ -84,14 +87,15 @@ function EditForm(props: EditFormProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null)
 
   const form = Form.useForm({
-    schema: (z) =>
-      z.object({
-        value: z
-          .string()
-          .min(1)
-          .trim()
-          .refine((value) => checkSubmittable?.(value)),
-      }),
+    schema: (z) => {
+      const baseSchema = z.object({ value: z.string().min(1).trim() })
+
+      if (schema != null) {
+        return baseSchema.merge(z.object({ value: schema(z) }))
+      }
+
+      return baseSchema
+    },
     defaultValues: { value: children },
     onSubmit: ({ value }) => onSubmit(value),
   })
@@ -124,28 +128,25 @@ function EditForm(props: EditFormProps) {
       <Form.Provider form={form}>
         <div className="flex flex-1 flex-shrink-0 basis-full items-center">
           <Input
+            inputRef={inputRef}
             name="value"
             variant="custom"
             size="custom"
             rounded="none"
-            inputRef={inputRef}
             testId={props['data-testid']}
             className={tailwindMerge.twJoin('flex-shrink-0 flex-grow basis-0', className)}
             type="text"
             aria-label={getText('editNameShortcut')}
+            // we don't want the display the default error message
             error={null}
-            isInvalid={hasError}
-            defaultValue={children}
             onContextMenu={(event) => {
               event.stopPropagation()
             }}
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 event.preventDefault()
-                form.reset()
                 onCancel()
               }
-
               event.stopPropagation()
             }}
           />
@@ -170,7 +171,7 @@ function EditForm(props: EditFormProps) {
                 >
                   <Form.Submit
                     size="medium"
-                    variant="ghost"
+                    variant="icon"
                     icon={TickIcon}
                     aria-label={getText('confirmEdit')}
                     children={null}
@@ -187,7 +188,7 @@ function EditForm(props: EditFormProps) {
                 >
                   <Form.Reset
                     size="medium"
-                    variant="ghost"
+                    variant="icon"
                     icon={CrossIcon}
                     aria-label={getText('cancelEdit')}
                     onPress={onCancel}

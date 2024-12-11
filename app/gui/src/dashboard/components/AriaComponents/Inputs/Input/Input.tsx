@@ -72,10 +72,11 @@ export const Input = forwardRef(function Input<
     form: formRaw,
     autoFocus = false,
     className,
+    testId: testIdRaw,
     ...inputProps
   } = props
   const form = Form.useFormContext(formRaw)
-  const testId = props.testId ?? props['data-testid']
+  const testId = testIdRaw ?? props['data-testid']
   const privateInputRef = useRef<HTMLInputElement>(null)
 
   const { fieldProps, formInstance } = Form.useFieldRegister<

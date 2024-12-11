@@ -66,7 +66,6 @@ export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
         editable={false}
         onSubmit={async () => {
           await doRename()
-
           setIsEditing(false)
         }}
         onCancel={() => {

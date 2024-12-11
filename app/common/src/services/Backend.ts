@@ -1541,17 +1541,27 @@ export function isNewTitleValid(
   newTitle: string,
   siblings?: readonly AnyAsset[] | null,
 ) {
+  return newTitle !== '' && newTitle !== item.title && isNewTitleUnique(item, newTitle, siblings)
+}
+
+/**
+ * Check whether a new title is unique among the siblings.
+ */
+export function isNewTitleUnique(
+  item: AnyAsset,
+  newTitle: string,
+  siblings?: readonly AnyAsset[] | null,
+) {
   siblings ??= []
-  return (
-    newTitle !== '' &&
-    newTitle !== item.title &&
-    siblings.every(sibling => {
-      const isSelf = sibling.id === item.id
-      const hasSameType = sibling.type === item.type
-      const hasSameTitle = sibling.title === newTitle
-      return !(!isSelf && hasSameType && hasSameTitle)
-    })
-  )
+
+  console.log('isNewTitleUnique()', { siblings, item, newTitle })
+
+  return siblings.every(sibling => {
+    const isSelf = sibling.id === item.id
+    const hasSameType = sibling.type === item.type
+    const hasSameTitle = sibling.title.toLowerCase() === newTitle.toLowerCase()
+    return !(!isSelf && hasSameType && hasSameTitle)
+  })
 }
 
 /** Network error class. */

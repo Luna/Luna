@@ -20,7 +20,6 @@ import { useStore } from '#/hooks/storeHooks'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
-import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import * as validation from '#/utilities/validation'
 
@@ -109,13 +108,21 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
           'cursor-pointer bg-transparent font-naming',
           rowState.isEditingName ? 'cursor-text' : 'cursor-pointer',
         )}
-        checkSubmittable={(newTitle) =>
-          validation.DIRECTORY_NAME_REGEX.test(newTitle) &&
-          backendModule.isNewTitleValid(
-            item,
-            newTitle,
-            nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
-          )
+        schema={(z) =>
+          z
+            .string()
+            .regex(validation.DIRECTORY_NAME_REGEX, {
+              message: getText('nameShouldNotContainInvalidCharacters'),
+            })
+            .refine(
+              (value) =>
+                backendModule.isNewTitleUnique(
+                  item,
+                  value,
+                  nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
+                ),
+              { message: getText('nameShouldBeUnique') },
+            )
         }
         onSubmit={doRename}
         onCancel={() => {

@@ -9,11 +9,11 @@ import SvgMask from '#/components/SvgMask'
 
 import * as backendModule from '#/services/Backend'
 
+import { useText } from '#/providers/TextProvider'
 import * as eventModule from '#/utilities/event'
 import * as fileIcon from '#/utilities/fileIcon'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
-import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 // ================
@@ -35,6 +35,7 @@ export default function FileNameColumn(props: FileNameColumnProps) {
   const { backend, nodeMap } = state
   const isCloud = backend.type === backendModule.BackendType.remote
 
+  const { getText } = useText()
   const updateFileMutation = useMutation(backendMutationOptions(backend, 'updateFile'))
 
   const setIsEditing = (isEditingName: boolean) => {
@@ -72,17 +73,21 @@ export default function FileNameColumn(props: FileNameColumnProps) {
         data-testid="asset-row-name"
         editable={rowState.isEditingName}
         className="grow bg-transparent font-naming"
-        checkSubmittable={(newTitle) =>
-          backendModule.isNewTitleValid(
-            item,
-            newTitle,
-            nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
-          )
-        }
         onSubmit={doRename}
         onCancel={() => {
           setIsEditing(false)
         }}
+        schema={(z) =>
+          z.string().refine(
+            (value) =>
+              backendModule.isNewTitleUnique(
+                item,
+                value,
+                nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
+              ),
+            { message: getText('nameShouldBeUnique') },
+          )
+        }
       >
         {item.title}
       </EditableSpan>

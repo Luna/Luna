@@ -51,6 +51,7 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
   const { backend, nodeMap } = state
 
   const { user } = authProvider.useFullUserSession()
+  const { getText } = textProvider.useText()
 
   const driveStore = useDriveStore()
   const doOpenProject = projectHooks.useOpenProject()
@@ -133,17 +134,21 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
           canExecute && !isOtherUserUsingProject && 'cursor-pointer',
           rowState.isEditingName && 'cursor-text',
         )}
-        checkSubmittable={(newTitle) =>
-          backendModule.isNewTitleValid(
-            item,
-            newTitle,
-            nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
-          )
-        }
         onSubmit={doRename}
         onCancel={() => {
           setIsEditing(false)
         }}
+        schema={(z) =>
+          z.string().refine(
+            (value) =>
+              backendModule.isNewTitleUnique(
+                item,
+                value,
+                nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
+              ),
+            { message: getText('nameShouldBeUnique') },
+          )
+        }
       >
         {item.title}
       </EditableSpan>
