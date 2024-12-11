@@ -87,3 +87,18 @@ Table.join self right:Table -> Table = ...
 Such a `Table&Column` value can be returned from the above `Table.join` function and while
 having only `Table` behavior by default, still being able to be explicitly casted by the visual environment
 to `Column`. 
+
+## Converting Type Check
+
+When an _intersection type_ is being checked against a type it doesn't represent,
+any of its component types can be used for [conversion](../syntax/conversions.md).
+Should there be a `Float` to `Text` conversion:
+```ruby
+Text.from (that:Float) = Float.to_text
+```
+then `Complex&Float` value `cf` can be typed as `cf:Text`. The value can also
+be converted to another _intersection type_ like `ct = cf:Complex&Text`. In such case
+it looses its `Float` type and `ct:Float` would fail.
+
+In short: when a [conversion](../syntax/conversions.md) is needed to satisfy a type check
+a new value is created to satisfy just the types requested in the check.

@@ -1,0 +1,57 @@
+from Standard.Base import all
+from Standard.Test import all
+import Standard.Base.Errors.Common.Type_Error
+import Standard.Base.Errors.Common.No_Such_Method
+
+import project.Data.Complex.Complex
+
+type A
+    A value
+    a self = "a"
+type B
+    B value
+    b self = "b"
+type C
+    C value
+    c self = "c"
+
+A.from (that:Float) = A.A that
+B.from (that:Float) = B.B that
+C.from (that:Float) = C.C that
+
+type U
+    U value
+    u self = "u"
+type V
+    V v
+
+U.from (that:B) = U.U that.value
+V.from (that:C) = V.V that.value
+
+add_specs suite_builder =
+    suite_builder.group "Convert Multi Value" group_builder->
+
+        group_builder.specify "performs conversion to U&V from B and C" <|
+            abc = 3.14 : A&B&C
+            uv = abc : U&V
+
+            uv.u . should_equal "u"
+            uv.v . should_equal 3.14
+
+            Test.expect_panic No_Such_Method <| uv.a 
+            Test.expect_panic No_Such_Method <| uv.b 
+            Test.expect_panic No_Such_Method <| uv.c 
+            Test.expect_panic Type_Error (uv:A)
+            Test.expect_panic Type_Error (uv:B)
+            Test.expect_panic Type_Error (uv:C)
+
+            uv:U . u . should_equal "u"
+            uv:V . v . should_equal 3.14
+
+            Test.expect_panic No_Such_Method <| (uv:V).u
+            Test.expect_panic No_Such_Method <| (uv:U).v
+
+main filter=Nothing =
+    suite = Test.build suite_builder->
+        add_specs suite_builder
+    suite.run_with_filter filter
