@@ -3,9 +3,11 @@ package org.enso.table.excel.xssfreader;
 import java.time.LocalDateTime;
 import java.util.SortedMap;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
 import org.enso.table.excel.ExcelRow;
 
 public class XSSFReaderRow implements ExcelRow {
+  private static final DataFormatter formatter = new DataFormatter();
   private final SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data;
   private final boolean use1904Dates;
 
@@ -66,11 +68,17 @@ public class XSSFReaderRow implements ExcelRow {
       return "";
     }
 
-    // TODO: This is missing logic...
     var dataType = cell.dataType();
     return switch (dataType) {
+      case NUMBER, OLE_DATETIME, OLE_DATE, INTEGER -> {
+        // Special handling for Number or Date cells as want to keep formatting.
+        var formatText = cell.format();
+        if (formatText == null || formatText.isEmpty()) {
+          yield cell.strValue();
+        }
+        yield formatter.formatRawCellContents(cell.getNumberValue(), -1, formatText, use1904Dates);
+      }
       case BOOL -> cell.getBooleanValue() ? "TRUE" : "FALSE";
-      case NUMBER -> String.valueOf(cell.getNumberValue());
       default -> cell.strValue();
     };
   }

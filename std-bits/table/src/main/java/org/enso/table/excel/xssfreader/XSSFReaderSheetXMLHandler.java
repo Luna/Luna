@@ -171,7 +171,12 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     public Temporal getDateTimeValue(boolean use1904Dates) {
       if (use1904Dates) {
         var datetime = ExcelUtils.fromExcelDateTime1904(getNumberValue());
-        if (datetime instanceof ZonedDateTime zdt && zdt.getYear() == 1904 && zdt.getDayOfYear() == 1 && !format.contains("y") && !format.contains("M") && !format.contains("d")) {
+        if (datetime instanceof ZonedDateTime zdt
+            && zdt.getYear() == 1904
+            && zdt.getDayOfYear() == 1
+            && !format.contains("y")
+            && !format.contains("M")
+            && !format.contains("d")) {
           datetime = zdt.toLocalTime();
         }
         return datetime;
