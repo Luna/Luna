@@ -63,11 +63,14 @@ object GithubAPI {
   def listReleases(repository: Repository): Try[Seq[Release]] = {
     val perPage = 100
     def listPage(page: Int): Try[Seq[Release]] = {
-      val uri = (projectURI(repository) / "releases") ?
-        ("per_page" -> perPage.toString) ? ("page" -> page.toString)
+      val uri =
+        ((projectURI(
+          repository
+        ) / "releases") ? ("per_page" -> perPage.toString) ? ("page" -> page.toString))
+          .build()
 
-      val downloadTask = HTTPDownload
-        .fetchString(HTTPRequestBuilder.fromURI(uri.build()).GET)
+      val downloadTask = CachedHTTP
+        .fetchString(HTTPRequestBuilder.fromURI(uri).GET)
         .flatMap(response =>
           parse(response.content)
             .flatMap(
@@ -98,10 +101,10 @@ object GithubAPI {
   /** Fetches release metadata for the release associated with the given tag.
     */
   def getRelease(repo: Repository, tag: String): TaskProgress[Release] = {
-    val uri = projectURI(repo) / "releases" / "tags" / tag
+    val uri = (projectURI(repo) / "releases" / "tags" / tag).build()
 
-    HTTPDownload
-      .fetchString(HTTPRequestBuilder.fromURI(uri.build()).GET)
+    CachedHTTP
+      .fetchString(HTTPRequestBuilder.fromURI(uri).GET)
       .flatMap(response =>
         parse(response.content)
           .flatMap(_.as[Release])
@@ -152,7 +155,7 @@ object GithubAPI {
       .addHeader("Accept", "application/octet-stream")
       .GET
 
-    HTTPDownload.fetchString(request, Some(asset.size)).map(_.content)
+    CachedHTTP.fetchString(request, Some(asset.size)).map(_.content)
   }
 
   /** Downloads the asset to the provided `destination`.
@@ -165,6 +168,7 @@ object GithubAPI {
       .addHeader("Accept", "application/octet-stream")
       .GET
 
+    System.err.println(s"Preparing to download asset ${asset.url}")
     HTTPDownload
       .download(request, destination, Some(asset.size))
       .map(_ => ())
