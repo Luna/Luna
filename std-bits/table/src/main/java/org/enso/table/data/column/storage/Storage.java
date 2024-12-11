@@ -224,7 +224,7 @@ public abstract class Storage<T> implements ColumnStorage {
       String name,
       MapOperationProblemAggregator problemAggregator,
       BiFunction<Object, Object, Object> fallback,
-      Object argument,
+      Value argument,
       boolean skipNulls,
       StorageType expectedResultType) {
     if (isBinaryOpVectorized(name)) {
