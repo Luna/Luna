@@ -110,8 +110,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
         )}
         schema={(z) =>
           z
-            .string()
-            .regex(validation.DIRECTORY_NAME_REGEX, {
+            .refine((value) => !validation.isDirectoryNameContainInvalidCharacters(value), {
               message: getText('nameShouldNotContainInvalidCharacters'),
             })
             .refine(

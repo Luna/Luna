@@ -1554,13 +1554,13 @@ export function isNewTitleUnique(
 ) {
   siblings ??= []
 
-  console.log('isNewTitleUnique()', { siblings, item, newTitle })
-
   return siblings.every(sibling => {
-    const isSelf = sibling.id === item.id
-    const hasSameType = sibling.type === item.type
+    if (sibling.id === item.id) {
+      return true
+    }
+
     const hasSameTitle = sibling.title.toLowerCase() === newTitle.toLowerCase()
-    return !(!isSelf && hasSameType && hasSameTitle)
+    return !hasSameTitle
   })
 }
 

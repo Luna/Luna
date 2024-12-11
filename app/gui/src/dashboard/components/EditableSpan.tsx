@@ -29,7 +29,7 @@ export interface EditableSpanProps {
   /**
    * Additional schema to validate the value.
    */
-  readonly schema?: (schema: typeof z) => z.ZodType<string>
+  readonly schema?: (schema: z.ZodType<string>) => z.ZodType<string>
 }
 
 /** A `<span>` that can turn into an `<input type="text">`. */
@@ -88,10 +88,11 @@ function EditForm(props: EditFormProps) {
 
   const form = Form.useForm({
     schema: (z) => {
-      const baseSchema = z.object({ value: z.string().min(1).trim() })
+      const baseValueSchema = z.string().min(1).trim()
+      const baseSchema = z.object({ value: baseValueSchema })
 
       if (schema != null) {
-        return baseSchema.merge(z.object({ value: schema(z) }))
+        return baseSchema.merge(z.object({ value: schema(baseValueSchema) }))
       }
 
       return baseSchema
@@ -124,7 +125,7 @@ function EditForm(props: EditFormProps) {
   const hasError = errorMessage != null
 
   return (
-    <form ref={formRef} className="relative flex grow gap-1.5" {...form.formProps}>
+    <form ref={formRef} className="relative isolate z-1 flex grow gap-1.5" {...form.formProps}>
       <Form.Provider form={form}>
         <div className="flex flex-1 flex-shrink-0 basis-full items-center">
           <Input
@@ -234,7 +235,7 @@ function ErrorMessage(props: ErrorMessageProps) {
     <>
       {formRect && (
         <div
-          className="pointer-events-none absolute rounded-4xl border-[2px] border-danger"
+          className="pointer-events-none absolute rounded-4xl border-[2px] border-danger shadow-lg"
           style={{
             width: formRect.width + outlineWidth,
             height: formRect.height + offset,
@@ -249,12 +250,12 @@ function ErrorMessage(props: ErrorMessageProps) {
         className="absolute -bottom-[5px] left-0 z-1"
         style={{ transform: `translateX(-${crossOffset}px) translateY(100%)` }}
       >
-        <Underlay className="max-w-[210px] rounded-2xl rounded-tl-none rounded-tr-none bg-danger px-2 py-1">
+        <Underlay className="max-w-[210px] rounded-3xl rounded-tl-none rounded-tr-none bg-danger px-4 py-2 shadow-lg">
           <Text variant="body" truncate="3" color="invert" nowrap="normal">
             {message}
           </Text>
 
-          <div className="absolute -top-[0.5px] right-[0.5px] aspect-square w-[21px] translate-x-full [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-danger)_70%)]" />
+          <div className="absolute right-[0px] top-[1px] aspect-square w-[16px] translate-x-full [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-danger)_70%)]" />
         </Underlay>
       </div>
     </>

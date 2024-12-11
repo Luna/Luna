@@ -78,7 +78,7 @@ export default function FileNameColumn(props: FileNameColumnProps) {
           setIsEditing(false)
         }}
         schema={(z) =>
-          z.string().refine(
+          z.refine(
             (value) =>
               backendModule.isNewTitleUnique(
                 item,

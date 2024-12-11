@@ -1807,9 +1807,12 @@ function AssetsTable(props: AssetsTableProps) {
       }}
     >
       <table className="rr-block isolate table-fixed border-collapse rounded-rows">
-        <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
-        <tbody ref={bodyRef}>
-          <tr className="h-1" aria-hidden />
+        <thead className="sticky top-0 isolate z-1 bg-dashboard before:absolute before:-inset-1 before:bottom-0 before:bg-dashboard">
+          {headerRow}
+        </thead>
+        <tbody ref={bodyRef} className="isolate">
+          {/* Dummy row to increase the gap between the header and the first row */}
+          <tr className="h-0.5" aria-hidden />
           {itemRows}
           <tr className="hidden h-row first:table-row">
             <td colSpan={columns.length} className="bg-transparent">

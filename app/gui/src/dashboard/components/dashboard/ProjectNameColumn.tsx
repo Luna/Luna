@@ -139,7 +139,7 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
           setIsEditing(false)
         }}
         schema={(z) =>
-          z.string().refine(
+          z.refine(
             (value) =>
               backendModule.isNewTitleUnique(
                 item,
