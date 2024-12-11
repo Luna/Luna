@@ -36,6 +36,7 @@ import * as localBackendModule from '#/services/LocalBackend'
 import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
 import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
 import { usePasteData } from '#/providers/DriveProvider'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as object from '#/utilities/object'
@@ -107,6 +108,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
 
   const systemApi = window.systemApi
   const ownsThisAsset = !isCloud || self?.permission === permissions.PermissionAction.own
+  const canManageThisAsset = asset.id !== USERS_DIRECTORY_ID && asset.id !== TEAMS_DIRECTORY_ID
   const managesThisAsset = ownsThisAsset || self?.permission === permissions.PermissionAction.admin
   const canEditThisAsset =
     managesThisAsset || self?.permission === permissions.PermissionAction.edit
@@ -218,6 +220,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
           />
           {pasteMenuEntry}
         </ContextMenu>
+    : !canManageThisAsset ? null
     : <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden} event={event}>
         {asset.type === backendModule.AssetType.datalink && (
           <ContextMenuEntry
