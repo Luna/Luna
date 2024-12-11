@@ -10,9 +10,10 @@ import java.util.zip.ZipOutputStream;
 class CompressZipArchive {
   static void compress(Path source, Path destination) throws IOException {
     try (var zip = Files.newOutputStream(destination);
-         var zos = new ZipOutputStream(zip);
-         var files = Files.walk(source)) {
-      files.filter(path -> !Files.isDirectory(path))
+        var zos = new ZipOutputStream(zip);
+        var files = Files.walk(source)) {
+      files
+          .filter(path -> !Files.isDirectory(path))
           .forEach(
               path -> {
                 var zipEntry = new ZipEntry(source.relativize(path).toString());
