@@ -224,14 +224,20 @@ public abstract class Storage<T> implements ColumnStorage {
       String name,
       MapOperationProblemAggregator problemAggregator,
       BiFunction<Object, Object, Object> fallback,
-      Object argument,
+      Value argument,
       boolean skipNulls,
       StorageType expectedResultType) {
+    Object convertedArg;
+    if (argument.isHostObject()) {
+      convertedArg = argument.asHostObject();
+    } else {
+      convertedArg = Polyglot_Utils.convertPolyglotValue(argument);
+    }
     if (isBinaryOpVectorized(name)) {
-      return runVectorizedBinaryMap(name, argument, problemAggregator);
+      return runVectorizedBinaryMap(name, convertedArg, problemAggregator);
     } else {
       checkFallback(fallback, expectedResultType, name);
-      return binaryMap(fallback, argument, skipNulls, expectedResultType, problemAggregator);
+      return binaryMap(fallback, convertedArg, skipNulls, expectedResultType, problemAggregator);
     }
   }
 
