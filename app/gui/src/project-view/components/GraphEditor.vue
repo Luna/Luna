@@ -33,6 +33,7 @@ import { groupColorVar } from '@/composables/nodeColors'
 import type { PlacementStrategy } from '@/composables/nodeCreation'
 import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
 import { provideGraphEditorLayers } from '@/providers/graphEditorLayers'
+import { provideGraphEditorState } from '@/providers/graphEditorState'
 import type { GraphNavigator } from '@/providers/graphNavigator'
 import { provideGraphNavigator } from '@/providers/graphNavigator'
 import { provideNodeColors } from '@/providers/graphNodeColors'
@@ -349,7 +350,7 @@ const graphBindingsHandler = graphBindings.handler({
     projectStore.lsRpcConnection.profilingStop()
   },
   openComponentBrowser() {
-    if (graphNavigator.sceneMousePos != null && !componentBrowserVisible.value) {
+    if (graphNavigator.sceneMousePos != null && !componentBrowserOpened.value) {
       createWithComponentBrowser(fromSelection() ?? { placement: { type: 'mouse' } })
     }
   },
@@ -467,24 +468,26 @@ const markdownDocs = computed(() => {
 
 // === Component Browser ===
 
-const componentBrowserVisible = ref(false)
+const { componentBrowserOpened } = provideGraphEditorState({
+  componentBrowserOpened: ref(false),
+})
 const componentBrowserNodePosition = ref<Vec2>(Vec2.Zero)
 const componentBrowserUsage = ref<Usage>({ type: 'newNode' })
 
 function openComponentBrowser(usage: Usage, position: Vec2) {
   componentBrowserUsage.value = usage
   componentBrowserNodePosition.value = position
-  componentBrowserVisible.value = true
+  componentBrowserOpened.value = true
 }
 
 function hideComponentBrowser() {
   graphStore.editedNodeInfo = undefined
-  componentBrowserVisible.value = false
+  componentBrowserOpened.value = false
   displayedDocs.value = null
 }
 
 const rightDockDisplayedTab = useSelectRef(
-  componentBrowserVisible,
+  componentBrowserOpened,
   computed({
     get() {
       if (userSettings.value.showHelpForCB) {
@@ -503,7 +506,7 @@ const rightDockDisplayedTab = useSelectRef(
 )
 
 const rightDockVisible = useSelectRef(
-  componentBrowserVisible,
+  componentBrowserOpened,
   computed({
     get() {
       return userSettings.value.showHelpForCB || rightDockVisibleForCB.value || showRightDock.value
@@ -758,7 +761,7 @@ const documentationEditorFullscreen = ref(false)
           />
           <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
           <ComponentBrowser
-            v-if="componentBrowserVisible"
+            v-if="componentBrowserOpened"
             ref="componentBrowser"
             :navigator="graphNavigator"
             :nodePosition="componentBrowserNodePosition"

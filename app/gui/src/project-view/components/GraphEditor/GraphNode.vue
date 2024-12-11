@@ -521,7 +521,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
       :nodeSize="nodeSize"
       :scale="navigator?.scale ?? 1"
       :nodePosition="nodePosition"
-      :isCircularMenuVisible="menuVisible"
+      :isComponentMenuVisible="menuVisible"
       :currentType="props.node.vis?.identifier"
       :dataSource="dataSource"
       :typename="expressionInfo?.typename"
@@ -583,17 +583,15 @@ const showMenuAt = ref<{ x: number; y: number }>()
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
         :forceVisible="nodeHovered"
+        @newNodeClick="
+          setSoleSelected(), emit('createNodes', [{ commit: false, content: undefined }])
+        "
         @portClick="(...args) => emit('outputPortClick', ...args)"
         @portDoubleClick="(...args) => emit('outputPortDoubleClick', ...args)"
         @update:hoverAnim="emit('update:hoverAnim', $event)"
         @update:nodeHovered="outputHovered = $event"
       />
     </svg>
-    <SmallPlusButton
-      v-if="menuVisible"
-      :class="isVisualizationVisible ? 'afterNode' : 'belowMenu'"
-      @createNodes="setSoleSelected(), emit('createNodes', $event)"
-    />
   </div>
   <PointFloatingMenu v-if="showMenuAt" :point="showMenuAt" @close="showMenuAt = undefined">
     <ComponentContextMenu @close="showMenuAt = undefined" />
@@ -685,7 +683,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
   opacity: 1;
 }
 
-.CircularMenu {
+.ComponentMenu {
   z-index: 25;
   &.partial {
     z-index: 1;
