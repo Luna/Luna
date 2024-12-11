@@ -970,7 +970,8 @@ lazy val pkg = (project in file("lib/scala/pkg"))
       (`editions` / Compile / exportedModule).value,
       (`semver` / Compile / exportedModule).value,
       (`scala-yaml` / Compile / exportedModule).value,
-      (`scala-libs-wrapper` / Compile / exportedModule).value
+      (`scala-libs-wrapper` / Compile / exportedModule).value,
+      (`version-output` / Compile / exportedModule).value
     )
   )
   .dependsOn(editions)
@@ -3620,6 +3621,7 @@ lazy val `engine-runner` = project
       ).distinct
       val stdLibsJars =
         `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
+        `image-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
         `table-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
       core ++ stdLibsJars
     },

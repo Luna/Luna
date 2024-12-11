@@ -51,7 +51,7 @@ import * as inputBindingsModule from '#/configurations/inputBindings'
 import AuthProvider, * as authProvider from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import DriveProvider from '#/providers/DriveProvider'
-import { useHttpClient } from '#/providers/HttpClientProvider'
+import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
 import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
 import { useLogger } from '#/providers/LoggerProvider'
@@ -247,7 +247,7 @@ export default function App(props: AppProps) {
         closeOnClick={false}
         draggable={false}
         toastClassName="text-sm leading-cozy bg-selected-frame rounded-lg backdrop-blur-default"
-        transition={toastify.Zoom}
+        transition={toastify.Slide}
         limit={3}
       />
       <router.BrowserRouter basename={getMainPageUrl().pathname}>
@@ -285,7 +285,7 @@ export interface AppRouterProps extends AppProps {
 function AppRouter(props: AppRouterProps) {
   const { isAuthenticationDisabled, shouldShowDashboard } = props
   const { onAuthenticated, projectManagerInstance } = props
-  const httpClient = useHttpClient()
+  const httpClient = useHttpClientStrict()
   const logger = useLogger()
   const navigate = router.useNavigate()
 
@@ -538,16 +538,14 @@ function AppRouter(props: AppRouterProps) {
                 {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
                  * due to modals being in `TheModal`. */}
                 <DriveProvider>
-                  <errorBoundary.ErrorBoundary>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    <suspense.Suspense>
-                      <errorBoundary.ErrorBoundary>
-                        <devtools.EnsoDevtools />
-                      </errorBoundary.ErrorBoundary>
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
+                  <LocalBackendPathSynchronizer />
+                  <VersionChecker />
+                  {routes}
+                  <suspense.Suspense>
+                    <errorBoundary.ErrorBoundary>
+                      <devtools.EnsoDevtools />
+                    </errorBoundary.ErrorBoundary>
+                  </suspense.Suspense>
                 </DriveProvider>
               </InputBindingsProvider>
             </AuthProvider>
