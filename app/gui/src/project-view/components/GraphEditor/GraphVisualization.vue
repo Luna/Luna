@@ -213,7 +213,7 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
 </script>
 
 <template>
-  <div class="GraphVisualization" :style="style">
+  <div class="GraphVisualization" :style="style" :class="{ isFocused }">
     <WithFullscreenMode :fullscreen="isFullscreen" @update:animating="fullscreenAnimating = $event">
       <div
         ref="panelElement"
@@ -278,8 +278,16 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
   position: absolute;
   border-radius: var(--radius-default);
   background: var(--color-visualization-bg);
+  opacity: 0.9;
+}
+
+.content {
   /** Prevent drawing on top of other UI elements (e.g. dropdown widgets). */
   isolation: isolate;
+}
+
+.isFocused {
+  opacity: 1;
 }
 
 .VisualizationPanel {
@@ -298,6 +306,7 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
 .content {
   overflow: auto;
   contain: strict;
+  border-radius: 0 0 var(--radius-default) var(--radius-default);
   height: 100%;
 }
 

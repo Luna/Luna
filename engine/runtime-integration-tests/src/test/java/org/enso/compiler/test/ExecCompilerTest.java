@@ -176,7 +176,7 @@ public class ExecCompilerTest {
     var error = run.execute(-1);
     assertTrue("We get an error value back", error.isException());
     assertTrue("The error value also represents null", error.isNull());
-    assertEquals("(Error: Uninitialized value)", error.toString());
+    assertEquals("(Error: 'Uninitialized value')", error.toString());
   }
 
   @Test
@@ -195,7 +195,7 @@ public class ExecCompilerTest {
     var error = run.execute("Nope: ");
     assertTrue("We get an error value back", error.isException());
     assertTrue("The error value also represents null", error.isNull());
-    assertEquals("(Error: Uninitialized value)", error.toString());
+    assertEquals("(Error: 'Uninitialized value')", error.toString());
   }
 
   @Ignore("Explicitly-default arguments will be implemented in #8480")
@@ -567,7 +567,7 @@ public class ExecCompilerTest {
           ex.getMessage().toLowerCase(),
           AllOf.allOf(containsString("type"), containsString("error")));
       var typeError = ex.getGuestObject();
-      assertEquals("Expected type", "First_Type", typeError.getMember("expected").toString());
+      assertEquals("Expected type", "First_Type", typeError.getMember("expected").asString());
       assertEquals("Got wrong value", 42, typeError.getMember("actual").asInt());
     }
   }

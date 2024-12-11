@@ -88,3 +88,18 @@ export function partition<T>(array: Iterable<T>, pred: (elem: T) => boolean): [T
 
   return [truthy, falsy]
 }
+
+/**
+ * Find smallest index at which two arrays differ. Returns an index past the array (i.e. array length) when both arrays
+ * are equal. Note that the default comparator uses strict equality, and so `NaN` values will be considered different.
+ */
+export function findDifferenceIndex<T>(
+  lhs: T[],
+  rhs: T[],
+  equals = (a: T, b: T) => a === b,
+): number {
+  return (
+    findIndexOpt(lhs, (item, index) => index >= rhs.length || !equals(item, rhs[index]!)) ??
+    lhs.length
+  )
+}

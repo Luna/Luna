@@ -34,8 +34,10 @@ import { useText } from '#/providers/TextProvider'
 import { Plan } from '#/services/Backend'
 import { LocalStorage } from '#/utilities/LocalStorage'
 import {
+  useAnimationsDisabled,
   useEnableVersionChecker,
   usePaywallDevtools,
+  useSetAnimationsDisabled,
   useSetEnableVersionChecker,
   useShowDevtools,
 } from './EnsoDevtoolsProvider'
@@ -52,6 +54,10 @@ export function EnsoDevtools() {
   const { features, setFeature } = usePaywallDevtools()
   const enableVersionChecker = useEnableVersionChecker()
   const setEnableVersionChecker = useSetEnableVersionChecker()
+
+  const animationsDisabled = useAnimationsDisabled()
+  const setAnimationsDisabled = useSetAnimationsDisabled()
+
   const { localStorage } = useLocalStorage()
   const [localStorageState, setLocalStorageState] = useState<Record<string, unknown>>({})
 
@@ -142,19 +148,36 @@ export function EnsoDevtools() {
           </Text>
 
           <Form
-            schema={(z) => z.object({ enableVersionChecker: z.boolean() })}
-            defaultValues={{ enableVersionChecker: enableVersionChecker ?? !IS_DEV_MODE }}
+            schema={(z) =>
+              z.object({ enableVersionChecker: z.boolean(), disableAnimations: z.boolean() })
+            }
+            defaultValues={{
+              enableVersionChecker: enableVersionChecker ?? !IS_DEV_MODE,
+              disableAnimations: animationsDisabled,
+            }}
           >
             {({ form }) => (
-              <Switch
-                form={form}
-                name="enableVersionChecker"
-                label={getText('enableVersionChecker')}
-                description={getText('enableVersionCheckerDescription')}
-                onChange={(value) => {
-                  setEnableVersionChecker(value)
-                }}
-              />
+              <>
+                <Switch
+                  form={form}
+                  name="disableAnimations"
+                  label={getText('disableAnimations')}
+                  description={getText('disableAnimationsDescription')}
+                  onChange={(value) => {
+                    setAnimationsDisabled(value)
+                  }}
+                />
+
+                <Switch
+                  form={form}
+                  name="enableVersionChecker"
+                  label={getText('enableVersionChecker')}
+                  description={getText('enableVersionCheckerDescription')}
+                  onChange={(value) => {
+                    setEnableVersionChecker(value)
+                  }}
+                />
+              </>
             )}
           </Form>
 

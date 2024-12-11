@@ -1,13 +1,14 @@
 /** @file Provider for enabling or disabling certain features. */
-import { useEffect, type ReactNode } from 'react'
-
+import * as z from 'zod'
 import { createStore, useStore } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-import { useMount } from '#/hooks/mountHooks'
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
-import { useFeatureFlags as useFeatureFlagsInternal } from './FeatureFlagsProvider/featureFlagsLocalStorage'
-import { useLocalStorage } from './LocalStorageProvider'
-export { FEATURE_FLAGS_SCHEMA } from './FeatureFlagsProvider/featureFlagsLocalStorage'
+export const FEATURE_FLAGS_SCHEMA = z.object({
+  enableMultitabs: z.boolean(),
+  enableAssetsTableBackgroundRefresh: z.boolean(),
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  assetsTableBackgroundRefreshInterval: z.number().min(100),
+})
 
 /** Feature flags store. */
 export interface FeatureFlags {
@@ -22,20 +23,22 @@ export interface FeatureFlags {
   ) => void
 }
 
-const flagsStore = createStore<FeatureFlags>((set) => ({
-  featureFlags: {
-    enableMultitabs: false,
-    enableAssetsTableBackgroundRefresh: true,
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    assetsTableBackgroundRefreshInterval: 3_000,
-  },
-  setFeatureFlags: (key, value) => {
-    set(({ featureFlags }) => {
-      const newFlags = { ...featureFlags, [key]: value }
-      return { featureFlags: newFlags }
-    })
-  },
-}))
+const flagsStore = createStore<FeatureFlags>()(
+  persist(
+    (set) => ({
+      featureFlags: {
+        enableMultitabs: false,
+        enableAssetsTableBackgroundRefresh: true,
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+        assetsTableBackgroundRefreshInterval: 3_000,
+      },
+      setFeatureFlags: (key, value) => {
+        set(({ featureFlags }) => ({ featureFlags: { ...featureFlags, [key]: value } }))
+      },
+    }),
+    { name: 'featureFlags' },
+  ),
+)
 
 /** Hook to get all feature flags. */
 export function useFeatureFlags() {
@@ -59,30 +62,6 @@ export function useSetFeatureFlags() {
  * Gets feature flags from local storage and sets them in the store.
  * Also saves feature flags to local storage when they change.
  */
-export function FeatureFlagsProvider({ children }: { children: ReactNode }) {
-  const { localStorage } = useLocalStorage()
-  const { get: getFeatureFlagsInternal, set: setFeatureFlagsInternal } = useFeatureFlagsInternal()
-  const setFeatureFlags = useSetFeatureFlags()
-
-  useMount(() => {
-    const storedFeatureFlags = getFeatureFlagsInternal()
-
-    if (storedFeatureFlags != null) {
-      for (const [key, value] of unsafeEntries(storedFeatureFlags)) {
-        setFeatureFlags(key, value)
-      }
-    }
-  })
-
-  useEffect(
-    () =>
-      flagsStore.subscribe((state, prevState) => {
-        if (state.featureFlags !== prevState.featureFlags) {
-          setFeatureFlagsInternal(state.featureFlags)
-        }
-      }),
-    [localStorage, setFeatureFlagsInternal],
-  )
-
+export function FeatureFlagsProvider({ children }: React.PropsWithChildren) {
   return children
 }

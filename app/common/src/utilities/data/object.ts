@@ -46,6 +46,11 @@ export function unsafeKeys<T extends object>(object: T): readonly (keyof T)[] {
   return Object.keys(object)
 }
 
+/** Return the values of an object. UNSAFE only when it is possible for an object to have extra keys. */
+export function unsafeValues<const T extends object>(object: T): readonly T[keyof T][] {
+  return Object.values(object)
+}
+
 /**
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
  * extra keys.
@@ -55,6 +60,17 @@ export function unsafeEntries<T extends object>(
 ): readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][] {
   // @ts-expect-error This is intentionally a wrapper function with a different type.
   return Object.entries(object)
+}
+
+/**
+ * Return an object from its entries. UNSAFE only when it is possible for an object to have
+ * extra keys.
+ */
+export function unsafeFromEntries<T extends object>(
+  entries: readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][],
+): T {
+  // @ts-expect-error This is intentionally a wrapper function with a different type.
+  return Object.fromEntries(entries)
 }
 
 /** A the object with `undefined` unsafely removed from the value types of all of its keys. */
@@ -146,3 +162,9 @@ export function useObjectId() {
 export function createObject<T extends object>(parent: T): T {
   return Object.create(parent)
 }
+
+/**
+ * Returns the union of `A` and `B`, with a type-level assertion that `A` and `B` don't have any keys in common; this
+ * can be used to splice together objects without the risk of collisions.
+ */
+export type DisjointKeysUnion<A, B> = keyof A & keyof B extends never ? A & B : never

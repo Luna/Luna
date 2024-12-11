@@ -19,7 +19,7 @@ import { AssetDocs } from '#/layouts/AssetDocs'
 import AssetProjectSessions from '#/layouts/AssetProjectSessions'
 import AssetProperties from '#/layouts/AssetProperties'
 import AssetVersions from '#/layouts/AssetVersions/AssetVersions'
-import type { Category } from '#/layouts/CategorySwitcher/Category'
+import { isLocalCategory, type Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useStore } from '#/utilities/zustand'
@@ -42,7 +42,7 @@ export interface AssetPanelProps {
  * A sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
-export function AssetPanel(props: AssetPanelProps) {
+export const AssetPanel = memo(function AssetPanel(props: AssetPanelProps) {
   const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
     unsafeEnableTransition: true,
   })
@@ -72,7 +72,7 @@ export function AssetPanel(props: AssetPanelProps) {
             initial={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
-            className="absolute bottom-0 right-0 top-0 flex flex-col bg-background-hex"
+            className="absolute bottom-0 right-0 top-0 flex flex-col"
             onClick={(event) => {
               // Prevent deselecting Assets Table rows.
               event.stopPropagation()
@@ -84,7 +84,7 @@ export function AssetPanel(props: AssetPanelProps) {
       </AnimatePresence>
     </div>
   )
-}
+})
 
 /** Tabs for an {@link AssetPanel}. */
 const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
@@ -107,6 +107,7 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
   })
 
   const isReadonly = category.type === 'trash'
+  const isLocal = isLocalCategory(category)
 
   const { getText } = useText()
 
@@ -148,7 +149,6 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
       <AnimatePresence initial={!isOpen} mode="sync">
         {isOpen && (
           <motion.div
-            custom={ASSET_PANEL_WIDTH}
             initial="initial"
             animate="animate"
             exit="exit"
@@ -199,27 +199,33 @@ const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
           getTranslation={getTranslation}
         />
 
-        <AssetPanelTabs.TabList className="">
+        <AssetPanelTabs.TabList>
           <AssetPanelTabs.Tab
             id="settings"
             icon={inspectIcon}
-            label={getText('properties')}
+            label={isLocal ? getText('assetProperties.localBackend') : getText('properties')}
             isExpanded={isOpen}
+            isDisabled={isLocal}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
             icon={versionsIcon}
-            label={getText('versions')}
+            label={
+              isLocal ? getText('assetVersions.localAssetsDoNotHaveVersions') : getText('versions')
+            }
             isExpanded={isOpen}
-            isDisabled={isHidden}
+            isDisabled={isLocal}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="sessions"
             icon={sessionsIcon}
-            label={getText('projectSessions')}
+            label={
+              isLocal ? getText('assetProjectSessions.localBackend') : getText('projectSessions')
+            }
             isExpanded={isOpen}
+            isDisabled={isLocal}
             onPress={expandTab}
           />
           <AssetPanelTabs.Tab
