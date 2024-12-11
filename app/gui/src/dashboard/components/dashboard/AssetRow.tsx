@@ -26,8 +26,8 @@ import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import * as localBackend from '#/services/LocalBackend'
 
 import * as backendModule from '#/services/Backend'
@@ -44,7 +44,7 @@ import {
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-import { useAsset } from '#/layouts/AssetsTable/assetsTableItemsHooks'
+import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import { download } from '#/utilities/download'
@@ -488,7 +488,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, asset.parentId]),
+                    backendQueryOptions(
+                      backend,
+                      'getProjectDetails',
+                      [asset.id, asset.parentId, true],
+                      { staleTime: 0 },
+                    ),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -504,7 +509,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.file: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title]),
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
+                      staleTime: 0,
+                    }),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, asset.title)
@@ -669,7 +676,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       return (
         <>
           {!hidden && (
-            <FocusRing>
+            <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
                 tabIndex={0}

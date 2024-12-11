@@ -55,6 +55,7 @@
   be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
+- [Edges are now colored based on their source component.][11810]
 - [Highlight missing required arguments][11803].
 - [Arrows in some drop-down buttons are now clearly visible][11800]
 
@@ -90,6 +91,7 @@
 [11753]: https://github.com/enso-org/enso/pull/11753
 [11761]: https://github.com/enso-org/enso/pull/11761
 [11768]: https://github.com/enso-org/enso/pull/11768
+[11810]: https://github.com/enso-org/enso/pull/11810
 [11803]: https://github.com/enso-org/enso/pull/11803
 [11800]: https://github.com/enso-org/enso/pull/11800
 
@@ -106,6 +108,7 @@
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [The reload button clears the HTTP cache.][11673]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -114,6 +117,7 @@
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
 [11577]: https://github.com/enso-org/enso/pull/11577
+[11673]: https://github.com/enso-org/enso/pull/11673
 
 #### Enso Language & Runtime
 
