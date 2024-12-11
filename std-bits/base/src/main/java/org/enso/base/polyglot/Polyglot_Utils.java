@@ -66,20 +66,18 @@ public class Polyglot_Utils {
 
   public static BigInteger asBigInteger(Value value) {
     try {
-      value.as(BigInteger.class);
+      return value.as(BigInteger.class);
     } catch (ClassCastException e) {
       return null;
     }
-    return null;
   }
 
   public static BigDecimal asBigDecimal(Value value) {
     try {
-      value.as(BigDecimal.class);
+      return value.as(BigDecimal.class);
     } catch (ClassCastException e) {
       return null;
     }
-    return null;
   }
 
   /**
