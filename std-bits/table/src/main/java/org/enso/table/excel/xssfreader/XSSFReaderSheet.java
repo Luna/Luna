@@ -115,6 +115,10 @@ public class XSSFReaderSheet implements ExcelSheet {
 
   @Override
   public ExcelRow get(int row) {
+    if (!readSheetData) {
+      readSheetData();
+    }
+
     if (!rowData.containsKey(row)) {
       return null;
     }

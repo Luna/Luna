@@ -2,6 +2,7 @@ package org.enso.table.excel.xssfreader;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
+import java.time.ZonedDateTime;
 import java.time.temporal.Temporal;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.model.SharedStrings;
@@ -168,9 +169,15 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     }
 
     public Temporal getDateTimeValue(boolean use1904Dates) {
-      return use1904Dates
-          ? ExcelUtils.fromExcelDateTime1904(getNumberValue())
-          : ExcelUtils.fromExcelDateTime(getNumberValue());
+      if (use1904Dates) {
+        var datetime = ExcelUtils.fromExcelDateTime1904(getNumberValue());
+        if (datetime instanceof ZonedDateTime zdt && zdt.getYear() == 1904 && zdt.getDayOfYear() == 1 && !format.contains("y") && !format.contains("M") && !format.contains("d")) {
+          datetime = zdt.toLocalTime();
+        }
+        return datetime;
+      }
+
+      return ExcelUtils.fromExcelDateTime(getNumberValue());
     }
   }
 

@@ -2,6 +2,7 @@ package org.enso.table.excel;
 
 import java.io.IOException;
 import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /** Represents an Excel workbook. Wraps the underlying Apache POI Workbook object. */
 public interface ExcelWorkbook {

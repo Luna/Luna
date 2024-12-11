@@ -247,7 +247,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   public int getSheetIndex(String name) {
     var map = getSheetInfoMap();
     if (!map.containsKey(name)) {
-      throw new IllegalArgumentException("Sheet not found: " + name);
+      return -1;
     }
     return map.get(name).index;
   }

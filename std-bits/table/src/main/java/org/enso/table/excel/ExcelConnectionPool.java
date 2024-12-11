@@ -282,7 +282,7 @@ public class ExcelConnectionPool {
           throw e;
         }
       }
-      case XLSX -> {
+      case XLSX, XLSX_FALLBACK -> {
         try {
           PackageAccess access = writeAccess ? PackageAccess.READ_WRITE : PackageAccess.READ;
           OPCPackage pkg = OPCPackage.open(file, access);
@@ -304,7 +304,7 @@ public class ExcelConnectionPool {
   private static Workbook createEmptyWorkbook(ExcelFileFormat format) {
     return switch (format) {
       case XLS -> new HSSFWorkbook();
-      case XLSX -> new XSSFWorkbook();
+      case XLSX, XLSX_FALLBACK -> new XSSFWorkbook();
     };
   }
 
