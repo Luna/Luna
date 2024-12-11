@@ -7,6 +7,7 @@ import org.enso.distribution.FileSystem.PathSyntax
 import org.enso.distribution.locking.{FileLockManager, LockType}
 import org.enso.launcher._
 import org.enso.process.{RunResult, WrappedProcess}
+import org.enso.runtimeversionmanager.releases.testing.FakeAsset
 import org.enso.semver.SemVer
 import org.enso.testkit.{FlakySpec, WithTemporaryDirectory}
 import org.scalatest.exceptions.TestFailedException
@@ -30,7 +31,8 @@ class UpgradeSpec
 
   /** Location of built Rust artifacts.
     */
-  private val rustBuildRoot = Path.of("../../target/rust/debug/").toAbsolutePath.normalize()
+  private val rustBuildRoot =
+    Path.of("../../target/rust/debug/").toAbsolutePath.normalize()
 
   /** Location of the actual launcher executable that is wrapped by the shims.
     */
@@ -194,8 +196,8 @@ class UpgradeSpec
     "upgrade/downgrade to a specific version " +
     "(and update necessary files)" taggedAs Flaky in {
       prepareDistribution(
-        portable = true,
-        launcherVersion = Some(SemVer.of(1, 0, 0))
+        portable        = true,
+        launcherVersion = Some(SemVer.of(0, 9999, 0))
       )
       // precondition for the test to make sense
       checkVersion().isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
@@ -338,7 +340,7 @@ class UpgradeSpec
       // so acquiring this exclusive lock will stall access to that file until
       // the exclusive lock is released
       val lock = syncLocker.acquireLock(
-        "testasset-" + launcherManifestAssetName,
+        FakeAsset.lockNameForAsset(launcherManifestAssetName),
         LockType.Exclusive
       )
 

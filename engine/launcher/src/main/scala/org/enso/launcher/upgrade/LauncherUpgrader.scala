@@ -6,12 +6,21 @@ import org.enso.semver.SemVer
 import org.enso.semver.SemVerOrdering._
 import org.enso.cli.{CLIOutput, OS}
 import org.enso.distribution.{DistributionManager, FileSystem}
-import org.enso.distribution.locking.{LockType, LockUserInterface, Resource, ResourceManager}
+import org.enso.distribution.locking.{
+  LockType,
+  LockUserInterface,
+  Resource,
+  ResourceManager
+}
 import org.enso.runtimeversionmanager.CurrentVersion
 import org.enso.distribution.FileSystem.PathSyntax
 import org.enso.downloader.archive.Archive
 import org.enso.runtimeversionmanager.components.UpgradeRequiredError
-import org.enso.launcher.cli.{CLIProgressReporter, GlobalCLIOptions, InternalOpts}
+import org.enso.launcher.cli.{
+  CLIProgressReporter,
+  GlobalCLIOptions,
+  InternalOpts
+}
 import org.enso.launcher.releases.launcher.LauncherRelease
 import org.enso.runtimeversionmanager.releases.ReleaseProvider
 import org.enso.launcher.releases.LauncherRepository
