@@ -27,7 +27,7 @@ public abstract class StringLongToStringOp
       Value arg,
       MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       StringBuilder builder = new StringBuilder(size, TextType.VARIABLE_LENGTH);
       builder.appendNulls(size);
       return builder.seal();

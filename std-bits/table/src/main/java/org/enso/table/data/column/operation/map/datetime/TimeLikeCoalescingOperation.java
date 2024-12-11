@@ -27,7 +27,7 @@ public abstract class TimeLikeCoalescingOperation<T>
   public Storage<?> runBinaryMap(
       SpecializedStorage<T> storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return storage;
     } else {
       Object adapted = Polyglot_Utils.convertPolyglotValue(arg);

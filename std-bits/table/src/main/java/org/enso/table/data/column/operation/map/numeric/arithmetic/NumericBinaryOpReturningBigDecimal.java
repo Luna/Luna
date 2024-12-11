@@ -21,7 +21,7 @@ public abstract class NumericBinaryOpReturningBigDecimal<
   @Override
   public Storage<? extends Number> runBinaryMap(
       I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return BigDecimalStorage.makeEmpty(storage.size());
     }
 

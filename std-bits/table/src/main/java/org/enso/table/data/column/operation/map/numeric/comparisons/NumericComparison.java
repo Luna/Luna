@@ -46,7 +46,7 @@ public abstract class NumericComparison<T extends Number, I extends Storage<? su
   @Override
   public BoolStorage runBinaryMap(
       I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return BoolStorage.makeEmpty(storage.size());
     } else if (Polyglot_Utils.asBigInteger(arg) instanceof BigInteger bigInteger) {
       return switch (storage) {

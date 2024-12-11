@@ -20,7 +20,7 @@ public abstract class CoalescingStringStringOp extends StringStringOp {
       Value arg,
       MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return storage;
     } else if (arg.isString()) {
       var argString = arg.asString();

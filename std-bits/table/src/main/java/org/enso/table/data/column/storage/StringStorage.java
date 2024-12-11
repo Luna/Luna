@@ -95,7 +95,7 @@ public final class StringStorage extends SpecializedStorage<String> {
             BitSet isNothing = new BitSet();
             Context context = Context.getCurrent();
             for (int i = 0; i < storage.size(); i++) {
-              if (storage.getItem(i) == null || arg == null) {
+              if (storage.getItem(i) == null || arg == null || arg.isNull()) {
                 isNothing.set(i);
               } else if (Polyglot_Utils.asString(arg) instanceof String s
                   && Text_Utils.equals(storage.getItem(i), s)) {

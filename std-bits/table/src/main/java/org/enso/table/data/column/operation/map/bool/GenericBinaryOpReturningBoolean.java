@@ -35,7 +35,7 @@ public abstract class GenericBinaryOpReturningBoolean<T, S extends SpecializedSt
   @Override
   public Storage<?> runBinaryMap(
       S storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return BoolStorage.makeEmpty(storage.size());
     } else {
       T argT = tryCast(arg);

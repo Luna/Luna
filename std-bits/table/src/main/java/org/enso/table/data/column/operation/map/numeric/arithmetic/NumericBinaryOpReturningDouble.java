@@ -21,7 +21,7 @@ public abstract class NumericBinaryOpReturningDouble<T extends Number, I extends
   @Override
   public Storage<? extends Number> runBinaryMap(
       I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       return DoubleStorage.makeEmpty(storage.size());
     }
 

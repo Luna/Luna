@@ -339,7 +339,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public BoolStorage runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return BoolStorage.makeEmpty(storage.size);
       } else if (Polyglot_Utils.asBoolean(arg) instanceof Boolean v) {
         if (v) {
@@ -381,7 +381,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public BoolStorage runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         if (storage.negated) {
           var newMissing = new BitSet(storage.size);
           newMissing.flip(0, storage.size);
@@ -452,7 +452,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public BoolStorage runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         if (storage.negated) {
           var newMissing = storage.isNothing.get(0, storage.size);
           newMissing.or(storage.values);
@@ -589,7 +589,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public Storage<?> runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
@@ -620,7 +620,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public Storage<?> runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
@@ -651,7 +651,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public Storage<?> runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
@@ -682,7 +682,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public Storage<?> runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
@@ -764,7 +764,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public BoolStorage runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return storage;
       }
 
@@ -796,7 +796,7 @@ public final class BoolStorage extends Storage<Boolean>
     @Override
     public BoolStorage runBinaryMap(
         BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
-      if (arg == null) {
+      if (arg == null || arg.isNull()) {
         return storage;
       }
 

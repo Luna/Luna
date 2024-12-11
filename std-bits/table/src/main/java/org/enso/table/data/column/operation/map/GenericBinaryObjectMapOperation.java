@@ -32,7 +32,7 @@ public abstract class GenericBinaryObjectMapOperation<
   public Storage<?> runBinaryMap(
       InputStorageType storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     var convertedArg = Polyglot_Utils.convertPolyglotValue(arg);
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       int n = storage.size();
       Builder builder = createOutputBuilder(n);
       builder.appendNulls(n);

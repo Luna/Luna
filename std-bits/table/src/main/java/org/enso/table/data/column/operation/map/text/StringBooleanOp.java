@@ -28,7 +28,7 @@ public abstract class StringBooleanOp
       SpecializedStorage<String> storage,
       Value arg,
       MapOperationProblemAggregator problemAggregator) {
-    if (arg == null) {
+    if (arg == null || arg.isNull()) {
       BitSet newVals = new BitSet();
       BitSet newIsNothing = new BitSet();
       newIsNothing.set(0, storage.size());
