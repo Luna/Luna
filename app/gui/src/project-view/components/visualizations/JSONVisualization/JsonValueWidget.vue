@@ -10,8 +10,13 @@ const emit = defineEmits<{
 </script>
 
 <template>
+  <span
+    v-if="props.data && typeof props.data === 'object' && '_to_js_object_error_' in props.data"
+    class="JsonErrorWidget"
+    v-text="props.data._to_js_object_error_"
+  />
   <JsonArrayWidget
-    v-if="Array.isArray(props.data)"
+    v-else-if="Array.isArray(props.data)"
     :data="props.data"
     @createProjection="emit('createProjection', $event)"
   />
