@@ -26,3 +26,9 @@ results.
 
 One can also download only a CSV file representing all the selected benchmark
 results with `bench_download.py --create-csv`.
+
+## Contribute
+Run local tests with:
+```bash
+python -m unittest --verbose bench_tool/test*.py
+```
