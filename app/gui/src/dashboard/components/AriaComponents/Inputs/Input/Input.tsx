@@ -39,7 +39,7 @@ export interface InputProps<Schema extends TSchema, TFieldName extends FieldPath
     FieldVariantProps,
     Omit<VariantProps<typeof INPUT_STYLES>, 'disabled' | 'invalid'>,
     TestIdProps {
-  readonly className?: string
+  // readonly className?: string
   readonly style?: CSSProperties
   readonly inputRef?: Ref<HTMLInputElement>
   readonly addonStart?: ReactNode
@@ -71,6 +71,7 @@ export const Input = forwardRef(function Input<
     fieldVariants,
     form: formRaw,
     autoFocus = false,
+    className,
     ...inputProps
   } = props
   const form = Form.useFormContext(formRaw)
@@ -99,14 +100,28 @@ export const Input = forwardRef(function Input<
     },
   })
 
+  const invalid = inputProps.isInvalid ?? fieldProps.isInvalid
+  const disabled = fieldProps.disabled || formInstance.formState.isSubmitting
+
   const classes = variants({
     variant,
     size,
     rounded,
-    invalid: fieldProps.isInvalid,
+    invalid,
     readOnly: inputProps.readOnly,
-    disabled: fieldProps.disabled || formInstance.formState.isSubmitting,
+    disabled,
   })
+
+  const computedClassName = (states: aria.InputRenderProps) => {
+    if (typeof className === 'function') {
+      return className({
+        ...states,
+        defaultClassName: classes.textArea(),
+      })
+    } else {
+      return className
+    }
+  }
 
   useAutoFocus({ ref: privateInputRef, disabled: !autoFocus })
 
@@ -134,7 +149,14 @@ export const Input = forwardRef(function Input<
           <div className={classes.inputContainer()}>
             <aria.Input
               {...aria.mergeProps<aria.InputProps>()(
-                { className: classes.textArea(), type, name },
+                {
+                  className: (classNameStates) =>
+                    classes.textArea({ className: computedClassName(classNameStates) }),
+                  type,
+                  name,
+                  // eslint-disable-next-line @typescript-eslint/naming-convention
+                  'aria-invalid': invalid,
+                },
                 omit(inputProps, 'isInvalid', 'isRequired', 'isDisabled'),
                 omit(fieldProps, 'isInvalid', 'isRequired', 'isDisabled', 'invalid'),
               )}

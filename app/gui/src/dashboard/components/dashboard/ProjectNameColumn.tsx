@@ -18,9 +18,7 @@ import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
-import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import * as validation from '#/utilities/validation'
 import { isOnMacOS } from 'enso-common/src/detect'
 
 // ===================
@@ -53,7 +51,7 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
   const { backend, nodeMap } = state
 
   const { user } = authProvider.useFullUserSession()
-  const { getText } = textProvider.useText()
+
   const driveStore = useDriveStore()
   const doOpenProject = projectHooks.useOpenProject()
   const ownPermission = permissions.tryFindSelfPermission(user, item.permissions)
@@ -80,23 +78,18 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
   }
 
   const doRename = async (newTitle: string) => {
+    await updateProjectMutation.mutateAsync([
+      item.id,
+      { ami: null, ideVersion: null, projectName: newTitle },
+      item.title,
+    ])
     setIsEditing(false)
-
-    if (string.isWhitespaceOnly(newTitle)) {
-      // Do nothing.
-    } else if (newTitle !== item.title) {
-      await updateProjectMutation.mutateAsync([
-        item.id,
-        { ami: null, ideVersion: null, projectName: newTitle },
-        item.title,
-      ])
-    }
   }
 
   return (
     <div
       className={tailwindMerge.twJoin(
-        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
+        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {
@@ -151,12 +144,6 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
         onCancel={() => {
           setIsEditing(false)
         }}
-        {...(backend.type === backendModule.BackendType.local ?
-          {
-            inputPattern: validation.LOCAL_PROJECT_NAME_PATTERN,
-            inputTitle: getText('projectNameCannotBeEmpty'),
-          }
-        : {})}
       >
         {item.title}
       </EditableSpan>

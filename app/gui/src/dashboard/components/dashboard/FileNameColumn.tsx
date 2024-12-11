@@ -43,24 +43,15 @@ export default function FileNameColumn(props: FileNameColumnProps) {
     }
   }
 
-  // TODO[sb]: Wait for backend implementation. `editable` should also be re-enabled, and the
-  // context menu entry should be re-added.
-  // Backend implementation is tracked here: https://github.com/enso-org/cloud-v2/issues/505.
   const doRename = async (newTitle: string) => {
-    if (isEditable) {
-      setIsEditing(false)
-      if (string.isWhitespaceOnly(newTitle)) {
-        // Do nothing.
-      } else if (!isCloud && newTitle !== item.title) {
-        await updateFileMutation.mutateAsync([item.id, { title: newTitle }, item.title])
-      }
-    }
+    await updateFileMutation.mutateAsync([item.id, { title: newTitle }, item.title])
+    setIsEditing(false)
   }
 
   return (
     <div
       className={tailwindMerge.twJoin(
-        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
+        'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
         indent.indentClass(depth),
       )}
       onKeyDown={(event) => {

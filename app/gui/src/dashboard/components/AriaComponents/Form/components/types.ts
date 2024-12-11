@@ -121,6 +121,10 @@ export interface UseFormReturn<Schema extends TSchema>
   readonly schema: Schema
   readonly setFormError: (error: string) => void
   readonly closeRef: React.MutableRefObject<() => void>
+  readonly formProps: {
+    readonly onSubmit: (event?: FormEvent<HTMLFormElement> | null) => Promise<void>
+    readonly noValidate: boolean
+  }
 }
 
 /**

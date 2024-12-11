@@ -1769,7 +1769,7 @@ function AssetsTable(props: AssetsTableProps) {
 
   const table = (
     <div
-      className="flex grow flex-col"
+      className="flex grow flex-col px-1"
       onContextMenu={(event) => {
         if (isAssetContextMenuVisible) {
           event.preventDefault()
@@ -1809,6 +1809,7 @@ function AssetsTable(props: AssetsTableProps) {
       <table className="rr-block isolate table-fixed border-collapse rounded-rows">
         <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
         <tbody ref={bodyRef}>
+          <tr className="h-1" aria-hidden />
           {itemRows}
           <tr className="hidden h-row first:table-row">
             <td colSpan={columns.length} className="bg-transparent">
