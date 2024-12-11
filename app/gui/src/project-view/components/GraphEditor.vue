@@ -397,7 +397,7 @@ const { componentBrowserOpened } = provideGraphEditorState({
 const componentBrowserNodePosition = ref<Vec2>(Vec2.Zero)
 const componentBrowserUsage = ref<Usage>({ type: 'newNode' })
 
-watch(componentBrowserVisible, (v) =>
+watch(componentBrowserOpened, (v) =>
   rightDock.setStorageMode(v ? StorageMode.ComponentBrowser : StorageMode.Default),
 )
 
@@ -409,7 +409,7 @@ function openComponentBrowser(usage: Usage, position: Vec2) {
 
 function hideComponentBrowser() {
   graphStore.editedNodeInfo = undefined
-  componentBrowserVisible.value = false
+  componentBrowserOpened.value = false
   displayedDocs.value = undefined
 }
 

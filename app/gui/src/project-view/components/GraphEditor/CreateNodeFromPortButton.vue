@@ -18,11 +18,7 @@ const hovered = ref(false)
       </mask>
       <circle :mask="`url(#${props.portId}_add_node_clip_path)`" fill="currentColor"></circle>
     </g>
-    <rect
-      class="newNodeHoverArea"
-      @pointerenter="hovered = true"
-      @pointerleave="hovered = false"
-    ></rect>
+    <rect class="hoverArea" @pointerenter="hovered = true" @pointerleave="hovered = false"></rect>
   </g>
 </template>
 
@@ -33,8 +29,8 @@ const hovered = ref(false)
   --strokeWidth: 1.5px;
   --leftOffset: 16px;
   --topOffset: 40px;
-  --color-dimmed: color-mix(in oklab, var(--node-color-port) 60%, white 40%);
-  --color: var(--node-color-port);
+  --color-dimmed: color-mix(in oklab, var(--color-node-primary) 60%, white 40%);
+  --color: var(--color-node-primary);
 }
 
 .connection {
@@ -43,7 +39,7 @@ const hovered = ref(false)
     var(--output-port-hovered-extra-width) * var(--direct-hover-animation)
   );
   width: var(--width);
-  height: calc((var(--topOffset) - var(--direct-hover-offset) + 1px) * var(--hover-animation));
+  height: calc((var(--topOffset) - var(--direct-hover-offset) + 2px) * var(--hover-animation));
   transform: translate(
     calc(var(--port-clip-start) * (100% + 1px) + var(--leftOffset) - var(--width) / 2),
     calc(var(--node-size-y) + var(--direct-hover-offset) - var(--output-port-overlap))
@@ -93,7 +89,8 @@ const hovered = ref(false)
     transition: color 0.2s ease;
   }
 }
-.newNodeHoverArea {
+
+.hoverArea {
   --margin: 4px;
   --width: calc(var(--radius) * 2 + var(--margin) * 2);
   fill: transparent;
