@@ -57,6 +57,34 @@ add_specs suite_builder =
             Test.expect_panic Type_Error <| ac:U
             ac:V . v . should_equal 3.14
 
+        group_builder.specify "case of first" <|
+            abc = 3.14 : A&B&C
+            c1 = case abc of
+                a:A -> a.a
+                b:B -> b.b
+                c:C -> c.c
+                _ -> "what?"
+            c1 . should_equal "a"
+
+        group_builder.specify "case of second downcasted" <|
+            abc = 3.14 : A&B&C
+            c1 = case abc:B of
+                b:B -> b.b
+                a:A -> a.a
+                c:C -> c.c
+                _ -> "what?"
+            c1 . should_equal "b"
+
+        group_builder.specify "case of third downcasted" <|
+            abc = 3.14 : A&B&C
+            c1 = case abc:C of
+                c:C -> c.c
+                b:B -> b.b
+                a:A -> a.a
+                _ -> "what?"
+            c1 . should_equal "c"
+
+
 main filter=Nothing =
     suite = Test.build suite_builder->
         add_specs suite_builder
