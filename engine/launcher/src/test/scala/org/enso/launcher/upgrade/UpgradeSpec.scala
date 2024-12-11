@@ -72,7 +72,9 @@ class UpgradeSpec
     prepareLauncherBinary(SemVer.of(0, 0, 2))
     prepareLauncherBinary(SemVer.of(0, 0, 3))
     prepareLauncherBinary(SemVer.of(0, 0, 4))
-    prepareLauncherBinary(SemVer.of(1, 0, 0))
+
+    // The 0.9999.0 version is marked as broken so it should not be considered for upgrades.
+    prepareLauncherBinary(SemVer.of(0, 9999, 0))
   }
 
   /** Prepares a launcher distribution in the temporary test location.
@@ -181,7 +183,7 @@ class UpgradeSpec
     "not downgrade without being explicitly asked to do so" taggedAs Flaky in {
       prepareDistribution(
         portable        = false,
-        launcherVersion = Some(SemVer.of(1, 0, 0))
+        launcherVersion = Some(SemVer.of(0, 9999, 0))
       )
 
       // precondition for the test to make sense
