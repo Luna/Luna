@@ -125,7 +125,7 @@ interface Context {
 export function mockAll({ page, setupAPI }: MockParams) {
   const context: { api: MockApi } = { api: undefined! }
   return new LoginPageActions<Context>(page, context)
-    .step('Execute all mocks', async () => {
+    .step('Execute all mocks', async (page) => {
       await Promise.all([
         mockApi({ page, setupAPI }).then((api) => {
           context.api = api
@@ -135,7 +135,7 @@ export function mockAll({ page, setupAPI }: MockParams) {
         mockUnneededUrls({ page }),
       ])
     })
-    .step('Navigate to the root page', async () => {
+    .step('Navigate to the root page', async (page) => {
       await page.goto('/')
       await waitForLoaded(page)
     })
@@ -145,12 +145,8 @@ export function mockAll({ page, setupAPI }: MockParams) {
 export function mockAllAndLogin({ page, setupAPI }: MockParams) {
   const actions = mockAll({ page, setupAPI })
   return actions
-    .step('Login', async () => {
-      await login({ page })
-    })
-    .step('Wait for dashboard to load', async (page) => {
-      await waitForDashboardToLoad(page)
-    })
+    .step('Login', (page) => login({ page }))
+    .step('Wait for dashboard to load', waitForDashboardToLoad)
     .step('Check if start modal is shown', async (page) => {
       // @ts-expect-error This is the only place in which the private member `.context`
       // should be accessed.
