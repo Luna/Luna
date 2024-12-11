@@ -26,7 +26,7 @@
 
 // test('create project from template', ({ page }) =>
 //   mockAllAndLogin({ page })
-//     .openStartModal()
+//     .expectStartModal()
 //     .createProjectFromTemplate(0)
 //     .do(async (thePage) => {
 //       await expect(locateEditor(thePage)).toBeAttached()

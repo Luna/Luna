@@ -132,20 +132,6 @@ export interface MockApi extends Awaited<ReturnType<typeof mockApiInternal>> {}
 
 export const mockApi: (params: MockParams) => Promise<MockApi> = mockApiInternal
 
-export const EULA_JSON = {
-  path: '/eula.md',
-  size: 9472,
-  modified: '2024-05-21T10:47:27.000Z',
-  hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
-}
-
-export const PRIVACY_JSON = {
-  path: '/privacy.md',
-  size: 1234,
-  modified: '2024-05-21T10:47:27.000Z',
-  hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
-}
-
 /** Add route handlers for the mock API to a page. */
 async function mockApiInternal({ page, setupAPI }: MockParams) {
   const defaultEmail = 'email@example.com' as backend.EmailAddress
@@ -1145,7 +1131,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       if (!maybeId) return
       const projectId = backend.ProjectId(maybeId)
       called('getProjectContent', { projectId })
-      const content = readFileSync(join(__dirname, './mock/enso-demo.main'), 'utf8')
+      const content = readFileSync(join(__dirname, '../mock/enso-demo.main'), 'utf8')
 
       return route.fulfill({
         body: content,

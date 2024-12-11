@@ -74,7 +74,7 @@ test('asset panel contents', ({ page }) =>
       // await expect(locateAssetPanelPermissions(page).getByText(USERNAME)).toBeVisible()
     }))
 
-test('Asset Panel Documentation view', ({ page }) =>
+test('Asset Panel documentation view', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {

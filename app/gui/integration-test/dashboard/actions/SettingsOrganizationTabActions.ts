@@ -25,7 +25,7 @@ export default class SettingsOrganizationTabActions<
   ) {
     return this.step('Upload organization profile picture', async (page) => {
       const fileChooserPromise = page.waitForEvent('filechooser')
-      await page.locator('label').click()
+      await page.getByTestId('organization-profile-picture-input').click()
       const fileChooser = await fileChooserPromise
       await fileChooser.setFiles([{ name, mimeType, buffer: Buffer.from(content) }])
     })

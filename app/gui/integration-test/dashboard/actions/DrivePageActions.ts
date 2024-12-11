@@ -125,7 +125,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
 
   /** Interact with the assets search bar. */
   withSearchBar(callback: LocatorCallback) {
-    callback(this.page.getByTestId('asset-search-bar').getByPlaceholder(/(?:)/))
+    return this.step('Interact with search bar', (page) =>
+      callback(page.getByTestId('asset-search-bar').getByPlaceholder(/(?:)/)),
+    )
   }
 
   /** Actions specific to the Drive table. */
@@ -164,7 +166,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
       /** Interact with the column heading for the "modified" column. */
       withModifiedColumnHeading(callback: LocatorCallback) {
         return self.step('Interact with "modified" column heading', (page) =>
-          callback(locateNameColumnHeading(page)),
+          callback(locateModifiedColumnHeading(page)),
         )
       },
       /** Click to select a specific row. */
@@ -297,6 +299,13 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
     return this.step('Open "start" modal', (page) =>
       page.getByText(TEXT.startWithATemplate).click(),
     ).into(StartModalActions<Context>)
+  }
+
+  /** Expect the "start" modal to be visible. */
+  expectStartModal() {
+    return this.into(StartModalActions<Context>).withStartModal(async (startModal) => {
+      await expect(startModal).toBeVisible()
+    })
   }
 
   /** Create a new empty project. */

@@ -9,14 +9,14 @@ export default class SettingsOrganizationFormActions<Context> extends SettingsFo
   Context,
   typeof SettingsOrganizationTabActions<Context>
 > {
-  /** Create a {@link SettingsAccountFormActions}. */
+  /** Create a {@link SettingsOrganizationFormActions}. */
   constructor(...args: ConstructorParameters<typeof PageActions<Context>>) {
     super(
       SettingsOrganizationTabActions<Context>,
       (page) =>
         page
           .getByRole('heading')
-          .and(page.getByText(TEXT.userAccountSettingsSection))
+          .and(page.getByText(TEXT.organizationSettingsSection))
           .locator('..'),
       ...args,
     )

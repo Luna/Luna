@@ -29,7 +29,7 @@ export default class SettingsAccountTabActions<Context> extends BaseSettingsTabA
   ) {
     return this.step('Upload account profile picture', async (page) => {
       const fileChooserPromise = page.waitForEvent('filechooser')
-      await page.locator('label').click()
+      await page.getByTestId('user-profile-picture-input').click()
       const fileChooser = await fileChooserPromise
       await fileChooser.setFiles([{ name, mimeType, buffer: Buffer.from(content) }])
     })

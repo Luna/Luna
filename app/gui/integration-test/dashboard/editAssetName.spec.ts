@@ -95,13 +95,12 @@ test('cancel editing name (keyboard)', ({ page }) =>
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       const oldName = (await nameEl.textContent()) ?? ''
-      await nameEl.click()
       await nameEl.fill(NEW_NAME_2)
       await nameEl.press('Escape')
       await test.expect(row).toHaveText(new RegExp('^' + oldName))
     }))
 
-test('change to blank name (double click)', ({ page }) => {
+test('change to blank name (double click)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
     .driveTable.withRows(async (rows) => {
@@ -114,8 +113,7 @@ test('change to blank name (double click)', ({ page }) => {
       await test.expect(locateEditingTick(row)).not.toBeVisible()
       await locateEditingCross(row).click()
       await test.expect(row).toHaveText(new RegExp('^' + oldName))
-    })
-})
+    }))
 
 test('change to blank name (keyboard)', ({ page }) =>
   mockAllAndLogin({ page })

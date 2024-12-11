@@ -20,6 +20,8 @@ test.use({ storageState: { cookies: [], origins: [] } })
 test('login and logout', ({ page }) =>
   mockAll({ page })
     .login()
+    .expectStartModal()
+    .close()
     .withDriveView(async (driveView) => {
       await expect(driveView).toBeVisible()
     })

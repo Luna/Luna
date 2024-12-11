@@ -36,7 +36,7 @@ export default class SettingsChangePasswordFormActions<Context> extends Settings
   fillNewPassword(name: string) {
     return this.step("Fill 'new password' input of 'change password' form", (page) =>
       this.locate(page)
-        .getByLabel(TEXT.userNewPasswordSettingsInput)
+        .getByLabel(new RegExp('^' + TEXT.userNewPasswordSettingsInput))
         .getByRole('textbox')
         .fill(name),
     )

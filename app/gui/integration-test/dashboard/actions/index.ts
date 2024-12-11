@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { TEXTS } from 'enso-common/src/text'
 
-import { EULA_JSON, PRIVACY_JSON, mockApi, type MockApi, type SetupAPI } from './api'
+import { mockApi, type MockApi, type SetupAPI } from './api'
 import DrivePageActions from './DrivePageActions'
 import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'json' }
 import LoginPageActions from './LoginPageActions'
@@ -30,7 +30,7 @@ async function login({ page }: MockParams, email = 'email@example.com', password
   const authFile = getAuthFilePath()
 
   await waitForLoaded(page)
-  const isLoggedIn = (await page.$('[data-testid="before-auth-layout"]')) === null
+  const isLoggedIn = (await page.getByTestId('before-auth-layout').count()) === 0
 
   if (isLoggedIn) {
     test.info().annotations.push({
@@ -61,7 +61,7 @@ async function login({ page }: MockParams, email = 'email@example.com', password
 async function waitForLoaded(page: Page) {
   await page.waitForLoadState()
 
-  await test.expect(page.locator('[data-testid="spinner"]')).toHaveCount(0)
+  await test.expect(page.getByTestId('spinner')).toHaveCount(0)
   await test.expect(page.getByTestId('loading-app-message')).not.toBeVisible({ timeout: 30_000 })
 }
 
@@ -172,8 +172,18 @@ async function mockAllAnimations({ page }: MockParams) {
 
 /** Mock unneeded URLs. */
 async function mockUnneededUrls({ page }: MockParams) {
-  const eulaJsonBody = JSON.stringify(EULA_JSON)
-  const privacyJsonBody = JSON.stringify(PRIVACY_JSON)
+  const eulaJsonBody = JSON.stringify({
+    path: '/eula.md',
+    size: 9472,
+    modified: '2024-05-21T10:47:27.000Z',
+    hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
+  })
+  const privacyJsonBody = JSON.stringify({
+    path: '/privacy.md',
+    size: 1234,
+    modified: '2024-05-21T10:47:27.000Z',
+    hash: '1c8a655202e59f0efebf5a83a703662527aa97247052964f959a8488382604b8',
+  })
 
   await test.step('Mock unneeded URLs', async () => {
     return Promise.all([
@@ -209,53 +219,45 @@ async function mockUnneededUrls({ page }: MockParams) {
         await route.fulfill({ contentType: 'text/css', body: '' })
       }),
 
-      ...(process.env.MOCK_ALL_URLS === 'true' ?
-        []
-      : [
-          page.route(
-            'https://api.github.com/repos/enso-org/enso/releases/latest',
-            async (route) => {
-              await route.fulfill({ json: LATEST_GITHUB_RELEASES })
-            },
-          ),
+      page.route('https://api.github.com/repos/enso-org/enso/releases/latest', async (route) => {
+        await route.fulfill({ json: LATEST_GITHUB_RELEASES })
+      }),
 
-          page.route('https://github.com/enso-org/enso/releases/download/**', async (route) => {
-            await route.fulfill({
-              status: 302,
-              headers: { location: 'https://objects.githubusercontent.com/foo/bar' },
-            })
-          }),
+      page.route('https://github.com/enso-org/enso/releases/download/**', async (route) => {
+        await route.fulfill({
+          status: 302,
+          headers: { location: 'https://objects.githubusercontent.com/foo/bar' },
+        })
+      }),
 
-          page.route('https://objects.githubusercontent.com/**', async (route) => {
-            await route.fulfill({
-              status: 200,
-              headers: {
-                'content-type': 'application/octet-stream',
-                'last-modified': 'Wed, 24 Jul 2024 17:22:47 GMT',
-                etag: '"0x8DCAC053D058EA5"',
-                server: 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0',
-                'x-ms-request-id': '20ab2b4e-c01e-0068-7dfa-dd87c5000000',
-                'x-ms-version': '2020-10-02',
-                'x-ms-creation-time': 'Wed, 24 Jul 2024 17:22:47 GMT',
-                'x-ms-lease-status': 'unlocked',
-                'x-ms-lease-state': 'available',
-                'x-ms-blob-type': 'BlockBlob',
-                'content-disposition':
-                  'attachment; filename=enso-linux-x86_64-2024.3.1-rc3.AppImage',
-                'x-ms-server-encrypted': 'true',
-                via: '1.1 varnish, 1.1 varnish',
-                'accept-ranges': 'bytes',
-                age: '1217',
-                date: 'Mon, 29 Jul 2024 09:40:09 GMT',
-                'x-served-by': 'cache-iad-kcgs7200163-IAD, cache-bne12520-BNE',
-                'x-cache': 'HIT, HIT',
-                'x-cache-hits': '48, 0',
-                'x-timer': 'S1722246008.269342,VS0,VE895',
-                'content-length': '1030383958',
-              },
-            })
-          }),
-        ]),
+      page.route('https://objects.githubusercontent.com/**', async (route) => {
+        await route.fulfill({
+          status: 200,
+          headers: {
+            'content-type': 'application/octet-stream',
+            'last-modified': 'Wed, 24 Jul 2024 17:22:47 GMT',
+            etag: '"0x8DCAC053D058EA5"',
+            server: 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0',
+            'x-ms-request-id': '20ab2b4e-c01e-0068-7dfa-dd87c5000000',
+            'x-ms-version': '2020-10-02',
+            'x-ms-creation-time': 'Wed, 24 Jul 2024 17:22:47 GMT',
+            'x-ms-lease-status': 'unlocked',
+            'x-ms-lease-state': 'available',
+            'x-ms-blob-type': 'BlockBlob',
+            'content-disposition': 'attachment; filename=enso-linux-x86_64-2024.3.1-rc3.AppImage',
+            'x-ms-server-encrypted': 'true',
+            via: '1.1 varnish, 1.1 varnish',
+            'accept-ranges': 'bytes',
+            age: '1217',
+            date: 'Mon, 29 Jul 2024 09:40:09 GMT',
+            'x-served-by': 'cache-iad-kcgs7200163-IAD, cache-bne12520-BNE',
+            'x-cache': 'HIT, HIT',
+            'x-cache-hits': '48, 0',
+            'x-timer': 'S1722246008.269342,VS0,VE895',
+            'content-length': '1030383958',
+          },
+        })
+      }),
     ])
   })
 }

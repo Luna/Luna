@@ -22,14 +22,12 @@ test('organization settings', ({ page }) =>
     },
   })
     .step('Verify initial organization state', (_, { api }) => {
+      expect(api.defaultUser.isOrganizationAdmin).toBe(true)
       expect(api.currentOrganization()?.name).toBe(api.defaultOrganizationName)
       expect(api.currentOrganization()?.email).toBe(null)
       expect(api.currentOrganization()?.picture).toBe(null)
       expect(api.currentOrganization()?.website).toBe(null)
       expect(api.currentOrganization()?.address).toBe(null)
-    })
-    .do(async (page) => {
-      await expect(page.getByText('Logging in to Enso...')).not.toBeVisible()
     })
     .goToPage.settings()
     .goToSettingsTab.organization()
