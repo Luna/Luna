@@ -77,16 +77,17 @@ test('Opening Component Browser from output port buttons', async ({ page }) => {
   await actions.goToGraph(page)
 
   // Small (+) button shown when node is hovered
-  await locate.graphNodeIcon(locate.graphNodeByBinding(page, 'selected')).hover()
-  await expect(locate.createNodeFromPort(page)).toBeVisible()
-  await locate.createNodeFromPort(page).click()
+  const node = locate.graphNodeByBinding(page, 'selected')
+  await locate.graphNodeIcon(node).hover()
+  await expect(locate.createNodeFromPort(node)).toBeVisible()
+  await locate.createNodeFromPort(node).click({ force: true })
   await expectAndCancelBrowser(page, '', 'selected')
 
   // Small (+) button shown when node is selected
   await page.keyboard.press('Escape')
-  await locate.graphNodeByBinding(page, 'selected').click()
-  await expect(locate.createNodeFromPort(page)).toBeVisible()
-  await locate.createNodeFromPort(page).click()
+  await node.click()
+  await expect(locate.createNodeFromPort(node)).toBeVisible()
+  await locate.createNodeFromPort(node).click({ force: true })
   await expectAndCancelBrowser(page, '', 'selected')
 })
 

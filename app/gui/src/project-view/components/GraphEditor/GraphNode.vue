@@ -17,7 +17,6 @@ import GraphNodeOutputPorts from '@/components/GraphEditor/GraphNodeOutputPorts.
 import GraphVisualization from '@/components/GraphEditor/GraphVisualization.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import PointFloatingMenu from '@/components/PointFloatingMenu.vue'
-import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'

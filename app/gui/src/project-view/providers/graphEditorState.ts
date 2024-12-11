@@ -9,7 +9,7 @@ export interface GraphEditorState {
 }
 
 export { provideGraphEditorState, useGraphEditorState }
-const { provideFn: provideGraphEditorState, injectFn: useGraphEditorState } = createContextStore(
+const [provideGraphEditorState, useGraphEditorState] = createContextStore(
   'Graph editor state',
   identity<GraphEditorState>,
 )
