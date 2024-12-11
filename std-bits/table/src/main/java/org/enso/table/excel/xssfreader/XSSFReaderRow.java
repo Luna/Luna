@@ -40,8 +40,16 @@ public class XSSFReaderRow implements ExcelRow {
       case BOOL -> cell.getBooleanValue();
       case DATE -> LocalDateTime.parse(cell.strValue()); // Don't believe used by Excel.
       case INLINE_STRING, SST_STRING, FORMULA_STRING -> cell.strValue();
-      case NUMBER -> cell.getNumberValue();
       case INTEGER -> cell.getIntegerValue();
+      case NUMBER -> {
+        double dbl = cell.getNumberValue();
+        long longVal = (long) dbl;
+        if (dbl == longVal) {
+          yield (long)dbl;
+        } else {
+          yield dbl;
+        }
+      }
       case OLE_DATE -> cell.getDateValue();
       case OLE_DATETIME -> cell.getDateTimeValue();
       case ERROR -> null;
@@ -55,6 +63,7 @@ public class XSSFReaderRow implements ExcelRow {
       return "";
     }
 
+    // TODO: This is missing logic...
     var dataType = cell.dataType();
     return switch (dataType) {
       case BOOL -> cell.getBooleanValue() ? "TRUE" : "FALSE";

@@ -195,7 +195,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
       } else if (isInteger) {
         dataType = XSSDataType.INTEGER;
       } else if (isDate) {
-        dataType = XSSDataType.DATE;
+        dataType = XSSDataType.OLE_DATETIME;
       }
     }
 
