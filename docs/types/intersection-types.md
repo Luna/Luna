@@ -42,17 +42,43 @@ Complex.from (that:Float) = Complex.Num that 0
 ```
 and uses them to create all the values the _intersection type_ represents.
 
+> [!NOTE]
+> Note that if a `Float.from (that:Complex)` conversion were available in the scope, any `Complex` instance would be convertible to `Float` regardless of how it was constructed. To ensure that such mix-ins are only available on values that opt-in to being an intersection type (like in the `Complex` example above where we include the `Float` mix-in only if `self.im == 0`), we need to ensure that the conversion used to create the intersection type is not available in the default conversion resolution scope. Thus it cannot be defined in the same module as `Complex` or `Float` types, but instead it should be defined in a separate module that is only imported in the place that will be constructing the multi-values.
+
 ## Narrowing Type Check
 
 When an _intersection type_ value is being downcast to _one of the types it already represents_,
-such a check is:
+this type becomes its 'visible' type. Any additional types it represents become hidden.
+
+The following operations consider only the 'visible' part of the type:
 - recorded for purposes of [dynamic dispatch](../types/dynamic-dispatch.md)
 - recorded for cases when the value is passed as an argument
-- however the value still keeps (internal) knowledge of all the types it represents
+
+However the value still keeps (internal) knowledge of all the types it represents.
+
+Thus, after casting a value `cf:Complex&Float` to just `Complex`, e.g. `c = cf:Complex`:
+- method calls on `c` will only consider methods defined on `Complex`,
+- the value `c` can only be passed as argument to methods expecting `Complex` type, if a `Float` parameter is expected that will raise a type error.
 
 As such a _static analysis_ knows the type a value _has been cast to_ and 
-can deduce the set of operations that can be performed with it. However, the value
-_can be cast to_ explicitly.
+can deduce the set of operations that can be performed with it. Moreover, any method calls will also only accept the value if it satisfies the type it _has been cast to_. Any additional remaining types that it had before the cast become hidden and can only be brought back through an _explicit_ cast.
+
+To perform an explicit cast that can uncover the 'hidden' part of a type, one can either:
+- write a type asserting expression - e.g. `f = c:Float`,
+- or inspect the types in a `case` expression, e.g.
+  ```
+  case c of
+      f : Float -> f.sqrt
+      _ -> "Not a float"
+  ```
+
+> [!WARNING]
+> Keep in mind that while both argument type check in method definitions and a 'type asserting' expression look similarly, they have slightly different behaviour.
+> ```
+> f a:Float = a
+> g a = a:Float
+> ```
+> These two functions, while very similar, will have different behaviour when passed a value like the value `c` above. The function `f` will fail with a type error, because the visible type of `c` is just `Complex` (assuming the conversion to `Float` is not available in the current scope). However, the function `g` will accept the same value and return it as a `Float` value, based on the 'hidden' part of its type.
 
 > [!NOTE]
 > In the **object oriented terminology** we can think of
@@ -75,7 +101,7 @@ _can be cast to_ explicitly.
 > This behavior is often described as being **openness to subclasses**. E.g. the `c:Complex` 
 > check allows values with _intersection types_ that include `Complex` to pass thru with
 > all their runtime information available,
-> but one has to perform an explicit cast to extract the other types associated with 
+> but one has to perform an explicit cast (similar to `instanceof` check in Java) to extract the other types associated with 
 > such a value.
 
 This behavior allows creation of values with types like `Table&Column` to represent a table
@@ -88,7 +114,7 @@ Such a `Table&Column` value can be returned from the above `Table.join` function
 having only `Table` behavior by default, still being able to be explicitly casted by the visual environment
 to `Column`. 
 
-## Converting Type Check
+## Conversions
 
 When an _intersection type_ is being checked against a type it doesn't represent,
 any of its component types can be used for [conversion](../syntax/conversions.md).
