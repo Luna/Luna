@@ -1,12 +1,17 @@
 /** @file Actions for the "organization" tab of the "settings" page. */
 import BaseSettingsTabActions from './BaseSettingsTabActions'
 import SettingsOrganizationFormActions from './SettingsOrganizationFormActions'
+import { goToSettingsTabActions, type GoToSettingsTabActions } from './gotoSettingsTabActions'
 
 /** Actions for the "organization" tab of the "settings" page. */
-export default class SettingsOrganizationTabActions<Context> extends BaseSettingsTabActions<
-  'organization',
-  Context
-> {
+export default class SettingsOrganizationTabActions<
+  Context,
+> extends BaseSettingsTabActions<Context> {
+  /** Actions for navigating to another settings tab. */
+  get goToSettingsTab(): Omit<GoToSettingsTabActions<Context>, 'organization'> {
+    return goToSettingsTabActions(this.step.bind(this))
+  }
+
   /** Manipulate the "organization" form. */
   organizationForm() {
     return this.into(SettingsOrganizationFormActions<Context>)
