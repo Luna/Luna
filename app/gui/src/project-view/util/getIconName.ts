@@ -1,4 +1,4 @@
-import { NodeId } from '@/stores/graph'
+import type { NodeId } from '@/stores/graph'
 import { GraphDb } from '@/stores/graph/graphDatabase'
 import {
   SuggestionKind,

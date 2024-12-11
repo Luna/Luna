@@ -3,8 +3,9 @@
 
 import DropdownMenu from '@/components/DropdownMenu.vue'
 import MenuButton from '@/components/MenuButton.vue'
+import MenuPanel from '@/components/MenuPanel.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { SelectionMenuOption } from '@/components/visualizations/toolbar'
+import type { SelectionMenuOption } from '@/components/visualizations/toolbar'
 import { ref } from 'vue'
 
 type Key = number | string | symbol
@@ -31,18 +32,20 @@ const open = ref(false)
         />
       </template>
     </template>
-    <template #entries>
-      <MenuButton
-        v-for="[key, option] in Object.entries(options)"
-        :key="key"
-        :title="option.title"
-        :modelValue="selected === key"
-        @update:modelValue="$event && (selected = key)"
-        @click="open = false"
-      >
-        <SvgIcon :name="option.icon" :style="option.iconStyle" :data-testid="option.dataTestid" />
-        <div v-if="option.label" class="iconLabel" v-text="option.label" />
-      </MenuButton>
+    <template #menu>
+      <MenuPanel>
+        <MenuButton
+          v-for="[key, option] in Object.entries(options)"
+          :key="key"
+          :title="option.title"
+          :modelValue="selected === key"
+          @update:modelValue="$event && (selected = key)"
+          @click="open = false"
+        >
+          <SvgIcon :name="option.icon" :style="option.iconStyle" :data-testid="option.dataTestid" />
+          <div v-if="option.label" class="iconLabel" v-text="option.label" />
+        </MenuButton>
+      </MenuPanel>
     </template>
   </DropdownMenu>
 </template>

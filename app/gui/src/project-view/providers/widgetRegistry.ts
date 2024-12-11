@@ -4,15 +4,14 @@ import type { WidgetConfiguration } from '@/providers/widgetRegistry/configurati
 import type { GraphDb } from '@/stores/graph/graphDatabase'
 import type { Typename } from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
-import { MutableModule } from '@/util/ast/abstract'
-import { ViteHotContext } from 'vite/types/hot.js'
+import type { ViteHotContext } from 'vite/types/hot.js'
 import { computed, shallowReactive, type Component, type PropType } from 'vue'
 import type { WidgetEditHandlerParent } from './widgetRegistry/editHandler'
 
 export type WidgetComponent<T extends WidgetInput> = Component<WidgetProps<T>>
 
 export namespace WidgetInput {
-  /** TODO: Add docs */
+  /** Returns widget-input data for the given AST tree or token. */
   export function FromAst<A extends Ast.Ast | Ast.Token>(ast: A): WidgetInput & { value: A } {
     return {
       portId: ast.id,
@@ -20,18 +19,15 @@ export namespace WidgetInput {
     }
   }
 
-  /** TODO: Add docs */
-  export function FromAstWithPort<A extends Ast.Ast | Ast.Token>(
-    ast: A,
-  ): WidgetInput & { value: A } {
+  /** Returns the input marked to be a port. */
+  export function WithPort<T extends WidgetInput>(input: T): T {
     return {
-      portId: ast.id,
-      value: ast,
+      ...input,
       forcePort: true,
     }
   }
 
-  /** TODO: Add docs */
+  /** A string representation of widget's value - the code in case of AST value. */
   export function valueRepr(input: WidgetInput): string | undefined {
     if (typeof input.value === 'string') return input.value
     else return input.value?.code()
@@ -52,31 +48,31 @@ export namespace WidgetInput {
 
   /** Match input against a placeholder or specific AST node type. */
   export function placeholderOrAstMatcher<T extends Ast.Ast>(nodeType: new (...args: any[]) => T) {
-    return (input: WidgetInput): input is WidgetInput & { value: T } =>
+    return (input: WidgetInput): input is WidgetInput & { value: T | string | undefined } =>
       isPlaceholder(input) || input.value instanceof nodeType
   }
 
-  /** TODO: Add docs */
-  export function isAst(input: WidgetInput): input is WidgetInput & { value: Ast.Ast } {
-    return input.value instanceof Ast.Ast
+  /** Check if input's value is existing AST node (not placeholder or token). */
+  export function isAst(input: WidgetInput): input is WidgetInput & { value: Ast.Expression } {
+    return input.value instanceof Ast.Ast && input.value.isExpression()
   }
 
-  /** Rule out token inputs. */
+  /** Check if input's value is existing AST node or placeholder. Rule out token inputs. */
   export function isAstOrPlaceholder(
     input: WidgetInput,
-  ): input is WidgetInput & { value: Ast.Ast | string | undefined } {
+  ): input is WidgetInput & { value: Ast.Expression | string | undefined } {
     return isPlaceholder(input) || isAst(input)
   }
 
-  /** TODO: Add docs */
+  /** Check if input's value is an AST token. */
   export function isToken(input: WidgetInput): input is WidgetInput & { value: Ast.Token } {
     return input.value instanceof Ast.Token
   }
 
-  /** TODO: Add docs */
-  export function isFunctionCall(
-    input: WidgetInput,
-  ): input is WidgetInput & { value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp } {
+  /** Check if input's value is an AST which potentially may be a function call. */
+  export function isFunctionCall(input: WidgetInput): input is WidgetInput & {
+    value: Ast.App | Ast.Ident | Ast.PropertyAccess | Ast.OprApp | Ast.AutoscopedIdentifier
+  } {
     return (
       input.value instanceof Ast.App ||
       input.value instanceof Ast.Ident ||
@@ -163,15 +159,18 @@ export interface WidgetProps<T> {
  * port may not represent any existing AST node) with `edit` containing any additional modifications
  * (like inserting necessary imports).
  *
+ * The same way widgets may set their metadata (as this is also technically an AST modification).
+ * Every widget type should set it's name as `metadataKey`.
+ *
  * The handlers interested in a specific port update should apply it using received edit. The edit
- * is committed in {@link NodeWidgetTree}.
+ * is committed in {@link ComponentWidgetTree}.
  */
 export interface WidgetUpdate {
-  edit?: MutableModule | undefined
-  portUpdate?: {
-    value: Ast.Owned | string | undefined
-    origin: PortId
-  }
+  edit?: Ast.MutableModule | undefined
+  portUpdate?: { origin: PortId } & (
+    | { value: Ast.Owned<Ast.MutableExpression> | string | undefined }
+    | { metadataKey: string; metadata: unknown }
+  )
 }
 
 /**
@@ -333,8 +332,7 @@ function makeInputMatcher<T extends WidgetInput>(
   }
 }
 
-export { injectFn as injectWidgetRegistry, provideFn as provideWidgetRegistry }
-const { provideFn, injectFn } = createContextStore(
+export const [provideWidgetRegistry, injectWidgetRegistry] = createContextStore(
   'Widget registry',
   (db: GraphDb) => new WidgetRegistry(db),
 )

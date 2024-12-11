@@ -2,20 +2,22 @@
 import { WidgetInputIsSpecificMethodCall } from '@/components/GraphEditor/widgets/WidgetFunction.vue'
 import TableHeader from '@/components/GraphEditor/widgets/WidgetTableEditor/TableHeader.vue'
 import {
-  tableNewCallMayBeHandled,
-  useTableNewArgument,
+  CELLS_LIMIT,
+  tableInputCallMayBeHandled,
+  useTableInputArgument,
   type RowData,
-} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableNewArgument'
+} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableInputArgument'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import AgGridTableView from '@/components/shared/AgGridTableView.vue'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
-import { useTooltipRegistry } from '@/providers/tooltipState'
+import { useTooltipRegistry } from '@/providers/tooltipRegistry'
 import { Score, defineWidget, widgetProps } from '@/providers/widgetRegistry'
 import { WidgetEditHandler } from '@/providers/widgetRegistry/editHandler'
 import { useGraphStore } from '@/stores/graph'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
+import { useToast } from '@/util/toast'
 import '@ag-grid-community/styles/ag-grid.css'
 import '@ag-grid-community/styles/ag-theme-alpine.css'
 import type {
@@ -29,13 +31,31 @@ import type {
 } from 'ag-grid-enterprise'
 import { computed, markRaw, ref } from 'vue'
 import type { ComponentExposed } from 'vue-component-type-helpers'
+import { z } from 'zod'
 
 const props = defineProps(widgetProps(widgetDefinition))
 const graph = useGraphStore()
 const suggestionDb = useSuggestionDbStore()
 const grid = ref<ComponentExposed<typeof AgGridTableView<RowData, any>>>()
+const pasteWarning = useToast.warning()
 
-const { rowData, columnDefs, moveColumn, moveRow, pasteFromClipboard } = useTableNewArgument(
+const configSchema = z.object({ size: z.object({ x: z.number(), y: z.number() }) })
+type Config = z.infer<typeof configSchema>
+
+const DEFAULT_CFG: Config = { size: { x: 200, y: 150 } }
+
+const config = computed(() => {
+  const configObj = props.input.value.widgetMetadata('WidgetTableEditor')
+  if (configObj == null) return DEFAULT_CFG
+  const parsed = configSchema.safeParse(configObj)
+  if (parsed.success) return parsed.data
+  else {
+    console.warn('Table Editor Widget: could not read config; invalid format: ', parsed.error)
+    return DEFAULT_CFG
+  }
+})
+
+const { rowData, columnDefs, moveColumn, moveRow, pasteFromClipboard } = useTableInputArgument(
   () => props.input,
   graph,
   suggestionDb.entries,
@@ -131,15 +151,22 @@ const headerEditHandler = new HeaderEditing()
 
 // === Resizing ===
 
-const size = ref(new Vec2(200, 150))
 const graphNav = injectGraphNavigator()
+
+const size = computed(() => Vec2.FromXY(config.value.size))
 
 const clientBounds = computed({
   get() {
     return new Rect(Vec2.Zero, size.value.scale(graphNav.scale))
   },
   set(value) {
-    size.value = new Vec2(value.width / graphNav.scale, value.height / graphNav.scale)
+    props.onUpdate({
+      portUpdate: {
+        origin: props.input.portId,
+        metadataKey: 'WidgetTableEditor',
+        metadata: { size: { x: value.width / graphNav.scale, y: value.height / graphNav.scale } },
+      },
+    })
   },
 })
 
@@ -170,10 +197,13 @@ function processDataFromClipboard({ data, api }: ProcessDataFromClipboardParams<
   const focusedCell = api.getFocusedCell()
   if (focusedCell === null) console.warn('Pasting while no cell is focused!')
   else {
-    pasteFromClipboard(data, {
+    const pasted = pasteFromClipboard(data, {
       rowIndex: focusedCell.rowIndex,
       colId: focusedCell.column.getColId(),
     })
+    if (pasted.rows < data.length || pasted.columns < (data[0]?.length ?? 0)) {
+      pasteWarning.show(`Truncated pasted data to keep table within ${CELLS_LIMIT} limit`)
+    }
   }
   return []
 }
@@ -205,12 +235,12 @@ export const widgetDefinition = defineWidget(
   WidgetInputIsSpecificMethodCall({
     module: 'Standard.Table.Table',
     definedOnType: 'Standard.Table.Table.Table',
-    name: 'new',
+    name: 'input',
   }),
   {
     priority: 999,
     score: (props) => {
-      if (!tableNewCallMayBeHandled(props.input.value)) return Score.Mismatch
+      if (!tableInputCallMayBeHandled(props.input.value)) return Score.Mismatch
       return Score.Perfect
     },
   },
@@ -223,7 +253,7 @@ export const widgetDefinition = defineWidget(
     <Suspense>
       <AgGridTableView
         ref="grid"
-        class="grid"
+        class="inner"
         :defaultColDef="defaultColDef"
         :columnDefs="columnDefs"
         :rowData="rowData"
@@ -262,8 +292,49 @@ export const widgetDefinition = defineWidget(
   position: relative;
 }
 
-.grid {
+.inner {
   width: 100%;
   height: 100%;
+}
+
+:deep(.newColumnCell) {
+  display: none;
+}
+
+:deep(.rowIndexCell) {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Those two classes are copied from AgGridTableView component.
+For some reason, Vue cannot load them there, probably because it is used also as Custom Element. */
+:deep(.inner) {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * FIXME: This is a copy of the style defined within AgGridTableView, which has no effect here due to a bug.
+ */
+:deep(.ag-theme-alpine) {
+  --ag-grid-size: 3px;
+  --ag-list-item-height: 20px;
+  --ag-background-color: var(--color-visualization-bg);
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-visualization-bg) 98%, black);
+  --ag-header-background-color: var(--color-visualization-bg);
+  font-family: var(--font-mono);
+
+  :deep(.ag-header) {
+    background: linear-gradient(
+      to top,
+      var(--ag-odd-row-background-color),
+      var(--ag-background-color)
+    );
+  }
+}
+
+/* Separate, actually widget-specific styling. */
+.WidgetTableEditor:deep(.ag-root-wrapper) {
+  --ag-wrapper-border-radius: var(--node-port-border-radius);
+  border: none;
 }
 </style>

@@ -199,6 +199,7 @@ export default [
       '**/*.timestamp-*.mjs',
       '**/node_modules',
       '**/generated',
+      '**/*.json',
       'app/rust-ffi/pkg/',
     ],
   },
@@ -236,7 +237,9 @@ export default [
         },
       ],
       '@typescript-eslint/no-namespace': 'off',
-      '@typescript-eslint/no-empty-object-type': ['error'],
+      // Empty interfaces have valid uses; e.g. although an empty interface extending a class is semantically equivalent
+      // to a type alias, it is not resolved by IDEs to the base type (which may be internal).
+      '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
       'no-unused-labels': 'off',
       // Taken care of by prettier
       'vue/max-attributes-per-line': 'off',
@@ -285,14 +288,7 @@ export default [
 
   // === Dashboard Rules ===
   {
-    files: [
-      'app/gui/src/dashboard/**/*.ts',
-      'app/gui/src/dashboard/**/*.mts',
-      'app/gui/src/dashboard/**/*.cts',
-      'app/gui/src/dashboard/**/*.tsx',
-      'app/gui/src/dashboard/**/*.mtsx',
-      'app/gui/src/dashboard/**/*.ctsx',
-    ],
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
     settings: {
       react: {
         version: '18.2',
@@ -303,7 +299,6 @@ export default [
       '@typescript-eslint': tsEslint,
       react: react,
       'react-hooks': reactHooks,
-      'react-compiler': reactCompiler,
     },
     languageOptions: {
       parserOptions: {
@@ -384,12 +379,8 @@ export default [
       'react/prop-types': 'off',
       'react/self-closing-comp': 'error',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll' }],
+      'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll|useLazyMemoHooks' }],
       'react/jsx-pascal-case': ['error', { allowNamespace: true }],
-
-      // We use warnings instead of errors because we want to gradually migrate the codebase to the new compiler.
-      // see: https://github.com/reactwg/react-compiler/discussions/8
-      'react-compiler/react-compiler': 'warn',
 
       // Prefer `interface` over `type`.
       '@typescript-eslint/consistent-type-definitions': 'error',
@@ -556,5 +547,35 @@ export default [
       // This rule does not work with TypeScript, and TypeScript already does this.
       'no-undef': 'off',
     },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.stories.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.test.tsx', 'app/gui/src/dashboard/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
+  {
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
+    ignores: ['**/*.d.ts', '**/*.spec.ts', '**/*.stories.tsx', '**/*.test.tsx', '**/*.test.ts'],
+    plugins: { 'react-compiler': reactCompiler },
+    rules: { 'react-compiler/react-compiler': 'error' },
   },
 ]

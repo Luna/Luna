@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { useWidgetFunctionCallInfo } from '@/components/GraphEditor/widgets/WidgetFunction/widgetFunctionCallInfo'
-import { FunctionName } from '@/components/GraphEditor/widgets/WidgetFunctionName.vue'
 import { injectFunctionInfo, provideFunctionInfo } from '@/providers/functionInfo'
 import {
   Score,
@@ -65,13 +64,7 @@ const innerInput = computed(() => {
     input = { ...props.input }
   }
   const callInfo = methodCallInfo.value
-  if (callInfo) {
-    input[CallInfo] = callInfo
-    if (input.value instanceof Ast.PropertyAccess || input.value instanceof Ast.Ident) {
-      const definition = graph.getMethodAst(callInfo.methodCall.methodPointer)
-      if (definition.ok) input[FunctionName] = { editableName: definition.value.name.externalId }
-    }
-  }
+  if (callInfo) input[CallInfo] = callInfo
   return input
 })
 
@@ -82,6 +75,11 @@ const innerInput = computed(() => {
 function handleArgUpdate(update: WidgetUpdate): boolean {
   const app = application.value
   if (update.portUpdate && app instanceof ArgumentApplication) {
+    if (!('value' in update.portUpdate)) {
+      if (!Ast.isAstId(update.portUpdate.origin))
+        console.error('Tried to set metadata on arg placeholder. This is not implemented yet!')
+      return false
+    }
     const { value, origin } = update.portUpdate
     const edit = update.edit ?? graph.startEdit()
     // Find the updated argument by matching origin port/expression with the appropriate argument.
@@ -96,11 +94,11 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
     // Perform appropriate AST update, either insertion or deletion.
     if (value != null && argApp?.argument instanceof ArgumentPlaceholder) {
       /* Case: Inserting value to a placeholder. */
-      let newArg: Ast.Owned
+      let newArg: Ast.Owned<Ast.MutableExpression>
       if (value instanceof Ast.Ast) {
         newArg = value
       } else {
-        newArg = Ast.parse(value, edit)
+        newArg = Ast.parseExpression(value, edit)!
       }
       const name =
         argApp.argument.insertAsNamed && isIdentifier(argApp.argument.argInfo.name) ?
@@ -143,8 +141,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
 
         // Named argument can always be removed immediately. Replace the whole application with its
         // target, effectively removing the argument from the call.
-        const func = edit.take(argApp.appTree.function.id)
-        assert(func != null)
+        const func = edit.getVersion(argApp.appTree.function).take()
         props.onUpdate({
           edit,
           portUpdate: {
@@ -158,7 +155,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
 
         // Infix application is removed as a whole. Only the target is kept.
         if (argApp.appTree.lhs) {
-          const lhs = edit.take(argApp.appTree.lhs.id)
+          const lhs = edit.getVersion(argApp.appTree.lhs).take()
           props.onUpdate({
             edit,
             portUpdate: {
@@ -183,9 +180,9 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
             const appTree = edit.getVersion(argApp.appTree)
             if (graph.db.isNodeId(appTree.externalId)) {
               // If the modified application is a node root, preserve its identity and metadata.
-              appTree.replaceValue(appTree.function.take())
+              appTree.updateValue((appTree) => appTree.function.take())
             } else {
-              appTree.replace(appTree.function.take())
+              appTree.update((appTree) => appTree.function.take())
             }
             props.onUpdate({ edit })
             return true

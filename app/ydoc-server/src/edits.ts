@@ -5,7 +5,7 @@
 
 import diff from 'fast-diff'
 import type { ModuleUpdate } from 'ydoc-shared/ast'
-import { MutableModule, print, spanMapToIdMap } from 'ydoc-shared/ast'
+import { MutableModule, printWithSpans, spanMapToIdMap } from 'ydoc-shared/ast'
 import { EnsoFileParts } from 'ydoc-shared/ensoFile'
 import { TextEdit } from 'ydoc-shared/languageServerTypes'
 import { assert } from 'ydoc-shared/util/assert'
@@ -38,7 +38,8 @@ const MAX_SIZE_FOR_NORMAL_DIFF = 30000
 interface AppliedUpdates {
   newCode: string | undefined
   newIdMap: IdMap | undefined
-  newMetadata: fileFormat.IdeMetadata['node'] | undefined
+  newPersistedIdMap: IdMap | undefined
+  newMetadata: fileFormat.IdeMetadata | undefined
 }
 
 /** Return an object containing updated versions of relevant fields, given an update payload. */
@@ -49,7 +50,7 @@ export function applyDocumentUpdates(
 ): AppliedUpdates {
   const codeChanged = update.nodesUpdated.size || update.nodesAdded.size || update.nodesDeleted.size
   let idsChanged = false
-  let metadataChanged = false
+  let metadataChanged = update.widgetMetadataUpdated.size > 0
   for (const { changes } of update.metadataUpdated) {
     for (const [key] of changes) {
       if (key === 'externalId') {
@@ -62,37 +63,66 @@ export function applyDocumentUpdates(
   }
 
   let newIdMap = undefined
+  let newPersistedIdMap = undefined
   let newCode = undefined
-  let newMetadata = undefined
+  let newMetadata: fileFormat.IdeMetadata | undefined = undefined
 
   const syncModule = new MutableModule(doc.ydoc)
   const root = syncModule.root()
   assert(root != null)
-  if (codeChanged || idsChanged || synced.idMapJson == null) {
-    const { code, info } = print(root)
-    if (codeChanged) newCode = code
-    newIdMap = spanMapToIdMap(info)
-  }
+
   if (codeChanged || idsChanged || metadataChanged) {
     // Update the metadata object.
     // Depth-first key order keeps diffs small.
-    newMetadata = {} satisfies fileFormat.IdeMetadata['node']
-    root.visitRecursiveAst(ast => {
+    newMetadata = {
+      node: {},
+      widget: {},
+      import: {}, // "import" is required by older versions (even though they don't use it)
+    }
+    root.visitRecursive(ast => {
       let pos = ast.nodeMetadata.get('position')
       const vis = ast.nodeMetadata.get('visualization')
       const colorOverride = ast.nodeMetadata.get('colorOverride')
       if (vis && !pos) pos = { x: 0, y: 0 }
       if (pos) {
-        newMetadata![ast.externalId] = {
+        newMetadata!.node[ast.externalId] = {
           position: { vector: [Math.round(pos.x), Math.round(-pos.y)] },
           visualization: vis && translateVisualizationToFile(vis),
           colorOverride,
         }
       }
+      const widgets = ast.widgetsMetadata()
+      if (!widgets.entries().next().done) {
+        if (newMetadata!.widget == null) newMetadata!.widget = {}
+        newMetadata!.widget[ast.externalId] = Object.fromEntries(
+          widgets.entries() as IterableIterator<[string, Record<string, unknown>]>,
+        )
+      }
     })
   }
 
-  return { newCode, newIdMap, newMetadata }
+  if (codeChanged || idsChanged || metadataChanged || synced.idMapJson == null) {
+    const { code, info } = printWithSpans(root)
+    if (codeChanged) newCode = code
+    const idMap = spanMapToIdMap(info)
+    if (codeChanged || idsChanged || synced.idMapJson == null) newIdMap = idMap
+    newPersistedIdMap = newMetadata && getIdMapToPersist(idMap, newMetadata)
+  }
+
+  return { newCode, newIdMap, newPersistedIdMap, newMetadata }
+}
+
+/**
+ * Get the subset of idMap which should be persisted in file.
+ */
+export function getIdMapToPersist(
+  idMap: IdMap,
+  metadata: fileFormat.IdeMetadata,
+): IdMap | undefined {
+  const entriesIntersection = idMap
+    .entries()
+    .filter(([, id]) => id in metadata.node || id in (metadata.widget ?? {}))
+  return new IdMap(entriesIntersection)
 }
 
 function translateVisualizationToFile(
@@ -156,7 +186,7 @@ export function translateVisualizationFromFile(
  * A simplified diff algorithm.
  *
  * The `fast-diff` package uses Myers' https://neil.fraser.name/writing/diff/myers.pdf with some
- * optimizations to generate minimal diff. Unfortunately, event this algorithm is still too slow
+ * optimizations to generate minimal diff. Unfortunately, even this algorithm is still too slow
  * for our metadata. Therefore we need to use faster algorithm which will not produce theoretically
  * minimal diff.
  *

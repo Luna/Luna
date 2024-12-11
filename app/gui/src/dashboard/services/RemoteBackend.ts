@@ -533,9 +533,14 @@ export default class RemoteBackend extends Backend {
     body: backend.CreateDirectoryRequestBody,
   ): Promise<backend.CreatedDirectory> {
     const path = remoteBackendPaths.CREATE_DIRECTORY_PATH
-    const response = await this.post<backend.CreatedDirectory>(path, body)
+
+    // Remote backend doesn't need the title in the body.
+    // It's generated on the server side.
+    const { title, ...rest } = body
+
+    const response = await this.post<backend.CreatedDirectory>(path, rest)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createFolderBackendError', body.title)
+      return await this.throw(response, 'createFolderBackendError', title)
     } else {
       return await response.json()
     }
@@ -560,14 +565,11 @@ export default class RemoteBackend extends Backend {
   }
 
   /** List all previous versions of an asset. */
-  override async listAssetVersions(
-    assetId: backend.AssetId,
-    title: string,
-  ): Promise<backend.AssetVersions> {
+  override async listAssetVersions(assetId: backend.AssetId): Promise<backend.AssetVersions> {
     const path = remoteBackendPaths.listAssetVersionsPath(assetId)
     const response = await this.get<backend.AssetVersions>(path)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'listAssetVersionsBackendError', title)
+      return await this.throw(response, 'listAssetVersionsBackendError')
     } else {
       return await response.json()
     }
@@ -576,14 +578,13 @@ export default class RemoteBackend extends Backend {
   /** Fetch the content of the `Main.enso` file of a project. */
   override async getFileContent(
     projectId: backend.ProjectId,
-    version: string,
-    title: string,
+    versionId?: backend.S3ObjectVersionId,
   ): Promise<string> {
-    const path = remoteBackendPaths.getProjectContentPath(projectId, version)
+    const path = remoteBackendPaths.getProjectContentPath(projectId, versionId)
     const response = await this.get<string>(path)
 
     if (!responseIsSuccessful(response)) {
-      return this.throw(response, 'getFileContentsBackendError', title)
+      return this.throw(response, 'getFileContentsBackendError')
     } else {
       return await response.text()
     }
@@ -688,9 +689,13 @@ export default class RemoteBackend extends Backend {
     body: backend.CreateProjectRequestBody,
   ): Promise<backend.CreatedProject> {
     const path = remoteBackendPaths.CREATE_PROJECT_PATH
-    const response = await this.post<backend.CreatedProject>(path, body)
+    // Remote backend doesn't need the project name in the body.
+    // It's generated on the server side.
+    const { projectName, ...rest } = body
+
+    const response = await this.post<backend.CreatedProject>(path, rest)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createProjectBackendError', body.projectName)
+      return await this.throw(response, 'createProjectBackendError', projectName)
     } else {
       return await response.json()
     }
@@ -762,15 +767,11 @@ export default class RemoteBackend extends Backend {
    * Return details for a project.
    * @throws An error if a non-successful status code (not 200-299) was received.
    */
-  override async getProjectDetails(
-    projectId: backend.ProjectId,
-    _directory: backend.DirectoryId | null,
-    title: string,
-  ): Promise<backend.Project> {
+  override async getProjectDetails(projectId: backend.ProjectId): Promise<backend.Project> {
     const path = remoteBackendPaths.getProjectDetailsPath(projectId)
     const response = await this.get<backend.ProjectRaw>(path)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'getProjectDetailsBackendError', title)
+      return await this.throw(response, 'getProjectDetailsBackendError')
     } else {
       const project = await response.json()
       const ideVersion =
@@ -1293,6 +1294,24 @@ export default class RemoteBackend extends Backend {
       return await this.throw(response, 'getCustomerPortalUrlBackendError')
     } else {
       return (await response.json()).url
+    }
+  }
+
+  /**
+   * Resolve the path of a project asset relative to the project `src` directory.
+   */
+  override async resolveProjectAssetPath(
+    projectId: backend.ProjectId,
+    relativePath: string,
+  ): Promise<string> {
+    const response = await this.get<string>(
+      remoteBackendPaths.getProjectAssetPath(projectId, relativePath),
+    )
+
+    if (!responseIsSuccessful(response)) {
+      return Promise.reject(new Error('Not implemented.'))
+    } else {
+      return await response.text()
     }
   }
 

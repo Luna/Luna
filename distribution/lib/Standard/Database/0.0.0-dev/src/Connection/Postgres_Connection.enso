@@ -11,17 +11,19 @@ import project.Connection.Connection.Connection
 import project.DB_Table.DB_Table
 import project.Dialect
 import project.Internal.Connection.Entity_Naming_Properties.Entity_Naming_Properties
+import project.Internal.Data_Link_Setup.Data_Link_Setup
 import project.Internal.IR.Query.Query
 import project.Internal.JDBC_Connection
-import project.Internal.Data_Link_Setup.Data_Link_Setup
 import project.Internal.SQL_Type_Reference.SQL_Type_Reference
 import project.SQL_Query.SQL_Query
 import project.SQL_Statement.SQL_Statement
 import project.SQL_Type.SQL_Type
+import project.Internal.Common.Connections_Helpers
 from project.Connection.Connection import make_schema_selector, make_structure_creator, make_table_name_selector, make_table_types_selector
 from project.Errors import SQL_Error, Table_Already_Exists, Table_Not_Found
 from project.Internal.Postgres.Helpers import get_encoding_name, parse_postgres_encoding
 from project.Internal.Upload.Helpers.Default_Arguments import first_column_name_in_structure
+
 
 type Postgres_Connection
     ## PRIVATE
@@ -137,7 +139,7 @@ type Postgres_Connection
     tables self name_like=Nothing database=self.database schema=Nothing types=self.dialect.default_table_types all_fields=False =
         self.connection.tables name_like database schema types all_fields
 
-    ## ALIAS read, load, open, import
+    ## ALIAS import, load, open, read
        GROUP Standard.Base.Input
        ICON data_input
        Set up a query returning a Table object, which can be used to work with
@@ -159,7 +161,7 @@ type Postgres_Connection
     query : SQL_Query -> Text -> DB_Table ! Table_Not_Found
     query self query:SQL_Query alias="" = self.connection.query query alias
 
-    ## ALIAS query, load, open, import
+    ## ALIAS import, load, open, query
        GROUP Standard.Base.Input
        ICON data_input
        Execute the query and load the results into memory as a Table.
@@ -306,4 +308,5 @@ type Postgres_Connection
        Converts this value to a JSON serializable object.
     to_js_object : JS_Object
     to_js_object self =
-        JS_Object.from_pairs [["type", "Postgres_Connection"], ["links", self.connection.tables.at "Name" . to_vector], ["get_child_node_action", "query"]]    
+        additional_visualization_fields = Connections_Helpers.get_data_viz_pairs
+        JS_Object.from_pairs <| [["type", "Postgres_Connection"], ["links", self.connection.tables.at "Name" . to_vector]] + additional_visualization_fields

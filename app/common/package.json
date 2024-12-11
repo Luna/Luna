@@ -18,7 +18,7 @@
   "scripts": {
     "test": "vitest run",
     "compile": "tsc",
-    "lint": "eslint . --max-warnings=0"
+    "lint": "eslint ./src --cache --max-warnings=0"
   },
   "peerDependencies": {
     "@tanstack/query-core": "5.54.1",

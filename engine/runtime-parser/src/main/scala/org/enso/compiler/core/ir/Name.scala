@@ -76,7 +76,7 @@ object Name {
         typePointer != this.typePointer
         || methodName != this.methodName
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -91,6 +91,12 @@ object Name {
         res.id          = id
         res
       } else this
+    }
+
+    def copyWithTypePointer(
+      typePointer: Option[Name]
+    ) = {
+      copy(typePointer = typePointer)
     }
 
     /** @inheritdoc */
@@ -246,7 +252,7 @@ object Name {
       if (
         parts != this.parts
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -318,7 +324,7 @@ object Name {
     ): Blank = {
       if (
         location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -400,7 +406,7 @@ object Name {
       if (
         specialName != this.specialName
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -506,7 +512,7 @@ object Name {
         || isMethod != this.isMethod
         || location != this.location
         || originalName != this.originalName
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -616,7 +622,7 @@ object Name {
       if (
         name != this.name
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -711,7 +717,7 @@ object Name {
         name != this.name
         || expression != this.expression
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -822,7 +828,7 @@ object Name {
       if (
         synthetic != this.synthetic
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -921,7 +927,7 @@ object Name {
     ): SelfType = {
       if (
         location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {

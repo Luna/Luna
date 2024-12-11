@@ -4,10 +4,8 @@ import * as React from 'react'
 import invariant from 'tiny-invariant'
 import { createStore, type StoreApi, useStore } from 'zustand'
 
-import type { AssetPanelContextProps } from '#/layouts/AssetPanel'
-import type { Suggestion } from '#/layouts/AssetSearchBar'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
@@ -44,18 +42,12 @@ interface DriveStore {
   readonly setCanDownload: (canDownload: boolean) => void
   readonly pasteData: PasteData<DrivePastePayload> | null
   readonly setPasteData: (pasteData: PasteData<DrivePastePayload> | null) => void
+  readonly expandedDirectoryIds: readonly DirectoryId[]
+  readonly setExpandedDirectoryIds: (selectedKeys: readonly DirectoryId[]) => void
   readonly selectedKeys: ReadonlySet<AssetId>
   readonly setSelectedKeys: (selectedKeys: ReadonlySet<AssetId>) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
-  readonly isAssetPanelPermanentlyVisible: boolean
-  readonly setIsAssetPanelPermanentlyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
-  readonly isAssetPanelTemporarilyVisible: boolean
-  readonly setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
-  readonly assetPanelProps: AssetPanelContextProps | null
-  readonly setAssetPanelProps: (assetPanelProps: AssetPanelContextProps | null) => void
-  readonly suggestions: readonly Suggestion[]
-  readonly setSuggestions: (suggestions: readonly Suggestion[]) => void
 }
 
 // =======================
@@ -80,7 +72,7 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
  */
 export default function DriveProvider(props: ProjectsProviderProps) {
   const { children } = props
-  const { localStorage } = useLocalStorage()
+
   const [store] = React.useState(() =>
     createStore<DriveStore>((set, get) => ({
       category: { type: 'cloud' },
@@ -91,8 +83,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
             targetDirectory: null,
             selectedKeys: EMPTY_SET,
             visuallySelectedKeys: null,
-            suggestions: EMPTY_ARRAY,
-            assetPanelProps: null,
+            expandedDirectoryIds: EMPTY_ARRAY,
           })
         }
       },
@@ -126,6 +117,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
           set({ pasteData })
         }
       },
+      expandedDirectoryIds: EMPTY_ARRAY,
+      setExpandedDirectoryIds: (expandedDirectoryIds) => {
+        if (get().expandedDirectoryIds !== expandedDirectoryIds) {
+          set({ expandedDirectoryIds })
+        }
+      },
       selectedKeys: EMPTY_SET,
       setSelectedKeys: (selectedKeys) => {
         if (get().selectedKeys !== selectedKeys) {
@@ -136,31 +133,6 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       setVisuallySelectedKeys: (visuallySelectedKeys) => {
         if (get().visuallySelectedKeys !== visuallySelectedKeys) {
           set({ visuallySelectedKeys })
-        }
-      },
-      isAssetPanelPermanentlyVisible: localStorage.get('isAssetPanelVisible') ?? false,
-      setIsAssetPanelPermanentlyVisible: (isAssetPanelPermanentlyVisible) => {
-        if (get().isAssetPanelPermanentlyVisible !== isAssetPanelPermanentlyVisible) {
-          set({ isAssetPanelPermanentlyVisible })
-          localStorage.set('isAssetPanelVisible', isAssetPanelPermanentlyVisible)
-        }
-      },
-      isAssetPanelTemporarilyVisible: false,
-      setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible) => {
-        if (get().isAssetPanelTemporarilyVisible !== isAssetPanelTemporarilyVisible) {
-          set({ isAssetPanelTemporarilyVisible })
-        }
-      },
-      assetPanelProps: null,
-      setAssetPanelProps: (assetPanelProps) => {
-        if (get().assetPanelProps !== assetPanelProps) {
-          set({ assetPanelProps })
-        }
-      },
-      suggestions: EMPTY_ARRAY,
-      setSuggestions: (suggestions) => {
-        if (get().suggestions !== suggestions) {
-          set({ suggestions })
         }
       },
     })),
@@ -250,13 +222,30 @@ export function useSetPasteData() {
   return useStore(store, (state) => state.setPasteData)
 }
 
+/** The expanded directories in the Asset Table. */
+export function useExpandedDirectoryIds() {
+  const store = useDriveStore()
+  return useStore(store, (state) => state.expandedDirectoryIds)
+}
+
+/** A function to set the expanded directoyIds in the Asset Table. */
+export function useSetExpandedDirectoryIds() {
+  const store = useDriveStore()
+  const privateSetExpandedDirectoryIds = useStore(store, (state) => state.setExpandedDirectoryIds)
+  return useEventCallback((expandedDirectoryIds: readonly DirectoryId[]) => {
+    React.startTransition(() => {
+      privateSetExpandedDirectoryIds(expandedDirectoryIds)
+    })
+  })
+}
+
 /** The selected keys in the Asset Table. */
 export function useSelectedKeys() {
   const store = useDriveStore()
   return useStore(store, (state) => state.selectedKeys)
 }
 
-/** A function to set the selected keys of the Asset Table selection. */
+/** A function to set the selected keys in the Asset Table. */
 export function useSetSelectedKeys() {
   const store = useDriveStore()
   return useStore(store, (state) => state.setSelectedKeys)
@@ -274,57 +263,24 @@ export function useSetVisuallySelectedKeys() {
   return useStore(store, (state) => state.setVisuallySelectedKeys)
 }
 
-/** Whether the Asset Panel is toggled on. */
-export function useIsAssetPanelPermanentlyVisible() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.isAssetPanelPermanentlyVisible)
-}
+/** Toggle whether a specific directory is expanded. */
+export function useToggleDirectoryExpansion() {
+  const driveStore = useDriveStore()
+  const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
-/** A function to set whether the Asset Panel is toggled on. */
-export function useSetIsAssetPanelPermanentlyVisible() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.setIsAssetPanelPermanentlyVisible)
-}
+  return useEventCallback((directoryId: DirectoryId, override?: boolean) => {
+    const expandedDirectoryIds = driveStore.getState().expandedDirectoryIds
+    const isExpanded = expandedDirectoryIds.includes(directoryId)
+    const shouldExpand = override ?? !isExpanded
 
-/** Whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
-export function useIsAssetPanelTemporarilyVisible() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.isAssetPanelTemporarilyVisible)
-}
-
-/** A function to set whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
-export function useSetIsAssetPanelTemporarilyVisible() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.setIsAssetPanelTemporarilyVisible)
-}
-
-/** Whether the Asset Panel is currently visible, either temporarily or permanently. */
-export function useIsAssetPanelVisible() {
-  const isAssetPanelPermanentlyVisible = useIsAssetPanelPermanentlyVisible()
-  const isAssetPanelTemporarilyVisible = useIsAssetPanelTemporarilyVisible()
-  return isAssetPanelPermanentlyVisible || isAssetPanelTemporarilyVisible
-}
-
-/** Props for the Asset Panel. */
-export function useAssetPanelProps() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.assetPanelProps)
-}
-
-/** A function to set props for the Asset Panel. */
-export function useSetAssetPanelProps() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.setAssetPanelProps)
-}
-
-/** Search suggestions. */
-export function useSuggestions() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.suggestions)
-}
-
-/** Set search suggestions. */
-export function useSetSuggestions() {
-  const store = useDriveStore()
-  return useStore(store, (state) => state.setSuggestions)
+    if (shouldExpand !== isExpanded) {
+      React.startTransition(() => {
+        if (shouldExpand) {
+          setExpandedDirectoryIds([...expandedDirectoryIds, directoryId])
+        } else {
+          setExpandedDirectoryIds(expandedDirectoryIds.filter((id) => id !== directoryId))
+        }
+      })
+    }
+  })
 }

@@ -1,9 +1,11 @@
 from Standard.Base import all
 import Standard.Base.Data.Array_Proxy.Array_Proxy
 import Standard.Base.Data.Filter_Condition as Filter_Condition_Module
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
 import Standard.Base.Data.Time.Errors.Date_Time_Format_Parse_Error
 import Standard.Base.Data.Vector.Builder
 import Standard.Base.Errors.Common.Additional_Warnings
+import Standard.Base.Errors.Common.Floating_Point_Equality
 import Standard.Base.Errors.Common.Incomparable_Values
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
 import Standard.Base.Errors.Common.Type_Error
@@ -36,7 +38,7 @@ import Standard.Table.Internal.Table_Ref.Table_Ref
 import Standard.Table.Internal.Unique_Name_Strategy.Unique_Name_Strategy
 import Standard.Table.Internal.Value_Type_Helpers
 import Standard.Table.Internal.Widget_Helpers
-import Standard.Table.Match_Columns as Match_Columns_Helpers
+import Standard.Table.Internal.Match_Columns_Helpers
 import Standard.Table.Row.Row
 import Standard.Table.Rows_To_Read.Rows_To_Read
 import Standard.Table.Value_Type.By_Type
@@ -401,7 +403,7 @@ type DB_Table
             result = self.updated_columns (new_columns.map _.as_internal)
             Warning.attach (Deprecated.Warning "Standard.Database.DB_Table.DB_Table" "remove_columns_by_type" "Deprecated: use `remove_columns` with a `By_Type` instead.") result
 
-    ## ALIAS select_blank_fields, select_missing_columns, select_na
+    ## ALIAS select_blank_fields, select_missing_columns, select_na, filter_blank_columns
        GROUP Standard.Base.Selections
        ICON select_column
 
@@ -1129,22 +1131,21 @@ type DB_Table
        Create a constant column from a value.
     make_constant_column : Any -> DB_Column ! Illegal_Argument
     make_constant_column self value =
-        Feature.Column_Operations.if_supported_else_throw self.connection.dialect "make_constant_column" <|
-            if Table_Helpers.is_column value then Error.throw (Illegal_Argument.Error "A constant value may only be created from a scalar, not a DB_Column") else
-                type_mapping = self.connection.dialect.get_type_mapping
-                argument_value_type = Value_Type_Helpers.find_argument_type value
-                sql_type = case argument_value_type of
-                    Nothing -> SQL_Type.null
-                    _ -> type_mapping.value_type_to_sql argument_value_type Problem_Behavior.Ignore
-                expr = SQL_Expression.Constant value
-                new_type_ref = SQL_Type_Reference.from_constant sql_type
-                base_column = Internal_Column.Value value.pretty new_type_ref expr
-                needs_cast = argument_value_type.is_nothing.not && self.connection.dialect.needs_literal_table_cast argument_value_type
-                result_internal_column = if needs_cast.not then base_column else
-                    infer_type_from_database new_expression =
-                        SQL_Type_Reference.new self.connection self.context new_expression
-                    self.connection.dialect.make_cast base_column sql_type infer_type_from_database
-                self.make_column result_internal_column
+        if Table_Helpers.is_column value then Error.throw (Illegal_Argument.Error "A constant value may only be created from a scalar, not a DB_Column") else
+            type_mapping = self.connection.dialect.get_type_mapping
+            argument_value_type = Value_Type_Helpers.find_argument_type value
+            sql_type = case argument_value_type of
+                Nothing -> SQL_Type.null
+                _ -> type_mapping.value_type_to_sql argument_value_type Problem_Behavior.Ignore
+            expr = SQL_Expression.Constant value
+            new_type_ref = SQL_Type_Reference.from_constant sql_type
+            base_column = Internal_Column.Value value.pretty new_type_ref expr
+            needs_cast = argument_value_type.is_nothing.not && self.connection.dialect.needs_literal_table_cast argument_value_type
+            result_internal_column = if needs_cast.not then base_column else
+                infer_type_from_database new_expression =
+                    SQL_Type_Reference.new self.connection self.context new_expression
+                self.connection.dialect.make_cast base_column sql_type infer_type_from_database
+            self.make_column result_internal_column
 
     ## PRIVATE
        Create a unique temporary column name.
@@ -2460,18 +2461,21 @@ type DB_Table
          true, a single row is output with `Nothing` for the aggregates column; if
          false, no row is output at all.
 
-       The following aggregate values are supported:
+       The following values are considered sequence-like:
        - `Array`
        - `Vector`
        - `List`
        - `Range`
        - `Date_Range`
        - `Pair`
-       - `Table`
+       - `Table` (interpreted as a sequence of `Row`s)
        - `Column`
 
-       Any other values are treated as non-aggregate values, and their rows are kept
-       unchanged.
+       Some aggregates, like dictionaries (`Dictionary`, `JS_Object`) will
+       expand into two columns - one for key and one for the value.
+
+       If a value is not an aggregate, or has no defined way of being expanded,
+       it is left as a single row containing that value unchanged.
 
        In in-memory tables, it is permitted to mix values of different types.
 
@@ -2558,7 +2562,7 @@ type DB_Table
         _ = [columns, shrink_types, error_on_missing_columns, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "auto_cast")
 
-    ## ALIAS drop_missing_rows, dropna
+    ## ALIAS drop_missing_rows, dropna, remove_blank_rows, remove_empty_rows, remove_missing_rows, filter_empty_rows, drop_empty_rows
        GROUP Standard.Base.Selections
        ICON preparation
        Remove rows which are all blank or containing blank values.
@@ -3121,3 +3125,8 @@ make_literal_table connection column_vectors column_names alias =
                     connection.dialect.make_cast base_column sql_type infer_type_from_database
 
             DB_Table.Value alias connection internal_columns context
+
+## PRIVATE
+Many_Files_List.from (that : DB_Table) =
+    _ = that
+    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database tables. Materialize the table into memory using `.read` first.")

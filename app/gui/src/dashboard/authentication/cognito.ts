@@ -221,12 +221,9 @@ export class Cognito {
    * Will refresh the {@link UserSession} if it has expired.
    */
   async userSession() {
-    const currentSession = await results.Result.wrapAsync(() => amplify.Auth.currentSession())
-    const amplifySession = currentSession.mapErr(intoCurrentSessionErrorType)
-
-    return amplifySession
-      .map((session) => parseUserSession(session, this.amplifyConfig.userPoolWebClientId))
-      .unwrapOr(null)
+    return amplify.Auth.currentSession()
+      .then((result) => parseUserSession(result, this.amplifyConfig.userPoolWebClientId))
+      .catch(() => null)
   }
 
   /**
@@ -336,6 +333,10 @@ export class Cognito {
     const result = await results.Result.wrapAsync(async () => {
       const currentUser = await currentAuthenticatedUser()
       const refreshToken = (await amplify.Auth.currentSession()).getRefreshToken()
+
+      if (refreshToken.getToken() === '') {
+        throw new Error('Refresh token is empty, cannot refresh session, Please sign in again.')
+      }
 
       return await new Promise<cognito.CognitoUserSession>((resolve, reject) => {
         currentUser

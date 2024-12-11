@@ -103,7 +103,7 @@ const props = defineProps<{ data: Data }>()
 const TOKEN = $config.MAPBOX_API_TOKEN
 if (!TOKEN) {
   console.warn(
-    'Mapbox API token is missing, to use Geo Map visualization please provide VITE_ENSO_MAPBOX_API_TOKEN.',
+    'Mapbox API token is missing, to use Geo Map visualization please provide ENSO_IDE_MAPBOX_API_TOKEN.',
   )
 }
 const SCATTERPLOT_LAYER = 'Scatterplot_Layer'

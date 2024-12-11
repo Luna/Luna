@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConditionalTeleport from '@/components/ConditionalTeleport.vue'
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { enclosingTopLevelArgument } from '@/components/GraphEditor/widgets/WidgetTopLevelArgument.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
@@ -42,17 +43,17 @@ const dropdownElement = ref<HTMLElement>()
 const activityElement = ref<HTMLElement>()
 
 const editedWidget = ref<string>()
-const editedValue = ref<Ast.Owned | string | undefined>()
+const editedValue = ref<Ast.Owned<Ast.MutableExpression> | string | undefined>()
 const isHovered = ref(false)
 /** See @{link Actions.setActivity} */
 const activity = shallowRef<VNode>()
 
 // How much wider a dropdown can be than a port it is attached to, when a long text is present.
 // Any text beyond that limit will receive an ellipsis and sliding animation on hover.
-const MAX_DROPDOWN_OVERSIZE_PX = 150
+const MAX_DROPDOWN_OVERSIZE_PX = 390
 
 const floatReference = computed(
-  () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
+  () => enclosingTopLevelArgument(widgetRoot.value, tree.rootElement) ?? widgetRoot.value,
 )
 
 function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidth: boolean) {
@@ -84,7 +85,7 @@ function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidt
           },
         })),
         // Try to keep the dropdown within node's bounds.
-        shift(() => (tree.nodeElement ? { boundary: tree.nodeElement } : {})),
+        shift(() => (tree.rootElement ? { boundary: tree.rootElement } : {})),
         shift(), // Always keep within screen bounds, overriding node bounds.
       ]
     }),
@@ -96,7 +97,7 @@ const { floatingStyles } = dropdownStyles(dropdownElement, true)
 const { floatingStyles: activityStyles } = dropdownStyles(activityElement, false)
 
 class ExpressionTag {
-  private cachedExpressionAst: Ast.Ast | undefined
+  private cachedExpressionAst: Ast.Expression | undefined
 
   constructor(
     readonly expression: string,
@@ -135,7 +136,7 @@ class ExpressionTag {
 
   get expressionAst() {
     if (this.cachedExpressionAst == null) {
-      this.cachedExpressionAst = Ast.parse(this.expression)
+      this.cachedExpressionAst = Ast.parseExpression(this.expression)
     }
     return this.cachedExpressionAst
   }
@@ -154,7 +155,7 @@ class ActionTag {
 
 type ExpressionFilter = (tag: ExpressionTag) => boolean
 function makeExpressionFilter(pattern: Ast.Ast | string): ExpressionFilter | undefined {
-  const editedAst = typeof pattern === 'string' ? Ast.parse(pattern) : pattern
+  const editedAst = typeof pattern === 'string' ? Ast.parseExpression(pattern) : pattern
   const editedCode = pattern instanceof Ast.Ast ? pattern.code() : pattern
   if (editedAst instanceof Ast.TextLiteral) {
     return (tag: ExpressionTag) =>
@@ -238,7 +239,7 @@ const innerWidgetInput = computed<WidgetInput>(() => {
 
 const parentSelectionArrow = injectSelectionArrow(true)
 const arrowSuppressed = ref(false)
-const showArrow = computed(() => isHovered.value && !arrowSuppressed.value)
+const showArrow = computed(() => !arrowSuppressed.value && (tree.extended || isHovered.value))
 provideSelectionArrow(
   proxyRefs({
     id: computed(() => {
@@ -249,11 +250,7 @@ provideSelectionArrow(
         if (node instanceof Ast.AutoscopedIdentifier) return node.identifier.id
         if (node instanceof Ast.PropertyAccess) return node.rhs.id
         if (node instanceof Ast.App) node = node.function
-        else {
-          const wrapped = node.wrappedExpression()
-          if (wrapped != null) node = wrapped
-          else break
-        }
+        else break
       }
       return null
     }),
@@ -369,7 +366,7 @@ function toggleVectorValue(vector: Ast.MutableVector, value: string, previousSta
   if (previousState) {
     vector.keep((ast) => ast.code() !== value)
   } else {
-    vector.push(Ast.parse(value, vector.module))
+    vector.push(Ast.parseExpression(value, vector.module)!)
   }
 }
 
@@ -467,15 +464,20 @@ declare module '@/providers/widgetRegistry' {
     @pointerout="isHovered = false"
   >
     <NodeWidget :input="innerWidgetInput" />
-    <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
-      <SvgIcon name="arrow_right_head_only" class="arrow widgetOutOfLayout" />
-    </Teleport>
-    <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
+    <ConditionalTeleport v-if="showArrow" :disabled="!arrowLocation" :to="arrowLocation">
+      <SvgIcon
+        name="arrow_right_head_only"
+        class="arrow widgetOutOfLayout"
+        :class="{ hovered: isHovered }"
+      />
+    </ConditionalTeleport>
+    <Teleport v-if="tree.rootElement" :to="tree.rootElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
         <SizeTransition height :duration="100">
           <DropdownWidget
             v-if="dropDownInteraction.isActive() && activity == null"
-            color="var(--node-color-primary)"
+            color="var(--color-node-text)"
+            backgroundColor="var(--color-node-background)"
             :entries="entries"
             @clickEntry="onClick"
           />
@@ -518,10 +520,13 @@ svg.arrow {
   opacity: 0.5;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
+  &.hovered {
+    opacity: 0.9;
+  }
 }
 
 .activityElement {
-  --background-color: var(--node-color-primary);
+  --background-color: var(--color-node-primary);
   /* Above the circular menu. */
   z-index: 26;
 }

@@ -59,6 +59,8 @@ export interface SuggestionEntry {
   arguments: SuggestionEntryArgument[]
   /** A type returned by the suggested object. */
   returnType: Typename
+  /** Qualified name of the parent type. */
+  parentType?: QualifiedName
   /** A least-nested module reexporting this entity. */
   reexportedIn?: QualifiedName
   documentation: Doc.Section[]
@@ -237,4 +239,9 @@ export function makeArgument(name: string, type: string = 'Any'): SuggestionEntr
     isSuspended: false,
     hasDefault: false,
   }
+}
+
+/** `true` if calling the function without providing a value for this argument will result in an error. */
+export function isRequiredArgument(info: SuggestionEntryArgument) {
+  return !!info.defaultValue?.startsWith('Missing_Argument.')
 }

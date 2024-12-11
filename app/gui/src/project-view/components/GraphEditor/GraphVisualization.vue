@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { visualizationBindings } from '@/bindings'
-import {
-  RawDataSource,
-  useVisualizationData,
-} from '@/components/GraphEditor/GraphVisualization/visualizationData'
+import type { RawDataSource } from '@/components/GraphEditor/GraphVisualization/visualizationData'
+import { useVisualizationData } from '@/components/GraphEditor/GraphVisualization/visualizationData'
 import VisualizationToolbar from '@/components/GraphEditor/GraphVisualization/VisualizationToolbar.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import WithFullscreenMode from '@/components/WithFullscreenMode.vue'
 import { focusIsIn, useEvent, useResizeObserver } from '@/composables/events'
-import { VisualizationDataSource } from '@/stores/visualization'
+import type { VisualizationDataSource } from '@/stores/visualization'
 import type { Opt } from '@/util/data/opt'
 import { type BoundsSet, Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
@@ -185,6 +183,15 @@ watch(
   () => isFullscreen,
   (f) => f && nextTick(() => panelElement.value?.focus()),
 )
+
+const visParams = computed(() => {
+  return {
+    visualization: effectiveVisualization.value,
+    data: effectiveVisualizationData.value,
+    size: contentElementSize.value,
+    nodeType: props.typename,
+  }
+})
 </script>
 
 <script lang="ts">
@@ -206,7 +213,7 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
 </script>
 
 <template>
-  <div class="GraphVisualization" :style="style">
+  <div class="GraphVisualization" :style="style" :class="{ isFocused }">
     <WithFullscreenMode :fullscreen="isFullscreen" @update:animating="fullscreenAnimating = $event">
       <div
         ref="panelElement"
@@ -241,10 +248,7 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
         >
           <component
             :is="ensoVisualizationHost"
-            :visualization="effectiveVisualization"
-            :data="effectiveVisualizationData"
-            :size="contentElementSize"
-            :nodeType="typename"
+            :params="visParams"
             @updatePreprocessor="
               updatePreprocessor($event.detail[0], $event.detail[1], ...$event.detail.slice(2))
             "
@@ -274,8 +278,16 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
   position: absolute;
   border-radius: var(--radius-default);
   background: var(--color-visualization-bg);
+  opacity: 0.9;
+}
+
+.content {
   /** Prevent drawing on top of other UI elements (e.g. dropdown widgets). */
   isolation: isolate;
+}
+
+.isFocused {
+  opacity: 1;
 }
 
 .VisualizationPanel {
@@ -294,6 +306,7 @@ customElements.define(ensoVisualizationHost, defineCustomElement(VisualizationHo
 .content {
   overflow: auto;
   contain: strict;
+  border-radius: 0 0 var(--radius-default) var(--radius-default);
   height: 100%;
 }
 

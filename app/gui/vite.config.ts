@@ -9,9 +9,13 @@ import { defineConfig, type Plugin } from 'vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import wasm from 'vite-plugin-wasm'
 import tailwindConfig from './tailwind.config'
+// @ts-expect-error We don't need to typecheck this file
+import reactCompiler from 'babel-plugin-react-compiler'
+// @ts-expect-error We don't need to typecheck this file
+import syntaxImportAttributes from '@babel/plugin-syntax-import-attributes'
 
 const isDevMode = process.env.NODE_ENV === 'development'
-const isE2E = process.env.E2E === 'true'
+const isE2E = process.env.INTEGRATION_TEST === 'true'
 
 const entrypoint = isE2E ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
 
@@ -42,7 +46,12 @@ export default defineConfig({
     }),
     react({
       include: fileURLToPath(new URL('./src/dashboard/**/*.tsx', import.meta.url)),
-      babel: { plugins: ['@babel/plugin-syntax-import-attributes'] },
+      babel: {
+        plugins: [
+          syntaxImportAttributes,
+          [reactCompiler, { target: '18', enablePreserveExistingMemoizationGuarantees: true }],
+        ],
+      },
     }),
     ...(isDevMode ? [await projectManagerShim()] : []),
   ],

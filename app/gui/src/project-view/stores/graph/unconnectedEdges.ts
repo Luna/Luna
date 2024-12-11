@@ -1,7 +1,7 @@
 import type { PortId } from '@/providers/portInfo'
 import type { ConnectedEdge } from '@/stores/graph/index'
-import { filterDefined } from '@/util/data/iterable'
 import { Vec2 } from '@/util/data/vec2'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { computed, ref, watch, type WatchSource } from 'vue'
 import type { AstId } from 'ydoc-shared/ast'
 
@@ -24,8 +24,6 @@ export interface UnconnectedSource extends AnyUnconnectedEdge {
 export interface UnconnectedTarget extends AnyUnconnectedEdge {
   source: AstId
   target: undefined
-  /** If true, the target end should be drawn as with a self-argument arrow. */
-  targetIsSelfArgument?: boolean
   /** If true, the edge will be rendered in its dimmed color. */
   suggestion?: boolean
 }
@@ -99,7 +97,7 @@ export function useUnconnectedEdges() {
   const unconnectedEdges = computed<Set<UnconnectedEdge>>(
     () =>
       new Set(
-        filterDefined([mouseEditedEdge.value, cbEditedEdge.value, outputSuggestedEdge.value]),
+        iter.filterDefined([mouseEditedEdge.value, cbEditedEdge.value, outputSuggestedEdge.value]),
       ),
   )
 

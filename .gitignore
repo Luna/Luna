@@ -37,6 +37,8 @@ generated/
 ############
 
 node_modules
+eslint_report.json
+.eslintcache
 
 ############
 ## System ##
@@ -186,5 +188,6 @@ test-results
 ##########################
 
 test-results/
+test-traces/
 playwright-report/
 playwright/.cache/

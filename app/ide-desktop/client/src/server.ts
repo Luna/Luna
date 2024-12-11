@@ -13,7 +13,7 @@ import type * as vite from 'vite'
 
 import * as projectManagement from '@/projectManagement'
 import { COOP_COEP_CORP_HEADERS } from 'enso-common'
-import GLOBAL_CONFIG from 'enso-common/src/config.json' assert { type: 'json' }
+import GLOBAL_CONFIG from 'enso-common/src/config.json' with { type: 'json' }
 import * as ydocServer from 'ydoc-server'
 
 import * as contentConfig from '@/contentConfig'
@@ -22,7 +22,6 @@ import { pathToFileURL } from 'node:url'
 
 const logger = contentConfig.logger
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 ydocServer.configureAllDebugLogs(
   process.env.ENSO_IDE_YDOC_LS_DEBUG === 'true',
   logger.log.bind(logger),

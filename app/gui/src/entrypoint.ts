@@ -1,4 +1,5 @@
 import * as dashboard from '#/index'
+import '#/styles.css'
 import '#/tailwind.css'
 import { AsyncApp } from '@/asyncApp'
 import { baseConfig, configValue, mergeConfig } from '@/util/config'
@@ -6,6 +7,7 @@ import { urlParams } from '@/util/urlParams'
 import * as vueQuery from '@tanstack/vue-query'
 import { isOnLinux } from 'enso-common/src/detect'
 import * as commonQuery from 'enso-common/src/queryClient'
+import * as idbKeyval from 'idb-keyval'
 import { lazyVueInReact } from 'veaury'
 import { type App } from 'vue'
 
@@ -41,6 +43,7 @@ function printScamWarning() {
 
 printScamWarning()
 let scamWarningHandle = 0
+
 window.addEventListener('resize', () => {
   window.clearTimeout(scamWarningHandle)
   scamWarningHandle = window.setTimeout(printScamWarning, SCAM_WARNING_TIMEOUT)
@@ -59,6 +62,7 @@ function main() {
   const url = new URL(location.href)
   const isInAuthenticationFlow = url.searchParams.has('code') && url.searchParams.has('state')
   const authenticationUrl = location.href
+
   if (isInAuthenticationFlow) {
     history.replaceState(null, '', localStorage.getItem(INITIAL_URL_KEY))
   }
@@ -81,7 +85,16 @@ function main() {
   const urlWithoutStartupProject = new URL(location.toString())
   urlWithoutStartupProject.searchParams.delete('startup.project')
   history.replaceState(null, '', urlWithoutStartupProject)
-  const queryClient = commonQuery.createQueryClient()
+
+  const store = idbKeyval.createStore('enso', 'query-persist-cache')
+  const queryClient = commonQuery.createQueryClient({
+    persisterStorage: {
+      getItem: async (key) => idbKeyval.get(key, store),
+      setItem: async (key, value) => idbKeyval.set(key, value, store),
+      removeItem: async (key) => idbKeyval.del(key, store),
+      clear: async () => idbKeyval.clear(store),
+    },
+  })
 
   const registerPlugins = (app: App) => {
     app.use(vueQuery.VueQueryPlugin, { queryClient })

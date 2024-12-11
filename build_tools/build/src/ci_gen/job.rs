@@ -1,7 +1,6 @@
-use core::panic;
-
 use crate::prelude::*;
 
+use crate::ci_gen::input;
 use crate::ci_gen::not_default_branch;
 use crate::ci_gen::runs_on;
 use crate::ci_gen::secret;
@@ -13,8 +12,11 @@ use crate::ci_gen::RELEASE_CLEANING_POLICY;
 use crate::engine::env as engine_env;
 use crate::ide::web::env as ide_env;
 
+use core::panic;
 use ide_ci::actions::workflow::definition::cancel_workflow_action;
+use ide_ci::actions::workflow::definition::get_input_expression;
 use ide_ci::actions::workflow::definition::shell;
+use ide_ci::actions::workflow::definition::step::Argument;
 use ide_ci::actions::workflow::definition::Access;
 use ide_ci::actions::workflow::definition::Job;
 use ide_ci::actions::workflow::definition::JobArchetype;
@@ -295,6 +297,14 @@ impl JobArchetype for StandardLibraryTests {
             graalvm::Edition::Enterprise =>
                 job.env(engine_env::GRAAL_EDITION, graalvm::Edition::Enterprise),
         }
+
+        // If running extra cloud tests, enable reporting all tests. These tests run on a nightly
+        // schedule, and so the normal test reporter is not available to them. Thus we want to see
+        // the full log in the CI to be able to tell which tests have been run.
+        if should_enable_cloud_tests {
+            job.env(crate::libraries_tests::env::REPORT_ALL_TESTS, "1");
+        }
+
         job
     }
 
@@ -382,6 +392,7 @@ impl JobArchetype for SnowflakeTests {
             .build_job(job_name, RunnerLabel::LinuxLatest)
             .with_permission(Permission::Checks, Access::Write);
         job.env(engine_env::GRAAL_EDITION, GRAAL_EDITION_FOR_EXTRA_TESTS);
+        job.env(crate::libraries_tests::env::REPORT_ALL_TESTS, "1");
         job
     }
 
@@ -407,16 +418,6 @@ impl JobArchetype for NativeTest {
         plain_job(target, "Native Rust tests", "wasm test --no-wasm")
     }
 }
-
-#[derive(Clone, Copy, Debug)]
-pub struct GuiCheck;
-
-impl JobArchetype for GuiCheck {
-    fn job(&self, target: Target) -> Job {
-        plain_job(target, "GUI tests", "gui check")
-    }
-}
-
 
 #[derive(Clone, Copy, Debug)]
 pub struct GuiBuild;
@@ -480,6 +481,47 @@ impl JobArchetype for DeployRuntime {
                     .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::runtime::REGION)]
             })
             .build_job("Upload Runtime to ECR", target)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DeployYdoc;
+
+impl JobArchetype for DeployYdoc {
+    fn job(&self, target: Target) -> Job {
+        let run_command =
+            format!("release deploy-ydoc-{}", get_input_expression(input::name::YDOC));
+        RunStepsBuilder::new(run_command)
+            .customize(|step| {
+                vec![step
+                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)
+                    .with_env("ENSO_BUILD_ECR_REPOSITORY", crate::aws::ecr::ydoc::NAME)
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_ACCESS_KEY_ID,
+                        "AWS_ACCESS_KEY_ID",
+                    )
+                    .with_secret_exposed_as(
+                        secret::ECR_PUSH_RUNTIME_SECRET_ACCESS_KEY,
+                        "AWS_SECRET_ACCESS_KEY",
+                    )
+                    .with_env("AWS_DEFAULT_REGION", crate::aws::ecr::ydoc::REGION)]
+            })
+            .cleaning(RELEASE_CLEANING_POLICY)
+            .build_job("Upload Ydoc to ECR", target)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DispatchBuildImage;
+
+impl JobArchetype for DispatchBuildImage {
+    fn job(&self, target: Target) -> Job {
+        RunStepsBuilder::new("release dispatch-build-image")
+            .customize(|step| {
+                vec![step
+                    .with_secret_exposed_as(secret::CI_PRIVATE_TOKEN, ide_ci::github::GITHUB_TOKEN)]
+            })
+            .build_job("Dispatch Cloud build-image workflow", target)
     }
 }
 
@@ -551,6 +593,19 @@ impl JobArchetype for PackageIde {
                     "ENSO_TEST_USER_PASSWORD",
                 );
             steps.push(test_step);
+
+            let upload_test_traces_step = Step {
+                r#if: Some("failure()".into()),
+                name: Some("Upload Test Traces".into()),
+                uses: Some("actions/upload-artifact@v4".into()),
+                with: Some(Argument::Other(BTreeMap::from_iter([
+                    ("name".into(), format!("test-traces-{}-{}", target.0, target.1).into()),
+                    ("path".into(), "app/ide-desktop/client/test-traces".into()),
+                    ("compression-level".into(), 0.into()), // The traces are in zip already.
+                ]))),
+                ..Default::default()
+            };
+            steps.push(upload_test_traces_step);
 
             // After the E2E tests run, they create a credentials file in user home directory.
             // If that file is not cleaned up, future runs of our tests may randomly get

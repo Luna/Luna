@@ -32,7 +32,10 @@ import org.enso.interpreter.node.expression.builtin.BuiltinRootNode;
 import org.enso.interpreter.node.expression.builtin.Nothing;
 import org.enso.interpreter.node.expression.builtin.Polyglot;
 import org.enso.interpreter.node.expression.builtin.debug.Debug;
+import org.enso.interpreter.node.expression.builtin.error.AdditionalWarnings;
 import org.enso.interpreter.node.expression.builtin.error.CaughtPanic;
+import org.enso.interpreter.node.expression.builtin.error.NoWrap;
+import org.enso.interpreter.node.expression.builtin.error.ProblemBehavior;
 import org.enso.interpreter.node.expression.builtin.error.Warning;
 import org.enso.interpreter.node.expression.builtin.immutable.Vector;
 import org.enso.interpreter.node.expression.builtin.io.File;
@@ -94,7 +97,6 @@ public final class Builtins {
   private final Comparable comparable;
   private final DefaultComparator defaultComparator;
   private final System system;
-  private final Special special;
 
   // Builtin types
   private final Builtin any;
@@ -117,6 +119,9 @@ public final class Builtins {
   private final Builtin timeOfDay;
   private final Builtin timeZone;
   private final Builtin warning;
+  private final NoWrap noWrap;
+  private final ProblemBehavior problemBehavior;
+  private final AdditionalWarnings additionalWarnings;
 
   /**
    * Creates an instance with builtin methods installed.
@@ -168,11 +173,13 @@ public final class Builtins {
     timeOfDay = builtins.get(org.enso.interpreter.node.expression.builtin.date.TimeOfDay.class);
     timeZone = builtins.get(org.enso.interpreter.node.expression.builtin.date.TimeZone.class);
     warning = builtins.get(Warning.class);
+    noWrap = getBuiltinType(NoWrap.class);
+    problemBehavior = getBuiltinType(ProblemBehavior.class);
+    additionalWarnings = getBuiltinType(AdditionalWarnings.class);
 
     error = new Error(this, context);
     system = new System(this);
     number = new Number(this);
-    special = new Special(language);
     scope = scopeBuilder.build();
   }
 
@@ -602,6 +609,21 @@ public final class Builtins {
     return warning.getType();
   }
 
+  /** Returns the {@code Problem_Behavior} type. */
+  public ProblemBehavior problemBehavior() {
+    return problemBehavior;
+  }
+
+  /** Returns the {@code No_Wrap} atom constructor. */
+  public NoWrap noWrap() {
+    return noWrap;
+  }
+
+  /** Returns the {@code Additional_Warnings} atom constructor. */
+  public AdditionalWarnings additionalWarnings() {
+    return additionalWarnings;
+  }
+
   /**
    * Returns the {@code File} atom constructor.
    *
@@ -743,10 +765,6 @@ public final class Builtins {
    */
   public Type dataflowError() {
     return dataflowError.getType();
-  }
-
-  public Special special() {
-    return special;
   }
 
   /**

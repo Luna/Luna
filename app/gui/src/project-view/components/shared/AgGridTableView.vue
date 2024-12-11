@@ -1,6 +1,8 @@
 <script lang="ts">
 import { gridBindings } from '@/bindings'
+import { modKey } from '@/composables/events'
 import type { MenuItemDef } from 'ag-grid-enterprise'
+import { ref } from 'vue'
 /**
  * A more specialized version of AGGrid's `MenuItemDef` to simplify testing (the tests need to provide
  * only values actually used by the composable)
@@ -14,25 +16,46 @@ export interface MenuItem<TData> extends MenuItemDef<TData> {
 
 const AGGRID_DEFAULT_COPY_ICON =
   '<span class="ag-icon ag-icon-copy" unselectable="on" role="presentation"></span>'
+const AGGRID_DEFAULT_CUT_ICON =
+  '<span class="ag-icon ag-icon-cut" unselectable="on" role="presentation"></span>'
+const AGGRID_DEFAULT_PASTE_ICON =
+  '<span class="ag-icon ag-icon-paste" unselectable="on" role="presentation"></span>'
+
+/** Whether to include column headers in copied clipboard content or not. See {@link sendToClipboard}. */
+const copyWithHeaders = ref(false)
 
 export const commonContextMenuActions = {
   cut: {
     name: 'Cut',
     shortcut: gridBindings.bindings['cutCells'].humanReadable,
-    action: ({ api }) => api.cutToClipboard(),
-    icon: AGGRID_DEFAULT_COPY_ICON,
+    action: ({ api }) => {
+      copyWithHeaders.value = false
+      api.cutToClipboard()
+    },
+    icon: AGGRID_DEFAULT_CUT_ICON,
   },
   copy: {
     name: 'Copy',
     shortcut: gridBindings.bindings['copyCells'].humanReadable,
-    action: ({ api }) => api.copyToClipboard(),
+    action: ({ api }) => {
+      copyWithHeaders.value = false
+      api.copyToClipboard()
+    },
+    icon: AGGRID_DEFAULT_COPY_ICON,
+  },
+  copyWithHeaders: {
+    name: 'Copy with Headers',
+    action: ({ api }) => {
+      copyWithHeaders.value = true
+      api.copyToClipboard()
+    },
     icon: AGGRID_DEFAULT_COPY_ICON,
   },
   paste: {
     name: 'Paste',
     shortcut: gridBindings.bindings['pasteCells'].humanReadable,
     action: ({ api }) => api.pasteFromClipboard(),
-    icon: AGGRID_DEFAULT_COPY_ICON,
+    icon: AGGRID_DEFAULT_PASTE_ICON,
   },
 } satisfies Record<string, MenuItem<unknown>>
 </script>
@@ -42,12 +65,7 @@ export const commonContextMenuActions = {
  * Component adding some useful logic to AGGrid table component (like keeping track of colum sizes),
  * and using common style for tables in our application.
  */
-import {
-  clipboardNodeData,
-  tsvTableToEnsoExpression,
-  writeClipboard,
-} from '@/components/GraphEditor/clipboard'
-import { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
+import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
 import { useAutoBlur } from '@/util/autoBlur'
 import type {
   CellEditingStartedEvent,
@@ -66,7 +84,15 @@ import type {
   RowHeightParams,
   SortChangedEvent,
 } from 'ag-grid-enterprise'
-import { type ComponentInstance, reactive, ref, shallowRef, watch } from 'vue'
+import * as iter from 'enso-common/src/utilities/data/iter'
+import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
+import { type ComponentInstance, reactive, shallowRef, watch } from 'vue'
+import { clipboardNodeData, writeClipboard } from '../GraphEditor/clipboard'
+import {
+  parseTsvData,
+  rowsToTsv,
+  tableToEnsoExpression,
+} from '../GraphEditor/widgets/WidgetTableEditor/tableParsing'
 
 const DEFAULT_ROW_HEIGHT = 22
 
@@ -114,14 +140,11 @@ function getRowHeight(params: RowHeightParams): number {
     return DEFAULT_ROW_HEIGHT
   }
 
-  const returnCharsCount = textValues.map((text: string) => {
-    const crlfCount = (text.match(/\r\n/g) || []).length
-    const crCount = (text.match(/\r/g) || []).length
-    const lfCount = (text.match(/\n/g) || []).length
-    return crCount + lfCount - crlfCount
-  })
+  const returnCharsCount = iter.map(textValues, (text) =>
+    iter.count(text.matchAll(LINE_BOUNDARIES)),
+  )
 
-  const maxReturnCharsCount = Math.max(...returnCharsCount)
+  const maxReturnCharsCount = iter.reduce(returnCharsCount, Math.max, 0)
   return (maxReturnCharsCount + 1) * DEFAULT_ROW_HEIGHT
 }
 
@@ -178,10 +201,38 @@ function lockColumnSize(e: ColumnResizedEvent) {
  * content. This data contains a ready-to-paste node that constructs an Enso table from the provided TSV.
  */
 function sendToClipboard({ data }: { data: string }) {
+  const rows = parseTsvData(data)
+  if (rows == null) return
+  // First row of `data` contains column names.
+  const columnNames = rows[0]
+  const rowsWithoutHeaders = rows.slice(1)
+  const expression = tableToEnsoExpression(rowsWithoutHeaders, columnNames)
+  if (expression == null) return
+  const clipboardContent = copyWithHeaders.value ? rows : rowsWithoutHeaders
   return writeClipboard({
-    ...clipboardNodeData([{ expression: tsvTableToEnsoExpression(data) }]),
-    'text/plain': data,
+    ...clipboardNodeData([{ expression }]),
+    'text/plain': rowsToTsv(clipboardContent),
   })
+}
+
+/**
+ * AgGrid does not conform RFC 4180 when serializing copied cells to TSV before calling {@link sendToClipboard}.
+ * We need to escape tabs, newlines and double quotes in the cell values to make
+ * sure round-trip with Excel and Google Spreadsheet works.
+ */
+function processCellForClipboard({
+  value,
+  formatValue,
+}: {
+  value: any
+  formatValue: (arg: any) => string
+}) {
+  if (value == null) return ''
+  const formatted = formatValue(value)
+  if (formatted.match(/[\t\n\r"]/)) {
+    return `"${formatted.replaceAll(/"/g, '""')}"`
+  }
+  return formatted
 }
 
 defineExpose({ gridApi })
@@ -208,7 +259,7 @@ function supressCopy(event: KeyboardEvent) {
   // and AgGrid API does not allow copy suppression.
   if (
     (event.code === 'KeyX' || event.code === 'KeyC' || event.code === 'KeyV') &&
-    event.ctrlKey &&
+    modKey(event) &&
     wrapper.value != null &&
     event.target != wrapper.value
   ) {
@@ -221,7 +272,7 @@ function supressCopy(event: KeyboardEvent) {
 
 const { LicenseManager } = await import('ag-grid-enterprise')
 
-if (!$config.AG_GRID_LICENSE_KEY) {
+if (typeof $config.AG_GRID_LICENSE_KEY !== 'string') {
   console.warn('The AG_GRID_LICENSE_KEY is not defined.')
   if (import.meta.env.DEV) {
     // Hide annoying license validation errors in dev mode when the license is not defined. The
@@ -241,8 +292,12 @@ if (!$config.AG_GRID_LICENSE_KEY) {
     }
   }
 } else {
-  const agGridLicenseKey = $config.AG_GRID_LICENSE_KEY
-  LicenseManager.setLicenseKey(agGridLicenseKey)
+  LicenseManager.setLicenseKey($config.AG_GRID_LICENSE_KEY)
+}
+
+function stopIfPrevented(event: Event) {
+  // When AG Grid handles the context menu event it prevents-default, but it doesn't stop propagation.
+  if (event.defaultPrevented) event.stopPropagation()
 }
 
 const { AgGridVue } = await import('ag-grid-vue3')
@@ -253,12 +308,14 @@ const { AgGridVue } = await import('ag-grid-vue3')
     <AgGridVue
       v-bind="$attrs"
       ref="grid"
-      class="ag-theme-alpine grid"
+      class="ag-theme-alpine inner"
       :headerHeight="26"
       :getRowHeight="getRowHeight"
       :rowData="rowData"
       :columnDefs="columnDefs"
       :defaultColDef="defaultColDef"
+      :copyHeadersToClipboard="true"
+      :processCellForClipboard="processCellForClipboard"
       :sendToClipboard="sendToClipboard"
       :suppressFieldDotNotation="true"
       :enableRangeSelection="true"
@@ -269,6 +326,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       :suppressDragLeaveHidesColumns="suppressDragLeaveHidesColumns"
       :suppressMoveWhenColumnDragging="suppressMoveWhenColumnDragging"
       :processDataFromClipboard="processDataFromClipboard"
+      :allowContextMenuWithControlKey="true"
       @gridReady="onGridReady"
       @firstDataRendered="updateColumnWidths"
       @rowDataUpdated="updateColumnWidths($event), emit('rowDataUpdated', $event)"
@@ -279,6 +337,7 @@ const { AgGridVue } = await import('ag-grid-vue3')
       @rowEditingStopped="emit('rowEditingStopped', $event)"
       @sortChanged="emit('sortOrFilterUpdated', $event)"
       @filterChanged="emit('sortOrFilterUpdated', $event)"
+      @contextmenu="stopIfPrevented"
     />
   </div>
 </template>
@@ -286,18 +345,30 @@ const { AgGridVue } = await import('ag-grid-vue3')
 <style src="@ag-grid-community/styles/ag-grid.css" />
 <style src="@ag-grid-community/styles/ag-theme-alpine.css" />
 <style scoped>
-.grid {
+.inner {
   width: 100%;
   height: 100%;
 }
 
+/*
+ * FIXME: This style should apply when using this component both in visualization and in widget.
+ * Right now, it appear to only have an effect on visualization, so we have a copy of it inside
+ * WidgetTableEditor.
+ */
 .ag-theme-alpine {
   --ag-grid-size: 3px;
   --ag-list-item-height: 20px;
+  --ag-background-color: var(--color-visualization-bg);
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-visualization-bg) 98%, black);
+  --ag-header-background-color: var(--color-visualization-bg);
   font-family: var(--font-mono);
-}
 
-.TableVisualization > .ag-theme-alpine > :deep(.ag-root-wrapper.ag-layout-normal) {
-  border-radius: 0 0 var(--radius-default) var(--radius-default);
+  :deep(.ag-header) {
+    background: linear-gradient(
+      to top,
+      var(--ag-odd-row-background-color),
+      var(--ag-background-color)
+    );
+  }
 }
 </style>

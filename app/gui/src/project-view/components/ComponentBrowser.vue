@@ -18,7 +18,7 @@ import { useProjectStore } from '@/stores/project'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { type Typename } from '@/stores/suggestionDatabase/entry'
 import type { VisualizationDataSource } from '@/stores/visualization'
-import { cancelOnClick, isNodeOutside, targetIsOutside } from '@/util/autoBlur'
+import { isNodeOutside, targetIsOutside } from '@/util/autoBlur'
 import { tryGetIndex } from '@/util/data/array'
 import type { Opt } from '@/util/data/opt'
 import { Rect } from '@/util/data/rect'
@@ -41,6 +41,8 @@ const PAN_MARGINS = {
 }
 const COMPONENT_EDITOR_PADDING = 12
 const ICON_WIDTH = 16
+// Component editor is larger than a typical node, so the edge should touch it a bit higher.
+const EDGE_Y_OFFSET = -6
 
 const cssComponentEditorPadding = `${COMPONENT_EDITOR_PADDING}px`
 
@@ -63,7 +65,7 @@ const emit = defineEmits<{
     firstAppliedReturnType: Typename | undefined,
   ]
   canceled: []
-  selectedSuggestionId: [id: SuggestionId | null]
+  selectedSuggestionId: [id: SuggestionId | undefined]
   isAiPrompt: [boolean]
 }>()
 
@@ -77,17 +79,29 @@ const clickOutsideAssociatedElements = (e: PointerEvent) => {
       false
     : props.associatedElements.every((element) => targetIsOutside(e, element))
 }
-const cbOpen: Interaction = cancelOnClick(clickOutsideAssociatedElements, {
-  cancel: () => emit('canceled'),
+const cbOpen: Interaction = {
+  pointerdown: (e: PointerEvent) => {
+    if (clickOutsideAssociatedElements(e)) {
+      if (props.usage.type === 'editNode') {
+        acceptInput()
+      } else {
+        emit('canceled')
+      }
+    }
+    return false
+  },
+  cancel: () => {
+    emit('canceled')
+  },
   end: () => {
-    // In AI prompt mode likely the input is not a valid mode.
-    if (input.mode.mode !== 'aiPrompt') {
-      acceptInput()
-    } else {
+    // In AI prompt mode, the input is likely not a valid expression.
+    if (input.mode.mode === 'aiPrompt') {
       emit('canceled')
+    } else {
+      acceptInput()
     }
   },
-})
+}
 
 function scaleValues<T extends Record<any, number>>(
   values: T,
@@ -187,7 +201,9 @@ watchEffect(() => {
     return
   }
   const scenePos = originScenePos.value.add(
-    new Vec2(COMPONENT_EDITOR_PADDING + ICON_WIDTH / 2, 0).scale(clientToSceneFactor.value),
+    new Vec2(COMPONENT_EDITOR_PADDING + ICON_WIDTH / 2, 0)
+      .scale(clientToSceneFactor.value)
+      .add(new Vec2(0, EDGE_Y_OFFSET)),
   )
   graphStore.cbEditedEdge = {
     source,
@@ -223,10 +239,6 @@ const nodeColor = computed(() => {
     if (color) return color
   }
   return 'var(--node-color-no-type)'
-})
-watchEffect(() => {
-  if (!graphStore.cbEditedEdge) return
-  graphStore.cbEditedEdge.color = nodeColor.value
 })
 
 const selectedSuggestionIcon = computed(() => {
@@ -280,7 +292,7 @@ const isVisualizationVisible = ref(true)
 
 // === Documentation Panel ===
 
-watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id ?? null))
+watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id))
 watch(
   () => input.mode,
   (mode) => emit('isAiPrompt', mode.mode === 'aiPrompt'),

@@ -3,20 +3,17 @@ import ExtendedMenu from '@/components/ExtendedMenu.vue'
 import NavBreadcrumbs from '@/components/NavBreadcrumbs.vue'
 import RecordControl from '@/components/RecordControl.vue'
 import SelectionMenu from '@/components/SelectionMenu.vue'
+import UndoRedoButtons from './UndoRedoButtons.vue'
 
-const showColorPicker = defineModel<boolean>('showColorPicker', { required: true })
 const showCodeEditor = defineModel<boolean>('showCodeEditor', { required: true })
 const showDocumentationEditor = defineModel<boolean>('showDocumentationEditor', { required: true })
 const props = defineProps<{
   zoomLevel: number
-  componentsSelected: number
 }>()
 const emit = defineEmits<{
   fitToAllClicked: []
   zoomIn: []
   zoomOut: []
-  collapseNodes: []
-  removeNodes: []
 }>()
 </script>
 
@@ -24,15 +21,8 @@ const emit = defineEmits<{
   <div class="TopBar">
     <NavBreadcrumbs />
     <RecordControl />
-    <Transition name="selection-menu">
-      <SelectionMenu
-        v-if="componentsSelected > 1"
-        v-model:showColorPicker="showColorPicker"
-        :selectedComponents="componentsSelected"
-        @collapseNodes="emit('collapseNodes')"
-        @removeNodes="emit('removeNodes')"
-      />
-    </Transition>
+    <UndoRedoButtons />
+    <SelectionMenu />
     <ExtendedMenu
       v-model:showCodeEditor="showCodeEditor"
       v-model:showDocumentationEditor="showDocumentationEditor"
@@ -61,15 +51,5 @@ const emit = defineEmits<{
 
 .TopBar.extraRightSpace {
   right: 32px;
-}
-
-.selection-menu-enter-active,
-.selection-menu-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.selection-menu-enter-from,
-.selection-menu-leave-to {
-  opacity: 0;
 }
 </style>

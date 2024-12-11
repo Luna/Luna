@@ -20,8 +20,8 @@ import org.enso.interpreter.node.callable.IndirectInvokeMethodNode;
 import org.enso.interpreter.node.expression.builtin.text.util.TypeToDisplayTextNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
-import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
+import org.enso.interpreter.runtime.data.text.Text;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.state.HasContextEnabledNode;
@@ -36,7 +36,7 @@ import org.enso.interpreter.runtime.state.State;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @ImportStatic(PanicException.class)
-public final class DataflowError extends AbstractTruffleException implements EnsoObject {
+public final class DataflowError extends AbstractTruffleException {
   /** Signals (local) values that haven't yet been initialized */
   public static final DataflowError UNINITIALIZED = new DataflowError(null, (Node) null);
 
@@ -117,8 +117,8 @@ public final class DataflowError extends AbstractTruffleException implements Ens
    *
    * @return the payload object
    */
-  public Object getPayload() {
-    return payload != null ? payload : "Uninitialized value";
+  public final Object getPayload() {
+    return payload != null ? payload : Text.create("Uninitialized value");
   }
 
   /**

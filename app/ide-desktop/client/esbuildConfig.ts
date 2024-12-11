@@ -7,10 +7,6 @@ import { wasmLoader } from 'esbuild-plugin-wasm'
 
 import * as paths from './paths'
 
-// ================
-// === Bundling ===
-// ================
-
 /**
  * Get the bundler options using the environment.
  *
