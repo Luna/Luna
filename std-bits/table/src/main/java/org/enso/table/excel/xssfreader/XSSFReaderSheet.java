@@ -64,15 +64,19 @@ public class XSSFReaderSheet implements ExcelSheet {
 
       rowData = new HashMap<>();
 
-      parent.withReader(
-          reader -> {
-            try {
-              var sheet = reader.getSheet(relId);
-              xmlReader.parse(new InputSource(sheet));
-            } catch (SAXException | InvalidFormatException | IOException e) {
-              throw new RuntimeException(e);
-            }
-          });
+      try {
+        parent.withReader(
+            reader -> {
+              try {
+                var sheet = reader.getSheet(relId);
+                xmlReader.parse(new InputSource(sheet));
+              } catch (SAXException | InvalidFormatException | IOException e) {
+                throw new RuntimeException(e);
+              }
+            });
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
 
       readSheetData = true;
     } catch (SAXException | ParserConfigurationException e) {

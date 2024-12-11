@@ -17,6 +17,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -79,7 +80,6 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
 
   private final String path;
 
-  private boolean readWorkbookData = false;
   private boolean use1904DateSystemFlag = false;
   private List<SheetInfo> sheetInfos;
   private Map<String, SheetInfo> sheetInfoMap;
@@ -89,20 +89,25 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   private SharedStrings sharedStrings;
   private XSSFReaderFormats styles;
 
-  public XSSFReaderWorkbook(String path) {
+  public XSSFReaderWorkbook(String path) throws IOException {
     this.path = path;
+
+    // Read the workbook data
+    this.readWorkbookData();
   }
 
   public String getPath() {
     return path;
   }
 
-  void withReader(Consumer<XSSFReader> action) {
+  void withReader(Consumer<XSSFReader> action) throws IOException {
     try (var pkg = OPCPackage.open(path, PackageAccess.READ)) {
       var reader = new XSSFReader(pkg);
       action.accept(reader);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    } catch (OpenXML4JException e) {
+      throw new IOException(
+          "Invalid format encountered when opening the file " + path + " as XLSX.",
+          e);
     }
   }
 
@@ -110,11 +115,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
 
   private record NamedRange(String name, String formula) {}
 
-  private synchronized void readWorkbookData() {
-    if (readWorkbookData) {
-      return;
-    }
-
+  private void readWorkbookData() throws IOException {
     withReader(
         rdr -> {
           try {
@@ -156,9 +157,6 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
               var formula = node.getTextContent();
               namedRangeMap.put(name, new NamedRange(name, formula));
             }
-
-            // Mark as read
-            readWorkbookData = true;
           } catch (SAXException
               | IOException
               | InvalidFormatException
@@ -173,68 +171,60 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
       return;
     }
 
-    withReader(
-        rdr -> {
-          try {
-            rdr.setUseReadOnlySharedStringsTable(true);
-            sharedStrings = rdr.getSharedStringsTable();
-            if (sharedStrings == null) {
-              sharedStrings =
-                  new SharedStrings() {
-                    @Override
-                    public RichTextString getItemAt(int idx) {
-                      return null;
-                    }
+    try {
+      withReader(
+          rdr -> {
+            try {
+              rdr.setUseReadOnlySharedStringsTable(true);
+              sharedStrings = rdr.getSharedStringsTable();
+              if (sharedStrings == null) {
+                sharedStrings =
+                    new SharedStrings() {
+                      @Override
+                      public RichTextString getItemAt(int idx) {
+                        return null;
+                      }
 
-                    @Override
-                    public int getCount() {
-                      return 0;
-                    }
+                      @Override
+                      public int getCount() {
+                        return 0;
+                      }
 
-                    @Override
-                    public int getUniqueCount() {
-                      return 0;
-                    }
-                  };
+                      @Override
+                      public int getUniqueCount() {
+                        return 0;
+                      }
+                    };
+              }
+
+              // Read the styles table and attach the format data
+              var stylesTable = rdr.getStylesTable();
+              styles = new XSSFReaderFormats(stylesTable);
+
+              readShared = true;
+            } catch (InvalidFormatException | IOException e) {
+              throw new RuntimeException(e);
             }
-
-            // Read the styles table and attach the format data
-            var stylesTable = rdr.getStylesTable();
-            styles = new XSSFReaderFormats(stylesTable);
-
-            readShared = true;
-          } catch (InvalidFormatException | IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
+          });
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** Flag that workbook is in 1904 format. */
   boolean use1904Format() {
-    if (!readWorkbookData) {
-      readWorkbookData();
-    }
     return use1904DateSystemFlag;
   }
 
   private Map<String, SheetInfo> getSheetInfoMap() {
-    if (!readWorkbookData) {
-      readWorkbookData();
-    }
     return sheetInfoMap;
   }
 
   private List<SheetInfo> getSheetInfos() {
-    if (!readWorkbookData) {
-      readWorkbookData();
-    }
     return sheetInfos;
   }
 
   private Map<String, NamedRange> getNamesMap() {
-    if (!readWorkbookData) {
-      readWorkbookData();
-    }
     return namedRangeMap;
   }
 
