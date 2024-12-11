@@ -1,5 +1,5 @@
 /** @file Actions for the user menu. */
-import type { Download } from 'playwright/test'
+import type { Download } from '@playwright/test'
 
 import type BaseActions from './BaseActions'
 import type { PageCallback } from './BaseActions'
