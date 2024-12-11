@@ -2328,7 +2328,7 @@ type Table
        GROUP Standard.Base.Values
        ICON column_add
        Adds a new column to the table enumerating groups of rows, assigning each
-       row to one group number. All rows in each group will get the sane number.
+       row to one group number. All rows in each group will get the same number.
 
        Arguments:
        - grouping_method: Specifies how to group the rows; see "Grouping
