@@ -12,9 +12,9 @@ import java.net.URI
 import java.nio.charset.{Charset, StandardCharsets}
 
 /** A very simple cache for HTTP requests made by the runtime version manager.
- *
- * It is used to avoid performing the same query to GitHub API multiple times.
- */
+  *
+  * It is used to avoid performing the same query to GitHub API multiple times.
+  */
 object CachedHTTP {
   def fetchString(
     request: HTTPRequest,
@@ -34,7 +34,9 @@ object CachedHTTP {
       case None =>
         System.out.println(s"Fetching ${request.requestImpl.uri()}")
         HTTPDownload.fetchString(request, sizeHint, encoding).map { response =>
-          cache.put(request, response)
+          if (response.content.length <= MAX_CACHE_ENTRY_SIZE) {
+            cache.put(request, response)
+          }
           response
         }
     }
@@ -45,6 +47,7 @@ object CachedHTTP {
     fetchString(request)
   }
 
+  private val MAX_CACHE_ENTRY_SIZE = 2 * 1024 * 1024
   private val cache =
     collection.concurrent.TrieMap.empty[HTTPRequest, APIResponse]
 }
