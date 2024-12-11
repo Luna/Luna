@@ -10,6 +10,7 @@ import org.enso.table.data.column.storage.type.IntegerType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.problems.BlackholeProblemAggregator;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /**
  * A column backing Mixed storage.
@@ -198,7 +199,7 @@ public final class MixedStorage extends ObjectStorage implements ColumnStorageWi
 
   @Override
   public Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+      String name, Value argument, MapOperationProblemAggregator problemAggregator) {
     if (resolveBinaryOp(name) == VectorizedOperationAvailability.AVAILABLE_IN_SPECIALIZED_STORAGE) {
       return getInferredStorage().runVectorizedBinaryMap(name, argument, problemAggregator);
     } else {

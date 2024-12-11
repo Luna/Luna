@@ -6,6 +6,7 @@ import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class GenericBinaryObjectMapOperation<
         InputType, InputStorageType extends Storage<InputType>, OutputType>
@@ -29,15 +30,15 @@ public abstract class GenericBinaryObjectMapOperation<
 
   @Override
   public Storage<?> runBinaryMap(
-      InputStorageType storage, Object arg, MapOperationProblemAggregator problemAggregator) {
-    arg = Polyglot_Utils.convertPolyglotValue(arg);
+      InputStorageType storage, Value arg, MapOperationProblemAggregator problemAggregator) {
+    var convertedArg = Polyglot_Utils.convertPolyglotValue(arg);
     if (arg == null) {
       int n = storage.size();
       Builder builder = createOutputBuilder(n);
       builder.appendNulls(n);
       return builder.seal();
-    } else if (inputTypeClass.isInstance(arg)) {
-      InputType casted = inputTypeClass.cast(arg);
+    } else if (inputTypeClass.isInstance(convertedArg)) {
+      InputType casted = inputTypeClass.cast(convertedArg);
       int n = storage.size();
       Builder builder = createOutputBuilder(n);
       Context context = Context.getCurrent();
@@ -54,7 +55,7 @@ public abstract class GenericBinaryObjectMapOperation<
       return builder.seal();
     } else {
       throw new UnexpectedTypeException(
-          "a " + inputTypeClass.getName() + " but got " + arg.getClass().getName());
+          "a " + inputTypeClass.getName() + " but got " + convertedArg.getClass().getName());
     }
   }
 

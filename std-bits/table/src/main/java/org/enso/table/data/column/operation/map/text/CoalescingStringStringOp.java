@@ -7,6 +7,7 @@ import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.column.storage.type.TextType;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class CoalescingStringStringOp extends StringStringOp {
   public CoalescingStringStringOp(String name) {
@@ -16,12 +17,13 @@ public abstract class CoalescingStringStringOp extends StringStringOp {
   @Override
   public Storage<?> runBinaryMap(
       SpecializedStorage<String> storage,
-      Object arg,
+      Value arg,
       MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
     if (arg == null) {
       return storage;
-    } else if (arg instanceof String argString) {
+    } else if (arg.isString()) {
+      var argString = arg.asString();
       String[] newVals = new String[size];
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {

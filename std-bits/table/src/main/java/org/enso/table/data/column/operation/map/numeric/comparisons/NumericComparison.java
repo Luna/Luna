@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.util.BitSet;
 import org.enso.base.CompareException;
 import org.enso.base.polyglot.NumericConverter;
+import org.enso.base.polyglot.Polyglot_Utils;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.numeric.helpers.BigDecimalArrayAdapter;
@@ -21,6 +22,7 @@ import org.enso.table.data.column.storage.numeric.DoubleStorage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
 import org.enso.table.util.BitSets;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class NumericComparison<T extends Number, I extends Storage<? super T>>
     extends BinaryMapOperation<T, I> {
@@ -43,10 +45,10 @@ public abstract class NumericComparison<T extends Number, I extends Storage<? su
 
   @Override
   public BoolStorage runBinaryMap(
-      I storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       return BoolStorage.makeEmpty(storage.size());
-    } else if (arg instanceof BigInteger bigInteger) {
+    } else if (Polyglot_Utils.asBigInteger(arg) instanceof BigInteger bigInteger) {
       return switch (storage) {
         case AbstractLongStorage s -> runBigIntegerMap(
             BigIntegerArrayAdapter.fromStorage(s), bigInteger, problemAggregator);
@@ -58,7 +60,7 @@ public abstract class NumericComparison<T extends Number, I extends Storage<? su
         default -> throw new IllegalStateException(
             "Unsupported lhs storage: " + storage.getClass().getCanonicalName());
       };
-    } else if (arg instanceof BigDecimal bigDecimal) {
+    } else if (Polyglot_Utils.asBigDecimal(arg) instanceof BigDecimal bigDecimal) {
       return switch (storage) {
         case AbstractLongStorage s -> runBigDecimalMap(
             BigDecimalArrayAdapter.fromStorage(s), bigDecimal, problemAggregator);

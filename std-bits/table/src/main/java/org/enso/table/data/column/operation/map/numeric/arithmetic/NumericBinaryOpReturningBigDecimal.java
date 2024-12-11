@@ -9,6 +9,7 @@ import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.numeric.helpers.BigDecimalArrayAdapter;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.numeric.BigDecimalStorage;
+import org.graalvm.polyglot.Value;
 
 public abstract class NumericBinaryOpReturningBigDecimal<
         T extends Number, I extends Storage<? super T>>
@@ -19,7 +20,7 @@ public abstract class NumericBinaryOpReturningBigDecimal<
 
   @Override
   public Storage<? extends Number> runBinaryMap(
-      I storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       return BigDecimalStorage.makeEmpty(storage.size());
     }

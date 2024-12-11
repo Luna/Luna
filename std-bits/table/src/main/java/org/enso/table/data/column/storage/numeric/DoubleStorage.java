@@ -115,7 +115,7 @@ public final class DoubleStorage extends NumericStorage<Double>
 
   @Override
   public Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+      String name, Value argument, MapOperationProblemAggregator problemAggregator) {
     return ops.runBinaryMap(name, this, argument, problemAggregator);
   }
 

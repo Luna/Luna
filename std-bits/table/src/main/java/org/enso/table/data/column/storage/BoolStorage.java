@@ -83,7 +83,7 @@ public final class BoolStorage extends Storage<Boolean>
 
   @Override
   public Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+      String name, Value argument, MapOperationProblemAggregator problemAggregator) {
     return ops.runBinaryMap(name, this, argument, problemAggregator);
   }
 
@@ -338,10 +338,10 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public BoolStorage runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return BoolStorage.makeEmpty(storage.size);
-      } else if (arg instanceof Boolean v) {
+      } else if (Polyglot_Utils.asBoolean(arg) instanceof Boolean v) {
         if (v) {
           return storage;
         } else {
@@ -380,7 +380,7 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public BoolStorage runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         if (storage.negated) {
           var newMissing = new BitSet(storage.size);
@@ -392,7 +392,7 @@ public final class BoolStorage extends Storage<Boolean>
           newMissing.or(storage.values);
           return new BoolStorage(new BitSet(), newMissing, storage.size, false);
         }
-      } else if (arg instanceof Boolean v) {
+      } else if (Polyglot_Utils.asBoolean(arg) instanceof Boolean v) {
         return v ? storage : new BoolStorage(new BitSet(), new BitSet(), storage.size, false);
       } else {
         throw new UnexpectedTypeException("a Boolean");
@@ -451,7 +451,7 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public BoolStorage runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         if (storage.negated) {
           var newMissing = storage.isNothing.get(0, storage.size);
@@ -463,7 +463,7 @@ public final class BoolStorage extends Storage<Boolean>
           newMissing.xor(storage.values);
           return new BoolStorage(storage.values, newMissing, storage.size, false);
         }
-      } else if (arg instanceof Boolean v) {
+      } else if (Polyglot_Utils.asBoolean(arg) instanceof Boolean v) {
         return v ? new BoolStorage(new BitSet(), new BitSet(), storage.size, true) : storage;
       } else {
         throw new UnexpectedTypeException("a Boolean");
@@ -588,13 +588,13 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public Storage<?> runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
-      if (arg instanceof Boolean b) {
-        if (b) {
+      if (arg.isBoolean()) {
+        if (arg.asBoolean()) {
           // false is smaller than true, so we want to negate
           return new BoolStorage(storage.negateNormalize(), storage.isNothing, storage.size, false);
         } else {
@@ -619,12 +619,12 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public Storage<?> runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
-      if (arg instanceof Boolean b) {
+      if (Polyglot_Utils.asBoolean(arg) instanceof Boolean b) {
         if (b) {
           // everything is <= true
           return new BoolStorage(new BitSet(), storage.isNothing, storage.size, true);
@@ -650,12 +650,12 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public Storage<?> runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
-      if (arg instanceof Boolean b) {
+      if (Polyglot_Utils.asBoolean(arg) instanceof Boolean b) {
         if (b) {
           // nothing is strictly greater than true
           return new BoolStorage(new BitSet(), storage.isNothing, storage.size, false);
@@ -681,12 +681,12 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public Storage<?> runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return BoolStorage.makeEmpty(storage.size);
       }
 
-      if (arg instanceof Boolean b) {
+      if (Polyglot_Utils.asBoolean(arg) instanceof Boolean b) {
         if (b) {
           // true is >= true
           return storage;
@@ -763,12 +763,12 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public BoolStorage runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return storage;
       }
 
-      if (arg instanceof Boolean b) {
+      if (Polyglot_Utils.asBoolean(arg) instanceof Boolean b) {
         if (b) {
           // true is larger than false, so we want to keep values as is, and fill missing ones with
           // true
@@ -795,12 +795,12 @@ public final class BoolStorage extends Storage<Boolean>
 
     @Override
     public BoolStorage runBinaryMap(
-        BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+        BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
       if (arg == null) {
         return storage;
       }
 
-      if (arg instanceof Boolean b) {
+      if (Polyglot_Utils.asBoolean(arg) instanceof Boolean b) {
         if (b) {
           // true is larger than everything:
           return BoolStorage.makeConstant(storage.size, true);

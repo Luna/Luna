@@ -7,6 +7,7 @@ import org.enso.table.data.column.storage.type.AnyObjectType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.mask.OrderMask;
 import org.enso.table.data.mask.SliceRange;
+import org.graalvm.polyglot.Value;
 
 /**
  * Wraps a storage of any type and alters its reported storage to be of type AnyObject.
@@ -58,7 +59,7 @@ public class MixedStorageFacade extends Storage<Object> {
 
   @Override
   public Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+      String name, Value argument, MapOperationProblemAggregator problemAggregator) {
     return underlyingStorage.runVectorizedBinaryMap(name, argument, problemAggregator);
   }
 

@@ -7,6 +7,7 @@ import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.SpecializedStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /**
  * A generic binary operation that takes two values of some type T and returns a boolean.
@@ -33,7 +34,7 @@ public abstract class GenericBinaryOpReturningBoolean<T, S extends SpecializedSt
 
   @Override
   public Storage<?> runBinaryMap(
-      S storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      S storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       return BoolStorage.makeEmpty(storage.size());
     } else {

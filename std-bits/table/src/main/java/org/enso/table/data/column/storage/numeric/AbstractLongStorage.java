@@ -22,6 +22,7 @@ import org.enso.table.data.column.storage.*;
 import org.enso.table.data.column.storage.type.IntegerType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class AbstractLongStorage extends NumericStorage<Long>
     implements ColumnLongStorage, ColumnStorageWithNothingMap {
@@ -36,7 +37,7 @@ public abstract class AbstractLongStorage extends NumericStorage<Long>
 
   @Override
   public Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator) {
+      String name, Value argument, MapOperationProblemAggregator problemAggregator) {
     return ops.runBinaryMap(name, this, argument, problemAggregator);
   }
 

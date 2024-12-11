@@ -1,5 +1,6 @@
 package org.enso.table.data.column.operation.map.text;
 
+import org.enso.base.polyglot.Polyglot_Utils;
 import org.enso.table.data.column.builder.StringBuilder;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
@@ -10,6 +11,7 @@ import org.enso.table.data.column.storage.numeric.LongStorage;
 import org.enso.table.data.column.storage.type.TextType;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class StringLongToStringOp
     extends BinaryMapOperation<String, SpecializedStorage<String>> {
@@ -22,14 +24,14 @@ public abstract class StringLongToStringOp
   @Override
   public Storage<?> runBinaryMap(
       SpecializedStorage<String> storage,
-      Object arg,
+      Value arg,
       MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
     if (arg == null) {
       StringBuilder builder = new StringBuilder(size, TextType.VARIABLE_LENGTH);
       builder.appendNulls(size);
       return builder.seal();
-    } else if (arg instanceof Long argLong) {
+    } else if (Polyglot_Utils.asLong(arg) instanceof Long argLong) {
       String[] newVals = new String[size];
       Context context = Context.getCurrent();
       for (int i = 0; i < size; i++) {

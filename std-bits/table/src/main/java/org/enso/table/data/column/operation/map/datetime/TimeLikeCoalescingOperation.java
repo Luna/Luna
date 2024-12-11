@@ -8,6 +8,7 @@ import org.enso.table.data.column.storage.SpecializedStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class TimeLikeCoalescingOperation<T>
     extends BinaryMapOperation<T, SpecializedStorage<T>> {
@@ -24,7 +25,7 @@ public abstract class TimeLikeCoalescingOperation<T>
 
   @Override
   public Storage<?> runBinaryMap(
-      SpecializedStorage<T> storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      SpecializedStorage<T> storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     int size = storage.size();
     if (arg == null) {
       return storage;

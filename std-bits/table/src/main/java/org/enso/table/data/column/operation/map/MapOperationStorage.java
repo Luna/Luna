@@ -3,6 +3,7 @@ package org.enso.table.data.column.operation.map;
 import java.util.HashMap;
 import java.util.Map;
 import org.enso.table.data.column.storage.Storage;
+import org.graalvm.polyglot.Value;
 
 /**
  * Stores map-like operations that can be performed on a given type.
@@ -34,7 +35,7 @@ public class MapOperationStorage<T, S extends Storage<? super T>> {
    * @return the result of running the operation
    */
   public Storage<?> runBinaryMap(
-      String n, S storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      String n, S storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (!isSupportedBinary(n)) {
       throw new IllegalStateException(
           "Requested vectorized binary operation " + n + ", but no such operation is known.");

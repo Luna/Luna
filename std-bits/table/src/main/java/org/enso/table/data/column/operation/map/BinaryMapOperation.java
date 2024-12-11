@@ -1,6 +1,7 @@
 package org.enso.table.data.column.operation.map;
 
 import org.enso.table.data.column.storage.Storage;
+import org.graalvm.polyglot.Value;
 
 /**
  * A representation of a map-like operation that can be performed on given storage types.
@@ -28,7 +29,7 @@ public abstract class BinaryMapOperation<T, I extends Storage<? super T>> {
    * @return the result of running the operation
    */
   public abstract Storage<?> runBinaryMap(
-      I storage, Object arg, MapOperationProblemAggregator problemAggregator);
+      I storage, Value arg, MapOperationProblemAggregator problemAggregator);
 
   /**
    * Run the operation in zip mode - combining corresponding rows of two storages.

@@ -110,7 +110,7 @@ public abstract class Storage<T> implements ColumnStorage {
 
   /** Runs a vectorized operation on this storage, taking one scalar argument. */
   public abstract Storage<?> runVectorizedBinaryMap(
-      String name, Object argument, MapOperationProblemAggregator problemAggregator);
+      String name, Value argument, MapOperationProblemAggregator problemAggregator);
 
   /* Specifies if the given ternary operation has a vectorized implementation available for this storage.*/
   public boolean isTernaryOpVectorized(String name) {

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.BitSet;
 import org.enso.base.polyglot.NumericConverter;
+import org.enso.base.polyglot.Polyglot_Utils;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.numeric.helpers.BigDecimalArrayAdapter;
@@ -21,6 +22,7 @@ import org.enso.table.data.column.storage.numeric.LongStorage;
 import org.enso.table.data.column.storage.type.IntegerType;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /** An operation expecting a numeric argument and returning a numeric column. */
 public abstract class NumericBinaryOpImplementation<T extends Number, I extends Storage<? super T>>
@@ -35,11 +37,11 @@ public abstract class NumericBinaryOpImplementation<T extends Number, I extends 
 
   @Override
   public Storage<? extends Number> runBinaryMap(
-      I storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       return allNullStorageOfSameType(storage);
     } else {
-      if (arg instanceof BigInteger rhs) {
+      if (Polyglot_Utils.asBigInteger(arg) instanceof BigInteger rhs) {
         return switch (storage) {
           case AbstractLongStorage s -> runBigIntegerMap(
               BigIntegerArrayAdapter.fromStorage(s), rhs, problemAggregator);
@@ -82,7 +84,7 @@ public abstract class NumericBinaryOpImplementation<T extends Number, I extends 
           default -> throw new IllegalStateException(
               "Unsupported storage: " + storage.getClass().getCanonicalName());
         };
-      } else if (arg instanceof BigDecimal bd) {
+      } else if (Polyglot_Utils.asBigDecimal(arg) instanceof BigDecimal bd) {
         return runBigDecimalMap(
             BigDecimalArrayAdapter.fromAnyStorage(storage), bd, problemAggregator);
       } else {

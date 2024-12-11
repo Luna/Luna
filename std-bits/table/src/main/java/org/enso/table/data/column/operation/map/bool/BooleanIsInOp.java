@@ -7,6 +7,7 @@ import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.util.ImmutableBitSet;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /**
  * A specialized implementation for the IS_IN operation on booleans - since booleans have just three
@@ -20,9 +21,9 @@ public class BooleanIsInOp extends BinaryMapOperation<Boolean, BoolStorage> {
 
   @Override
   public BoolStorage runBinaryMap(
-      BoolStorage storage, Object arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg instanceof List) {
-      return runMap(storage, (List<?>) arg);
+      BoolStorage storage, Value arg, MapOperationProblemAggregator problemAggregator) {
+    if (arg.hasArrayElements()) {
+      return runMap(storage, arg.as(List.class));
     } else {
       throw new IllegalArgumentException("Argument to `is_in` must be a vector.");
     }

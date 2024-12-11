@@ -5,10 +5,12 @@ import static org.enso.table.data.column.operation.map.numeric.helpers.DoubleArr
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.enso.base.polyglot.NumericConverter;
+import org.enso.base.polyglot.Polyglot_Utils;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.numeric.helpers.DoubleArrayAdapter;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.numeric.DoubleStorage;
+import org.graalvm.polyglot.Value;
 
 public abstract class NumericBinaryOpReturningDouble<T extends Number, I extends Storage<? super T>>
     extends NumericBinaryOpImplementation<T, I> {
@@ -18,14 +20,14 @@ public abstract class NumericBinaryOpReturningDouble<T extends Number, I extends
 
   @Override
   public Storage<? extends Number> runBinaryMap(
-      I storage, Object arg, MapOperationProblemAggregator problemAggregator) {
+      I storage, Value arg, MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       return DoubleStorage.makeEmpty(storage.size());
     }
 
     DoubleArrayAdapter lhs = fromAnyStorage(storage);
     double rhs =
-        (arg instanceof BigInteger bigInteger)
+        (Polyglot_Utils.asBigInteger(arg) instanceof BigInteger bigInteger)
             ? bigInteger.doubleValue()
             : NumericConverter.coerceToDouble(arg);
     return runDoubleMap(lhs, rhs, problemAggregator);

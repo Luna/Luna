@@ -6,6 +6,7 @@ import java.util.List;
 import org.enso.table.data.column.storage.BoolStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 /**
  * A specialized implementation for the IS_IN operation for builtin types, relying on hashing. Since
@@ -43,9 +44,9 @@ public abstract class SpecializedIsInOp<T, S extends Storage<T>> extends BinaryM
 
   @Override
   public Storage<?> runBinaryMap(
-      S storage, Object arg, MapOperationProblemAggregator problemAggregator) {
-    if (arg instanceof List) {
-      return runMap(storage, (List<?>) arg);
+      S storage, Value arg, MapOperationProblemAggregator problemAggregator) {
+    if (arg.hasArrayElements()) {
+      return runMap(storage, arg.as(List.class));
     } else {
       throw new IllegalArgumentException("Argument to `is_in` must be a vector.");
     }

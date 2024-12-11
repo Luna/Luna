@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
+import org.enso.base.polyglot.Polyglot_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
@@ -19,6 +20,7 @@ import org.enso.table.data.column.operation.map.text.StringStringOp;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 import org.slf4j.Logger;
 
 /** A column storing strings. */
@@ -87,7 +89,7 @@ public final class StringStorage extends SpecializedStorage<String> {
           @Override
           public BoolStorage runBinaryMap(
               SpecializedStorage<String> storage,
-              Object arg,
+              Value arg,
               MapOperationProblemAggregator problemAggregator) {
             BitSet r = new BitSet();
             BitSet isNothing = new BitSet();
@@ -95,7 +97,8 @@ public final class StringStorage extends SpecializedStorage<String> {
             for (int i = 0; i < storage.size(); i++) {
               if (storage.getItem(i) == null || arg == null) {
                 isNothing.set(i);
-              } else if (arg instanceof String s && Text_Utils.equals(storage.getItem(i), s)) {
+              } else if (Polyglot_Utils.asString(arg) instanceof String s
+                  && Text_Utils.equals(storage.getItem(i), s)) {
                 r.set(i);
               }
 

@@ -9,6 +9,7 @@ import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public abstract class StringBooleanOp
     extends BinaryMapOperation<String, SpecializedStorage<String>> {
@@ -25,14 +26,15 @@ public abstract class StringBooleanOp
   @Override
   public BoolStorage runBinaryMap(
       SpecializedStorage<String> storage,
-      Object arg,
+      Value arg,
       MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       BitSet newVals = new BitSet();
       BitSet newIsNothing = new BitSet();
       newIsNothing.set(0, storage.size());
       return new BoolStorage(newVals, newIsNothing, storage.size(), false);
-    } else if (arg instanceof String argString) {
+    } else if (arg.isString()) {
+      var argString = arg.asString();
       BitSet newVals = new BitSet();
       BitSet newIsNothing = new BitSet();
       Context context = Context.getCurrent();

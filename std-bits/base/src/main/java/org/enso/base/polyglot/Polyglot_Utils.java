@@ -1,5 +1,6 @@
 package org.enso.base.polyglot;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +41,45 @@ public class Polyglot_Utils {
       return item.asLong();
     }
     return ret;
+  }
+
+  public static Boolean asBoolean(Value value) {
+    if (value.isBoolean()) {
+      return value.asBoolean();
+    }
+    return null;
+  }
+
+  public static String asString(Value value) {
+    if (value.isString()) {
+      return value.asString();
+    }
+    return null;
+  }
+
+  public static Long asLong(Value value) {
+    if (value.isNumber() && value.fitsInLong()) {
+      return value.asLong();
+    }
+    return null;
+  }
+
+  public static BigInteger asBigInteger(Value value) {
+    try {
+      value.as(BigInteger.class);
+    } catch (ClassCastException e) {
+      return null;
+    }
+    return null;
+  }
+
+  public static BigDecimal asBigDecimal(Value value) {
+    try {
+      value.as(BigDecimal.class);
+    } catch (ClassCastException e) {
+      return null;
+    }
+    return null;
   }
 
   /**

@@ -10,6 +10,7 @@ import org.enso.table.data.column.storage.SpecializedStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.error.UnexpectedTypeException;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
 public class LikeOp extends StringBooleanOp {
   public LikeOp() {
@@ -37,14 +38,15 @@ public class LikeOp extends StringBooleanOp {
   @Override
   public BoolStorage runBinaryMap(
       SpecializedStorage<String> storage,
-      Object arg,
+      Value arg,
       MapOperationProblemAggregator problemAggregator) {
     if (arg == null) {
       BitSet newVals = new BitSet();
       BitSet newIsNothing = new BitSet();
       newIsNothing.set(0, storage.size());
       return new BoolStorage(newVals, newIsNothing, storage.size(), false);
-    } else if (arg instanceof String argString) {
+    } else if (arg.isString()) {
+      var argString = arg.asString();
       Pattern pattern = createRegexPatternFromSql(argString);
       BitSet newVals = new BitSet();
       BitSet newIsNothing = new BitSet();
