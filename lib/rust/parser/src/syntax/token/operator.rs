@@ -22,10 +22,41 @@ pub struct OperatorProperties {
 
 pub fn is_syntactic_binary_operator(variant: &Variant) -> bool {
     use Variant::*;
-    matches!(
-        variant,
-        AssignmentOperator(_) | TypeAnnotationOperator(_) | ArrowOperator(_) | CommaOperator(_)
-    )
+    match variant {
+        AssignmentOperator(_) | TypeAnnotationOperator(_) | ArrowOperator(_) | CommaOperator(_) =>
+            true,
+        Operator(_)
+        | DotOperator(_)
+        | UnaryOperator(_)
+        | AnnotationOperator(_)
+        | AutoscopeOperator(_)
+        | LambdaOperator(_)
+        | SuspensionOperator(_)
+        | NegationOperator(_)
+        | Newline(_)
+        | OpenSymbol(_)
+        | CloseSymbol(_)
+        | BlockStart(_)
+        | BlockEnd(_)
+        | Wildcard(_)
+        | SuspendedDefaultArguments(_)
+        | Ident(_)
+        | Digits(_)
+        | NumberBase(_)
+        | PrivateKeyword(_)
+        | TypeKeyword(_)
+        | ForeignKeyword(_)
+        | AllKeyword(_)
+        | CaseKeyword(_)
+        | OfKeyword(_)
+        | TextStart(_)
+        | TextEnd(_)
+        | TextSection(_)
+        | TextEscape(_)
+        | TextInitialNewline(_)
+        | TextNewline(_)
+        | Invalid(_) => false,
+    }
 }
 
 impl OperatorProperties {
@@ -51,7 +82,6 @@ impl OperatorProperties {
 
     /// Return a copy of this operator, with unary prefix parsing allowed.
     pub fn with_unary_prefix_mode(self, precedence: Precedence) -> Self {
-        debug_assert!(precedence > Precedence::min());
         Self { unary_prefix_precedence: Some(precedence), ..self }
     }
 
@@ -203,7 +233,7 @@ impl HasOperatorProperties for variant::AnnotationOperator {
 impl HasOperatorProperties for variant::AutoscopeOperator {
     fn operator_properties(&self) -> OperatorProperties {
         OperatorProperties {
-            unary_prefix_precedence: Some(Precedence::min_valid()),
+            unary_prefix_precedence: Some(Precedence::Assignment),
             is_compile_time: true,
             rhs_is_non_expression: true,
             ..default()
@@ -224,7 +254,7 @@ impl HasOperatorProperties for variant::NegationOperator {
 impl HasOperatorProperties for variant::LambdaOperator {
     fn operator_properties(&self) -> OperatorProperties {
         OperatorProperties {
-            unary_prefix_precedence: Some(Precedence::min_valid()),
+            unary_prefix_precedence: Some(Precedence::Assignment),
             is_compile_time: true,
             ..default()
         }
@@ -240,7 +270,7 @@ impl HasOperatorProperties for variant::DotOperator {
 impl HasOperatorProperties for variant::SuspensionOperator {
     fn operator_properties(&self) -> OperatorProperties {
         OperatorProperties {
-            unary_prefix_precedence: Some(Precedence::max()),
+            unary_prefix_precedence: Some(Precedence::Annotation),
             is_compile_time: true,
             rhs_is_non_expression: true,
             ..default()
@@ -265,9 +295,7 @@ impl HasOperatorProperties for variant::CommaOperator {
 #[repr(u8)]
 #[allow(missing_docs)]
 pub enum Precedence {
-    /// A value that is lower than the precedence of any operator.
-    Min = 0,
-    Assignment,
+    Assignment = 1,
     TypeAnnotation,
     Arrow,
     Not,
@@ -284,34 +312,13 @@ pub enum Precedence {
     Negation,
     Application,
     Annotation,
-    /// A value that is higher than the precedence of any operator.
-    Max,
+    // NOTE: The highest value must not exceed 0x7e--see usage of `into_u8`.
 }
 
 impl Precedence {
-    /// Return a precedence that is lower than the precedence of any operator.
-    pub fn min() -> Self {
-        Precedence::Min
-    }
-
-    /// Return the lowest precedence for any operator.
-    pub fn min_valid() -> Self {
-        debug_assert_eq!(Precedence::Assignment as u8, Precedence::Min as u8 + 1);
-        Precedence::Assignment
-    }
-
-    /// Return a precedence that is not lower than any other precedence.
-    pub fn max() -> Self {
-        Precedence::Max
-    }
-
     /// Return the value as a number.
     pub fn into_u8(self) -> u8 {
-        let value = self as u8;
-        debug_assert!(value > Precedence::Min as u8);
-        debug_assert!(value & 0x80 == 0);
-        debug_assert!((value + 1) & 0x80 == 0);
-        value
+        self as u8
     }
 }
 

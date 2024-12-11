@@ -15,7 +15,6 @@ import {
 } from '.'
 import type * as baseActions from './BaseActions'
 import * as contextMenuActions from './contextMenuActions'
-import EditorPageActions from './EditorPageActions'
 import * as goToPageActions from './goToPageActions'
 import NewDataLinkModalActions from './NewDataLinkModalActions'
 import PageActions from './PageActions'
@@ -242,9 +241,12 @@ export default class DrivePageActions extends PageActions {
 
   /** Create a new empty project. */
   newEmptyProject() {
-    return this.step('Create empty project', (page) =>
-      page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
-    ).into(EditorPageActions)
+    return this.step(
+      'Create empty project',
+      (page) => page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
+      // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+      // Uncomment once cloud execution in the browser is re-enabled.
+    ) /* .into(EditorPageActions) */
   }
 
   /** Interact with the drive view (the main container of this page). */
@@ -376,6 +378,20 @@ export default class DrivePageActions extends PageActions {
   withContextMenus(callback: baseActions.LocatorCallback) {
     return this.step('Interact with context menus', async (page) => {
       await callback(locateContextMenus(page))
+    })
+  }
+
+  /** Close the "get started" modal. */
+  closeGetStartedModal() {
+    return this.step('Close "get started" modal', async (page) => {
+      await new StartModalActions(page).close()
+    })
+  }
+
+  /** Interact with the "start" modal. */
+  withStartModal(callback: baseActions.LocatorCallback) {
+    return this.step('Interact with start modal', async (page) => {
+      await callback(new StartModalActions(page).locateStartModal())
     })
   }
 }

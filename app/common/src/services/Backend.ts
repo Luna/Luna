@@ -1433,13 +1433,27 @@ export function compareAssets(a: AnyAsset, b: AnyAsset) {
 
   if (relativeTypeOrder !== 0) {
     return relativeTypeOrder
-  }
+  } else {
+    // We sort by modified date, because the running/recent projects should be at the top,
+    // but below the folders.
+    const aModified = Number(new Date(a.modifiedAt))
+    const bModified = Number(new Date(b.modifiedAt))
+    const modifiedDelta = aModified - bModified
 
-  return (
-    a.title > b.title ? 1
-    : a.title < b.title ? -1
-    : 0
-  )
+    const aTitle = a.title.toLowerCase()
+    const bTitle = b.title.toLowerCase()
+
+    if (modifiedDelta !== 0) {
+      // Sort by date descending, rather than ascending.
+      return -modifiedDelta
+    } else {
+      return (
+        aTitle > bTitle ? 1
+        : aTitle < bTitle ? -1
+        : 0
+      )
+    }
+  }
 }
 
 // ==================
@@ -1673,6 +1687,7 @@ export default abstract class Backend {
   abstract getProjectDetails(
     projectId: ProjectId,
     directoryId: DirectoryId | null,
+    getPresignedUrl?: boolean,
   ): Promise<Project>
   /** Return Language Server logs for a project session. */
   abstract getProjectSessionLogs(
@@ -1709,7 +1724,11 @@ export default abstract class Backend {
   /** Change the name of a file. */
   abstract updateFile(fileId: FileId, body: UpdateFileRequestBody, title: string): Promise<void>
   /** Return file details. */
-  abstract getFileDetails(fileId: FileId, title: string): Promise<FileDetails>
+  abstract getFileDetails(
+    fileId: FileId,
+    title: string,
+    getPresignedUrl?: boolean,
+  ): Promise<FileDetails>
   /** Create a Datalink. */
   abstract createDatalink(body: CreateDatalinkRequestBody): Promise<DatalinkInfo>
   /** Return a Datalink. */
@@ -1772,4 +1791,18 @@ export default abstract class Backend {
 
   /** Resolve the path of an asset relative to a project. */
   abstract resolveProjectAssetPath(projectId: ProjectId, relativePath: string): Promise<string>
+}
+
+// ==============================
+// ====== Custom Errors =========
+// ==============================
+
+/** Error thrown when a directory does not exist. */
+export class DirectoryDoesNotExistError extends Error {
+  /**
+   * Create a new instance of the {@link DirectoryDoesNotExistError} class.
+   */
+  constructor() {
+    super('Directory does not exist.')
+  }
 }
