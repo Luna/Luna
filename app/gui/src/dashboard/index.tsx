@@ -112,7 +112,6 @@ export function run(props: DashboardProps) {
       replaysSessionSampleRate: SENTRY_SAMPLE_RATE,
       replaysOnErrorSampleRate: 1.0,
       beforeSend: (event) => {
-        console.log('beforeSend', event)
         if (
           (event.breadcrumbs ?? []).some(
             (breadcrumb) =>
@@ -124,7 +123,7 @@ export function run(props: DashboardProps) {
               new URL(breadcrumb.data.url).host === API_HOST,
           )
         ) {
-          return undefined
+          return null
         }
         return event
       },
