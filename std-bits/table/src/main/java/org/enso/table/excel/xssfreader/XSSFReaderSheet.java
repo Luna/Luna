@@ -119,7 +119,7 @@ public class XSSFReaderSheet implements ExcelSheet {
       return null;
     }
 
-    return new XSSFReaderRow(rowData.get(row));
+    return new XSSFReaderRow(rowData.get(row), parent.use1904Format());
   }
 
   @Override

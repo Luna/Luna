@@ -7,9 +7,12 @@ import org.enso.table.excel.ExcelRow;
 
 public class XSSFReaderRow implements ExcelRow {
   private final SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data;
+  private final boolean use1904Dates;
 
-  public XSSFReaderRow(SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data) {
+  public XSSFReaderRow(
+      SortedMap<Short, XSSFReaderSheetXMLHandler.CellValue> data, boolean use1904Dates) {
     this.data = data;
+    this.use1904Dates = use1904Dates;
   }
 
   @Override
@@ -45,13 +48,13 @@ public class XSSFReaderRow implements ExcelRow {
         double dbl = cell.getNumberValue();
         long longVal = (long) dbl;
         if (dbl == longVal) {
-          yield (long)dbl;
+          yield (long) dbl;
         } else {
           yield dbl;
         }
       }
-      case OLE_DATE -> cell.getDateValue();
-      case OLE_DATETIME -> cell.getDateTimeValue();
+      case OLE_DATE -> cell.getDateValue(use1904Dates);
+      case OLE_DATETIME -> cell.getDateTimeValue(use1904Dates);
       case ERROR -> null;
     };
   }

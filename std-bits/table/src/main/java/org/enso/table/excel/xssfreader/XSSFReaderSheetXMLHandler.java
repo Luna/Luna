@@ -161,12 +161,16 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
       return Long.parseLong(strValue);
     }
 
-    public Temporal getDateValue() {
-      return ExcelUtils.fromExcelDateTime(getIntegerValue());
+    public Temporal getDateValue(boolean use1904Dates) {
+      return use1904Dates
+          ? ExcelUtils.fromExcelDateTime1904(getIntegerValue())
+          : ExcelUtils.fromExcelDateTime(getIntegerValue());
     }
 
-    public Temporal getDateTimeValue() {
-      return ExcelUtils.fromExcelDateTime(getNumberValue());
+    public Temporal getDateTimeValue(boolean use1904Dates) {
+      return use1904Dates
+          ? ExcelUtils.fromExcelDateTime1904(getNumberValue())
+          : ExcelUtils.fromExcelDateTime(getNumberValue());
     }
   }
 

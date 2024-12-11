@@ -25,6 +25,7 @@ import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.enso.table.excel.ExcelSheet;
 import org.enso.table.excel.ExcelWorkbook;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -72,12 +73,14 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
     }
   }
 
+  public static final String WORKBOOK_CONFIG_XPATH = "/ss:workbook/ss:workbookPr";
   public static final String SHEET_NAME_XPATH = "/ss:workbook/ss:sheets/ss:sheet";
   public static final String NAMED_RANGE_XPATH = "/ss:workbook/ss:definedNames/ss:definedName";
 
   private final String path;
 
   private boolean readWorkbookData = false;
+  private boolean use1904DateSystemFlag = false;
   private List<SheetInfo> sheetInfos;
   private Map<String, SheetInfo> sheetInfoMap;
   private Map<String, NamedRange> namedRangeMap;
@@ -117,6 +120,14 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
           try {
             var workbookData = rdr.getWorkbookData();
             var workbookDoc = DocumentHelper.readDocument(workbookData);
+
+            // Read the Workbook settings
+            var workbookXPath = compileXPathWithNamespace(WORKBOOK_CONFIG_XPATH);
+            var workbookNode = (Node) workbookXPath.evaluate(workbookDoc, XPathConstants.NODE);
+            if (workbookNode != null) {
+              var date1904 = workbookNode.getAttributes().getNamedItem("date1904");
+              use1904DateSystemFlag = date1904 != null && "1".equals(date1904.getNodeValue());
+            }
 
             // Read the Sheets
             var sheetXPath = compileXPathWithNamespace(SHEET_NAME_XPATH);
@@ -196,6 +207,14 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
             throw new RuntimeException(e);
           }
         });
+  }
+
+  /** Flag that workbook is in 1904 format. */
+  boolean use1904Format() {
+    if (!readWorkbookData) {
+      readWorkbookData();
+    }
+    return use1904DateSystemFlag;
   }
 
   private Map<String, SheetInfo> getSheetInfoMap() {
