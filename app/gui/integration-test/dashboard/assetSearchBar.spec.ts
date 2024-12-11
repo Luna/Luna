@@ -88,10 +88,10 @@ test('suggestions', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {
-      api.addDirectory('foo')
-      api.addProject('bar')
-      api.addSecret('baz')
-      api.addSecret('quux')
+      api.addDirectory({ title: 'foo' })
+      api.addProject({ title: 'bar' })
+      api.addSecret({ title: 'baz' })
+      api.addSecret({ title: 'quux' })
     },
   }).withSearchBar(async (searchBar) => {
     const suggestions = locateSearchBarSuggestions(page)
@@ -112,10 +112,10 @@ test('suggestions (keyboard)', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {
-      api.addDirectory('foo')
-      api.addProject('bar')
-      api.addSecret('baz')
-      api.addSecret('quux')
+      api.addDirectory({ title: 'foo' })
+      api.addProject({ title: 'bar' })
+      api.addSecret({ title: 'baz' })
+      api.addSecret({ title: 'quux' })
     },
   }).withSearchBar(async (searchBar) => {
     const suggestions = locateSearchBarSuggestions(page)
@@ -133,10 +133,10 @@ test('complex flows', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {
-      api.addDirectory(FIRST_ASSET_NAME)
-      api.addProject('bar')
-      api.addSecret('baz')
-      api.addSecret('quux')
+      api.addDirectory({ title: FIRST_ASSET_NAME })
+      api.addProject({ title: 'bar' })
+      api.addSecret({ title: 'baz' })
+      api.addSecret({ title: 'quux' })
     },
   }).withSearchBar(async (searchBar) => {
     await searchBar.click()

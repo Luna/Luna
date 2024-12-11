@@ -4,7 +4,6 @@ import { expect, type Locator, type Page } from '@playwright/test'
 import { TEXT } from '.'
 import type { LocatorCallback } from './BaseActions'
 import { contextMenuActions } from './contextMenuActions'
-import EditorPageActions from './EditorPageActions'
 import { goToPageActions, type GoToPageActions } from './goToPageActions'
 import NewDataLinkModalActions from './NewDataLinkModalActions'
 import PageActions from './PageActions'
@@ -302,9 +301,12 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
 
   /** Create a new empty project. */
   newEmptyProject() {
-    return this.step('Create empty project', (page) =>
-      page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
-    ).into(EditorPageActions<Context>)
+    return this.step(
+      'Create empty project',
+      (page) => page.getByText(TEXT.newEmptyProject, { exact: true }).click(),
+      // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+      // Uncomment once cloud execution in the browser is re-enabled.
+    ) /* .into(EditorPageActions) */
   }
 
   /** Interact with the drive view (the main container of this page). */

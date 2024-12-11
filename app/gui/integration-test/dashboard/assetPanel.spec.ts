@@ -48,7 +48,7 @@ test('asset panel contents', ({ page }) =>
     page,
     setupAPI: (api) => {
       const { defaultOrganizationId, defaultUserId } = api
-      api.addProject('project', {
+      api.addProject({
         description: DESCRIPTION,
         permissions: [
           {
@@ -71,14 +71,14 @@ test('asset panel contents', ({ page }) =>
       await test.expect(locateAssetPanelDescription(page)).toHaveText(DESCRIPTION)
       // `getByText` is required so that this assertion works if there are multiple permissions.
       // This is not visible; "Shared with" should only be visible on the Enterprise plan.
-      // await test.expect(actions.locateAssetPanelPermissions(page).getByText(USERNAME)).toBeVisible()
+      // await expect(locateAssetPanelPermissions(page).getByText(USERNAME)).toBeVisible()
     }))
 
 test('Asset Panel Documentation view', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {
-      api.addProject('project', { description: DESCRIPTION })
+      api.addProject({})
     },
   })
     .driveTable.clickRow(0)

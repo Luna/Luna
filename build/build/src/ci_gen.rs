@@ -11,6 +11,7 @@ use crate::version::ENSO_RELEASE_MODE;
 use crate::version::ENSO_VERSION;
 
 use ide_ci::actions::workflow::definition::checkout_repo_step;
+use ide_ci::actions::workflow::definition::get_input;
 use ide_ci::actions::workflow::definition::get_input_expression;
 use ide_ci::actions::workflow::definition::is_non_windows_runner;
 use ide_ci::actions::workflow::definition::is_windows_runner;
@@ -489,11 +490,10 @@ pub fn changelog() -> Result<Workflow> {
 }
 
 pub fn nightly() -> Result<Workflow> {
-    let workflow_dispatch =
-        WorkflowDispatch::default().with_input(input::name::YDOC, input::ydoc());
-    let workflow_call = WorkflowCall::try_from(workflow_dispatch.clone())?;
+    let input_ydoc = input::ydoc();
+    let input_ydoc_default = input_ydoc.r#type.default().expect("Default Ydoc input is expected.");
+    let workflow_dispatch = WorkflowDispatch::default().with_input(input::name::YDOC, input_ydoc);
     let on = Event {
-        workflow_call: Some(workflow_call),
         workflow_dispatch: Some(workflow_dispatch),
         // 2am (UTC) every day.
         schedule: vec![Schedule::new("0 2 * * *")?],
@@ -501,10 +501,13 @@ pub fn nightly() -> Result<Workflow> {
     };
 
     let mut workflow = Workflow { on, name: "Nightly Release".into(), ..default() };
+    // Scheduled workflows do not support input parameters. We need to provide an explicit default
+    // value. Feature request is tracked by https://github.com/orgs/community/discussions/74698
+    let input_ydoc = format!("{} || '{}'", get_input(input::name::YDOC), input_ydoc_default);
 
     let job = workflow_call_job("Promote nightly", PROMOTE_WORKFLOW_PATH)
         .with_with(input::name::DESIGNATOR, Designation::Nightly.as_ref())
-        .with_with(input::name::YDOC, get_input_expression(input::name::YDOC));
+        .with_with(input::name::YDOC, wrap_expression(input_ydoc));
     workflow.add_job(job);
     Ok(workflow)
 }
@@ -646,9 +649,12 @@ pub fn typical_check_triggers() -> Event {
 }
 
 pub fn gui() -> Result<Workflow> {
-    let on = typical_check_triggers();
-    let mut workflow = Workflow { name: "GUI Packaging".into(), on, ..default() };
-    workflow.add(PRIMARY_TARGET, job::CancelWorkflow);
+    let mut workflow = Workflow {
+        name: "GUI Packaging".into(),
+        on: typical_check_triggers(),
+        concurrency: Some(concurrency()),
+        ..default()
+    };
 
     for target in PR_CHECKED_TARGETS {
         let project_manager_job = workflow.add(target, job::BuildBackend);
@@ -670,10 +676,22 @@ pub fn gui_tests() -> Result<Workflow> {
     Ok(workflow)
 }
 
+fn concurrency() -> Concurrency {
+    let github_workflow = wrap_expression("github.workflow");
+    let github_ref = wrap_expression("github.ref");
+    Concurrency::Map {
+        group:              format!("{github_workflow}-{github_ref}"),
+        cancel_in_progress: wrap_expression(not_default_branch()),
+    }
+}
+
 pub fn backend() -> Result<Workflow> {
-    let on = typical_check_triggers();
-    let mut workflow = Workflow { name: "Engine CI".into(), on, ..default() };
-    workflow.add(PRIMARY_TARGET, job::CancelWorkflow);
+    let mut workflow = Workflow {
+        name: "Engine CI".into(),
+        on: typical_check_triggers(),
+        concurrency: Some(concurrency()),
+        ..default()
+    };
     workflow.add(PRIMARY_TARGET, job::VerifyLicensePackages);
     for target in PR_CHECKED_TARGETS {
         add_backend_checks(&mut workflow, target, graalvm::Edition::Community);

@@ -533,9 +533,14 @@ export default class RemoteBackend extends Backend {
     body: backend.CreateDirectoryRequestBody,
   ): Promise<backend.CreatedDirectory> {
     const path = remoteBackendPaths.CREATE_DIRECTORY_PATH
-    const response = await this.post<backend.CreatedDirectory>(path, body)
+
+    // Remote backend doesn't need the title in the body.
+    // It's generated on the server side.
+    const { title, ...rest } = body
+
+    const response = await this.post<backend.CreatedDirectory>(path, rest)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createFolderBackendError', body.title)
+      return await this.throw(response, 'createFolderBackendError', title)
     } else {
       return await response.json()
     }
@@ -684,9 +689,13 @@ export default class RemoteBackend extends Backend {
     body: backend.CreateProjectRequestBody,
   ): Promise<backend.CreatedProject> {
     const path = remoteBackendPaths.CREATE_PROJECT_PATH
-    const response = await this.post<backend.CreatedProject>(path, body)
+    // Remote backend doesn't need the project name in the body.
+    // It's generated on the server side.
+    const { projectName, ...rest } = body
+
+    const response = await this.post<backend.CreatedProject>(path, rest)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createProjectBackendError', body.projectName)
+      return await this.throw(response, 'createProjectBackendError', projectName)
     } else {
       return await response.json()
     }
@@ -758,8 +767,15 @@ export default class RemoteBackend extends Backend {
    * Return details for a project.
    * @throws An error if a non-successful status code (not 200-299) was received.
    */
-  override async getProjectDetails(projectId: backend.ProjectId): Promise<backend.Project> {
-    const path = remoteBackendPaths.getProjectDetailsPath(projectId)
+  override async getProjectDetails(
+    projectId: backend.ProjectId,
+    _directoryId: null,
+    getPresignedUrl = false,
+  ): Promise<backend.Project> {
+    const paramsString = new URLSearchParams({
+      presigned: `${getPresignedUrl}`,
+    }).toString()
+    const path = `${remoteBackendPaths.getProjectDetailsPath(projectId)}?${paramsString}`
     const response = await this.get<backend.ProjectRaw>(path)
     if (!responseIsSuccessful(response)) {
       return await this.throw(response, 'getProjectDetailsBackendError')
@@ -950,8 +966,12 @@ export default class RemoteBackend extends Backend {
   override async getFileDetails(
     fileId: backend.FileId,
     title: string,
+    getPresignedUrl = false,
   ): Promise<backend.FileDetails> {
-    const path = remoteBackendPaths.getFileDetailsPath(fileId)
+    const searchParams = new URLSearchParams({
+      presigned: `${getPresignedUrl}`,
+    }).toString()
+    const path = `${remoteBackendPaths.getFileDetailsPath(fileId)}?${searchParams}`
     const response = await this.get<backend.FileDetails>(path)
     if (!responseIsSuccessful(response)) {
       return await this.throw(response, 'getFileDetailsBackendError', title)

@@ -13,6 +13,7 @@ const SECRET_NAME = 'a secret name'
 const SECRET_VALUE = 'a secret value'
 
 /** Find an editor container. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function locateEditor(page: Page) {
   // Test ID of a placeholder editor component used during testing.
   return page.locator('.App')
@@ -30,8 +31,10 @@ test('create folder', ({ page }) =>
 test('create project', ({ page }) =>
   mockAllAndLogin({ page })
     .newEmptyProject()
-    .do((thePage) => expect(locateEditor(thePage)).toBeAttached())
-    .goToPage.drive()
+    // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1615
+    // Uncomment once cloud execution in the browser is re-enabled.
+    // .do((thePage) => expect(locateEditor(thePage)).toBeAttached())
+    // .goToPage.drive()
     .driveTable.withRows((rows) => expect(rows).toHaveCount(1)))
 
 test('upload file', ({ page }) =>

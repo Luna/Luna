@@ -65,7 +65,7 @@ const emit = defineEmits<{
     firstAppliedReturnType: Typename | undefined,
   ]
   canceled: []
-  selectedSuggestionId: [id: SuggestionId | null]
+  selectedSuggestionId: [id: SuggestionId | undefined]
   isAiPrompt: [boolean]
 }>()
 
@@ -240,10 +240,6 @@ const nodeColor = computed(() => {
   }
   return 'var(--node-color-no-type)'
 })
-watchEffect(() => {
-  if (!graphStore.cbEditedEdge) return
-  graphStore.cbEditedEdge.color = nodeColor.value
-})
 
 const selectedSuggestionIcon = computed(() => {
   return selectedSuggestion.value ? suggestionEntryToIcon(selectedSuggestion.value) : undefined
@@ -296,7 +292,7 @@ const isVisualizationVisible = ref(true)
 
 // === Documentation Panel ===
 
-watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id ?? null))
+watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id))
 watch(
   () => input.mode,
   (mode) => emit('isAiPrompt', mode.mode === 'aiPrompt'),

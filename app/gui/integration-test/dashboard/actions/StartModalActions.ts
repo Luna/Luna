@@ -1,6 +1,6 @@
 /** @file Actions for the "home" page. */
 import type { Page } from '@playwright/test'
-import BaseActions from './BaseActions'
+import BaseActions, { type LocatorCallback } from './BaseActions'
 import DrivePageActions from './DrivePageActions'
 import EditorPageActions from './EditorPageActions'
 
@@ -20,9 +20,27 @@ function locateSamples(page: Page) {
 export default class StartModalActions<Context> extends BaseActions<Context> {
   /** Close this modal and go back to the Drive page. */
   close() {
-    return this.step('Close "start" modal', (page) => page.getByLabel('Close').click()).into(
-      DrivePageActions<Context>,
-    )
+    return this.step('Close start modal', async (page) => {
+      const isOnScreen = await this.isStartModalShown(page)
+      if (isOnScreen) {
+        await this.locateStartModal(page).getByTestId('close-button').click()
+      }
+    }).into(DrivePageActions<Context>)
+  }
+
+  /** Locate the "start" modal. */
+  private locateStartModal(page: Page) {
+    return page.getByTestId('start-modal')
+  }
+
+  /** Check if the Asset Panel is shown. */
+  private isStartModalShown(page: Page) {
+    return this.locateStartModal(page)
+      .isHidden()
+      .then(
+        (result) => !result,
+        () => false,
+      )
   }
 
   /** Create a project from the template at the given index. */
@@ -32,5 +50,12 @@ export default class StartModalActions<Context> extends BaseActions<Context> {
         .nth(index + 1)
         .click(),
     ).into(EditorPageActions<Context>)
+  }
+
+  /** Interact with the "start" modal. */
+  withStartModal(callback: LocatorCallback) {
+    return this.step('Interact with start modal', async (page) => {
+      await callback(this.locateStartModal(page))
+    })
   }
 }

@@ -62,7 +62,7 @@ test('extra columns should stick to top of scroll container', ({ page }) =>
     page,
     setupAPI: (api) => {
       for (let i = 0; i < 100; i += 1) {
-        api.addFile('a')
+        api.addFile({ title: 'a' })
       }
     },
   })

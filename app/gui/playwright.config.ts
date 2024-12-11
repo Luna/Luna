@@ -67,7 +67,7 @@ export default defineConfig({
   fullyParallel: true,
   ...(WORKERS ? { workers: WORKERS } : {}),
   forbidOnly: isCI,
-  reporter: isCI ? ([['list'], ['blob']] as const) : ([['list']] as const),
+  reporter: isCI ? [['list'], ['blob']] : [['html']],
   retries: isCI ? 3 : 0,
   use: {
     headless: !DEBUG,
@@ -110,6 +110,7 @@ export default defineConfig({
       use: {
         baseURL: `http://localhost:${ports.dashboard}`,
         actionTimeout: TIMEOUT_MS,
+        offline: false,
       },
     },
     {
@@ -125,20 +126,8 @@ export default defineConfig({
       use: {
         baseURL: `http://localhost:${ports.dashboard}`,
         actionTimeout: TIMEOUT_MS,
+        offline: false,
         storageState: path.join(dirName, './playwright/.auth/user.json'),
-      },
-    },
-    {
-      name: 'Auth',
-      testDir: './integration-test/dashboard/auth',
-      expect: {
-        toHaveScreenshot: { threshold: 0 },
-        timeout: TIMEOUT_MS,
-      },
-      timeout: TIMEOUT_MS,
-      use: {
-        baseURL: `http://localhost:${ports.dashboard}`,
-        actionTimeout: TIMEOUT_MS,
       },
     },
     {

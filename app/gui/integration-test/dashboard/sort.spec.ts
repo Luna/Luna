@@ -49,14 +49,14 @@ test('sort', ({ page }) =>
       const date6 = toRfc3339(new Date(START_DATE_EPOCH_MS + 5 * MIN_MS))
       const date7 = toRfc3339(new Date(START_DATE_EPOCH_MS + 6 * MIN_MS))
       const date8 = toRfc3339(new Date(START_DATE_EPOCH_MS + 7 * MIN_MS))
-      api.addDirectory('a directory', { modifiedAt: date4 })
-      api.addDirectory('G directory', { modifiedAt: date6 })
-      api.addProject('C project', { modifiedAt: date7 })
-      api.addSecret('H secret', { modifiedAt: date2 })
-      api.addProject('b project', { modifiedAt: date1 })
-      api.addFile('d file', { modifiedAt: date8 })
-      api.addSecret('f secret', { modifiedAt: date3 })
-      api.addFile('e file', { modifiedAt: date5 })
+      api.addDirectory({ modifiedAt: date4, title: 'a directory' })
+      api.addDirectory({ modifiedAt: date6, title: 'G directory' })
+      api.addProject({ modifiedAt: date7, title: 'C project' })
+      api.addSecret({ modifiedAt: date2, title: 'H secret' })
+      api.addProject({ modifiedAt: date1, title: 'b project' })
+      api.addFile({ modifiedAt: date8, title: 'd file' })
+      api.addSecret({ modifiedAt: date3, title: 'f secret' })
+      api.addFile({ modifiedAt: date5, title: 'e file' })
       // By date:
       // b project
       // h secret
@@ -79,14 +79,16 @@ test('sort', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       // By default, assets should be grouped by type.
       // Assets in each group are ordered by insertion order.
-      await expect(rows.nth(0)).toHaveText(/^a directory/)
-      await expect(rows.nth(1)).toHaveText(/^G directory/)
-      await expect(rows.nth(2)).toHaveText(/^C project/)
-      await expect(rows.nth(3)).toHaveText(/^b project/)
-      await expect(rows.nth(4)).toHaveText(/^d file/)
-      await expect(rows.nth(5)).toHaveText(/^e file/)
-      await expect(rows.nth(6)).toHaveText(/^H secret/)
-      await expect(rows.nth(7)).toHaveText(/^f secret/)
+      await expect(rows).toHaveText([
+        /^a directory/,
+        /^G directory/,
+        /^C project/,
+        /^b project/,
+        /^d file/,
+        /^e file/,
+        /^H secret/,
+        /^f secret/,
+      ])
     })
     // Sort by name ascending.
     .driveTable.clickNameColumnHeading()
@@ -94,14 +96,16 @@ test('sort', ({ page }) =>
       await expectNotOpacity0(locateSortAscendingIcon(nameHeading))
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^a directory/)
-      await expect(rows.nth(1)).toHaveText(/^b project/)
-      await expect(rows.nth(2)).toHaveText(/^C project/)
-      await expect(rows.nth(3)).toHaveText(/^d file/)
-      await expect(rows.nth(4)).toHaveText(/^e file/)
-      await expect(rows.nth(5)).toHaveText(/^f secret/)
-      await expect(rows.nth(6)).toHaveText(/^G directory/)
-      await expect(rows.nth(7)).toHaveText(/^H secret/)
+      await expect(rows).toHaveText([
+        /^a directory/,
+        /^b project/,
+        /^C project/,
+        /^d file/,
+        /^e file/,
+        /^f secret/,
+        /^G directory/,
+        /^H secret/,
+      ])
     })
     // Sort by name descending.
     .driveTable.clickNameColumnHeading()
@@ -109,14 +113,16 @@ test('sort', ({ page }) =>
       await expectNotOpacity0(locateSortDescendingIcon(nameHeading))
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^H secret/)
-      await expect(rows.nth(1)).toHaveText(/^G directory/)
-      await expect(rows.nth(2)).toHaveText(/^f secret/)
-      await expect(rows.nth(3)).toHaveText(/^e file/)
-      await expect(rows.nth(4)).toHaveText(/^d file/)
-      await expect(rows.nth(5)).toHaveText(/^C project/)
-      await expect(rows.nth(6)).toHaveText(/^b project/)
-      await expect(rows.nth(7)).toHaveText(/^a directory/)
+      await expect(rows).toHaveText([
+        /^H secret/,
+        /^G directory/,
+        /^f secret/,
+        /^e file/,
+        /^d file/,
+        /^C project/,
+        /^b project/,
+        /^a directory/,
+      ])
     })
     // Sorting should be unset.
     .driveTable.clickNameColumnHeading()
@@ -128,14 +134,16 @@ test('sort', ({ page }) =>
       await test.expect(locateSortDescendingIcon(nameHeading)).not.toBeVisible()
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^a directory/)
-      await expect(rows.nth(1)).toHaveText(/^G directory/)
-      await expect(rows.nth(2)).toHaveText(/^C project/)
-      await expect(rows.nth(3)).toHaveText(/^b project/)
-      await expect(rows.nth(4)).toHaveText(/^d file/)
-      await expect(rows.nth(5)).toHaveText(/^e file/)
-      await expect(rows.nth(6)).toHaveText(/^H secret/)
-      await expect(rows.nth(7)).toHaveText(/^f secret/)
+      await expect(rows).toHaveText([
+        /^a directory/,
+        /^G directory/,
+        /^C project/,
+        /^b project/,
+        /^d file/,
+        /^e file/,
+        /^H secret/,
+        /^f secret/,
+      ])
     })
     // Sort by date ascending.
     .driveTable.clickModifiedColumnHeading()
@@ -143,14 +151,16 @@ test('sort', ({ page }) =>
       await expectNotOpacity0(locateSortAscendingIcon(modifiedHeading))
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^b project/)
-      await expect(rows.nth(1)).toHaveText(/^H secret/)
-      await expect(rows.nth(2)).toHaveText(/^f secret/)
-      await expect(rows.nth(3)).toHaveText(/^a directory/)
-      await expect(rows.nth(4)).toHaveText(/^e file/)
-      await expect(rows.nth(5)).toHaveText(/^G directory/)
-      await expect(rows.nth(6)).toHaveText(/^C project/)
-      await expect(rows.nth(7)).toHaveText(/^d file/)
+      await expect(rows).toHaveText([
+        /^b project/,
+        /^H secret/,
+        /^f secret/,
+        /^a directory/,
+        /^e file/,
+        /^G directory/,
+        /^C project/,
+        /^d file/,
+      ])
     })
     // Sort by date descending.
     .driveTable.clickModifiedColumnHeading()
@@ -158,14 +168,16 @@ test('sort', ({ page }) =>
       await expectNotOpacity0(locateSortDescendingIcon(modifiedHeading))
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^d file/)
-      await expect(rows.nth(1)).toHaveText(/^C project/)
-      await expect(rows.nth(2)).toHaveText(/^G directory/)
-      await expect(rows.nth(3)).toHaveText(/^e file/)
-      await expect(rows.nth(4)).toHaveText(/^a directory/)
-      await expect(rows.nth(5)).toHaveText(/^f secret/)
-      await expect(rows.nth(6)).toHaveText(/^H secret/)
-      await expect(rows.nth(7)).toHaveText(/^b project/)
+      await expect(rows).toHaveText([
+        /^d file/,
+        /^C project/,
+        /^G directory/,
+        /^e file/,
+        /^a directory/,
+        /^f secret/,
+        /^H secret/,
+        /^b project/,
+      ])
     })
     // Sorting should be unset.
     .driveTable.clickModifiedColumnHeading()
@@ -177,12 +189,14 @@ test('sort', ({ page }) =>
       await expect(locateSortDescendingIcon(modifiedHeading)).not.toBeVisible()
     })
     .driveTable.withRows(async (rows) => {
-      await expect(rows.nth(0)).toHaveText(/^a directory/)
-      await expect(rows.nth(1)).toHaveText(/^G directory/)
-      await expect(rows.nth(2)).toHaveText(/^C project/)
-      await expect(rows.nth(3)).toHaveText(/^b project/)
-      await expect(rows.nth(4)).toHaveText(/^d file/)
-      await expect(rows.nth(5)).toHaveText(/^e file/)
-      await expect(rows.nth(6)).toHaveText(/^H secret/)
-      await expect(rows.nth(7)).toHaveText(/^f secret/)
+      await expect(rows).toHaveText([
+        /^a directory/,
+        /^G directory/,
+        /^C project/,
+        /^b project/,
+        /^d file/,
+        /^e file/,
+        /^H secret/,
+        /^f secret/,
+      ])
     }))
