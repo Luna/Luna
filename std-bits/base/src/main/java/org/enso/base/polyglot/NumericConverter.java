@@ -33,6 +33,22 @@ public class NumericConverter {
     };
   }
 
+  public static double coerceToDouble(Value val) {
+    if (val.fitsInDouble()) {
+      return val.asDouble();
+    }
+    if (val.fitsInFloat()) {
+      return Float.valueOf(val.asFloat()).doubleValue();
+    }
+    if (val.fitsInBigInteger()) {
+      return val.asBigInteger().doubleValue();
+    }
+    if (Polyglot_Utils.asBigDecimal(val) instanceof BigDecimal bigDec) {
+      return bigDec.doubleValue();
+    }
+    return (double) coerceToLong(val);
+  }
+
   /**
    * Coerces a number to an Integer.
    *
@@ -50,6 +66,22 @@ public class NumericConverter {
     };
   }
 
+  public static long coerceToLong(Value val) {
+    if (val.fitsInLong()) {
+      return val.asLong();
+    }
+    if (val.fitsInInt()) {
+      return Integer.valueOf(val.asInt()).longValue();
+    }
+    if (val.fitsInShort()) {
+      return Short.valueOf(val.asShort()).longValue();
+    }
+    if (val.fitsInByte()) {
+      return Byte.valueOf(val.asByte()).longValue();
+    }
+    throw new UnsupportedOperationException("Cannot coerce " + val + " to a numeric type.");
+  }
+
   public static BigInteger coerceToBigInteger(Object o) {
     if (o instanceof BigInteger bigInteger) {
       return bigInteger;
@@ -57,6 +89,14 @@ public class NumericConverter {
       long longValue = coerceToLong(o);
       return BigInteger.valueOf(longValue);
     }
+  }
+
+  public static BigInteger coerceToBigInteger(Value val) {
+    if (val.fitsInBigInteger()) {
+      return val.asBigInteger();
+    }
+    var longValue = coerceToLong(val);
+    return BigInteger.valueOf(longValue);
   }
 
   /**
@@ -78,14 +118,55 @@ public class NumericConverter {
     };
   }
 
+  /**
+   * Coerces a polyglot value to a BigDecimal.
+   *
+   * <p>Will throw an exception if the object is not a number.
+   */
+  public static BigDecimal coerceToBigDecimal(Value val) {
+    if (val.fitsInDouble()) {
+      return BigDecimal.valueOf(val.asDouble());
+    }
+    if (Polyglot_Utils.asBigDecimal(val) instanceof BigDecimal bd) {
+      return bd;
+    }
+    if (val.fitsInFloat()) {
+      return BigDecimal.valueOf(val.asFloat());
+    }
+    if (val.fitsInBigInteger()) {
+      return new BigDecimal(val.asBigInteger());
+    }
+    if (val.fitsInLong()) {
+      return BigDecimal.valueOf(val.asLong());
+    }
+    if (val.fitsInInt()) {
+      return BigDecimal.valueOf(val.asInt());
+    }
+    if (val.fitsInShort()) {
+      return BigDecimal.valueOf(val.asShort());
+    }
+    if (val.fitsInByte()) {
+      return BigDecimal.valueOf(val.asByte());
+    }
+    throw new UnsupportedOperationException("Cannot coerce " + val + " to a BigDecimal.");
+  }
+
   /** Returns true if the object is any supported number. */
   public static boolean isCoercibleToDouble(Object o) {
     return isFloatLike(o)|| isCoercibleToLong(o) || o instanceof BigInteger;
   }
 
+  public static boolean isCoercibleToDouble(Value val) {
+    return isFloatLike(val) || isCoercibleToLong(val) || val.fitsInBigInteger();
+  }
+
   public static boolean isFloatLike(Object o) {
     return o instanceof Double
         || o instanceof Float;
+  }
+
+  public static boolean isFloatLike(Value val) {
+    return val.fitsInDouble() || val.fitsInFloat();
   }
 
   /**
@@ -97,8 +178,19 @@ public class NumericConverter {
     return o instanceof Long || o instanceof Integer || o instanceof Short || o instanceof Byte;
   }
 
+  public static boolean isCoercibleToLong(Value val) {
+    if (val.isNumber()) {
+      return val.fitsInLong() || val.fitsInInt() || val.fitsInShort() || val.fitsInByte();
+    }
+    return false;
+  }
+
   public static boolean isCoercibleToBigInteger(Object o) {
     return o instanceof BigInteger || isCoercibleToLong(o);
+  }
+
+  public static boolean isCoercibleToBigInteger(Value val) {
+    return val.fitsInBigInteger() || isCoercibleToLong(val);
   }
 
   /**
