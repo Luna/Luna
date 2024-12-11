@@ -39,7 +39,7 @@ public class XSSFReaderRow implements ExcelRow {
     return switch (dataType) {
       case BOOL -> cell.getBooleanValue();
       case DATE -> LocalDateTime.parse(cell.strValue()); // Don't believe used by Excel.
-      case INLINE_STRING, SST_STRING, FORMULA_STRING, TEXT -> cell.strValue();
+      case INLINE_STRING, SST_STRING, FORMULA_STRING -> cell.strValue();
       case NUMBER -> cell.getNumberValue();
       case INTEGER -> cell.getIntegerValue();
       case OLE_DATE -> cell.getDateValue();

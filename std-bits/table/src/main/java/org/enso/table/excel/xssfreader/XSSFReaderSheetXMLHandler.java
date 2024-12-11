@@ -25,8 +25,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     INTEGER,
     OLE_DATE,
     OLE_DATETIME,
-    FORMULA_STRING,
-    TEXT // Resolved Text Value
+    FORMULA_STRING
   }
 
   // Set when V start element is seen
