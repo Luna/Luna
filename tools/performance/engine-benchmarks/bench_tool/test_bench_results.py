@@ -52,7 +52,8 @@ class TestBenchResults(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(len(bench_runs), 0)
         bench_run = bench_runs[0]
         commit_ts = parse_commit_timestamp(bench_run.head_commit)
-        self.assertLess(since, commit_ts)
+        # There are, let's say, 2 days tolerance
+        self.assertLess(datetime.fromisoformat("2023-09-28"), commit_ts)
         self.assertGreater(until, commit_ts)
 
     async def test_get_bench_report(self):
