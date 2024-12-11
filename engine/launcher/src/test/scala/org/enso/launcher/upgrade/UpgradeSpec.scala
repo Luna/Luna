@@ -1,24 +1,22 @@
 package org.enso.launcher.upgrade
 
-import java.nio.file.{Files, Path, StandardCopyOption}
 import io.circe.parser
-import org.enso.semver.SemVer
-import org.enso.distribution.FileSystem
-import org.enso.distribution.locking.{FileLockManager, LockType}
-import FileSystem.PathSyntax
 import org.enso.cli.OS
+import org.enso.distribution.FileSystem
+import org.enso.distribution.FileSystem.PathSyntax
+import org.enso.distribution.locking.{FileLockManager, LockType}
 import org.enso.launcher._
-import org.enso.testkit.{FlakySpec, WithTemporaryDirectory}
 import org.enso.process.{RunResult, WrappedProcess}
-import org.enso.version.BuildVersion
+import org.enso.semver.SemVer
+import org.enso.testkit.{FlakySpec, WithTemporaryDirectory}
 import org.scalatest.exceptions.TestFailedException
-import org.scalatest.{BeforeAndAfterAll, Ignore, OptionValues}
+import org.scalatest.{BeforeAndAfterAll, OptionValues}
 
+import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.concurrent.TimeoutException
 
 // TODO [DB] The suite became quite flaky and frequently fails the
 // Windows CI. Disabled until #3183 is implemented.
-@Ignore
 class UpgradeSpec
     extends NativeTest
     with WithTemporaryDirectory
@@ -32,13 +30,13 @@ class UpgradeSpec
 
   /** Location of built Rust artifacts.
     */
-  private val rustBuildRoot = Path.of("./target/rust/debug/")
+  private val rustBuildRoot = Path.of("../../target/rust/debug/").toAbsolutePath.normalize()
 
   /** Location of the actual launcher executable that is wrapped by the shims.
     */
   private val realLauncherLocation =
     Path
-      .of(".")
+      .of("../../")
       .resolve(OS.executableName(Constants.name))
       .toAbsolutePath
       .normalize
@@ -74,6 +72,7 @@ class UpgradeSpec
     prepareLauncherBinary(SemVer.of(0, 0, 2))
     prepareLauncherBinary(SemVer.of(0, 0, 3))
     prepareLauncherBinary(SemVer.of(0, 0, 4))
+    prepareLauncherBinary(SemVer.of(1, 0, 0))
   }
 
   /** Prepares a launcher distribution in the temporary test location.
@@ -88,7 +87,7 @@ class UpgradeSpec
     */
   private def prepareDistribution(
     portable: Boolean,
-    launcherVersion: Option[SemVer] = None
+    launcherVersion: Option[SemVer]
   ): Unit = {
     val sourceLauncherLocation =
       launcherVersion.map(builtLauncherBinary).getOrElse(baseLauncherLocation)
@@ -180,29 +179,25 @@ class UpgradeSpec
     }
 
     "not downgrade without being explicitly asked to do so" taggedAs Flaky in {
-      // precondition for the test to make sense
-      SemVer
-        .parse(BuildVersion.ensoVersion)
-        .get
-        .isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
-
       prepareDistribution(
-        portable = true
+        portable        = false,
+        launcherVersion = Some(SemVer.of(1, 0, 0))
       )
+
+      // precondition for the test to make sense
+      checkVersion().isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
       run(Seq("upgrade")).exitCode shouldEqual 1
     }
 
     "upgrade/downgrade to a specific version " +
     "(and update necessary files)" taggedAs Flaky in {
-      // precondition for the test to make sense
-      SemVer
-        .parse(BuildVersion.ensoVersion)
-        .get
-        .isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
-
       prepareDistribution(
-        portable = true
+        portable = true,
+        launcherVersion = Some(SemVer.of(1, 0, 0))
       )
+      // precondition for the test to make sense
+      checkVersion().isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
+
       val root = launcherPath.getParent.getParent
       FileSystem.writeTextFile(root / "README.md", "Old readme")
       run(Seq("upgrade", "0.0.1")) should returnSuccess
