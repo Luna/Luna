@@ -109,8 +109,8 @@ export function getColumnList(
     isCloud && Column.labels,
     // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1525
     // Bring back these columns when they are ready for use again.
-    isCloud && Column.accessedByProjects,
-    isCloud && Column.accessedData,
+    // isCloud && Column.accessedByProjects,
+    // isCloud && Column.accessedData,
     isCloud && Column.docs,
   ] as const
 
