@@ -1,14 +1,30 @@
 /** @file Test the search bar and its suggestions. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import { COLORS } from '#/services/Backend'
 
-import {
-  locateSearchBarLabels,
-  locateSearchBarSuggestions,
-  locateSearchBarTags,
-  mockAllAndLogin,
-} from './actions'
+import { mockAllAndLogin } from './actions'
+
+/** Find a search bar. */
+function locateSearchBar(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('asset-search-bar')
+}
+
+/** Find a list of tags in the search bar. */
+function locateSearchBarTags(page: Page) {
+  return locateSearchBar(page).getByTestId('asset-search-tag-names').getByRole('button')
+}
+
+/** Find a list of labels in the search bar. */
+function locateSearchBarLabels(page: Page) {
+  return locateSearchBar(page).getByTestId('asset-search-labels').getByRole('button')
+}
+
+/** Find a list of labels in the search bar. */
+function locateSearchBarSuggestions(page: Page) {
+  return locateSearchBar(page).getByTestId('asset-search-suggestion')
+}
 
 const FIRST_ASSET_NAME = 'foo'
 

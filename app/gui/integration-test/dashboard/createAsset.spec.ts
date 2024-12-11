@@ -1,7 +1,7 @@
 /** @file Test copying, moving, cutting and pasting. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-import { locateEditor, mockAllAndLogin } from './actions'
+import { mockAllAndLogin } from './actions'
 
 /** The name of the uploaded file. */
 const FILE_NAME = 'foo.txt'
@@ -11,6 +11,12 @@ const FILE_CONTENTS = 'hello world'
 const SECRET_NAME = 'a secret name'
 /** The value of the created secret. */
 const SECRET_VALUE = 'a secret value'
+
+/** Find an editor container. */
+function locateEditor(page: Page) {
+  // Test ID of a placeholder editor component used during testing.
+  return page.locator('.App')
+}
 
 test('create folder', ({ page }) =>
   mockAllAndLogin({ page })

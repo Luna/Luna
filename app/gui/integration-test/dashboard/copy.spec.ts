@@ -1,12 +1,27 @@
 /** @file Test copying, moving, cutting and pasting. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import {
-  getAssetRowLeftPx,
-  locateContextMenus,
-  locateTrashCategory,
-  mockAllAndLogin,
-} from './actions'
+import { mockAllAndLogin } from './actions'
+
+/** Find a set of context menus. */
+function locateContextMenus(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('context-menus')
+}
+
+/** Find a button for the "Trash" category. */
+function locateTrashCategory(page: Page) {
+  return page.getByLabel('Trash').locator('visible=true')
+}
+
+/**
+ * Get the left side of the bounding box of an asset row. The locator MUST be for an asset row.
+ * DO NOT assume the left side of the outer container will change. This means that it is NOT SAFE
+ * to do anything with the returned values other than comparing them.
+ */
+function getAssetRowLeftPx(locator: Locator) {
+  return locator.evaluate((el) => el.children[0]?.children[0]?.getBoundingClientRect().left ?? 0)
+}
 
 test('copy', ({ page }) =>
   mockAllAndLogin({ page })
@@ -125,7 +140,7 @@ test('move (keyboard)', ({ page }) =>
       expect(childLeft, 'child is indented further than parent').toBeGreaterThan(parentLeft)
     }))
 
-test('cut (keyboard)', async ({ page }) =>
+test('cut (keyboard)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
     .driveTable.clickRow(0)

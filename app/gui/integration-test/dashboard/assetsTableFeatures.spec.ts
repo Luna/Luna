@@ -1,14 +1,32 @@
 /** @file Test the drive view. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import {
-  getAssetRowLeftPx,
-  locateAssetsTable,
-  locateExtraColumns,
-  locateRootDirectoryDropzone,
-  mockAllAndLogin,
-  TEXT,
-} from './actions'
+import { mockAllAndLogin, TEXT } from './actions'
+
+/** Find an extra columns button panel. */
+function locateExtraColumns(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('extra-columns')
+}
+
+/**
+ * Get the left side of the bounding box of an asset row. The locator MUST be for an asset row.
+ * DO NOT assume the left side of the outer container will change. This means that it is NOT SAFE
+ * to do anything with the returned values other than comparing them.
+ */
+function getAssetRowLeftPx(locator: Locator) {
+  return locator.evaluate((el) => el.children[0]?.children[0]?.getBoundingClientRect().left ?? 0)
+}
+
+/**
+ * Find a root directory dropzone.
+ * This is the empty space below the assets table, if it doesn't take up the whole screen
+ * vertically.
+ */
+function locateRootDirectoryDropzone(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('root-directory-dropzone')
+}
 
 const PASS_TIMEOUT = 5_000
 
@@ -26,9 +44,8 @@ test('extra columns should stick to right side of assets table', ({ page }) =>
         scrollableParent?.scrollTo({ left: 999999, behavior: 'instant' })
       })
     })
-    .do(async (thePage) => {
+    .withAssetsTable(async (assetsTable, _, thePage) => {
       const extraColumns = locateExtraColumns(thePage)
-      const assetsTable = locateAssetsTable(thePage)
       await expect(async () => {
         const extraColumnsRight = await extraColumns.evaluate(
           (element) => element.getBoundingClientRect().right,
@@ -40,8 +57,8 @@ test('extra columns should stick to right side of assets table', ({ page }) =>
       }).toPass({ timeout: PASS_TIMEOUT })
     }))
 
-test('extra columns should stick to top of scroll container', async ({ page }) => {
-  await mockAllAndLogin({
+test('extra columns should stick to top of scroll container', ({ page }) =>
+  mockAllAndLogin({
     page,
     setupAPI: (api) => {
       for (let i = 0; i < 100; i += 1) {
@@ -49,36 +66,37 @@ test('extra columns should stick to top of scroll container', async ({ page }) =
       }
     },
   })
-
-  await locateAssetsTable(page).evaluate((element) => {
-    let scrollableParent: HTMLElement | SVGElement | null = element
-    while (
-      scrollableParent != null &&
-      scrollableParent.scrollHeight <= scrollableParent.clientHeight
-    ) {
-      scrollableParent = scrollableParent.parentElement
-    }
-    scrollableParent?.scrollTo({ top: 999999, behavior: 'instant' })
-  })
-  const extraColumns = locateExtraColumns(page)
-  const assetsTable = locateAssetsTable(page)
-  await expect(async () => {
-    const extraColumnsTop = await extraColumns.evaluate(
-      (element) => element.getBoundingClientRect().top,
-    )
-    const assetsTableTop = await assetsTable.evaluate((element) => {
-      let scrollableParent: HTMLElement | SVGElement | null = element
-      while (
-        scrollableParent != null &&
-        scrollableParent.scrollHeight <= scrollableParent.clientHeight
-      ) {
-        scrollableParent = scrollableParent.parentElement
-      }
-      return scrollableParent?.getBoundingClientRect().top ?? 0
+    .withAssetsTable(async (assetsTable) => {
+      await assetsTable.evaluate((element) => {
+        let scrollableParent: HTMLElement | SVGElement | null = element
+        while (
+          scrollableParent != null &&
+          scrollableParent.scrollHeight <= scrollableParent.clientHeight
+        ) {
+          scrollableParent = scrollableParent.parentElement
+        }
+        scrollableParent?.scrollTo({ top: 999999, behavior: 'instant' })
+      })
     })
-    expect(extraColumnsTop).toEqual(assetsTableTop + 2)
-  }).toPass({ timeout: PASS_TIMEOUT })
-})
+    .withAssetsTable(async (assetsTable, _, thePage) => {
+      const extraColumns = locateExtraColumns(thePage)
+      await expect(async () => {
+        const extraColumnsTop = await extraColumns.evaluate(
+          (element) => element.getBoundingClientRect().top,
+        )
+        const assetsTableTop = await assetsTable.evaluate((element) => {
+          let scrollableParent: HTMLElement | SVGElement | null = element
+          while (
+            scrollableParent != null &&
+            scrollableParent.scrollHeight <= scrollableParent.clientHeight
+          ) {
+            scrollableParent = scrollableParent.parentElement
+          }
+          return scrollableParent?.getBoundingClientRect().top ?? 0
+        })
+        expect(extraColumnsTop).toEqual(assetsTableTop + 2)
+      }).toPass({ timeout: PASS_TIMEOUT })
+    }))
 
 test('can drop onto root directory dropzone', ({ page }) =>
   mockAllAndLogin({ page })

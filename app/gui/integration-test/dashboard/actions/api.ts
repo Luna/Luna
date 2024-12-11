@@ -10,7 +10,7 @@ import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
 import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 
-import * as actions from './actions'
+import * as actions from '.'
 
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'

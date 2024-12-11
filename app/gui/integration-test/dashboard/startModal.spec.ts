@@ -1,7 +1,25 @@
 /** @file Test the "change password" modal. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-import { locateEditor, locateSamples, mockAllAndLogin } from './actions'
+import { mockAllAndLogin } from './actions'
+
+/** Find an editor container. */
+function locateEditor(page: Page) {
+  // Test ID of a placeholder editor component used during testing.
+  return page.locator('.App')
+}
+
+/** Find a samples list. */
+function locateSamplesList(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('samples')
+}
+
+/** Find all samples list. */
+function locateSamples(page: Page) {
+  // This has no identifying features.
+  return locateSamplesList(page).getByRole('button')
+}
 
 test('create project from template', ({ page }) =>
   mockAllAndLogin({ page })

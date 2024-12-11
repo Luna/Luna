@@ -1,12 +1,18 @@
 /** @file Test the drive view. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import {
-  locateAssetsTable,
-  locateEditor,
-  locateStopProjectButton,
-  mockAllAndLogin,
-} from './actions'
+import { TEXT, mockAllAndLogin } from './actions'
+
+/** Find an editor container. */
+function locateEditor(page: Page) {
+  // Test ID of a placeholder editor component used during testing.
+  return page.locator('.App')
+}
+
+/** Find a button to close the project. */
+function locateStopProjectButton(page: Locator) {
+  return page.getByLabel(TEXT.stopExecution)
+}
 
 test('drive view', ({ page }) =>
   mockAllAndLogin({ page })
@@ -22,8 +28,8 @@ test('drive view', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       await expect(rows).toHaveCount(1)
     })
-    .do(async () => {
-      await expect(locateAssetsTable(page)).toBeVisible()
+    .withAssetsTable(async (assetsTable) => {
+      await expect(assetsTable).toBeVisible()
     })
     .newEmptyProject()
     .do(async () => {

@@ -1,18 +1,7 @@
 /** @file Actions for the "drive" page. */
-import { expect, type Locator, type Page } from 'playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
-import {
-  locateAssetPanel,
-  locateAssetsTable,
-  locateContextMenus,
-  locateCreateButton,
-  locateDriveView,
-  locateNewSecretIcon,
-  locateNonAssetRows,
-  locateSecretNameInput,
-  locateSecretValueInput,
-  TEXT,
-} from '.'
+import { TEXT } from '.'
 import type { LocatorCallback } from './BaseActions'
 import { contextMenuActions } from './contextMenuActions'
 import EditorPageActions from './EditorPageActions'
@@ -23,9 +12,63 @@ import StartModalActions from './StartModalActions'
 
 const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
 
-/** Find all assets table rows (if any). */
+/** Find a set of context menus. */
+function locateContextMenus(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('context-menus')
+}
+
+/** Find a drive view. */
+function locateDriveView(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('drive-view')
+}
+
+/** Find a "create" button. */
+function locateCreateButton(page: Page) {
+  return page.getByRole('button', { name: TEXT.create }).getByText(TEXT.create)
+}
+
+/** Find an assets table. */
+function locateAssetsTable(page: Page) {
+  return page.getByTestId('drive-view').getByRole('table')
+}
+
+/** Find all assets table rows. */
 function locateAssetRows(page: Page) {
   return locateAssetsTable(page).getByTestId('asset-row')
+}
+
+/** Find assets table placeholder rows. */
+function locateNonAssetRows(page: Page) {
+  return locateAssetsTable(page).locator('tbody tr:not([data-testid="asset-row"])')
+}
+
+/** Find a "new secret" icon. */
+function locateNewSecretIcon(page: Page) {
+  return page.getByRole('button', { name: 'New Secret' })
+}
+
+/** Find an "upsert secret" modal. */
+function locateUpsertSecretModal(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('upsert-secret-modal')
+}
+
+/** Find a "name" input for an "upsert secret" modal. */
+function locateSecretNameInput(page: Page) {
+  return locateUpsertSecretModal(page).getByPlaceholder(TEXT.secretNamePlaceholder)
+}
+
+/** Find a "value" input for an "upsert secret" modal. */
+function locateSecretValueInput(page: Page) {
+  return locateUpsertSecretModal(page).getByPlaceholder(TEXT.secretValuePlaceholder)
+}
+
+/** Find an asset panel. */
+function locateAssetPanel(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('asset-panel').locator('visible=true')
 }
 
 /** Actions for the "drive" page. */
@@ -90,20 +133,39 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   get driveTable() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self: DrivePageActions<Context> = this
+    const locateNameColumnHeading = (page: Page) =>
+      page
+        .getByLabel(TEXT.sortByName)
+        .or(page.getByLabel(TEXT.sortByNameDescending))
+        .or(page.getByLabel(TEXT.stopSortingByName))
+    const locateModifiedColumnHeading = (page: Page) =>
+      page
+        .getByLabel(TEXT.sortByModificationDate)
+        .or(page.getByLabel(TEXT.sortByModificationDateDescending))
+        .or(page.getByLabel(TEXT.stopSortingByModificationDate))
     return {
       /** Click the column heading for the "name" column to change its sort order. */
       clickNameColumnHeading() {
         return self.step('Click "name" column heading', (page) =>
-          page.getByLabel(TEXT.sortByName).or(page.getByLabel(TEXT.stopSortingByName)).click(),
+          locateNameColumnHeading(page).click(),
+        )
+      },
+      /** Interact with the column heading for the "name" column. */
+      withNameColumnHeading(callback: LocatorCallback) {
+        return self.step('Interact with "name" column heading', (page) =>
+          callback(locateNameColumnHeading(page)),
         )
       },
       /** Click the column heading for the "modified" column to change its sort order. */
       clickModifiedColumnHeading() {
         return self.step('Click "modified" column heading', (page) =>
-          page
-            .getByLabel(TEXT.sortByModificationDate)
-            .or(page.getByLabel(TEXT.stopSortingByModificationDate))
-            .click(),
+          locateModifiedColumnHeading(page).click(),
+        )
+      },
+      /** Interact with the column heading for the "modified" column. */
+      withModifiedColumnHeading(callback: LocatorCallback) {
+        return self.step('Interact with "modified" column heading', (page) =>
+          callback(locateNameColumnHeading(page)),
         )
       },
       /** Click to select a specific row. */
@@ -135,10 +197,11 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
           assetRows: Locator,
           nonAssetRows: Locator,
           context: Context,
+          page: Page,
         ) => Promise<void> | void,
       ) {
         return self.step('Interact with drive table rows', async (page) => {
-          await callback(locateAssetRows(page), locateNonAssetRows(page), self.context)
+          await callback(locateAssetRows(page), locateNonAssetRows(page), self.context, page)
         })
       },
       /** Drag a row onto another row. */
@@ -349,9 +412,11 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the container element of the assets table. */
-  withAssetsTable(callback: LocatorCallback) {
+  withAssetsTable(
+    callback: (input: Locator, context: Context, page: Page) => Promise<void> | void,
+  ) {
     return this.step('Interact with drive table', async (page) => {
-      await callback(locateAssetsTable(page))
+      await callback(locateAssetsTable(page), this.context, page)
     })
   }
 

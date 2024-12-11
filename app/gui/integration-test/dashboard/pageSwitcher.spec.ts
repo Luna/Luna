@@ -1,7 +1,19 @@
 /** @file Test the login flow. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-import { locateDriveView, locateEditor, mockAllAndLogin } from './actions'
+import { mockAllAndLogin } from './actions'
+
+/** Find an editor container. */
+function locateEditor(page: Page) {
+  // Test ID of a placeholder editor component used during testing.
+  return page.locator('.App')
+}
+
+/** Find a drive view. */
+function locateDriveView(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('drive-view')
+}
 
 test('page switcher', ({ page }) =>
   mockAllAndLogin({ page })

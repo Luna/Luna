@@ -1,8 +1,20 @@
 /** @file Actions for the "home" page. */
-import { locateSamples } from '.'
+import type { Page } from '@playwright/test'
 import BaseActions from './BaseActions'
 import DrivePageActions from './DrivePageActions'
 import EditorPageActions from './EditorPageActions'
+
+/** Find a samples list. */
+function locateSamplesList(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('samples')
+}
+
+/** Find all samples list. */
+function locateSamples(page: Page) {
+  // This has no identifying features.
+  return locateSamplesList(page).getByRole('button')
+}
 
 /** Actions for the "start" modal. */
 export default class StartModalActions<Context> extends BaseActions<Context> {

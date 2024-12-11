@@ -1,11 +1,30 @@
 /** @file Tests for the asset panel. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import { EmailAddress, UserId } from '#/services/Backend'
 
 import { PermissionAction } from '#/utilities/permissions'
 
-import { locateAssetPanelDescription, mockAllAndLogin } from './actions'
+import { mockAllAndLogin } from './actions'
+
+/** Find an asset panel. */
+function locateAssetPanel(page: Page) {
+  // This has no identifying features.
+  return page.getByTestId('asset-panel').locator('visible=true')
+}
+
+/** Find an asset description in an asset panel. */
+function locateAssetPanelDescription(page: Page) {
+  // This has no identifying features.
+  return locateAssetPanel(page).getByTestId('asset-panel-description')
+}
+
+/** Find asset permissions in an asset panel. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function locateAssetPanelPermissions(page: Page) {
+  // This has no identifying features.
+  return locateAssetPanel(page).getByTestId('asset-panel-permissions').getByRole('button')
+}
 
 /** An example description for the asset selected in the asset panel. */
 const DESCRIPTION = 'foo bar'
@@ -55,8 +74,8 @@ test('asset panel contents', ({ page }) =>
       // await test.expect(actions.locateAssetPanelPermissions(page).getByText(USERNAME)).toBeVisible()
     }))
 
-test('Asset Panel Documentation view', ({ page }) => {
-  return mockAllAndLogin({
+test('Asset Panel Documentation view', ({ page }) =>
+  mockAllAndLogin({
     page,
     setupAPI: (api) => {
       api.addProject('project', { description: DESCRIPTION })
@@ -68,5 +87,4 @@ test('Asset Panel Documentation view', ({ page }) => {
       await expect(assetPanel.getByTestId('asset-panel-tab-panel-docs')).toBeVisible()
       await expect(assetPanel.getByTestId('asset-docs-content')).toBeVisible()
       await expect(assetPanel.getByTestId('asset-docs-content')).toHaveText(/Project Goal/)
-    })
-})
+    }))

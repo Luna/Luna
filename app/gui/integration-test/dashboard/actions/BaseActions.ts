@@ -3,7 +3,14 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import type { AutocompleteKeybind } from '#/utilities/inputBindings'
 
-import { modModifier } from '.'
+/** `Meta` (`Cmd`) on macOS, and `Control` on all other platforms. */
+async function modModifier(page: Page) {
+  let userAgent = ''
+  await test.step('Detect browser OS', async () => {
+    userAgent = await page.evaluate(() => navigator.userAgent)
+  })
+  return /\bMac OS\b/i.test(userAgent) ? 'Meta' : 'Control'
+}
 
 /** A callback that performs actions on a {@link Page}. */
 export interface PageCallback<Context> {
@@ -105,7 +112,7 @@ export default class BaseActions<Context> implements Promise<void> {
   }
 
   /**
-   * Perform an action on the current page. This should generally be avoided in favor of using
+   * Perform an action. This should generally be avoided in favor of using
    * specific methods; this is more or less an escape hatch used ONLY when the methods do not
    * support desired functionality.
    */
@@ -118,7 +125,7 @@ export default class BaseActions<Context> implements Promise<void> {
     )
   }
 
-  /** Perform an action on the current page. */
+  /** Perform an action. */
   step(name: string, callback: PageCallback<Context>) {
     return this.do(() => test.step(name, () => callback(this.page, this.context)))
   }

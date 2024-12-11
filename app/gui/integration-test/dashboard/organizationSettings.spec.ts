@@ -13,7 +13,7 @@ const PROFILE_PICTURE_FILENAME = 'bar.jpeg'
 const PROFILE_PICTURE_CONTENT = 'organization profile picture'
 const PROFILE_PICTURE_MIMETYPE = 'image/jpeg'
 
-test('organization settings', async ({ page }) =>
+test('organization settings', ({ page }) =>
   mockAllAndLogin({
     page,
     setupAPI: (api) => {
