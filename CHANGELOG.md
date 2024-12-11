@@ -1,3 +1,11 @@
+# Next Next Release
+
+#### Enso Language & Runtime
+
+- [Intersection types & type checks][11600]
+
+[11600]: https://github.com/enso-org/enso/pull/11600
+
 # Next Release
 
 #### Enso IDE
@@ -120,10 +128,6 @@
 #### Enso Language & Runtime
 
 - [Arguments in constructor definitions may now be on their own lines][11374]
-- [Intersection types & type checks][11600]
-
-[11374]: https://github.com/enso-org/enso/pull/11374
-[11600]: https://github.com/enso-org/enso/pull/11600
 - [The `:` type operator can now be chained][11671].
 
 [11374]: https://github.com/enso-org/enso/pull/11374
