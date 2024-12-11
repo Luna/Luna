@@ -11,8 +11,6 @@ import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'j
 import LoginPageActions from './LoginPageActions'
 import StartModalActions from './StartModalActions'
 
-export { mockApi } from './api'
-
 /** An example password that does not meet validation requirements. */
 export const INVALID_PASSWORD = 'password'
 /** An example password that meets validation requirements. */
@@ -162,9 +160,7 @@ export function mockAllAndLogin({ page, setupAPI }: MockParams) {
     .into(DrivePageActions)
 }
 
-/**
- * Mock all animations.
- */
+/** Mock all animations. */
 export async function mockAllAnimations({ page }: MockParams) {
   await test.step('Mock all animations', async () => {
     await page.addInitScript({
@@ -196,6 +192,7 @@ async function mockUnneededUrls({ page }: MockParams) {
       page.route('https://www.googletagmanager.com/gtag/js*', async (route) => {
         await route.fulfill({ contentType: 'text/javascript', body: 'export {};' })
       }),
+
       page.route('https://*.ingest.sentry.io/api/*/envelope/*', async (route) => {
         await route.fulfill()
       }),
