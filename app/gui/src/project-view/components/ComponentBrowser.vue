@@ -73,7 +73,6 @@ const cbRoot = ref<HTMLElement>()
 const componentList = ref<ComponentInstance<typeof ComponentList>>()
 
 const clickOutsideAssociatedElements = (e: PointerEvent) => {
-  console.log(props.associatedElements)
   return props.associatedElements.length === 0 ?
       false
     : props.associatedElements.every((element) => targetIsOutside(e, element))
