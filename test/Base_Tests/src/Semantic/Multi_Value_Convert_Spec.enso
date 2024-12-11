@@ -51,6 +51,12 @@ add_specs suite_builder =
             Test.expect_panic No_Such_Method <| (uv:V).u
             Test.expect_panic No_Such_Method <| (uv:U).v
 
+        group_builder.specify "fails conversion to U&V from A and C as B is missing" <|
+            ac = 3.14 : A&C
+            Test.expect_panic Type_Error <| ac:U&V
+            Test.expect_panic Type_Error <| ac:U
+            ac:V . v . should_equal 3.14
+
 main filter=Nothing =
     suite = Test.build suite_builder->
         add_specs suite_builder
