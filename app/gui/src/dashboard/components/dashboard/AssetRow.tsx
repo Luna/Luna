@@ -326,11 +326,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const isDeleting =
     useBackendMutationState(backend, 'deleteAsset', {
-      predicate: ({ state: { variables } }) => variables?.[0] === asset.id,
+      predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
     }).length !== 0
   const isRestoring =
     useBackendMutationState(backend, 'undoDeleteAsset', {
-      predicate: ({ state: { variables } }) => variables?.[0] === asset.id,
+      predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
     }).length !== 0
 
   const isCloud = isCloudCategory(category)

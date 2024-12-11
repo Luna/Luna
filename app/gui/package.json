@@ -30,8 +30,6 @@
     "test-dev:unit": "vitest",
     "test-dev:integration": "cross-env NODE_ENV=production playwright test --ui",
     "test-dev-dashboard:integration": "cross-env NODE_ENV=production playwright test ./integration-test/dashboard/ --ui",
-    "preinstall": "corepack pnpm run generate-metadata",
-    "generate-metadata": "node scripts/generateIconMetadata.js",
     "storybook:react": "cross-env FRAMEWORK=react storybook dev",
     "storybook:vue": "cross-env FRAMEWORK=vue storybook dev",
     "build-storybook:react": "cross-env FRAMEWORK=react storybook build",
