@@ -53,7 +53,7 @@ public class AddGroupNumber {
 
   public static Storage<?> numberGroupsEqualCount(
       long numRows,
-      int bucketCount,
+      int groupCount,
       long start,
       long step,
       Column[] orderingColumns,
@@ -61,7 +61,7 @@ public class AddGroupNumber {
       ProblemAggregator problemAggregator) {
     long[] numbers = new long[(int) numRows];
 
-    var equalCountGenerator = new EqualCountGenerator(start, step, numRows, bucketCount);
+    var equalCountGenerator = new EqualCountGenerator(start, step, numRows, groupCount);
 
     if (orderingColumns.length == 0) {
       for (int i = 0; i < numRows; ++i) {
@@ -105,16 +105,16 @@ public class AddGroupNumber {
     private final long start;
     private final long step;
     private long current = 0;
-    private final long bucketSize;
+    private final long groupSize;
 
-    public EqualCountGenerator(long start, long step, long totalCount, long numBuckets) {
+    public EqualCountGenerator(long start, long step, long totalCount, long numgroups) {
       this.start = start;
       this.step = step;
-      bucketSize = (long) Math.ceil((double) totalCount / (double) numBuckets);
+      groupSize = (long) Math.ceil((double) totalCount / (double) numgroups);
     }
 
     public long next() {
-      long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / bucketSize)));
+      long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / groupSize)));
       current = Math.addExact(current, 1L);
       return toReturn;
     }

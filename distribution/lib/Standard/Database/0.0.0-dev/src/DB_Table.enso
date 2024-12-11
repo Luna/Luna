@@ -938,22 +938,13 @@ type DB_Table
        - name: The name of the new column. Defaults to "Group".
        - from: The starting value for the enumeration. Defaults to 0.
        - step: The amount to increment the enumeration by. Defaults to 1.
-       - group_by: Specifies the columns to group by, for grouping methods that
-         use specific columns.
-       - order_by: Specifies the columns to order by, for grouping methods that
-         are affected by ordering. Defaults to the order of the rows in the
-         table.
 
        ? Grouping Methods
 
          The following grouping methods are supported:
-         - `Unique`: groups rows by the values in the columns specified in
-           `group_by`. `order_by` is not allowed to be specified.
-         - Equal_Count: groups rows into the specified number of buckets, with
-           each bucket containing the same number of rows, except possibly the
-           last one. If `order_by` is specified, then the rows are allocated to
-           successive groups in the specified order. `group_by` is not allowed
-           to be specified.
+         - `Unique`: Group rows by the specified columns.
+         - Equal_Count: Create the specified number of groups with the same
+           number of rows in each group (except possibly the last one).
 
        ? Ordering of rows
 
@@ -964,8 +955,6 @@ type DB_Table
 
        ! Error Conditions
 
-         - If the `group_by` and `order_by` arguments are not appropriate for
-           the grouping method, an `Illegal_Argument` error is raised.
          - If the columns specified in `group_by` or `order_by` are not present
            in the table, a `Missing_Input_Columns` error is raised.
          - If the column with the same name as provided `name` already exists,
@@ -987,7 +976,7 @@ type DB_Table
                 1 | 0 | 1
                 1 | 2 | 1
             table = table_builder [['x', [1, 0, 1, 0, 1, 1]], ['y', [0, 1, 2, 1, 0, 2]], ['z' [2, 0, 0, 1, 1, 1]]]
-            table2 = table.add_group_number ..Unique "g" group_by=['x', 'y']
+            table2 = table.add_group_number (..Unique group_by=['x', 'y']) "g"
             table2.at 'g' . to_vector
             # => [0, 1, 2, 1, 0, 2]
             ## table2:
@@ -1026,8 +1015,8 @@ type DB_Table
     @from (Widget.Numeric_Input display=..Always)
     @group_by (Widget_Helpers.make_column_name_multi_selector display=..When_Modified)
     @order_by (Widget_Helpers.make_order_by_selector display=..When_Modified)
-    add_group_number self (grouping_method:Grouping_Method=..Unique) (name:Text="Group") (from:Integer=0) (step:Integer=1) (group_by:(Vector | Text | Integer | Regex)=[]) (order_by:(Vector | Text)=[]) (on_problems:Problem_Behavior=..Report_Warning) -> Table =
-        _ = [grouping_method, name, from, step, group_by, order_by, on_problems]
+    add_group_number self (grouping_method:Grouping_Method=..Unique) (name:Text="Group") (from:Integer=0) (step:Integer=1) (on_problems:Problem_Behavior=..Report_Warning) -> Table =
+        _ = [grouping_method, name, from, step, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "add_group_number")
 
 
