@@ -153,11 +153,11 @@ export function mockAllAndLogin({ page, setupAPI }: MockParams) {
       const context = actions.context
       await new StartModalActions(page, context).close()
     })
-    .into(DrivePageActions)
+    .into(DrivePageActions<Context>)
 }
 
 /** Mock all animations. */
-export async function mockAllAnimations({ page }: MockParams) {
+async function mockAllAnimations({ page }: MockParams) {
   await test.step('Mock all animations', async () => {
     await page.addInitScript({
       content: `

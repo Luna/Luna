@@ -121,6 +121,7 @@ export default class BaseActions<Context> implements Promise<void> {
     // same parameters as `BaseActions`.
     return new this.constructor(
       this.page,
+      this.context,
       this.then(() => callback(this.page, this.context)),
     )
   }
