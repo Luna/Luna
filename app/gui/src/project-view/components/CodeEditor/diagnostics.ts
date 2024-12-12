@@ -27,10 +27,7 @@ export function useEnsoDiagnostics(
 ): Extension {
   function spanOfExternalId(externalId: ExternalId): SourceRange | undefined {
     const astId = graphStore.db.idFromExternal(externalId)
-    if (!astId) return
-    const span = graphStore.moduleSource.getSpan(astId)
-    if (!span) return
-    return span
+    return astId && graphStore.moduleSource.getSpan(astId)
   }
   const expressionUpdatesDiagnostics = computed(() => {
     const updates = projectStore.computedValueRegistry.db
