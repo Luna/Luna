@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -24,9 +23,12 @@ import java.util.Objects;
 import org.enso.interpreter.Constants;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.ConstantNode;
+import org.enso.interpreter.node.callable.InvokeCallableNode.ArgumentsExecutionMode;
+import org.enso.interpreter.node.callable.InvokeCallableNode.DefaultsExecutionMode;
+import org.enso.interpreter.node.callable.dispatch.InvokeFunctionNode;
 import org.enso.interpreter.runtime.EnsoContext;
-import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.argument.ArgumentDefinition;
+import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.callable.function.Function;
 import org.enso.interpreter.runtime.callable.function.FunctionSchema;
 import org.enso.interpreter.runtime.data.atom.AtomConstructor;
@@ -385,20 +387,17 @@ public final class Type extends EnsoObject {
   @ExportMessage
   static final class InvokeMember {
     @Specialization(
-        guards = {"cachedMember.equals(member)"},
+        guards = {"cachedMember.equals(member)", "func != null"},
         limit = "3")
     static Object doCached(
         Type receiver,
         String member,
         Object[] args,
         @Cached("member") String cachedMember,
-        @Cached("buildSymbol(cachedMember)") UnresolvedSymbol cachedSymbol,
-        @CachedLibrary("cachedSymbol") InteropLibrary interop)
+        @Cached("findMethod(receiver, member)") Function func,
+        @Cached("buildInvokeFuncNode(func)") InvokeFunctionNode invokeFuncNode)
         throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
-      var argsForBuiltin = new Object[args.length + 1];
-      argsForBuiltin[0] = receiver;
-      java.lang.System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
-      return interop.execute(cachedSymbol, argsForBuiltin);
+      return invokeFuncNode.execute(func, null, null, args);
     }
 
     @Specialization(replaces = "doCached")
@@ -407,20 +406,33 @@ public final class Type extends EnsoObject {
         String member,
         Object[] args,
         @CachedLibrary(limit = "3") InteropLibrary interop)
-        throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
-      var ctx = EnsoContext.get(interop);
-      var symbol = buildSymbol(member, ctx);
-      return doCached(receiver, member, args, member, symbol, interop);
+        throws UnsupportedMessageException,
+            UnsupportedTypeException,
+            ArityException,
+            UnknownIdentifierException {
+      var method = findMethod(receiver, member);
+      if (method == null) {
+        throw UnknownIdentifierException.create(member);
+      }
+      var invokeFuncNode = buildInvokeFuncNode(method);
+      return invokeFuncNode.execute(method, null, null, args);
     }
 
-    private static UnresolvedSymbol buildSymbol(String symbol, EnsoContext ctx) {
-      return UnresolvedSymbol.build(symbol, ctx.getBuiltins().getScope());
+    static Function findMethod(Type receiver, String name) {
+      return receiver.methods().get(name);
     }
 
-    @NeverDefault
-    static UnresolvedSymbol buildSymbol(String symbol) {
-      var ctx = EnsoContext.get(null);
-      return buildSymbol(symbol, ctx);
+    static InvokeFunctionNode buildInvokeFuncNode(Function func) {
+      assert func != null;
+      var argumentInfos = func.getSchema().getArgumentInfos();
+      var callArgInfos = new CallArgumentInfo[argumentInfos.length];
+      for (var i = 0; i < argumentInfos.length; i++) {
+        var argInfo = argumentInfos[i];
+        var callArgInfo = new CallArgumentInfo(argInfo.getName());
+        callArgInfos[i] = callArgInfo;
+      }
+      return InvokeFunctionNode.build(
+          callArgInfos, DefaultsExecutionMode.EXECUTE, ArgumentsExecutionMode.EXECUTE);
     }
   }
 
@@ -513,10 +525,4 @@ public final class Type extends EnsoObject {
     }
     return func.getName();
   }
-
-  /**
-   * @param simpleName Non-qualified name of the method.
-   * @param function The method.
-   */
-  private record MethodWithName(String simpleName, Function function) {}
 }
