@@ -43,10 +43,19 @@ public class InvokeBuiltinMethodViaInteropTest {
           var interop = InteropLibrary.getUncached();
           var refUnwrapped = ContextUtils.unwrapValue(ctx, ref);
           assertThat(
-              "Ref should have a 'get' method",
-              interop.isMemberInvocable(refUnwrapped, "get"),
+              "Ref builtin object should not have any members",
+              interop.hasMembers(refUnwrapped),
+              is(false));
+          assertThat(
+              "Ref should have a meta-object (Ref type)",
+              interop.hasMetaObject(refUnwrapped),
               is(true));
-          var res = interop.invokeMember(refUnwrapped, "get");
+          var refMeta = interop.getMetaObject(refUnwrapped);
+          assertThat(
+              "Ref meta-object should have a 'get' method",
+              interop.isMemberInvocable(refMeta, "get"),
+              is(true));
+          var res = interop.invokeMember(refMeta, "get", new Object[] {refMeta, refUnwrapped});
           assertThat("Ref.get should return a number", interop.isNumber(res), is(true));
           assertThat("Ref.get should return 42", interop.asInt(res), is(42));
           return null;
@@ -65,9 +74,10 @@ public class InvokeBuiltinMethodViaInteropTest {
         () -> {
           var interop = InteropLibrary.getUncached();
           var textUnwrapped = ContextUtils.unwrapValue(ctx, text);
+          var textMeta = interop.getMetaObject(textUnwrapped);
           assertThat(
-              "Text should not be able to resolve 'reverse' method",
-              interop.isMemberInvocable(textUnwrapped, "reverse"),
+              "Text type should not be able to resolve 'reverse' method",
+              interop.isMemberInvocable(textMeta, "reverse"),
               is(false));
           return null;
         });
@@ -83,11 +93,12 @@ public class InvokeBuiltinMethodViaInteropTest {
           var interop = InteropLibrary.getUncached();
           var text1Unwrapped = ContextUtils.unwrapValue(ctx, text1);
           var text2Unwrapped = ContextUtils.unwrapValue(ctx, text2);
+          var textMeta = interop.getMetaObject(text1Unwrapped);
           assertThat(
-              "Text should have a '+' method",
-              interop.isMemberInvocable(text1Unwrapped, "+"),
+              "Text type should have a '+' method",
+              interop.isMemberInvocable(textMeta, "+"),
               is(true));
-          var res = interop.invokeMember(text1Unwrapped, "+", text2Unwrapped);
+          var res = interop.invokeMember(textMeta, "+", text1Unwrapped, text2Unwrapped);
           assertThat("Text.+ should return a text", interop.isString(res), is(true));
           assertThat(
               "Text.+ should return 'FirstSecond'", interop.asString(res), is("FirstSecond"));
