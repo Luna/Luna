@@ -124,9 +124,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the assets search bar. */
-  withSearchBar(callback: LocatorCallback) {
-    return this.step('Interact with search bar', (page) =>
-      callback(page.getByTestId('asset-search-bar').getByPlaceholder(/(?:)/)),
+  withSearchBar(callback: LocatorCallback<Context>) {
+    return this.step('Interact with search bar', (page, context) =>
+      callback(page.getByTestId('asset-search-bar').getByPlaceholder(/(?:)/), context),
     )
   }
 
@@ -152,9 +152,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
         )
       },
       /** Interact with the column heading for the "name" column. */
-      withNameColumnHeading(callback: LocatorCallback) {
-        return self.step('Interact with "name" column heading', (page) =>
-          callback(locateNameColumnHeading(page)),
+      withNameColumnHeading(callback: LocatorCallback<Context>) {
+        return self.step('Interact with "name" column heading', (page, context) =>
+          callback(locateNameColumnHeading(page), context),
         )
       },
       /** Click the column heading for the "modified" column to change its sort order. */
@@ -164,9 +164,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
         )
       },
       /** Interact with the column heading for the "modified" column. */
-      withModifiedColumnHeading(callback: LocatorCallback) {
-        return self.step('Interact with "modified" column heading', (page) =>
-          callback(locateModifiedColumnHeading(page)),
+      withModifiedColumnHeading(callback: LocatorCallback<Context>) {
+        return self.step('Interact with "modified" column heading', (page, context) =>
+          callback(locateModifiedColumnHeading(page), context),
         )
       },
       /** Click to select a specific row. */
@@ -319,8 +319,10 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the drive view (the main container of this page). */
-  withDriveView(callback: LocatorCallback) {
-    return this.step('Interact with drive view', (page) => callback(locateDriveView(page)))
+  withDriveView(callback: LocatorCallback<Context>) {
+    return this.step('Interact with drive view', (page, context) =>
+      callback(locateDriveView(page), context),
+    )
   }
 
   /** Create a new folder using the icon in the Drive Bar. */
@@ -432,9 +434,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the Asset Panel. */
-  withAssetPanel(callback: LocatorCallback) {
-    return this.step('Interact with asset panel', async (page) => {
-      await callback(locateAssetPanel(page))
+  withAssetPanel(callback: LocatorCallback<Context>) {
+    return this.step('Interact with asset panel', async (page, context) => {
+      await callback(locateAssetPanel(page), context)
     })
   }
 
@@ -446,9 +448,9 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   }
 
   /** Interact with the context menus (the context menus MUST be visible). */
-  withContextMenus(callback: LocatorCallback) {
-    return this.step('Interact with context menus', async (page) => {
-      await callback(locateContextMenu(page))
+  withContextMenus(callback: LocatorCallback<Context>) {
+    return this.step('Interact with context menus', async (page, context) => {
+      await callback(locateContextMenu(page), context)
     })
   }
 }

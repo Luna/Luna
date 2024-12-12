@@ -45,10 +45,15 @@ test('organization settings', ({ page }) =>
     })
     .cancel()
     .organizationForm()
+    .withName(async (nameEl) => {
+      await expect(nameEl).toHaveText(NEW_NAME)
+    })
+    .cancel()
+    .organizationForm()
     .fillEmail(INVALID_EMAIL)
     .save()
     .step('Setting invalid email should fail', (_, { api }) => {
-      expect(api.currentOrganization()?.email).toBe('')
+      expect(api.currentOrganization()?.email).toBe(null)
     })
     .organizationForm()
     .fillEmail(NEW_EMAIL)

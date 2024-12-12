@@ -68,7 +68,7 @@ test('asset panel contents', ({ page }) =>
     .driveTable.clickRow(0)
     .toggleDescriptionAssetPanel()
     .do(async () => {
-      await test.expect(locateAssetPanelDescription(page)).toHaveText(DESCRIPTION)
+      await expect(locateAssetPanelDescription(page)).toHaveText(DESCRIPTION)
       // `getByText` is required so that this assertion works if there are multiple permissions.
       // This is not visible; "Shared with" should only be visible on the Enterprise plan.
       // await expect(locateAssetPanelPermissions(page).getByText(USERNAME)).toBeVisible()

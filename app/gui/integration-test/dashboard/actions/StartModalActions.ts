@@ -53,9 +53,9 @@ export default class StartModalActions<Context> extends BaseActions<Context> {
   }
 
   /** Interact with the "start" modal. */
-  withStartModal(callback: LocatorCallback) {
-    return this.step('Interact with start modal', async (page) => {
-      await callback(this.locateStartModal(page))
+  withStartModal(callback: LocatorCallback<Context>) {
+    return this.step('Interact with start modal', async (page, context) => {
+      await callback(this.locateStartModal(page), context)
     })
   }
 }

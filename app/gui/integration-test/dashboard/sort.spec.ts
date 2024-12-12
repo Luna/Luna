@@ -131,7 +131,7 @@ test('sort', ({ page }) =>
     })
     .driveTable.withNameColumnHeading(async (nameHeading) => {
       await expectOpacity0(locateSortAscendingIcon(nameHeading))
-      await test.expect(locateSortDescendingIcon(nameHeading)).not.toBeVisible()
+      await expect(locateSortDescendingIcon(nameHeading)).not.toBeVisible()
     })
     .driveTable.withRows(async (rows) => {
       await expect(rows).toHaveText([

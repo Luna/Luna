@@ -61,14 +61,14 @@ async function login({ page }: MockParams, email = 'email@example.com', password
 async function waitForLoaded(page: Page) {
   await page.waitForLoadState()
 
-  await test.expect(page.getByTestId('spinner')).toHaveCount(0)
-  await test.expect(page.getByTestId('loading-app-message')).not.toBeVisible({ timeout: 30_000 })
+  await expect(page.getByTestId('spinner')).toHaveCount(0)
+  await expect(page.getByTestId('loading-app-message')).not.toBeVisible({ timeout: 30_000 })
 }
 
 /** Wait for the dashboard to load. */
 async function waitForDashboardToLoad(page: Page) {
   await waitForLoaded(page)
-  await test.expect(page.getByTestId('after-auth-layout')).toBeAttached()
+  await expect(page.getByTestId('after-auth-layout')).toBeAttached()
 }
 
 /** A placeholder date for visual regression testing. */

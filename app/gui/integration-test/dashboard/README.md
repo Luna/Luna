@@ -3,51 +3,38 @@
 ## Running tests
 
 Execute all commands from the parent directory.
+Note that all options can be used in any combination.
 
 ```sh
 # Run tests normally
-pnpm run test:integration
+pnpm playwright test
 # Open UI to run tests
-pnpm run test:integration:debug
+pnpm playwright test --ui
 # Run tests in a specific file only
-pnpm run test:integration -- integration-test/file-name-here.spec.ts
-pnpm run test:integration:debug -- integration-test/file-name-here.spec.ts
+pnpm playwright test integration-test/dashboard/file-name-here.spec.ts
 # Compile the entire app before running the tests.
 # DOES NOT hot reload the tests.
 # Prefer not using this when you are trying to fix a test;
 # prefer using this when you just want to know which tests are failing (if any).
-PROD=1 pnpm run test:integration
-PROD=1 pnpm run test:integration:debug
-PROD=1 pnpm run test:integration -- integration-test/file-name-here.spec.ts
-PROD=1 pnpm run test:integration:debug -- integration-test/file-name-here.spec.ts
+PROD=true pnpm playwright test
 ```
 
 ## Getting started
 
 ```ts
-test.test('test name here', ({ page }) =>
-  actions.mockAllAndLogin({ page }).then(
-    // ONLY chain methods from `pageActions`.
-    // Using methods not in `pageActions` is UNDEFINED BEHAVIOR.
-    // If it is absolutely necessary though, please remember to `await` the method chain.
-    // Note that the `async`/`await` pair is REQUIRED, as `Actions` subclasses are `PromiseLike`s,
-    // not `Promise`s, which causes Playwright to output a type error.
-    async ({ pageActions }) => await pageActions.goTo.drive(),
-  ),
-)
+// ONLY chain methods from `pageActions`.
+// Using methods not in `pageActions` is UNDEFINED BEHAVIOR.
+// If it is absolutely necessary though, please remember to `await` the method chain.
+test('test name here', ({ page }) => mockAllAndLogin({ page }).goToPage.drive())
 ```
 
 ### Perform arbitrary actions (e.g. actions on the API)
 
 ```ts
-test.test('test name here', ({ page }) =>
-  actions.mockAllAndLogin({ page }).then(
-    async ({ pageActions, api }) =>
-      await pageActions.do(() => {
-        api.foo()
-        api.bar()
-        test.expect(api.baz()?.quux).toEqual('bar')
-      }),
-  ),
-)
+test('test name here', ({ page }) =>
+  mockAllAndLogin({ page }).do((_page, { api }) => {
+    api.foo()
+    api.bar()
+    expect(api.baz()?.quux).toEqual('bar')
+  }))
 ```

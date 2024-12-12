@@ -18,8 +18,8 @@ export interface PageCallback<Context> {
 }
 
 /** A callback that performs actions on a {@link Locator}. */
-export interface LocatorCallback {
-  (input: Locator): Promise<void> | void
+export interface LocatorCallback<Context> {
+  (input: Locator, context: Context): Promise<void> | void
 }
 
 export interface BaseActionsClass<Context, Args extends readonly unknown[] = []> {

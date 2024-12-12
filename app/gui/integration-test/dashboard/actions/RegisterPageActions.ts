@@ -68,9 +68,9 @@ export default class RegisterPageActions<Context> extends BaseActions<Context> {
   }
 
   /** Interact with the email input. */
-  withEmailInput(callback: LocatorCallback) {
-    return this.step('Interact with email input', async (page) => {
-      await callback(page.getByPlaceholder(TEXT.emailPlaceholder))
+  withEmailInput(callback: LocatorCallback<Context>) {
+    return this.step('Interact with email input', async (page, context) => {
+      await callback(page.getByPlaceholder(TEXT.emailPlaceholder), context)
     })
   }
 
