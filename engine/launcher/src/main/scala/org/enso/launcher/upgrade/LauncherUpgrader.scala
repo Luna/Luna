@@ -217,28 +217,47 @@ class LauncherUpgrader(
 
   @scala.annotation.tailrec
   private def nextVersionToUpgradeTo(
-    release: LauncherRelease,
+    currentTargetRelease: LauncherRelease,
     availableVersions: Seq[SemVer]
   ): LauncherRelease = {
-    val recentEnoughVersions =
-      availableVersions.filter(
-        _.isGreaterThanOrEqual(release.minimumVersionToPerformUpgrade)
+    assert(
+      currentTargetRelease.minimumVersionToPerformUpgrade.isGreaterThan(
+        CurrentVersion.version
       )
+    )
+
+    // We look at older versions that are satisfying the minimum version
+    // required to upgrade to currentTargetRelease.
+    val recentEnoughVersions =
+      availableVersions.filter(possibleVersion =>
+        possibleVersion.isGreaterThanOrEqual(
+          currentTargetRelease.minimumVersionToPerformUpgrade
+        ) && possibleVersion.isLessThan(currentTargetRelease.version)
+      )
+
+    // We take the oldest of these, hoping that it will yield the shortest
+    // upgrade path (perhaps it will be possible to upgrade directly from
+    // current version)
     val minimumValidVersion = recentEnoughVersions.sorted.headOption.getOrElse {
       throw UpgradeError(
         s"Upgrade failed: To continue upgrade, a version at least " +
-        s"${release.minimumVersionToPerformUpgrade} is required, but no " +
-        s"valid version satisfying this requirement could be found."
+        s"${currentTargetRelease.minimumVersionToPerformUpgrade} is required, " +
+        s"but no upgrade path has been found from the current version " +
+        s"${CurrentVersion.version}."
       )
     }
-    val nextRelease = releaseProvider.fetchRelease(minimumValidVersion).get
+
+    val newTargetRelease = releaseProvider.fetchRelease(minimumValidVersion).get
     logger.debug(
-      s"To upgrade to ${release.version}, " +
-      s"the launcher will have to upgrade to ${nextRelease.version} first."
+      s"To upgrade to ${currentTargetRelease.version}, " +
+      s"the launcher will have to upgrade to ${newTargetRelease.version} first."
     )
-    if (nextRelease.canPerformUpgradeFromCurrentVersion)
-      nextRelease
-    else nextVersionToUpgradeTo(nextRelease, availableVersions)
+
+    // If the current version cannot upgrade directly to the new target version,
+    // we continue the search looking for an even earlier version that we could
+    // upgrade to.
+    if (newTargetRelease.canPerformUpgradeFromCurrentVersion) newTargetRelease
+    else nextVersionToUpgradeTo(newTargetRelease, availableVersions)
   }
 
   /** Extracts just the launcher executable from the archive.

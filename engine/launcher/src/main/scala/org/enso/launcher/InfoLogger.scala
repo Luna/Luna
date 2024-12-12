@@ -9,6 +9,7 @@ import org.enso.cli.CLIOutput
   * logging settings.
   */
 object InfoLogger {
+
   /** Prints an info level message.
     *
     * Currently, the message is always printed to standard output. But this may be changed by changing this method.

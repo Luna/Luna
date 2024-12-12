@@ -393,8 +393,12 @@ class UpgradeSpec
       )
 
       val result = run(Seq("upgrade", "1.0.4"))
-      result.exitCode shouldEqual 1
-      result.stdout should include("No upgrade path exists")
+      withClue(result) {
+        result.exitCode shouldEqual 1
+        result.stdout should include(
+          "no upgrade path has been found from the current version 0.0.0."
+        )
+      }
     }
 
     "should allow to upgrade the development version ignoring the version check, but warn about it" taggedAs Flaky in {
