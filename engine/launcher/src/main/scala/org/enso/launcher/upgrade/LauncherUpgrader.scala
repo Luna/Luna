@@ -1,6 +1,6 @@
 package org.enso.launcher.upgrade
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{AccessDeniedException, Files, Path}
 import com.typesafe.scalalogging.Logger
 import org.enso.semver.SemVer
 import org.enso.semver.SemVerOrdering._
@@ -29,6 +29,7 @@ import org.enso.launcher.distribution.DefaultManagers
 import org.enso.runtimeversionmanager.locking.Resources
 import org.slf4j.LoggerFactory
 
+import scala.annotation.tailrec
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -152,16 +153,31 @@ class LauncherUpgrader(
     val temporaryFiles =
       FileSystem.listDirectory(binRoot).filter(isTemporaryExecutable)
     if (temporaryFiles.nonEmpty && isStartup) {
-      logger.debug("Cleaning temporary files from a previous upgrade.")
+      logger.debug(
+        s"Cleaning ${temporaryFiles.size} temporary files from a previous upgrade."
+      )
     }
     for (file <- temporaryFiles) {
       try {
-        Files.delete(file)
+        tryHardToDelete(file)
         logger.debug(s"Upgrade cleanup: removed `$file`.")
       } catch {
         case NonFatal(e) =>
           logger.debug(s"Cannot remove temporary file $file: $e", e)
       }
+    }
+  }
+
+  /** On Windows, deleting an executable immediately after it has exited may fail and the process may need to wait a few millisecond. This method detects this kind of failure and retries a few times. */
+  @tailrec
+  private def tryHardToDelete(file: Path, attempts: Int = 10): Unit = {
+    try {
+      Files.delete(file)
+    } catch {
+      case e: AccessDeniedException if attempts > 0 =>
+        logger.debug(s"Failed to delete file `$file` due to $e. Retrying.")
+        Thread.sleep(100)
+        tryHardToDelete(file, attempts - 1)
     }
   }
 
