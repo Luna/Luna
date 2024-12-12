@@ -29,7 +29,6 @@ import org.enso.launcher.distribution.DefaultManagers
 import org.enso.runtimeversionmanager.locking.Resources
 import org.slf4j.LoggerFactory
 
-import scala.annotation.tailrec
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -168,14 +167,16 @@ class LauncherUpgrader(
     }
   }
 
-  /** On Windows, deleting an executable immediately after it has exited may fail and the process may need to wait a few millisecond. This method detects this kind of failure and retries a few times. */
-  @tailrec
-  private def tryHardToDelete(file: Path, attempts: Int = 10): Unit = {
+  /** On Windows, deleting an executable immediately after it has exited may fail
+    * and the process may need to wait a few millisecond. This method detects
+    * this kind of failure and retries a few times.
+    */
+  private def tryHardToDelete(file: Path, attempts: Int = 30): Unit = {
     try {
       Files.delete(file)
     } catch {
-      case e: AccessDeniedException if attempts > 0 =>
-        logger.debug(s"Failed to delete file `$file` due to $e. Retrying.")
+      case _: AccessDeniedException if attempts > 0 =>
+        logger.trace(s"Failed to delete file `$file`. Retrying.")
         Thread.sleep(100)
         tryHardToDelete(file, attempts - 1)
     }
@@ -291,7 +292,9 @@ class LauncherUpgrader(
         s"Upgrade failed: To continue upgrade, at least version " +
         s"${currentTargetRelease.minimumVersionToPerformUpgrade} is required, " +
         s"but no upgrade path has been found from the current version " +
-        s"${CurrentVersion.version}."
+        s"${CurrentVersion.version}. " +
+        s"Please manually download a newer release from " +
+        s"${LauncherRepository.websiteUrl}"
       )
     }
 
