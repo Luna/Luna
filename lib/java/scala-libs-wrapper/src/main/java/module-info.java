@@ -1,7 +1,7 @@
 module org.enso.scala.wrapper {
   requires scala.library;
   requires scala.reflect;
-  //requires org.jline;
+  requires org.jline;
   requires org.slf4j;
 
   exports org.enso.scala.wrapper;
