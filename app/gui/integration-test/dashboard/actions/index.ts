@@ -225,8 +225,11 @@ async function mockUnneededUrls({ page }: MockParams) {
 
       page.route('https://github.com/enso-org/enso/releases/download/**', async (route) => {
         await route.fulfill({
-          status: 302,
-          headers: { location: 'https://objects.githubusercontent.com/foo/bar' },
+          status: 200,
+          headers: {
+            'content-type': 'text/html',
+          },
+          body: '<meta http-equiv="Refresh" content="0; URL=https://objects.githubusercontent.com/foo/bar" />',
         })
       }),
 
