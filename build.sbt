@@ -1,4 +1,3 @@
-import Dependencies.Versions
 import LibraryManifestGenerator.BundledLibrary
 import org.enso.build.BenchTasks._
 import org.enso.build.WithDebugCommand
@@ -604,18 +603,18 @@ val diffsonVersion          = "4.4.0"
 val directoryWatcherVersion = "0.18.0"
 val flatbuffersVersion      = "24.3.25"
 val guavaVersion            = "32.0.0-jre"
-val jlineVersion            = "3.23.0"
+val jlineVersion            = "3.26.3"
 val jgitVersion             = "6.7.0.202309050840-r"
-val kindProjectorVersion    = Versions.kindProjector
+val kindProjectorVersion    = "0.13.3"
 val mockitoScalaVersion     = "1.17.14"
 val newtypeVersion          = "0.4.4"
 val pprintVersion           = "0.8.1"
 val pureconfigVersion       = "0.17.4"
-val scalacheckVersion       = Versions.scalacheck
-val scalacticVersion        = Versions.scalactic
+val scalacheckVersion       = "1.18.1"
+val scalacticVersion        = "3.2.19"
 val scalaLoggingVersion     = "3.9.4"
 val scalameterVersion       = "0.19"
-val scalatestVersion        = Versions.scalatest
+val scalatestVersion        = "3.2.19"
 val slf4jVersion            = JPMSUtils.slf4jVersion
 val sqliteVersion           = "3.46.1.0"
 val tikaVersion             = "2.4.1"
