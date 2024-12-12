@@ -245,7 +245,11 @@ final class JobExecutionEngine(
       try {
         val result = job.run(runtimeContext)
         val took   = System.currentTimeMillis() - before
-        logger.log(Level.FINE, s"Job {0} finished in {1} ms.", Array[Any](job, took))
+        logger.log(
+          Level.FINE,
+          s"Job {0} finished in {1} ms.",
+          Array[Any](job, took)
+        )
         promise.success(result)
       } catch {
         case NonFatal(ex) =>
