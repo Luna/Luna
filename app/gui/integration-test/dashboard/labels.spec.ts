@@ -43,10 +43,10 @@ test('drag labels onto single row', ({ page }) =>
       api.addLabel('bbbb', COLORS[1])
       api.addLabel('cccc', COLORS[2])
       api.addLabel('dddd', COLORS[3])
-      api.addDirectory('foo')
-      api.addSecret('bar')
-      api.addFile('baz')
-      api.addSecret('quux')
+      api.addDirectory({ title: 'foo' })
+      api.addSecret({ title: 'bar' })
+      api.addFile({ title: 'baz' })
+      api.addSecret({ title: 'quux' })
     },
   }).driveTable.withRows(async (rows, _, _context, page) => {
     const labelEl = locateLabelsPanelLabels(page, LABEL)
@@ -66,10 +66,10 @@ test('drag labels onto multiple rows', ({ page }) =>
       api.addLabel('bbbb', COLORS[1])
       api.addLabel('cccc', COLORS[2])
       api.addLabel('dddd', COLORS[3])
-      api.addDirectory('foo')
-      api.addSecret('bar')
-      api.addFile('baz')
-      api.addSecret('quux')
+      api.addDirectory({ title: 'foo' })
+      api.addSecret({ title: 'bar' })
+      api.addFile({ title: 'baz' })
+      api.addSecret({ title: 'quux' })
     },
   })
     .withModPressed((self) =>

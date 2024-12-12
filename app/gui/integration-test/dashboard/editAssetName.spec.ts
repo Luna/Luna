@@ -6,10 +6,10 @@ import { TEXT, mockAllAndLogin } from './actions'
 const NEW_NAME = 'foo bar baz'
 const NEW_NAME_2 = 'foo bar baz quux'
 
-/** Find a set of context menus. */
-function locateContextMenus(page: Page) {
+/** Find the context menu. */
+function locateContextMenu(page: Page) {
   // This has no identifying features.
-  return page.getByTestId('context-menus')
+  return page.getByTestId('context-menu')
 }
 
 /** Find the name column of the given assets table row. */
@@ -46,7 +46,7 @@ test('edit name (context menu)', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       const row = rows.nth(0)
       await locateAssetRowName(row).click({ button: 'right' })
-      await locateContextMenus(page)
+      await locateContextMenu(page)
         .getByText(/Rename/)
         .click()
       const nameEl = locateAssetRowName(row)

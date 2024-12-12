@@ -3,10 +3,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { mockAllAndLogin } from './actions'
 
-/** Find a set of context menus. */
-function locateContextMenus(page: Page) {
+/** Find the context menu. */
+function locateContextMenu(page: Page) {
   // This has no identifying features.
-  return page.getByTestId('context-menus')
+  return page.getByTestId('context-menu')
 }
 
 /** Find a button for the "Trash" category. */
@@ -167,7 +167,7 @@ test('duplicate', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       // Assets: [0: New Project 1, 1: New Project 1 (copy)]
       await expect(rows).toHaveCount(2)
-      await expect(locateContextMenus(page)).not.toBeVisible()
+      await expect(locateContextMenu(page)).not.toBeVisible()
       await expect(rows.nth(1)).toBeVisible()
       await expect(rows.nth(1)).toHaveText(/^New Project 1 [(]copy[)]/)
     }))

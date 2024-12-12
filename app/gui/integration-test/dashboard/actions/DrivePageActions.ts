@@ -11,10 +11,10 @@ import StartModalActions from './StartModalActions'
 
 const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
 
-/** Find a set of context menus. */
-function locateContextMenus(page: Page) {
+/** Find the context menu. */
+function locateContextMenu(page: Page) {
   // This has no identifying features.
-  return page.getByTestId('context-menus')
+  return page.getByTestId('context-menu')
 }
 
 /** Find a drive view. */
@@ -448,7 +448,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
   /** Interact with the context menus (the context menus MUST be visible). */
   withContextMenus(callback: LocatorCallback) {
     return this.step('Interact with context menus', async (page) => {
-      await callback(locateContextMenus(page))
+      await callback(locateContextMenu(page))
     })
   }
 }
