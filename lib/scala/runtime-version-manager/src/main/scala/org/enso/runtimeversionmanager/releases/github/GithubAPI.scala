@@ -9,6 +9,7 @@ import org.enso.cli.task.TaskProgress
 import org.enso.downloader.http.{
   APIResponse,
   HTTPDownload,
+  HTTPException,
   HTTPRequestBuilder,
   Header,
   URIBuilder
@@ -18,7 +19,7 @@ import org.enso.runtimeversionmanager.releases.{
   ReleaseProviderException
 }
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /** Contains functions used to query the GitHubAPI endpoints.
   */
@@ -168,6 +169,9 @@ object GithubAPI {
           )
           .toTry
       )
+      .recoverWith { case httpException: HTTPException =>
+        Failure(ReleaseNotFound(tag, cause = httpException))
+      }
   }
 
   /** A helper function that detecte a rate-limit error and tries to make a more
