@@ -125,7 +125,7 @@ When #11828 is fixed.
 > both = v : Complex&Float
 > use_complex both (v-> v:Float . sqrt)
 > ```
-> This behavior is often described as being **openness to subclasses**. E.g. the `c:Complex` 
+> This behavior is often described as being **open to subclasses**. E.g. the `c:Complex` 
 > check allows values with _intersection types_ that include `Complex` to pass thru with
 > all their runtime information available,
 > but one has to perform an explicit cast to extract the other types associated with
