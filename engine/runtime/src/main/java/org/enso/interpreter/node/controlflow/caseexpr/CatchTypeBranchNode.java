@@ -33,7 +33,7 @@ public class CatchTypeBranchNode extends BranchNode {
   }
 
   public void execute(VirtualFrame frame, Object state, Object value) {
-    if (profile.profile(isValueOfTypeNode.execute(expectedType, value))) {
+    if (profile.profile(isValueOfTypeNode.execute(expectedType, value, true))) {
       accept(frame, state, new Object[] {value});
     }
   }

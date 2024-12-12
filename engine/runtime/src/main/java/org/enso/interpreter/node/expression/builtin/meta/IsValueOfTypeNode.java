@@ -22,46 +22,62 @@ import org.enso.interpreter.runtime.type.TypesGen;
 /** An implementation of the payload check against the expected panic type. */
 @NodeInfo(shortName = "IsValueOfTypeNode")
 public abstract class IsValueOfTypeNode extends Node {
+  IsValueOfTypeNode() {}
+
   public static IsValueOfTypeNode build() {
     return IsValueOfTypeNodeGen.create();
   }
 
-  public abstract boolean execute(Object expectedType, Object payload);
+  /**
+   * @param expectedType the type to check
+   * @param obj the object to check
+   * @param includeExtraTypes specify {@code false} to return only <em>types value has already been
+   *     case to</em>, specify {@code true} to return all <em>types value can be cast to</em>
+   */
+  public abstract boolean execute(Object expectedType, Object obj, boolean includeExtraTypes);
 
   @Specialization(guards = {"types.hasType(payload)"})
   boolean doTyped(
       Object expectedType,
       Object payload,
+      boolean allTypes,
       @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types,
       @Cached Typed typed) {
-    return typed.execute(expectedType, payload);
+    return typed.execute(expectedType, payload, allTypes);
   }
 
   @Specialization(guards = {"!types.hasType(payload)"})
   boolean doPolyglot(
       Object expectedType,
       Object payload,
+      boolean allTypes,
       @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types,
       @Cached Untyped untyped) {
-    return untyped.execute(expectedType, payload);
+    return untyped.execute(expectedType, payload, allTypes);
   }
 
   private static boolean typeAndCheck(
       Object payload,
       Object expectedType,
+      boolean allTypes,
       TypeOfNode typeOfNode,
       IsSameObjectNode isSameObject,
       CountingConditionProfile isSameObjectProfile) {
-    Object tpeOfPayload = typeOfNode.findTypeOrError(payload);
-    if (isSameObjectProfile.profile(isSameObject.execute(expectedType, tpeOfPayload))) {
-      return true;
-    } else if (TypesGen.isType(tpeOfPayload)) {
-      Type tpe = TypesGen.asType(tpeOfPayload);
-      var ctx = EnsoContext.get(typeOfNode);
-      for (var superTpe : tpe.allTypes(ctx)) {
-        boolean testSuperTpe = isSameObject.execute(expectedType, superTpe);
-        if (testSuperTpe) {
-          return true;
+    var arr = typeOfNode.findAllTypesOrNull(payload, allTypes);
+    if (arr == null) {
+      return false;
+    }
+    for (var tpeOfPayload : arr) {
+      if (isSameObjectProfile.profile(isSameObject.execute(expectedType, tpeOfPayload))) {
+        return true;
+      } else if (TypesGen.isType(tpeOfPayload)) {
+        Type tpe = TypesGen.asType(tpeOfPayload);
+        var ctx = EnsoContext.get(typeOfNode);
+        for (var superTpe : tpe.allTypes(ctx)) {
+          boolean testSuperTpe = isSameObject.execute(expectedType, superTpe);
+          if (testSuperTpe) {
+            return true;
+          }
         }
       }
     }
@@ -73,33 +89,33 @@ public abstract class IsValueOfTypeNode extends Node {
     private @Child TypeOfNode typeOfNode = TypeOfNode.create();
     private final CountingConditionProfile profile = CountingConditionProfile.create();
 
-    abstract boolean execute(Object expectedType, Object payload);
+    abstract boolean execute(Object expectedType, Object payload, boolean allTypes);
 
     @Specialization(guards = "isAnyType(expectedType)")
-    boolean doAnyType(Object expectedType, Object payload) {
+    boolean doAnyType(Object expectedType, Object payload, boolean allTypes) {
       return true;
     }
 
     @Specialization
-    boolean doLongCheck(Type expectedType, long payload) {
+    boolean doLongCheck(Type expectedType, long payload, boolean allTypes) {
       var numbers = EnsoContext.get(this).getBuiltins().number();
       return checkParentTypes(numbers.getInteger(), expectedType);
     }
 
     @Specialization
-    boolean doDoubleCheck(Type expectedType, double payload) {
+    boolean doDoubleCheck(Type expectedType, double payload, boolean allTypes) {
       var numbers = EnsoContext.get(this).getBuiltins().number();
       return checkParentTypes(numbers.getFloat(), expectedType);
     }
 
     @Specialization
-    boolean doBigIntegerCheck(Type expectedType, EnsoBigInteger value) {
+    boolean doBigIntegerCheck(Type expectedType, EnsoBigInteger value, boolean allTypes) {
       var numbers = EnsoContext.get(this).getBuiltins().number();
       return checkParentTypes(numbers.getInteger(), expectedType);
     }
 
     @Specialization
-    boolean doUnresolvedSymbol(Type expectedType, UnresolvedSymbol value) {
+    boolean doUnresolvedSymbol(Type expectedType, UnresolvedSymbol value, boolean allTypes) {
       var funTpe = EnsoContext.get(this).getBuiltins().function();
       return expectedType == funTpe;
     }
@@ -119,8 +135,9 @@ public abstract class IsValueOfTypeNode extends Node {
     boolean doType(
         Type expectedType,
         Object payload,
+        boolean allTypes,
         @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types) {
-      return typeAndCheck(payload, expectedType, typeOfNode, isSameObject, profile);
+      return typeAndCheck(payload, expectedType, allTypes, typeOfNode, isSameObject, profile);
     }
 
     @Specialization(
@@ -131,13 +148,14 @@ public abstract class IsValueOfTypeNode extends Node {
     public boolean doArrayViaType(
         Object expectedType,
         Object payload,
+        boolean allTypes,
         @CachedLibrary(limit = "3") InteropLibrary interop,
         @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types) {
       return EnsoContext.get(this).getBuiltins().array() == types.getType(payload);
     }
 
     @Fallback
-    boolean doOther(Object expectedType, Object payload) {
+    boolean doOther(Object expectedType, Object payload, boolean allTypes) {
       return false;
     }
 
@@ -155,7 +173,7 @@ public abstract class IsValueOfTypeNode extends Node {
     private @Child TypeOfNode typeOfNode = TypeOfNode.create();
     private final CountingConditionProfile profile = CountingConditionProfile.create();
 
-    abstract boolean execute(Object expectedType, Object payload);
+    abstract boolean execute(Object expectedType, Object payload, boolean allTypes);
 
     @Specialization(
         guards = {
@@ -163,7 +181,10 @@ public abstract class IsValueOfTypeNode extends Node {
           "isMetaInstance(interop, expectedType, payload)"
         })
     boolean doPolyglotType(
-        Object expectedType, Object payload, @CachedLibrary(limit = "3") InteropLibrary interop) {
+        Object expectedType,
+        Object payload,
+        boolean allTypes,
+        @CachedLibrary(limit = "3") InteropLibrary interop) {
       return true;
     }
 
@@ -176,8 +197,8 @@ public abstract class IsValueOfTypeNode extends Node {
     }
 
     @Fallback
-    public boolean doOther(Object expectedType, Object payload) {
-      return typeAndCheck(payload, expectedType, typeOfNode, isSameObject, profile);
+    public boolean doOther(Object expectedType, Object payload, boolean allTypes) {
+      return typeAndCheck(payload, expectedType, allTypes, typeOfNode, isSameObject, profile);
     }
   }
 }
