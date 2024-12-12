@@ -15,6 +15,10 @@ import * as actions from './actions'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type {
+  FeatureFlags,
+  FeatureFlagsStore,
+} from '../../src/dashboard/providers/FeatureFlagsProvider'
 import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'json' }
 
 // =================
@@ -1140,6 +1144,21 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     deleteUser,
     addUserGroup,
     deleteUserGroup,
+    setFeatureFlags: (flags: Partial<FeatureFlags>) => {
+      return page.addInitScript((flags: Partial<FeatureFlags>) => {
+        const currentOverrideFeatureFlags =
+          'overrideFeatureFlags' in window && typeof window.overrideFeatureFlags === 'object' ?
+            window.overrideFeatureFlags
+          : {}
+
+        Object.defineProperty(window, 'overrideFeatureFlags', {
+          value: { ...currentOverrideFeatureFlags, ...flags },
+          writable: false,
+        })
+
+        console.log('overrideFeatureFlags', window.overrideFeatureFlags)
+      }, flags)
+    },
     // TODO:
     // addPermission,
     // deletePermission,

@@ -1,6 +1,6 @@
 /** @file Test the drive view. */
+import * as backend from '#/services/Backend'
 import * as test from '@playwright/test'
-
 import * as actions from './actions'
 
 const PASS_TIMEOUT = 5_000
@@ -96,5 +96,60 @@ test.test('can drop onto root directory dropzone', ({ page }) =>
       const firstLeft = await actions.getAssetRowLeftPx(rows.nth(0))
       const secondLeft = await actions.getAssetRowLeftPx(rows.nth(1))
       test.expect(firstLeft, 'Siblings have same indentation').toEqual(secondLeft)
+    }),
+)
+
+test.test("can't run a project in browser by default", ({ page }) =>
+  actions
+    .mockAllAndLogin({
+      page,
+      setupAPI: async (api) => {
+        api.addProject({ title: 'a' })
+      },
+    })
+    .driveTable.withRows(async (rows) => {
+      const row = rows.first()
+
+      const startProjectButton = row.getByTestId('open-project')
+      await test.expect(startProjectButton).toBeDisabled()
+    }),
+)
+
+test.test("can't start an already running by another user", ({ page }) =>
+  actions
+    .mockAllAndLogin({
+      page,
+      setupAPI: async (api) => {
+        await api.setFeatureFlags({ enableCloudExecution: true })
+
+        const userGroup = api.addUserGroup('Test Group')
+
+        api.addUserGroupToUser(api.defaultUser.userId, userGroup.id)
+
+        const peer = api.addUser('Test User', {
+          email: backend.EmailAddress('test@test.com'),
+          userGroups: [userGroup.id],
+        })
+
+        api.addProject({
+          title: 'a',
+          projectState: {
+            type: backend.ProjectState.opened,
+            volumeId: '123',
+            openedBy: peer.email,
+          },
+        })
+      },
+    })
+    .driveTable.withRows(async (rows) => {
+      const row = rows.first()
+      const startProjectButton = row.getByTestId('open-project')
+
+      await test.expect(row).toBeVisible()
+      await test.expect(row.getByTestId('switch-to-project')).not.toBeVisible()
+      await test.expect(startProjectButton).toBeDisabled()
+      await test
+        .expect(startProjectButton)
+        .toHaveAccessibleName(actions.getText('xIsUsingTheProject', 'Test User'))
     }),
 )

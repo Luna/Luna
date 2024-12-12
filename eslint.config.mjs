@@ -157,6 +157,7 @@ const RESTRICTED_SYNTAXES = [
     message: 'Use `while (true)` instead of `for (;;)`',
   },
   {
+    id: 'no-jsx-strings',
     selector: `:matches(\
             JSXAttribute[name.name=/^(?:alt|error|label|placeholder|text|title|actionButtonLabel|actionText|aria-label)$/][value.raw=/^'|^"|^\`/], \
             JSXText[value=/\\S/], \
@@ -569,6 +570,18 @@ export default [
       '@typescript-eslint/naming-convention': 'off',
     },
   },
+  // === EnsoDevtools Rules ===
+  // Allow JSX strings in EnsoDevtools.tsx.
+  {
+    files: ['app/gui/src/dashboard/**/EnsoDevtools.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...RESTRICTED_SYNTAXES.filter(syntax => syntax.id !== 'no-jsx-strings'),
+      ],
+    },
+  },
+  // === React Compiler Rules ===
   {
     files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
     ignores: ['**/*.d.ts', '**/*.spec.ts', '**/*.stories.tsx', '**/*.test.tsx', '**/*.test.ts'],

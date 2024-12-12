@@ -1,7 +1,7 @@
 /** @file Various actions, locators, and constants used in end-to-end tests. */
 import * as test from '@playwright/test'
 
-import { TEXTS } from 'enso-common/src/text'
+import { TEXTS, getText as baseGetText, type Replacements, type TextId } from 'enso-common/src/text'
 
 import path from 'node:path'
 import * as apiModule from '../api'
@@ -20,6 +20,10 @@ export const VALID_PASSWORD = 'Password0!'
 /** An example valid email address. */
 export const VALID_EMAIL = 'email@example.com'
 export const TEXT = TEXTS.english
+
+export const getText = (key: TextId, ...replacements: Replacements[TextId]) => {
+  return baseGetText(TEXT, key, ...replacements)
+}
 
 // ================
 // === Locators ===
