@@ -1,7 +1,7 @@
 from Standard.Base import all
 import Standard.Base.Errors.Common.Floating_Point_Equality
 
-from Standard.Table import Table, Sort_Column, expr
+from Standard.Table import Table, Sort_Column, Value_Type, expr
 from Standard.Table.Aggregate_Column.Aggregate_Column import all
 import Standard.Table.Expression.Expression_Error
 from Standard.Table.Errors import all
@@ -934,6 +934,62 @@ add_aggregate_specs suite_builder setup =
                 materialized.columns.at 1 . name . should_equal "Shortest B"
                 materialized.columns.at 1 . to_vector . should_equal ["f"]
 
+    suite_builder.group prefix+"Table.aggregate Sum" group_builder->
+        # The types of aggregates are only tested in-memory, in DB they will depend on each backend
+        if setup.is_database.not then group_builder.specify "should return an Integer column when summing an Integer input" <|
+            table = table_builder [["int_column", [1, 2, 3, 4, 5, 6, 7]]]
+            table.at "int_column" . value_type . should_equal Value_Type.Integer
+
+            result = table.aggregate [] [Sum "int_column"]
+            within_table result <|
+                result.row_count . should_equal 1
+                materialized = materialize result
+                Problems.assume_no_problems materialized
+                materialized.column_count . should_equal 1
+                materialized.columns.at 0 . name . should_equal "Sum int_column"
+                materialized.columns.at 0 . to_vector . should_equal [28]
+                materialized.columns.at 0 . value_type . should_equal Value_Type.Integer
+
+            table2 = table_builder [["int_column", [31000, 31000, 31000, 31000, 31000]]]
+                . cast "int_column" (Value_Type.Integer ..Bits_16)
+            table2.at "int_column" . value_type . should_equal (Value_Type.Integer ..Bits_16)
+
+            result2 = table2.aggregate [] [Sum "int_column"]
+            within_table result2 <|
+                result2.row_count . should_equal 1
+                materialized2 = materialize result2
+                Problems.assume_no_problems materialized2
+                materialized2.column_count . should_equal 1
+                materialized2.columns.at 0 . name . should_equal "Sum int_column"
+                materialized2.columns.at 0 . to_vector . should_equal [5*31000]
+                materialized2.columns.at 0 . value_type . should_be_a (Value_Type.Integer ...)
+
+        if setup.is_database.not then group_builder.specify "should return a Decimal column when the sum overflows 64-bit Integers" <|
+            table = table_builder [["int_column", [2^62, 2^62, 2^62, 2^62, 2^62, 2^62, 2^62]]]
+            table.at "int_column" . value_type . should_equal Value_Type.Integer
+
+            result = table.aggregate [] [Sum "int_column"]
+            within_table result <|
+                result.row_count . should_equal 1
+                materialized = materialize result
+                Problems.assume_no_problems materialized
+                materialized.column_count . should_equal 1
+                materialized.columns.at 0 . name . should_equal "Sum int_column"
+                materialized.columns.at 0 . to_vector . should_equal [(2^62) * table.row_count]
+                materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
+
+        if setup.is_database.not then group_builder.specify "should allow to sum big-integer column" <|
+            table = table_builder [["big_column", [2^100, 2^70]]]
+            table.at "big_column" . value_type . should_be_a (Value_Type.Decimal ...)
+            result = table.aggregate [] [Sum "big_column"]
+            within_table result <|
+                result.row_count . should_equal 1
+                materialized = materialize result
+                Problems.assume_no_problems materialized
+                materialized.column_count . should_equal 1
+                materialized.columns.at 0 . name . should_equal "Sum big_column"
+                materialized.columns.at 0 . to_vector . should_equal [2^100 + 2^70]
+                materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
 
     # Special case for Snowflake until the https://github.com/enso-org/enso/issues/10412 ticket is resolved.
     if setup.prefix.contains "Snowflake" then
