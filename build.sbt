@@ -1694,7 +1694,7 @@ lazy val `project-manager` = (project in file("lib/scala/project-manager"))
         pkgsToExclude,
         streams.value.log,
         moduleName.value,
-        scalaBinaryVersion.value,
+        scalaBinaryVersion.value
       )
     },
     assembly / assemblyMergeStrategy := {
