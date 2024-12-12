@@ -69,7 +69,7 @@ object GithubAPI {
         ) / "releases") ? ("per_page" -> perPage.toString) ? ("page" -> page.toString))
           .build()
 
-      val downloadTask = CachedHTTP
+      val downloadTask = HTTPDownload
         .fetchString(HTTPRequestBuilder.fromURI(uri).GET)
         .flatMap(response =>
           parse(response.content)
@@ -103,7 +103,7 @@ object GithubAPI {
   def getRelease(repo: Repository, tag: String): TaskProgress[Release] = {
     val uri = (projectURI(repo) / "releases" / "tags" / tag).build()
 
-    CachedHTTP
+    HTTPDownload
       .fetchString(HTTPRequestBuilder.fromURI(uri).GET)
       .flatMap(response =>
         parse(response.content)
@@ -155,7 +155,7 @@ object GithubAPI {
       .addHeader("Accept", "application/octet-stream")
       .GET
 
-    CachedHTTP.fetchString(request, Some(asset.size)).map(_.content)
+    HTTPDownload.fetchString(request, Some(asset.size)).map(_.content)
   }
 
   /** Downloads the asset to the provided `destination`.
