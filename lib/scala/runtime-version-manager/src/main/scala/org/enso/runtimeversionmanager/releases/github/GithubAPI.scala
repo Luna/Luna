@@ -61,6 +61,19 @@ object GithubAPI {
     * bar for this task.
     */
   def listReleases(repository: Repository): Try[Seq[Release]] = {
+    releaseListCache.get(repository) match {
+      case Some(cachedList) => Success(cachedList)
+      case None =>
+        makeListReleasesRequest(repository).map { releases =>
+          releaseListCache.put(repository, releases)
+          releases
+        }
+    }
+  }
+
+  private def makeListReleasesRequest(
+    repository: Repository
+  ): Try[Seq[Release]] = {
     val perPage = 100
     def listPage(page: Int): Try[Seq[Release]] = {
       val uri =
@@ -97,6 +110,14 @@ object GithubAPI {
 
     listAllPages(1)
   }
+
+  /** Fetching the list of releases may involve making multiple requests with big payloads, so it is good to cache the relevant information extracted from it to avoid unnecessary re-fetching.
+    *
+    * The runtime version manager assumes that the list of known releases will not change during the runtime of the program, so the cache is never invalidated as long as the program is running.
+    */
+  private val releaseListCache
+    : collection.concurrent.TrieMap[Repository, Seq[Release]] =
+    collection.concurrent.TrieMap.empty
 
   /** Fetches release metadata for the release associated with the given tag.
     */
