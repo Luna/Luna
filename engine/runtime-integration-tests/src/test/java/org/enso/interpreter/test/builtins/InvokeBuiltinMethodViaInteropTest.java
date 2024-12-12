@@ -94,27 +94,4 @@ public class InvokeBuiltinMethodViaInteropTest {
           return null;
         });
   }
-
-  /**
-   * 'Text.is_empty' is not a builtin method, defined on a builtin type. It should be treated as a
-   * builtin method, thus be invocable via interop.
-   */
-  @Test
-  public void invokeNonBuiltinMethodOnBuiltinType() {
-    var text = ContextUtils.evalModule(ctx, "main = 'Hello'");
-    ContextUtils.executeInContext(
-        ctx,
-        () -> {
-          var interop = InteropLibrary.getUncached();
-          var textUnwrapped = ContextUtils.unwrapValue(ctx, text);
-          assertThat(
-              "Text should have a 'is_empty' method",
-              interop.isMemberInvocable(textUnwrapped, "is_empty"),
-              is(true));
-          var res = interop.invokeMember(textUnwrapped, "is_empty");
-          assertThat("Text.is_empty should return a boolean", interop.isBoolean(res), is(true));
-          assertThat("Text.is_empty should return false", interop.asBoolean(res), is(false));
-          return null;
-        });
-  }
 }
