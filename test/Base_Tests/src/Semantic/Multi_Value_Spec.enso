@@ -125,6 +125,11 @@ add_specs suite_builder =
                 a:A -> "==="+a.a
             msg3 . should_equal "===a"
 
+            msg4 = case x of
+                b:B -> "Not a "+b.to_text
+                a:A -> "A but also "+(a:X).to_text
+            msg4 . should_equal "A but also X"
+
         group_builder.specify "Intersection type of unrelated types is not possible" <|
             Test.expect_panic Type_Error <|
                 _ = X:X&B
