@@ -278,11 +278,14 @@ class LauncherUpgrader(
     // We look at older versions that are satisfying the minimum version
     // required to upgrade to currentTargetRelease.
     val recentEnoughVersions =
-      availableVersions.filter(possibleVersion =>
-        possibleVersion.isGreaterThanOrEqual(
+      availableVersions.filter { possibleVersion =>
+        val canUpgradeToTarget = possibleVersion.isGreaterThanOrEqual(
           currentTargetRelease.minimumVersionToPerformUpgrade
-        ) && possibleVersion.isLessThan(currentTargetRelease.version)
-      )
+        )
+        val isEarlierThanTarget =
+          possibleVersion.isLessThan(currentTargetRelease.version)
+        canUpgradeToTarget && isEarlierThanTarget
+      }
 
     // We take the oldest of these, hoping that it will yield the shortest
     // upgrade path (perhaps it will be possible to upgrade directly from
@@ -299,6 +302,7 @@ class LauncherUpgrader(
     }
 
     val newTargetRelease = releaseProvider.fetchRelease(minimumValidVersion).get
+    assert(newTargetRelease.version != currentTargetRelease.version)
     logger.debug(
       s"To upgrade to ${currentTargetRelease.version}, " +
       s"the launcher will have to upgrade to ${newTargetRelease.version} first."
