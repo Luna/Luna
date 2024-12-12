@@ -495,6 +495,7 @@ public final class Type extends EnsoObject {
 
   private Map<String, Function> methods() {
     if (methods == null) {
+      CompilerDirectives.transferToInterpreter();
       var allMethods = new HashMap<String, Function>();
       var defScope = definitionScope.asModuleScope();
       var methodsFromThisScope = defScope.getMethodsForType(this);
