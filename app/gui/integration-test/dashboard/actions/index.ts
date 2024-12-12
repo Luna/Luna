@@ -5,7 +5,13 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { TEXTS } from 'enso-common/src/text'
 
-import { mockApi, type MockApi, type SetupAPI } from './api'
+import {
+  INITIAL_CALLS_OBJECT,
+  mockApi,
+  type MockApi,
+  type SetupAPI,
+  type TrackedCalls,
+} from './api'
 import DrivePageActions from './DrivePageActions'
 import LATEST_GITHUB_RELEASES from './latestGithubReleases.json' with { type: 'json' }
 import LoginPageActions from './LoginPageActions'
@@ -119,11 +125,15 @@ export async function passAgreementsDialog({ page }: MockParams) {
 
 interface Context {
   readonly api: MockApi
+  calls: TrackedCalls
 }
 
 /** Set up all mocks, without logging in. */
 export function mockAll({ page, setupAPI }: MockParams) {
-  const context: { api: MockApi } = { api: undefined! }
+  const context: { -readonly [K in keyof Context]: Context[K] } = {
+    api: undefined!,
+    calls: INITIAL_CALLS_OBJECT,
+  }
   return new LoginPageActions<Context>(page, context)
     .step('Execute all mocks', async (page) => {
       await Promise.all([

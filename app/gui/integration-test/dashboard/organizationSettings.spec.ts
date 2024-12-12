@@ -33,16 +33,24 @@ test('organization settings', ({ page }) =>
     .goToSettingsTab.organization()
     .organizationForm()
     .fillName(NEW_NAME)
+    .do((_, context) => {
+      context.calls = context.api.trackCalls()
+    })
     .save()
-    .step('Set organization name', (_, { api }) => {
+    .step('Set organization name', (_, { api, calls }) => {
       expect(api.currentOrganization()?.name).toBe(NEW_NAME)
       expect(api.currentUser()?.name).not.toBe(NEW_NAME)
+      expect(calls.updateOrganization).toMatchObject([{ name: NEW_NAME }])
     })
     .organizationForm()
     .fillName('')
+    .do((_, context) => {
+      context.calls = context.api.trackCalls()
+    })
     .save()
-    .step('Unsetting organization name should fail', (_, { api }) => {
+    .step('Unsetting organization name should fail', (_, { api, calls }) => {
       expect(api.currentOrganization()?.name).toBe(NEW_NAME)
+      expect(calls.updateOrganization).toMatchObject([{ name: '' }])
     })
     .organizationForm()
     .cancel()

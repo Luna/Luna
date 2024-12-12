@@ -113,6 +113,16 @@ const INITIAL_CALLS_OBJECT = {
   getProjectAsset: array<{ projectId: backend.ProjectId }>(),
 }
 
+const READONLY_INITIAL_CALLS_OBJECT: TrackedCallsInternal = INITIAL_CALLS_OBJECT
+
+export { READONLY_INITIAL_CALLS_OBJECT as INITIAL_CALLS_OBJECT }
+
+type TrackedCallsInternal = {
+  [K in keyof typeof INITIAL_CALLS_OBJECT]: Readonly<(typeof INITIAL_CALLS_OBJECT)[K]>
+}
+
+export interface TrackedCalls extends TrackedCallsInternal {}
+
 /** Parameters for {@link mockApi}. */
 export interface MockParams {
   readonly page: test.Page
