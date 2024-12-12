@@ -2,6 +2,7 @@ package org.enso.interpreter.test.builtins;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import org.enso.test.utils.ContextUtils;
@@ -55,9 +56,32 @@ public class InvokeBuiltinMethodViaInteropTest {
               "Ref meta-object should have a 'get' method",
               interop.isMemberInvocable(refMeta, "get"),
               is(true));
-          var res = interop.invokeMember(refMeta, "get", new Object[] {refMeta, refUnwrapped});
+          var res = interop.invokeMember(refMeta, "get", new Object[] {refUnwrapped});
           assertThat("Ref.get should return a number", interop.isNumber(res), is(true));
           assertThat("Ref.get should return 42", interop.asInt(res), is(42));
+          return null;
+        });
+  }
+
+  @Test
+  public void invokePathMethodOnFile() {
+    var code =
+        """
+        from Standard.Base import File
+
+        main =
+            File.current_directory
+        """;
+    var file = ContextUtils.evalModule(ctx, code);
+    ContextUtils.executeInContext(
+        ctx,
+        () -> {
+          var fileType = file.getMetaObject();
+          assertThat(fileType, is(notNullValue()));
+          assertThat(fileType.hasMember("path"), is(true));
+          var res = fileType.invokeMember("path", new Object[] {file});
+          assertThat("path method can be invoked", res, is(notNullValue()));
+          assertThat("path method returns correct result", res.isString(), is(true));
           return null;
         });
   }
