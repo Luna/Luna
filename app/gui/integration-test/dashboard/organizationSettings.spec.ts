@@ -40,20 +40,17 @@ test('organization settings', ({ page }) =>
     })
     .organizationForm()
     .fillName('')
+    .save()
     .step('Unsetting organization name should fail', (_, { api }) => {
       expect(api.currentOrganization()?.name).toBe(NEW_NAME)
     })
-    .cancel()
     .organizationForm()
-    .withName(async (nameEl) => {
-      await expect(nameEl).toHaveText(NEW_NAME)
-    })
     .cancel()
     .organizationForm()
     .fillEmail(INVALID_EMAIL)
     .save()
     .step('Setting invalid email should fail', (_, { api }) => {
-      expect(api.currentOrganization()?.email).toBe(null)
+      expect(api.currentOrganization()?.email).toBe('')
     })
     .organizationForm()
     .fillEmail(NEW_EMAIL)

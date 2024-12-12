@@ -28,7 +28,7 @@ export default class SettingsFormActions<
   /** Cancel editing this settings section. */
   cancel(): InstanceType<ParentClass> {
     return this.step('Cancel editing settings form', (page) =>
-      this.locate(page).getByRole('button', { name: TEXT.save }).getByText(TEXT.cancel).click(),
+      this.locate(page).getByRole('button', { name: TEXT.cancel }).getByText(TEXT.cancel).click(),
     ).into(this.parentClass)
   }
 }
