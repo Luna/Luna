@@ -1,5 +1,7 @@
 package org.enso.runtimeversionmanager.releases.github
 
+import com.typesafe.scalalogging.Logger
+
 import java.nio.file.Path
 import io.circe._
 import io.circe.parser._
@@ -62,7 +64,9 @@ object GithubAPI {
     */
   def listReleases(repository: Repository): Try[Seq[Release]] = {
     releaseListCache.get(repository) match {
-      case Some(cachedList) => Success(cachedList)
+      case Some(cachedList) =>
+        logger.debug("Using cached release list for repository {}", repository)
+        Success(cachedList)
       case None =>
         makeListReleasesRequest(repository).map { releases =>
           releaseListCache.put(repository, releases)
@@ -122,6 +126,32 @@ object GithubAPI {
   /** Fetches release metadata for the release associated with the given tag.
     */
   def getRelease(repo: Repository, tag: String): TaskProgress[Release] = {
+    findCachedRelease(repo, tag) match {
+      case Some(release) =>
+        logger.debug(
+          "Using cached release for tag {} in repository {}",
+          tag,
+          repo
+        )
+        TaskProgress.runImmediately(release)
+      case None =>
+        makeGetSingleReleaseRequest(repo, tag)
+    }
+  }
+
+  private def findCachedRelease(
+    repo: Repository,
+    tag: String
+  ): Option[Release] =
+    for {
+      cachedList <- releaseListCache.get(repo)
+      release    <- cachedList.find(_.tag == tag)
+    } yield release
+
+  private def makeGetSingleReleaseRequest(
+    repo: Repository,
+    tag: String
+  ): TaskProgress[Release] = {
     val uri = (projectURI(repo) / "releases" / "tags" / tag).build()
 
     HTTPDownload
@@ -214,4 +244,6 @@ object GithubAPI {
       assets <- json.get[Seq[Asset]]("assets")
     } yield Release(tag, assets)
   }
+
+  private val logger: Logger = Logger[GithubAPI.type]
 }
