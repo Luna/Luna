@@ -2,8 +2,6 @@ package org.enso.interpreter.test.builtins;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.containsString;
 
 import java.io.ByteArrayOutputStream;
 import org.enso.test.utils.ContextUtils;
@@ -35,10 +33,11 @@ public class BuiltinsJavaInteropTest {
 
   @Test
   public void javaMethodAcceptsEnsoTimeOfDay_AsObject() {
-    var src = """
+    var src =
+        """
         from Standard.Base import Date_Time
         polyglot java import org.enso.example.PolyglotTestClass
-        
+
         main =
             dt = Date_Time.now
             PolyglotTestClass.isPolyglotDate_Object dt
@@ -49,10 +48,11 @@ public class BuiltinsJavaInteropTest {
 
   @Test
   public void javaMethodAcceptsEnsoTimeOfDay_AsLocalDate() {
-    var src = """
+    var src =
+        """
         from Standard.Base import Date_Time
         polyglot java import org.enso.example.PolyglotTestClass
-        
+
         main =
             dt = Date_Time.now
             PolyglotTestClass.isPolyglotDate_LocalDate dt
@@ -63,10 +63,11 @@ public class BuiltinsJavaInteropTest {
 
   @Test
   public void javaMethodAcceptsEnsoTimeOfDay_AsValue() {
-    var src = """
+    var src =
+        """
         from Standard.Base import Date_Time
         polyglot java import org.enso.example.PolyglotTestClass
-        
+
         main =
             dt = Date_Time.now
             PolyglotTestClass.isPolyglotDate_Value dt
@@ -74,5 +75,4 @@ public class BuiltinsJavaInteropTest {
     var result = ContextUtils.evalModule(ctx, src);
     assertThat(result.asBoolean(), is(true));
   }
-
 }
