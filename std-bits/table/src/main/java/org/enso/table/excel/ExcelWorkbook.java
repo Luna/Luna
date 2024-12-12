@@ -13,7 +13,7 @@ public interface ExcelWorkbook {
   int getNumberOfSheets();
 
   /**
-   * Returns the index of the sheet by his name
+   * Returns the index of the sheet by its name
    *
    * @param name the sheet name
    * @return index of the sheet (0 based)
