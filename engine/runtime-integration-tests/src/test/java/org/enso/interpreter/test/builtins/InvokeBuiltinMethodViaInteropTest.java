@@ -86,6 +86,25 @@ public class InvokeBuiltinMethodViaInteropTest {
         });
   }
 
+  @Test
+  public void invokeToTextOnVector() {
+    var code = """
+        main = [1,2,3]
+        """;
+    var vec = ContextUtils.evalModule(ctx, code);
+    ContextUtils.executeInContext(
+        ctx,
+        () -> {
+          var vecType = vec.getMetaObject();
+          assertThat(vecType, is(notNullValue()));
+          assertThat(vecType.hasMember("to_text"), is(true));
+          var res = vecType.invokeMember("to_text", new Object[] {vec});
+          assertThat("to_text method can be invoked", res, is(notNullValue()));
+          assertThat("to_text method returns correct result", res.isString(), is(true));
+          return null;
+        });
+  }
+
   /**
    * 'Text.reverse' is an extension method defined outside builtins module scope, so it cannot be
    * resolved.
