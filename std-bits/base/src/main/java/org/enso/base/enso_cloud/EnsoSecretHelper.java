@@ -163,7 +163,9 @@ public final class EnsoSecretHelper extends SecretValueResolver {
         keyStrings.add(resolvedHeader.getRight());
       }
 
-      return Integer.toHexString(Arrays.deepHashCode(keyStrings.toArray()));
+      var cacheKey = Integer.toHexString(Arrays.deepHashCode(keyStrings.toArray()));
+      System.out.println("AAA ck " + cacheKey + " " + keyStrings);
+      return cacheKey;
     }
 
     @Override

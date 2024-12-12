@@ -10,9 +10,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Predicate;
@@ -61,6 +63,7 @@ public class LRUCache<M> {
 
   /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
+  private final Set<String> closed = new HashSet<>();
 
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
@@ -176,7 +179,17 @@ public class LRUCache<M> {
     }
 
     markCacheEntryUsed(cacheKey);
-    return new CacheResult<>(new FileInputStream(cacheFile), cache.get(cacheKey).metadata());
+    var fis = new FileInputStream(cacheFile) {
+      {
+        System.out.println("AAA Opening " + cacheKey);
+      }
+      public void close() throws IOException {
+        super.close();
+        closed.add(cacheKey);
+        System.out.println("AAA Closing " + cacheKey);
+      }
+    };
+    return new CacheResult<>(fis, cache.get(cacheKey).metadata());
   }
 
   /**
@@ -263,6 +276,7 @@ public class LRUCache<M> {
   /** Remove a cache file. */
   private void removeCacheFile(String key, CacheEntry<M> cacheEntry) {
     boolean removed = cacheEntry.responseData.delete();
+    System.out.println("AAA Deleting " + key + " " + closed.contains(key));
     if (!removed) {
       logger.log(Level.WARNING, "Unable to delete cache file for key {0}", key);
     }
