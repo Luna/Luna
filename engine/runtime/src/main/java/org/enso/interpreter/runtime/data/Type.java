@@ -397,7 +397,10 @@ public final class Type extends EnsoObject {
         @Cached("findMethod(receiver, member)") Function func,
         @Cached("buildInvokeFuncNode(func)") InvokeFunctionNode invokeFuncNode)
         throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
-      return invokeFuncNode.execute(func, null, null, args);
+      var argsWithReceiver = new Object[args.length + 1];
+      argsWithReceiver[0] = receiver;
+      System.arraycopy(args, 0, argsWithReceiver, 1, args.length);
+      return invokeFuncNode.execute(func, null, null, argsWithReceiver);
     }
 
     @Specialization(replaces = "doCached")
@@ -415,7 +418,7 @@ public final class Type extends EnsoObject {
         throw UnknownIdentifierException.create(member);
       }
       var invokeFuncNode = buildInvokeFuncNode(method);
-      return invokeFuncNode.execute(method, null, null, args);
+      return doCached(receiver, member, args, member, method, invokeFuncNode);
     }
 
     static Function findMethod(Type receiver, String name) {
