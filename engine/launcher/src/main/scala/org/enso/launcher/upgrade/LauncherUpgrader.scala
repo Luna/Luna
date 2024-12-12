@@ -135,6 +135,7 @@ class LauncherUpgrader(
         performStepByStepUpgrade(release)
 
       runCleanup()
+      logger.debug("Upgrade completed successfully.")
     }
   }
 
