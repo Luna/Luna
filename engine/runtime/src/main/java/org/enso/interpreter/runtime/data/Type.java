@@ -3,9 +3,14 @@ package org.enso.interpreter.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.NeverDefault;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -13,12 +18,14 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import org.enso.interpreter.Constants;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.ConstantNode;
 import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.argument.ArgumentDefinition;
 import org.enso.interpreter.runtime.callable.function.Function;
 import org.enso.interpreter.runtime.callable.function.FunctionSchema;
@@ -41,6 +48,7 @@ public final class Type extends EnsoObject {
   private final boolean isProjectPrivate;
 
   private boolean gettersGenerated;
+  private Map<String, Function> methods;
 
   private Type(
       String name,
@@ -337,13 +345,25 @@ public final class Type extends EnsoObject {
     return true;
   }
 
+  /**
+   * Members are constructors and methods from this type, and eigen type. Not extension methods as
+   * they are most likely not in the module scope of this type.
+   *
+   * @param includeInternal
+   * @return
+   */
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
   EnsoObject getMembers(boolean includeInternal) {
     if (isProjectPrivate) {
       return ArrayLikeHelpers.empty();
     } else {
-      return ArrayLikeHelpers.wrapStrings(constructors.keySet().toArray(String[]::new));
+      var consNames = constructors.keySet();
+      var methodNames = methods().keySet();
+      var allNames = new HashSet<String>();
+      allNames.addAll(consNames);
+      allNames.addAll(methodNames);
+      return ArrayLikeHelpers.wrapStrings(allNames.toArray(String[]::new));
     }
   }
 
@@ -353,7 +373,54 @@ public final class Type extends EnsoObject {
     if (isProjectPrivate) {
       return false;
     } else {
-      return constructors.containsKey(member);
+      return constructors.containsKey(member) || methods().containsKey(member);
+    }
+  }
+
+  @ExportMessage
+  boolean isMemberInvocable(String member) {
+    return methods().containsKey(member);
+  }
+
+  @ExportMessage
+  static final class InvokeMember {
+    @Specialization(
+        guards = {"cachedMember.equals(member)"},
+        limit = "3")
+    static Object doCached(
+        Type receiver,
+        String member,
+        Object[] args,
+        @Cached("member") String cachedMember,
+        @Cached("buildSymbol(cachedMember)") UnresolvedSymbol cachedSymbol,
+        @CachedLibrary("cachedSymbol") InteropLibrary interop)
+        throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
+      var argsForBuiltin = new Object[args.length + 1];
+      argsForBuiltin[0] = receiver;
+      java.lang.System.arraycopy(args, 0, argsForBuiltin, 1, args.length);
+      return interop.execute(cachedSymbol, argsForBuiltin);
+    }
+
+    @Specialization(replaces = "doCached")
+    static Object doUncached(
+        Type receiver,
+        String member,
+        Object[] args,
+        @CachedLibrary(limit = "3") InteropLibrary interop)
+        throws UnsupportedMessageException, UnsupportedTypeException, ArityException {
+      var ctx = EnsoContext.get(interop);
+      var symbol = buildSymbol(member, ctx);
+      return doCached(receiver, member, args, member, symbol, interop);
+    }
+
+    private static UnresolvedSymbol buildSymbol(String symbol, EnsoContext ctx) {
+      return UnresolvedSymbol.build(symbol, ctx.getBuiltins().getScope());
+    }
+
+    @NeverDefault
+    static UnresolvedSymbol buildSymbol(String symbol) {
+      var ctx = EnsoContext.get(null);
+      return buildSymbol(symbol, ctx);
     }
   }
 
@@ -363,12 +430,15 @@ public final class Type extends EnsoObject {
     if (isProjectPrivate) {
       throw UnknownIdentifierException.create(member);
     }
-    var result = constructors.get(member);
-    if (result == null) {
-      throw UnknownIdentifierException.create(member);
-    } else {
-      return result;
+    var cons = constructors.get(member);
+    if (cons != null) {
+      return cons;
     }
+    var method = methods().get(member);
+    if (method != null) {
+      return method;
+    }
+    throw UnknownIdentifierException.create(member);
   }
 
   @ExportMessage
@@ -407,4 +477,46 @@ public final class Type extends EnsoObject {
     var b = EnsoContext.get(lib).getBuiltins();
     return this == b.nothing();
   }
+
+  private Map<String, Function> methods() {
+    if (methods == null) {
+      var allMethods = new HashMap<String, Function>();
+      var defScope = definitionScope.asModuleScope();
+      var methodsFromThisScope = defScope.getMethodsForType(this);
+      if (methodsFromThisScope != null) {
+        methodsFromThisScope.forEach(
+            func -> {
+              var simpleName = simpleFuncName(func);
+              allMethods.put(simpleName, func);
+            });
+      }
+      if (eigentype != null) {
+        var methodsFromEigenScope = eigentype.getDefinitionScope().getMethodsForType(eigentype);
+        if (methodsFromEigenScope != null) {
+          methodsFromEigenScope.forEach(
+              func -> {
+                var simpleName = simpleFuncName(func);
+                allMethods.put(simpleName, func);
+              });
+        }
+      }
+      methods = allMethods;
+    }
+    return methods;
+  }
+
+  private static String simpleFuncName(Function func) {
+    assert func.getName() != null;
+    if (func.getName().contains(".")) {
+      var items = func.getName().split("\\.");
+      return items[items.length - 1];
+    }
+    return func.getName();
+  }
+
+  /**
+   * @param simpleName Non-qualified name of the method.
+   * @param function The method.
+   */
+  private record MethodWithName(String simpleName, Function function) {}
 }

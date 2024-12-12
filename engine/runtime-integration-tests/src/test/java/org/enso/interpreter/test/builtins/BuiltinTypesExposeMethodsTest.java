@@ -4,7 +4,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.ArrayList;
 import java.util.List;
 import org.enso.interpreter.runtime.data.Type;
@@ -26,13 +25,13 @@ import org.junit.runners.Parameterized.Parameters;
  * checks that {@link Value#canInvokeMember(String)} returns true.
  */
 @RunWith(Parameterized.class)
-public class BuiltinsExposeMethodsTest {
+public class BuiltinTypesExposeMethodsTest {
   private static Context ctx;
 
-  private final ValueWithType valueWithType;
+  private final Value type;
 
-  public BuiltinsExposeMethodsTest(ValueWithType valueWithType) {
-    this.valueWithType = valueWithType;
+  public BuiltinTypesExposeMethodsTest(Value type) {
+    this.type = type;
   }
 
   private static Context ctx() {
@@ -43,21 +42,22 @@ public class BuiltinsExposeMethodsTest {
   }
 
   @Parameters(name = "{index}: {0}")
-  public static Iterable<ValueWithType> generateBuiltinObjects() {
+  public static Iterable<Value> generateBuiltinObjects() {
     var valuesGenerator = ValuesGenerator.create(ctx(), Language.ENSO);
-    var builtinObjectsWithTypes = new ArrayList<ValueWithType>();
+    var builtinTypes = new ArrayList<Value>();
     ContextUtils.executeInContext(
         ctx(),
         () -> {
-          valuesGenerator.allValues().stream()
-              .map(val -> new ValueWithType(val, getType(val)))
-              .filter(valWithType -> !shouldSkipType(valWithType.type))
-              .filter(valWithType -> !isPrimitive(valWithType.value))
-              .filter(valWithType -> !isHostValue(valWithType.value))
-              .forEach(builtinObjectsWithTypes::add);
+          valuesGenerator.allTypes().stream()
+              .filter(
+                  val -> {
+                    var asType = getType(val);
+                    return !shouldSkipType(asType);
+                  })
+              .forEach(builtinTypes::add);
           return null;
         });
-    return builtinObjectsWithTypes;
+    return builtinTypes;
   }
 
   private static Type getType(Value object) {
@@ -78,10 +78,9 @@ public class BuiltinsExposeMethodsTest {
     ContextUtils.executeInContext(
         ctx(),
         () -> {
-          assertThat(valueWithType, is(notNullValue()));
-          assertThat(valueWithType.type.isBuiltin(), is(true));
-          var typeDefScope = valueWithType.type.getDefinitionScope();
-          var methodsDefinedInScope = typeDefScope.getMethodsForType(valueWithType.type);
+          assertThat(type, is(notNullValue()));
+          var typeDefScope = getType(type).getDefinitionScope();
+          var methodsDefinedInScope = typeDefScope.getMethodsForType(getType(type));
           if (methodsDefinedInScope != null) {
             for (var methodInScope : methodsDefinedInScope) {
               var methodName = methodInScope.getName();
@@ -90,36 +89,19 @@ public class BuiltinsExposeMethodsTest {
                 methodName = items[items.length - 1];
               }
               assertThat(
-                  "Builtin type " + valueWithType.type.getQualifiedName() + " should have members",
-                  valueWithType.value.hasMembers(),
-                  is(true));
+                  "Builtin type " + type + " should have members", type.hasMembers(), is(true));
               assertThat(
                   "Member " + methodName + " should be present",
-                  valueWithType.value.hasMember(methodName),
+                  type.hasMember(methodName),
                   is(true));
               assertThat(
                   "Member " + methodName + " should be invocable",
-                  valueWithType.value.canInvokeMember(methodName),
-                  is(true));
-              var interop = InteropLibrary.getUncached();
-              var unwrappedValue = ContextUtils.unwrapValue(ctx(), valueWithType.value);
-              var memberViaInterop = interop.readMember(unwrappedValue, methodName);
-              assertThat(
-                  "Member via interop should be the same as in scope, but was: " + memberViaInterop,
-                  memberViaInterop == methodInScope,
+                  type.canInvokeMember(methodName),
                   is(true));
             }
           }
           return null;
         });
-  }
-
-  private static boolean isPrimitive(Value object) {
-    var unwrapped = ContextUtils.unwrapValue(ctx(), object);
-    return unwrapped instanceof Long
-        || unwrapped instanceof Boolean
-        || unwrapped instanceof Integer
-        || unwrapped instanceof Double;
   }
 
   private static boolean shouldSkipType(Type type) {
@@ -136,12 +118,4 @@ public class BuiltinsExposeMethodsTest {
     var shouldBeSkipped = typesToSkip.stream().anyMatch(toSkip -> toSkip == type);
     return shouldBeSkipped;
   }
-
-  private static boolean isHostValue(Value value) {
-    var unwrapped = ContextUtils.unwrapValue(ctx(), value);
-    var ensoCtx = ContextUtils.leakContext(ctx());
-    return ensoCtx.isJavaPolyglotObject(unwrapped);
-  }
-
-  public record ValueWithType(Value value, Type type) {}
 }
