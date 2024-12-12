@@ -199,7 +199,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
   usersMap.set(defaultUser.userId, defaultUser)
 
   function trackCalls() {
-    const calls = { ...INITIAL_CALLS_OBJECT }
+    const calls = structuredClone(INITIAL_CALLS_OBJECT)
     callsObjects.add(calls)
     return calls
   }

@@ -1,5 +1,5 @@
 /** @file Test copying, moving, cutting and pasting. */
-import { test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { TEXT, mockAllAndLogin } from './actions'
 
@@ -30,32 +30,36 @@ function locateEditingCross(page: Locator) {
 test('edit name (double click)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       await nameEl.click()
       await nameEl.click()
       await nameEl.fill(NEW_NAME)
+      const calls = api.trackCalls()
       await locateEditingTick(row).click()
-      await test.expect(row).toHaveText(new RegExp('^' + NEW_NAME))
+      await expect(row).toHaveText(new RegExp('^' + NEW_NAME))
+      expect(calls.updateDirectory).toMatchObject([{ title: NEW_NAME }])
     }))
 
 test('edit name (context menu)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       await locateAssetRowName(row).click({ button: 'right' })
       await locateContextMenu(page)
         .getByText(/Rename/)
         .click()
       const nameEl = locateAssetRowName(row)
-      await test.expect(nameEl).toBeVisible()
-      await test.expect(nameEl).toBeFocused()
+      await expect(nameEl).toBeVisible()
+      await expect(nameEl).toBeFocused()
       await nameEl.fill(NEW_NAME)
-      await test.expect(nameEl).toHaveValue(NEW_NAME)
+      await expect(nameEl).toHaveValue(NEW_NAME)
+      const calls = api.trackCalls()
       await nameEl.press('Enter')
-      await test.expect(row).toHaveText(new RegExp('^' + NEW_NAME))
+      await expect(row).toHaveText(new RegExp('^' + NEW_NAME))
+      expect(calls.updateDirectory).toMatchObject([{ title: NEW_NAME }])
     }))
 
 test('edit name (keyboard)', ({ page }) =>
@@ -65,54 +69,67 @@ test('edit name (keyboard)', ({ page }) =>
       await locateAssetRowName(rows.nth(0)).click()
     })
     .press('Mod+R')
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       await nameEl.fill(NEW_NAME_2)
+      const calls = api.trackCalls()
       await nameEl.press('Enter')
-      await test.expect(row).toHaveText(new RegExp('^' + NEW_NAME_2))
+      await expect(row).toHaveText(new RegExp('^' + NEW_NAME_2))
+      expect(calls.updateDirectory).toMatchObject([{ title: NEW_NAME_2 }])
     }))
 
 test('cancel editing name (double click)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       const oldName = (await nameEl.textContent()) ?? ''
       await nameEl.click()
       await nameEl.click()
       await nameEl.fill(NEW_NAME)
+      const calls = api.trackCalls()
       await locateEditingCross(row).click()
-      await test.expect(row).toHaveText(new RegExp('^' + oldName))
+      await expect(row).toHaveText(new RegExp('^' + oldName))
+      expect(calls.updateDirectory).toMatchObject([])
     }))
 
-test('cancel editing name (keyboard)', ({ page }) =>
-  mockAllAndLogin({ page })
+test('cancel editing name (keyboard)', ({ page }) => {
+  let oldName = ''
+  return mockAllAndLogin({ page })
     .createFolder()
-    .press('Mod+R')
     .driveTable.withRows(async (rows) => {
+      await rows.nth(0).click()
+    })
+    .press('Mod+R')
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
-      const oldName = (await nameEl.textContent()) ?? ''
+      oldName = (await nameEl.textContent()) ?? ''
       await nameEl.fill(NEW_NAME_2)
+      const calls = api.trackCalls()
       await nameEl.press('Escape')
-      await test.expect(row).toHaveText(new RegExp('^' + oldName))
-    }))
+      await expect(row).toHaveText(new RegExp('^' + oldName))
+      expect(calls.updateDirectory).toMatchObject([])
+    })
+})
 
 test('change to blank name (double click)', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       const oldName = (await nameEl.textContent()) ?? ''
       await nameEl.click()
       await nameEl.click()
       await nameEl.fill('')
-      await test.expect(locateEditingTick(row)).not.toBeVisible()
+      await expect(locateEditingTick(row)).not.toBeVisible()
+      const calls = api.trackCalls()
       await locateEditingCross(row).click()
-      await test.expect(row).toHaveText(new RegExp('^' + oldName))
+      await expect(row).toHaveText(new RegExp('^' + oldName))
+      expect(calls.updateDirectory).toMatchObject([])
     }))
 
 test('change to blank name (keyboard)', ({ page }) =>
@@ -122,11 +139,13 @@ test('change to blank name (keyboard)', ({ page }) =>
       await locateAssetRowName(rows.nth(0)).click()
     })
     .press('Mod+R')
-    .driveTable.withRows(async (rows) => {
+    .driveTable.withRows(async (rows, _, { api }) => {
       const row = rows.nth(0)
       const nameEl = locateAssetRowName(row)
       const oldName = (await nameEl.textContent()) ?? ''
       await nameEl.fill('')
+      const calls = api.trackCalls()
       await nameEl.press('Enter')
-      await test.expect(row).toHaveText(new RegExp('^' + oldName))
+      await expect(row).toHaveText(new RegExp('^' + oldName))
+      expect(calls.updateDirectory).toMatchObject([])
     }))
