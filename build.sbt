@@ -1202,13 +1202,13 @@ lazy val `scala-libs-wrapper` = project
       "com.typesafe.scala-logging"            %% "scala-logging"         % scalaLoggingVersion,
       "org.slf4j"                              % "slf4j-api"             % slf4jVersion,
       "org.typelevel"                         %% "cats-core"             % catsVersion,
-      //"org.jline"                              % "jline"                 % jlineVersion,
+      "org.jline"                              % "jline"                 % jlineVersion,
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion,
       "net.java.dev.jna"                       % "jna"                   % jnaVersion
     ),
     Compile / moduleDependencies ++= scalaLibrary ++ Seq(
       "org.scala-lang" % "scala-reflect" % scalacVersion,
-      //"org.jline"      % "jline"         % jlineVersion,
+      "org.jline"      % "jline"         % jlineVersion,
       "org.slf4j"      % "slf4j-api"     % slf4jVersion
     ),
     assembly / assemblyExcludedJars := {
@@ -1220,7 +1220,7 @@ lazy val `scala-libs-wrapper` = project
           "org.scala-lang"            % "scala-reflect"   % scalacVersion,
           "org.slf4j"                 % "slf4j-api"       % slf4jVersion,
           "io.github.java-diff-utils" % "java-diff-utils" % javaDiffVersion,
-          //"org.jline"                 % "jline"           % jlineVersion,
+          "org.jline"                 % "jline"           % jlineVersion,
           "net.java.dev.jna"          % "jna"             % jnaVersion
         ),
         streams.value.log,
@@ -1465,7 +1465,7 @@ lazy val `akka-wrapper` = project
           "org.slf4j"                 % "slf4j-api"          % slf4jVersion,
           "com.typesafe"              % "config"             % typesafeConfigVersion,
           "io.github.java-diff-utils" % "java-diff-utils"    % javaDiffVersion,
-          //"org.jline"                 % "jline"              % jlineVersion,
+          "org.jline"                 % "jline"              % jlineVersion,
           "com.google.protobuf"       % "protobuf-java"      % googleProtobufVersion,
           "org.reactivestreams"       % "reactive-streams"   % reactiveStreamsVersion,
           "net.java.dev.jna"          % "jna"                % jnaVersion
