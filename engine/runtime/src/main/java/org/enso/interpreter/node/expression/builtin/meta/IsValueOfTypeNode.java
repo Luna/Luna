@@ -31,7 +31,7 @@ public abstract class IsValueOfTypeNode extends Node {
    * @param expectedType the type to check
    * @param obj the object to check
    * @param includeExtraTypes specify {@code false} to return only <em>types value has already been
-   *     case to</em>, specify {@code true} to return all <em>types value can be cast to</em>
+   *     cast to</em>, specify {@code true} to return all <em>types value can be cast to</em>
    */
   public abstract boolean execute(Object expectedType, Object obj, boolean includeExtraTypes);
 
