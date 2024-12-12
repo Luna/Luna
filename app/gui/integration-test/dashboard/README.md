@@ -38,3 +38,12 @@ test('test name here', ({ page }) =>
     expect(api.baz()?.quux).toEqual('bar')
   }))
 ```
+
+### Writing new classes extending `BaseActions`
+
+- Make sure that every method returns either the class itself (`this`) or `.into(AnotherActionsClass<Context>)`.
+- Avoid constructing `new AnotherActionsClass()` - instead prefer `.into(AnotherActionsClass<Context>)` and optionally `.into(ThisClass<Context>)` if required.
+- Never construct an `ActionsClass`
+  - In some rare exceptions, it is fine as long as you `await` the `PageActions` class - for example in `index.ts` there is `await new StartModalActions().close()`.
+- Methods for locators are fine, but it is not recommended to expose them as it makes it easy to accidentally - i.e. it is fine as long as they are `private`.
+  - In general, avoid exposing any method that returns a `Promise` rather than a `PageActions`.
