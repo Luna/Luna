@@ -7,6 +7,9 @@ import java.net.http.HttpRequest
   */
 case class HTTPRequest(requestImpl: HttpRequest) {
 
-  /** Checks if this is a GET request. */
-  def isGET: Boolean = requestImpl.method() == "GET"
+  /** Returns the method of this request. */
+  def method: String = requestImpl.method()
+
+  /** Returns the URI of this request as string, used e.g. for logging. */
+  def uri: String = requestImpl.uri().toString
 }
