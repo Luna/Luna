@@ -70,13 +70,13 @@ class UpgradeSpec
   override def beforeAll(): Unit = {
     super.beforeAll()
     prepareLauncherBinary(SemVer.of(0, 0, 0))
-    prepareLauncherBinary(SemVer.of(0, 0, 1))
-    prepareLauncherBinary(SemVer.of(0, 0, 2))
-    prepareLauncherBinary(SemVer.of(0, 0, 3))
-    prepareLauncherBinary(SemVer.of(0, 0, 4))
+    prepareLauncherBinary(SemVer.of(1, 0, 1))
+    prepareLauncherBinary(SemVer.of(1, 0, 2))
+    prepareLauncherBinary(SemVer.of(1, 0, 3))
+    prepareLauncherBinary(SemVer.of(1, 0, 4))
 
-    // The 0.9999.0 version is marked as broken so it should not be considered for upgrades.
-    prepareLauncherBinary(SemVer.of(0, 9999, 0))
+    // The 99.9999.0 version is marked as broken so it should not be considered for upgrades.
+    prepareLauncherBinary(SemVer.of(99, 9999, 0))
   }
 
   /** Prepares a launcher distribution in the temporary test location.
@@ -175,37 +175,41 @@ class UpgradeSpec
     "upgrade to latest version (excluding broken)" taggedAs Flaky in {
       prepareDistribution(
         portable        = true,
-        launcherVersion = Some(SemVer.of(0, 0, 2))
+        launcherVersion = Some(SemVer.of(1, 0, 2))
       )
       run(Seq("upgrade")) should returnSuccess
 
-      checkVersion() shouldEqual SemVer.of(0, 0, 4)
+      checkVersion() shouldEqual SemVer.of(1, 0, 4)
     }
 
     "not downgrade without being explicitly asked to do so" taggedAs Flaky in {
       prepareDistribution(
         portable        = false,
-        launcherVersion = Some(SemVer.of(0, 9999, 0))
+        launcherVersion = Some(SemVer.of(99, 9999, 0))
       )
 
       // precondition for the test to make sense
-      checkVersion().isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
-      run(Seq("upgrade")).exitCode shouldEqual 1
+      checkVersion().isGreaterThan(SemVer.of(1, 0, 4)) shouldBe true
+      val result = run(Seq("upgrade"))
+      withClue(result) {
+        result.exitCode shouldEqual 1
+        result.stdout should include("If you really want to downgrade")
+      }
     }
 
     "upgrade/downgrade to a specific version " +
     "(and update necessary files)" taggedAs Flaky in {
       prepareDistribution(
         portable        = true,
-        launcherVersion = Some(SemVer.of(0, 9999, 0))
+        launcherVersion = Some(SemVer.of(99, 9999, 0))
       )
       // precondition for the test to make sense
-      checkVersion().isGreaterThan(SemVer.of(0, 0, 4)) shouldBe true
+      checkVersion().isGreaterThan(SemVer.of(1, 0, 4)) shouldBe true
 
       val root = launcherPath.getParent.getParent
       FileSystem.writeTextFile(root / "README.md", "Old readme")
-      run(Seq("upgrade", "0.0.1")) should returnSuccess
-      checkVersion() shouldEqual SemVer.of(0, 0, 1)
+      run(Seq("upgrade", "1.0.2")) should returnSuccess
+      checkVersion() shouldEqual SemVer.of(1, 0, 2)
       TestHelpers.readFileContent(root / "README.md").trim shouldEqual "Content"
       TestHelpers
         .readFileContent(root / "THIRD-PARTY" / "test-license.txt")
@@ -215,19 +219,21 @@ class UpgradeSpec
     "upgrade also in installed mode" taggedAs Flaky in {
       prepareDistribution(
         portable        = false,
-        launcherVersion = Some(SemVer.of(0, 0, 0))
+        launcherVersion = Some(SemVer.of(1, 0, 1))
       )
       val dataRoot   = getTestDirectory / "data"
       val configRoot = getTestDirectory / "config"
-      checkVersion() shouldEqual SemVer.of(0, 0, 0)
+      checkVersion() shouldEqual SemVer.of(1, 0, 1)
       val env = Map(
         "ENSO_DATA_DIRECTORY"    -> dataRoot.toString,
         "ENSO_CONFIG_DIRECTORY"  -> configRoot.toString,
         "ENSO_RUNTIME_DIRECTORY" -> (getTestDirectory / "run").toString
       )
 
-      run(Seq("upgrade", "0.0.1"), extraEnv = env) should returnSuccess
-      checkVersion() shouldEqual SemVer.of(0, 0, 1)
+      run(Seq("upgrade", "1.0.2"), extraEnv = env) should returnSuccess
+      checkVersion() shouldEqual SemVer.of(1, 0, 2)
+
+      // Make sure that files were added
       TestHelpers
         .readFileContent(dataRoot / "README.md")
         .trim shouldEqual "Content"
@@ -237,27 +243,25 @@ class UpgradeSpec
     }
 
     "perform a multi-step upgrade if necessary" taggedAs Flaky in {
-      // 0.0.3 can only be upgraded from 0.0.2 which can only be upgraded from
-      // 0.0.1, so the upgrade path should be following:
-      // 0.0.0 -> 0.0.1 -> 0.0.2 -> 0.0.3
+      // 1.0.4 can only be upgraded from 1.0.2 which can only be upgraded from
+      // 1.0.1, so the upgrade path should be following: 1.0.1 -> 1.0.2 -> 1.0.4
       prepareDistribution(
         portable        = true,
-        launcherVersion = Some(SemVer.of(0, 0, 0))
+        launcherVersion = Some(SemVer.of(1, 0, 1))
       )
 
-      checkVersion() shouldEqual SemVer.of(0, 0, 0)
-      val process = startLauncher(Seq("upgrade", "0.0.3"))
+      checkVersion() shouldEqual SemVer.of(1, 0, 1)
+      val process = startLauncher(Seq("upgrade", "1.0.4"))
       try {
-        process.join(timeoutSeconds = 30) should returnSuccess
+        process.join(timeoutSeconds = 60) should returnSuccess
 
-        checkVersion() shouldEqual SemVer.of(0, 0, 3)
+        checkVersion() shouldEqual SemVer.of(1, 0, 4)
 
         val launchedVersions = Seq(
-          "0.0.0",
-          "0.0.0",
-          "0.0.1",
-          "0.0.2",
-          "0.0.3"
+          "1.0.1",
+          "1.0.1",
+          "1.0.2",
+          "1.0.4"
         )
 
         val reportedLaunchLog = TestHelpers
@@ -293,7 +297,7 @@ class UpgradeSpec
     "that action with the upgraded launcher" ignore {
       prepareDistribution(
         portable        = true,
-        launcherVersion = Some(SemVer.of(0, 0, 2))
+        launcherVersion = Some(SemVer.of(1, 0, 2))
       )
       val enginesPath = getTestDirectory / "enso" / "dist"
       Files.createDirectories(enginesPath)
@@ -302,7 +306,7 @@ class UpgradeSpec
       //  engine distribution can be used in the test
 //      FileSystem.copyDirectory(
 //        Path.of("target/distribution/"),
-//        enginesPath / "0.1.0"
+//        enginesPath / "1.0.2"
 //      )
       val script  = getTestDirectory / "script.enso"
       val message = "Hello from test"
@@ -320,17 +324,20 @@ class UpgradeSpec
           script.toAbsolutePath.toString,
           "--use-system-jvm",
           "--use-enso-version",
-          "0.1.0"
+          "1.0.2"
         )
       )
-      result should returnSuccess
-      result.stdout should include(message)
+
+      withClue(result) {
+        result should returnSuccess
+        result.stdout should include(message)
+      }
     }
 
     "fail if another upgrade is running in parallel" taggedAs Flaky in {
       prepareDistribution(
         portable        = true,
-        launcherVersion = Some(SemVer.of(0, 0, 1))
+        launcherVersion = Some(SemVer.of(1, 0, 1))
       )
 
       val syncLocker = new FileLockManager(getTestDirectory / "enso" / "lock")
@@ -347,7 +354,7 @@ class UpgradeSpec
       val firstSuspended = startLauncher(
         Seq(
           "upgrade",
-          "0.0.2",
+          "1.0.2",
           "--internal-emulate-repository-wait",
           "--launcher-log-level=trace"
         )
@@ -376,7 +383,31 @@ class UpgradeSpec
       }
 
       firstSuspended.join(timeoutSeconds = 20) should returnSuccess
-      checkVersion() shouldEqual SemVer.of(0, 0, 2)
+      checkVersion() shouldEqual SemVer.of(1, 0, 2)
+    }
+
+    "should return a useful error message if upgrade cannot be performed because no upgrade path exists" taggedAs Flaky in {
+      prepareDistribution(
+        portable        = true,
+        launcherVersion = Some(SemVer.of(0, 0, 0))
+      )
+
+      val result = run(Seq("upgrade", "1.0.4"))
+      result.exitCode shouldEqual 1
+      result.stdout should include("No upgrade path exists")
+    }
+
+    "should allow to upgrade the development version ignoring the version check, but warn about it" taggedAs Flaky in {
+      prepareDistribution(
+        portable        = true,
+        launcherVersion = Some(SemVer.of(0, 0, 0, "dev"))
+      )
+
+      val result = run(Seq("upgrade", "1.0.4"))
+      result should returnSuccess
+      withClue(result) {
+        result.stdout should include("ignoring")
+      }
     }
   }
 }
