@@ -410,7 +410,8 @@ class UpgradeSpec
       val result = run(Seq("upgrade", "1.0.4"))
       result should returnSuccess
       withClue(result) {
-        result.stdout should include("ignoring")
+        result.stdout should include("development version")
+        result.stdout should include("minimum version check can be ignored")
       }
     }
   }

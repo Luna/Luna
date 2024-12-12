@@ -97,7 +97,39 @@ class LauncherUpgrader(
           }
         }
       }
-      if (release.canPerformUpgradeFromCurrentVersion)
+
+      val canPerformDirectUpgrade: Boolean =
+        if (release.canPerformUpgradeFromCurrentVersion) true
+        else if (CurrentVersion.isDevVersion) {
+          logger.warn(
+            s"Cannot upgrade to version ${release.version} directly, because " +
+            s"it requires at least version " +
+            s"${release.minimumVersionToPerformUpgrade}."
+          )
+          if (globalCLIOptions.autoConfirm) {
+            logger.warn(
+              s"However, the current version (${CurrentVersion.version}) is " +
+              s"a development version, so the minimum version check can be " +
+              s"ignored. Since `auto-confirm` is set, the upgrade will " +
+              s"continue. But please be warned that it may fail due to " +
+              s"incompatibility."
+            )
+            true
+          } else {
+            logger.warn(
+              s"Since the current version (${CurrentVersion.version}) is " +
+              s"a development version, the minimum version check can be " +
+              s"ignored. However, please be warned that the upgrade " +
+              s"may fail due to incompatibility."
+            )
+            CLIOutput.askConfirmation(
+              "Do you want to continue upgrading to this version " +
+              "despite the warning?"
+            )
+          }
+        } else false
+
+      if (canPerformDirectUpgrade)
         performUpgradeTo(release)
       else
         performStepByStepUpgrade(release)
@@ -240,7 +272,7 @@ class LauncherUpgrader(
     // current version)
     val minimumValidVersion = recentEnoughVersions.sorted.headOption.getOrElse {
       throw UpgradeError(
-        s"Upgrade failed: To continue upgrade, a version at least " +
+        s"Upgrade failed: To continue upgrade, at least version " +
         s"${currentTargetRelease.minimumVersionToPerformUpgrade} is required, " +
         s"but no upgrade path has been found from the current version " +
         s"${CurrentVersion.version}."
