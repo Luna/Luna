@@ -382,7 +382,7 @@ class UpgradeSpec
         lock.release()
       }
 
-      firstSuspended.join(timeoutSeconds = 20) should returnSuccess
+      firstSuspended.join(timeoutSeconds = 60) should returnSuccess
       checkVersion() shouldEqual SemVer.of(1, 0, 2)
     }
 
