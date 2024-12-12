@@ -17,7 +17,6 @@ import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypeOfNode;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.number.EnsoBigInteger;
-import org.enso.interpreter.runtime.type.TypesGen;
 
 /** An implementation of the payload check against the expected panic type. */
 @NodeInfo(shortName = "IsValueOfTypeNode")
@@ -58,28 +57,32 @@ public abstract class IsValueOfTypeNode extends Node {
 
   private static boolean typeAndCheck(
       Object payload,
-      Object expectedType,
+      Object expectedMeta,
       boolean allTypes,
       TypeOfNode typeOfNode,
       IsSameObjectNode isSameObject,
       CountingConditionProfile isSameObjectProfile) {
-    var arr = typeOfNode.findAllTypesOrNull(payload, allTypes);
-    if (arr == null) {
-      return false;
-    }
-    for (var tpeOfPayload : arr) {
-      if (isSameObjectProfile.profile(isSameObject.execute(expectedType, tpeOfPayload))) {
-        return true;
-      } else if (TypesGen.isType(tpeOfPayload)) {
-        Type tpe = TypesGen.asType(tpeOfPayload);
-        var ctx = EnsoContext.get(typeOfNode);
-        for (var superTpe : tpe.allTypes(ctx)) {
-          boolean testSuperTpe = isSameObject.execute(expectedType, superTpe);
-          if (testSuperTpe) {
-            return true;
+    if (expectedMeta instanceof Type expectedType) {
+      var arr = typeOfNode.findAllTypesOrNull(payload, allTypes);
+      if (arr == null) {
+        return false;
+      }
+      for (var tpeOfPayload : arr) {
+        if (isSameObjectProfile.profile(isSameObject.execute(expectedType, tpeOfPayload))) {
+          return true;
+        } else {
+          var ctx = EnsoContext.get(typeOfNode);
+          for (var superTpe : tpeOfPayload.allTypes(ctx)) {
+            boolean testSuperTpe = isSameObject.execute(expectedType, superTpe);
+            if (testSuperTpe) {
+              return true;
+            }
           }
         }
       }
+    } else {
+      var tpe = typeOfNode.findTypeOrError(payload);
+      return isSameObject.execute(expectedMeta, tpe);
     }
     return false;
   }
