@@ -37,7 +37,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 
-import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery, type QueryClient } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { Slide, ToastContainer } from 'react-toastify'
 import * as z from 'zod'
@@ -59,9 +59,29 @@ import {
   SUBSCRIBE_PATH,
   SUBSCRIBE_SUCCESS_PATH,
 } from '#/appUtils'
-
+import { useInitAuthService } from '#/authentication/service'
+import { RouterProvider } from '#/components/aria'
+import { EnsoDevtools } from '#/components/Devtools'
+import { ErrorBoundary } from '#/components/ErrorBoundary'
+import { Suspense } from '#/components/Suspense'
 import { createBindings, type DashboardBindingKey } from '#/configurations/inputBindings'
-
+import type { GraphEditorRunner } from '#/layouts/Editor'
+import { OpenAppWatcher } from '#/layouts/OpenAppWatcher'
+import VersionChecker from '#/layouts/VersionChecker'
+import AboutModal from '#/modals/AboutModal'
+import { AgreementsModal } from '#/modals/AgreementsModal'
+import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
+import { SetupOrganizationAfterSubscribe } from '#/modals/SetupOrganizationAfterSubscribe'
+import ConfirmRegistration from '#/pages/authentication/ConfirmRegistration'
+import ForgotPassword from '#/pages/authentication/ForgotPassword'
+import Login from '#/pages/authentication/Login'
+import Registration from '#/pages/authentication/Registration'
+import ResetPassword from '#/pages/authentication/ResetPassword'
+import RestoreAccount from '#/pages/authentication/RestoreAccount'
+import { Setup } from '#/pages/authentication/Setup'
+import Dashboard from '#/pages/dashboard/Dashboard'
+import { Subscribe } from '#/pages/subscribe/Subscribe'
+import { SubscribeSuccess } from '#/pages/subscribe/SubscribeSuccess'
 import AuthProvider, {
   FullUserSession,
   GuestLayout,
@@ -73,6 +93,7 @@ import AuthProvider, {
 } from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import DriveProvider from '#/providers/DriveProvider'
+import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
 import LocalStorageProvider, {
@@ -84,43 +105,13 @@ import ModalProvider, { useSetModal } from '#/providers/ModalProvider'
 import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import SessionProvider from '#/providers/SessionProvider'
 import { useText } from '#/providers/TextProvider'
-
-import ConfirmRegistration from '#/pages/authentication/ConfirmRegistration'
-import ForgotPassword from '#/pages/authentication/ForgotPassword'
-import Login from '#/pages/authentication/Login'
-import Registration from '#/pages/authentication/Registration'
-import ResetPassword from '#/pages/authentication/ResetPassword'
-import RestoreAccount from '#/pages/authentication/RestoreAccount'
-import { Setup } from '#/pages/authentication/Setup'
-import Dashboard from '#/pages/dashboard/Dashboard'
-import { Subscribe } from '#/pages/subscribe/Subscribe'
-import { SubscribeSuccess } from '#/pages/subscribe/SubscribeSuccess'
-
-import type { GraphEditorRunner } from '#/layouts/Editor'
-import { OpenAppWatcher } from '#/layouts/OpenAppWatcher'
-import VersionChecker from '#/layouts/VersionChecker'
-
-import { RouterProvider } from '#/components/aria'
-import { EnsoDevtools } from '#/components/Devtools'
-import { ErrorBoundary } from '#/components/ErrorBoundary'
-import { Suspense } from '#/components/Suspense'
-
-import AboutModal from '#/modals/AboutModal'
-import { AgreementsModal } from '#/modals/AgreementsModal'
-import { SetupOrganizationAfterSubscribe } from '#/modals/SetupOrganizationAfterSubscribe'
-
 import LocalBackend from '#/services/LocalBackend'
 import ProjectManager, * as projectManager from '#/services/ProjectManager'
 import RemoteBackend from '#/services/RemoteBackend'
-
-import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 import { isElementPartOfMonaco, isElementTextInput } from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
-
-import { useInitAuthService } from '#/authentication/service'
-import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
 
 declare module '#/utilities/LocalStorage' {
   /** */

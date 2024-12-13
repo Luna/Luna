@@ -43,7 +43,7 @@ import type { AccessToken } from 'enso-common/src/accessToken'
 import { isOnElectron } from 'enso-common/src/detect'
 import { toRfc3339, type Rfc3339DateTime } from 'enso-common/src/utilities/data/dateTime'
 
-import { AmplifyConfig, toNestedAmplifyConfig } from '#/authentication/service'
+import { toNestedAmplifyConfig, type AmplifyConfig } from '#/authentication/service'
 import type { Logger } from '#/providers/LoggerProvider'
 
 /**

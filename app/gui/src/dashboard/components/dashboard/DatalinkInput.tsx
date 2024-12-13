@@ -1,36 +1,23 @@
 /** @file A dynamic wizard for creating an arbitrary type of Datalink. */
-import SCHEMA from '#/data/datalinkSchema.json' with { type: 'json' }
-import * as datalinkValidator from '#/data/datalinkValidator'
-
-import type * as jsonSchemaInput from '#/components/JSONSchemaInput'
-import JSONSchemaInput from '#/components/JSONSchemaInput'
+import { assert } from 'enso-common/src/utilities/error'
 
 import { FieldError } from '#/components/aria'
 import type { FieldPath, FormInstance, TSchema } from '#/components/AriaComponents'
 import { Form } from '#/components/AriaComponents'
-import * as error from '#/utilities/error'
-
-// =================
-// === Constants ===
-// =================
+import type * as jsonSchemaInput from '#/components/JSONSchemaInput'
+import JSONSchemaInput from '#/components/JSONSchemaInput'
+import SCHEMA from '#/data/datalinkSchema.json' with { type: 'json' }
+import * as datalinkValidator from '#/data/datalinkValidator'
 
 const DEFS: Record<string, object> = SCHEMA.$defs
-
-// ====================
-// === getValidator ===
-// ====================
 
 /**
  * Get a known schema using a path.
  * @throws {Error} when there is no schema present at the given path.
  */
 function getValidator(path: string) {
-  return error.assert<(value: unknown) => boolean>(() => datalinkValidator.AJV.getSchema(path))
+  return assert<(value: unknown) => boolean>(() => datalinkValidator.AJV.getSchema(path))
 }
-
-// =====================
-// === DataLinkInput ===
-// =====================
 
 /** Props for a {@link DatalinkInput}. */
 export type DatalinkInputProps = Omit<

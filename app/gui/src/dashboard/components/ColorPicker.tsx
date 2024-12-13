@@ -1,14 +1,14 @@
 /** @file A color picker to select from a predetermined list of colors. */
-import { ForwardedRef, ReactNode } from 'react'
+import type { ForwardedRef, ReactNode } from 'react'
 
 import {
   COLOR_STRING_TO_COLOR,
   COLORS,
-  LChColor,
   lChColorToCssColor,
+  type LChColor,
 } from 'enso-common/src/services/Backend'
 
-import { Radio, RadioGroupProps } from '#/components/aria'
+import { Radio, type RadioGroupProps } from '#/components/aria'
 import FocusRing from '#/components/styled/FocusRing'
 import RadioGroup from '#/components/styled/RadioGroup'
 import { useHandleFocusMove } from '#/hooks/focusHooks'

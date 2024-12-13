@@ -2,7 +2,7 @@
  * @file A hook that turns a `set` function for an {@link AssetTreeNode} to a `set` function
  * on its item, for a specific type of item.
  */
-import { Dispatch, SetStateAction, useCallback } from 'react'
+import { useCallback, type Dispatch, type SetStateAction } from 'react'
 
 import type { AnyAsset } from 'enso-common/src/services/Backend'
 

@@ -1,25 +1,22 @@
 /** @file Catches errors in child components. */
-import * as React from 'react'
+import type { JSX, PropsWithChildren } from 'react'
 
-import * as sentry from '@sentry/react'
-import * as reactQuery from '@tanstack/react-query'
-import * as errorBoundary from 'react-error-boundary'
+import { captureException } from '@sentry/react'
+import { QueryErrorResetBoundary } from '@tanstack/react-query'
+import {
+  ErrorBoundary as ReactErrorBoundary,
+  type FallbackProps,
+  type ErrorBoundaryProps as ReactErrorBoundaryProps,
+} from 'react-error-boundary'
 
-import * as detect from 'enso-common/src/detect'
+import { IS_DEV_MODE } from 'enso-common/src/detect'
+import { getMessageOrToString, tryGetStack } from 'enso-common/src/utilities/error'
 
-import * as offlineHooks from '#/hooks/offlineHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as result from '#/components/Result'
-
+import { Alert, Button, ButtonGroup, Separator, Text } from '#/components/AriaComponents'
+import { Result, type ResultProps } from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as errorUtils from '#/utilities/error'
-
-// =====================
-// === ErrorBoundary ===
-// =====================
+import { useOffline } from '#/hooks/offlineHooks'
+import { useText } from '#/providers/TextProvider'
 
 /** Arguments for the {@link ErrorBoundaryProps.onBeforeFallbackShown} callback. */
 export interface OnBeforeFallbackShownArgs {
@@ -30,12 +27,9 @@ export interface OnBeforeFallbackShownArgs {
 
 /** Props for an {@link ErrorBoundary}. */
 export interface ErrorBoundaryProps
-  extends Readonly<React.PropsWithChildren>,
+  extends Readonly<PropsWithChildren>,
     Readonly<
-      Pick<
-        errorBoundary.ErrorBoundaryProps,
-        'FallbackComponent' | 'onError' | 'onReset' | 'resetKeys'
-      >
+      Pick<ReactErrorBoundaryProps, 'FallbackComponent' | 'onError' | 'onReset' | 'resetKeys'>
     > {
   /** Called before the fallback is shown. */
   readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
@@ -60,9 +54,9 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   } = props
 
   return (
-    <reactQuery.QueryErrorResetBoundary>
+    <QueryErrorResetBoundary>
       {({ reset }) => (
-        <errorBoundary.ErrorBoundary
+        <ReactErrorBoundary
           FallbackComponent={(fallbackProps) => (
             <FallbackComponent
               {...fallbackProps}
@@ -73,7 +67,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
             />
           )}
           onError={(error, info) => {
-            sentry.captureException(error, { extra: { info } })
+            captureException(error, { extra: { info } })
             onError(error, info)
           }}
           onReset={(details) => {
@@ -83,13 +77,13 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
           {...rest}
         />
       )}
-    </reactQuery.QueryErrorResetBoundary>
+    </QueryErrorResetBoundary>
   )
 }
 
 /** Props for a {@link ErrorDisplay}. */
-export interface ErrorDisplayProps extends errorBoundary.FallbackProps {
-  readonly status?: result.ResultProps['status']
+export interface ErrorDisplayProps extends FallbackProps {
+  readonly status?: ResultProps['status']
   readonly onBeforeFallbackShown?: (args: OnBeforeFallbackShownArgs) => void
   readonly resetQueries?: () => void
   readonly title?: string | undefined
@@ -98,9 +92,9 @@ export interface ErrorDisplayProps extends errorBoundary.FallbackProps {
 }
 
 /** Default fallback component to show when there is an error. */
-export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
-  const { getText } = textProvider.useText()
-  const { isOffline } = offlineHooks.useOffline()
+export function ErrorDisplay(props: ErrorDisplayProps): JSX.Element {
+  const { getText } = useText()
+  const { isOffline } = useOffline()
 
   const {
     error,
@@ -112,8 +106,8 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
     resetQueries = () => {},
   } = props
 
-  const message = errorUtils.getMessageOrToString(error)
-  const stack = errorUtils.tryGetStack(error)
+  const message = getMessageOrToString(error)
+  const stack = tryGetStack(error)
 
   onBeforeFallbackShown?.({ error, resetErrorBoundary, resetQueries })
 
@@ -122,48 +116,42 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
   })
 
   return (
-    <result.Result className="h-full" status={status} title={title} subtitle={subtitle}>
-      <ariaComponents.ButtonGroup align="center">
-        <ariaComponents.Button
-          variant="submit"
-          size="small"
-          rounded="full"
-          className="w-24"
-          onPress={onReset}
-        >
+    <Result className="h-full" status={status} title={title} subtitle={subtitle}>
+      <ButtonGroup align="center">
+        <Button variant="submit" size="small" rounded="full" className="w-24" onPress={onReset}>
           {getText('tryAgain')}
-        </ariaComponents.Button>
-      </ariaComponents.ButtonGroup>
+        </Button>
+      </ButtonGroup>
 
-      {detect.IS_DEV_MODE && stack != null && (
+      {IS_DEV_MODE && stack != null && (
         <div className="mt-6">
-          <ariaComponents.Separator className="my-2" />
+          <Separator className="my-2" />
 
-          <ariaComponents.Text color="primary" variant="h1" className="text-start">
+          <Text color="primary" variant="h1" className="text-start">
             {getText('developerInfo')}
-          </ariaComponents.Text>
+          </Text>
 
-          <ariaComponents.Text color="danger" variant="body">
+          <Text color="danger" variant="body">
             {getText('errorColon')}
             {message}
-          </ariaComponents.Text>
+          </Text>
 
-          <ariaComponents.Alert
+          <Alert
             className="mx-auto mt-2 max-h-[80vh] max-w-screen-lg overflow-auto"
             variant="neutral"
           >
-            <ariaComponents.Text
+            <Text
               elementType="pre"
               className="whitespace-pre-wrap text-left"
               color="primary"
               variant="body"
             >
               {stack}
-            </ariaComponents.Text>
-          </ariaComponents.Alert>
+            </Text>
+          </Alert>
         </div>
       )}
-    </result.Result>
+    </Result>
   )
 }
 

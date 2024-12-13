@@ -3,23 +3,26 @@
  *
  * This file contains hooks for using Zustand store with tearing transitions.
  */
-import type { DispatchWithoutAction, Reducer, RefObject } from 'react'
-import { useEffect, useReducer, useRef } from 'react'
-import { type StoreApi } from 'zustand'
+import {
+  useEffect,
+  useReducer,
+  useRef,
+  type DispatchWithoutAction,
+  type Reducer,
+  type RefObject,
+} from 'react'
+import type { StoreApi } from 'zustand'
 import { useStoreWithEqualityFn } from 'zustand/traditional'
-import { objectEquality, refEquality, shallowEquality } from '../utilities/equalities'
+
+import { objectEquality, refEquality, shallowEquality } from 'enso-common/src/utilities/equalities'
 
 /**
  * A type that allows to choose between different equality functions.
  */
 export type AreEqual<T> = EqualityFunction<T> | EqualityFunctionName
-/**
- * Custom equality function.
- */
+/** Custom equality function. */
 export type EqualityFunction<T> = (a: T, b: T) => boolean
-/**
- * Equality function name from a list of predefined ones.
- */
+/** Equality function name from a list of predefined ones. */
 export type EqualityFunctionName = 'object' | 'shallow' | 'strict'
 
 const EQUALITY_FUNCTIONS: Record<EqualityFunctionName, (a: unknown, b: unknown) => boolean> = {
