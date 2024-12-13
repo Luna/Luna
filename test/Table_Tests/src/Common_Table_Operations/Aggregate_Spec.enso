@@ -965,7 +965,7 @@ add_aggregate_specs suite_builder setup =
                 materialized2.columns.at 0 . value_type . should_be_a (Value_Type.Integer ...)
 
         if setup.is_database.not then group_builder.specify "should return a Decimal column when the sum overflows 64-bit Integers" <|
-            table = table_builder [["int_column", [2^62, 2^62, 2^62, 2^62, 2^62, 2^62, 2^62]]]
+            table = table_builder [["int_column", [2^62, 2^62, 2^62, 2^62, 2^62, 2^62, 2^62, 1, 2, 4]], ["group", ["big", "big", "big", "big", "big", "big", "big", "small", "small", "small"]]]
             table.at "int_column" . value_type . should_equal Value_Type.Integer
 
             result = table.aggregate [] [Sum "int_column"]
@@ -975,8 +975,20 @@ add_aggregate_specs suite_builder setup =
                 Problems.assume_no_problems materialized
                 materialized.column_count . should_equal 1
                 materialized.columns.at 0 . name . should_equal "Sum int_column"
-                materialized.columns.at 0 . to_vector . should_equal [(2^62) * table.row_count]
+                materialized.columns.at 0 . to_vector . should_equal [((2^62) * 7) + 7]
                 materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
+
+            result2 = table.aggregate ["group"] [Sum "int_column"] . sort "group"
+            within_table result2 <|
+                result2.row_count . should_equal 2
+                materialized2 = materialize result2
+                Problems.assume_no_problems materialized2
+                materialized2.column_count . should_equal 2
+                materialized2.columns.at 0 . name . should_equal "group"
+                materialized2.columns.at 0 . to_vector . should_equal ["big", "small"]
+                materialized2.columns.at 1 . name . should_equal "Sum int_column"
+                materialized2.columns.at 1 . to_vector . should_equal [(2^62) * 7, 7]
+                materialized2.columns.at 1 . value_type . should_be_a (Value_Type.Decimal ...)
 
         if setup.is_database.not then group_builder.specify "should allow to sum big-integer column" <|
             table = table_builder [["big_column", [2^100, 2^70]]]
@@ -989,6 +1001,23 @@ add_aggregate_specs suite_builder setup =
                 materialized.column_count . should_equal 1
                 materialized.columns.at 0 . name . should_equal "Sum big_column"
                 materialized.columns.at 0 . to_vector . should_equal [2^100 + 2^70]
+                materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
+
+    suite_builder.group prefix+"Table.aggregate Average" group_builder->
+        # The types of aggregates are only tested in-memory, in DB they will depend on each backend
+        if setup.is_database.not then group_builder.specify "should return a Decimal column when input is Decimal" <|
+            table = table_builder [["X", [2^62, 2^62, 2^62, 2^62]]]
+                . cast "X" (Value_Type.Decimal scale=0)
+            result = table.aggregate [] [Average "X"]
+            within_table result <|
+                result.row_count . should_equal 1
+                materialized = materialize result
+                Problems.assume_no_problems materialized
+                materialized.column_count . should_equal 1
+                materialized.columns.at 0 . name . should_equal "Average X"
+                materialized.columns.at 0 . to_vector . should_equal [2^62]
+                # Map to text to ensure that the equality is _exact_ and does not rely on Float rounding
+                materialized.columns.at 0 . to_vector . map .to_text . should_equal [(2^62).to_text]
                 materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
 
     # Special case for Snowflake until the https://github.com/enso-org/enso/issues/10412 ticket is resolved.
