@@ -3,8 +3,8 @@
 import type * as queryCore from '@tanstack/query-core'
 
 import * as object from '../../utilities/data/object'
-import type Backend from './services/Backend'
-import * as backendModule from './services/Backend'
+import type Backend from '../Backend'
+import * as backendModule from '../Backend'
 
 /** The properties of the Backend type that are methods. */
 export type BackendMethods = object.ExtractKeys<Backend, object.MethodOf<Backend>>
