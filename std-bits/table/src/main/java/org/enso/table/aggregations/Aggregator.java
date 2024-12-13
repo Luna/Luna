@@ -1,9 +1,7 @@
 package org.enso.table.aggregations;
 
 import java.util.List;
-
 import org.enso.table.data.column.builder.Builder;
-import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.problems.ProblemAggregator;
 
 /** Interface used to define aggregate columns. */

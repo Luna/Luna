@@ -9,31 +9,36 @@ import org.enso.table.data.column.builder.DoubleBuilder;
 import org.enso.table.data.column.builder.InferredIntegerBuilder;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.storage.Storage;
+import org.enso.table.data.column.storage.numeric.AbstractLongStorage;
+import org.enso.table.data.column.storage.numeric.BigIntegerStorage;
+import org.enso.table.data.column.storage.numeric.DoubleStorage;
 import org.enso.table.data.column.storage.type.BigIntegerType;
 import org.enso.table.data.column.storage.type.FloatType;
 import org.enso.table.data.column.storage.type.IntegerType;
+import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.table.Column;
-import org.enso.table.data.table.problems.InvalidAggregation;
 import org.enso.table.problems.ProblemAggregator;
 import org.graalvm.polyglot.Context;
 
 /** Aggregate Column computing the total value in a group. */
 public class Sum extends Aggregator {
   private final Storage<?> inputStorage;
+  private final StorageType inputType;
 
   public Sum(String name, Column column) {
     super(name);
     this.inputStorage = column.getStorage();
+    inputType = inputStorage.inferPreciseType();
   }
 
   @Override
   public Builder makeBuilder(int size, ProblemAggregator problemAggregator) {
-    var preciseInputType = inputStorage.inferPreciseType();
-    return switch (preciseInputType) {
+    return switch (inputType) {
       case IntegerType integerType -> new InferredIntegerBuilder(size, problemAggregator);
       case BigIntegerType bigIntegerType -> new BigIntegerBuilder(size, problemAggregator);
       case FloatType floatType -> DoubleBuilder.createDoubleBuilder(size, problemAggregator);
-      default -> throw new IllegalStateException("Unexpected input type for Sum aggregate: " + preciseInputType);
+      default -> throw new IllegalStateException(
+          "Unexpected input type for Sum aggregate: " + inputType);
     };
   }
 
@@ -41,17 +46,28 @@ public class Sum extends Aggregator {
   public Object aggregate(List<Integer> indexes, ProblemAggregator problemAggregator) {
     MapOperationProblemAggregator innerAggregator =
         new MapOperationProblemAggregator(problemAggregator, getName());
-    Context context = Context.getCurrent();
-    SumAccumulator accumulator = new SumAccumulator();
-    for (int row : indexes) {
-      Object value = inputStorage.getItemBoxed(row);
-      accumulator.add(value);
-      context.safepoint();
-    }
+    SumAccumulator accumulator = makeAccumulator();
+    accumulator.accumulate(indexes, inputStorage);
     return accumulator.summarize();
   }
 
-  private static class SumAccumulator {
+  private SumAccumulator makeAccumulator() {
+    return switch (inputType) {
+      case IntegerType integerType -> new IntegerSumAccumulator();
+      case BigIntegerType bigIntegerType -> new IntegerSumAccumulator();
+      case FloatType floatType -> new FloatSumAccumulator();
+      default -> throw new IllegalStateException(
+          "Unexpected input type for Sum aggregate: " + inputType);
+    };
+  }
+
+  private abstract static class SumAccumulator {
+    abstract void accumulate(List<Integer> indexes, Storage<?> storage);
+
+    abstract Object summarize();
+  }
+
+  private static class IntegerSumAccumulator extends SumAccumulator {
     private Object accumulator = null;
 
     void add(Object value) {
@@ -65,11 +81,32 @@ public class Sum extends Aggregator {
       } else if (value instanceof BigInteger) {
         addBigInteger((BigInteger) value);
       } else {
-        Double valueAsDouble = NumericConverter.tryConvertingToDouble(value);
-        if (valueAsDouble != null) {
-          addDouble(valueAsDouble);
-        } else {
-          throw new IllegalStateException("Unexpected value type: " + value.getClass());
+        throw new IllegalStateException("Unexpected value type: " + value.getClass());
+      }
+    }
+
+    @Override
+    void accumulate(List<Integer> indexes, Storage<?> storage) {
+      Context context = Context.getCurrent();
+      if (storage instanceof AbstractLongStorage longStorage) {
+        for (int row : indexes) {
+          if (!longStorage.isNothing(row)) {
+            addLong(longStorage.getItem(row));
+          }
+          context.safepoint();
+        }
+      } else if (storage instanceof BigIntegerStorage bigIntegerStorage) {
+        for (int row : indexes) {
+          BigInteger value = bigIntegerStorage.getItem(row);
+          if (value != null) {
+            addBigInteger(value);
+          }
+          context.safepoint();
+        }
+      } else {
+        for (int row : indexes) {
+          add(storage.getItemBoxed(row));
+          context.safepoint();
         }
       }
     }
@@ -86,17 +123,16 @@ public class Sum extends Aggregator {
         case BigInteger accumulatorAsBigInteger -> {
           accumulator = accumulatorAsBigInteger.add(BigInteger.valueOf(value));
         }
-        case Double accumulatorAsDouble -> {
-          accumulator = accumulatorAsDouble + value;
-        }
         case null -> {
           accumulator = value;
         }
-        default -> throw new IllegalStateException("Unexpected accumulator type: " + accumulator.getClass());
+        default -> throw new IllegalStateException(
+            "Unexpected accumulator type: " + accumulator.getClass());
       }
     }
 
     private void addBigInteger(BigInteger value) {
+      assert value != null;
       switch (accumulator) {
         case Long accumulatorAsLong -> {
           accumulator = BigInteger.valueOf(accumulatorAsLong).add(value);
@@ -104,35 +140,62 @@ public class Sum extends Aggregator {
         case BigInteger accumulatorAsBigInteger -> {
           accumulator = accumulatorAsBigInteger.add(value);
         }
-        case Double accumulatorAsDouble -> {
-          accumulator = accumulatorAsDouble + value.doubleValue();
-        }
         case null -> {
           accumulator = value;
         }
-        default -> throw new IllegalStateException("Unexpected accumulator type: " + accumulator.getClass());
-      }
-    }
-
-    private void addDouble(double value) {
-      switch (accumulator) {
-        case Long accumulatorAsLong -> {
-          accumulator = ((double) accumulatorAsLong) + value;
-        }
-        case BigInteger accumulatorAsBigInteger -> {
-          accumulator = accumulatorAsBigInteger.doubleValue() + value;
-        }
-        case Double accumulatorAsDouble -> {
-          accumulator = accumulatorAsDouble + value;
-        }
-        case null -> {
-          accumulator = value;
-        }
-        default -> throw new IllegalStateException("Unexpected accumulator type: " + accumulator.getClass());
+        default -> throw new IllegalStateException(
+            "Unexpected accumulator type: " + accumulator.getClass());
       }
     }
 
     Object summarize() {
+      return accumulator;
+    }
+  }
+
+  private static class FloatSumAccumulator extends SumAccumulator {
+    private Double accumulator = null;
+
+    void add(Object value) {
+      if (value == null) {
+        return;
+      }
+
+      Double valueAsDouble = NumericConverter.tryConvertingToDouble(value);
+      if (valueAsDouble != null) {
+        addDouble(valueAsDouble);
+      } else {
+        throw new IllegalStateException("Unexpected value type: " + value.getClass());
+      }
+    }
+
+    @Override
+    void accumulate(List<Integer> indexes, Storage<?> storage) {
+      Context context = Context.getCurrent();
+      if (storage instanceof DoubleStorage doubleStorage) {
+        for (int row : indexes) {
+          if (!doubleStorage.isNothing(row)) {
+            addDouble(doubleStorage.getItem(row));
+          }
+          context.safepoint();
+        }
+      } else {
+        for (int row : indexes) {
+          add(storage.getItemBoxed(row));
+          context.safepoint();
+        }
+      }
+    }
+
+    private void addDouble(double value) {
+      if (accumulator == null) {
+        accumulator = value;
+      } else {
+        accumulator += value;
+      }
+    }
+
+    Double summarize() {
       return accumulator;
     }
   }
