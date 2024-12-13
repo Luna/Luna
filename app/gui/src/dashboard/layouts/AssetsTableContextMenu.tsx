@@ -6,8 +6,13 @@ import type { MouseEvent, MutableRefObject } from 'react'
 
 import { useStore } from 'zustand'
 
-import type Backend from 'enso-common/src/services/Backend'
-import { AssetType, Plan, type AssetId, type DirectoryId } from 'enso-common/src/services/Backend'
+import {
+  AssetType,
+  Plan,
+  type AssetId,
+  type Backend,
+  type DirectoryId,
+} from 'enso-common/src/services/Backend'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'

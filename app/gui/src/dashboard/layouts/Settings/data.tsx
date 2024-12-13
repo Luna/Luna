@@ -4,11 +4,11 @@ import type { HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute, ReactNode 
 import type { QueryClient } from '@tanstack/react-query'
 import * as z from 'zod'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   EmailAddress,
   HttpsUrl,
   isUserOnPlanWithOrganization,
+  type Backend,
   type OrganizationInfo,
   type User,
 } from 'enso-common/src/services/Backend'

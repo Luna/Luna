@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   AssetType,
   getAssetPermissionId,
   getAssetPermissionName,
   type Asset,
   type AssetPermission,
+  type Backend,
   type UserPermissionIdentifier,
 } from 'enso-common/src/services/Backend'
 import type { TextId } from 'enso-common/src/text'

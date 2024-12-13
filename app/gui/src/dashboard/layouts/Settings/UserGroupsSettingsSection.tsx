@@ -3,10 +3,10 @@ import { useMemo, useRef } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   isPlaceholderUserGroupId,
   isUserGroupId,
+  type Backend,
   type User,
   type UserGroupInfo,
 } from 'enso-common/src/services/Backend'

@@ -21,7 +21,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import * as z from 'zod'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   assetIsProject,
   AssetType,
@@ -32,6 +31,7 @@ import {
   ProjectState,
   type AnyAsset,
   type AssetId,
+  type Backend,
   type DirectoryAsset,
   type DirectoryId,
   type LabelName,

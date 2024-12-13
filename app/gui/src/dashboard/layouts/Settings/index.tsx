@@ -3,7 +3,7 @@ import * as React from 'react'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
+import type { Backend } from 'enso-common/src/services/Backend'
 import { includesPredicate } from 'enso-common/src/utilities/data/array'
 import { regexEscape } from 'enso-common/src/utilities/data/string'
 

@@ -1,14 +1,14 @@
 /** @file A list of previous versions of an asset. */
-import * as React from 'react'
+import { useState } from 'react'
 
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   AssetType,
   BackendType,
   S3ObjectVersionId,
   type AnyAsset,
+  type Backend,
   type S3ObjectVersion,
 } from 'enso-common/src/services/Backend'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
@@ -73,9 +73,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
 
-  const [placeholderVersions, setPlaceholderVersions] = React.useState<readonly S3ObjectVersion[]>(
-    [],
-  )
+  const [placeholderVersions, setPlaceholderVersions] = useState<readonly S3ObjectVersion[]>([])
 
   const versionsQuery = useSuspenseQuery(assetVersionsQueryOptions({ assetId: item.id, backend }))
 

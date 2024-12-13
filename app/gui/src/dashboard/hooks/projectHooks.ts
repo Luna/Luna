@@ -2,7 +2,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   AssetType,
   BackendType,
@@ -10,6 +9,7 @@ import {
   type AnyAsset,
   type Asset,
   type AssetId,
+  type Backend,
   type DirectoryId,
   type ProjectAsset,
 } from 'enso-common/src/services/Backend'

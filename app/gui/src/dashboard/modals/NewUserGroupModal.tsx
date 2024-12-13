@@ -3,7 +3,7 @@ import { useMemo, useState, type MouseEvent } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
+import { type Backend } from 'enso-common/src/services/Backend'
 import { normalizeName } from 'enso-common/src/utilities/data/string'
 
 import { FieldError, Heading, Input, Label, TextField } from '#/components/aria'

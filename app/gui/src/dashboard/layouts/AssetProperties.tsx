@@ -3,12 +3,12 @@ import * as React from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   AssetType,
   BackendType,
   Plan,
   type AnyAsset,
+  type Backend,
   type DatalinkId,
 } from 'enso-common/src/services/Backend'
 import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'

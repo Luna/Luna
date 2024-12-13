@@ -3,8 +3,12 @@ import { useMemo } from 'react'
 
 import { useQuery } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
-import { BackendType, ProjectState, type ProjectAsset } from 'enso-common/src/services/Backend'
+import {
+  BackendType,
+  ProjectState,
+  type Backend,
+  type ProjectAsset,
+} from 'enso-common/src/services/Backend'
 
 import ArrowUpIcon from '#/assets/arrow_up.svg'
 import PlayIcon from '#/assets/play.svg'

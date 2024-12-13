@@ -7,9 +7,10 @@
  */
 import invariant from 'tiny-invariant'
 
-import Backend, {
+import {
   Address,
   AssetType,
+  Backend,
   BackendType,
   DirectoryDoesNotExistError,
   DirectoryId,

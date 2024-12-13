@@ -1,16 +1,16 @@
 /** @file Documentation display for an asset. */
 import { useCallback } from 'react'
 
-import type Backend from 'enso-common/src/services/Backend'
-import { AssetType, type Asset } from 'enso-common/src/services/Backend'
+import { useSuspenseQuery } from '@tanstack/react-query'
+
+import { AssetType, type Asset, type Backend } from 'enso-common/src/services/Backend'
 
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'
+import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
+import { assetPanelStore } from '#/layouts/AssetPanel'
 import { useText } from '#/providers/TextProvider'
 import { useStore } from '#/utilities/zustand'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionContent'
-import { assetPanelStore } from '../AssetPanel'
 
 import { MutableFunctionDef, parseModule } from 'ydoc-shared/ast'
 import { splitFileContents } from 'ydoc-shared/ensoFile'

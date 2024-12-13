@@ -1,6 +1,5 @@
 /** @file Displays information describing a specific version of an asset. */
-import type Backend from 'enso-common/src/services/Backend'
-import type { ProjectAsset, ProjectSession } from 'enso-common/src/services/Backend'
+import type { Backend, ProjectAsset, ProjectSession } from 'enso-common/src/services/Backend'
 import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
 
 import LogsIcon from '#/assets/logs.svg'

@@ -5,7 +5,6 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import isEmail from 'validator/es/lib/isEmail'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   compareAssetPermissions,
   EmailAddress,
@@ -15,6 +14,7 @@ import {
   isUserPermission,
   type AnyAsset,
   type AssetPermission,
+  type Backend,
   type UserGroupInfo,
   type UserInfo,
   type UserPermissionIdentifier,

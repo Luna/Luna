@@ -4,8 +4,8 @@ import * as React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import * as z from 'zod'
 
-import type Backend from 'enso-common/src/services/Backend'
-import { findLeastUsedColor } from 'enso-common/src/services/Backend'
+import { findLeastUsedColor, type Backend } from 'enso-common/src/services/Backend'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 import { ButtonGroup, DialogDismiss, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
@@ -13,7 +13,6 @@ import FocusArea from '#/components/styled/FocusArea'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useText } from '#/providers/TextProvider'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 /** Props for a {@link NewLabelModal}. */
 export interface NewLabelModalProps {

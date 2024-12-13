@@ -6,8 +6,9 @@
  * the response from the API.
  */
 import { IS_DEV_MODE } from 'enso-common/src/detect'
-import Backend, {
+import {
   Address,
+  Backend,
   BackendType,
   DirectoryId,
   NetworkError,
@@ -255,7 +256,7 @@ export default class RemoteBackend extends Backend {
    */
   async throw<K extends Extract<TextId, `${string}BackendError`>>(
     response: Response | null,
-    textId: NetworkError | K,
+    textId: K | NetworkError,
     ...replacements: Replacements[K]
   ): Promise<never> {
     if (textId instanceof NetworkError) {

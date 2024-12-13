@@ -2,8 +2,7 @@
 import { DiffEditor } from '@monaco-editor/react'
 import { useSuspenseQueries } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
-import type { ProjectAsset, S3ObjectVersionId } from 'enso-common/src/services/Backend'
+import type { Backend, ProjectAsset, S3ObjectVersionId } from 'enso-common/src/services/Backend'
 
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'

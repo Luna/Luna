@@ -1,9 +1,9 @@
 /** @file The input for viewing and changing the user's profile picture. */
-import { ChangeEvent } from 'react'
-
-import type Backend from 'enso-common/src/services/Backend'
+import type { ChangeEvent } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
+
+import type { Backend } from 'enso-common/src/services/Backend'
 
 import DefaultUserIcon from '#/assets/default_user.svg'
 import { Input, Label, Text } from '#/components/aria'

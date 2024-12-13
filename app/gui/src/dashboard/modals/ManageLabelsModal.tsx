@@ -3,11 +3,11 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
 import {
   findLeastUsedColor,
   LabelName,
   type AnyAsset,
+  type Backend,
   type LChColor,
 } from 'enso-common/src/services/Backend'
 import { regexEscape } from 'enso-common/src/utilities/data/string'

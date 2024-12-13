@@ -1,8 +1,12 @@
 /** @file A list of previous versions of an asset. */
 import { useSuspenseQuery } from '@tanstack/react-query'
 
-import type Backend from 'enso-common/src/services/Backend'
-import { AssetType, BackendType, type ProjectAsset } from 'enso-common/src/services/Backend'
+import {
+  AssetType,
+  BackendType,
+  type Backend,
+  type ProjectAsset,
+} from 'enso-common/src/services/Backend'
 
 import { Result } from '#/components/Result'
 import AssetProjectSession from '#/layouts/AssetProjectSession'

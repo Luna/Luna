@@ -1,6 +1,10 @@
 /** @file Displays information describing a specific version of an asset. */
-import type Backend from 'enso-common/src/services/Backend'
-import { AssetType, type AnyAsset, type S3ObjectVersion } from 'enso-common/src/services/Backend'
+import {
+  AssetType,
+  type AnyAsset,
+  type Backend,
+  type S3ObjectVersion,
+} from 'enso-common/src/services/Backend'
 import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
 
 import CompareIcon from '#/assets/compare.svg'
