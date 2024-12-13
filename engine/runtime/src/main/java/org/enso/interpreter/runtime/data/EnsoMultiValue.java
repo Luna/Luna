@@ -88,8 +88,12 @@ public final class EnsoMultiValue extends EnsoObject {
   }
 
   @ExportMessage
-  final Type[] allTypes() {
-    return types.clone();
+  final Type[] allTypes(boolean includeExtraTypes) {
+    if (includeExtraTypes || methodDispatchTypes == types.length) {
+      return types.clone();
+    } else {
+      return Arrays.copyOf(types, methodDispatchTypes);
+    }
   }
 
   @ExportMessage

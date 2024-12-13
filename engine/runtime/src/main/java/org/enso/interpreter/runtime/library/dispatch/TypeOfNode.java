@@ -12,7 +12,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
-import java.util.Arrays;
 import org.enso.interpreter.node.expression.builtin.meta.AtomWithAHoleNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.builtin.Builtins;
@@ -208,22 +207,10 @@ public abstract class TypeOfNode extends Node {
   @Specialization(guards = {"isWithType(value, types, interop)"})
   Type[] doType(
       Object value,
-      boolean allTypes,
+      boolean includeExtraTypes,
       @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
       @Shared("types") @CachedLibrary(limit = "3") TypesLibrary types) {
-    if (value instanceof EnsoMultiValue multi && !allTypes) {
-      var arr = types.allTypes(value);
-      var to = 0;
-      for (var i = 0; i < arr.length; i++) {
-        var typ =
-            EnsoMultiValue.CastToNode.getUncached().findTypeOrNull(arr[i], multi, false, false);
-        if (typ != null) {
-          arr[to++] = arr[i];
-        }
-      }
-      return Arrays.copyOf(arr, to);
-    }
-    return types.allTypes(value);
+    return types.allTypes(value, includeExtraTypes);
   }
 
   @Fallback
