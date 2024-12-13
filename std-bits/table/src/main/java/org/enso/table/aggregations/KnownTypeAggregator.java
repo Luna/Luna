@@ -4,6 +4,10 @@ import org.enso.table.data.column.builder.Builder;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.problems.ProblemAggregator;
 
+/**
+ * A common subclass for aggregators that know their type on construction and use a standard
+ * builder.
+ */
 public abstract class KnownTypeAggregator extends Aggregator {
   private final StorageType type;
 
