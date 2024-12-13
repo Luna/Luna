@@ -3,7 +3,7 @@
  * Types copied from the enso-bot server implementation:
  * https://github.com/enso-org/enso-bot/blob/aa903b6e639a31930ee4fff55c5639e4471fa48d/chat.ts
  */
-import type { Newtype } from 'enso-common/src/utilities/data/newtype'
+import type { Newtype } from '@common/utilities/data/newtype'
 
 /** Identifier for a chat Thread. */
 export type ThreadId = Newtype<string, 'ThreadId'>

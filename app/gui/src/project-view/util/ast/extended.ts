@@ -9,7 +9,7 @@ import {
   walkRecursive,
 } from '@/util/ast/raw'
 import type { Opt } from '@/util/data/opt'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import * as encoding from 'lib0/encoding'
 import * as sha256 from 'lib0/hash/sha256'
 import * as map from 'lib0/map'

@@ -1,5 +1,5 @@
 /** @file Modal for confirming delete of any type of asset. */
-import type { SecretId } from 'enso-common/src/services/Backend'
+import type { SecretId } from '@common/services/Backend'
 
 import { ButtonGroup, Dialog, DialogDismiss, Form, Input } from '#/components/AriaComponents'
 import { useText } from '#/providers/TextProvider'

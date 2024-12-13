@@ -2,10 +2,10 @@
  * @file Exports `defineKeybinds`, a function to define a namespace containing keyboard and mouse
  * shortcuts.
  */
-import { isOnMacOS } from 'enso-common/src/detect'
-import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
-import { unsafeMutable } from 'enso-common/src/utilities/data/object'
-import { camelCaseToTitleCase } from 'enso-common/src/utilities/data/string'
+import { newtypeConstructor, type Newtype } from '@common/utilities/data/newtype'
+import { unsafeMutable } from '@common/utilities/data/object'
+import { camelCaseToTitleCase } from '@common/utilities/data/string'
+import { isOnMacOS } from '@common/utilities/detect'
 
 import { isElementTextInput, isTextInputEvent } from '#/utilities/event'
 

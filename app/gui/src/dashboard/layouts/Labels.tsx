@@ -3,8 +3,8 @@ import type { Dispatch, SetStateAction } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type { Backend } from 'enso-common/src/services/Backend'
-import { shallowEqual } from 'enso-common/src/utilities/data/array'
+import type { Backend } from '@common/services/Backend'
+import { shallowEqual } from '@common/utilities/data/array'
 
 import PlusIcon from '#/assets/plus.svg'
 import Trash2Icon from '#/assets/trash2.svg'

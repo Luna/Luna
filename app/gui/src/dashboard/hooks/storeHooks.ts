@@ -14,7 +14,7 @@ import {
 import type { StoreApi } from 'zustand'
 import { useStoreWithEqualityFn } from 'zustand/traditional'
 
-import { objectEquality, refEquality, shallowEquality } from 'enso-common/src/utilities/equalities'
+import { objectEquality, refEquality, shallowEquality } from '@common/utilities/equalities'
 
 /**
  * A type that allows to choose between different equality functions.

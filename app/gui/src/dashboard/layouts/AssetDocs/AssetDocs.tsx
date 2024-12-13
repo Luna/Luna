@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 
 import { useSuspenseQuery } from '@tanstack/react-query'
 
-import { AssetType, type Asset, type Backend } from 'enso-common/src/services/Backend'
+import { AssetType, type Asset, type Backend } from '@common/services/Backend'
 
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'

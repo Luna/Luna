@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import type { PaymentMethod } from '@stripe/stripe-js'
 import { useQuery } from '@tanstack/react-query'
 
-import type { Plan } from 'enso-common/src/services/Backend'
+import type { Plan } from '@common/services/Backend'
 
 import {
   Button,

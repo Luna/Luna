@@ -1,7 +1,7 @@
 /** @file Allow users to select one or more items from a list of choices. */
 import type { CSSProperties, ForwardedRef, ReactElement } from 'react'
 
-import { omit } from 'enso-common/src/utilities/data/object'
+import { omit } from '@common/utilities/data/object'
 
 import {
   CheckboxGroup as AriaCheckboxGroup,

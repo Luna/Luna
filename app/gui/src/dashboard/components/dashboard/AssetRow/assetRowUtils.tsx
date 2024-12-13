@@ -1,7 +1,7 @@
 /** @file Utilities related to `AssetRow`s. */
 import type * as assetsTable from '#/layouts/AssetsTable'
 
-import { EMPTY_SET } from 'enso-common/src/utilities/data/set'
+import { EMPTY_SET } from '@common/utilities/data/set'
 
 /** The default {@link assetsTable.AssetRowState} associated with an `AssetRow`. */
 export const INITIAL_ROW_STATE: assetsTable.AssetRowState = Object.freeze({

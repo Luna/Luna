@@ -1,5 +1,5 @@
 /** @file The icon and name of an {@link Asset}. */
-import { AssetType, type Asset } from 'enso-common/src/services/Backend'
+import { AssetType, type Asset } from '@common/services/Backend'
 
 import type { AssetColumnProps } from '#/components/dashboard/column'
 import DatalinkNameColumn from '#/components/dashboard/DatalinkNameColumn'

@@ -11,7 +11,7 @@ import {
   type Path,
   type User,
   type UserGroupInfo,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import AssetEventType from '#/events/AssetEventType'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'

@@ -1,6 +1,6 @@
 import { assert, assertDefined } from '@/util/assert'
 import { Ast } from '@/util/ast'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 
 /**
  * A pattern is an AST object with "placeholder" expressions.

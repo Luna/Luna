@@ -3,7 +3,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { splitFileContents } from 'ydoc-shared/ensoFile'
 
-import type { Backend, ProjectId, S3ObjectVersionId } from 'enso-common/src/services/Backend'
+import type { Backend, ProjectId, S3ObjectVersionId } from '@common/services/Backend'
 
 const TWO_MINUTES_MS = 120_000
 

@@ -1,7 +1,7 @@
 /** @file The tab panels for the dashboard page. */
 import { Collection } from 'react-aria-components'
 
-import type { ProjectId } from 'enso-common/src/services/Backend'
+import type { ProjectId } from '@common/services/Backend'
 
 import * as aria from '#/components/aria'
 import { ErrorBoundary } from '#/components/ErrorBoundary'

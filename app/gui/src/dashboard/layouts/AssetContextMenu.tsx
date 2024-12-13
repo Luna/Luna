@@ -12,10 +12,10 @@ import {
   type Asset,
   type DirectoryId,
   type ProjectId,
-} from 'enso-common/src/services/Backend'
-import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
-import { mapNonNullish } from 'enso-common/src/utilities/data/nullable'
-import { merger } from 'enso-common/src/utilities/data/object'
+} from '@common/services/Backend'
+import { normalizePath } from '@common/utilities/data/fileInfo'
+import { mapNonNullish } from '@common/utilities/data/nullable'
+import { merger } from '@common/utilities/data/object'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'

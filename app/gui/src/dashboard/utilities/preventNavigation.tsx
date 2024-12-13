@@ -1,7 +1,7 @@
 /** @file A React hook to prevent navigation. */
 import { useEffect } from 'react'
 
-import { isOnElectron } from 'enso-common/src/detect'
+import { isOnElectron } from '@common/utilities/detect'
 
 import { Button, ButtonGroup, Dialog, Text } from '#/components/AriaComponents'
 import { useSyncRef } from '#/hooks/syncRefHooks'

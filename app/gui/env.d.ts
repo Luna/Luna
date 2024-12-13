@@ -7,11 +7,7 @@
 import type * as saveAccessToken from 'enso-common/src/accessToken'
 
 // prettier-ignore
-import * as buildJson from '../../build.json' with { type: 'json' };
-
-// =============
-// === Types ===
-// =============
+import * as buildJson from '../../build.json' with { type: 'json' }
 
 /** Nested configuration options with `string` values. */
 interface StringConfig {
@@ -22,10 +18,6 @@ interface StringConfig {
 interface Enso {
   readonly main: (inputConfig?: StringConfig) => Promise<void>
 }
-
-// ===================
-// === Backend API ===
-// ===================
 
 /**
  * `window.backendApi` is a context bridge to the main process, when we're running in an
@@ -39,10 +31,6 @@ interface BackendApi {
     name: string,
   ) => Promise<ProjectInfo>
 }
-
-// ==========================
-// === Authentication API ===
-// ==========================
 
 /**
  * `window.authenticationApi` is a context bridge to the main process, when we're running in an
@@ -67,10 +55,6 @@ interface AuthenticationApi {
   readonly saveAccessToken: (accessToken: saveAccessToken.AccessToken | null) => void
 }
 
-// ======================
-// === Navigation API ===
-// ======================
-
 /**
  * `window.navigationApi` is a context bridge to the main process, when we're running in an
  * Electron context. It contains navigation-related functionality.
@@ -82,29 +66,17 @@ interface NavigationApi {
   readonly goForward: () => void
 }
 
-// ================
-// === Menu API ===
-// ================
-
 /** `window.menuApi` exposes functionality related to the system menu. */
 interface MenuApi {
   /** Set the callback to be called when the "about" entry is clicked in the "help" menu. */
   readonly setShowAboutModalHandler: (callback: () => void) => void
 }
 
-// ==================
-// === System API ===
-// ==================
-
 /** `window.systemApi` exposes functionality related to the operating system. */
 interface SystemApi {
   readonly downloadURL: (url: string, headers?: Record<string, string>) => void
   readonly showItemInFolder: (fullPath: string) => void
 }
-
-// ==============================
-// === Project Management API ===
-// ==============================
 
 /** Metadata for a newly imported project. */
 interface ProjectInfo {
@@ -120,10 +92,6 @@ interface ProjectInfo {
 interface ProjectManagementApi {
   readonly setOpenProjectHandler: (handler: (projectInfo: ProjectInfo) => void) => void
 }
-
-// ========================
-// === File Browser API ===
-// ========================
 
 /**
  * `window.fileBrowserApi` is a context bridge to the main process, when we're running in an
@@ -146,10 +114,6 @@ interface FileBrowserApi {
   ) => Promise<string[] | undefined>
 }
 
-// ====================
-// === Version Info ===
-// ====================
-
 /** Versions of the app, and selected software bundled with Electron. */
 interface VersionInfo {
   readonly version: string
@@ -157,10 +121,6 @@ interface VersionInfo {
   readonly electron: string
   readonly chrome: string
 }
-
-// =====================================
-// === Global namespace augmentation ===
-// =====================================
 
 // JSDocs here are intentionally empty as these interfaces originate from elsewhere.
 declare global {

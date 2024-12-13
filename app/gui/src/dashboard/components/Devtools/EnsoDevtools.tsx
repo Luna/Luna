@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { Plan } from 'enso-common/src/services/Backend'
+import { Plan } from '@common/services/Backend'
+import { IS_DEV_MODE } from '@common/utilities/detect'
 
 import { SETUP_PATH } from '#/appUtils'
 import CrossIcon from '#/assets/cross.svg'

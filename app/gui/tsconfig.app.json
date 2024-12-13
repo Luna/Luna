@@ -16,7 +16,11 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "types": ["vitest/importMeta"],
-    "paths": { "@/*": ["./src/project-view/*"], "#/*": ["./src/dashboard/*"] }
+    "paths": {
+      "@common/*": ["./src/common/*"],
+      "@/*": ["./src/project-view/*"],
+      "#/*": ["./src/dashboard/*"]
+    }
   },
   "references": [{ "path": "../ydoc-shared" }]
 }

@@ -1,7 +1,7 @@
 /** @file Fetches the versions of the selected project asset. */
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-import type { AssetId, Backend } from 'enso-common/src/services/Backend'
+import type { AssetId, Backend } from '@common/services/Backend'
 
 /** Options for {@link useAssetVersions}. */
 export interface AssetVersionsQueryOptions {

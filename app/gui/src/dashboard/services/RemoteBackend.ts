@@ -5,7 +5,6 @@
  * an API endpoint. The functions are asynchronous and return a {@link Promise} that resolves to
  * the response from the API.
  */
-import { IS_DEV_MODE } from 'enso-common/src/detect'
 import {
   Address,
   Backend,
@@ -87,10 +86,11 @@ import {
   type UserGroupId,
   type UserGroupInfo,
   type UserId,
-} from 'enso-common/src/services/Backend'
-import type { Replacements, TextId } from 'enso-common/src/text'
-import { merge, omit, type Mutable } from 'enso-common/src/utilities/data/object'
-import { download } from 'enso-common/src/utilities/download'
+} from '@common/services/Backend'
+import type { Replacements, TextId } from '@common/text'
+import { merge, omit, type Mutable } from '@common/utilities/data/object'
+import { IS_DEV_MODE } from '@common/utilities/detect'
+import { download } from '@common/utilities/download'
 
 import type { Logger } from '#/providers/LoggerProvider'
 import type { GetText } from '#/providers/TextProvider'

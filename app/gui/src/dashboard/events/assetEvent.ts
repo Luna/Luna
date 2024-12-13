@@ -1,7 +1,7 @@
 /** @file Events related to changes in asset state. */
 import type AssetEventType from '#/events/AssetEventType'
 
-import type { AssetId, DirectoryId, LabelName } from 'enso-common/src/services/Backend'
+import type { AssetId, DirectoryId, LabelName } from '@common/services/Backend'
 
 /** Properties common to all asset state change events. */
 interface AssetBaseEvent<Type extends AssetEventType> {

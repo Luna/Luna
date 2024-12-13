@@ -18,7 +18,7 @@ import {
   type UserGroupInfo,
   type UserInfo,
   type UserPermissionIdentifier,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import { Heading } from '#/components/aria'
 import { Button } from '#/components/AriaComponents'

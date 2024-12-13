@@ -1,8 +1,8 @@
 /** @file A class for handling navigation between elements on a 2D plane. */
 import type * as React from 'react'
 
-import * as detect from 'enso-common/src/detect'
-import * as object from 'enso-common/src/utilities/data/object'
+import * as object from '@common/utilities/data/object'
+import * as detect from '@common/utilities/detect'
 
 import * as eventModule from '#/utilities/event'
 

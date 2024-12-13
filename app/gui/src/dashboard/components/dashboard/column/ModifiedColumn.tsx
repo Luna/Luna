@@ -1,5 +1,5 @@
 /** @file A column displaying the time at which the asset was last modified. */
-import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 import { Text } from '#/components/AriaComponents'
 import type { AssetColumnProps } from '#/components/dashboard/column'

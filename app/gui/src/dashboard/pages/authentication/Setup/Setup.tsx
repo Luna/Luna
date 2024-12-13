@@ -5,8 +5,8 @@ import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-q
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import invariant from 'tiny-invariant'
 
-import { Plan } from 'enso-common/src/services/Backend'
-import type { TextId } from 'enso-common/src/text'
+import { Plan } from '@common/services/Backend'
+import type { TextId } from '@common/text'
 
 import { DASHBOARD_PATH, LOGIN_PATH } from '#/appUtils'
 import ArrowRight from '#/assets/arrow_right.svg'

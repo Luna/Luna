@@ -21,8 +21,6 @@ import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 
-import { architecture, platform } from 'enso-common/src/detect'
-import { event, gtag } from 'enso-common/src/gtag'
 import {
   EmailAddress,
   NotAuthorizedError,
@@ -30,8 +28,10 @@ import {
   type CreateUserRequestBody,
   type UpdateUserRequestBody,
   type User,
-} from 'enso-common/src/services/Backend'
-import { UnreachableCaseError } from 'enso-common/src/utilities/error'
+} from '@common/services/Backend'
+import { architecture, platform } from '@common/utilities/detect'
+import { UnreachableCaseError } from '@common/utilities/error'
+import { event, gtag } from '@common/utilities/gtag'
 
 import { DASHBOARD_PATH, LOGIN_PATH, RESTORE_USER_PATH, SETUP_PATH } from '#/appUtils'
 

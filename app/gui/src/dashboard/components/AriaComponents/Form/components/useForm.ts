@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query'
 import * as reactHookForm from 'react-hook-form'
 import invariant from 'tiny-invariant'
 
-import { isJSError, tryGetMessage } from 'enso-common/src/utilities/error'
+import { isJSError, tryGetMessage } from '@common/utilities/error'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline, useOfflineChange } from '#/hooks/offlineHooks'

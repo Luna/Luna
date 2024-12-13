@@ -1,6 +1,6 @@
 /** @file Utilities getting various metadata about the app. */
-import * as common from '../'
-import * as detect from '../detect'
+import * as common from 'enso-common'
+import * as detect from './detect'
 
 const ONE_HOUR_MS = 3_600_000
 export const LATEST_RELEASE_PAGE_URL = 'https://github.com/enso-org/enso/releases/latest'
@@ -129,7 +129,7 @@ const appExtension = (() => {
 export async function getDownloadUrl() {
   const assets = (await getLatestRelease()).assets
   return (
-    assets.find(item => item.browser_download_url.endsWith(appExtension))?.browser_download_url ??
+    assets.find((item) => item.browser_download_url.endsWith(appExtension))?.browser_download_url ??
     null
   )
 }

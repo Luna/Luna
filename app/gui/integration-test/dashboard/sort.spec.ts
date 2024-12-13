@@ -1,7 +1,7 @@
 /** @file Test sorting of assets columns. */
 import { expect, test, type Locator } from '@playwright/test'
 
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
+import { toRfc3339 } from '@common/utilities/data/dateTime'
 
 import { mockAllAndLogin } from './actions'
 

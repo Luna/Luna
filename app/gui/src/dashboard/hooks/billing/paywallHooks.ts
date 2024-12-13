@@ -1,5 +1,5 @@
 /** @file Hooks for paywall-related functionality. */
-import type { Plan } from 'enso-common/src/services/Backend'
+import type { Plan } from '@common/services/Backend'
 
 import { usePaywallDevtools } from '#/components/Devtools'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'

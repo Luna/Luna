@@ -1,7 +1,7 @@
 /** @file A modal for showing logs for a project. */
 import { useSuspenseQuery } from '@tanstack/react-query'
 
-import type { Backend, ProjectSessionId } from 'enso-common/src/services/Backend'
+import type { Backend, ProjectSessionId } from '@common/services/Backend'
 
 import ReloadIcon from '#/assets/reload.svg'
 import { Button, Dialog } from '#/components/AriaComponents'

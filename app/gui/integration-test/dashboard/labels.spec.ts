@@ -1,7 +1,7 @@
 /** @file Test dragging of labels. */
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import { COLORS } from 'enso-common/src/services/Backend'
+import { COLORS } from '@common/services/Backend'
 
 import { mockAllAndLogin } from './actions'
 

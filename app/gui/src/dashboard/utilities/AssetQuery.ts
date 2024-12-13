@@ -1,5 +1,5 @@
 /** @file Parsing and representation of the search query. */
-import * as array from 'enso-common/src/utilities/data/array'
+import * as array from '@common/utilities/data/array'
 
 // Control characters must be handled, in order to follow the JSON spec.
 // eslint-disable-next-line no-control-regex

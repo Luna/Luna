@@ -2,7 +2,7 @@
 import isNetworkErrorLib from 'is-network-error'
 import type * as toastify from 'react-toastify'
 
-import { getMessageOrToString } from 'enso-common/src/utilities/error'
+import { getMessageOrToString } from '@common/utilities/error'
 
 /** Return a toastify option object that renders an error message. */
 export function render(f: (message: string) => string): toastify.UpdateOptions {

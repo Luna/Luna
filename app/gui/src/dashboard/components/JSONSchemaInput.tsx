@@ -1,7 +1,7 @@
 /** @file A dynamic wizard for creating an arbitrary type of Datalink. */
 import { Fragment, useState, type JSX } from 'react'
 
-import { asObject, singletonObjectOrNull } from 'enso-common/src/utilities/data/object'
+import { asObject, singletonObjectOrNull } from '@common/utilities/data/object'
 
 import { Input } from '#/components/aria'
 import { Button, Checkbox, Dropdown, Text } from '#/components/AriaComponents'

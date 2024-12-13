@@ -6,8 +6,8 @@ import * as React from 'react'
 
 import invariant from 'tiny-invariant'
 
+import { BackendType } from '@common/services/Backend'
 import * as common from 'enso-common'
-import { BackendType } from 'enso-common/src/services/Backend'
 
 import { type Category, isCloudCategory } from '#/layouts/CategorySwitcher/Category'
 

@@ -42,9 +42,9 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import { Slide, ToastContainer } from 'react-toastify'
 import * as z from 'zod'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { mapEntries, unsafeEntries } from 'enso-common/src/utilities/data/object'
-import { Path } from 'enso-common/src/utilities/data/path'
+import { mapEntries, unsafeEntries } from '@common/utilities/data/object'
+import { Path } from '@common/utilities/data/path'
+import { IS_DEV_MODE } from '@common/utilities/detect'
 
 import {
   ALL_PATHS_REGEX,

@@ -1,6 +1,6 @@
 /** @file Constants for the subscribe page. */
-import { Plan } from 'enso-common/src/services/Backend'
-import type { TextId } from 'enso-common/src/text'
+import { Plan } from '@common/services/Backend'
+import type { TextId } from '@common/text'
 
 /* eslint-disable @typescript-eslint/no-magic-numbers, @typescript-eslint/naming-convention */
 

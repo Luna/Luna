@@ -2,7 +2,7 @@
 import { Navigate } from 'react-router'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { Plan, isPlan } from 'enso-common/src/services/Backend'
+import { Plan, isPlan } from '@common/services/Backend'
 
 import { DASHBOARD_PATH } from '#/appUtils'
 

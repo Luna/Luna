@@ -9,7 +9,7 @@ import { elementHierarchy } from '@/util/dom'
 import { ToValue } from '@/util/reactivity'
 import { Compartment, EditorState, Extension, Text } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
+import { LINE_BOUNDARIES } from '@common/utilities/data/string'
 import {
   type ComponentInstance,
   computed,

@@ -36,12 +36,12 @@ import {
   type DirectoryId,
   type LabelName,
   type ProjectAsset,
-} from 'enso-common/src/services/Backend'
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
-import { fileExtension } from 'enso-common/src/utilities/data/fileInfo'
-import { EMPTY_SET, setPresence, withPresence } from 'enso-common/src/utilities/data/set'
-import { noop } from 'enso-common/src/utilities/functions'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+} from '@common/services/Backend'
+import { toRfc3339 } from '@common/utilities/data/dateTime'
+import { fileExtension } from '@common/utilities/data/fileInfo'
+import { EMPTY_SET, setPresence, withPresence } from '@common/utilities/data/set'
+import { noop } from '@common/utilities/functions'
+import { uniqueString } from '@common/utilities/uniqueString'
 
 import DropFilesImage from '#/assets/drop_files.svg'
 import { FileTrigger, mergeProps } from '#/components/aria'

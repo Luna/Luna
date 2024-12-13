@@ -4,8 +4,8 @@ import { useRef } from 'react'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import isEmail from 'validator/es/lib/isEmail'
 
-import type { EmailAddress } from 'enso-common/src/services/Backend'
-import { parseUserEmails } from 'enso-common/src/utilities/data/email'
+import type { EmailAddress } from '@common/services/Backend'
+import { parseUserEmails } from '@common/utilities/data/email'
 
 import { Form, ResizableContentEditableInput } from '#/components/AriaComponents'
 import { PaywallAlert } from '#/components/Paywall'

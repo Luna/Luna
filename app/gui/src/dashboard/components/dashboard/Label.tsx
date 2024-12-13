@@ -5,7 +5,7 @@ import {
   lChColorToCssColor,
   type Label as BackendLabel,
   type LChColor,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import type { PressEvent } from '#/components/aria'
 import { Text } from '#/components/AriaComponents'

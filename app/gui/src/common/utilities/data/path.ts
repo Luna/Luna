@@ -1,5 +1,5 @@
 /** @file Functions for manipulating and querying paths. */
-import { isOnWindows } from '../../detect'
+import { isOnWindows } from '../detect'
 import { newtypeConstructor, type Newtype } from './newtype'
 
 /** A filesystem path. */

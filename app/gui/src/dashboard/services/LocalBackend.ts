@@ -51,12 +51,12 @@ import {
   type UploadLargeFileMetadata,
   type UploadedLargeAsset,
   type User,
-} from 'enso-common/src/services/Backend'
-import { fileExtension, getFileName, getFolderPath } from 'enso-common/src/utilities/data/fileInfo'
-import { getDirectoryAndName, joinPath } from 'enso-common/src/utilities/data/path'
-import { download } from 'enso-common/src/utilities/download'
-import { tryGetMessage } from 'enso-common/src/utilities/error'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+} from '@common/services/Backend'
+import { fileExtension, getFileName, getFolderPath } from '@common/utilities/data/fileInfo'
+import { getDirectoryAndName, joinPath } from '@common/utilities/data/path'
+import { download } from '@common/utilities/download'
+import { tryGetMessage } from '@common/utilities/error'
+import { uniqueString } from '@common/utilities/uniqueString'
 
 import type ProjectManager from '#/services/ProjectManager'
 import {

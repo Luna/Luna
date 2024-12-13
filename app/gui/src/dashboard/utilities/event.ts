@@ -1,7 +1,7 @@
 /** @file Utility functions related to event handling. */
 import type * as React from 'react'
 
-import { isOnMacOS } from 'enso-common/src/detect'
+import { isOnMacOS } from '@common/utilities/detect'
 
 /** Returns `true` if and only if the event is a single click event. */
 export function isSingleClick(event: React.MouseEvent) {

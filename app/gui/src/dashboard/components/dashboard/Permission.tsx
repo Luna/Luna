@@ -11,9 +11,9 @@ import {
   type AssetPermission,
   type Backend,
   type UserPermissionIdentifier,
-} from 'enso-common/src/services/Backend'
-import type { TextId } from 'enso-common/src/text'
-import { merge } from 'enso-common/src/utilities/data/object'
+} from '@common/services/Backend'
+import type { TextId } from '@common/text'
+import { merge } from '@common/utilities/data/object'
 
 import { Text } from '#/components/AriaComponents'
 import PermissionSelector from '#/components/dashboard/PermissionSelector'

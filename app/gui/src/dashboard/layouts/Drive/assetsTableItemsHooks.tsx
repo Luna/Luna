@@ -1,11 +1,11 @@
 /** @file A hook to return the items in the assets table. */
 import { startTransition, useMemo } from 'react'
 
-import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
-import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
-import { fileExtension } from 'enso-common/src/utilities/data/fileInfo'
-import { regexEscape } from 'enso-common/src/utilities/data/string'
-import { PermissionAction } from 'enso-common/src/utilities/permissions'
+import type { AnyAsset, AssetId } from '@common/services/Backend'
+import { AssetType, getAssetPermissionName } from '@common/services/Backend'
+import { fileExtension } from '@common/utilities/data/fileInfo'
+import { regexEscape } from '@common/utilities/data/string'
+import { PermissionAction } from '@common/utilities/permissions'
 
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import { Column } from '#/components/dashboard/column/columnUtils'

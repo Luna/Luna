@@ -12,8 +12,8 @@ import {
   type AssetId,
   type Backend,
   type DirectoryId,
-} from 'enso-common/src/services/Backend'
-import { EMPTY_SET } from 'enso-common/src/utilities/data/set'
+} from '@common/services/Backend'
+import { EMPTY_SET } from '@common/utilities/data/set'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'

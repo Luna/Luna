@@ -24,10 +24,10 @@ import {
   type DirectoryId,
   type ProjectId,
   type RealAssetId,
-} from 'enso-common/src/services/Backend'
-import { merge } from 'enso-common/src/utilities/data/object'
-import { EMPTY_SET, withPresence } from 'enso-common/src/utilities/data/set'
-import { download } from 'enso-common/src/utilities/download'
+} from '@common/services/Backend'
+import { merge } from '@common/utilities/data/object'
+import { EMPTY_SET, withPresence } from '@common/utilities/data/set'
+import { download } from '@common/utilities/download'
 
 import BlankIcon from '#/assets/blank.svg'
 

@@ -5,10 +5,10 @@
  */
 import invariant from 'tiny-invariant'
 
-import { ProjectState as BackendProjectState } from 'enso-common/src/services/Backend'
-import { toRfc3339, type Rfc3339DateTime } from 'enso-common/src/utilities/data/dateTime'
-import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
-import { getDirectoryAndName, normalizeSlashes } from 'enso-common/src/utilities/data/path'
+import { ProjectState as BackendProjectState } from '@common/services/Backend'
+import { toRfc3339, type Rfc3339DateTime } from '@common/utilities/data/dateTime'
+import { newtypeConstructor, type Newtype } from '@common/utilities/data/newtype'
+import { getDirectoryAndName, normalizeSlashes } from '@common/utilities/data/path'
 
 import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 

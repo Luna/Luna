@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, type PropsWithChildren, type ReactNode } fr
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 
-import { ProjectState } from 'enso-common/src/services/Backend'
-import type { TextId } from 'enso-common/src/text'
+import { ProjectState } from '@common/services/Backend'
+import type { TextId } from '@common/text'
 
 import { AnimatedBackground } from '#/components/AnimatedBackground'
 import { Tab as AriaTab, TabList, type TabListProps } from '#/components/aria'

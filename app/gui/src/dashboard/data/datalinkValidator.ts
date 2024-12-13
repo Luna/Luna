@@ -2,7 +2,7 @@
 import type * as ajv from 'ajv/dist/2020'
 import Ajv from 'ajv/dist/2020'
 
-import { assert } from 'enso-common/src/utilities/error'
+import { assert } from '@common/utilities/error'
 
 import SCHEMA from '#/data/datalinkSchema.json' with { type: 'json' }
 

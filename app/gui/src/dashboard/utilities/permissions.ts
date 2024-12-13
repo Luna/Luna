@@ -8,10 +8,10 @@ import {
   type UserGroupInfo,
   type UserGroupPermission,
   type UserPermission,
-} from 'enso-common/src/services/Backend'
-import { merge } from 'enso-common/src/utilities/data/object'
-import { Permission, PermissionAction } from 'enso-common/src/utilities/permissions'
-export * from 'enso-common/src/utilities/permissions'
+} from '@common/services/Backend'
+import { merge } from '@common/utilities/data/object'
+import { Permission, PermissionAction } from '@common/utilities/permissions'
+export * from '@common/utilities/permissions'
 
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 

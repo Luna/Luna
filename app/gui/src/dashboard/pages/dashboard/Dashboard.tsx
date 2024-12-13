@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 
 import { usePrefetchQuery } from '@tanstack/react-query'
 
-import { isOnElectron, platform, Platform } from 'enso-common/src/detect'
-import { BackendType, Path } from 'enso-common/src/services/Backend'
-import { baseName } from 'enso-common/src/utilities/data/fileInfo'
+import { BackendType, Path } from '@common/services/Backend'
+import { baseName } from '@common/utilities/data/fileInfo'
+import { isOnElectron, platform, Platform } from '@common/utilities/detect'
 
 import { Tabs } from '#/components/aria'
 import Page from '#/components/Page'

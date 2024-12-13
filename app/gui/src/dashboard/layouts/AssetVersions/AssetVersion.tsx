@@ -4,8 +4,8 @@ import {
   type AnyAsset,
   type Backend,
   type S3ObjectVersion,
-} from 'enso-common/src/services/Backend'
-import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
+} from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'

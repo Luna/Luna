@@ -10,10 +10,10 @@ import {
   type AnyAsset,
   type Backend,
   type S3ObjectVersion,
-} from 'enso-common/src/services/Backend'
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
-import { noop } from 'enso-common/src/utilities/functions'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+} from '@common/services/Backend'
+import { toRfc3339 } from '@common/utilities/data/dateTime'
+import { noop } from '@common/utilities/functions'
+import { uniqueString } from '@common/utilities/uniqueString'
 
 import { Result } from '#/components/Result'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'

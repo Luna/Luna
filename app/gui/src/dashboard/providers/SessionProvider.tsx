@@ -14,7 +14,7 @@ import {
 } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import { UnreachableCaseError } from 'enso-common/src/utilities/error'
+import { UnreachableCaseError } from '@common/utilities/error'
 
 import type { UserSession } from '#/authentication/cognito'
 import { AuthEvent, type ListenFunction } from '#/authentication/listen'

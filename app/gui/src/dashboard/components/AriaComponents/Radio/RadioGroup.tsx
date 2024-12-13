@@ -1,7 +1,7 @@
 /** @file A radio group. */
 import type { ForwardedRef, ReactNode } from 'react'
 
-import { omit } from 'enso-common/src/utilities/data/object'
+import { omit } from '@common/utilities/data/object'
 
 import {
   RadioGroup as AriaRadioGroup,

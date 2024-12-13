@@ -1,11 +1,11 @@
 /** @file The mock API. */
 import * as test from '@playwright/test'
 
-import * as backend from 'enso-common/src/services/Backend'
-import * as dateTime from 'enso-common/src/utilities/data/dateTime'
-import * as object from 'enso-common/src/utilities/data/object'
-import * as permissions from 'enso-common/src/utilities/permissions'
-import * as uniqueString from 'enso-common/src/utilities/uniqueString'
+import * as backend from '@common/services/Backend'
+import * as dateTime from '@common/utilities/data/dateTime'
+import * as object from '@common/utilities/data/object'
+import * as permissions from '@common/utilities/permissions'
+import * as uniqueString from '@common/utilities/uniqueString'
 
 import type * as remoteBackend from '#/services/RemoteBackend'
 import * as remoteBackendPaths from '#/services/remoteBackendPaths'

@@ -1,7 +1,7 @@
 /** @file A hook that makes `gtag.event()` a no-op if the user is offline. */
 import * as React from 'react'
 
-import * as gtag from 'enso-common/src/gtag'
+import * as gtag from '@common/utilities/gtag'
 
 // ====================
 // === useGtagEvent ===

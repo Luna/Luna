@@ -9,7 +9,7 @@ import {
   type Backend,
   type Project,
   type ProjectId,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import { SEARCH_PARAMS_PREFIX } from '#/appUtils'
 import { ErrorBoundary, ErrorDisplay } from '#/components/ErrorBoundary'

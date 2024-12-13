@@ -17,8 +17,8 @@ import { useBackendQuery } from '#/hooks/backendHooks'
 import { useText } from '#/providers/TextProvider'
 import { nextSortDirection, SortDirection, type SortInfo } from '#/utilities/sorting'
 import { twMerge } from '#/utilities/tailwindMerge'
-import { EVENT_TYPES, EventType, type Backend, type Event } from 'enso-common/src/services/Backend'
-import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
+import { EVENT_TYPES, EventType, type Backend, type Event } from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 const EVENT_TYPE_ICON: Record<EventType, string> = {
   [EventType.GetSecret]: KeyIcon,

@@ -1,4 +1,4 @@
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import diff from 'fast-diff'
 import { rangeEncloses, rangeLength, type SourceRange } from '../../yjsModel'
 

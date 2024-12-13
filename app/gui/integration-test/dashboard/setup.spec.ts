@@ -1,7 +1,7 @@
 /** @file Test the setup flow. */
 import { expect, test } from '@playwright/test'
 
-import { Plan } from 'enso-common/src/services/Backend'
+import { Plan } from '@common/services/Backend'
 import { mockAll } from './actions'
 
 // Reset storage state for this file to avoid being authenticated

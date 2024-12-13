@@ -9,8 +9,8 @@ import {
   type AnyAsset,
   type Backend,
   type LChColor,
-} from 'enso-common/src/services/Backend'
-import { regexEscape } from 'enso-common/src/utilities/data/string'
+} from '@common/services/Backend'
+import { regexEscape } from '@common/utilities/data/string'
 
 import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'

@@ -1,7 +1,7 @@
 /** @file A column listing the labels on this asset. */
 import { useMemo } from 'react'
 
-import { COLORS } from 'enso-common/src/services/Backend'
+import { COLORS } from '@common/services/Backend'
 
 import Plus2Icon from '#/assets/plus2.svg'
 import { Button, DialogTrigger } from '#/components/AriaComponents'

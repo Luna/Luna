@@ -1,5 +1,5 @@
 /** @file Barrel re-export of `react-aria` and `react-aria-components`. */
-import type { Mutable } from 'enso-common/src/utilities/data/object'
+import type { Mutable } from '@common/utilities/data/object'
 import * as aria from 'react-aria'
 
 export * from '@react-aria/interactions'

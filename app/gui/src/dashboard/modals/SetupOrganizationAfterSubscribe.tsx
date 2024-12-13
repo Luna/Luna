@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { Outlet } from 'react-router'
 
-import { Plan } from 'enso-common/src/services/Backend'
+import { Plan } from '@common/services/Backend'
 
 import { Button, Dialog, Form, Input } from '#/components/AriaComponents'
 import { Result } from '#/components/Result'

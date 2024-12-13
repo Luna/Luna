@@ -1,7 +1,7 @@
 /** @file The input for viewing and changing the organization's profile picture. */
 import type { ChangeEvent } from 'react'
 
-import type { Backend } from 'enso-common/src/services/Backend'
+import type { Backend } from '@common/services/Backend'
 
 import { useMutation } from '@tanstack/react-query'
 

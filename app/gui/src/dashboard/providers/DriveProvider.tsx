@@ -3,14 +3,9 @@ import { createContext, startTransition, useContext, useState, type PropsWithChi
 
 import invariant from 'tiny-invariant'
 
-import type {
-  AssetId,
-  BackendType,
-  DirectoryAsset,
-  DirectoryId,
-} from 'enso-common/src/services/Backend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
-import { EMPTY_SET } from 'enso-common/src/utilities/data/set'
+import type { AssetId, BackendType, DirectoryAsset, DirectoryId } from '@common/services/Backend'
+import { EMPTY_ARRAY } from '@common/utilities/data/array'
+import { EMPTY_SET } from '@common/utilities/data/set'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'

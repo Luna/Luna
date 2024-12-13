@@ -1,7 +1,7 @@
 /** @file An area that contains focusable children. */
 import { type JSX, type RefCallback, useMemo, useRef, useState } from 'react'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
+import { IS_DEV_MODE } from '@common/utilities/detect'
 
 import AreaFocusProvider from '#/providers/AreaFocusProvider'
 import FocusClassesProvider, { useFocusClasses } from '#/providers/FocusClassProvider'

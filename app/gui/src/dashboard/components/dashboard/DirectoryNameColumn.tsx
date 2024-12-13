@@ -1,9 +1,9 @@
 /** @file The icon and name of a {@link DirectoryAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import { isNewTitleValid, type DirectoryAsset } from 'enso-common/src/services/Backend'
-import { merger } from 'enso-common/src/utilities/data/object'
-import { isWhitespaceOnly } from 'enso-common/src/utilities/data/string'
+import { isNewTitleValid, type DirectoryAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
+import { isWhitespaceOnly } from '@common/utilities/data/string'
 
 import FolderIcon from '#/assets/folder.svg'
 import FolderArrowIcon from '#/assets/folder_arrow.svg'

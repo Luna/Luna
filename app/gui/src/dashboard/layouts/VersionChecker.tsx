@@ -3,9 +3,9 @@ import { startTransition, useState } from 'react'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { download } from 'enso-common/src/utilities/download'
-import { getDownloadUrl, getLatestRelease } from 'enso-common/src/utilities/github'
+import { IS_DEV_MODE } from '@common/utilities/detect'
+import { download } from '@common/utilities/download'
+import { getDownloadUrl, getLatestRelease } from '@common/utilities/github'
 
 import DownloadIcon from '#/assets/download.svg'
 import NewTabIcon from '#/assets/new_tab.svg'

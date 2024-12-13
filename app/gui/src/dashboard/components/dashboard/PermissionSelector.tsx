@@ -1,7 +1,7 @@
 /** @file A selector for all possible permissions. */
 import { useRef, useState, type JSX } from 'react'
 
-import type { AssetType } from 'enso-common/src/services/Backend'
+import type { AssetType } from '@common/services/Backend'
 
 import { Button } from '#/components/AriaComponents'
 import PermissionTypeSelector from '#/components/dashboard/PermissionTypeSelector'

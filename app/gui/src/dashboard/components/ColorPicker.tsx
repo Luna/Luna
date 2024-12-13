@@ -6,7 +6,7 @@ import {
   COLORS,
   lChColorToCssColor,
   type LChColor,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import { Radio, type RadioGroupProps } from '#/components/aria'
 import FocusRing from '#/components/styled/FocusRing'

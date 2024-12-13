@@ -1,7 +1,7 @@
 /** @file A modal for capturing an arbitrary keyboard shortcut. */
 import { useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 
-import { isOnMacOS } from 'enso-common/src/detect'
+import { isOnMacOS } from '@common/utilities/detect'
 
 import { ButtonGroup, Dialog, DialogDismiss, Form, Text } from '#/components/AriaComponents'
 import KeyboardShortcut from '#/components/dashboard/KeyboardShortcut'

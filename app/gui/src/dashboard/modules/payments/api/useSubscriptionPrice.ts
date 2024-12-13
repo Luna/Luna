@@ -1,7 +1,7 @@
 /** @file A hook to fetch the subscription price based on the provided parameters. */
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
-import type { Plan } from 'enso-common/src/services/Backend'
+import type { Plan } from '@common/services/Backend'
 
 import { DISCOUNT_MULTIPLIER_BY_DURATION, PRICE_BY_PLAN } from '../constants'
 

@@ -1,8 +1,8 @@
 /** @file Tests for the asset panel. */
 import { expect, test, type Page } from '@playwright/test'
 
-import { EmailAddress, UserId } from 'enso-common/src/services/Backend'
-import { PermissionAction } from 'enso-common/src/utilities/permissions'
+import { EmailAddress, UserId } from '@common/services/Backend'
+import { PermissionAction } from '@common/utilities/permissions'
 
 import { mockAllAndLogin } from './actions'
 

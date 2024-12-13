@@ -1,7 +1,7 @@
 /** @file Plan selector component. */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { Plan, PLANS } from 'enso-common/src/services/Backend'
+import { Plan, PLANS } from '@common/services/Backend'
 
 import { DIALOG_BACKGROUND } from '#/components/AriaComponents'
 import { usePaywall } from '#/hooks/billing'

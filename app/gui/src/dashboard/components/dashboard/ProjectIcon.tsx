@@ -8,7 +8,7 @@ import {
   ProjectState,
   type Backend,
   type ProjectAsset,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import ArrowUpIcon from '#/assets/arrow_up.svg'
 import PlayIcon from '#/assets/play.svg'

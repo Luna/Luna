@@ -11,8 +11,8 @@ import type {
   TagId,
   UserGroupId,
   UserId,
-} from 'enso-common/src/services/Backend'
-import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
+} from '@common/services/Backend'
+import { newtypeConstructor, type Newtype } from '@common/utilities/data/newtype'
 
 /** Relative HTTP path to the "list users" endpoint of the Cloud backend API. */
 export const LIST_USERS_PATH = 'users'

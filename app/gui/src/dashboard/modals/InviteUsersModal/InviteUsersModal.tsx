@@ -1,7 +1,7 @@
 /** @file A modal with inputs for user email and permission level. */
 import { useState } from 'react'
 
-import type { EmailAddress, OrganizationId } from 'enso-common/src/services/Backend'
+import type { EmailAddress, OrganizationId } from '@common/services/Backend'
 
 import { Dialog, Popover } from '#/components/AriaComponents'
 import { Stepper } from '#/components/Stepper'

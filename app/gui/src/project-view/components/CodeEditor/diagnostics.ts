@@ -3,7 +3,7 @@ import { type ProjectStore } from '@/stores/project'
 import { type Diagnostic, forceLinting, linter } from '@codemirror/lint'
 import { type Extension, StateEffect, StateField } from '@codemirror/state'
 import { type EditorView } from '@codemirror/view'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import { computed, watch } from 'vue'
 import { type Diagnostic as LSDiagnostic, type Position } from 'ydoc-shared/languageServerTypes'
 

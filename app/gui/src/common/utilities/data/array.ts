@@ -2,18 +2,10 @@
 
 export const EMPTY_ARRAY: readonly never[] = []
 
-// ====================
-// === shallowEqual ===
-// ====================
-
 /** Whether both arrays contain the same items. Does not recurse into the items. */
 export function shallowEqual<T>(a: readonly T[], b: readonly T[]) {
   return a.length === b.length && a.every((item, i) => item === b[i])
 }
-
-// ================
-// === includes ===
-// ================
 
 /**
  * Returns a type predicate that returns true if and only if the value is in the array.
@@ -32,10 +24,6 @@ export function includesPredicate<T>(array: Iterable<T>) {
   const set: Set<unknown> = array instanceof Set ? array : new Set<T>(array)
   return (item: unknown): item is T => set.has(item)
 }
-
-// ======================
-// === splice helpers ===
-// ======================
 
 /** The value returned when {@link Array.findIndex} fails. */
 const NOT_FOUND = -1
@@ -82,5 +70,5 @@ export function splicedAfter<T>(array: T[], items: T[], predicate: (value: T) =>
 export function transpose<T>(matrix: T[][]): T[][] {
   if (matrix.length === 0) return []
   if (matrix[0] && matrix[0].length === 0) return [[]]
-  return matrix[0]!.map((_, colIndex) => matrix.map(row => row[colIndex]!))
+  return matrix[0]!.map((_, colIndex) => matrix.map((row) => row[colIndex]!))
 }

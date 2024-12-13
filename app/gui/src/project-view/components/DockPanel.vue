@@ -7,7 +7,7 @@ import { useResizeObserver } from '@/composables/events'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
 import { TabButton } from '@/util/tabs'
-import { tabClipPath } from 'enso-common/src/utilities/style/tabBar'
+import { tabClipPath } from '@common/utilities/style/tabBar'
 import { computed, ref } from 'vue'
 
 const TAB_EDGE_MARGIN_PX = 4

@@ -2,8 +2,8 @@
 import { MotionGlobalConfig } from 'framer-motion'
 import { persist } from 'zustand/middleware'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { unsafeEntries, unsafeFromEntries } from 'enso-common/src/utilities/data/object'
+import { unsafeEntries, unsafeFromEntries } from '@common/utilities/data/object'
+import { IS_DEV_MODE } from '@common/utilities/detect'
 
 import { type PaywallFeatureName, PAYWALL_FEATURES } from '#/hooks/billing'
 import { createStore, useStore } from '#/utilities/zustand'

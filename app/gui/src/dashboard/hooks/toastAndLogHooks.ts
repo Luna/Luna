@@ -1,13 +1,13 @@
 /** @file */
 import { toast, type Id } from 'react-toastify'
 
-import type { Replacements, TextId } from 'enso-common/src/text'
+import type { Replacements, TextId } from '@common/text'
 
 import { useLogger } from '#/providers/LoggerProvider'
 import { useText } from '#/providers/TextProvider'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { getMessageOrToString, type MustNotBeKnown } from 'enso-common/src/utilities/error'
+import { getMessageOrToString, type MustNotBeKnown } from '@common/utilities/error'
 
 /** The type of the `toastAndLog` function returned by {@link useToastAndLog}. */
 export type ToastAndLogCallback = ReturnType<typeof useToastAndLog>

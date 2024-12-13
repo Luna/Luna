@@ -19,10 +19,10 @@ import {
 
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { isOnMacOS } from 'enso-common/src/detect'
-import type { Backend, Label as BackendLabel } from 'enso-common/src/services/Backend'
-import { shallowEqual } from 'enso-common/src/utilities/data/array'
-import { compareCaseInsensitive } from 'enso-common/src/utilities/data/string'
+import type { Backend, Label as BackendLabel } from '@common/services/Backend'
+import { shallowEqual } from '@common/utilities/data/array'
+import { compareCaseInsensitive } from '@common/utilities/data/string'
+import { isOnMacOS } from '@common/utilities/detect'
 
 import FindIcon from '#/assets/find.svg'
 import {

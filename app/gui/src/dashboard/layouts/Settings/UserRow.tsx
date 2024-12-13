@@ -1,5 +1,5 @@
 /** @file A row representing a user in a table of users. */
-import type { User } from 'enso-common/src/services/Backend'
+import type { User } from '@common/services/Backend'
 
 import Cross2 from '#/assets/cross2.svg'
 import { Button as AriaButton, Cell, FocusRing, Row } from '#/components/aria'

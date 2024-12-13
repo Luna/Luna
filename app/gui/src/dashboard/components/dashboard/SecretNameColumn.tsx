@@ -1,8 +1,8 @@
 /** @file The icon and name of a {@link SecretAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import type { SecretAsset } from 'enso-common/src/services/Backend'
-import { merger } from 'enso-common/src/utilities/data/object'
+import type { SecretAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
 
 import KeyIcon from '#/assets/key.svg'
 import { Text } from '#/components/AriaComponents'

@@ -1,5 +1,5 @@
 /** @file Utilities for using JSON schemas. */
-import { asObject, singletonObjectOrNull } from 'enso-common/src/utilities/data/object'
+import { asObject, singletonObjectOrNull } from '@common/utilities/data/object'
 
 // =================
 // === lookupDef ===

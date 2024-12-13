@@ -1,6 +1,6 @@
 /** @file Displays information describing a specific version of an asset. */
-import type { Backend, ProjectAsset, ProjectSession } from 'enso-common/src/services/Backend'
-import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
+import type { Backend, ProjectAsset, ProjectSession } from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 import LogsIcon from '#/assets/logs.svg'
 import { Button, DialogTrigger } from '#/components/AriaComponents'

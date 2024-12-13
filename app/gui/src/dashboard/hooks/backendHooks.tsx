@@ -18,10 +18,6 @@ import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 
 import {
-  backendQueryOptions as backendQueryOptionsBase,
-  type BackendMethods,
-} from 'enso-common/src/backendQuery'
-import {
   assetIsDirectory,
   assetIsFile,
   assetIsProject,
@@ -55,8 +51,12 @@ import {
   type UploadFileRequestParams,
   type User,
   type UserGroupInfo,
-} from 'enso-common/src/services/Backend'
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
+} from '@common/services/Backend'
+import {
+  backendQueryOptions as backendQueryOptionsBase,
+  type BackendMethods,
+} from '@common/services/tanstackQuery/query'
+import { toRfc3339 } from '@common/utilities/data/dateTime'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProject } from '#/hooks/projectHooks'

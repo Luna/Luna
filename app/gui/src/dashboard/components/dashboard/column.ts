@@ -1,7 +1,7 @@
 /** @file Column types and column display modes. */
 import { memo, type Dispatch, type JSX, type SetStateAction } from 'react'
 
-import type { AnyAsset, Asset, AssetId, BackendType } from 'enso-common/src/services/Backend'
+import type { AnyAsset, Asset, AssetId, BackendType } from '@common/services/Backend'
 
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import { Column } from '#/components/dashboard/column/columnUtils'

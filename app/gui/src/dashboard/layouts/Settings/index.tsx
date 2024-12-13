@@ -3,9 +3,9 @@ import * as React from 'react'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import type { Backend } from 'enso-common/src/services/Backend'
-import { includesPredicate } from 'enso-common/src/utilities/data/array'
-import { regexEscape } from 'enso-common/src/utilities/data/string'
+import type { Backend } from '@common/services/Backend'
+import { includesPredicate } from '@common/utilities/data/array'
+import { regexEscape } from '@common/utilities/data/string'
 
 import BurgerMenuIcon from '#/assets/burger_menu.svg'
 import { Heading, MenuTrigger } from '#/components/aria'

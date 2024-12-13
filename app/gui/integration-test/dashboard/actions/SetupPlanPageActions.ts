@@ -1,6 +1,6 @@
 /** @file Actions for the second step of the "setup" page. */
 import { PLAN_TO_UPGRADE_LABEL_ID } from '#/modules/payments/constants'
-import { Plan } from 'enso-common/src/services/Backend'
+import { Plan } from '@common/services/Backend'
 import { TEXT } from '.'
 import BaseActions from './BaseActions'
 import SetupDonePageActions from './SetupDonePageActions'

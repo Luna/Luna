@@ -15,8 +15,8 @@ import {
   type AssetId,
   type User,
   type UserGroupInfo,
-} from 'enso-common/src/services/Backend'
-import { getFileName } from 'enso-common/src/utilities/data/fileInfo'
+} from '@common/services/Backend'
+import { getFileName } from '@common/utilities/data/fileInfo'
 
 import { SEARCH_PARAMS_PREFIX } from '#/appUtils'
 import CloudIcon from '#/assets/cloud.svg'

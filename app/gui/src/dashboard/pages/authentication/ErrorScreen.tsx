@@ -1,5 +1,5 @@
 /** @file A screen displaying an error. */
-import { getMessageOrToString } from 'enso-common/src/utilities/error'
+import { getMessageOrToString } from '@common/utilities/error'
 
 import { Text } from '#/components/aria'
 import { useText } from '#/providers/TextProvider'

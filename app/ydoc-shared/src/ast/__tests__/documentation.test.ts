@@ -1,4 +1,4 @@
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 import { assert, assertDefined } from '../../util/assert'

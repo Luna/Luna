@@ -1,7 +1,7 @@
 /** @file A dropdown menu of user actions and settings. */
-import { Plan } from 'enso-common/src/services/Backend'
-import { download } from 'enso-common/src/utilities/download'
-import { getDownloadUrl } from 'enso-common/src/utilities/github'
+import { Plan } from '@common/services/Backend'
+import { download } from '@common/utilities/download'
+import { getDownloadUrl } from '@common/utilities/github'
 
 import DefaultUserIcon from '#/assets/default_user.svg'
 import { Popover, Text } from '#/components/AriaComponents'

@@ -39,9 +39,9 @@ import {
 } from 'amazon-cognito-identity-js'
 import { Err, Result } from 'ts-results'
 
+import { toRfc3339, type Rfc3339DateTime } from '@common/utilities/data/dateTime'
+import { isOnElectron } from '@common/utilities/detect'
 import type { AccessToken } from 'enso-common/src/accessToken'
-import { isOnElectron } from 'enso-common/src/detect'
-import { toRfc3339, type Rfc3339DateTime } from 'enso-common/src/utilities/data/dateTime'
 
 import { toNestedAmplifyConfig, type AmplifyConfig } from '#/authentication/service'
 import type { Logger } from '#/providers/LoggerProvider'

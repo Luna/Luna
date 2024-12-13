@@ -1,7 +1,7 @@
 /** @file A page in which the currently active payment plan can be changed. */
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { isPlan } from 'enso-common/src/services/Backend'
+import { isPlan } from '@common/services/Backend'
 
 import { DASHBOARD_PATH, SUBSCRIBE_SUCCESS_PATH } from '#/appUtils'
 import Back from '#/assets/arrow_left.svg'

@@ -1,8 +1,8 @@
 /** @file A context menu available everywhere in the directory. */
 import { useStore } from 'zustand'
 
-import { BackendType, type Backend, type DirectoryId } from 'enso-common/src/services/Backend'
-import { inputFiles } from 'enso-common/src/utilities/input'
+import { BackendType, type Backend, type DirectoryId } from '@common/services/Backend'
+import { inputFiles } from '@common/utilities/input'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'

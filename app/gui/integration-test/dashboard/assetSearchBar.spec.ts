@@ -1,7 +1,7 @@
 /** @file Test the search bar and its suggestions. */
 import { expect, test, type Page } from '@playwright/test'
 
-import { COLORS } from 'enso-common/src/services/Backend'
+import { COLORS } from '@common/services/Backend'
 
 import { mockAllAndLogin } from './actions'
 

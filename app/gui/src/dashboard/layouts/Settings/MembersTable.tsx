@@ -1,7 +1,7 @@
 /** @file A list of members in the organization. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { UserId, type Backend, type User } from 'enso-common/src/services/Backend'
+import { UserId, type Backend, type User } from '@common/services/Backend'
 
 import {
   Column,

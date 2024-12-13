@@ -4,7 +4,7 @@
  */
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
 
-import type { AnyAsset } from 'enso-common/src/services/Backend'
+import type { AnyAsset } from '@common/services/Backend'
 
 import AssetTreeNode, { type AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 

@@ -11,9 +11,9 @@ import {
   type DirectoryId,
   type FileAsset,
   type ProjectAsset,
-} from 'enso-common/src/services/Backend'
-import { basenameAndExtension } from 'enso-common/src/utilities/data/fileInfo'
-import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+} from '@common/services/Backend'
+import { basenameAndExtension } from '@common/utilities/data/fileInfo'
+import { unsafeMutable } from '@common/utilities/data/object'
 
 import { Heading, Text } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'

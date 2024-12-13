@@ -1,8 +1,8 @@
 /** @file Various types of drag event payloads. */
 import type { DragEvent } from 'react'
 
-import type { AnyAsset, AssetId, LabelName } from 'enso-common/src/services/Backend'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+import type { AnyAsset, AssetId, LabelName } from '@common/services/Backend'
+import { uniqueString } from '@common/utilities/uniqueString'
 
 /** Set the drag image to blank, so a custom div can be used instead. */
 export function setDragImageToBlank(event: DragEvent) {

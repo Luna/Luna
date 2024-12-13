@@ -7,6 +7,7 @@ import {
   languageDataProp,
   LanguageSupport,
 } from '@codemirror/language'
+import * as iter from '@common/utilities/data/iter'
 import {
   type Input,
   NodeProp,
@@ -17,7 +18,6 @@ import {
   Tree,
 } from '@lezer/common'
 import { styleTags, tags } from '@lezer/highlight'
-import * as iter from 'enso-common/src/utilities/data/iter'
 
 const nodeTypes: NodeType[] = [
   ...RawAst.Tree.typeNames.map((name, id) => NodeType.define({ id, name })),

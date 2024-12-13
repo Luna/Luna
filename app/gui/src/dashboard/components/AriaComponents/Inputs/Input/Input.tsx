@@ -29,7 +29,7 @@ import { useAutoFocus } from '#/hooks/autoFocusHooks'
 import { mergeRefs } from '#/utilities/mergeRefs'
 import { forwardRef } from '#/utilities/react'
 import type { ExtractFunction, VariantProps } from '#/utilities/tailwindVariants'
-import { omit } from 'enso-common/src/utilities/data/object'
+import { omit } from '@common/utilities/data/object'
 import { INPUT_STYLES } from '../variants'
 
 /** Props for the Input component. */

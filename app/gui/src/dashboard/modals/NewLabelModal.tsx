@@ -4,8 +4,8 @@ import * as React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import * as z from 'zod'
 
-import { findLeastUsedColor, type Backend } from 'enso-common/src/services/Backend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { findLeastUsedColor, type Backend } from '@common/services/Backend'
+import { EMPTY_ARRAY } from '@common/utilities/data/array'
 
 import { ButtonGroup, DialogDismiss, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'

@@ -1,7 +1,7 @@
 /** @file Settings tab for viewing and editing organization members. */
 import { useMutation, useSuspenseQueries } from '@tanstack/react-query'
 
-import type { EmailAddress, Invitation, UserId } from 'enso-common/src/services/Backend'
+import type { EmailAddress, Invitation, UserId } from '@common/services/Backend'
 
 import { Button, ButtonGroup, CopyButton, DialogTrigger, Text } from '#/components/AriaComponents'
 import { PaywallDialogButton } from '#/components/Paywall'

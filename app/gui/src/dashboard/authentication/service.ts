@@ -8,8 +8,8 @@ import * as React from 'react'
 import * as amplify from '@aws-amplify/auth'
 import { useNavigate } from 'react-router'
 
+import * as detect from '@common/utilities/detect'
 import * as common from 'enso-common'
-import * as detect from 'enso-common/src/detect'
 
 import * as appUtils from '#/appUtils'
 

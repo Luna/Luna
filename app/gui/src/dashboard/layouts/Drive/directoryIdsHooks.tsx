@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import { Path, createRootDirectoryAsset } from 'enso-common/src/services/Backend'
+import { Path, createRootDirectoryAsset } from '@common/services/Backend'
 
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'

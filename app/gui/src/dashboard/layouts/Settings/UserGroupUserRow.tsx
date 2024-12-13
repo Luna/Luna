@@ -1,5 +1,5 @@
 /** @file A row of the user groups table representing a user. */
-import type { User, UserGroupInfo } from 'enso-common/src/services/Backend'
+import type { User, UserGroupInfo } from '@common/services/Backend'
 
 import Cross2 from '#/assets/cross2.svg'
 import { Cell, Row } from '#/components/aria'

@@ -1,7 +1,7 @@
 /** @file An element that prevents navigation outside of itself. */
 import * as React from 'react'
 
-import * as detect from 'enso-common/src/detect'
+import * as detect from '@common/utilities/detect'
 
 import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 

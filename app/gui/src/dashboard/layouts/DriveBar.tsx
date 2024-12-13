@@ -6,8 +6,8 @@ import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type { Backend } from 'enso-common/src/services/Backend'
-import { inputFiles } from 'enso-common/src/utilities/input'
+import type { Backend } from '@common/services/Backend'
+import { inputFiles } from '@common/utilities/input'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'

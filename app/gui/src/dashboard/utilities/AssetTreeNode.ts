@@ -8,7 +8,7 @@ import {
   isPlaceholderId,
   type AnyAsset,
   type DirectoryId,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 /** An {@link AssetTreeNode}, but excluding its methods. */
 export type AssetTreeNodeData = Pick<

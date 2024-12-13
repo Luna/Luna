@@ -11,14 +11,8 @@ import {
   type PropsWithChildren,
 } from 'react'
 
-import {
-  Language,
-  LANGUAGE_TO_LOCALE,
-  TEXTS,
-  type Replacements,
-  type TextId,
-} from 'enso-common/src/text'
-import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+import { Language, LANGUAGE_TO_LOCALE, TEXTS, type Replacements, type TextId } from '@common/text'
+import { unsafeMutable } from '@common/utilities/data/object'
 
 /** State contained in a `TextContext`. */
 export interface TextContextType {

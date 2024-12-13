@@ -1,9 +1,9 @@
 /** @file The icon and name of a {@link FileAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import { BackendType, isNewTitleValid, type FileAsset } from 'enso-common/src/services/Backend'
-import { merger } from 'enso-common/src/utilities/data/object'
-import { isWhitespaceOnly } from 'enso-common/src/utilities/data/string'
+import { BackendType, isNewTitleValid, type FileAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
+import { isWhitespaceOnly } from '@common/utilities/data/string'
 
 import type { AssetColumnProps } from '#/components/dashboard/column'
 import EditableSpan from '#/components/EditableSpan'

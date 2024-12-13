@@ -1,7 +1,7 @@
 /** @file Commonly used functions for electron tests */
 
+import { TEXTS } from '@common/text'
 import { _electron, ElectronApplication, expect, type Page, test } from '@playwright/test'
-import { TEXTS } from 'enso-common/src/text'
 import * as random from 'lib0/random'
 import os from 'node:os'
 import pathModule from 'node:path'

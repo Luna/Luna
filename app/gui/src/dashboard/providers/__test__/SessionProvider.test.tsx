@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { Rfc3339DateTime } from 'enso-common/src/utilities/data/dateTime'
+import { Rfc3339DateTime } from '@common/utilities/data/dateTime'
 
 import type { UserSession } from '#/authentication/cognito'
 import { render, screen, waitFor } from '#/test'

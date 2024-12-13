@@ -1,5 +1,5 @@
 import { RawAst, rawParseModule, readAstOrTokenSpan, walkRecursive } from '@/util/ast/raw'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import { assert, expect, test } from 'vitest'
 import { Token, Tree } from 'ydoc-shared/ast/generated/ast'
 import type { LazyObject } from 'ydoc-shared/ast/parserSupport'

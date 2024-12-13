@@ -1,7 +1,7 @@
 /** @file Settings tab for viewing and editing keyboard shortcuts. */
 import { useMemo, useRef } from 'react'
 
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
+import { unsafeEntries } from '@common/utilities/data/object'
 
 import BlankIcon from '#/assets/blank.svg'
 import CrossIcon from '#/assets/cross.svg'

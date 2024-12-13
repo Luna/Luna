@@ -5,7 +5,7 @@ import type {
   DirectoryId,
   ProjectAsset,
   S3ObjectVersionId,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import AssetListEventType from '#/events/AssetListEventType'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'

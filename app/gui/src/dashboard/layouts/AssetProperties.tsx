@@ -10,9 +10,9 @@ import {
   type AnyAsset,
   type Backend,
   type DatalinkId,
-} from 'enso-common/src/services/Backend'
-import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
-import { mapNonNullish } from 'enso-common/src/utilities/data/nullable'
+} from '@common/services/Backend'
+import { normalizePath } from '@common/utilities/data/fileInfo'
+import { mapNonNullish } from '@common/utilities/data/nullable'
 
 import PenIcon from '#/assets/pen.svg'
 import { Heading } from '#/components/aria'

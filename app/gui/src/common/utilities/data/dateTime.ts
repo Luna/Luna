@@ -1,5 +1,5 @@
 /** @file Utilities for manipulating and displaying dates and times. */
-import * as newtype from './newtype'
+import * as newtype from '@common/utilities/data/newtype'
 
 /** The number of hours in half a day. This is used to get the number of hours for AM/PM time. */
 const HALF_DAY_HOURS = 12

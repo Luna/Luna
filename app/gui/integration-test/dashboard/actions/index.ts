@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { expect, test, type Page } from '@playwright/test'
 
-import { TEXTS } from 'enso-common/src/text'
+import { TEXTS } from '@common/text'
 
 import {
   INITIAL_CALLS_OBJECT,

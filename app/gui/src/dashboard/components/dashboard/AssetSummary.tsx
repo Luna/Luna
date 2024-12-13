@@ -1,6 +1,6 @@
 /** @file Displays a few details of an asset. */
-import type { AnyAsset } from 'enso-common/src/services/Backend'
-import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
+import type { AnyAsset } from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 import BreadcrumbArrowIcon from '#/assets/breadcrumb_arrow.svg'
 import { Text } from '#/components/aria'

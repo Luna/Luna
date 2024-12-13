@@ -1,6 +1,6 @@
 /** @file The icon and name of a {@link DatalinkAsset}. */
-import type { DatalinkAsset } from 'enso-common/src/services/Backend'
-import { merger } from 'enso-common/src/utilities/data/object'
+import type { DatalinkAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
 
 import DatalinkIcon from '#/assets/datalink.svg'
 import type { AssetColumnProps } from '#/components/dashboard/column'

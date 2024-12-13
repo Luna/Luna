@@ -1,7 +1,7 @@
 /** @file A column listing the users with which this asset is shared. */
 import { useRef } from 'react'
 
-import { getAssetPermissionId, getAssetPermissionName } from 'enso-common/src/services/Backend'
+import { getAssetPermissionId, getAssetPermissionName } from '@common/services/Backend'
 
 import Plus2Icon from '#/assets/plus2.svg'
 import { Button } from '#/components/AriaComponents'

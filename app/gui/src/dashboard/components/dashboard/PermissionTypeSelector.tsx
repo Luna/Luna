@@ -1,7 +1,7 @@
 /** @file A selector for all possible permission types. */
 import type { CSSProperties } from 'react'
 
-import { AssetType } from 'enso-common/src/services/Backend'
+import { AssetType } from '@common/services/Backend'
 
 import { Label, Text } from '#/components/aria'
 import { Button } from '#/components/AriaComponents'

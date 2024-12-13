@@ -7,7 +7,7 @@ import { startTransition } from 'react'
 
 import * as z from 'zod'
 
-import type { AnyAsset, Backend } from 'enso-common/src/services/Backend'
+import type { AnyAsset, Backend } from '@common/services/Backend'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { AssetPropertiesSpotlight } from '#/layouts/AssetProperties'

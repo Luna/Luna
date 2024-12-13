@@ -3,9 +3,9 @@ import { memo, useDeferredValue, useEffect, useState, type Ref } from 'react'
 
 import { toast } from 'react-toastify'
 
-import { DirectoryDoesNotExistError, Plan } from 'enso-common/src/services/Backend'
-import { download } from 'enso-common/src/utilities/download'
-import { getDownloadUrl } from 'enso-common/src/utilities/github'
+import { DirectoryDoesNotExistError, Plan } from '@common/services/Backend'
+import { download } from '@common/utilities/download'
+import { getDownloadUrl } from '@common/utilities/github'
 
 import { SUBSCRIBE_PATH } from '#/appUtils'
 import { Button, ButtonGroup } from '#/components/AriaComponents'

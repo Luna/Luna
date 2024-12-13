@@ -8,6 +8,7 @@
 
 import { Form, type FormInstance, type FormProps, type TSchema } from '#/components/AriaComponents'
 import UIProviders from '#/components/UIProviders'
+import { createQueryClient } from '@common/services/tanstackQuery/client'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import {
   render,
@@ -17,7 +18,6 @@ import {
   type RenderOptions,
   type RenderResult,
 } from '@testing-library/react'
-import { createQueryClient } from 'enso-common/src/queryClient'
 import { useState, type PropsWithChildren, type ReactElement, type ReactNode } from 'react'
 
 /**

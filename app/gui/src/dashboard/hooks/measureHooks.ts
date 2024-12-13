@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { frame, useMotionValue } from 'framer-motion'
 
-import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+import { unsafeMutable } from '@common/utilities/data/object'
 
 import { useDebouncedCallback } from './debounceCallbackHooks'
 import { useEventCallback } from './eventCallbackHooks'

@@ -9,8 +9,8 @@ import {
   type ErrorBoundaryProps as ReactErrorBoundaryProps,
 } from 'react-error-boundary'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { getMessageOrToString, tryGetStack } from 'enso-common/src/utilities/error'
+import { IS_DEV_MODE } from '@common/utilities/detect'
+import { getMessageOrToString, tryGetStack } from '@common/utilities/error'
 
 import { Alert, Button, ButtonGroup, Separator, Text } from '#/components/AriaComponents'
 import { Result, type ResultProps } from '#/components/Result'

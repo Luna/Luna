@@ -4,8 +4,8 @@ import { createContext, useContext, useMemo, type PropsWithChildren } from 'reac
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
-import { BackendType, type DirectoryId, type ProjectId } from 'enso-common/src/services/Backend'
-import { EMPTY_ARRAY, includes } from 'enso-common/src/utilities/data/array'
+import { BackendType, type DirectoryId, type ProjectId } from '@common/services/Backend'
+import { EMPTY_ARRAY, includes } from '@common/utilities/data/array'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'

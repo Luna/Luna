@@ -1,5 +1,5 @@
 /** @file A dynamic wizard for creating an arbitrary type of Datalink. */
-import { assert } from 'enso-common/src/utilities/error'
+import { assert } from '@common/utilities/error'
 
 import { FieldError } from '#/components/aria'
 import type { FieldPath, FormInstance, TSchema } from '#/components/AriaComponents'

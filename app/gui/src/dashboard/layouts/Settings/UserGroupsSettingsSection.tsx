@@ -9,7 +9,7 @@ import {
   type Backend,
   type User,
   type UserGroupInfo,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import { Cell, Column, Row, Table, TableBody, TableHeader, useDragAndDrop } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'

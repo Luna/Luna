@@ -11,9 +11,9 @@ import {
 
 import { createPortal } from 'react-dom'
 
-import { formatDateTimeChatFriendly } from 'enso-common/src/utilities/data/dateTime'
-import { newtypeConstructor } from 'enso-common/src/utilities/data/newtype'
-import { merge } from 'enso-common/src/utilities/data/object'
+import { formatDateTimeChatFriendly } from '@common/utilities/data/dateTime'
+import { newtypeConstructor } from '@common/utilities/data/newtype'
+import { merge } from '@common/utilities/data/object'
 
 import CloseLargeIcon from '#/assets/close_large.svg'
 import DefaultUserIcon from '#/assets/default_user.svg'

@@ -1,15 +1,15 @@
 /** @file The icon and name of a {@link ProjectAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import { isOnMacOS } from 'enso-common/src/detect'
 import {
   BackendType,
   IS_OPENING_OR_OPENED,
   isNewTitleValid,
   type ProjectAsset,
-} from 'enso-common/src/services/Backend'
-import { merger } from 'enso-common/src/utilities/data/object'
-import { isWhitespaceOnly } from 'enso-common/src/utilities/data/string'
+} from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
+import { isWhitespaceOnly } from '@common/utilities/data/string'
+import { isOnMacOS } from '@common/utilities/detect'
 
 import type { AssetColumnProps } from '#/components/dashboard/column'
 import ProjectIcon, { CLOSED_PROJECT_STATE } from '#/components/dashboard/ProjectIcon'

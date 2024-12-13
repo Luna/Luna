@@ -11,10 +11,10 @@ import {
   type Backend,
   type OrganizationInfo,
   type User,
-} from 'enso-common/src/services/Backend'
-import type { TextId } from 'enso-common/src/text'
-import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
-import { pick, unsafeEntries } from 'enso-common/src/utilities/data/object'
+} from '@common/services/Backend'
+import type { TextId } from '@common/text'
+import { normalizePath } from '@common/utilities/data/fileInfo'
+import { pick, unsafeEntries } from '@common/utilities/data/object'
 
 import ComputerIcon from '#/assets/computer.svg'
 import CreditCardIcon from '#/assets/credit_card.svg'

@@ -1,5 +1,5 @@
 /** @file A toolbar containing chat and the user menu. */
-import { Plan } from 'enso-common/src/services/Backend'
+import { Plan } from '@common/services/Backend'
 
 import { SUBSCRIBE_PATH } from '#/appUtils'
 import ChatIcon from '#/assets/chat.svg'

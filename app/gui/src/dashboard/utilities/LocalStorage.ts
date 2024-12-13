@@ -5,8 +5,8 @@ import invariant from 'tiny-invariant'
 
 import { PRODUCT_NAME } from 'enso-common'
 
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
+import { unsafeEntries } from '@common/utilities/data/object'
+import { IS_DEV_MODE } from '@common/utilities/detect'
 
 const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
 

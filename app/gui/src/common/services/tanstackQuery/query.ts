@@ -2,9 +2,9 @@
 
 import type * as queryCore from '@tanstack/query-core'
 
+import * as object from '../../utilities/data/object'
 import type Backend from './services/Backend'
 import * as backendModule from './services/Backend'
-import * as object from './utilities/data/object'
 
 /** The properties of the Backend type that are methods. */
 export type BackendMethods = object.ExtractKeys<Backend, object.MethodOf<Backend>>
@@ -15,8 +15,8 @@ type BackendQueryNormalizers = {
 }
 
 const NORMALIZE_METHOD_QUERY: BackendQueryNormalizers = {
-  listDirectory: query => [query.parentId, object.omit(query, 'parentId')],
-  getFileDetails: fileId => [fileId],
+  listDirectory: (query) => [query.parentId, object.omit(query, 'parentId')],
+  getFileDetails: (fileId) => [fileId],
 }
 
 /** Creates a partial query key representing the given method and arguments. */

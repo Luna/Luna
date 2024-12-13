@@ -12,8 +12,8 @@ import {
   type Backend,
   type DirectoryId,
   type ProjectAsset,
-} from 'enso-common/src/services/Backend'
-import { merge } from 'enso-common/src/utilities/data/object'
+} from '@common/services/Backend'
+import { merge } from '@common/utilities/data/object'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 

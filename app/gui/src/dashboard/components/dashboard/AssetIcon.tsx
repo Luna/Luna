@@ -1,5 +1,5 @@
 /** @file Displays a non-interactable icon for an asset based on its type and name. */
-import { AssetType, type AnyAsset } from 'enso-common/src/services/Backend'
+import { AssetType, type AnyAsset } from '@common/services/Backend'
 
 import BlankIcon from '#/assets/blank.svg'
 import DatalinkIcon from '#/assets/datalink.svg'
