@@ -1968,7 +1968,7 @@ function AssetsTable(props: AssetsTableProps) {
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
+                  <div className="flex h-full w-min min-w-full grow flex-col px-1">{table}</div>
                 </div>
               </div>
             </IsolateLayout>

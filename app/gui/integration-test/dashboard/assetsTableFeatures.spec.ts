@@ -54,7 +54,7 @@ test('extra columns should stick to right side of assets table', ({ page }) =>
         const assetsTableRight = await assetsTable.evaluate(
           (element) => element.getBoundingClientRect().right,
         )
-        expect(extraColumnsRight).toEqual(assetsTableRight - 12)
+        expect(extraColumnsRight).toEqual(assetsTableRight - 8)
       }).toPass({ timeout: PASS_TIMEOUT })
     }))
 

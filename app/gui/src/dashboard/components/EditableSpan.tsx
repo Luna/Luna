@@ -4,12 +4,11 @@ import * as React from 'react'
 import CrossIcon from '#/assets/cross.svg'
 import TickIcon from '#/assets/tick.svg'
 
-import { Input, Text } from '#/components/AriaComponents'
+import { Button, Form, Input, Text, Underlay } from '#/components/AriaComponents'
 import * as textProvider from '#/providers/TextProvider'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 import { useInteractOutside } from '#/components/aria'
-import { Form, Underlay } from '#/components/AriaComponents'
 import { useAutoFocus } from '#/hooks/autoFocusHooks'
 import { useMeasure } from '#/hooks/measureHooks'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
@@ -38,14 +37,22 @@ export interface EditableSpanProps {
 export default function EditableSpan(props: EditableSpanProps) {
   const { className = '', editable = false, children } = props
 
-  if (editable) {
-    return <EditForm {...props} />
-  }
-
   return (
-    <Text testId={props['data-testid']} truncate="1" className={className}>
-      {children}
-    </Text>
+    <AnimatePresence>
+      {editable && <EditForm {...props} />}
+
+      {!editable && (
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 5 }}
+        >
+          <Text testId={props['data-testid']} truncate="1" className={className}>
+            {children}
+          </Text>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -164,14 +171,14 @@ function EditForm(props: EditFormProps) {
           </AnimatePresence>
 
           <AnimatePresence>
-            {form.formState.isDirty && (
-              <motion.div
-                variants={CONTAINER_VARIANTS}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                className="ml-1 flex w-auto flex-none basis-0 items-center gap-1.5"
-              >
+            <motion.div
+              variants={CONTAINER_VARIANTS}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              className="ml-1 flex w-auto flex-none basis-0 items-center gap-1.5"
+            >
+              {form.formState.isDirty && (
                 <motion.div
                   variants={CHILD_VARIANTS}
                   transition={TRANSITION_OPTIONS}
@@ -187,26 +194,26 @@ function EditForm(props: EditFormProps) {
                     children={null}
                   />
                 </motion.div>
+              )}
 
-                <motion.div
-                  variants={CHILD_VARIANTS}
-                  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-                  transition={{ ...TRANSITION_OPTIONS, delay: 0.25 }}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                >
-                  <Form.Reset
-                    size="medium"
-                    variant="icon"
-                    icon={CrossIcon}
-                    aria-label={getText('cancelEdit')}
-                    onPress={onCancel}
-                    children={null}
-                  />
-                </motion.div>
+              <motion.div
+                variants={CHILD_VARIANTS}
+                // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+                transition={{ ...TRANSITION_OPTIONS, delay: 0.25 }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+              >
+                <Button
+                  size="medium"
+                  variant="icon"
+                  icon={CrossIcon}
+                  aria-label={getText('cancelEdit')}
+                  onPress={onCancel}
+                  children={null}
+                />
               </motion.div>
-            )}
+            </motion.div>
           </AnimatePresence>
         </div>
       </Form.Provider>
