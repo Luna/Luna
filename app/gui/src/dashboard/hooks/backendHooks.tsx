@@ -21,6 +21,42 @@ import {
   backendQueryOptions as backendQueryOptionsBase,
   type BackendMethods,
 } from 'enso-common/src/backendQuery'
+import type Backend from 'enso-common/src/services/Backend'
+import {
+  assetIsDirectory,
+  assetIsFile,
+  assetIsProject,
+  AssetType,
+  BackendType,
+  createPlaceholderDatalinkAsset,
+  createPlaceholderDirectoryAsset,
+  createPlaceholderFileAsset,
+  createPlaceholderProjectAsset,
+  createPlaceholderSecretAsset,
+  DatalinkId,
+  escapeSpecialCharacters,
+  extractProjectExtension,
+  fileIsNotProject,
+  fileIsProject,
+  isEmptyAssetId,
+  isErrorAssetId,
+  isLoadingAssetId,
+  Path,
+  S3_CHUNK_SIZE_BYTES,
+  S3MultipartPart,
+  SpecialEmptyAsset,
+  SpecialErrorAsset,
+  SpecialLoadingAsset,
+  stripProjectExtension,
+  UploadFileRequestParams,
+  type AnyAsset,
+  type AssetId,
+  type DirectoryAsset,
+  type DirectoryId,
+  type User,
+  type UserGroupInfo,
+} from 'enso-common/src/services/Backend'
+import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
@@ -36,38 +72,17 @@ import {
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
-import {
-  AssetType,
-  BackendType,
-  type AnyAsset,
-  type AssetId,
-  type DirectoryAsset,
-  type DirectoryId,
-  type User,
-  type UserGroupInfo,
-} from '#/services/Backend'
 import LocalBackend from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 // The number of bytes in 1 megabyte.
 const MB_BYTES = 1_000_000
-const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES)
-
-// ============================
-// === DefineBackendMethods ===
-// ============================
+const S3_CHUNK_SIZE_MB = Math.round(S3_CHUNK_SIZE_BYTES / MB_BYTES)
 
 /** Ensure that the given type contains only names of backend methods. */
 type DefineBackendMethods<T extends keyof Backend> = T
-
-// ======================
-// === MutationMethod ===
-// ======================
 
 /** Names of methods corresponding to mutations. */
 export type MutationMethod = DefineBackendMethods<
@@ -113,10 +128,6 @@ export type MutationMethod = DefineBackendMethods<
   | 'uploadOrganizationPicture'
   | 'uploadUserPicture'
 >
-
-// =======================
-// === useBackendQuery ===
-// =======================
 
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend,
@@ -173,10 +184,6 @@ export function useBackendQuery<Method extends BackendMethods>(
 ) {
   return useQuery(backendQueryOptions(backend, method, args, options))
 }
-
-// ==========================
-// === useBackendMutation ===
-// ==========================
 
 const INVALIDATE_ALL_QUERIES = Symbol('invalidate all queries')
 const INVALIDATION_MAP: Partial<
@@ -266,10 +273,6 @@ export function backendMutationOptions<Method extends MutationMethod>(
     },
   }
 }
-
-// ==================================
-// === useListUserGroupsWithUsers ===
-// ==================================
 
 /** A user group, as well as the users that are a part of the user group. */
 export interface UserGroupInfoWithUsers extends UserGroupInfo {
@@ -402,29 +405,29 @@ export function useAssetPassiveListener(
         type: AssetType.directory,
       } satisfies DirectoryAsset
     }
-    case backendModule.isLoadingAssetId(assetId): {
+    case isLoadingAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialLoading,
-      } satisfies backendModule.SpecialLoadingAsset
+      } satisfies SpecialLoadingAsset
     }
-    case backendModule.isEmptyAssetId(assetId): {
+    case isEmptyAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialEmpty,
-      } satisfies backendModule.SpecialEmptyAsset
+      } satisfies SpecialEmptyAsset
     }
-    case backendModule.isErrorAssetId(assetId): {
+    case isErrorAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialError,
-      } satisfies backendModule.SpecialErrorAsset
+      } satisfies SpecialErrorAsset
     }
     default: {
       return
@@ -490,29 +493,29 @@ export function useAsset(options: UseAssetOptions) {
         type: AssetType.directory,
       } satisfies DirectoryAsset
     }
-    case backendModule.isLoadingAssetId(assetId): {
+    case isLoadingAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialLoading,
-      } satisfies backendModule.SpecialLoadingAsset
+      } satisfies SpecialLoadingAsset
     }
-    case backendModule.isEmptyAssetId(assetId): {
+    case isEmptyAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialEmpty,
-      } satisfies backendModule.SpecialEmptyAsset
+      } satisfies SpecialEmptyAsset
     }
-    case backendModule.isErrorAssetId(assetId): {
+    case isErrorAssetId(assetId): {
       return {
         ...shared,
         id: assetId,
         title: '',
         type: AssetType.specialError,
-      } satisfies backendModule.SpecialErrorAsset
+      } satisfies SpecialErrorAsset
     }
     default: {
       return
@@ -566,7 +569,7 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
   const [localRootDirectory] = useLocalStorageState('localRootDirectory')
 
   return useMemo(() => {
-    const localRootPath = localRootDirectory != null ? backendModule.Path(localRootDirectory) : null
+    const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null
     const id =
       'homeDirectoryId' in category ?
         category.homeDirectoryId
@@ -643,12 +646,12 @@ export function useNewFolder(backend: Backend, category: Category) {
     toggleDirectoryExpansion(parentId, true)
     const siblings = await ensureListDirectory(parentId)
     const directoryIndices = siblings
-      .filter(backendModule.assetIsDirectory)
+      .filter(assetIsDirectory)
       .map((item) => /^New Folder (?<directoryIndex>\d+)$/.exec(item.title))
       .map((match) => match?.groups?.directoryIndex)
       .map((maybeIndex) => (maybeIndex != null ? parseInt(maybeIndex, 10) : 0))
     const title = `New Folder ${Math.max(0, ...directoryIndices) + 1}`
-    const placeholderItem = backendModule.createPlaceholderDirectoryAsset(
+    const placeholderItem = createPlaceholderDirectoryAsset(
       title,
       parentId,
       tryCreateOwnerPermission(
@@ -693,7 +696,7 @@ export function useNewProject(backend: Backend, category: Category) {
       }: {
         templateName: string | null | undefined
         templateId?: string | null | undefined
-        datalinkId?: backendModule.DatalinkId | null | undefined
+        datalinkId?: DatalinkId | null | undefined
       },
       parentId: DirectoryId,
       parentPath: string | null | undefined,
@@ -705,7 +708,7 @@ export function useNewProject(backend: Backend, category: Category) {
         const prefix = `${templateName ?? 'New Project'} `
         const projectNameTemplate = new RegExp(`^${prefix}(?<projectIndex>\\d+)$`)
         const projectIndices = siblings
-          .filter(backendModule.assetIsProject)
+          .filter(assetIsProject)
           .map((item) => projectNameTemplate.exec(item.title)?.groups?.projectIndex)
           .map((maybeIndex) => (maybeIndex != null ? parseInt(maybeIndex, 10) : 0))
         return `${prefix}${Math.max(0, ...projectIndices) + 1}`
@@ -713,7 +716,7 @@ export function useNewProject(backend: Backend, category: Category) {
 
       const path = backend instanceof LocalBackend ? backend.joinPath(parentId, projectName) : null
 
-      const placeholderItem = backendModule.createPlaceholderProjectAsset(
+      const placeholderItem = createPlaceholderProjectAsset(
         projectName,
         parentId,
         tryCreateOwnerPermission(
@@ -771,7 +774,7 @@ export function useNewSecret(backend: Backend, category: Category) {
       parentPath: string | null | undefined,
     ) => {
       toggleDirectoryExpansion(parentId, true)
-      const placeholderItem = backendModule.createPlaceholderSecretAsset(
+      const placeholderItem = createPlaceholderSecretAsset(
         name,
         parentId,
         tryCreateOwnerPermission(
@@ -810,7 +813,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
       parentPath: string | null | undefined,
     ) => {
       toggleDirectoryExpansion(parentId, true)
-      const placeholderItem = backendModule.createPlaceholderDatalinkAsset(
+      const placeholderItem = createPlaceholderDatalinkAsset(
         name,
         parentId,
         tryCreateOwnerPermission(
@@ -855,8 +858,8 @@ export function useUploadFiles(backend: Backend, category: Category) {
       const localBackend = backend instanceof LocalBackend ? backend : null
       const reversedFiles = Array.from(filesToUpload).reverse()
       const siblings = await ensureListDirectory(parentId)
-      const siblingFiles = siblings.filter(backendModule.assetIsFile)
-      const siblingProjects = siblings.filter(backendModule.assetIsProject)
+      const siblingFiles = siblings.filter(assetIsFile)
+      const siblingProjects = siblings.filter(assetIsProject)
       const siblingFileTitles = new Set(siblingFiles.map((asset) => asset.title))
       const siblingProjectTitles = new Set(siblingProjects.map((asset) => asset.title))
       const ownerPermission = tryCreateOwnerPermission(
@@ -866,19 +869,17 @@ export function useUploadFiles(backend: Backend, category: Category) {
         users ?? [],
         userGroups ?? [],
       )
-      const files = reversedFiles.filter(backendModule.fileIsNotProject).map((file) => {
-        const asset = backendModule.createPlaceholderFileAsset(
-          backendModule.escapeSpecialCharacters(file.name),
+      const files = reversedFiles.filter(fileIsNotProject).map((file) => {
+        const asset = createPlaceholderFileAsset(
+          escapeSpecialCharacters(file.name),
           parentId,
           ownerPermission,
         )
         return { asset, file }
       })
-      const projects = reversedFiles.filter(backendModule.fileIsProject).map((file) => {
-        const basename = backendModule.escapeSpecialCharacters(
-          backendModule.stripProjectExtension(file.name),
-        )
-        const asset = backendModule.createPlaceholderProjectAsset(
+      const projects = reversedFiles.filter(fileIsProject).map((file) => {
+        const basename = escapeSpecialCharacters(stripProjectExtension(file.name))
+        const asset = createPlaceholderProjectAsset(
           basename,
           parentId,
           ownerPermission,
@@ -889,7 +890,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
       })
       const duplicateFiles = files.filter((file) => siblingFileTitles.has(file.asset.title))
       const duplicateProjects = projects.filter((project) =>
-        siblingProjectTitles.has(backendModule.stripProjectExtension(project.asset.title)),
+        siblingProjectTitles.has(stripProjectExtension(project.asset.title)),
       )
       const fileMap = new Map<AssetId, File>([
         ...files.map(({ asset, file }) => [asset.id, file] as const),
@@ -909,11 +910,9 @@ export function useUploadFiles(backend: Backend, category: Category) {
           const fileId = method === 'new' ? null : asset.id
 
           switch (true) {
-            case backendModule.assetIsProject(asset): {
-              const { extension } = backendModule.extractProjectExtension(file.name)
-              const title = backendModule.escapeSpecialCharacters(
-                backendModule.stripProjectExtension(asset.title),
-              )
+            case assetIsProject(asset): {
+              const { extension } = extractProjectExtension(file.name)
+              const title = escapeSpecialCharacters(stripProjectExtension(asset.title))
 
               await uploadFileMutation
                 .mutateAsync(
@@ -933,8 +932,8 @@ export function useUploadFiles(backend: Backend, category: Category) {
 
               break
             }
-            case backendModule.assetIsFile(asset): {
-              const title = backendModule.escapeSpecialCharacters(asset.title)
+            case assetIsFile(asset): {
+              const title = escapeSpecialCharacters(asset.title)
               await uploadFileMutation
                 .mutateAsync({ fileId, fileName: title, parentDirectoryId: asset.parentId }, file)
                 .then(({ id }) => {
@@ -963,21 +962,17 @@ export function useUploadFiles(backend: Backend, category: Category) {
           // with the same name.
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           current: siblingFilesByName.get(file.asset.title)!,
-          new: backendModule.createPlaceholderFileAsset(
-            file.asset.title,
-            parentId,
-            ownerPermission,
-          ),
+          new: createPlaceholderFileAsset(file.asset.title, parentId, ownerPermission),
           file: file.file,
         }))
         const conflictingProjects = duplicateProjects.map((project) => {
-          const basename = backendModule.stripProjectExtension(project.asset.title)
+          const basename = stripProjectExtension(project.asset.title)
           return {
             // This is SAFE, as `duplicateProjects` only contains projects that have
             // siblings with the same name.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             current: siblingProjectsByName.get(basename)!,
-            new: backendModule.createPlaceholderProjectAsset(
+            new: createPlaceholderProjectAsset(
               basename,
               parentId,
               ownerPermission,
@@ -1015,7 +1010,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
               const newFiles = files
                 .filter((file) => !siblingFileTitles.has(file.asset.title))
                 .map((file) => {
-                  const asset = backendModule.createPlaceholderFileAsset(
+                  const asset = createPlaceholderFileAsset(
                     file.asset.title,
                     parentId,
                     ownerPermission,
@@ -1027,13 +1022,11 @@ export function useUploadFiles(backend: Backend, category: Category) {
               const newProjects = projects
                 .filter(
                   (project) =>
-                    !siblingProjectTitles.has(
-                      backendModule.stripProjectExtension(project.asset.title),
-                    ),
+                    !siblingProjectTitles.has(stripProjectExtension(project.asset.title)),
                 )
                 .map((project) => {
-                  const basename = backendModule.stripProjectExtension(project.asset.title)
-                  const asset = backendModule.createPlaceholderProjectAsset(
+                  const basename = stripProjectExtension(project.asset.title)
+                  const asset = createPlaceholderProjectAsset(
                     basename,
                     parentId,
                     ownerPermission,
@@ -1171,63 +1164,60 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
       [backend, endRetries],
     ),
   )
-  const [variables, setVariables] =
-    useState<[params: backendModule.UploadFileRequestParams, file: File]>()
+  const [variables, setVariables] = useState<[params: UploadFileRequestParams, file: File]>()
   const [sentMb, setSentMb] = useState(0)
   const [totalMb, setTotalMb] = useState(0)
-  const mutateAsync = useEventCallback(
-    async (body: backendModule.UploadFileRequestParams, file: File) => {
-      setVariables([body, file])
-      const fileSizeMb = Math.ceil(file.size / MB_BYTES)
-      options.onBegin?.({ event: 'begin', sentMb: 0, totalMb: fileSizeMb })
-      setSentMb(0)
-      setTotalMb(fileSizeMb)
-      try {
-        const { sourcePath, uploadId, presignedUrls } = await uploadFileStartMutation.mutateAsync([
-          body,
-          file,
-        ])
-        const parts: backendModule.S3MultipartPart[] = []
-        for (const [url, i] of Array.from(
-          presignedUrls,
-          (presignedUrl, index) => [presignedUrl, index] as const,
-        )) {
-          parts.push(await uploadFileChunkMutation.mutateAsync([url, file, i]))
-          const newSentMb = Math.min((i + 1) * S3_CHUNK_SIZE_MB, fileSizeMb)
-          setSentMb(newSentMb)
-          options.onChunkSuccess?.({
-            event: 'chunk',
-            sentMb: newSentMb,
-            totalMb: fileSizeMb,
-          })
-        }
-        const result = await uploadFileEndMutation.mutateAsync([
-          {
-            parentDirectoryId: body.parentDirectoryId,
-            parts,
-            sourcePath: sourcePath,
-            uploadId: uploadId,
-            assetId: body.fileId,
-            fileName: body.fileName,
-          },
-        ])
-        setSentMb(fileSizeMb)
-        const progress: UploadFileMutationProgress = {
-          event: 'end',
-          sentMb: fileSizeMb,
+  const mutateAsync = useEventCallback(async (body: UploadFileRequestParams, file: File) => {
+    setVariables([body, file])
+    const fileSizeMb = Math.ceil(file.size / MB_BYTES)
+    options.onBegin?.({ event: 'begin', sentMb: 0, totalMb: fileSizeMb })
+    setSentMb(0)
+    setTotalMb(fileSizeMb)
+    try {
+      const { sourcePath, uploadId, presignedUrls } = await uploadFileStartMutation.mutateAsync([
+        body,
+        file,
+      ])
+      const parts: S3MultipartPart[] = []
+      for (const [url, i] of Array.from(
+        presignedUrls,
+        (presignedUrl, index) => [presignedUrl, index] as const,
+      )) {
+        parts.push(await uploadFileChunkMutation.mutateAsync([url, file, i]))
+        const newSentMb = Math.min((i + 1) * S3_CHUNK_SIZE_MB, fileSizeMb)
+        setSentMb(newSentMb)
+        options.onChunkSuccess?.({
+          event: 'chunk',
+          sentMb: newSentMb,
           totalMb: fileSizeMb,
-        }
-        options.onSuccess?.(progress)
-        options.onSettled?.(progress, null)
-        return result
-      } catch (error) {
-        onError(error)
-        options.onSettled?.(null, error)
-        throw error
+        })
       }
-    },
-  )
-  const mutate = useEventCallback((params: backendModule.UploadFileRequestParams, file: File) => {
+      const result = await uploadFileEndMutation.mutateAsync([
+        {
+          parentDirectoryId: body.parentDirectoryId,
+          parts,
+          sourcePath: sourcePath,
+          uploadId: uploadId,
+          assetId: body.fileId,
+          fileName: body.fileName,
+        },
+      ])
+      setSentMb(fileSizeMb)
+      const progress: UploadFileMutationProgress = {
+        event: 'end',
+        sentMb: fileSizeMb,
+        totalMb: fileSizeMb,
+      }
+      options.onSuccess?.(progress)
+      options.onSettled?.(progress, null)
+      return result
+    } catch (error) {
+      onError(error)
+      options.onSettled?.(null, error)
+      throw error
+    }
+  })
+  const mutate = useEventCallback((params: UploadFileRequestParams, file: File) => {
     void mutateAsync(params, file)
   })
 

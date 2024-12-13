@@ -1,9 +1,5 @@
 /** @file Utilities for indenting elements. */
 
-// =================
-// === Constants ===
-// =================
-
 /**
  * An explicit list of classes  used for indentation. This is required so that Tailwind includes
  * the classes in the final CSS file.

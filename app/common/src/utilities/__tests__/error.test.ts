@@ -1,11 +1,7 @@
 /** @file Tests for `error.ts`. */
 import * as v from 'vitest'
 
-import * as error from '#/utilities/error'
-
-// =============
-// === Tests ===
-// =============
+import { tryGetMessage } from '../error'
 
 const MESSAGE = 'A custom error message.'
 
@@ -17,7 +13,7 @@ v.describe('`error.tryGetMessage`', () => {
     { errorObject: {}, message: null },
     { errorObject: null, message: null },
   ])('should correctly parse error objects', ({ errorObject, message }) => {
-    v.expect(error.tryGetMessage<unknown>(errorObject)).toBe(message)
+    v.expect(tryGetMessage<unknown>(errorObject)).toBe(message)
   })
 
   v.test.each([
@@ -29,7 +25,7 @@ v.describe('`error.tryGetMessage`', () => {
   ])(
     'should return default message if failed to extract it from the error object',
     ({ errorObject, message, defaultMessage }) => {
-      v.expect(error.tryGetMessage<unknown, string>(errorObject, defaultMessage)).toBe(message)
+      v.expect(tryGetMessage<unknown, string>(errorObject, defaultMessage)).toBe(message)
     },
   )
 })

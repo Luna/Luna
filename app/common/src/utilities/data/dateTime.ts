@@ -1,10 +1,6 @@
 /** @file Utilities for manipulating and displaying dates and times. */
 import * as newtype from './newtype'
 
-// =================
-// === Constants ===
-// =================
-
 /** The number of hours in half a day. This is used to get the number of hours for AM/PM time. */
 const HALF_DAY_HOURS = 12
 
@@ -23,10 +19,6 @@ export const MONTH_NAMES = [
   'November',
   'December',
 ]
-
-// ================
-// === DateTime ===
-// ================
 
 /** A string with date and time, following the RFC3339 specification. */
 export type Rfc3339DateTime = newtype.Newtype<string, 'Rfc3339DateTime'>

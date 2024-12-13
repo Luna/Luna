@@ -3,21 +3,16 @@
  * Types copied from the enso-bot server implementation:
  * https://github.com/enso-org/enso-bot/blob/aa903b6e639a31930ee4fff55c5639e4471fa48d/chat.ts
  */
-
-import type * as newtype from '#/utilities/newtype'
-
-// =====================
-// === Message Types ===
-// =====================
+import type { Newtype } from 'enso-common/src/utilities/data/newtype'
 
 /** Identifier for a chat Thread. */
-export type ThreadId = newtype.Newtype<string, 'ThreadId'>
+export type ThreadId = Newtype<string, 'ThreadId'>
 /** Identifier for a chat message. */
-export type MessageId = newtype.Newtype<string, 'MessageId'>
+export type MessageId = Newtype<string, 'MessageId'>
 /** Identifier for a chat user. */
-export type UserId = newtype.Newtype<string, 'UserId'>
+export type UserId = Newtype<string, 'UserId'>
 /** Chat user's email addresss. */
-export type EmailAddress = newtype.Newtype<string, 'EmailAddress'>
+export type EmailAddress = Newtype<string, 'EmailAddress'>
 
 /** Enumeration of all message types exchanged with the chat server. */
 export enum ChatMessageDataType {

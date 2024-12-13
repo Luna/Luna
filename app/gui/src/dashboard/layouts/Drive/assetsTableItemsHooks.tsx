@@ -3,6 +3,8 @@ import { startTransition, useMemo } from 'react'
 
 import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
+import { fileExtension } from 'enso-common/src/utilities/data/fileInfo'
+import { regexEscape } from 'enso-common/src/utilities/data/string'
 import { PermissionAction } from 'enso-common/src/utilities/permissions'
 
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
@@ -11,11 +13,8 @@ import type { DirectoryId } from '#/services/ProjectManager'
 import type AssetQuery from '#/utilities/AssetQuery'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import Visibility from '#/utilities/Visibility'
-import { fileExtension } from '#/utilities/fileInfo'
-import type { SortInfo } from '#/utilities/sorting'
-import { SortDirection } from '#/utilities/sorting'
-import { regexEscape } from '#/utilities/string'
-import { createStore, useStore } from '#/utilities/zustand.ts'
+import { SortDirection, type SortInfo } from '#/utilities/sorting'
+import { createStore, useStore } from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
 /** Options for {@link useAssetsTableItems}. */

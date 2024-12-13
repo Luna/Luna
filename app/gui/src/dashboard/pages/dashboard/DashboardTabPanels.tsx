@@ -1,7 +1,9 @@
 /** @file The tab panels for the dashboard page. */
+import { Collection } from 'react-aria-components'
+
+import type { ProjectId } from 'enso-common/src/services/Backend'
 
 import * as aria from '#/components/aria'
-
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Suspense } from '#/components/Suspense'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
@@ -13,8 +15,6 @@ import type { GraphEditorRunner } from '#/layouts/Editor'
 import Editor from '#/layouts/Editor'
 import Settings from '#/layouts/Settings'
 import { TabType, useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
-import type { ProjectId } from '#/services/Backend'
-import { Collection } from 'react-aria-components'
 
 /** The props for the {@link DashboardTabPanels} component. */
 export interface DashboardTabPanelsProps {

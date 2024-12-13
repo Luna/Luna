@@ -1,12 +1,6 @@
-/**
- * @file
- *
- * Paywall configuration for different plans.
- */
-
-import type * as text from 'enso-common/src/text'
-
-import * as backend from '#/services/Backend'
+/** @file Paywall configuration for different plans. */
+import { Plan } from 'enso-common/src/services/Backend'
+import type { TextId } from 'enso-common/src/text'
 
 /** Registered paywall features. */
 export const PAYWALL_FEATURES = {
@@ -23,7 +17,7 @@ export const PAYWALL_FEATURES = {
 export type PaywallFeatureName = keyof typeof PAYWALL_FEATURES
 
 /** Paywall level names */
-export type PaywallLevelName = backend.Plan | 'free'
+export type PaywallLevelName = Plan | 'free'
 
 /**
  * Paywall level values.
@@ -32,24 +26,24 @@ export type PaywallLevelName = backend.Plan | 'free'
  * Because the paywall levels are ordered and inclusive, the value is used to compare the levels.
  */
 export type PaywallLevelValue =
-  | (0 & { readonly name: PaywallLevelName; readonly label: text.TextId })
-  | (1 & { readonly name: PaywallLevelName; readonly label: text.TextId })
-  | (2 & { readonly name: PaywallLevelName; readonly label: text.TextId })
-  | (3 & { readonly name: PaywallLevelName; readonly label: text.TextId })
+  | (0 & { readonly name: PaywallLevelName; readonly label: TextId })
+  | (1 & { readonly name: PaywallLevelName; readonly label: TextId })
+  | (2 & { readonly name: PaywallLevelName; readonly label: TextId })
+  | (3 & { readonly name: PaywallLevelName; readonly label: TextId })
 
 /** Paywall levels configuration. */
 export const PAYWALL_LEVELS: Record<PaywallLevelName, PaywallLevelValue> = {
   free: Object.assign(0, { name: 'free', label: 'freePlanName' } as const),
-  [backend.Plan.solo]: Object.assign(1, {
-    name: backend.Plan.solo,
+  [Plan.solo]: Object.assign(1, {
+    name: Plan.solo,
     label: 'soloPlanName',
   } as const),
-  [backend.Plan.team]: Object.assign(2, {
-    name: backend.Plan.team,
+  [Plan.team]: Object.assign(2, {
+    name: Plan.team,
     label: 'teamPlanName',
   } as const),
-  [backend.Plan.enterprise]: Object.assign(3, {
-    name: backend.Plan.enterprise,
+  [Plan.enterprise]: Object.assign(3, {
+    name: Plan.enterprise,
     label: 'enterprisePlanName',
   } as const),
 }
@@ -58,7 +52,7 @@ export const PAYWALL_LEVELS: Record<PaywallLevelName, PaywallLevelValue> = {
 export type PaywallLevel = (typeof PAYWALL_LEVELS)[keyof typeof PAYWALL_LEVELS]
 
 /** Paywall feature labels. */
-const PAYWALL_FEATURES_LABELS: Record<PaywallFeatureName, text.TextId> = {
+const PAYWALL_FEATURES_LABELS: Record<PaywallFeatureName, TextId> = {
   userGroups: 'userGroupsFeatureLabel',
   userGroupsFull: 'userGroupsFullFeatureLabel',
   inviteUser: 'inviteUserFeatureLabel',
@@ -133,7 +127,7 @@ const PAYWALL_CONFIGURATION: Record<PaywallFeatureName, BasicFeatureConfiguratio
 }
 
 /** Map a plan to a paywall level. */
-export function mapPlanOnPaywall(plan: backend.Plan | undefined): PaywallLevel {
+export function mapPlanOnPaywall(plan: Plan | undefined): PaywallLevel {
   return plan != null ? PAYWALL_LEVELS[plan] : PAYWALL_LEVELS.free
 }
 

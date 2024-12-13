@@ -1,17 +1,19 @@
 /** @file Events related to changes in the asset list. */
+import type {
+  AnyAsset,
+  AssetId,
+  DirectoryId,
+  ProjectAsset,
+  S3ObjectVersionId,
+} from 'enso-common/src/services/Backend'
+
 import AssetListEventType from '#/events/AssetListEventType'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
 import { useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
-
-import type * as backend from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
-
-// ======================
-// === AssetListEvent ===
-// ======================
 
 /** Properties common to all asset list events. */
 interface AssetListBaseEvent<Type extends AssetListEventType> {
@@ -42,25 +44,25 @@ type SanityCheck<
 /** A signal to duplicate a project. */
 interface AssetListDuplicateProjectEvent
   extends AssetListBaseEvent<AssetListEventType.duplicateProject> {
-  readonly parentKey: backend.DirectoryId
-  readonly parentId: backend.DirectoryId
-  readonly original: backend.ProjectAsset
-  readonly versionId: backend.S3ObjectVersionId
+  readonly parentKey: DirectoryId
+  readonly parentId: DirectoryId
+  readonly original: ProjectAsset
+  readonly versionId: S3ObjectVersionId
 }
 
 /** A signal that files should be copied. */
 interface AssetListCopyEvent extends AssetListBaseEvent<AssetListEventType.copy> {
-  readonly newParentKey: backend.DirectoryId
-  readonly newParentId: backend.DirectoryId
-  readonly items: backend.AnyAsset[]
+  readonly newParentKey: DirectoryId
+  readonly newParentId: DirectoryId
+  readonly items: AnyAsset[]
 }
 
 /** A signal that a file has been moved. */
 interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move> {
-  readonly key: backend.AssetId
-  readonly newParentKey: backend.DirectoryId
-  readonly newParentId: backend.DirectoryId
-  readonly items: backend.AnyAsset[]
+  readonly key: AssetId
+  readonly newParentKey: DirectoryId
+  readonly newParentId: DirectoryId
+  readonly items: AnyAsset[]
 }
 
 /**
@@ -68,7 +70,7 @@ interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move>
  * finished.
  */
 interface AssetListDeleteEvent extends AssetListBaseEvent<AssetListEventType.delete> {
-  readonly key: backend.AssetId
+  readonly key: AssetId
 }
 
 /** A signal to permanently delete all files in Trash. */
@@ -76,7 +78,7 @@ type AssetListEmptyTrashEvent = AssetListBaseEvent<AssetListEventType.emptyTrash
 
 /** A signal for a file to remove itself from the asset list, without being deleted. */
 interface AssetListRemoveSelfEvent extends AssetListBaseEvent<AssetListEventType.removeSelf> {
-  readonly id: backend.AssetId
+  readonly id: AssetId
 }
 
 /** Every possible type of asset list event. */
@@ -91,10 +93,10 @@ export function useCutAndPaste(category: Category) {
   const dispatchAssetListEvent = useDispatchAssetListEvent()
   return useEventCallback(
     (
-      newParentKey: backend.DirectoryId,
-      newParentId: backend.DirectoryId,
+      newParentKey: DirectoryId,
+      newParentId: DirectoryId,
       pasteData: DrivePastePayload,
-      nodeMap: ReadonlyMap<backend.AssetId, AnyAssetTreeNode>,
+      nodeMap: ReadonlyMap<AssetId, AnyAssetTreeNode>,
     ) => {
       const ids = Array.from(pasteData.ids)
       const nodes = ids.flatMap((id) => {

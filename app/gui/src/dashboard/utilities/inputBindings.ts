@@ -2,29 +2,29 @@
  * @file Exports `defineKeybinds`, a function to define a namespace containing keyboard and mouse
  * shortcuts.
  */
-import * as detect from 'enso-common/src/detect'
+import { isOnMacOS } from 'enso-common/src/detect'
+import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+import { camelCaseToTitleCase } from 'enso-common/src/utilities/data/string'
 
-import * as eventModule from '#/utilities/event'
-import * as newtype from '#/utilities/newtype'
-import * as object from '#/utilities/object'
-import * as string from '#/utilities/string'
+import { isElementTextInput, isTextInputEvent } from '#/utilities/event'
 
 // ================
 // === Newtypes ===
 // ================
 
 /** A keyboard key obtained from `KeyboardEvent.key`. */
-type KeyName = newtype.Newtype<string, 'keyboard key'>
+type KeyName = Newtype<string, 'keyboard key'>
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-const KeyName = newtype.newtypeConstructor<KeyName>()
+const KeyName = newtypeConstructor<KeyName>()
 /** A bitset of flags representing each keyboard modifier key. */
-type ModifierFlags = newtype.Newtype<number, 'modifier flags'>
+type ModifierFlags = Newtype<number, 'modifier flags'>
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-const ModifierFlags = newtype.newtypeConstructor<ModifierFlags>()
+const ModifierFlags = newtypeConstructor<ModifierFlags>()
 /** A bitset of flags representing each mouse pointer. */
-type PointerButtonFlags = newtype.Newtype<number, 'pointer button flags'>
+type PointerButtonFlags = Newtype<number, 'pointer button flags'>
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-const PointerButtonFlags = newtype.newtypeConstructor<PointerButtonFlags>()
+const PointerButtonFlags = newtypeConstructor<PointerButtonFlags>()
 
 // =============
 // === Types ===
@@ -84,7 +84,7 @@ const RAW_MODIFIER_FLAG = {
 } as const
 
 const MODIFIER_FLAG_NAME: Readonly<Record<Modifier, ModifierKey>> = {
-  Mod: detect.isOnMacOS() ? 'Meta' : 'Ctrl',
+  Mod: isOnMacOS() ? 'Meta' : 'Ctrl',
   Ctrl: 'Ctrl',
   Alt: 'Alt',
   Shift: 'Shift',
@@ -192,7 +192,7 @@ function buttonToPointerButtonFlags(button: number) {
 // ==========================
 
 const ALL_MODIFIERS =
-  detect.isOnMacOS() ?
+  isOnMacOS() ?
     (['Ctrl', 'Shift', 'Alt', 'Mod'] as const)
   : (['Mod', 'Shift', 'Alt', 'Meta'] as const)
 /** All valid keyboard modifier keys. */
@@ -321,7 +321,7 @@ export const normalizedKeyboardSegmentLookup = Object.fromEntries<string>(
 )
 normalizedKeyboardSegmentLookup[''] = '+'
 normalizedKeyboardSegmentLookup['space'] = ' '
-normalizedKeyboardSegmentLookup['osdelete'] = detect.isOnMacOS() ? 'Backspace' : 'Delete'
+normalizedKeyboardSegmentLookup['osdelete'] = isOnMacOS() ? 'Backspace' : 'Delete'
 /**
  * A mapping between the lowercased segment of a keyboard shortcut to its properly capitalized
  * normalized form.
@@ -494,10 +494,7 @@ export function defineBindingNamespace<T extends Record<keyof T, KeybindValue>>(
       Object.entries(bindingsAsRecord).map((kv) => {
         const [name, info] = kv
         if (Array.isArray(info)) {
-          return [
-            name,
-            { name: string.camelCaseToTitleCase(name), bindings: structuredClone(info) },
-          ]
+          return [name, { name: camelCaseToTitleCase(name), bindings: structuredClone(info) }]
         } else {
           return [name, structuredClone(info)]
         }
@@ -562,9 +559,9 @@ export function defineBindingNamespace<T extends Record<keyof T, KeybindValue>>(
             : buttonToPointerButtonFlags(event.button)
           ]?.[eventModifierFlags]
       let handle = handlers[DEFAULT_HANDLER]
-      const isTextInputFocused = eventModule.isElementTextInput(document.activeElement)
-      const isTextInputEvent = 'key' in event && eventModule.isTextInputEvent(event)
-      const shouldIgnoreEvent = isTextInputFocused && isTextInputEvent
+      const isTextInputFocused = isElementTextInput(document.activeElement)
+      const isEventTextInputEvent = 'key' in event && isTextInputEvent(event)
+      const shouldIgnoreEvent = isTextInputFocused && isEventTextInputEvent
       if (matchingBindings != null && !shouldIgnoreEvent) {
         for (const bindingNameRaw in handlers) {
           // This is SAFE, because `handlers` is an object with identical keys to `T`,
@@ -633,7 +630,7 @@ export function defineBindingNamespace<T extends Record<keyof T, KeybindValue>>(
         bindingsOrInfo.bindings
       : bindingsOrInfo
     if (bindingsList != null) {
-      object.unsafeMutable(bindingsList).splice(bindingsList.indexOf(binding), 1)
+      unsafeMutable(bindingsList).splice(bindingsList.indexOf(binding), 1)
       rebuildLookups()
     }
   }
@@ -645,7 +642,7 @@ export function defineBindingNamespace<T extends Record<keyof T, KeybindValue>>(
         bindingsOrInfo.bindings
       : bindingsOrInfo
     if (bindingsList != null) {
-      object.unsafeMutable(bindingsList).push(binding)
+      unsafeMutable(bindingsList).push(binding)
       rebuildLookups()
     }
   }

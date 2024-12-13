@@ -1,23 +1,16 @@
 /** @file The input for viewing and changing the user's profile picture. */
-import * as React from 'react'
+import { ChangeEvent } from 'react'
+
+import type Backend from 'enso-common/src/services/Backend'
 
 import { useMutation } from '@tanstack/react-query'
 
 import DefaultUserIcon from '#/assets/default_user.svg'
-
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
+import { Input, Label, Text } from '#/components/aria'
 import FocusRing from '#/components/styled/FocusRing'
-
-import type Backend from '#/services/Backend'
-
-// ===========================
-// === ProfilePictureInput ===
-// ===========================
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useText } from '#/providers/TextProvider'
 
 /** Props for a {@link ProfilePictureInput}. */
 export interface ProfilePictureInputProps {
@@ -27,13 +20,13 @@ export interface ProfilePictureInputProps {
 /** The input for viewing and changing the user's profile picture. */
 export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   const { backend } = props
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
+  const toastAndLog = useToastAndLog()
   const { data: user } = useBackendQuery(backend, 'usersMe', [])
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
 
   const uploadUserPicture = useMutation(backendMutationOptions(backend, 'uploadUserPicture')).mutate
 
-  const doUploadUserPicture = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const doUploadUserPicture = (event: ChangeEvent<HTMLInputElement>) => {
     const image = event.target.files?.[0]
     if (image == null) {
       toastAndLog('noNewProfilePictureError')
@@ -48,7 +41,7 @@ export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   return (
     <>
       <FocusRing within>
-        <aria.Label
+        <Label
           data-testid="user-profile-picture-input"
           className="flex h-profile-picture-large w-profile-picture-large cursor-pointer items-center overflow-clip rounded-full transition-colors hover:bg-frame"
         >
@@ -56,17 +49,17 @@ export default function ProfilePictureInput(props: ProfilePictureInputProps) {
             src={user?.profilePicture ?? DefaultUserIcon}
             className="pointer-events-none h-full w-full"
           />
-          <aria.Input
+          <Input
             type="file"
             className="focus-child w-0"
             accept="image/*"
             onChange={doUploadUserPicture}
           />
-        </aria.Label>
+        </Label>
       </FocusRing>
-      <aria.Text className="w-profile-picture-caption py-profile-picture-caption-y">
+      <Text className="w-profile-picture-caption py-profile-picture-caption-y">
         {getText('profilePictureWarning')}
-      </aria.Text>
+      </Text>
     </>
   )
 }

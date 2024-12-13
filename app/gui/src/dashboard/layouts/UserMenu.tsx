@@ -1,4 +1,8 @@
 /** @file A dropdown menu of user actions and settings. */
+import { Plan } from 'enso-common/src/services/Backend'
+import { download } from 'enso-common/src/utilities/download'
+import { getDownloadUrl } from 'enso-common/src/utilities/github'
+
 import DefaultUserIcon from '#/assets/default_user.svg'
 import { Popover, Text } from '#/components/AriaComponents'
 import MenuEntry from '#/components/MenuEntry'
@@ -9,9 +13,6 @@ import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend } from '#/providers/BackendProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import { Plan } from '#/services/Backend'
-import { download } from '#/utilities/download'
-import { getDownloadUrl } from '#/utilities/github'
 
 /** Props for a {@link UserMenu}. */
 export interface UserMenuProps {

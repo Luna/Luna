@@ -1,19 +1,9 @@
 /** @file Utilities getting various metadata about the app. */
-import * as common from 'enso-common'
-import * as detect from 'enso-common/src/detect'
-
-/* eslint-disable @typescript-eslint/naming-convention */
-
-// =================
-// === Constants ===
-// =================
+import * as common from '../'
+import * as detect from '../detect'
 
 const ONE_HOUR_MS = 3_600_000
 export const LATEST_RELEASE_PAGE_URL = 'https://github.com/enso-org/enso/releases/latest'
-
-// ==================
-// === GitHub API ===
-// ==================
 
 /** Metadata for a GitHub user. */
 interface GitHubSimpleUser {
@@ -89,10 +79,6 @@ interface GitHubRelease {
   readonly assets: GitHubReleaseAsset[]
 }
 
-// =====================
-// === CachedRelease ===
-// =====================
-
 /** Metadata for a GitHub release, plus metadata for caching purposes. */
 interface CachedRelease {
   readonly lastFetchEpochMs: number
@@ -104,7 +90,6 @@ const LOCAL_STORAGE_KEY = `${common.PRODUCT_NAME.toLowerCase()}-cached-release`
 /** Gets the metadata for the latest release of the app. */
 export async function getLatestRelease() {
   const savedCachedRelease = localStorage.getItem(LOCAL_STORAGE_KEY)
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const cachedRelease: CachedRelease | null =
     savedCachedRelease != null ? JSON.parse(savedCachedRelease) : null
   if (cachedRelease != null && Number(new Date()) - cachedRelease.lastFetchEpochMs < ONE_HOUR_MS) {
@@ -116,7 +101,6 @@ export async function getLatestRelease() {
         ['X-GitHub-Api-Version', '2022-11-28'],
       ],
     })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const data: GitHubRelease = await response.json()
     localStorage.setItem(
       LOCAL_STORAGE_KEY,
@@ -145,7 +129,7 @@ const appExtension = (() => {
 export async function getDownloadUrl() {
   const assets = (await getLatestRelease()).assets
   return (
-    assets.find((item) => item.browser_download_url.endsWith(appExtension))?.browser_download_url ??
+    assets.find(item => item.browser_download_url.endsWith(appExtension))?.browser_download_url ??
     null
   )
 }

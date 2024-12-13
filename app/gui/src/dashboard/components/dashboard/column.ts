@@ -1,6 +1,8 @@
 /** @file Column types and column display modes. */
 import { memo, type Dispatch, type JSX, type SetStateAction } from 'react'
 
+import type { AnyAsset, Asset, AssetId, BackendType } from 'enso-common/src/services/Backend'
+
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import { Column } from '#/components/dashboard/column/columnUtils'
 import DocsColumn from '#/components/dashboard/column/DocsColumn'
@@ -11,12 +13,7 @@ import PlaceholderColumn from '#/components/dashboard/column/PlaceholderColumn'
 import SharedWithColumn from '#/components/dashboard/column/SharedWithColumn'
 import type { AssetRowState, AssetsTableState } from '#/layouts/AssetsTable'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
-import type { AnyAsset, Asset, AssetId, BackendType } from '#/services/Backend'
 import type { SortInfo } from '#/utilities/sorting'
-
-// ===================
-// === AssetColumn ===
-// ===================
 
 /** Props for an arbitrary variant of {@link Asset}. */
 export interface AssetColumnProps {
@@ -51,10 +48,6 @@ export interface AssetColumn {
   readonly heading: (props: AssetColumnHeadingProps) => JSX.Element
   readonly render: (props: AssetColumnProps) => JSX.Element
 }
-
-// =======================
-// === COLUMN_RENDERER ===
-// =======================
 
 /** React components for every column. */
 export const COLUMN_RENDERER: Readonly<

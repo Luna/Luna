@@ -1,38 +1,36 @@
-/**
- * @file
- *
- * A radio group component.
- */
-import * as React from 'react'
+/** @file A radio group. */
+import type { ForwardedRef, ReactNode } from 'react'
 
-import * as aria from '#/components/aria'
+import { omit } from 'enso-common/src/utilities/data/object'
 
-import * as mergeRefs from '#/utilities/mergeRefs'
-import * as twv from '#/utilities/tailwindVariants'
-
-import { omit } from '#/utilities/object'
+import {
+  RadioGroup as AriaRadioGroup,
+  mergeProps,
+  type AriaRadioGroupProps as AriaAriaRadioGroupProps,
+  type RadioGroupProps as AriaRadioGroupProps,
+} from '#/components/aria'
+import { mergeRefs } from '#/utilities/mergeRefs'
 import { forwardRef } from '#/utilities/react'
+import { tv, type VariantProps } from '#/utilities/tailwindVariants'
 import type { FieldVariantProps } from '../Form'
-import * as formComponent from '../Form'
-import * as radioGroupContext from './RadioGroupContext'
+import { Form, type FieldPath, type FieldProps, type FieldStateProps, type TSchema } from '../Form'
+import { RadioGroupProvider } from './RadioGroupContext'
 
 /** Props for {@link RadioGroup}. */
-export interface RadioGroupProps<
-  Schema extends formComponent.TSchema,
-  TFieldName extends formComponent.FieldPath<Schema>,
-> extends formComponent.FieldStateProps<
-      Omit<aria.AriaRadioGroupProps, 'description' | 'label'>,
+export interface RadioGroupProps<Schema extends TSchema, TFieldName extends FieldPath<Schema>>
+  extends FieldStateProps<
+      Omit<AriaAriaRadioGroupProps, 'description' | 'label'>,
       Schema,
       TFieldName
     >,
-    twv.VariantProps<typeof RADIO_GROUP_STYLES>,
-    formComponent.FieldProps,
+    VariantProps<typeof RADIO_GROUP_STYLES>,
+    FieldProps,
     FieldVariantProps {
-  readonly children?: React.ReactNode
+  readonly children?: ReactNode
   readonly className?: string
 }
 
-export const RADIO_GROUP_STYLES = twv.tv({
+export const RADIO_GROUP_STYLES = tv({
   base: 'flex flex-col gap-0.5 items-start',
   variants: { fullWidth: { true: 'w-full' } },
 })
@@ -40,9 +38,9 @@ export const RADIO_GROUP_STYLES = twv.tv({
 /** A radio group component. */
 
 export const RadioGroup = forwardRef(function RadioGroup<
-  Schema extends formComponent.TSchema,
-  TFieldName extends formComponent.FieldPath<Schema>,
->(props: RadioGroupProps<Schema, TFieldName>, ref: React.ForwardedRef<HTMLDivElement>) {
+  Schema extends TSchema,
+  TFieldName extends FieldPath<Schema>,
+>(props: RadioGroupProps<Schema, TFieldName>, ref: ForwardedRef<HTMLDivElement>) {
   const {
     children,
     isRequired = false,
@@ -61,7 +59,7 @@ export const RadioGroup = forwardRef(function RadioGroup<
     ...radioGroupProps
   } = props
 
-  const { field, fieldState, formInstance } = formComponent.Form.useField({
+  const { field, fieldState, formInstance } = Form.useField({
     name,
     isDisabled,
     form,
@@ -73,11 +71,11 @@ export const RadioGroup = forwardRef(function RadioGroup<
   const base = variants({ fullWidth, className })
 
   return (
-    <aria.RadioGroup
+    <AriaRadioGroup
       ref={(el) => {
-        mergeRefs.mergeRefs(ref, field.ref)(el)
+        mergeRefs(ref, field.ref)(el)
       }}
-      {...aria.mergeProps<aria.RadioGroupProps>()(omit(radioGroupProps, 'validate'), {
+      {...mergeProps<AriaRadioGroupProps>()(omit(radioGroupProps, 'validate'), {
         name: field.name,
         value: field.value,
         isDisabled: field.disabled ?? isDisabled,
@@ -89,8 +87,8 @@ export const RadioGroup = forwardRef(function RadioGroup<
         isInvalid: invalid,
       })}
     >
-      <radioGroupContext.RadioGroupProvider>
-        <formComponent.Form.Field
+      <RadioGroupProvider>
+        <Form.Field
           name={name}
           form={formInstance}
           label={label}
@@ -101,8 +99,8 @@ export const RadioGroup = forwardRef(function RadioGroup<
           {...radioGroupProps}
         >
           {children}
-        </formComponent.Form.Field>
-      </radioGroupContext.RadioGroupProvider>
-    </aria.RadioGroup>
+        </Form.Field>
+      </RadioGroupProvider>
+    </AriaRadioGroup>
   )
 })

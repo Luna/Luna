@@ -1,38 +1,55 @@
 /** @file A search bar containing a text input, and a list of suggestions. */
-import * as React from 'react'
+import {
+  memo,
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type MutableRefObject,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  type SetStateAction,
+} from 'react'
 
-import * as detect from 'enso-common/src/detect'
+import { AnimatePresence, motion } from 'framer-motion'
+
+import { isOnMacOS } from 'enso-common/src/detect'
+import type { Backend, Label as BackendLabel } from 'enso-common/src/services/Backend'
+import { shallowEqual } from 'enso-common/src/utilities/data/array'
+import { compareCaseInsensitive } from 'enso-common/src/utilities/data/string'
 
 import FindIcon from '#/assets/find.svg'
-import { unsafeWriteValue } from '#/utilities/write'
-
-import * as backendHooks from '#/hooks/backendHooks'
-
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
-import * as ariaComponents from '#/components/AriaComponents'
+import {
+  Button as AriaButton,
+  Label as AriaLabel,
+  Input,
+  mergeProps,
+  SearchField,
+  type KeyboardEvent as AriaKeyboardEvent,
+  type LabelProps,
+  type PressEvent,
+} from '#/components/aria'
+import { Button, DIALOG_BACKGROUND, Text } from '#/components/AriaComponents'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
 import SvgMask from '#/components/SvgMask'
-
+import { useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
-import type Backend from '#/services/Backend'
-import type { Label as BackendLabel } from '#/services/Backend'
-import * as array from '#/utilities/array'
+import { useModalRef } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 import AssetQuery from '#/utilities/AssetQuery'
-import * as eventModule from '#/utilities/event'
-import * as string from '#/utilities/string'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { isElementTextInput, isPotentiallyShortcut, isTextInputEvent } from '#/utilities/event'
+import { twMerge } from '#/utilities/tailwindMerge'
+import { unsafeWriteValue } from '#/utilities/write'
 import { createStore, useStore } from '#/utilities/zustand'
-import { AnimatePresence, motion } from 'framer-motion'
-
-// =============
-// === Types ===
-// =============
 
 /** The reason behind a new query. */
 enum QuerySource {
@@ -52,21 +69,17 @@ enum QuerySource {
 /** A suggested query. */
 export interface Suggestion {
   readonly key: string
-  readonly render: () => React.ReactNode
+  readonly render: () => ReactNode
   readonly addToQuery: (query: AssetQuery) => AssetQuery
   readonly deleteFromQuery: (query: AssetQuery) => AssetQuery
 }
 
-// ============
-// === Tags ===
-// ============
-
 /** Props for a {@link Tags}. */
 interface InternalTagsProps {
   readonly isCloud: boolean
-  readonly querySource: React.MutableRefObject<QuerySource>
+  readonly querySource: MutableRefObject<QuerySource>
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
 }
 
 export const searchbarSuggestionsStore = createStore<{
@@ -91,9 +104,9 @@ export function useSetSuggestions() {
 /** Tags (`name:`, `modified:`, etc.) */
 function Tags(props: InternalTagsProps) {
   const { isCloud, querySource, query, setQuery } = props
-  const [isShiftPressed, setIsShiftPressed] = React.useState(false)
+  const [isShiftPressed, setIsShiftPressed] = useState(false)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       setIsShiftPressed(event.shiftKey)
     }
@@ -119,7 +132,7 @@ function Tags(props: InternalTagsProps) {
             []
           : [
               <FocusRing key={key}>
-                <ariaComponents.Button
+                <Button
                   variant="outline"
                   size="xsmall"
                   className="min-w-12"
@@ -129,7 +142,7 @@ function Tags(props: InternalTagsProps) {
                   }}
                 >
                   {tag + ':'}
-                </ariaComponents.Button>
+                </Button>
               </FocusRing>,
             ]
       })}
@@ -146,53 +159,53 @@ export interface AssetSearchBarProps {
   readonly backend: Backend | null
   readonly isCloud: boolean
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
 }
 
 /** A search bar containing a text input, and a list of suggestions. */
 function AssetSearchBar(props: AssetSearchBarProps) {
   const { backend, isCloud, query, setQuery } = props
-  const { modalRef } = modalProvider.useModalRef()
+  const { modalRef } = useModalRef()
   /** A cached query as of the start of tabbing. */
-  const baseQuery = React.useRef(query)
+  const baseQuery = useRef(query)
 
   const rawSuggestions = useStore(searchbarSuggestionsStore, (state) => state.suggestions, {
     unsafeEnableTransition: true,
   })
 
-  const [suggestions, setSuggestions] = React.useState(rawSuggestions)
+  const [suggestions, setSuggestions] = useState(rawSuggestions)
 
   const suggestionsRef = useSyncRef(suggestions)
 
-  const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
-  const [areSuggestionsVisible, privateSetAreSuggestionsVisible] = React.useState(false)
-  const areSuggestionsVisibleRef = React.useRef(areSuggestionsVisible)
-  const querySource = React.useRef(QuerySource.external)
-  const rootRef = React.useRef<HTMLLabelElement | null>(null)
-  const searchRef = React.useRef<HTMLInputElement | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [areSuggestionsVisible, privateSetAreSuggestionsVisible] = useState(false)
+  const areSuggestionsVisibleRef = useRef(areSuggestionsVisible)
+  const querySource = useRef(QuerySource.external)
+  const rootRef = useRef<HTMLLabelElement | null>(null)
+  const searchRef = useRef<HTMLInputElement | null>(null)
 
   const setAreSuggestionsVisible = useEventCallback((value: boolean) => {
-    React.startTransition(() => {
+    startTransition(() => {
       privateSetAreSuggestionsVisible(value)
       areSuggestionsVisibleRef.current = value
     })
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (querySource.current !== QuerySource.tabbing) {
       setSuggestions(rawSuggestions)
       unsafeWriteValue(suggestionsRef, 'current', rawSuggestions)
     }
   }, [rawSuggestions, suggestionsRef])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (querySource.current !== QuerySource.tabbing) {
       baseQuery.current = query
     }
     // This effect MUST only run when `query` changes.
   }, [query])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (querySource.current !== QuerySource.tabbing) {
       setSelectedIndex(null)
     }
@@ -208,7 +221,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
 
   const selectedIndexDeps = useSyncRef({ query, setQuery, suggestions })
 
-  React.useEffect(() => {
+  useEffect(() => {
     const deps = selectedIndexDeps.current
     if (
       querySource.current === QuerySource.internal ||
@@ -229,7 +242,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     }
   }, [selectedIndex, selectedIndexDeps])
 
-  React.useEffect(() => {
+  useEffect(() => {
     const onSearchKeyDown = (event: KeyboardEvent) => {
       if (areSuggestionsVisibleRef.current) {
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
@@ -274,11 +287,11 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       // Allow `alt` key to be pressed in case it is being used to enter special characters.
       if (
-        !eventModule.isElementTextInput(event.target) &&
+        !isElementTextInput(event.target) &&
         (!(event.target instanceof Node) || rootRef.current?.contains(event.target) !== true) &&
-        eventModule.isTextInputEvent(event) &&
+        isTextInputEvent(event) &&
         event.key !== ' ' &&
-        (!detect.isOnMacOS() || event.key !== 'Delete') &&
+        (!isOnMacOS() || event.key !== 'Delete') &&
         modalRef.current == null
       ) {
         searchRef.current?.focus()
@@ -286,7 +299,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
       if (
         event.target instanceof Node &&
         rootRef.current?.contains(event.target) === true &&
-        eventModule.isPotentiallyShortcut(event)
+        isPotentiallyShortcut(event)
       ) {
         searchRef.current?.focus()
       }
@@ -301,7 +314,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
   }, [setQuery, modalRef, setAreSuggestionsVisible, suggestionsRef])
 
   // Reset `querySource` after all other effects have run.
-  React.useEffect(() => {
+  useEffect(() => {
     if (querySource.current !== QuerySource.typing && searchRef.current != null) {
       searchRef.current.value = query.toString()
     }
@@ -311,18 +324,18 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     }
   }, [query, setQuery])
 
-  const onSearchFieldKeyDown = useEventCallback((event: aria.KeyboardEvent) => {
+  const onSearchFieldKeyDown = useEventCallback((event: AriaKeyboardEvent) => {
     event.continuePropagation()
   })
 
-  const searchFieldOnChange = useEventCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const searchFieldOnChange = useEventCallback((event: ChangeEvent<HTMLInputElement>) => {
     if (querySource.current !== QuerySource.internal) {
       querySource.current = QuerySource.typing
       setQuery(AssetQuery.fromString(event.target.value))
     }
   })
 
-  const searchInputOnKeyDown = useEventCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const searchInputOnKeyDown = useEventCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (
       event.key === 'Enter' &&
       !event.shiftKey &&
@@ -335,33 +348,30 @@ function AssetSearchBar(props: AssetSearchBarProps) {
     }
   })
 
-  const deferredSuggestions = React.useDeferredValue(suggestions)
+  const deferredSuggestions = useDeferredValue(suggestions)
 
   return (
     <FocusArea direction="horizontal">
       {(innerProps) => (
         <div className="relative w-full max-w-[60em]">
-          <aria.Label
+          <AriaLabel
             data-testid="asset-search-bar"
-            {...aria.mergeProps<aria.LabelProps & React.RefAttributes<HTMLLabelElement>>()(
-              innerProps,
-              {
-                className:
-                  'z-1 group flex grow items-center gap-asset-search-bar rounded-full px-1.5 py-1 text-primary border-0.5 border-primary/20',
-                ref: rootRef,
-                onFocus: () => {
-                  setAreSuggestionsVisible(true)
-                },
-                onBlur: (event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) {
-                    if (querySource.current === QuerySource.tabbing) {
-                      querySource.current = QuerySource.external
-                    }
-                    setAreSuggestionsVisible(false)
-                  }
-                },
+            {...mergeProps<LabelProps & RefAttributes<HTMLLabelElement>>()(innerProps, {
+              className:
+                'z-1 group flex grow items-center gap-asset-search-bar rounded-full px-1.5 py-1 text-primary border-0.5 border-primary/20',
+              ref: rootRef,
+              onFocus: () => {
+                setAreSuggestionsVisible(true)
               },
-            )}
+              onBlur: (event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  if (querySource.current === QuerySource.tabbing) {
+                    querySource.current = QuerySource.external
+                  }
+                  setAreSuggestionsVisible(false)
+                }
+              },
+            })}
           >
             <div className="relative size-4 placeholder" />
 
@@ -391,7 +401,7 @@ function AssetSearchBar(props: AssetSearchBarProps) {
               searchFieldOnChange={searchFieldOnChange}
               searchInputOnKeyDown={searchInputOnKeyDown}
             />
-          </aria.Label>
+          </AriaLabel>
         </div>
       )}
     </FocusArea>
@@ -402,19 +412,17 @@ function AssetSearchBar(props: AssetSearchBarProps) {
 interface AssetSearchBarInputProps {
   readonly query: AssetQuery
   readonly isCloud: boolean
-  readonly onSearchFieldKeyDown: (event: aria.KeyboardEvent) => void
-  readonly searchRef: React.RefObject<HTMLInputElement>
-  readonly searchFieldOnChange: (event: React.ChangeEvent<HTMLInputElement>) => void
-  readonly searchInputOnKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void
+  readonly onSearchFieldKeyDown: (event: AriaKeyboardEvent) => void
+  readonly searchRef: RefObject<HTMLInputElement>
+  readonly searchFieldOnChange: (event: ChangeEvent<HTMLInputElement>) => void
+  readonly searchInputOnKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void
 }
 
 /**
  * Renders the search field.
  */
 // eslint-disable-next-line no-restricted-syntax
-const AssetSearchBarInput = React.memo(function AssetSearchBarInput(
-  props: AssetSearchBarInputProps,
-) {
+const AssetSearchBarInput = memo(function AssetSearchBarInput(props: AssetSearchBarInputProps) {
   const {
     query,
     isCloud,
@@ -423,23 +431,23 @@ const AssetSearchBarInput = React.memo(function AssetSearchBarInput(
     searchFieldOnChange,
     searchInputOnKeyDown,
   } = props
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
   return (
     <>
       <FocusRing placement="before">
-        <aria.SearchField
+        <SearchField
           aria-label={getText('assetSearchFieldLabel')}
           className="relative grow before:text before:absolute before:-inset-x-1 before:my-auto before:rounded-full before:transition-all"
           value={query.query}
           onKeyDown={onSearchFieldKeyDown}
         >
-          <aria.Input
+          <Input
             type="search"
             ref={searchRef}
             size={1}
             placeholder={
               isCloud ?
-                detect.isOnMacOS() ?
+                isOnMacOS() ?
                   getText('remoteBackendSearchPlaceholderMacOs')
                 : getText('remoteBackendSearchPlaceholder')
               : getText('localBackendSearchPlaceholder')
@@ -448,7 +456,7 @@ const AssetSearchBarInput = React.memo(function AssetSearchBarInput(
             onChange={searchFieldOnChange}
             onKeyDown={searchInputOnKeyDown}
           />
-        </aria.SearchField>
+        </SearchField>
       </FocusRing>
     </>
   )
@@ -460,20 +468,20 @@ const AssetSearchBarInput = React.memo(function AssetSearchBarInput(
 interface AssetSearchBarPopoverProps {
   readonly areSuggestionsVisible: boolean
   readonly isCloud: boolean
-  readonly querySource: React.MutableRefObject<QuerySource>
+  readonly querySource: MutableRefObject<QuerySource>
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
   readonly suggestions: readonly Suggestion[]
   readonly selectedIndex: number | null
   readonly setAreSuggestionsVisible: (value: boolean) => void
-  readonly baseQuery: React.MutableRefObject<AssetQuery>
+  readonly baseQuery: MutableRefObject<AssetQuery>
   readonly backend: Backend | null
 }
 
 /**
  * Renders the popover containing suggestions.
  */
-const AssetSearchBarPopover = React.memo(function AssetSearchBarPopover(
+const AssetSearchBarPopover = memo(function AssetSearchBarPopover(
   props: AssetSearchBarPopoverProps,
 ) {
   const {
@@ -489,9 +497,7 @@ const AssetSearchBarPopover = React.memo(function AssetSearchBarPopover(
     backend,
   } = props
 
-  const [selectedIndices, setSelectedIndices] = React.useState<ReadonlySet<number>>(
-    new Set<number>(),
-  )
+  const [selectedIndices, setSelectedIndices] = useState<ReadonlySet<number>>(new Set<number>())
 
   return (
     <>
@@ -501,7 +507,7 @@ const AssetSearchBarPopover = React.memo(function AssetSearchBarPopover(
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className={ariaComponents.DIALOG_BACKGROUND({
+            className={DIALOG_BACKGROUND({
               className:
                 'absolute left-0 right-0 top-0 z-1 grid w-full overflow-hidden rounded-default border-0.5 border-primary/20 -outline-offset-1 outline-primary',
             })}
@@ -558,19 +564,19 @@ interface SuggestionRendererProps {
   readonly index: number
   readonly suggestion: Suggestion
   readonly query: AssetQuery
-  readonly baseQuery: React.MutableRefObject<AssetQuery>
+  readonly baseQuery: MutableRefObject<AssetQuery>
   readonly selectedIndex: number | null
   readonly selectedIndices: ReadonlySet<number>
-  readonly setSelectedIndices: React.Dispatch<React.SetStateAction<ReadonlySet<number>>>
-  readonly querySource: React.MutableRefObject<QuerySource>
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setSelectedIndices: Dispatch<SetStateAction<ReadonlySet<number>>>
+  readonly querySource: MutableRefObject<QuerySource>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
   readonly setAreSuggestionsVisible: (value: boolean) => void
 }
 
 /**
  * Renders a suggestion.
  */
-const SuggestionRenderer = React.memo(function SuggestionRenderer(props: SuggestionRendererProps) {
+const SuggestionRenderer = memo(function SuggestionRenderer(props: SuggestionRendererProps) {
   const {
     index,
     selectedIndex,
@@ -585,7 +591,7 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
   } = props
 
   return (
-    <aria.Button
+    <AriaButton
       data-testid="asset-search-suggestion"
       key={index}
       ref={(el) => {
@@ -593,7 +599,7 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
           el?.focus()
         }
       }}
-      className={tailwindMerge.twMerge(
+      className={twMerge(
         'flex w-full cursor-pointer rounded-l-default rounded-r-sm px-[7px] py-0.5 text-left transition-[background-color] hover:bg-primary/5',
         selectedIndices.has(index) && 'bg-primary/10',
         index === selectedIndex && 'bg-selected-frame',
@@ -618,10 +624,10 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
         }
       }}
     >
-      <ariaComponents.Text variant="body" truncate="1" className="w-full">
+      <Text variant="body" truncate="1" className="w-full">
         {suggestion.render()}
-      </ariaComponents.Text>
-    </aria.Button>
+      </Text>
+    </AriaButton>
   )
 })
 
@@ -631,22 +637,22 @@ const SuggestionRenderer = React.memo(function SuggestionRenderer(props: Suggest
 interface LabelsProps {
   readonly isCloud: boolean
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
   readonly backend: Backend | null
-  readonly querySource: React.MutableRefObject<QuerySource>
-  readonly baseQuery: React.MutableRefObject<AssetQuery>
+  readonly querySource: MutableRefObject<QuerySource>
+  readonly baseQuery: MutableRefObject<AssetQuery>
 }
 
 /**
  * Renders labels.
  */
-const Labels = React.memo(function Labels(props: LabelsProps) {
+const Labels = memo(function Labels(props: LabelsProps) {
   const { isCloud, query, setQuery, backend, querySource, baseQuery } = props
 
-  const labels = backendHooks.useBackendQuery(backend, 'listTags', []).data ?? []
+  const labels = useBackendQuery(backend, 'listTags', []).data ?? []
 
   const labelOnPress = useEventCallback(
-    (event: aria.PressEvent | React.MouseEvent<HTMLButtonElement>, label?: BackendLabel) => {
+    (event: PressEvent | ReactMouseEvent<HTMLButtonElement>, label?: BackendLabel) => {
       if (label == null) {
         return
       }
@@ -669,19 +675,15 @@ const Labels = React.memo(function Labels(props: LabelsProps) {
       {isCloud && labels.length !== 0 && (
         <div data-testid="asset-search-labels" className="pointer-events-auto flex gap-2 px-1.5">
           {[...labels]
-            .sort((a, b) => string.compareCaseInsensitive(a.value, b.value))
+            .sort((a, b) => compareCaseInsensitive(a.value, b.value))
             .map((label) => {
-              const negated = query.negativeLabels.some((term) =>
-                array.shallowEqual(term, [label.value]),
-              )
+              const negated = query.negativeLabels.some((term) => shallowEqual(term, [label.value]))
               return (
                 <Label
                   key={label.id}
                   color={label.color}
                   label={label}
-                  active={
-                    negated || query.labels.some((term) => array.shallowEqual(term, [label.value]))
-                  }
+                  active={negated || query.labels.some((term) => shallowEqual(term, [label.value]))}
                   negated={negated}
                   onPress={labelOnPress}
                 >
@@ -695,4 +697,4 @@ const Labels = React.memo(function Labels(props: LabelsProps) {
   )
 })
 
-export default React.memo(AssetSearchBar)
+export default memo(AssetSearchBar)

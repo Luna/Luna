@@ -1,5 +1,7 @@
 /** @file A column listing the users with which this asset is shared. */
-import * as React from 'react'
+import { useRef } from 'react'
+
+import { getAssetPermissionId, getAssetPermissionName } from 'enso-common/src/services/Backend'
 
 import Plus2Icon from '#/assets/plus2.svg'
 import { Button } from '#/components/AriaComponents'
@@ -10,12 +12,7 @@ import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
-import { getAssetPermissionId, getAssetPermissionName } from '#/services/Backend'
 import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
-
-// ========================
-// === SharedWithColumn ===
-// ========================
 
 /** The type of the `state` prop of a {@link SharedWithColumn}. */
 interface SharedWithColumnStateProp
@@ -41,7 +38,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
   const assetPermissions = item.permissions ?? []
   const { setModal } = useSetModal()
   const self = tryFindSelfPermission(user, item.permissions)
-  const plusButtonRef = React.useRef<HTMLButtonElement>(null)
+  const plusButtonRef = useRef<HTMLButtonElement>(null)
   const managesThisAsset =
     !isReadonly &&
     category.type !== 'trash' &&

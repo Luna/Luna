@@ -1,8 +1,9 @@
 /** @file Hooks for showing an overlay with a cutout for a rectangular element. */
 import { startTransition, useEffect, useLayoutEffect, useState, type CSSProperties } from 'react'
 
+import { convertCSSUnitString } from 'enso-common/src/utilities/convertCSSUnits'
+
 import Portal from '#/components/Portal'
-import { convertCSSUnitString } from '#/utilities/convertCSSUnits'
 import { useEventCallback } from './eventCallbackHooks'
 import type { RectReadOnly } from './measureHooks'
 import { useMeasure } from './measureHooks'

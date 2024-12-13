@@ -97,6 +97,10 @@ importers:
       vue:
         specifier: ^3.5.2
         version: 3.5.2(typescript@5.5.3)
+    devDependencies:
+      '@fast-check/vitest':
+        specifier: ^0.0.8
+        version: 0.0.8(vitest@1.6.0(@types/node@22.9.0)(jsdom@24.1.0)(lightningcss@1.25.1))
 
   app/gui:
     dependencies:

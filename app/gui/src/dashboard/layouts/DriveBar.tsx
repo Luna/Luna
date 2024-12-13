@@ -2,9 +2,11 @@
  * @file Header menubar for the directory listing, containing information about
  * the current directory and some configuration options.
  */
-import * as React from 'react'
+import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
+
+import type { Backend } from 'enso-common/src/services/Backend'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -41,6 +43,7 @@ import StartModal from '#/layouts/StartModal'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import UpsertDatalinkModal from '#/modals/UpsertDatalinkModal'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
+import { useFullUserSession } from '#/providers/AuthProvider'
 import {
   useCanCreateAssets,
   useCanDownload,
@@ -50,22 +53,16 @@ import {
 import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
-import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import { useFullUserSession } from '../providers/AuthProvider'
+import { document } from '#/utilities/sanitizedEventTargets'
 import { AssetPanelToggle } from './AssetPanel'
-
-// ================
-// === DriveBar ===
-// ================
 
 /** Props for a {@link DriveBar}. */
 export interface DriveBarProps {
   readonly backend: Backend
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
   readonly category: Category
   readonly doEmptyTrash: () => void
   readonly isEmpty: boolean
@@ -95,7 +92,7 @@ export default function DriveBar(props: DriveBarProps) {
   const inputBindings = useInputBindings()
   const dispatchAssetEvent = useDispatchAssetEvent()
   const canCreateAssets = useCanCreateAssets()
-  const createAssetButtonsRef = React.useRef<HTMLDivElement>(null)
+  const createAssetButtonsRef = useRef<HTMLDivElement>(null)
   const isCloud = isCloudCategory(category)
   const { isOffline } = useOffline()
   const { user } = useFullUserSession()
@@ -163,8 +160,8 @@ export default function DriveBar(props: DriveBarProps) {
   const newProject = newProjectMutation.mutateAsync
   const isCreatingProject = newProjectMutation.isPending
 
-  React.useEffect(() => {
-    return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
+  useEffect(() => {
+    return inputBindings.attach(document.body, 'keydown', {
       ...(isCloud ?
         {
           newFolder: () => {

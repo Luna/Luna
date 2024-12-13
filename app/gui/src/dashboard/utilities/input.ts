@@ -1,8 +1,6 @@
 /** @file Functions related to inputs. */
 
-/**
- * Trigger a file input.
- */
+/** Trigger a file input. */
 export function inputFiles() {
   return new Promise<FileList>((resolve, reject) => {
     const input = document.createElement('input')

@@ -1,10 +1,10 @@
 /** @file Tests for the `parseUserEmails` function. */
-import * as vitest from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-import * as parseUserEmails from '#/utilities/parseUserEmails'
+import { parseUserEmails } from '../email'
 
-vitest.describe('parseUserEmails', () => {
-  vitest.it.each([
+describe('parseUserEmails', () => {
+  it.each([
     ['john.doe@domain.com', { entries: [{ email: 'john.doe@domain.com' }] }],
     [
       'john.doe@domain.com, jane.doe@domain.com',
@@ -50,7 +50,7 @@ vitest.describe('parseUserEmails', () => {
       { entries: [{ email: 'john.doe@domain.com' }, { email: 'jane.doe@domain.com' }] },
     ],
   ])('should correctly parse email addresses in different formats', (given, expected) => {
-    const result = parseUserEmails.parseUserEmails(given)
-    vitest.expect(result).toEqual(expected)
+    const result = parseUserEmails(given)
+    expect(result).toEqual(expected)
   })
 })

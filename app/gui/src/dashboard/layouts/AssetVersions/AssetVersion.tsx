@@ -1,37 +1,26 @@
 /** @file Displays information describing a specific version of an asset. */
-import * as React from 'react'
+import type Backend from 'enso-common/src/services/Backend'
+import { AssetType, type AnyAsset, type S3ObjectVersion } from 'enso-common/src/services/Backend'
+import { formatDateTime } from 'enso-common/src/utilities/data/dateTime'
 
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'
 import RestoreIcon from '#/assets/restore.svg'
-
-import * as textProvider from '#/providers/TextProvider'
-
+import * as ariaComponents from '#/components/AriaComponents'
 import AssetListEventType from '#/events/AssetListEventType'
-
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as assetDiffView from '#/layouts/AssetDiffView'
 import * as eventListProvider from '#/layouts/Drive/EventListProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-
-import type Backend from '#/services/Backend'
-import * as backendService from '#/services/Backend'
-
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as dateTime from '#/utilities/dateTime'
+import * as textProvider from '#/providers/TextProvider'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ====================
-// === AssetVersion ===
-// ====================
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {
   readonly placeholder?: boolean
-  readonly item: backendService.AnyAsset
+  readonly item: AnyAsset
   readonly number: number
-  readonly version: backendService.S3ObjectVersion
-  readonly latestVersion: backendService.S3ObjectVersion
+  readonly version: S3ObjectVersion
+  readonly latestVersion: S3ObjectVersion
   readonly backend: Backend
   readonly doRestore: () => Promise<void> | void
 }
@@ -41,7 +30,7 @@ export default function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const isProject = item.type === backendService.AssetType.project
+  const isProject = item.type === AssetType.project
 
   const doDuplicate = useEventCallback(() => {
     if (isProject) {
@@ -68,7 +57,7 @@ export default function AssetVersion(props: AssetVersionProps) {
         </div>
 
         <time className="text-xs text-not-selected">
-          {getText('onDateX', dateTime.formatDateTime(new Date(version.lastModified)))}
+          {getText('onDateX', formatDateTime(new Date(version.lastModified)))}
         </time>
       </div>
 

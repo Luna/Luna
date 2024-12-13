@@ -1,5 +1,6 @@
 /** @file Types and constants related to `Column`s. */
-import type * as text from 'enso-common/src/text'
+import { BackendType, Plan, type User } from 'enso-common/src/services/Backend'
+import type { TextId } from 'enso-common/src/text'
 
 import AccessedByProjectsIcon from '#/assets/accessed_by_projects.svg'
 import AccessedDataIcon from '#/assets/accessed_data.svg'
@@ -8,13 +9,7 @@ import DocsIcon from '#/assets/docs.svg'
 import PeopleIcon from '#/assets/people.svg'
 import TagIcon from '#/assets/tag.svg'
 import TimeIcon from '#/assets/time.svg'
-
 import type { Category } from '#/layouts/CategorySwitcher/Category'
-import * as backend from '#/services/Backend'
-
-// =============
-// === Types ===
-// =============
 
 /** Column type. */
 export enum Column {
@@ -29,10 +24,6 @@ export enum Column {
 
 /** Columns that can be used as a sort column. */
 export type SortableColumn = Column.modified | Column.name
-
-// =================
-// === Constants ===
-// =================
 
 export const DEFAULT_ENABLED_COLUMNS: ReadonlySet<Column> = new Set([
   Column.name,
@@ -53,7 +44,7 @@ export const COLUMN_ICONS: Readonly<Record<Column, string>> = {
   [Column.docs]: DocsIcon,
 }
 
-export const COLUMN_SHOW_TEXT_ID: Readonly<Record<Column, text.TextId>> = {
+export const COLUMN_SHOW_TEXT_ID: Readonly<Record<Column, TextId>> = {
   [Column.name]: 'nameColumnShow',
   [Column.modified]: 'modifiedColumnShow',
   [Column.sharedWith]: 'sharedWithColumnShow',
@@ -78,18 +69,14 @@ export const COLUMN_CSS_CLASS: Readonly<Record<Column, string>> = {
   [Column.docs]: `min-w-drive-docs-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
 }
 
-// =====================
-// === getColumnList ===
-// =====================
-
 /** Return the full list of columns given the relevant current state. */
 export function getColumnList(
-  user: backend.User,
-  backendType: backend.BackendType,
+  user: User,
+  backendType: BackendType,
   category: Category,
 ): readonly Column[] {
-  const isCloud = backendType === backend.BackendType.remote
-  const isEnterprise = user.plan === backend.Plan.enterprise
+  const isCloud = backendType === BackendType.remote
+  const isEnterprise = user.plan === Plan.enterprise
 
   const isTrash = category.type === 'trash'
   const isRecent = category.type === 'recent'

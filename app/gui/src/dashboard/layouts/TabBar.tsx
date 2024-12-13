@@ -1,31 +1,28 @@
 /** @file Switcher to choose the currently visible full-screen page. */
-import * as React from 'react'
+import { useEffect, useMemo, useRef, type PropsWithChildren, type ReactNode } from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
-
-import type * as text from 'enso-common/src/text'
-
-import * as projectHooks from '#/hooks/projectHooks'
-
-import type { LaunchedProject } from '#/providers/ProjectsProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
-import * as ariaComponents from '#/components/AriaComponents'
-import { StatelessSpinner } from '#/components/StatelessSpinner'
-import SvgMask from '#/components/SvgMask'
-
-import { AnimatedBackground } from '#/components/AnimatedBackground'
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useBackendForProjectType } from '#/providers/BackendProvider'
-import { useInputBindings } from '#/providers/InputBindingsProvider'
-import { ProjectState } from '#/services/Backend'
-import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 
+import { ProjectState } from 'enso-common/src/services/Backend'
+import type { TextId } from 'enso-common/src/text'
+
+import { AnimatedBackground } from '#/components/AnimatedBackground'
+import { Tab as AriaTab, TabList, type TabListProps } from '#/components/aria'
+import { CloseButton, Text } from '#/components/AriaComponents'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
+import SvgMask from '#/components/SvgMask'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
+import { useBackendForProjectType } from '#/providers/BackendProvider'
+import { useInputBindings } from '#/providers/InputBindingsProvider'
+import type { LaunchedProject } from '#/providers/ProjectsProvider'
+import { useText } from '#/providers/TextProvider'
+import { document } from '#/utilities/sanitizedEventTargets'
+import { twJoin } from '#/utilities/tailwindMerge'
+
 /** Props for a {@link TabBar}. */
-export interface TabBarProps<T extends object> extends aria.TabListProps<T> {
+export interface TabBarProps<T extends object> extends TabListProps<T> {
   readonly className?: string
 }
 
@@ -33,29 +30,25 @@ export interface TabBarProps<T extends object> extends aria.TabListProps<T> {
 export default function TabBar<T extends object>(props: TabBarProps<T>) {
   const { className, ...rest } = props
 
-  const classes = React.useMemo(() => tailwindMerge.twJoin('flex grow', className), [className])
+  const classes = useMemo(() => twJoin('flex grow', className), [className])
 
   return (
     <AnimatedBackground>
       <div className={classes}>
-        <aria.TabList<T> className="flex h-12 shrink-0 grow" {...rest} />
+        <TabList<T> className="flex h-12 shrink-0 grow" {...rest} />
       </div>
     </AnimatedBackground>
   )
 }
 
-// ===========
-// === Tab ===
-// ===========
-
 /** Props for a {@link Tab}. */
-export interface TabProps extends Readonly<React.PropsWithChildren> {
+export interface TabProps extends Readonly<PropsWithChildren> {
   readonly 'data-testid'?: string
   readonly id: string
   readonly isActive: boolean
   readonly isHidden?: boolean
-  readonly icon: React.ReactNode | string | null
-  readonly labelId: text.TextId
+  readonly icon: ReactNode | string | null
+  readonly labelId: TextId
   readonly onClose?: () => void
 }
 
@@ -70,27 +63,27 @@ const UNDERLAY_ELEMENT = (
 /** A tab in a {@link TabBar}. */
 export function Tab(props: TabProps) {
   const { id, isActive, isHidden = false, icon, labelId, children, onClose } = props
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
   const inputBindings = useInputBindings()
 
   const stableOnClose = useEventCallback(() => {
     onClose?.()
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isActive) {
-      return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
+      return inputBindings.attach(document.body, 'keydown', {
         closeTab: stableOnClose,
       })
     }
   }, [inputBindings, isActive, stableOnClose])
 
   return (
-    <aria.Tab
+    <AriaTab
       data-testid={props['data-testid']}
       id={id}
       aria-label={getText(labelId)}
-      className={tailwindMerge.twJoin(
+      className={twJoin(
         'disabled:cursor-not-allowed disabled:opacity-30 [&.disabled]:cursor-not-allowed [&.disabled]:opacity-30',
         !isActive && 'cursor-pointer',
         isHidden && 'hidden',
@@ -113,31 +106,27 @@ export function Tab(props: TabProps) {
             {typeof icon === 'string' ?
               <SvgMask
                 src={icon}
-                className={tailwindMerge.twJoin(
-                  onClose && 'group-hover:hidden focus-visible:hidden',
-                )}
+                className={twJoin(onClose && 'group-hover:hidden focus-visible:hidden')}
               />
             : icon}
 
-            <ariaComponents.Text truncate="1" className="max-w-40">
+            <Text truncate="1" className="max-w-40">
               {children}
-            </ariaComponents.Text>
+            </Text>
 
             {onClose && (
               <div className="relative">
-                <ariaComponents.CloseButton onPress={onClose} />
+                <CloseButton onPress={onClose} />
               </div>
             )}
           </div>
         </AnimatedBackground.Item>
       )}
-    </aria.Tab>
+    </AriaTab>
   )
 }
 
-/**
- * Props for a {@link ProjectTab}.
- */
+/** Props for a {@link ProjectTab}. */
 export interface ProjectTabProps extends Omit<TabProps, 'onClose'> {
   readonly project: LaunchedProject
   readonly onLoadEnd?: (project: LaunchedProject) => void
@@ -146,13 +135,11 @@ export interface ProjectTabProps extends Omit<TabProps, 'onClose'> {
 
 const SPINNER = <StatelessSpinner state="loading-medium" size={16} />
 
-/**
- * Project Tab is a {@link Tab} that displays the name of the project.
- */
+/** Project Tab is a {@link Tab} that displays the name of the project. */
 export function ProjectTab(props: ProjectTabProps) {
   const { project, onLoadEnd, onClose, icon: iconRaw, ...rest } = props
 
-  const didNotifyOnLoadEnd = React.useRef(false)
+  const didNotifyOnLoadEnd = useRef(false)
   const backend = useBackendForProjectType(project.type)
 
   const stableOnLoadEnd = useEventCallback(() => {
@@ -163,8 +150,8 @@ export function ProjectTab(props: ProjectTabProps) {
     onClose?.(project)
   })
 
-  const { data: isOpened, isSuccess } = reactQuery.useQuery({
-    ...projectHooks.createGetProjectDetailsQuery({
+  const { data: isOpened, isSuccess } = useQuery({
+    ...createGetProjectDetailsQuery({
       assetId: project.id,
       parentId: project.parentId,
       backend,
@@ -174,14 +161,14 @@ export function ProjectTab(props: ProjectTabProps) {
 
   const isReady = isSuccess && isOpened
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isReady && !didNotifyOnLoadEnd.current) {
       didNotifyOnLoadEnd.current = true
       stableOnLoadEnd()
     }
   }, [isReady, stableOnLoadEnd])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isReady) {
       didNotifyOnLoadEnd.current = false
     }

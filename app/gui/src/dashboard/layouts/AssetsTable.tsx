@@ -21,6 +21,25 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import * as z from 'zod'
 
+import type Backend from 'enso-common/src/services/Backend'
+import {
+  assetIsProject,
+  AssetType,
+  BackendType,
+  getAssetPermissionName,
+  Plan,
+  ProjectId,
+  ProjectState,
+  type AnyAsset,
+  type AssetId,
+  type DirectoryAsset,
+  type DirectoryId,
+  type LabelName,
+  type ProjectAsset,
+} from 'enso-common/src/services/Backend'
+import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
+import { fileExtension } from 'enso-common/src/utilities/data/fileInfo'
+import { noop } from 'enso-common/src/utilities/functions'
 import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 
 import DropFilesImage from '#/assets/drop_files.svg'
@@ -101,32 +120,13 @@ import { useSetModal } from '#/providers/ModalProvider'
 import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import { useLaunchedProjects } from '#/providers/ProjectsProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import {
-  assetIsProject,
-  AssetType,
-  BackendType,
-  getAssetPermissionName,
-  Plan,
-  ProjectId,
-  ProjectState,
-  type AnyAsset,
-  type AssetId,
-  type DirectoryAsset,
-  type DirectoryId,
-  type LabelName,
-  type ProjectAsset,
-} from '#/services/Backend'
 import { isSpecialReadonlyDirectoryId } from '#/services/RemoteBackend'
 import type { AssetQueryKey } from '#/utilities/AssetQuery'
 import AssetQuery from '#/utilities/AssetQuery'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
-import { toRfc3339 } from '#/utilities/dateTime'
 import type { AssetRowsDragPayload } from '#/utilities/drag'
 import { ASSET_ROWS, LABELS, setDragImageToBlank } from '#/utilities/drag'
-import { fileExtension } from '#/utilities/fileInfo'
-import { noop } from '#/utilities/functions'
 import type { DetailedRectangle } from '#/utilities/geometry'
 import { DEFAULT_HANDLER } from '#/utilities/inputBindings'
 import LocalStorage from '#/utilities/LocalStorage'

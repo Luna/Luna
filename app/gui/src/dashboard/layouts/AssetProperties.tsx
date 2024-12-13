@@ -3,6 +3,16 @@ import * as React from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
+import type Backend from 'enso-common/src/services/Backend'
+import {
+  AssetType,
+  BackendType,
+  Plan,
+  type AnyAsset,
+  type DatalinkId,
+} from 'enso-common/src/services/Backend'
+import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
+
 import PenIcon from '#/assets/pen.svg'
 import { Heading } from '#/components/aria'
 import {
@@ -30,14 +40,11 @@ import { useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend } from '#/providers/BackendProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import { AssetType, BackendType, Plan, type AnyAsset, type DatalinkId } from '#/services/Backend'
 import { extractTypeAndId } from '#/services/LocalBackend'
-import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
-import * as permissions from '#/utilities/permissions'
+import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
-import { useStore } from '../utilities/zustand'
+import { useStore } from '#/utilities/zustand'
 
 const ASSET_PROPERTIES_VARIANTS = tv({
   base: '',
@@ -162,12 +169,12 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   })
 
   const labels = useBackendQuery(backend, 'listTags', []).data ?? []
-  const self = permissions.tryFindSelfPermission(user, item.permissions)
-  const ownsThisAsset = self?.permission === permissions.PermissionAction.own
+  const self = tryFindSelfPermission(user, item.permissions)
+  const ownsThisAsset = self?.permission === PermissionAction.own
   const canEditThisAsset =
     ownsThisAsset ||
-    self?.permission === permissions.PermissionAction.admin ||
-    self?.permission === permissions.PermissionAction.edit
+    self?.permission === PermissionAction.admin ||
+    self?.permission === PermissionAction.edit
   const isSecret = item.type === AssetType.secret
   const isDatalink = item.type === AssetType.datalink
   const isCloud = backend.type === BackendType.remote

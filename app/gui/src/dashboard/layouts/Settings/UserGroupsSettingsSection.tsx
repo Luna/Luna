@@ -3,6 +3,14 @@ import { useMemo, useRef } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
+import type Backend from 'enso-common/src/services/Backend'
+import {
+  isPlaceholderUserGroupId,
+  isUserGroupId,
+  type User,
+  type UserGroupInfo,
+} from 'enso-common/src/services/Backend'
+
 import { Cell, Column, Row, Table, TableBody, TableHeader, useDragAndDrop } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { PaywallDialogButton } from '#/components/Paywall'
@@ -20,20 +28,9 @@ import NewUserGroupModal from '#/modals/NewUserGroupModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import {
-  isPlaceholderUserGroupId,
-  isUserGroupId,
-  type User,
-  type UserGroupInfo,
-} from '#/services/Backend'
 import { twMerge } from '#/utilities/tailwindMerge'
 import UserGroupRow from './UserGroupRow'
 import UserGroupUserRow from './UserGroupUserRow'
-
-// =================================
-// === UserGroupsSettingsSection ===
-// =================================
 
 /** Props for a {@link UserGroupsSettingsSection}. */
 export interface UserGroupsSettingsSectionProps {

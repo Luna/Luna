@@ -1,50 +1,47 @@
 /** @file A page to show when a user successfully subscribes to a plan. */
-import * as router from 'react-router'
-import * as routerDom from 'react-router-dom'
+import { Navigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import * as appUtils from '#/appUtils'
+import { Plan, isPlan } from 'enso-common/src/services/Backend'
 
-import * as textProvider from '#/providers/TextProvider'
+import { DASHBOARD_PATH } from '#/appUtils'
 
-import * as ariaComponents from '#/components/AriaComponents'
-import * as result from '#/components/Result'
+import { useText } from '#/providers/TextProvider'
+
+import { Button, ButtonGroup } from '#/components/AriaComponents'
+import { Result } from '#/components/Result'
 
 import { PLAN_TO_TEXT_ID } from '#/modules/payments'
-import { Plan, isPlan } from '#/services/Backend'
-
-// ========================
-// === SubscribeSuccess ===
-// ========================
 
 /** A page to show when a user successfully subscribes to a plan. */
 export function SubscribeSuccess() {
-  const { getText } = textProvider.useText()
-  const [searchParams] = routerDom.useSearchParams()
-  const navigate = routerDom.useNavigate()
+  const { getText } = useText()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const plan = searchParams.get('plan') ?? Plan.solo
 
   if (!isPlan(plan)) {
-    return <router.Navigate to={appUtils.DASHBOARD_PATH} replace />
+    return <Navigate to={DASHBOARD_PATH} replace />
   } else {
     return (
-      <result.Result
+      <Result
         className="h-full"
         title={getText('subscribeSuccessTitle')}
         subtitle={getText('subscribeSuccessSubtitle', getText(PLAN_TO_TEXT_ID[plan]))}
         status="success"
       >
-        <ariaComponents.ButtonGroup align="center">
-          <ariaComponents.Button
+        <ButtonGroup align="center">
+          <Button
             variant="submit"
             size="large"
             onPress={() => {
-              navigate(appUtils.DASHBOARD_PATH)
+              navigate(DASHBOARD_PATH)
             }}
           >
             {getText('subscribeSuccessSubmit')}
-          </ariaComponents.Button>
-        </ariaComponents.ButtonGroup>
-      </result.Result>
+          </Button>
+        </ButtonGroup>
+      </Result>
     )
   }
 }

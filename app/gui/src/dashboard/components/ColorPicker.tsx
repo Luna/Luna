@@ -1,36 +1,38 @@
 /** @file A color picker to select from a predetermined list of colors. */
-import * as React from 'react'
+import { ForwardedRef, ReactNode } from 'react'
 
-import * as focusHooks from '#/hooks/focusHooks'
+import {
+  COLOR_STRING_TO_COLOR,
+  COLORS,
+  LChColor,
+  lChColorToCssColor,
+} from 'enso-common/src/services/Backend'
 
-import * as focusClassProvider from '#/providers/FocusClassProvider'
-import * as focusDirectionProvider from '#/providers/FocusDirectionProvider'
-
-import * as aria from '#/components/aria'
+import { Radio, RadioGroupProps } from '#/components/aria'
 import FocusRing from '#/components/styled/FocusRing'
 import RadioGroup from '#/components/styled/RadioGroup'
-
-import * as backend from '#/services/Backend'
-
+import { useHandleFocusMove } from '#/hooks/focusHooks'
+import { useFocusClasses } from '#/providers/FocusClassProvider'
+import { useFocusDirection } from '#/providers/FocusDirectionProvider'
 import { forwardRef } from '#/utilities/react'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { twMerge } from '#/utilities/tailwindMerge'
 
 /** Props for a {@link ColorPickerItem}. */
 export interface InternalColorPickerItemProps {
-  readonly color: backend.LChColor
+  readonly color: LChColor
 }
 
 /** An input in a {@link ColorPicker}. */
 function ColorPickerItem(props: InternalColorPickerItemProps) {
   const { color } = props
-  const { focusChildClass } = focusClassProvider.useFocusClasses()
-  const focusDirection = focusDirectionProvider.useFocusDirection()
-  const handleFocusMove = focusHooks.useHandleFocusMove(focusDirection)
-  const cssColor = backend.lChColorToCssColor(color)
+  const { focusChildClass } = useFocusClasses()
+  const focusDirection = useFocusDirection()
+  const handleFocusMove = useHandleFocusMove(focusDirection)
+  const cssColor = lChColorToCssColor(color)
 
   return (
     <FocusRing within>
-      <aria.Radio
+      <Radio
         ref={(element) => {
           element?.querySelector('input')?.classList.add(focusChildClass)
         }}
@@ -40,7 +42,7 @@ function ColorPickerItem(props: InternalColorPickerItemProps) {
         onKeyDown={handleFocusMove}
       >
         <div className="hidden size-radio-button-dot rounded-full bg-selected-frame group-selected:block" />
-      </aria.Radio>
+      </Radio>
     </FocusRing>
   )
 }
@@ -50,40 +52,35 @@ function ColorPickerItem(props: InternalColorPickerItemProps) {
 // ===================
 
 /** Props for a {@link ColorPicker}. */
-export interface ColorPickerProps extends Readonly<Omit<aria.RadioGroupProps, 'className'>> {
-  readonly children?: React.ReactNode
+export interface ColorPickerProps extends Readonly<Omit<RadioGroupProps, 'className'>> {
+  readonly children?: ReactNode
   readonly className?: string
   readonly pickerClassName?: string
-  readonly setColor: (color: backend.LChColor) => void
+  readonly setColor: (color: LChColor) => void
 }
 
 /** A color picker to select from a predetermined list of colors. */
 export default forwardRef(ColorPicker)
 
 /** A color picker to select from a predetermined list of colors. */
-function ColorPicker(props: ColorPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
+function ColorPicker(props: ColorPickerProps, ref: ForwardedRef<HTMLDivElement>) {
   const { className, pickerClassName = '', children, setColor, ...radioGroupProps } = props
   return (
     <RadioGroup
       ref={ref}
       {...radioGroupProps}
       orientation="horizontal"
-      className={tailwindMerge.twMerge('flex flex-col', className)}
+      className={twMerge('flex flex-col', className)}
       onChange={(value) => {
-        const color = backend.COLOR_STRING_TO_COLOR.get(value)
+        const color = COLOR_STRING_TO_COLOR.get(value)
         if (color != null) {
           setColor(color)
         }
       }}
     >
       {children}
-      <div
-        className={tailwindMerge.twMerge(
-          'flex items-center justify-between gap-colors',
-          pickerClassName,
-        )}
-      >
-        {backend.COLORS.map((currentColor, i) => (
+      <div className={twMerge('flex items-center justify-between gap-colors', pickerClassName)}>
+        {COLORS.map((currentColor, i) => (
           <ColorPickerItem key={i} color={currentColor} />
         ))}
       </div>

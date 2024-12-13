@@ -2,59 +2,45 @@
  * @file A context menu for an `AssetsTable`, when no row is selected, or multiple rows
  * are selected.
  */
-import * as React from 'react'
+import type { MouseEvent, MutableRefObject } from 'react'
 
 import { useStore } from 'zustand'
 
-import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
-
-import AssetEventType from '#/events/AssetEventType'
-
-import {
-  canTransferBetweenCategories,
-  type Category,
-  isCloudCategory,
-} from '#/layouts/CategorySwitcher/Category'
-import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
+import type Backend from 'enso-common/src/services/Backend'
+import { AssetType, Plan, type AssetId, type DirectoryId } from 'enso-common/src/services/Backend'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
-
-import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
-
-import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
-
 import Separator from '#/components/styled/Separator'
+import AssetEventType from '#/events/AssetEventType'
+import {
+  canTransferBetweenCategories,
+  isCloudCategory,
+  type Category,
+} from '#/layouts/CategorySwitcher/Category'
 import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
+import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
+import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
+import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type * as assetTreeNode from '#/utilities/AssetTreeNode'
-import * as permissions from '#/utilities/permissions'
+import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
+import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
 import { EMPTY_SET } from '#/utilities/set'
-
-// =================
-// === Constants ===
-// =================
 
 /** Props for an {@link AssetsTableContextMenu}. */
 export interface AssetsTableContextMenuProps {
   readonly hidden?: boolean
   readonly backend: Backend
   readonly category: Category
-  readonly rootDirectoryId: backendModule.DirectoryId
-  readonly nodeMapRef: React.MutableRefObject<
-    ReadonlyMap<backendModule.AssetId, assetTreeNode.AnyAssetTreeNode>
-  >
-  readonly event: Pick<React.MouseEvent<Element, MouseEvent>, 'pageX' | 'pageY'>
+  readonly rootDirectoryId: DirectoryId
+  readonly nodeMapRef: MutableRefObject<ReadonlyMap<AssetId, AnyAssetTreeNode>>
+  readonly event: Pick<MouseEvent<Element, MouseEvent>, 'pageX' | 'pageY'>
   readonly doCopy: () => void
   readonly doCut: () => void
-  readonly doPaste: (
-    newParentKey: backendModule.DirectoryId,
-    newParentId: backendModule.DirectoryId,
-  ) => void
-  readonly doDelete: (assetId: backendModule.AssetId, forever?: boolean) => Promise<void>
+  readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
+  readonly doDelete: (assetId: AssetId, forever?: boolean) => Promise<void>
 }
 
 /**
@@ -95,8 +81,8 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     !isCloud ||
     Array.from(selectedKeys).every(
       (key) =>
-        permissions.tryFindSelfPermission(user, nodeMapRef.current.get(key)?.item.permissions)
-          ?.permission === permissions.PermissionAction.own,
+        tryFindSelfPermission(user, nodeMapRef.current.get(key)?.item.permissions)?.permission ===
+        PermissionAction.own,
     )
 
   // This is not a React component even though it contains JSX.
@@ -112,7 +98,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     if (
       isCloud &&
       [...selectedKeys].every(
-        (key) => nodeMapRef.current.get(key)?.item.type !== backendModule.AssetType.directory,
+        (key) => nodeMapRef.current.get(key)?.item.type !== AssetType.directory,
       )
     ) {
       deleteAll()
@@ -144,7 +130,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         const selectedNode =
           selectedKeys.size === 1 && firstKey != null ? nodeMapRef.current.get(firstKey) : null
 
-        if (selectedNode?.type === backendModule.AssetType.directory) {
+        if (selectedNode?.type === AssetType.directory) {
           doPaste(selectedNode.key, selectedNode.item.id)
         } else {
           doPaste(rootDirectoryId, rootDirectoryId)
@@ -210,7 +196,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   } else {
     const shouldShowAssetMenu = selectedKeys.size !== 0 || pasteAllMenuEntry !== false
     const shouldShowGlobalMenu =
-      category.type !== 'cloud' || user.plan == null || user.plan === backendModule.Plan.solo
+      category.type !== 'cloud' || user.plan == null || user.plan === Plan.solo
     if (!shouldShowAssetMenu && !shouldShowGlobalMenu) {
       return null
     } else {

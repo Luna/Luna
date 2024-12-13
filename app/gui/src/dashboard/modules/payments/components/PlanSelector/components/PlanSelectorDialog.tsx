@@ -1,14 +1,10 @@
-/**
- * @file
- *
- * Dialog that shows the plan details, price, and the payment form.
- */
-import * as React from 'react'
+/** @file Dialog that shows the plan details, price, and the payment form. */
+import { useMemo } from 'react'
 
 import type { PaymentMethod } from '@stripe/stripe-js'
 import { useQuery } from '@tanstack/react-query'
 
-import { type GetText, useText } from '#/providers/TextProvider'
+import type { Plan } from 'enso-common/src/services/Backend'
 
 import {
   Button,
@@ -22,9 +18,7 @@ import {
 } from '#/components/AriaComponents'
 import { ErrorDisplay } from '#/components/ErrorBoundary'
 import { Suspense } from '#/components/Suspense'
-
-import type { Plan } from '#/services/Backend'
-
+import { type GetText, useText } from '#/providers/TextProvider'
 import { twMerge } from '#/utilities/tailwindMerge'
 
 import { createSubscriptionPriceQuery, useCreatePaymentMethodMutation } from '../../../api'
@@ -104,7 +98,7 @@ export function PlanSelectorDialog(props: PlanSelectorDialogProps) {
   const seats = Form.useWatch({ name: 'seats', control: form.control })
   const period = Form.useWatch({ name: 'period', control: form.control })
 
-  const formatter = React.useMemo(
+  const formatter = useMemo(
     () => new Intl.NumberFormat(locale, { style: 'currency', currency: PRICE_CURRENCY }),
     [locale],
   )

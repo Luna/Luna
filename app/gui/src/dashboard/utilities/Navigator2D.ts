@@ -2,9 +2,9 @@
 import type * as React from 'react'
 
 import * as detect from 'enso-common/src/detect'
+import * as object from 'enso-common/src/utilities/data/object'
 
 import * as eventModule from '#/utilities/event'
-import * as object from '#/utilities/object'
 
 // =================
 // === Constants ===

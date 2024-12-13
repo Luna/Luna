@@ -1,18 +1,25 @@
-/**
- * @file
- *
- * A CheckboxGroup allows users to select one or more items from a list of choices.
- */
-import type { CheckboxGroupProps as AriaCheckboxGroupProps } from '#/components/aria'
-import { CheckboxGroup as AriaCheckboxGroup, mergeProps } from '#/components/aria'
+/** @file Allow users to select one or more items from a list of choices. */
+import type { CSSProperties, ForwardedRef, ReactElement } from 'react'
+
+import { omit } from 'enso-common/src/utilities/data/object'
+
+import {
+  CheckboxGroup as AriaCheckboxGroup,
+  mergeProps,
+  type CheckboxGroupProps as AriaCheckboxGroupProps,
+} from '#/components/aria'
 import { mergeRefs } from '#/utilities/mergeRefs'
-import { omit } from '#/utilities/object'
 import { forwardRef } from '#/utilities/react'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
-import type { CSSProperties, ForwardedRef, ReactElement } from 'react'
-import type { FieldVariantProps } from '../Form'
-import { Form, type FieldPath, type FieldProps, type FieldStateProps, type TSchema } from '../Form'
+import {
+  Form,
+  type FieldPath,
+  type FieldProps,
+  type FieldStateProps,
+  type FieldVariantProps,
+  type TSchema,
+} from '../Form'
 import type { TestIdProps } from '../types'
 import { CheckboxGroupProvider } from './CheckboxContext'
 

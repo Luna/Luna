@@ -1,121 +1,125 @@
-/** @file The context menu for an arbitrary {@link backendModule.Asset}. */
-import * as React from 'react'
+/** @file The context menu for an arbitrary {@link Asset}. */
+import type { MouseEvent, MutableRefObject } from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
-import * as toast from 'react-toastify'
+import { useQuery } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
-import * as billingHooks from '#/hooks/billing'
-import * as copyHooks from '#/hooks/copyHooks'
-import * as projectHooks from '#/hooks/projectHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import AssetEventType from '#/events/AssetEventType'
-import AssetListEventType from '#/events/AssetListEventType'
-
-import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
+import {
+  assetIsProject,
+  AssetType,
+  IS_OPENING_OR_OPENED,
+  Plan,
+  type Asset,
+  type DirectoryId,
+  type ProjectId,
+} from 'enso-common/src/services/Backend'
+import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
+import { merger } from 'enso-common/src/utilities/data/object'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
 import type * as assetRow from '#/components/dashboard/AssetRow'
+import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
 import Separator from '#/components/styled/Separator'
-
+import AssetEventType from '#/events/AssetEventType'
+import AssetListEventType from '#/events/AssetListEventType'
+import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
+import { usePaywall } from '#/hooks/billing'
+import { useCopy } from '#/hooks/copyHooks'
+import {
+  createGetProjectDetailsQuery,
+  useCanOpenProjects,
+  useCloseProject,
+  useOpenProject,
+  useOpenProjectMutation,
+} from '#/hooks/projectHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { isCloudCategory } from '#/layouts/CategorySwitcher/Category'
+import { useDispatchAssetEvent, useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'
+import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import ManageLabelsModal from '#/modals/ManageLabelsModal'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
-
-import * as backendModule from '#/services/Backend'
-import * as localBackendModule from '#/services/LocalBackend'
-
-import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
-import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { usePasteData } from '#/providers/DriveProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
+import { extractTypeAndId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
-import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
-import * as object from '#/utilities/object'
-import * as permissions from '#/utilities/permissions'
+import {
+  canPermissionModifyDirectoryContents,
+  isTeamPath,
+  PERMISSION_ACTION_CAN_EXECUTE,
+  PermissionAction,
+  tryFindSelfPermission,
+} from '#/utilities/permissions'
 import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
-
-// ========================
-// === AssetContextMenu ===
-// ========================
 
 /** Props for a {@link AssetContextMenu}. */
 export interface AssetContextMenuProps {
   readonly hidden?: boolean
   readonly innerProps: assetRow.AssetRowInnerProps
-  readonly rootDirectoryId: backendModule.DirectoryId
-  readonly triggerRef: React.MutableRefObject<HTMLElement | null>
-  readonly event: Pick<React.MouseEvent, 'pageX' | 'pageY'>
+  readonly rootDirectoryId: DirectoryId
+  readonly triggerRef: MutableRefObject<HTMLElement | null>
+  readonly event: Pick<MouseEvent, 'pageX' | 'pageY'>
   readonly eventTarget: HTMLElement | null
   readonly doDelete: () => void
   readonly doCopy: () => void
   readonly doCut: () => void
-  readonly doPaste: (
-    newParentKey: backendModule.DirectoryId,
-    newParentId: backendModule.DirectoryId,
-  ) => void
+  readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
 }
 
-/** The context menu for an arbitrary {@link backendModule.Asset}. */
+/** The context menu for an arbitrary {@link Asset}. */
 export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { innerProps, rootDirectoryId, event, eventTarget, hidden = false, triggerRef } = props
   const { doCopy, doCut, doPaste, doDelete } = props
   const { asset, path: pathRaw, state, setRowState } = innerProps
   const { backend, category, nodeMap } = state
 
-  const canOpenProjects = projectHooks.useCanOpenProjects()
-  const { user } = authProvider.useFullUserSession()
-  const { setModal } = modalProvider.useSetModal()
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
-  const { getText } = textProvider.useText()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
+  const canOpenProjects = useCanOpenProjects()
+  const { user } = useFullUserSession()
+  const { setModal } = useSetModal()
+  const remoteBackend = useRemoteBackend()
+  const localBackend = useLocalBackend()
+  const { getText } = useText()
+  const toastAndLog = useToastAndLog()
+  const dispatchAssetEvent = useDispatchAssetEvent()
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
-  const openProject = projectHooks.useOpenProject()
-  const closeProject = projectHooks.useCloseProject()
-  const openProjectMutation = projectHooks.useOpenProjectMutation()
-  const self = permissions.tryFindSelfPermission(user, asset.permissions)
-  const isCloud = categoryModule.isCloudCategory(category)
+  const openProject = useOpenProject()
+  const closeProject = useCloseProject()
+  const openProjectMutation = useOpenProjectMutation()
+  const self = tryFindSelfPermission(user, asset.permissions)
+  const isCloud = isCloudCategory(category)
   const pathComputed =
     category.type === 'recent' || category.type === 'trash' ? null
-    : isCloud ? `${pathRaw}${asset.type === backendModule.AssetType.datalink ? '.datalink' : ''}`
-    : asset.type === backendModule.AssetType.project ?
+    : isCloud ? `${pathRaw}${asset.type === AssetType.datalink ? '.datalink' : ''}`
+    : asset.type === AssetType.project ?
       mapNonNullish(localBackend?.getProjectPath(asset.id) ?? null, normalizePath)
-    : normalizePath(localBackendModule.extractTypeAndId(asset.id).id)
+    : normalizePath(extractTypeAndId(asset.id).id)
   const path =
     pathComputed == null ? null
     : isCloud ? encodeURI(pathComputed)
     : pathComputed
-  const copyMutation = copyHooks.useCopy({ copyText: path ?? '' })
+  const copyMutation = useCopy({ copyText: path ?? '' })
   const uploadFileToCloudMutation = useUploadFileWithToastMutation(remoteBackend)
   const disabledTooltip = !canOpenProjects ? getText('downloadToOpenWorkflow') : undefined
 
-  const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
+  const { isFeatureUnderPaywall } = usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
 
   const newProject = useNewProject(backend, category)
 
   const systemApi = window.systemApi
-  const ownsThisAsset = !isCloud || self?.permission === permissions.PermissionAction.own
+  const ownsThisAsset = !isCloud || self?.permission === PermissionAction.own
   const canManageThisAsset = asset.id !== USERS_DIRECTORY_ID && asset.id !== TEAMS_DIRECTORY_ID
-  const managesThisAsset = ownsThisAsset || self?.permission === permissions.PermissionAction.admin
-  const canEditThisAsset =
-    managesThisAsset || self?.permission === permissions.PermissionAction.edit
+  const managesThisAsset = ownsThisAsset || self?.permission === PermissionAction.admin
+  const canEditThisAsset = managesThisAsset || self?.permission === PermissionAction.edit
   const canAddToThisDirectory =
-    category.type !== 'recent' &&
-    asset.type === backendModule.AssetType.directory &&
-    canEditThisAsset
+    category.type !== 'recent' && asset.type === AssetType.directory && canEditThisAsset
   const pasteData = usePasteData()
   const hasPasteData = (pasteData?.data.ids.size ?? 0) > 0
   const pasteDataParentKeys =
@@ -135,43 +139,37 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         const parent = parentKey == null ? null : nodeMap.current.get(parentKey)
         if (!parent) {
           return false
-        } else if (permissions.isTeamPath(parent.path)) {
+        } else if (isTeamPath(parent.path)) {
           return true
         } else {
           // Assume user path; check permissions
-          const permission = permissions.tryFindSelfPermission(user, asset.permissions)
-          return (
-            permission != null &&
-            permissions.canPermissionModifyDirectoryContents(permission.permission)
-          )
+          const permission = tryFindSelfPermission(user, asset.permissions)
+          return permission != null && canPermissionModifyDirectoryContents(permission.permission)
         }
       })
 
-  const { data } = reactQuery.useQuery({
-    ...projectHooks.createGetProjectDetailsQuery({
+  const { data } = useQuery({
+    ...createGetProjectDetailsQuery({
       // This is safe because we disable the query when the asset is not a project.
       // see `enabled` property below.
       // eslint-disable-next-line no-restricted-syntax
-      assetId: asset.id as backendModule.ProjectId,
+      assetId: asset.id as ProjectId,
       parentId: asset.parentId,
       backend,
     }),
-    enabled: asset.type === backendModule.AssetType.project && canOpenProjects,
+    enabled: asset.type === AssetType.project && canOpenProjects,
   })
 
   const isRunningProject =
-    (asset.type === backendModule.AssetType.project &&
-      data &&
-      backendModule.IS_OPENING_OR_OPENED[data.state.type]) ??
-    false
+    (asset.type === AssetType.project && data && IS_OPENING_OR_OPENED[data.state.type]) ?? false
 
   const canExecute =
     category.type !== 'trash' &&
-    (!isCloud || (self != null && permissions.PERMISSION_ACTION_CAN_EXECUTE[self.permission]))
+    (!isCloud || (self != null && PERMISSION_ACTION_CAN_EXECUTE[self.permission]))
 
   const isOtherUserUsingProject =
     isCloud &&
-    backendModule.assetIsProject(asset) &&
+    assetIsProject(asset) &&
     asset.projectState.openedBy != null &&
     asset.projectState.openedBy !== user.email
 
@@ -180,14 +178,13 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       hidden={hidden}
       action="paste"
       doAction={() => {
-        const directoryId =
-          asset.type === backendModule.AssetType.directory ? asset.id : asset.parentId
+        const directoryId = asset.type === AssetType.directory ? asset.id : asset.parentId
         doPaste(directoryId, directoryId)
       }}
     />
   )
 
-  const canUploadToCloud = user.plan !== backendModule.Plan.free
+  const canUploadToCloud = user.plan !== Plan.free
 
   return (
     category.type === 'trash' ?
@@ -222,7 +219,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         </ContextMenu>
     : !canManageThisAsset ? null
     : <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden} event={event}>
-        {asset.type === backendModule.AssetType.datalink && (
+        {asset.type === AssetType.datalink && (
           <ContextMenuEntry
             hidden={hidden}
             action="useInNewProject"
@@ -235,7 +232,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             }}
           />
         )}
-        {asset.type === backendModule.AssetType.project &&
+        {asset.type === AssetType.project &&
           canExecute &&
           !isRunningProject &&
           !isOtherUserUsingProject && (
@@ -254,7 +251,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               }}
             />
           )}
-        {asset.type === backendModule.AssetType.project && isCloud && (
+        {asset.type === AssetType.project && isCloud && (
           <ContextMenuEntry
             hidden={hidden}
             action="run"
@@ -280,7 +277,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             }}
           />
         )}
-        {asset.type === backendModule.AssetType.project &&
+        {asset.type === AssetType.project &&
           canExecute &&
           isRunningProject &&
           !isOtherUserUsingProject && (
@@ -297,7 +294,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               }}
             />
           )}
-        {asset.type === backendModule.AssetType.project && !isCloud && (
+        {asset.type === AssetType.project && !isCloud && (
           <PaywallContextMenuEntry
             hidden={hidden}
             isUnderPaywall={!canUploadToCloud}
@@ -306,7 +303,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             doAction={async () => {
               try {
                 const projectResponse = await fetch(
-                  `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
+                  `./api/project-manager/projects/${extractTypeAndId(asset.id).id}/enso-project`,
                 )
                 // This DOES NOT update the cloud assets list when it
                 // completes, as the current backend is not the remote
@@ -322,7 +319,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   },
                   new File([await projectResponse.blob()], fileName),
                 )
-                toast.toast.success(getText('uploadProjectToCloudSuccess'))
+                toast.success(getText('uploadProjectToCloudSuccess'))
               } catch (error) {
                 toastAndLog('uploadProjectToCloudError', error)
               }
@@ -332,19 +329,16 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         {canExecute &&
           !isRunningProject &&
           !isOtherUserUsingProject &&
-          (!isCloud ||
-            asset.type === backendModule.AssetType.project ||
-            asset.type === backendModule.AssetType.directory) && (
+          (!isCloud || asset.type === AssetType.project || asset.type === AssetType.directory) && (
             <ContextMenuEntry
               hidden={hidden}
               action="rename"
               doAction={() => {
-                setRowState(object.merger({ isEditingName: true }))
+                setRowState(merger({ isEditingName: true }))
               }}
             />
           )}
-        {(asset.type === backendModule.AssetType.secret ||
-          asset.type === backendModule.AssetType.datalink) &&
+        {(asset.type === AssetType.secret || asset.type === AssetType.datalink) &&
           canEditThisAsset && (
             <ContextMenuEntry
               hidden={hidden}
@@ -353,7 +347,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                 setIsAssetPanelTemporarilyVisible(true)
                 const assetPanelProps = { backend, item: asset }
                 switch (asset.type) {
-                  case backendModule.AssetType.secret: {
+                  case AssetType.secret: {
                     setAssetPanelProps({
                       ...assetPanelProps,
                       path: pathRaw,
@@ -361,7 +355,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                     })
                     break
                   }
-                  case backendModule.AssetType.datalink: {
+                  case AssetType.datalink: {
                     setAssetPanelProps({
                       ...assetPanelProps,
                       path: pathRaw,
@@ -406,7 +400,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             label={isCloud ? getText('moveToTrashShortcut') : getText('deleteShortcut')}
             doAction={() => {
               if (isCloud) {
-                if (asset.type === backendModule.AssetType.directory) {
+                if (asset.type === AssetType.directory) {
                   setModal(
                     <ConfirmDeleteModal
                       defaultOpen
@@ -467,7 +461,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
           />
         )}
         {isCloud && managesThisAsset && self != null && <Separator hidden={hidden} />}
-        {asset.type === backendModule.AssetType.project && (
+        {asset.type === AssetType.project && (
           <ContextMenuEntry
             hidden={hidden}
             action="duplicate"
@@ -492,12 +486,10 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         {!isRunningProject && !isOtherUserUsingProject && (
           <ContextMenuEntry hidden={hidden} action="cut" doAction={doCut} />
         )}
-        {(isCloud ?
-          asset.type !== backendModule.AssetType.directory
-        : asset.type === backendModule.AssetType.project) && (
+        {(isCloud ? asset.type !== AssetType.directory : asset.type === AssetType.project) && (
           <ContextMenuEntry
             hidden={hidden}
-            isDisabled={asset.type === backendModule.AssetType.secret}
+            isDisabled={asset.type === AssetType.secret}
             action="download"
             doAction={() => {
               dispatchAssetEvent({ type: AssetEventType.download, ids: new Set([asset.id]) })

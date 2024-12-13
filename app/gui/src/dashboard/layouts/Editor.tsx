@@ -1,38 +1,35 @@
 /** @file The container that launches the IDE. */
-import * as React from 'react'
+import { memo, useCallback, useEffect, useMemo, type ComponentType } from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
-import * as appUtils from '#/appUtils'
+import {
+  BackendType,
+  ProjectState,
+  type Backend,
+  type Project,
+  type ProjectId,
+} from 'enso-common/src/services/Backend'
 
-import * as gtagHooks from '#/hooks/gtagHooks'
-import * as projectHooks from '#/hooks/projectHooks'
-
-import * as backendProvider from '#/providers/BackendProvider'
-import type { LaunchedProject } from '#/providers/ProjectsProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as errorBoundary from '#/components/ErrorBoundary'
-import * as suspense from '#/components/Suspense'
-
-import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
-
+import { SEARCH_PARAMS_PREFIX } from '#/appUtils'
+import { ErrorBoundary, ErrorDisplay } from '#/components/ErrorBoundary'
+import { Loader, Suspense } from '#/components/Suspense'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as twMerge from '#/utilities/tailwindMerge'
-
-// ====================
-// === StringConfig ===
-// ====================
+import { gtagOpenCloseCallback, useGtagEvent } from '#/hooks/gtagHooks'
+import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
+import {
+  useBackendForProjectType,
+  useLocalBackend,
+  useRemoteBackend,
+} from '#/providers/BackendProvider'
+import type { LaunchedProject } from '#/providers/ProjectsProvider'
+import { useText } from '#/providers/TextProvider'
+import { twJoin } from '#/utilities/tailwindMerge'
 
 /** A configuration in which values may be strings or nested configurations. */
 interface StringConfig {
   readonly [key: string]: StringConfig | string
 }
-
-// ========================
-// === GraphEditorProps ===
-// ========================
 
 /** Props for the GUI editor root component. */
 export interface GraphEditorProps {
@@ -46,25 +43,13 @@ export interface GraphEditorProps {
   readonly remoteBackend: Backend | null
 }
 
-// =========================
-// === GraphEditorRunner ===
-// =========================
-
 /**
  * The value passed from the entrypoint to the dashboard, which enables the dashboard to
  * open a new IDE instance.
  */
-export type GraphEditorRunner = React.ComponentType<GraphEditorProps>
+export type GraphEditorRunner = ComponentType<GraphEditorProps>
 
-// =================
-// === Constants ===
-// =================
-
-const IGNORE_PARAMS_REGEX = new RegExp(`^${appUtils.SEARCH_PARAMS_PREFIX}(.+)$`)
-
-// ==============
-// === Editor ===
-// ==============
+const IGNORE_PARAMS_REGEX = new RegExp(`^${SEARCH_PARAMS_PREFIX}(.+)$`)
 
 /** Props for an {@link Editor}. */
 export interface EditorProps {
@@ -75,27 +60,27 @@ export interface EditorProps {
   readonly hidden: boolean
   readonly ydocUrl: string | null
   readonly appRunner: GraphEditorRunner | null
-  readonly renameProject: (newName: string, projectId: backendModule.ProjectId) => void
-  readonly projectId: backendModule.ProjectId
+  readonly renameProject: (newName: string, projectId: ProjectId) => void
+  readonly projectId: ProjectId
 }
 
 /** The container that launches the IDE. */
 function Editor(props: EditorProps) {
   const { project, hidden, startProject, isOpeningFailed, openingError } = props
 
-  const backend = backendProvider.useBackendForProjectType(project.type)
+  const backend = useBackendForProjectType(project.type)
 
-  const projectStatusQuery = projectHooks.createGetProjectDetailsQuery({
+  const projectStatusQuery = createGetProjectDetailsQuery({
     assetId: project.id,
     parentId: project.parentId,
     backend,
   })
 
-  const projectQuery = reactQuery.useQuery(projectStatusQuery)
+  const projectQuery = useQuery(projectStatusQuery)
 
-  const isProjectClosed = projectQuery.data?.state.type === backendModule.ProjectState.closed
+  const isProjectClosed = projectQuery.data?.state.type === ProjectState.closed
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isProjectClosed) {
       startProject(project)
     }
@@ -103,7 +88,7 @@ function Editor(props: EditorProps) {
 
   if (isOpeningFailed) {
     return (
-      <errorBoundary.ErrorDisplay
+      <ErrorDisplay
         error={openingError}
         resetErrorBoundary={() => {
           startProject(project)
@@ -114,7 +99,7 @@ function Editor(props: EditorProps) {
 
   return (
     <div
-      className={twMerge.twJoin('contents', hidden && 'hidden')}
+      className={twJoin('contents', hidden && 'hidden')}
       data-testvalue={project.id}
       data-testid="editor"
     >
@@ -122,27 +107,26 @@ function Editor(props: EditorProps) {
         switch (true) {
           case projectQuery.isError:
             return (
-              <errorBoundary.ErrorDisplay
+              <ErrorDisplay
                 error={projectQuery.error}
                 resetErrorBoundary={() => projectQuery.refetch()}
               />
             )
 
-          case projectQuery.isLoading ||
-            projectQuery.data?.state.type !== backendModule.ProjectState.opened:
-            return <suspense.Loader minHeight="full" />
+          case projectQuery.isLoading || projectQuery.data?.state.type !== ProjectState.opened:
+            return <Loader minHeight="full" />
 
           default:
             return (
-              <errorBoundary.ErrorBoundary>
-                <suspense.Suspense>
+              <ErrorBoundary>
+                <Suspense>
                   <EditorInternal
                     {...props}
                     openedProject={projectQuery.data}
                     backendType={project.type}
                   />
-                </suspense.Suspense>
-              </errorBoundary.ErrorBoundary>
+                </Suspense>
+              </ErrorBoundary>
             )
         }
       })()}
@@ -150,38 +134,34 @@ function Editor(props: EditorProps) {
   )
 }
 
-// ======================
-// === EditorInternal ===
-// ======================
-
 /** Props for an {@link EditorInternal}. */
 interface EditorInternalProps extends Omit<EditorProps, 'project'> {
-  readonly openedProject: backendModule.Project
-  readonly backendType: backendModule.BackendType
+  readonly openedProject: Project
+  readonly backendType: BackendType
 }
 
 /** An internal editor. */
 function EditorInternal(props: EditorInternalProps) {
   const { hidden, ydocUrl, appRunner: AppRunner, renameProject, openedProject, backendType } = props
 
-  const { getText } = textProvider.useText()
-  const gtagEvent = gtagHooks.useGtagEvent()
+  const { getText } = useText()
+  const gtagEvent = useGtagEvent()
 
-  const localBackend = backendProvider.useLocalBackend()
-  const remoteBackend = backendProvider.useRemoteBackend()
+  const localBackend = useLocalBackend()
+  const remoteBackend = useRemoteBackend()
 
-  const logEvent = React.useCallback(
+  const logEvent = useCallback(
     (message: string, projectId?: string | null, metadata?: object | null) => {
       void remoteBackend.logEvent(message, projectId, metadata)
     },
     [remoteBackend],
   )
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (hidden) {
       return
     } else {
-      return gtagHooks.gtagOpenCloseCallback(gtagEvent, 'open_workflow', 'close_workflow')
+      return gtagOpenCloseCallback(gtagEvent, 'open_workflow', 'close_workflow')
     }
   }, [hidden, gtagEvent])
 
@@ -189,12 +169,11 @@ function EditorInternal(props: EditorInternalProps) {
     renameProject(newName, openedProject.projectId)
   })
 
-  const appProps = React.useMemo<GraphEditorProps>(() => {
+  const appProps = useMemo<GraphEditorProps>(() => {
     const jsonAddress = openedProject.jsonAddress
     const binaryAddress = openedProject.binaryAddress
     const ydocAddress = openedProject.ydocAddress ?? ydocUrl ?? ''
-    const projectBackend =
-      backendType === backendModule.BackendType.remote ? remoteBackend : localBackend
+    const projectBackend = backendType === BackendType.remote ? remoteBackend : localBackend
 
     if (jsonAddress == null) {
       throw new Error(getText('noJSONEndpointError'))
@@ -233,4 +212,4 @@ function EditorInternal(props: EditorInternalProps) {
   return AppRunner == null ? null : <AppRunner key={appProps.projectId} {...appProps} />
 }
 
-export default React.memo(Editor)
+export default memo(Editor)

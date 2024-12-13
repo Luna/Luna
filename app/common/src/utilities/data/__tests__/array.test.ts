@@ -1,5 +1,7 @@
+import * as fc from '@fast-check/vitest'
 import { expect, test } from 'vitest'
-import * as array from '../array'
+
+import { includesPredicate, shallowEqual, transpose } from '../array'
 
 interface TransposeCase {
   matrix: number[][]
@@ -26,6 +28,28 @@ const transposeCases: TransposeCase[] = [
 ]
 
 test.each(transposeCases)('transpose: case %#', ({ matrix, expected }) => {
-  const transposed = array.transpose(matrix)
+  const transposed = transpose(matrix)
   expect(transposed).toStrictEqual(expected)
+})
+
+fc.test.prop({ theArray: fc.fc.array(fc.fc.anything()) })(
+  '`array.shallowEqual`',
+  ({ theArray }) => {
+    expect(shallowEqual(theArray, [...theArray]))
+  },
+)
+
+fc.test.prop({
+  theArray: fc.fc.array(fc.fc.anything(), { minLength: 1 }).chain(theArray =>
+    fc.fc.record({
+      theArray: fc.fc.constant(theArray),
+      i: fc.fc.nat(theArray.length - 1),
+    }),
+  ),
+})('`array.includesPredicate`', ({ theArray: { theArray, i } }) => {
+  expect(
+    includesPredicate(theArray)(theArray[i]),
+    `'${JSON.stringify(theArray)}' should include '${JSON.stringify(theArray[i])}'`,
+  ).toBe(true)
+  expect(includesPredicate(theArray)({}), 'unique object should not be in array').toBe(false)
 })

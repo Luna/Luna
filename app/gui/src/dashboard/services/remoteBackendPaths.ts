@@ -1,10 +1,19 @@
 /** @file Paths used by the `RemoteBackend`. */
-import type * as backend from '#/services/Backend'
+import type {
+  AssetId,
+  CheckoutSessionId,
+  DatalinkId,
+  DirectoryId as DirectoryId_1,
+  FileId,
+  ProjectId,
+  ProjectSessionId,
+  S3ObjectVersionId,
+  SecretId,
+  TagId,
+  UserGroupId,
+  UserId,
+} from 'enso-common/src/services/Backend'
 import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
-
-// =============
-// === Paths ===
-// =============
 
 /** Relative HTTP path to the "list users" endpoint of the Cloud backend API. */
 export const LIST_USERS_PATH = 'users'
@@ -90,18 +99,15 @@ export function getCustomerPortalSessionPath(returnUrl?: string) {
 }
 
 /** Relative HTTP path to the "change user groups" endpoint of the Cloud backend API. */
-export function changeUserGroupPath(userId: backend.UserId) {
+export function changeUserGroupPath(userId: UserId) {
   return `users/${userId}/usergroups`
 }
 /** Relative HTTP path to the "list asset versions" endpoint of the Cloud backend API. */
-export function listAssetVersionsPath(assetId: backend.AssetId) {
+export function listAssetVersionsPath(assetId: AssetId) {
   return `assets/${assetId}/versions`
 }
 /** Relative HTTP path to the "get Main.enso file" endpoint of the Cloud backend API. */
-export function getProjectContentPath(
-  projectId: backend.ProjectId,
-  versionId?: backend.S3ObjectVersionId,
-) {
+export function getProjectContentPath(projectId: ProjectId, versionId?: S3ObjectVersionId) {
   const searchParams = new URLSearchParams()
   if (versionId !== undefined) {
     searchParams.set('versionId', versionId)
@@ -110,95 +116,91 @@ export function getProjectContentPath(
 }
 
 /** Relative HTTP path to the "get project asset" endpoint of the Cloud backend API. */
-export function getProjectAssetPath(projectId: backend.ProjectId, relativePath: string) {
+export function getProjectAssetPath(projectId: ProjectId, relativePath: string) {
   return `projects/${projectId}/files/${relativePath.replace('./', '')}`
 }
 
 /** Relative HTTP path to the "update asset" endpoint of the Cloud backend API. */
-export function updateAssetPath(assetId: backend.AssetId) {
+export function updateAssetPath(assetId: AssetId) {
   return `assets/${assetId}`
 }
 /** Relative HTTP path to the "delete asset" endpoint of the Cloud backend API. */
-export function deleteAssetPath(assetId: backend.AssetId) {
+export function deleteAssetPath(assetId: AssetId) {
   return `assets/${assetId}`
 }
 /** Relative HTTP path to the "copy asset" endpoint of the Cloud backend API. */
-export function copyAssetPath(assetId: backend.AssetId) {
+export function copyAssetPath(assetId: AssetId) {
   return `assets/${assetId}/copy`
 }
 /** Relative HTTP path to the "update directory" endpoint of the Cloud backend API. */
-export function updateDirectoryPath(directoryId: backend.DirectoryId) {
+export function updateDirectoryPath(directoryId: DirectoryId_1) {
   return `directories/${directoryId}`
 }
 /** Relative HTTP path to the "close project" endpoint of the Cloud backend API. */
-export function closeProjectPath(projectId: backend.ProjectId) {
+export function closeProjectPath(projectId: ProjectId) {
   return `projects/${projectId}/close`
 }
 /** Relative HTTP path to the "get project details" endpoint of the Cloud backend API. */
-export function getProjectDetailsPath(projectId: backend.ProjectId) {
+export function getProjectDetailsPath(projectId: ProjectId) {
   return `projects/${projectId}`
 }
 
 /** Relative HTTP path to the "get project logs" endpoint of the Cloud backend API. */
-export function getProjectSessionLogsPath(projectSessionId: backend.ProjectSessionId) {
+export function getProjectSessionLogsPath(projectSessionId: ProjectSessionId) {
   return `project-sessions/${projectSessionId}/logs`
 }
 /** Relative HTTP path to the "duplicate project" endpoint of the Cloud backend API. */
-export function duplicateProjectPath(projectId: backend.ProjectId) {
+export function duplicateProjectPath(projectId: ProjectId) {
   return `projects/${projectId}/versions/clone`
 }
 /** Relative HTTP path to the "restore project" endpoint of the Cloud backend API. */
-export function restoreProjectPath(projectId: backend.ProjectId) {
+export function restoreProjectPath(projectId: ProjectId) {
   return `projects/${projectId}/versions/restore`
 }
 /** Relative HTTP path to the "open project" endpoint of the Cloud backend API. */
-export function openProjectPath(projectId: backend.ProjectId) {
+export function openProjectPath(projectId: ProjectId) {
   return `projects/${projectId}/open`
 }
 /** Relative HTTP path to the "project update" endpoint of the Cloud backend API. */
-export function projectUpdatePath(projectId: backend.ProjectId) {
+export function projectUpdatePath(projectId: ProjectId) {
   return `projects/${projectId}`
 }
 /** Relative HTTP path to the "get file details" endpoint of the Cloud backend API. */
-export function getFileDetailsPath(fileId: backend.FileId) {
+export function getFileDetailsPath(fileId: FileId) {
   return `files/${fileId}`
 }
 /** Relative HTTP path to the "check resources" endpoint of the Cloud backend API. */
-export function checkResourcesPath(projectId: backend.ProjectId) {
+export function checkResourcesPath(projectId: ProjectId) {
   return `projects/${projectId}/resources`
 }
 /** Relative HTTP path to the "update secret" endpoint of the Cloud backend API. */
-export function updateSecretPath(secretId: backend.SecretId) {
+export function updateSecretPath(secretId: SecretId) {
   return `secrets/${secretId}`
 }
 /** Relative HTTP path to the "get secret" endpoint of the Cloud backend API. */
-export function getSecretPath(secretId: backend.SecretId) {
+export function getSecretPath(secretId: SecretId) {
   return `secrets/${secretId}`
 }
 /** Relative HTTP path to the "get datalink" endpoint of the Cloud backend API. */
-export function getDatalinkPath(datalinkId: backend.DatalinkId) {
+export function getDatalinkPath(datalinkId: DatalinkId) {
   return `datalinks/${datalinkId}`
 }
 /** Relative HTTP path to the "associate tag" endpoint of the Cloud backend API. */
-export function associateTagPath(assetId: backend.AssetId) {
+export function associateTagPath(assetId: AssetId) {
   return `assets/${assetId}/labels`
 }
 /** Relative HTTP path to the "delete tag" endpoint of the Cloud backend API. */
-export function deleteTagPath(tagId: backend.TagId) {
+export function deleteTagPath(tagId: TagId) {
   return `tags/${tagId}`
 }
 /** Relative HTTP path to the "delete user group" endpoint of the Cloud backend API. */
-export function deleteUserGroupPath(groupId: backend.UserGroupId) {
+export function deleteUserGroupPath(groupId: UserGroupId) {
   return `usergroups/${groupId}`
 }
 /** Relative HTTP path to the "get checkout session" endpoint of the Cloud backend API. */
-export function getCheckoutSessionPath(checkoutSessionId: backend.CheckoutSessionId) {
+export function getCheckoutSessionPath(checkoutSessionId: CheckoutSessionId) {
   return `${GET_CHECKOUT_SESSION_PATH}/${checkoutSessionId}`
 }
-
-// ===========
-// === IDs ===
-// ===========
 
 /** Unique identifier for a directory. */
 type DirectoryId = Newtype<string, 'DirectoryId'>

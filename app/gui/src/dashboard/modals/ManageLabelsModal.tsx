@@ -3,6 +3,15 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
+import type Backend from 'enso-common/src/services/Backend'
+import {
+  findLeastUsedColor,
+  LabelName,
+  type AnyAsset,
+  type LChColor,
+} from 'enso-common/src/services/Backend'
+import { regexEscape } from 'enso-common/src/utilities/data/string'
+
 import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
 import Label from '#/components/dashboard/Label'
@@ -12,13 +21,6 @@ import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import { findLeastUsedColor, LabelName, type AnyAsset, type LChColor } from '#/services/Backend'
-import { regexEscape } from '#/utilities/string'
-
-// =========================
-// === ManageLabelsModal ===
-// =========================
 
 /** Props for a {@link ManageLabelsModal}. */
 export interface ManageLabelsModalProps<Asset extends AnyAsset = AnyAsset> {

@@ -3,6 +3,10 @@ import * as React from 'react'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import type Backend from 'enso-common/src/services/Backend'
+import { includesPredicate } from 'enso-common/src/utilities/data/array'
+import { regexEscape } from 'enso-common/src/utilities/data/string'
+
 import BurgerMenuIcon from '#/assets/burger_menu.svg'
 import { Heading, MenuTrigger } from '#/components/aria'
 import { Button, Popover, Text } from '#/components/AriaComponents'
@@ -16,10 +20,7 @@ import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
 import { Path } from '#/services/ProjectManager'
-import { includesPredicate } from '#/utilities/array'
-import { regexEscape } from '#/utilities/string'
 import {
   ALL_SETTINGS_TABS,
   SETTINGS_DATA,
@@ -32,10 +33,6 @@ import {
 import SettingsSidebar from './Sidebar'
 import SettingsTab from './Tab'
 import SettingsTabType from './TabType'
-
-// ================
-// === Settings ===
-// ================
 
 /** Props for a {@link Settings}. */
 export interface SettingsProps {

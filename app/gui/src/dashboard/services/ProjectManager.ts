@@ -5,11 +5,12 @@
  */
 import invariant from 'tiny-invariant'
 
-import * as backend from '#/services/Backend'
-import * as appBaseUrl from '#/utilities/appBaseUrl'
-import * as dateTime from '#/utilities/dateTime'
-import * as newtype from '#/utilities/newtype'
-import { getDirectoryAndName, normalizeSlashes } from '#/utilities/path'
+import { ProjectState as BackendProjectState } from 'enso-common/src/services/Backend'
+import { toRfc3339, type Rfc3339DateTime } from 'enso-common/src/utilities/data/dateTime'
+import { newtypeConstructor, type Newtype } from 'enso-common/src/utilities/data/newtype'
+import { getDirectoryAndName, normalizeSlashes } from 'enso-common/src/utilities/data/path'
+
+import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 
 // =================
 // === Constants ===
@@ -61,28 +62,28 @@ export type JSONRPCResponse<T> = JSONRPCErrorResponse | JSONRPCSuccessResponse<T
 /* eslint-disable @typescript-eslint/no-redeclare */
 
 /** A UUID. */
-export type UUID = newtype.Newtype<string, 'UUID'>
+export type UUID = Newtype<string, 'UUID'>
 /** Create a {@link UUID}. */
-export const UUID = newtype.newtypeConstructor<UUID>()
+export const UUID = newtypeConstructor<UUID>()
 /** A filesystem path. */
-export type Path = newtype.Newtype<string, 'Path'>
+export type Path = Newtype<string, 'Path'>
 /** Create a {@link Path}. */
-export const Path = newtype.newtypeConstructor<Path>()
+export const Path = newtypeConstructor<Path>()
 /** An ID of a directory. */
-export type DirectoryId = newtype.Newtype<string, 'DirectoryId'>
+export type DirectoryId = Newtype<string, 'DirectoryId'>
 /** Create a {@link DirectoryId}. */
-export const DirectoryId = newtype.newtypeConstructor<DirectoryId>()
+export const DirectoryId = newtypeConstructor<DirectoryId>()
 /** A name of a project. */
-export type ProjectName = newtype.Newtype<string, 'ProjectName'>
+export type ProjectName = Newtype<string, 'ProjectName'>
 /** Create a {@link ProjectName}. */
-export const ProjectName = newtype.newtypeConstructor<ProjectName>()
+export const ProjectName = newtypeConstructor<ProjectName>()
 /**
  * The newtype's `TypeName` is intentionally different from the name of this type alias,
  * to match the backend's newtype.
  */
-export type UTCDateTime = dateTime.Rfc3339DateTime
+export type UTCDateTime = Rfc3339DateTime
 /** Create a {@link UTCDateTime}. */
-export const UTCDateTime = newtype.newtypeConstructor<UTCDateTime>()
+export const UTCDateTime = newtypeConstructor<UTCDateTime>()
 
 /* eslint-enable @typescript-eslint/no-redeclare */
 
@@ -103,16 +104,16 @@ interface ProjectMetadata {
    */
   readonly engineVersion?: string
   /** The project creation time. */
-  readonly created: dateTime.Rfc3339DateTime
+  readonly created: Rfc3339DateTime
   /** The last opened datetime. */
-  readonly lastOpened?: dateTime.Rfc3339DateTime
+  readonly lastOpened?: Rfc3339DateTime
 }
 
 /** Attributes of a file or folder. */
 interface Attributes {
-  readonly creationTime: dateTime.Rfc3339DateTime
-  readonly lastAccessTime: dateTime.Rfc3339DateTime
-  readonly lastModifiedTime: dateTime.Rfc3339DateTime
+  readonly creationTime: Rfc3339DateTime
+  readonly lastAccessTime: Rfc3339DateTime
+  readonly lastModifiedTime: Rfc3339DateTime
   readonly byteSize: number
 }
 
@@ -194,19 +195,15 @@ export interface DuplicatedProject {
   readonly projectNormalizedName: string
 }
 
-// ====================
-// === ProjectState ===
-// ====================
-
 /** A project that is currently opening. */
 interface OpenInProgressProjectState {
-  readonly state: backend.ProjectState.openInProgress
+  readonly state: BackendProjectState.openInProgress
   readonly data: Promise<OpenProject>
 }
 
 /** A project that is currently opened. */
 interface OpenedProjectState {
-  readonly state: backend.ProjectState.opened
+  readonly state: BackendProjectState.opened
   readonly data: OpenProject
 }
 
@@ -405,13 +402,13 @@ export default class ProjectManager {
     } else {
       const promise = this.sendRequest<OpenProject>('project/open', params)
       this.internalProjects.set(params.projectId, {
-        state: backend.ProjectState.openInProgress,
+        state: BackendProjectState.openInProgress,
         data: promise,
       })
       try {
         const result = await promise
         this.internalProjects.set(params.projectId, {
-          state: backend.ProjectState.opened,
+          state: BackendProjectState.opened,
           data: result,
         })
         return result
@@ -473,7 +470,7 @@ export default class ProjectManager {
     const fullParams: RenameProjectParams = { ...params, projectsDirectory: directoryPath }
     await this.sendRequest('project/rename', fullParams)
     const state = this.internalProjects.get(params.projectId)
-    if (state?.state === backend.ProjectState.opened) {
+    if (state?.state === BackendProjectState.opened) {
       this.internalProjects.set(params.projectId, {
         state: state.state,
         data: { ...state.data, projectName: params.name },
@@ -583,7 +580,7 @@ export default class ProjectManager {
     const directoryPath = getDirectoryAndName(path).directoryPath
     const siblings = this.internalDirectories.get(directoryPath)
     if (siblings) {
-      const now = dateTime.toRfc3339(new Date())
+      const now = toRfc3339(new Date())
       this.internalDirectories.set(directoryPath, [
         ...siblings.filter((sibling) => sibling.type === FileSystemEntryType.DirectoryEntry),
         {
@@ -607,7 +604,7 @@ export default class ProjectManager {
     const directoryPath = getDirectoryAndName(path).directoryPath
     const siblings = this.internalDirectories.get(directoryPath)
     if (siblings) {
-      const now = dateTime.toRfc3339(new Date())
+      const now = toRfc3339(new Date())
       this.internalDirectories.set(directoryPath, [
         ...siblings.filter((sibling) => sibling.type !== FileSystemEntryType.FileEntry),
         {
@@ -756,7 +753,7 @@ export default class ProjectManager {
       'cli-arguments': JSON.stringify([`--${name}`, ...cliArguments]),
     }).toString()
     const response = await fetch(
-      `${appBaseUrl.APP_BASE_URL}/api/run-project-manager-command?${searchParams}`,
+      `${APP_BASE_URL}/api/run-project-manager-command?${searchParams}`,
       {
         method: 'POST',
         body,

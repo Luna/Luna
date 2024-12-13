@@ -1,5 +1,4 @@
 /** @file Type definitions common between all backends. */
-
 import * as array from '../utilities/data/array'
 import * as dateTime from '../utilities/data/dateTime'
 import * as newtype from '../utilities/data/newtype'
@@ -8,10 +7,6 @@ import * as uniqueString from '../utilities/uniqueString'
 
 /** The size, in bytes, of the chunks which the backend accepts. */
 export const S3_CHUNK_SIZE_BYTES = 10_000_000
-
-// ================
-// === Newtypes ===
-// ================
 
 /** Unique identifier for an organization. */
 export type OrganizationId = newtype.Newtype<string, 'OrganizationId'>
@@ -144,10 +139,6 @@ export function isPlaceholderUserGroupId(id: string) {
 export function newPlaceholderUserGroupId() {
   return UserGroupId(`${PLACEHOLDER_USER_GROUP_PREFIX}${uniqueString.uniqueString()}`)
 }
-
-// =============
-// === Types ===
-// =============
 
 /** The {@link Backend} variant. If a new variant is created, it should be added to this enum. */
 export enum BackendType {
@@ -685,10 +676,6 @@ export function findLeastUsedColor(labels: Iterable<Label>) {
   return minColor == null ? COLORS[0] : COLOR_STRING_TO_COLOR.get(minColor) ?? COLORS[0]
 }
 
-// =================
-// === AssetType ===
-// =================
-
 export enum SpecialAssetType {
   loading = 'specialLoading',
   empty = 'specialEmpty',
@@ -746,10 +733,6 @@ export const ASSET_TYPE_ORDER: Readonly<Record<AssetType, number>> = {
   [AssetType.specialEmpty]: 1000,
   [AssetType.specialError]: 1000,
 }
-
-// =============
-// === Asset ===
-// =============
 
 /**
  * Metadata uniquely identifying a directory entry.
@@ -1136,10 +1119,6 @@ export interface AssetVersions {
   readonly versions: S3ObjectVersion[]
 }
 
-// ===============================
-// === compareAssetPermissions ===
-// ===============================
-
 /**
  * Return a positive number when `a > b`, a negative number when `a < b`, and `0`
  * when `a === b`.
@@ -1166,10 +1145,6 @@ export function compareAssetPermissions(a: AssetPermission, b: AssetPermission) 
     )
   }
 }
-
-// =================
-// === Endpoints ===
-// =================
 
 /** HTTP request body for the "set username" endpoint. */
 export interface CreateUserRequestBody {
@@ -1380,10 +1355,6 @@ export interface UploadPictureRequestParams {
   readonly fileName: string | null
 }
 
-// ==============================
-// === detectVersionLifecycle ===
-// ==============================
-
 /** Extract the {@link VersionLifecycle} from a version string. */
 export function detectVersionLifecycle(version: string) {
   if (/rc/i.test(version)) {
@@ -1396,10 +1367,6 @@ export function detectVersionLifecycle(version: string) {
     return VersionLifecycle.stable
   }
 }
-
-// =====================
-// === compareAssets ===
-// =====================
 
 /** Return a positive number if `a > b`, a negative number if `a < b`, and zero if `a === b`. */
 export function compareAssets(a: AnyAsset, b: AnyAsset) {
@@ -1430,10 +1397,6 @@ export function compareAssets(a: AnyAsset, b: AnyAsset) {
   }
 }
 
-// ==================
-// === getAssetId ===
-// ==================
-
 /**
  * A convenience function to get the `id` of an {@link Asset}.
  * This is useful to avoid React re-renders as it is not re-created on each function call.
@@ -1441,10 +1404,6 @@ export function compareAssets(a: AnyAsset, b: AnyAsset) {
 export function getAssetId<Type extends AssetType>(asset: Asset<Type>) {
   return asset.id
 }
-
-// ================================
-// === userHasUserAndTeamSpaces ===
-// ================================
 
 /** Whether a user's root directory has the "Users" and "Teams" subdirectories. */
 export function userHasUserAndTeamSpaces(user: User | null) {
@@ -1460,10 +1419,6 @@ export function userHasUserAndTeamSpaces(user: User | null) {
     }
   }
 }
-
-// =====================
-// === fileIsProject ===
-// =====================
 
 /** A subset of properties of the JS `File` type. */
 interface JSFile {
@@ -1483,10 +1438,6 @@ export function fileIsProject(file: JSFile) {
 export function fileIsNotProject(file: JSFile) {
   return !fileIsProject(file)
 }
-
-// =============================
-// === stripProjectExtension ===
-// =============================
 
 /** Remove the extension of the project file name (if any). */
 export function stripProjectExtension(name: string) {
@@ -1531,7 +1482,7 @@ export function isNewTitleValid(
 /** Network error class. */
 export class NetworkError extends Error {
   /**
-   * Create a new instance of the {@link NetworkError} class.
+   * Create a new {@link NetworkError}.
    * @param message - The error message.
    * @param status - The HTTP status code.
    */
@@ -1542,12 +1493,9 @@ export class NetworkError extends Error {
     super(message)
   }
 }
+
 /** Error class for when the user is not authorized to access a resource. */
 export class NotAuthorizedError extends NetworkError {}
-
-// ===============
-// === Backend ===
-// ===============
 
 /** Interface for sending requests to a backend that manages assets and runs projects. */
 export default abstract class Backend {
@@ -1765,15 +1713,11 @@ export default abstract class Backend {
   abstract resolveProjectAssetPath(projectId: ProjectId, relativePath: string): Promise<string>
 }
 
-// ==============================
-// ====== Custom Errors =========
-// ==============================
+export { Backend }
 
 /** Error thrown when a directory does not exist. */
 export class DirectoryDoesNotExistError extends Error {
-  /**
-   * Create a new instance of the {@link DirectoryDoesNotExistError} class.
-   */
+  /** Create a new {@link DirectoryDoesNotExistError}. */
   constructor() {
     super('Directory does not exist.')
   }

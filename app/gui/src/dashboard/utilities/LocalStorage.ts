@@ -1,11 +1,12 @@
 /** @file A LocalStorage data manager. */
 import type * as z from 'zod'
 
-import * as common from 'enso-common'
-
-import * as object from '#/utilities/object'
-import { IS_DEV_MODE } from 'enso-common/src/detect'
 import invariant from 'tiny-invariant'
+
+import { PRODUCT_NAME } from 'enso-common'
+
+import { IS_DEV_MODE } from 'enso-common/src/detect'
+import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 
 const KEY_DEFINITION_STACK_TRACES = new Map<string, string>()
 
@@ -66,7 +67,7 @@ export default class LocalStorage {
     LocalStorageKeyMetadata<LocalStorageKey>
   >
   private static instance: LocalStorage | null = null
-  localStorageKey = common.PRODUCT_NAME.toLowerCase()
+  localStorageKey = PRODUCT_NAME.toLowerCase()
   protected values: Partial<LocalStorageData>
   private readonly eventTarget = new EventTarget()
 
@@ -157,7 +158,7 @@ export default class LocalStorage {
 
   /** Delete user-specific entries from the stored data, and save. */
   clearUserSpecificEntries() {
-    for (const [key, metadata] of object.unsafeEntries(LocalStorage.keyMetadata)) {
+    for (const [key, metadata] of unsafeEntries(LocalStorage.keyMetadata)) {
       if (metadata.isUserSpecific === true) {
         this.delete(key)
       }
