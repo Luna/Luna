@@ -11,7 +11,7 @@ import org.enso.table.problems.ProblemAggregator;
 import org.graalvm.polyglot.Context;
 
 /** Aggregate Column computing the mean value in a group. */
-public class Mean extends Aggregator {
+public class Mean extends KnownTypeAggregator {
   private static class Calculation {
     public long count;
     public double total;
