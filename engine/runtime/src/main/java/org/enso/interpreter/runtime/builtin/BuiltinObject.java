@@ -48,7 +48,7 @@ public abstract class BuiltinObject extends EnsoObject {
   @ExportMessage
   public final Type getType(@Bind("$node") Node node) {
     if (cachedBuiltinType == null) {
-      CompilerDirectives.transferToInterpreter();
+      CompilerDirectives.transferToInterpreterAndInvalidate();
       var ctx = EnsoContext.get(node);
       cachedBuiltinType = ctx.getBuiltins().getBuiltinType(builtinName);
     }
