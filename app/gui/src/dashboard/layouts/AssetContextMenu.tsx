@@ -14,6 +14,7 @@ import {
   type ProjectId,
 } from 'enso-common/src/services/Backend'
 import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
+import { mapNonNullish } from 'enso-common/src/utilities/data/nullable'
 import { merger } from 'enso-common/src/utilities/data/object'
 
 import ContextMenu from '#/components/ContextMenu'
@@ -47,7 +48,6 @@ import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import { extractTypeAndId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
-import { mapNonNullish } from '#/utilities/nullable'
 import {
   canPermissionModifyDirectoryContents,
   isTeamPath,

@@ -1,14 +1,8 @@
 /** @file The React provider (and associated hooks) for Data Catalog state. */
-import * as React from 'react'
+import { createContext, startTransition, useContext, useState, type PropsWithChildren } from 'react'
 
-import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type { Category } from '#/layouts/CategorySwitcher/Category'
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
-import type { PasteData } from '#/utilities/pasteData'
-import { EMPTY_SET } from '#/utilities/set'
 import type {
   AssetId,
   BackendType,
@@ -16,10 +10,13 @@ import type {
   DirectoryId,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { EMPTY_SET } from 'enso-common/src/utilities/data/set'
 
-// ==================
-// === DriveStore ===
-// ==================
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
+import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import type { PasteData } from '#/utilities/pasteData'
+import { createStore, useStore, type StoreApi } from '#/utilities/zustand'
 
 /** Attached data for a paste payload. */
 export interface DrivePastePayload {
@@ -55,12 +52,12 @@ interface DriveStore {
 // =======================
 
 /** State contained in a `ProjectsContext`. */
-export type ProjectsContextType = zustand.StoreApi<DriveStore>
+export type ProjectsContextType = StoreApi<DriveStore>
 
-const DriveContext = React.createContext<ProjectsContextType | null>(null)
+const DriveContext = createContext<ProjectsContextType | null>(null)
 
 /** Props for a {@link DriveProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
+export type ProjectsProviderProps = Readonly<PropsWithChildren>
 
 // ========================
 // === ProjectsProvider ===
@@ -73,8 +70,8 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
 export default function DriveProvider(props: ProjectsProviderProps) {
   const { children } = props
 
-  const [store] = React.useState(() =>
-    zustand.createStore<DriveStore>((set, get) => ({
+  const [store] = useState(() =>
+    createStore<DriveStore>((set, get) => ({
       category: { type: 'cloud' },
       setCategory: (category) => {
         if (get().category !== category) {
@@ -143,7 +140,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
 
 /** The drive store. */
 export function useDriveStore() {
-  const store = React.useContext(DriveContext)
+  const store = useContext(DriveContext)
 
   invariant(store, 'Drive store can only be used inside an `DriveProvider`.')
 
@@ -153,91 +150,89 @@ export function useDriveStore() {
 /** The category of the Asset Table. */
 export function useCategory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.category, { unsafeEnableTransition: true })
+  return useStore(store, (state) => state.category, { unsafeEnableTransition: true })
 }
 
 /** A function to set the category of the Asset Table. */
 export function useSetCategory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCategory, { unsafeEnableTransition: true })
+  return useStore(store, (state) => state.setCategory, { unsafeEnableTransition: true })
 }
 
 /** The target directory of the Asset Table selection. */
 export function useTargetDirectory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.targetDirectory)
+  return useStore(store, (state) => state.targetDirectory)
 }
 
 /** A function to set the target directory of the Asset Table selection. */
 export function useSetTargetDirectory() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setTargetDirectory)
+  return useStore(store, (state) => state.setTargetDirectory)
 }
 
 /** The ID of the most newly created folder. */
 export function useNewestFolderId() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.newestFolderId)
+  return useStore(store, (state) => state.newestFolderId)
 }
 
 /** A function to set the ID of the most newly created folder. */
 export function useSetNewestFolderId() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setNewestFolderId)
+  return useStore(store, (state) => state.setNewestFolderId)
 }
 
 /** Whether assets can be created in the current directory. */
 export function useCanCreateAssets() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.canCreateAssets)
+  return useStore(store, (state) => state.canCreateAssets)
 }
 
 /** A function to set whether assets can be created in the current directory. */
 export function useSetCanCreateAssets() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCanCreateAssets)
+  return useStore(store, (state) => state.setCanCreateAssets)
 }
 
 /** Whether the current Asset Table selection is downloadble. */
 export function useCanDownload() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.canDownload)
+  return useStore(store, (state) => state.canDownload)
 }
 
 /** A function to set whether the current Asset Table selection is downloadble. */
 export function useSetCanDownload() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCanDownload)
+  return useStore(store, (state) => state.setCanDownload)
 }
 
 /** The paste data for the Asset Table. */
 export function usePasteData() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.pasteData)
+  return useStore(store, (state) => state.pasteData)
 }
 
 /** A function to set the paste data for the Asset Table. */
 export function useSetPasteData() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setPasteData)
+  return useStore(store, (state) => state.setPasteData)
 }
 
 /** The expanded directories in the Asset Table. */
 export function useExpandedDirectoryIds() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.expandedDirectoryIds)
+  return useStore(store, (state) => state.expandedDirectoryIds)
 }
 
 /** A function to set the expanded directoyIds in the Asset Table. */
 export function useSetExpandedDirectoryIds() {
   const store = useDriveStore()
-  const privateSetExpandedDirectoryIds = zustand.useStore(
-    store,
-    (state) => state.setExpandedDirectoryIds,
-    { unsafeEnableTransition: true },
-  )
+  const privateSetExpandedDirectoryIds = useStore(store, (state) => state.setExpandedDirectoryIds, {
+    unsafeEnableTransition: true,
+  })
   return useEventCallback((expandedDirectoryIds: readonly DirectoryId[]) => {
-    React.startTransition(() => {
+    startTransition(() => {
       privateSetExpandedDirectoryIds(expandedDirectoryIds)
     })
   })
@@ -246,19 +241,19 @@ export function useSetExpandedDirectoryIds() {
 /** The selected keys in the Asset Table. */
 export function useSelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.selectedKeys)
+  return useStore(store, (state) => state.selectedKeys)
 }
 
 /** A function to set the selected keys in the Asset Table. */
 export function useSetSelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setSelectedKeys)
+  return useStore(store, (state) => state.setSelectedKeys)
 }
 
 /** The visually selected keys in the Asset Table. */
 export function useVisuallySelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.selectedKeys, {
+  return useStore(store, (state) => state.selectedKeys, {
     unsafeEnableTransition: true,
   })
 }
@@ -266,7 +261,7 @@ export function useVisuallySelectedKeys() {
 /** A function to set the visually selected keys in the Asset Table. */
 export function useSetVisuallySelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setVisuallySelectedKeys, {
+  return useStore(store, (state) => state.setVisuallySelectedKeys, {
     unsafeEnableTransition: true,
   })
 }
@@ -282,7 +277,7 @@ export function useToggleDirectoryExpansion() {
     const shouldExpand = override ?? !isExpanded
 
     if (shouldExpand !== isExpanded) {
-      React.startTransition(() => {
+      startTransition(() => {
         if (shouldExpand) {
           setExpandedDirectoryIds([...expandedDirectoryIds, directoryId])
         } else {

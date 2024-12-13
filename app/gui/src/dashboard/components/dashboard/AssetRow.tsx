@@ -26,6 +26,7 @@ import {
   type RealAssetId,
 } from 'enso-common/src/services/Backend'
 import { merge } from 'enso-common/src/utilities/data/object'
+import { EMPTY_SET, withPresence } from 'enso-common/src/utilities/data/set'
 import { download } from 'enso-common/src/utilities/download'
 
 import BlankIcon from '#/assets/blank.svg'
@@ -74,7 +75,6 @@ import * as drag from '#/utilities/drag'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as permissions from '#/utilities/permissions'
-import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 
@@ -372,7 +372,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const setSelected = useEventCallback((newSelected: boolean) => {
     const { selectedKeys } = driveStore.getState()
-    setSelectedKeys(set.withPresence(selectedKeys, id, newSelected))
+    setSelectedKeys(withPresence(selectedKeys, id, newSelected))
   })
 
   useEffect(() => {
@@ -398,9 +398,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const clearDragState = useCallback(() => {
     setIsDraggedOver(false)
     setRowState((oldRowState) =>
-      oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
+      oldRowState.temporarilyAddedLabels === EMPTY_SET ?
         oldRowState
-      : merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
+      : merge(oldRowState, { temporarilyAddedLabels: EMPTY_SET }),
     )
   }, [])
 
@@ -581,30 +581,30 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         break
       }
       case AssetEventType.temporarilyAddLabels: {
-        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
+        const labels = event.ids.has(id) ? event.labelNames : EMPTY_SET
         setRowState((oldRowState) =>
           (
             oldRowState.temporarilyAddedLabels === labels &&
-            oldRowState.temporarilyRemovedLabels === set.EMPTY_SET
+            oldRowState.temporarilyRemovedLabels === EMPTY_SET
           ) ?
             oldRowState
           : merge(oldRowState, {
               temporarilyAddedLabels: labels,
-              temporarilyRemovedLabels: set.EMPTY_SET,
+              temporarilyRemovedLabels: EMPTY_SET,
             }),
         )
         break
       }
       case AssetEventType.temporarilyRemoveLabels: {
-        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
+        const labels = event.ids.has(id) ? event.labelNames : EMPTY_SET
         setRowState((oldRowState) =>
           (
-            oldRowState.temporarilyAddedLabels === set.EMPTY_SET &&
+            oldRowState.temporarilyAddedLabels === EMPTY_SET &&
             oldRowState.temporarilyRemovedLabels === labels
           ) ?
             oldRowState
           : merge(oldRowState, {
-              temporarilyAddedLabels: set.EMPTY_SET,
+              temporarilyAddedLabels: EMPTY_SET,
               temporarilyRemovedLabels: labels,
             }),
         )
@@ -612,9 +612,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       }
       case AssetEventType.addLabels: {
         setRowState((oldRowState) =>
-          oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
+          oldRowState.temporarilyAddedLabels === EMPTY_SET ?
             oldRowState
-          : merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
+          : merge(oldRowState, { temporarilyAddedLabels: EMPTY_SET }),
         )
         const labels = asset.labels
         if (
@@ -635,9 +635,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       }
       case AssetEventType.removeLabels: {
         setRowState((oldRowState) =>
-          oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
+          oldRowState.temporarilyAddedLabels === EMPTY_SET ?
             oldRowState
-          : merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
+          : merge(oldRowState, { temporarilyAddedLabels: EMPTY_SET }),
         )
         const labels = asset.labels
         if (

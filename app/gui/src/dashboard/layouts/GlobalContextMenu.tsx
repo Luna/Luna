@@ -2,6 +2,7 @@
 import { useStore } from 'zustand'
 
 import { BackendType, type Backend, type DirectoryId } from 'enso-common/src/services/Backend'
+import { inputFiles } from 'enso-common/src/utilities/input'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -19,7 +20,6 @@ import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useDriveStore } from '#/providers/DriveProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import { inputFiles } from '#/utilities/input'
 
 /** Props for a {@link GlobalContextMenu}. */
 export interface GlobalContextMenuProps {

@@ -7,6 +7,7 @@ import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import type { Backend } from 'enso-common/src/services/Backend'
+import { inputFiles } from 'enso-common/src/utilities/input'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -54,7 +55,6 @@ import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type AssetQuery from '#/utilities/AssetQuery'
-import { inputFiles } from '#/utilities/input'
 import { document } from '#/utilities/sanitizedEventTargets'
 import { AssetPanelToggle } from './AssetPanel'
 

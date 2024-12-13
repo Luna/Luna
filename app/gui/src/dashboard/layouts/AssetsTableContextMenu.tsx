@@ -13,6 +13,7 @@ import {
   type Backend,
   type DirectoryId,
 } from 'enso-common/src/services/Backend'
+import { EMPTY_SET } from 'enso-common/src/utilities/data/set'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
@@ -32,7 +33,6 @@ import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
-import { EMPTY_SET } from '#/utilities/set'
 
 /** Props for an {@link AssetsTableContextMenu}. */
 export interface AssetsTableContextMenuProps {

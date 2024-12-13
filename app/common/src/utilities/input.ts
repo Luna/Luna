@@ -8,7 +8,6 @@ export function inputFiles() {
     input.style.display = 'none'
     document.body.appendChild(input)
     input.addEventListener('input', () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       resolve(input.files!)
     })
     input.addEventListener('cancel', () => {

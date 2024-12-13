@@ -12,6 +12,7 @@ import {
   type DatalinkId,
 } from 'enso-common/src/services/Backend'
 import { normalizePath } from 'enso-common/src/utilities/data/fileInfo'
+import { mapNonNullish } from 'enso-common/src/utilities/data/nullable'
 
 import PenIcon from '#/assets/pen.svg'
 import { Heading } from '#/components/aria'
@@ -41,7 +42,6 @@ import { useLocalBackend } from '#/providers/BackendProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
 import { extractTypeAndId } from '#/services/LocalBackend'
-import { mapNonNullish } from '#/utilities/nullable'
 import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
 import { useStore } from '#/utilities/zustand'

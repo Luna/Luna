@@ -39,6 +39,7 @@ import {
 } from 'enso-common/src/services/Backend'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 import { fileExtension } from 'enso-common/src/utilities/data/fileInfo'
+import { EMPTY_SET, setPresence, withPresence } from 'enso-common/src/utilities/data/set'
 import { noop } from 'enso-common/src/utilities/functions'
 import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 
@@ -137,7 +138,6 @@ import {
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
-import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
