@@ -1,6 +1,7 @@
 /** @file A styled focus ring. */
 
 import * as aria from '#/components/aria'
+import { twMerge } from '#/utilities/tailwindMerge'
 
 // =================
 // === FocusRing ===

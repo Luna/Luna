@@ -16,6 +16,8 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { useLayoutEffect } from 'react'
 import type { z } from 'zod'
 
+const MotionText = motion(Text)
+
 /**
  * Props for {@link EditableSpan}.
  */
@@ -125,7 +127,12 @@ function EditForm(props: EditFormProps) {
   const hasError = errorMessage != null
 
   return (
-    <form ref={formRef} className="relative isolate z-1 flex grow gap-1.5" {...form.formProps}>
+    <form
+      ref={formRef}
+      className="relative flex grow gap-1.5"
+      data-testid="editable-span-form"
+      {...form.formProps}
+    >
       <Form.Provider form={form}>
         <div className="flex flex-1 flex-shrink-0 basis-full items-center">
           <Input
@@ -152,7 +159,9 @@ function EditForm(props: EditFormProps) {
             }}
           />
 
-          {hasError && <ErrorMessage message={errorMessage} formRef={formRef} />}
+          <AnimatePresence>
+            {hasError && <ErrorMessage message={errorMessage} formRef={formRef} />}
+          </AnimatePresence>
 
           <AnimatePresence>
             {form.formState.isDirty && (
@@ -231,33 +240,56 @@ function ErrorMessage(props: ErrorMessageProps) {
     measureFormRef(formRef.current)
   }, [measureFormRef, formRef])
 
+  if (formRect == null) {
+    return null
+  }
+
   return (
-    <>
-      {formRect && (
-        <div
-          className="pointer-events-none absolute rounded-4xl border-[2px] border-danger shadow-lg"
-          style={{
-            width: formRect.width + outlineWidth,
-            height: formRect.height + offset,
-            transform: `translateX(-${crossOffset}px)`,
-          }}
-        >
-          <div className="absolute -bottom-0.5 -left-0.5 aspect-square w-5 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-danger)_70%)]" />
-        </div>
-      )}
+    <div
+      className="pointer-events-none absolute"
+      style={{
+        width: formRect.width + outlineWidth,
+        height: formRect.height + offset,
+        transform: `translateX(-${crossOffset}px)`,
+      }}
+    >
+      <motion.div
+        layout
+        initial={{ opacity: 0, scaleX: 0.99 }}
+        animate={{ opacity: 1, scaleX: 1 }}
+        exit={{ opacity: 0, scaleX: 0.99 }}
+        className="pointer-events-none absolute h-full w-full rounded-4xl border-[2px] border-danger"
+        data-testid="error-message-outline"
+      />
 
-      <div
-        className="absolute -bottom-[5px] left-0 z-1"
-        style={{ transform: `translateX(-${crossOffset}px) translateY(100%)` }}
+      <motion.div
+        initial={{ opacity: 0, x: -4 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ x: -4, opacity: 0 }}
+        data-testid="error-message-container"
+        className="absolute bottom-0 right-0 top-0 z-1"
       >
-        <Underlay className="max-w-[210px] rounded-3xl rounded-tl-none rounded-tr-none bg-danger px-4 py-2 shadow-lg">
-          <Text variant="body" truncate="3" color="invert" nowrap="normal">
+        <Underlay
+          className="pointer-events-auto flex h-full max-w-[512px] items-center rounded-3xl rounded-l-none bg-danger pl-1.5 pr-2.5"
+          style={{ transform: `translateX(100%)` }}
+        >
+          <MotionText
+            initial={{ filter: 'blur(8px)', opacity: 0, x: -12 }}
+            animate={{ filter: 'blur(0px)', opacity: 1, x: 0 }}
+            exit={{ filter: 'blur(8px)', opacity: 0, x: -12 }}
+            transition={{ stiffness: 550, damping: 150, mass: 4 }}
+            testId="error-message-text"
+            variant="body"
+            truncate="1"
+            color="invert"
+          >
             {message}
-          </Text>
+          </MotionText>
 
-          <div className="absolute right-[0px] top-[1px] aspect-square w-[16px] translate-x-full [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-danger)_70%)]" />
+          <div className="absolute bottom-0 left-0 aspect-square w-5 -translate-x-full [background:radial-gradient(circle_at_0%_0%,_transparent_70%,_var(--color-danger)_70%)]" />
+          <div className="absolute left-0 top-0 aspect-square w-5 -translate-x-full [background:radial-gradient(circle_at_0%_100%,_transparent_70%,_var(--color-danger)_70%)]" />
         </Underlay>
-      </div>
-    </>
+      </motion.div>
+    </div>
   )
 }

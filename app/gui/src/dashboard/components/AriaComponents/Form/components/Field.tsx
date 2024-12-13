@@ -109,7 +109,7 @@ export const Field = forwardRef(function Field<Schema extends types.TSchema>(
             {label}
 
             {isRequired && (
-              <span aria-hidden="true" className="scale-80 text-danger">
+              <span aria-hidden="true" className="scale-80 text-danger" data-testid="required-mark">
                 {' *'}
               </span>
             )}
@@ -131,7 +131,7 @@ export const Field = forwardRef(function Field<Schema extends types.TSchema>(
       </aria.Label>
 
       {description != null && (
-        <span id={descriptionId} className={classes.description()}>
+        <span id={descriptionId} className={classes.description()} data-testid="description">
           {description}
         </span>
       )}

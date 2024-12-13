@@ -970,9 +970,7 @@ export function createSpecialLoadingAsset(directoryId: DirectoryId): SpecialLoad
   return {
     type: AssetType.specialLoading,
     title: '',
-    id: LoadingAssetId(
-      createPlaceholderId(`${AssetType.specialLoading}-${uniqueString.uniqueString()}`),
-    ),
+    id: LoadingAssetId(createPlaceholderId(`${AssetType.specialLoading}-${directoryId}`)),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
@@ -998,7 +996,7 @@ export function createSpecialEmptyAsset(directoryId: DirectoryId): SpecialEmptyA
   return {
     type: AssetType.specialEmpty,
     title: '',
-    id: EmptyAssetId(`${AssetType.specialEmpty}-${uniqueString.uniqueString()}`),
+    id: EmptyAssetId(`${AssetType.specialEmpty}-${directoryId}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
@@ -1024,7 +1022,7 @@ export function createSpecialErrorAsset(directoryId: DirectoryId): SpecialErrorA
   return {
     type: AssetType.specialError,
     title: '',
-    id: ErrorAssetId(`${AssetType.specialError}-${uniqueString.uniqueString()}`),
+    id: ErrorAssetId(`${AssetType.specialError}-${directoryId}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],

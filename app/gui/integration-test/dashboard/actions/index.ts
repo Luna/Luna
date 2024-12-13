@@ -1,13 +1,10 @@
 /** @file Various actions, locators, and constants used in end-to-end tests. */
-import * as test from '@playwright/test'
 
 import { TEXTS, getText as baseGetText, type Replacements, type TextId } from 'enso-common/src/text'
 
 import path from 'node:path'
 
 import { expect, test, type Page } from '@playwright/test'
-
-import { TEXTS } from 'enso-common/src/text'
 
 import {
   INITIAL_CALLS_OBJECT,

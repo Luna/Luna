@@ -1,7 +1,8 @@
 /** @file Test the drive view. */
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import { mockAllAndLogin, TEXT } from './actions'
+import { EmailAddress, ProjectState } from '#/services/Backend'
+import { getText, mockAllAndLogin, TEXT } from './actions'
 
 /** Find an extra columns button panel. */
 function locateExtraColumns(page: Page) {
@@ -117,54 +118,50 @@ test('can drop onto root directory dropzone', ({ page }) =>
     }))
 
 test("can't run a project in browser by default", ({ page }) =>
-  actions
-    .mockAllAndLogin({
-      page,
-      setupAPI: async (api) => {
-        api.addProject({ title: 'a' })
-      },
-    })
-    .driveTable.withRows(async (rows) => {
-      const row = rows.first()
+  mockAllAndLogin({
+    page,
+    setupAPI: async (api) => {
+      api.addProject({ title: 'a' })
+    },
+  }).driveTable.withRows(async (rows) => {
+    const row = rows.first()
 
-      const startProjectButton = row.getByTestId('open-project')
-      await expect(startProjectButton).toBeDisabled()
-    }))
+    const startProjectButton = row.getByTestId('open-project')
+    await expect(startProjectButton).toBeDisabled()
+  }))
 
 test("can't start an already running by another user", ({ page }) =>
-  actions
-    .mockAllAndLogin({
-      page,
-      setupAPI: async (api) => {
-        await api.setFeatureFlags({ enableCloudExecution: true })
+  mockAllAndLogin({
+    page,
+    setupAPI: async (api) => {
+      await api.setFeatureFlags({ enableCloudExecution: true })
 
-        const userGroup = api.addUserGroup('Test Group')
+      const userGroup = api.addUserGroup('Test Group')
 
-        api.addUserGroupToUser(api.defaultUser.userId, userGroup.id)
+      api.addUserGroupToUser(api.defaultUser.userId, userGroup.id)
 
-        const peer = api.addUser('Test User', {
-          email: backend.EmailAddress('test@test.com'),
-          userGroups: [userGroup.id],
-        })
+      const peer = api.addUser('Test User', {
+        email: EmailAddress('test@test.com'),
+        userGroups: [userGroup.id],
+      })
 
-        api.addProject({
-          title: 'a',
-          projectState: {
-            type: backend.ProjectState.opened,
-            volumeId: '123',
-            openedBy: peer.email,
-          },
-        })
-      },
-    })
-    .driveTable.withRows(async (rows) => {
-      const row = rows.first()
-      const startProjectButton = row.getByTestId('open-project')
+      api.addProject({
+        title: 'a',
+        projectState: {
+          type: ProjectState.opened,
+          volumeId: '123',
+          openedBy: peer.email,
+        },
+      })
+    },
+  }).driveTable.withRows(async (rows) => {
+    const row = rows.first()
+    const startProjectButton = row.getByTestId('open-project')
 
-      await expect(row).toBeVisible()
-      await expect(row.getByTestId('switch-to-project')).not.toBeVisible()
-      await expect(startProjectButton).toBeDisabled()
-      await expect(startProjectButton).toHaveAccessibleName(
-        actions.getText('xIsUsingTheProject', 'Test User'),
-      )
-    }))
+    await expect(row).toBeVisible()
+    await expect(row.getByTestId('switch-to-project')).not.toBeVisible()
+    await expect(startProjectButton).toBeDisabled()
+    await expect(startProjectButton).toHaveAccessibleName(
+      getText('xIsUsingTheProject', 'Test User'),
+    )
+  }))
