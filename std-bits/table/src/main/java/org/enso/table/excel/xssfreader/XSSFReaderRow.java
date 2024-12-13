@@ -42,6 +42,7 @@ public class XSSFReaderRow implements ExcelRow {
 
     var dataType = cell.dataType();
     return switch (dataType) {
+      case BLANK -> null;
       case BOOL -> cell.getBooleanValue();
       case DATE -> LocalDateTime.parse(cell.strValue()); // Don't believe used by Excel.
       case INLINE_STRING, SST_STRING, FORMULA_STRING -> cell.strValue();
@@ -70,6 +71,7 @@ public class XSSFReaderRow implements ExcelRow {
 
     var dataType = cell.dataType();
     return switch (dataType) {
+      case BLANK -> "";
       case NUMBER, OLE_DATETIME, OLE_DATE, INTEGER -> {
         // Special handling for Number or Date cells as want to keep formatting.
         var formatText = cell.format();

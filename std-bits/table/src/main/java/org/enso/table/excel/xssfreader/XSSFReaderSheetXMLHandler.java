@@ -23,6 +23,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
   private final SharedStrings sharedStrings;
 
   public enum XSSDataType {
+    BLANK,
     BOOL,
     DATE,
     ERROR,
@@ -38,6 +39,9 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
       return this == INLINE_STRING || this == SST_STRING || this == FORMULA_STRING;
     }
   }
+
+  // Record if seen a value element
+  private boolean seenValue;
 
   // Set when V start element is seen
   private boolean vIsOpen;
@@ -77,6 +81,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     }
 
     if (isTextTag(localName)) {
+      seenValue = true;
       vIsOpen = true;
       if (!isIsOpen) {
         value.setLength(0);
@@ -96,6 +101,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
           break;
         case "c": // Cell
           cellRef = attributes.getValue("r");
+          seenValue = false;
 
           String cellType = attributes.getValue("t");
           if (cellType == null) {
@@ -213,6 +219,19 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
   }
 
   private void outputCellValue() {
+    short columnNumber = 0;
+    int i = 0;
+    char c;
+    while (i < cellRef.length() && (c = cellRef.charAt(i)) >= 'A' && c <= 'Z') {
+      columnNumber = (short) (columnNumber * 26 + (c - 'A' + 1));
+      i++;
+    }
+
+    if (!seenValue) {
+      onCell(rowNumber, columnNumber, cellRef, new CellValue(XSSDataType.BLANK, "", null));
+      return;
+    }
+
     var stringValue = getStringValue();
     if (dataType == XSSDataType.NUMBER) {
       boolean isInteger = !stringValue.contains(".");
@@ -224,14 +243,6 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
       } else if (isDate) {
         dataType = XSSDataType.OLE_DATETIME;
       }
-    }
-
-    short columnNumber = 0;
-    int i = 0;
-    char c;
-    while (i < cellRef.length() && (c = cellRef.charAt(i)) >= 'A' && c <= 'Z') {
-      columnNumber = (short) (columnNumber * 26 + (c - 'A' + 1));
-      i++;
     }
 
     var cellValue = new CellValue(dataType, stringValue, numberFormat);
