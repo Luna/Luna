@@ -32,7 +32,11 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
     INTEGER,
     OLE_DATE,
     OLE_DATETIME,
-    FORMULA_STRING
+    FORMULA_STRING;
+
+    public boolean isString() {
+      return this == INLINE_STRING || this == SST_STRING || this == FORMULA_STRING;
+    }
   }
 
   // Set when V start element is seen

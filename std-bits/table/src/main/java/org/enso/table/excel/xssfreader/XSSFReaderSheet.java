@@ -125,7 +125,8 @@ public class XSSFReaderSheet implements ExcelSheet {
   @Override
   public Sheet getSheet() {
     // Not supported as we don't have the underlying Apache POI Sheet object.
-    return null;
+    throw new UnsupportedOperationException(
+        "XSSFReader does not support getting the Sheet object.");
   }
 
   protected void handleOnDimensions(String dimension) {

@@ -31,7 +31,7 @@ public class XSSFReaderRow implements ExcelRow {
   public Cell get(int column) {
     // Not supported as we don't have the underlying Apache POI Cell object.
     throw new UnsupportedOperationException(
-        "XSSFReading does not support getting the Cell object.");
+        "XSSFReader does not support getting the Cell object.");
   }
 
   @Override
@@ -111,12 +111,9 @@ public class XSSFReaderRow implements ExcelRow {
     for (int col = startCol; col <= currentEndCol; col++) {
 
       var cell = data.get((short) col);
-      if (cell != null) {
-        var dataType = cell.dataType();
-        if (dataType != XSSFReaderSheetXMLHandler.XSSDataType.INLINE_STRING
-            && dataType != XSSFReaderSheetXMLHandler.XSSDataType.SST_STRING) {
-          return null;
-        }
+      if (cell != null && !cell.dataType().isString()) {
+        // Short circuit if find not a string cell.
+        return null;
       }
 
       output[col - startCol] = cell == null ? "" : cell.strValue();
