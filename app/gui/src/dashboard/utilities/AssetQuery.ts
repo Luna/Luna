@@ -1,9 +1,5 @@
 /** @file Parsing and representation of the search query. */
-import * as array from './array'
-
-// =====================
-// === Regex Helpers ===
-// =====================
+import * as array from 'enso-common/src/utilities/data/array'
 
 // Control characters must be handled, in order to follow the JSON spec.
 // eslint-disable-next-line no-control-regex
@@ -16,10 +12,6 @@ const JSON_VALUE_REGEX = /"(?:[^\0-\x1f\\"]|\\[\\/bfnrt"]|\\u[0-9a-fA-F]{4})*"?/
 function interpolateRegex(regex: RegExp) {
   return new RegExp(regex.source.replace(/<json>/g, JSON_VALUE_REGEX), regex.flags)
 }
-
-// ==================
-// === AssetQuery ===
-// ==================
 
 /** Keys of an {@Link AssetQuery} which correspond to tags. */
 export type AssetQueryKey = Exclude<keyof AssetQuery & `${string}s`, 'withUpdates'>

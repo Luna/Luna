@@ -52,6 +52,7 @@ const COMPONENT_PER_PLAN: Record<Plan, ComponentForPlan> = {
   },
   [Plan.solo]: {
     learnMore: () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const { getText } = useText()
 
       return (
@@ -75,6 +76,7 @@ const COMPONENT_PER_PLAN: Record<Plan, ComponentForPlan> = {
   },
   [Plan.team]: {
     learnMore: () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const { getText } = useText()
 
       return (
@@ -99,6 +101,7 @@ const COMPONENT_PER_PLAN: Record<Plan, ComponentForPlan> = {
   },
   [Plan.enterprise]: {
     learnMore: () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const { getText } = useText()
 
       return (
@@ -119,6 +122,7 @@ const COMPONENT_PER_PLAN: Record<Plan, ComponentForPlan> = {
     title: PLAN_TO_TEXT_ID['enterprise'],
     subtitle: 'enterprisePlanSubtitle',
     submitButton: () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const { getText } = useText()
 
       return (

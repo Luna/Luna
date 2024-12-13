@@ -3,7 +3,6 @@ import type {
   AssetId,
   CheckoutSessionId,
   DatalinkId,
-  DirectoryId as DirectoryId_1,
   FileId,
   ProjectId,
   ProjectSessionId,
@@ -133,7 +132,7 @@ export function copyAssetPath(assetId: AssetId) {
   return `assets/${assetId}/copy`
 }
 /** Relative HTTP path to the "update directory" endpoint of the Cloud backend API. */
-export function updateDirectoryPath(directoryId: DirectoryId_1) {
+export function updateDirectoryPath(directoryId: DirectoryId) {
   return `directories/${directoryId}`
 }
 /** Relative HTTP path to the "close project" endpoint of the Cloud backend API. */
@@ -204,7 +203,7 @@ export function getCheckoutSessionPath(checkoutSessionId: CheckoutSessionId) {
 
 /** Unique identifier for a directory. */
 type DirectoryId = Newtype<string, 'DirectoryId'>
-// eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-redeclare
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 const DirectoryId = newtypeConstructor<DirectoryId>()
 export const ROOT_PARENT_DIRECTORY_ID = DirectoryId('')
 /** The ID of the directory containing the home directories of all users. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Rfc3339DateTime } from '../../utilities/dateTime'
+
+import { Rfc3339DateTime } from '../../utilities/data/dateTime'
 import { AssetType, compareAssets, type AnyAsset } from '../Backend'
 
 describe('Backend', () => {

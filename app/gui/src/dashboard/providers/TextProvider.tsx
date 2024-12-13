@@ -14,8 +14,8 @@ import {
 import {
   Language,
   LANGUAGE_TO_LOCALE,
-  Replacements,
   TEXTS,
+  type Replacements,
   type TextId,
 } from 'enso-common/src/text'
 import { unsafeMutable } from 'enso-common/src/utilities/data/object'

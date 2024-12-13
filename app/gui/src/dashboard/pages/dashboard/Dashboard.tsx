@@ -22,7 +22,7 @@ import {
 } from '#/hooks/projectHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import type { AssetManagementApi } from '#/layouts/AssetsTable'
-import { Category, CATEGORY_SCHEMA } from '#/layouts/CategorySwitcher/Category'
+import { CATEGORY_SCHEMA, type Category } from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
 import EventListProvider, { useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'

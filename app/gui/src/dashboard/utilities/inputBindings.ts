@@ -9,10 +9,6 @@ import { camelCaseToTitleCase } from 'enso-common/src/utilities/data/string'
 
 import { isElementTextInput, isTextInputEvent } from '#/utilities/event'
 
-// ================
-// === Newtypes ===
-// ================
-
 /** A keyboard key obtained from `KeyboardEvent.key`. */
 type KeyName = Newtype<string, 'keyboard key'>
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -25,10 +21,6 @@ const ModifierFlags = newtypeConstructor<ModifierFlags>()
 type PointerButtonFlags = Newtype<number, 'pointer button flags'>
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 const PointerButtonFlags = newtypeConstructor<PointerButtonFlags>()
-
-// =============
-// === Types ===
-// =============
 
 /** All possible modifier keys. */
 export type ModifierKey = keyof typeof RAW_MODIFIER_FLAG

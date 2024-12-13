@@ -40,7 +40,6 @@ import {
 import { twMerge } from '#/utilities/tailwindMerge'
 
 /** Create a {@link ChatMessageId}. */
-// eslint-disable-next-line no-restricted-syntax
 const MessageId = newtypeConstructor<ChatMessageId>()
 
 // TODO[sb]: Consider associating a project with a thread
