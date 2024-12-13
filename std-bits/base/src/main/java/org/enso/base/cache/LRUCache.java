@@ -63,7 +63,7 @@ public class LRUCache<M> {
 
   /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
-  private final Set<String> closed = new HashSet<>();
+  private final Map<String, Set<Integer>> opened = new HashMap<>();
 
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
@@ -180,13 +180,19 @@ public class LRUCache<M> {
 
     markCacheEntryUsed(cacheKey);
     var fis = new FileInputStream(cacheFile) {
+      static int serial = 0;
+      int s;
       {
-        System.out.println("AAA Opening " + cacheKey);
+        s = serial;
+        serial++;
+        opened.computeIfAbsent(cacheKey, (k) -> new HashSet<>()).add(s);
+        System.out.println("AAA Opening " + cacheKey + " " + s);
       }
       public void close() throws IOException {
         super.close();
-        closed.add(cacheKey);
-        System.out.println("AAA Closing " + cacheKey);
+        assert opened.containsKey(cacheKey) && opened.get(cacheKey).contains(s);
+        opened.get(cacheKey).remove(s);
+        System.out.println("AAA Closing " + cacheKey + " " + s);
       }
     };
     return new CacheResult<>(fis, cache.get(cacheKey).metadata());
@@ -276,7 +282,7 @@ public class LRUCache<M> {
   /** Remove a cache file. */
   private void removeCacheFile(String key, CacheEntry<M> cacheEntry) {
     boolean removed = cacheEntry.responseData.delete();
-    System.out.println("AAA Deleting " + key + " " + closed.contains(key));
+    System.out.println("AAA Deleting " + key + " " + opened.get(key).isEmpty() + " " + opened.get(key));
     if (!removed) {
       logger.log(Level.WARNING, "Unable to delete cache file for key {0}", key);
     }
