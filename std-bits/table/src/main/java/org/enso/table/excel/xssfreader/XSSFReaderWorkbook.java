@@ -153,8 +153,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
     for (int i = 0; i < sheetNodes.getLength(); i++) {
       var node = sheetNodes.item(i);
       var sheetName = node.getAttributes().getNamedItem("name").getNodeValue();
-      var sheetId =
-          Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
+      var sheetId = Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
       var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
       var visible = node.getAttributes().getNamedItem("state") == null;
       var sheetInfo = new SheetInfo(i, sheetId, sheetName, relId, visible);

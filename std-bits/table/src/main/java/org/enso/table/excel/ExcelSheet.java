@@ -70,7 +70,9 @@ public interface ExcelSheet {
 
     @Override
     public ExcelRow get(int row) {
-      return row < firstRow || row > lastRow ? null : ExcelRow.forPOIUserModel(sheet, row, use1904Format);
+      return row < firstRow || row > lastRow
+          ? null
+          : ExcelRow.forPOIUserModel(sheet, row, use1904Format);
     }
 
     @Override
