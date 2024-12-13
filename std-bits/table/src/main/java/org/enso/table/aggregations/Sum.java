@@ -67,7 +67,7 @@ public class Sum extends Aggregator {
     abstract Object summarize();
   }
 
-  private static class IntegerSumAccumulator extends SumAccumulator {
+  private static final class IntegerSumAccumulator extends SumAccumulator {
     private Object accumulator = null;
 
     void add(Object value) {
@@ -153,7 +153,7 @@ public class Sum extends Aggregator {
     }
   }
 
-  private static class FloatSumAccumulator extends SumAccumulator {
+  private static final class FloatSumAccumulator extends SumAccumulator {
     private Double accumulator = null;
 
     void add(Object value) {

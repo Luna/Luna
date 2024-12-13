@@ -1008,6 +1008,7 @@ add_aggregate_specs suite_builder setup =
         if setup.is_database.not then group_builder.specify "should return a Decimal column when input is Decimal" <|
             table = table_builder [["X", [2^62, 2^62, 2^62, 2^62]]]
                 . cast "X" (Value_Type.Decimal scale=0)
+            table.at "X" . value_type . should_be_a (Value_Type.Decimal ...)
             result = table.aggregate [] [Average "X"]
             within_table result <|
                 result.row_count . should_equal 1
@@ -1016,9 +1017,10 @@ add_aggregate_specs suite_builder setup =
                 materialized.column_count . should_equal 1
                 materialized.columns.at 0 . name . should_equal "Average X"
                 materialized.columns.at 0 . to_vector . should_equal [2^62]
+                materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
+
                 # Map to text to ensure that the equality is _exact_ and does not rely on Float rounding
                 materialized.columns.at 0 . to_vector . map .to_text . should_equal [(2^62).to_text]
-                materialized.columns.at 0 . value_type . should_be_a (Value_Type.Decimal ...)
 
     # Special case for Snowflake until the https://github.com/enso-org/enso/issues/10412 ticket is resolved.
     if setup.prefix.contains "Snowflake" then
