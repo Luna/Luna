@@ -1812,8 +1812,6 @@ function AssetsTable(props: AssetsTableProps) {
           {headerRow}
         </thead>
         <tbody ref={bodyRef} className="isolate">
-          {/* Dummy row to increase the gap between the header and the first row */}
-          <tr className="h-0.5" aria-hidden data-testid="dummy-row" />
           {itemRows}
           <tr className="hidden h-row first:table-row">
             <td colSpan={columns.length} className="bg-transparent">
@@ -1970,7 +1968,7 @@ function AssetsTable(props: AssetsTableProps) {
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex h-full w-min min-w-full grow flex-col pl-1">{table}</div>
+                  <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
                 </div>
               </div>
             </IsolateLayout>

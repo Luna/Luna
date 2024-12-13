@@ -8,7 +8,7 @@ import { useFormContext } from './FormProvider'
 import type { FormInstance } from './types'
 
 /**
- *
+ * Props for {@link useFormError}.
  */
 export interface UseFormErrorProps {
   // We do not need to know the form fields.
@@ -20,7 +20,9 @@ export interface UseFormErrorProps {
  * Error type.
  */
 interface Error {
+  /** The type of the error, either caused by a form field or by an offline error. */
   readonly type: 'error' | 'offline'
+  /** The error message. */
   readonly message: string
 }
 
