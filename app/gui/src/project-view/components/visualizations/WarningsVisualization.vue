@@ -37,22 +37,24 @@ type Warning = string[]
 type Data = Error | Warning
 
 const props = defineProps<{ data: Data }>()
-const messages = ref<string[]>([])
-const isRemoveWarningsDisabled = ref<boolean>(false)
-
 const config = useVisualizationConfig()
 
-watchEffect(() => {
+const messages = computed(() => {
   const data = props.data
   if (Array.isArray(data)) {
-    data.map((m) => messages.value.push(m))
-    isRemoveWarningsDisabled.value = messages.value.length === 0
+    return data
   }
   if (typeof data === 'object' && data !== null && 'message' in data) {
-    messages.value.push(data.message)
-    isRemoveWarningsDisabled.value = true
+    return [data.message]
   }
+  return []
 })
+
+const isRemoveWarningsDisabled = computed(() =>
+  Array.isArray(props.data) ?
+    messages.value.length === 0
+  : typeof props.data === 'object' && props.data !== null && 'message' in props.data,
+)
 
 config.setToolbar([
   {
