@@ -5,7 +5,7 @@ import { expect } from 'vitest'
 import { setPresence, withPresence } from '../set'
 
 fc.test.prop({
-  set: fc.fc.array(fc.fc.anything(), { minLength: 1 }).map(array => new Set(array)),
+  set: fc.fc.array(fc.fc.anything(), { minLength: 1 }).map((array) => new Set(array)),
   item: fc.fc.anything(),
 })('Manipulating `Set` presence', ({ set, item }) => {
   expect(withPresence(set, item, true).has(item)).toBe(true)

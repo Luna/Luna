@@ -40,7 +40,7 @@ fc.test.prop({ theArray: fc.fc.array(fc.fc.anything()) })(
 )
 
 fc.test.prop({
-  theArray: fc.fc.array(fc.fc.anything(), { minLength: 1 }).chain(theArray =>
+  theArray: fc.fc.array(fc.fc.anything(), { minLength: 1 }).chain((theArray) =>
     fc.fc.record({
       theArray: fc.fc.constant(theArray),
       i: fc.fc.nat(theArray.length - 1),

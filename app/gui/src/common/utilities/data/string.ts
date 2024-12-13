@@ -5,7 +5,7 @@ export const LINE_BOUNDARIES = /\r\n|[\n\v\f\r\x85\u2028\u2029]/g
 
 /** Return the given string, but with the first letter uppercased. */
 export function capitalizeFirst(string: string) {
-  return string.replace(/^./, match => match.toUpperCase())
+  return string.replace(/^./, (match) => match.toUpperCase())
 }
 
 /** Sanitizes a string for use as a regex. */
@@ -23,7 +23,7 @@ export function isWhitespaceOnly(string: string) {
  * DOES NOT make particles lowercase.
  */
 export function camelCaseToTitleCase(string: string) {
-  return string.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase())
+  return string.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())
 }
 
 /**
