@@ -51,7 +51,7 @@ test.each([
   },
   {
     clipboard: 'Standard.Base.Math',
-  }
+  },
 ])('Auto-linking pasted text: $clipboard', ({ clipboard, inserted }) => {
   expect(transformPastedText(clipboard)).toBe(inserted ?? clipboard)
 })
