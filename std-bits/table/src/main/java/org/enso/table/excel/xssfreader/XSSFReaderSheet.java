@@ -20,7 +20,7 @@ public class XSSFReaderSheet implements ExcelSheet {
   private final String relId;
   private final XSSFReaderWorkbook parent;
 
-  private boolean readSheetData = false;
+  private boolean hasReadSheetData = false;
   private String dimensions;
   private int firstRow;
   private int lastRow;
@@ -33,8 +33,8 @@ public class XSSFReaderSheet implements ExcelSheet {
     this.parent = parent;
   }
 
-  private synchronized void readSheetData() {
-    if (readSheetData) {
+  private synchronized void ensureReadSheetData() {
+    if (hasReadSheetData) {
       return;
     }
 
@@ -78,7 +78,7 @@ public class XSSFReaderSheet implements ExcelSheet {
         throw new RuntimeException(e);
       }
 
-      readSheetData = true;
+      hasReadSheetData = true;
     } catch (SAXException | ParserConfigurationException e) {
       throw new RuntimeException(e);
     }
@@ -95,33 +95,25 @@ public class XSSFReaderSheet implements ExcelSheet {
   }
 
   public String getDimensions() {
-    if (!readSheetData) {
-      readSheetData();
-    }
+    ensureReadSheetData();
     return dimensions;
   }
 
   @Override
   public int getFirstRow() {
-    if (!readSheetData) {
-      readSheetData();
-    }
+    ensureReadSheetData();
     return firstRow;
   }
 
   @Override
   public int getLastRow() {
-    if (!readSheetData) {
-      readSheetData();
-    }
+    ensureReadSheetData();
     return lastRow;
   }
 
   @Override
   public ExcelRow get(int row) {
-    if (!readSheetData) {
-      readSheetData();
-    }
+    ensureReadSheetData();
 
     if (!rowData.containsKey(row)) {
       return null;

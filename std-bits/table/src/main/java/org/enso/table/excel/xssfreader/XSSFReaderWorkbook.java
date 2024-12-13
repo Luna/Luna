@@ -85,7 +85,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   private Map<String, SheetInfo> sheetInfoMap;
   private Map<String, NamedRange> namedRangeMap;
 
-  private boolean readShared = false;
+  private boolean hasReadShared = false;
   private SharedStrings sharedStrings;
   private XSSFReaderFormats styles;
 
@@ -166,8 +166,8 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
         });
   }
 
-  private synchronized void readShared() {
-    if (readShared) {
+  private synchronized void ensureReadShared() {
+    if (hasReadShared) {
       return;
     }
 
@@ -201,7 +201,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
               var stylesTable = rdr.getStylesTable();
               styles = new XSSFReaderFormats(stylesTable);
 
-              readShared = true;
+              hasReadShared = true;
             } catch (InvalidFormatException | IOException e) {
               throw new RuntimeException(e);
             }
@@ -269,16 +269,12 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
   }
 
   public SharedStrings getSharedStrings() {
-    if (!readShared) {
-      readShared();
-    }
+    ensureReadShared();
     return sharedStrings;
   }
 
   public XSSFReaderFormats getStyles() {
-    if (!readShared) {
-      readShared();
-    }
+    ensureReadShared();
     return styles;
   }
 

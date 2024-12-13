@@ -30,7 +30,7 @@ public class XSSFReaderRow implements ExcelRow {
   @Override
   public Cell get(int column) {
     // Not supported as we don't have the underlying Apache POI Cell object.
-    return null;
+    throw new UnsupportedOperationException("XSSFReading does not support getting the Cell object.");
   }
 
   @Override
