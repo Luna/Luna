@@ -10,8 +10,8 @@ import com.oracle.truffle.api.nodes.Node;
 import java.lang.ref.PhantomReference;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 /**
  * An Enso runtime representation of a managed resource.
@@ -35,9 +35,12 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
  * ProcessItems} processor.
  */
 @ExportLibrary(InteropLibrary.class)
-@ExportLibrary(TypesLibrary.class)
-@Builtin(pkg = "resource", stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource")
-public final class ManagedResource extends EnsoObject {
+@Builtin(
+    pkg = "resource",
+    stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource",
+    name = ManagedResource.builtinName)
+public final class ManagedResource extends BuiltinObject {
+  static final String builtinName = "Managed_Resource";
   private final Object resource;
   private final PhantomReference<ManagedResource> phantomReference;
 
@@ -50,6 +53,7 @@ public final class ManagedResource extends EnsoObject {
   public ManagedResource(
       Object resource,
       java.util.function.Function<ManagedResource, PhantomReference<ManagedResource>> factory) {
+    super(builtinName);
     this.resource = resource;
     this.phantomReference = factory.apply(this);
   }
@@ -95,26 +99,6 @@ public final class ManagedResource extends EnsoObject {
   @Builtin.Specialize
   public void close(EnsoContext context) {
     context.getResourceManager().close(this);
-  }
-
-  @ExportMessage
-  Type getMetaObject(@Bind("$node") Node node) {
-    return EnsoContext.get(node).getBuiltins().managedResource();
-  }
-
-  @ExportMessage
-  boolean hasMetaObject() {
-    return true;
-  }
-
-  @ExportMessage
-  boolean hasType() {
-    return true;
-  }
-
-  @ExportMessage
-  Type getType(@Bind("$node") Node node) {
-    return EnsoContext.get(node).getBuiltins().managedResource();
   }
 
   @ExportMessage

@@ -2,31 +2,28 @@ package org.enso.interpreter.runtime.warning;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.StopIterationException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.nodes.Node;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
-import org.enso.interpreter.runtime.data.EnsoObject;
-import org.enso.interpreter.runtime.data.Type;
+import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
 import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
-import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
-@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
-@ExportLibrary(TypesLibrary.class)
+@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning", name = Warning.builtinName)
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
-public final class Warning extends EnsoObject {
+public final class Warning extends BuiltinObject {
+  static final String builtinName = "Warning";
   final Object value;
   private final Object origin;
   private final long sequenceId;
 
   private Warning(Object value, Object origin, long sequenceId) {
+    super(builtinName);
     this.value = value;
     this.origin = origin;
     this.sequenceId = sequenceId;
@@ -127,16 +124,6 @@ public final class Warning extends EnsoObject {
 
   public long getSequenceId() {
     return sequenceId;
-  }
-
-  @ExportMessage
-  boolean hasType() {
-    return true;
-  }
-
-  @ExportMessage
-  Type getType(@Bind("$node") Node node) {
-    return EnsoContext.get(node).getBuiltins().warning();
   }
 
   public static Warning wrapMapError(WarningsLibrary warningsLib, Warning warning, long index) {
