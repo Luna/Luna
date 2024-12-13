@@ -86,6 +86,8 @@ case c of
     f : Float -> f.sqrt
     _ -> "Not a float"
 ```
+Remember to use `f.sqrt` and not `c.sqrt`. `f` in the case branch _has been cast to_ `Float` while
+`c` in the case branch only _can be cast to_.
 
 > [!WARNING]
 > Keep in mind that while both argument type check in method definitions and a 
