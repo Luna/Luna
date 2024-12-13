@@ -88,6 +88,7 @@ public class XSSFReaderSheetXMLHandler extends DefaultHandler {
           if (dimension != null) {
             onDimensions(dimension);
           }
+          break;
         case "row": // Row
           String rowNumStr = attributes.getValue("r");
           rowNumber = rowNumStr == null ? nextRowNumber : Integer.parseInt(rowNumStr);
