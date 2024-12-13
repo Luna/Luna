@@ -144,12 +144,6 @@ public class XSSFReaderSheet implements ExcelSheet {
 
   private void handleOnCell(
       int rowNumber, short columnNumber, XSSFReaderSheetXMLHandler.CellValue value) {
-    if (rowData.containsKey(rowNumber)) {
-      rowData.get(rowNumber).put(columnNumber, value);
-    } else {
-      var map = new TreeMap<Short, XSSFReaderSheetXMLHandler.CellValue>();
-      map.put(columnNumber, value);
-      rowData.put(rowNumber, map);
-    }
+    rowData.computeIfAbsent(rowNumber, k -> new TreeMap<>()).put(columnNumber, value);
   }
 }

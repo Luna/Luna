@@ -40,11 +40,11 @@ public interface ExcelRow {
   String[] getCellsAsText(int startCol, int endCol);
 
   /** Gets the underlying Apache POI Sheet object. */
-  static ExcelRow fromSheet(Sheet sheet, int rowIndex, boolean use1904Format) {
+  static ExcelRow forPOIUserModel(Sheet sheet, int rowIndex, boolean use1904Format) {
     var row = sheet.getRow(rowIndex - 1);
     return row == null
         ? null
-        : new ExcelRowFromSheet(
+        : new ExcelRowFromPOIUserModel(
             row, row.getFirstCellNum() + 1, row.getLastCellNum(), use1904Format);
   }
 
@@ -63,7 +63,7 @@ public interface ExcelRow {
     return true;
   }
 
-  record ExcelRowFromSheet(Row row, int firstColumn, int lastColumn, boolean use1904Format)
+  record ExcelRowFromPOIUserModel(Row row, int firstColumn, int lastColumn, boolean use1904Format)
       implements ExcelRow {
     private static final DataFormatter formatter = new DataFormatter();
 

@@ -71,12 +71,12 @@ public interface ExcelWorkbook {
    * @param workbook the Apache POI Workbook object
    * @return the ExcelWorkbook object
    */
-  static ExcelWorkbook forWorkbook(org.apache.poi.ss.usermodel.Workbook workbook) {
-    return new ExcelWorkbookForWorkbook(workbook);
+  static ExcelWorkbook forPOIUserModel(org.apache.poi.ss.usermodel.Workbook workbook) {
+    return new ExcelWorkbookFromPOIUserModel(workbook);
   }
 
   // ** Wrap a Workbook object in the interface. */
-  record ExcelWorkbookForWorkbook(org.apache.poi.ss.usermodel.Workbook workbook)
+  record ExcelWorkbookFromPOIUserModel(org.apache.poi.ss.usermodel.Workbook workbook)
       implements ExcelWorkbook {
     @Override
     public int getNumberOfSheets() {
@@ -112,7 +112,7 @@ public interface ExcelWorkbook {
 
     @Override
     public ExcelSheet getSheetAt(int sheetIndex) {
-      return ExcelSheet.fromWorkbook(workbook, sheetIndex);
+      return ExcelSheet.forPOIUserModel(workbook, sheetIndex);
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.enso.table.excel.ExcelSheet;
 import org.enso.table.excel.ExcelWorkbook;
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -106,8 +107,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
       action.accept(reader);
     } catch (OpenXML4JException e) {
       throw new IOException(
-          "Invalid format encountered when opening the file " + path + " as XLSX.",
-          e);
+          "Invalid format encountered when opening the file " + path + " as XLSX.", e);
     }
   }
 
@@ -117,46 +117,13 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
 
   private void readWorkbookData() throws IOException {
     withReader(
-        rdr -> {
+        reader -> {
           try {
-            var workbookData = rdr.getWorkbookData();
+            var workbookData = reader.getWorkbookData();
             var workbookDoc = DocumentHelper.readDocument(workbookData);
-
-            // Read the Workbook settings
-            var workbookXPath = compileXPathWithNamespace(WORKBOOK_CONFIG_XPATH);
-            var workbookNode = (Node) workbookXPath.evaluate(workbookDoc, XPathConstants.NODE);
-            if (workbookNode != null) {
-              var date1904 = workbookNode.getAttributes().getNamedItem("date1904");
-              use1904DateSystemFlag = date1904 != null && "1".equals(date1904.getNodeValue());
-            }
-
-            // Read the Sheets
-            var sheetXPath = compileXPathWithNamespace(SHEET_NAME_XPATH);
-            var sheetNodes = (NodeList) sheetXPath.evaluate(workbookDoc, XPathConstants.NODESET);
-            sheetInfos = new ArrayList<>(sheetNodes.getLength());
-            sheetInfoMap = new HashMap<>();
-            for (int i = 0; i < sheetNodes.getLength(); i++) {
-              var node = sheetNodes.item(i);
-              var sheetName = node.getAttributes().getNamedItem("name").getNodeValue();
-              var sheetId =
-                  Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
-              var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
-              var visible = node.getAttributes().getNamedItem("state") == null;
-              var sheetInfo = new SheetInfo(i, sheetId, sheetName, relId, visible);
-              sheetInfos.add(sheetInfo);
-              sheetInfoMap.put(sheetName, sheetInfo);
-            }
-
-            // Read the Named Ranges
-            var namesXPath = compileXPathWithNamespace(NAMED_RANGE_XPATH);
-            var nameNodes = (NodeList) namesXPath.evaluate(workbookDoc, XPathConstants.NODESET);
-            namedRangeMap = new HashMap<>();
-            for (int i = 0; i < nameNodes.getLength(); i++) {
-              var node = nameNodes.item(i);
-              var name = node.getAttributes().getNamedItem("name").getNodeValue();
-              var formula = node.getTextContent();
-              namedRangeMap.put(name, new NamedRange(name, formula));
-            }
+            read1904DateSetting(workbookDoc);
+            readSheetInfo(workbookDoc);
+            readNamedRanges(workbookDoc);
           } catch (SAXException
               | IOException
               | InvalidFormatException
@@ -166,6 +133,45 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
         });
   }
 
+  private void readNamedRanges(Document workbookDoc) throws XPathExpressionException {
+    var namesXPath = compileXPathWithNamespace(NAMED_RANGE_XPATH);
+    var nameNodes = (NodeList) namesXPath.evaluate(workbookDoc, XPathConstants.NODESET);
+    namedRangeMap = new HashMap<>();
+    for (int i = 0; i < nameNodes.getLength(); i++) {
+      var node = nameNodes.item(i);
+      var name = node.getAttributes().getNamedItem("name").getNodeValue();
+      var formula = node.getTextContent();
+      namedRangeMap.put(name, new NamedRange(name, formula));
+    }
+  }
+
+  private void readSheetInfo(Document workbookDoc) throws XPathExpressionException {
+    var sheetXPath = compileXPathWithNamespace(SHEET_NAME_XPATH);
+    var sheetNodes = (NodeList) sheetXPath.evaluate(workbookDoc, XPathConstants.NODESET);
+    sheetInfos = new ArrayList<>(sheetNodes.getLength());
+    sheetInfoMap = new HashMap<>();
+    for (int i = 0; i < sheetNodes.getLength(); i++) {
+      var node = sheetNodes.item(i);
+      var sheetName = node.getAttributes().getNamedItem("name").getNodeValue();
+      var sheetId =
+          Integer.parseInt(node.getAttributes().getNamedItem("sheetId").getNodeValue());
+      var relId = node.getAttributes().getNamedItem("r:id").getNodeValue();
+      var visible = node.getAttributes().getNamedItem("state") == null;
+      var sheetInfo = new SheetInfo(i, sheetId, sheetName, relId, visible);
+      sheetInfos.add(sheetInfo);
+      sheetInfoMap.put(sheetName, sheetInfo);
+    }
+  }
+
+  private void read1904DateSetting(Document workbookDoc) throws XPathExpressionException {
+    var workbookXPath = compileXPathWithNamespace(WORKBOOK_CONFIG_XPATH);
+    var workbookNode = (Node) workbookXPath.evaluate(workbookDoc, XPathConstants.NODE);
+    if (workbookNode != null) {
+      var date1904 = workbookNode.getAttributes().getNamedItem("date1904");
+      use1904DateSystemFlag = date1904 != null && "1".equals(date1904.getNodeValue());
+    }
+  }
+
   private synchronized void ensureReadShared() {
     if (hasReadShared) {
       return;
@@ -173,10 +179,10 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
 
     try {
       withReader(
-          rdr -> {
+          reader -> {
             try {
-              rdr.setUseReadOnlySharedStringsTable(true);
-              sharedStrings = rdr.getSharedStringsTable();
+              reader.setUseReadOnlySharedStringsTable(true);
+              sharedStrings = reader.getSharedStringsTable();
               if (sharedStrings == null) {
                 sharedStrings =
                     new SharedStrings() {
@@ -198,7 +204,7 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
               }
 
               // Read the styles table and attach the format data
-              var stylesTable = rdr.getStylesTable();
+              var stylesTable = reader.getStylesTable();
               styles = new XSSFReaderFormats(stylesTable);
 
               hasReadShared = true;
@@ -216,55 +222,40 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
     return use1904DateSystemFlag;
   }
 
-  private Map<String, SheetInfo> getSheetInfoMap() {
-    return sheetInfoMap;
-  }
-
-  private List<SheetInfo> getSheetInfos() {
-    return sheetInfos;
-  }
-
-  private Map<String, NamedRange> getNamesMap() {
-    return namedRangeMap;
-  }
-
   @Override
   public int getNumberOfSheets() {
-    return getSheetInfoMap().size();
+    return sheetInfoMap.size();
   }
 
   @Override
   public int getSheetIndex(String name) {
-    var map = getSheetInfoMap();
-    if (!map.containsKey(name)) {
+    if (!sheetInfoMap.containsKey(name)) {
       return -1;
     }
-    return map.get(name).index;
+    return sheetInfoMap.get(name).index;
   }
 
   @Override
   public String getSheetName(int sheet) {
-    var list = getSheetInfos();
-    if (sheet < 0 || sheet >= list.size()) {
+    if (sheet < 0 || sheet >= sheetInfos.size()) {
       throw new IllegalArgumentException("Sheet index out of range: " + sheet);
     }
-    return list.get(sheet).name;
+    return sheetInfos.get(sheet).name;
   }
 
   @Override
   public int getNumberOfNames() {
-    return getNamesMap().size();
+    return namedRangeMap.size();
   }
 
   @Override
   public String[] getRangeNames() {
-    return getNamesMap().keySet().toArray(String[]::new);
+    return namedRangeMap.keySet().toArray(String[]::new);
   }
 
   @Override
   public String getNameFormula(String name) {
-    var map = getNamesMap();
-    var namedRange = map.get(name);
+    var namedRange = namedRangeMap.get(name);
     return namedRange == null ? null : namedRange.formula;
   }
 
@@ -280,7 +271,6 @@ public class XSSFReaderWorkbook implements ExcelWorkbook {
 
   @Override
   public ExcelSheet getSheetAt(int sheetIndex) {
-    var sheetInfos = getSheetInfos();
     if (sheetIndex < 0 || sheetIndex >= sheetInfos.size()) {
       throw new IllegalArgumentException("Sheet index out of range: " + sheetIndex);
     }

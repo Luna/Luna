@@ -11,14 +11,12 @@ import org.enso.table.excel.ExcelUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
-/** Based on the XSSFSheetXMLHandler class from Apache POI. *//** SAX-based Handler to Read Excel XML on top of POI support.
- * Technical specification can be found at:
+/** Based on the XSSFSheetXMLHandler class from Apache POI. */
+/**
+ * SAX-based Handler to Read Excel XML on top of POI support. Technical specification can be found
+ * at:
  * https://learn.microsoft.com/en-us/openspecs/office_standards/ms-oe376/db9b9b72-b10b-4e7e-844c-09f88c972219
- *
- * ECMA-376 Part 1 - Fundamentals And Markup Language Reference
- * ECMA-376 Part 2 - Open Packaging Conventions
- * ECMA-376 Part 3 - Markup Compatibility And Extensibility
- * ECMA-376 Part 4 - Transitional Migration Features
+ * https://ecma-international.org/publications-and-standards/standards/ecma-376/
  */
 public class XSSFReaderSheetXMLHandler extends DefaultHandler {
   private final XSSFReaderFormats styles;

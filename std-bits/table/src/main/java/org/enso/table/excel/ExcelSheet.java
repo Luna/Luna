@@ -1,6 +1,5 @@
 package org.enso.table.excel;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
@@ -30,9 +29,9 @@ public interface ExcelSheet {
   Sheet getSheet();
 
   /** Gets the underlying Apache POI Sheet object. */
-  static ExcelSheet fromWorkbook(Workbook workbook, int sheetIndex) {
+  static ExcelSheet forPOIUserModel(Workbook workbook, int sheetIndex) {
     var sheet = workbook.getSheetAt(sheetIndex);
-    return new ExcelSheetFromWorkbook(
+    return new ExcelSheetFromPOIUserModel(
         sheet,
         sheetIndex,
         sheet.getSheetName(),
@@ -41,7 +40,7 @@ public interface ExcelSheet {
         ExcelUtils.is1904DateSystem(workbook));
   }
 
-  record ExcelSheetFromWorkbook(
+  record ExcelSheetFromPOIUserModel(
       Sheet sheet,
       int sheetIndex,
       String sheetName,
@@ -71,7 +70,7 @@ public interface ExcelSheet {
 
     @Override
     public ExcelRow get(int row) {
-      return row < firstRow || row > lastRow ? null : ExcelRow.fromSheet(sheet, row, use1904Format);
+      return row < firstRow || row > lastRow ? null : ExcelRow.forPOIUserModel(sheet, row, use1904Format);
     }
 
     @Override
