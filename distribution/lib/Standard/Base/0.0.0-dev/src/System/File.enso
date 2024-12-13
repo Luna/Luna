@@ -47,11 +47,6 @@ polyglot java import java.nio.file.StandardOpenOption
 polyglot java import java.time.ZonedDateTime
 polyglot java import org.enso.base.DryRunFileManager
 polyglot java import org.enso.base.file_system.File_Utils
-polyglot java import org.enso.base.file_system.FileSystemSPI
-
-## PRIVATE
-file_types : Vector
-file_types = Vector.from_polyglot_array (FileSystemSPI.get_types False)
 
 ## Represents a file or folder on the filesystem.
 @Builtin_Type
@@ -81,13 +76,13 @@ type File
     new path = case path of
         _ : Text -> if path.contains "://" . not then resolve_path path else
             protocol = path.split "://" . first
-            file_system = FileSystemSPI.get_type protocol False
+            file_system = File_System_SPI.get_type protocol False
             if file_system.is_nothing then Error.throw (Illegal_Argument.Error "Unsupported protocol "+protocol) else
                 file_system.new path
         _ : File -> path
         _ ->
             ## Check to see if a valid "File" type.
-            if (file_types.any file_type-> path.is_a file_type) then path else
+            if ((File_System_SPI.get_types False).any file_type-> path.is_a file_type) then path else
                 Error.throw (Illegal_Argument.Error "The provided path is neither a Text, nor any recognized File-like type.")
 
 
@@ -924,3 +919,16 @@ local_file_move (source : File) (destination : File) (replace_existing : Boolean
     File_Error.handle_java_exceptions source <|
         copy_options = if replace_existing then [StandardCopyOption.REPLACE_EXISTING.to_text] else []
         source.move_builtin destination copy_options
+
+# PRIVATE
+type File_System_SPI
+    private Entry protocol:Text typ
+
+    new protocol:Text typ = File_System_SPI.Entry protocol typ
+
+    private get_type protocol:Text _:Boolean =
+        vec = Self.get_types . filter (_.protocol == protocol)
+        if vec . not_empty then vec.first else Nothing
+
+    private get_types _:Boolean =
+        Meta.lookup_services File_System_SPI

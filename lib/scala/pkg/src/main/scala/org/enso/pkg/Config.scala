@@ -13,6 +13,53 @@ import org.yaml.snakeyaml.nodes.{MappingNode, Node}
 import java.io.{Reader, StringReader}
 import java.util
 import scala.util.Try
+import java.io.IOException
+
+/** Information about registered service.
+  *
+  * @param provides name of SPI type
+  * @param with name of implementation type
+  */
+case class ProvidesWith(val provides: String, val `with`: String) {}
+
+object ProvidesWith {
+
+  /** Fields for use when serializing the [[ProvidesWith]]. */
+  object Fields {
+    val Provides = "provides"
+    val With     = "with"
+  }
+
+  implicit val decoderSnake: YamlDecoder[ProvidesWith] =
+    new YamlDecoder[ProvidesWith] {
+      override def decode(node: Node): Either[Throwable, ProvidesWith] =
+        node match {
+          case mappingNode: MappingNode =>
+            val str      = implicitly[YamlDecoder[String]]
+            val bindings = mappingKV(mappingNode)
+            for {
+              p <- bindings
+                .get(Fields.Provides)
+                .map(str.decode)
+                .getOrElse(Left(new IOException("Missing provides")))
+              w <- bindings
+                .get(Fields.With)
+                .map(str.decode)
+                .getOrElse(Left(new IOException("Missing provides")))
+            } yield ProvidesWith(p, w)
+        }
+    }
+
+  implicit val encoderSnake: YamlEncoder[ProvidesWith] =
+    new YamlEncoder[ProvidesWith] {
+      override def encode(value: ProvidesWith) = {
+        val elements = new util.ArrayList[(String, Object)]()
+        elements.add((Fields.Provides, value.provides))
+        elements.add((Fields.With, value.`with`))
+        toMap(elements)
+      }
+    }
+}
 
 /** Contact information to a user.
   *
@@ -110,7 +157,8 @@ case class Config(
   maintainers: List[Contact],
   edition: Option[Editions.RawEdition],
   preferLocalLibraries: Boolean,
-  componentGroups: Option[ComponentGroups]
+  componentGroups: Option[ComponentGroups],
+  services: List[ProvidesWith]
 ) {
 
   /** Converts the configuration into a YAML representation. */
@@ -160,6 +208,7 @@ object Config {
     val Edition: String        = "edition"
     val PreferLocalLibraries   = "prefer-local-libraries"
     val ComponentGroups        = "component-groups"
+    val Services: String       = "services"
   }
 
   implicit val yamlDecoder: YamlDecoder[Config] =
@@ -171,6 +220,7 @@ object Config {
           val normalizedNameDecoder =
             implicitly[YamlDecoder[Option[String]]]
           val contactDecoder     = implicitly[YamlDecoder[List[Contact]]]
+          val servicesDecoder    = implicitly[YamlDecoder[List[ProvidesWith]]]
           val editionNameDecoder = implicitly[YamlDecoder[EditionName]]
           val editionDecoder =
             implicitly[YamlDecoder[Option[Editions.RawEdition]]]
@@ -233,6 +283,10 @@ object Config {
               .get(JsonFields.ComponentGroups)
               .map(componentGroups.decode)
               .getOrElse(Right(None))
+            services <- clazzMap
+              .get(JsonFields.Services)
+              .map(servicesDecoder.decode)
+              .getOrElse(Right(Nil))
           } yield Config(
             name,
             normalizedName,
@@ -243,7 +297,8 @@ object Config {
             maintainers,
             edition,
             preferLocalLibraries,
-            componentGroups
+            componentGroups,
+            services
           )
       }
     }
