@@ -2681,17 +2681,14 @@ export class BodyBlock extends BaseExpression {
 
   /** TODO: Add docs */
   *concreteChildren({ indent }: PrintContext): IterableIterator<RawConcreteChild> {
-    let linesIndent: string | undefined = undefined
     for (const line of this.fields.get('lines')) {
       yield preferUnspaced(line.newline)
       if (line.statement) {
         const whitespace: string =
-          linesIndent ??
           (line.statement.whitespace && line.statement.whitespace.length > (indent || '').length ?
             line.statement.whitespace
           : undefined) ??
           (indent != null ? indent + '    ' : '')
-        linesIndent = whitespace
         yield { whitespace, node: line.statement.node }
       }
     }
