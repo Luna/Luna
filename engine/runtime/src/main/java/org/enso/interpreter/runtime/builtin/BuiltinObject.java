@@ -18,11 +18,8 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
  * Base class for every Enso builtin object. Not type. Note that base class for a builtin type is
  * {@link Builtin}.
  *
- * <p>The {@link InteropLibrary interop} protocol roughly corresponds to the implementation of the
- * protocol inside {@link org.enso.interpreter.runtime.data.atom.Atom}.
- *
- * <p>Note that extension methods are not resolved, because they are not defined in builtins module
- * scope. In other words, extension methods are not reported as members via interop.
+ * <p>In other words, this class represents an object of builtin type in a similar way that {@link
+ * org.enso.interpreter.runtime.data.atom.Atom} represents an object of a non-builtin type.
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
