@@ -32,7 +32,6 @@ import org.enso.compiler.core.ir.module.scope.Definition
 import org.enso.compiler.core.ir.module.scope.definition
 import org.enso.compiler.core.ir.module.scope.Import
 import org.enso.compiler.core.ir.module.scope.imports
-import org.enso.compiler.core.ir.Name.Special
 import org.enso.compiler.core.ir.expression.{
   errors,
   Application,
@@ -726,7 +725,10 @@ class IrToTruffle(
         Some(scopeAssociatedType)
       case Some(tpePointer) =>
         tpePointer
-          .getMetadata(MethodDefinitions)
+          .getMetadata(
+            MethodDefinitions.INSTANCE,
+            classOf[BindingsMap.Resolution]
+          )
           .map { res =>
             res.target match {
               case binding @ BindingsMap.ResolvedType(_, _) =>
@@ -908,7 +910,11 @@ class IrToTruffle(
     arg: DefinitionArgument
   ): TypeCheckValueNode = {
     val comment = "`" + arg.name.name + "`"
-    arg.ascribedType.map(extractAscribedType(comment, _)).getOrElse(null)
+    arg.ascribedType
+      .map { t =>
+        TypeCheckValueNode.allTypes(false, extractAscribedType(comment, t))
+      }
+      .getOrElse(null)
   }
 
   /** Checks if the expression has a @Builtin_Method annotation
@@ -947,38 +953,40 @@ class IrToTruffle(
   }
 
   private def getTypeResolution(expr: IR): Option[Type] =
-    expr.getMetadata(MethodDefinitions).map { res =>
-      res.target match {
-        case binding @ BindingsMap.ResolvedType(_, _) =>
-          asType(binding)
-        case BindingsMap.ResolvedModule(module) =>
-          asAssociatedType(module.unsafeAsModule())
-        case BindingsMap.ResolvedConstructor(_, _) =>
-          throw new CompilerError(
-            "Impossible here, should be caught by MethodDefinitions pass."
-          )
-        case BindingsMap.ResolvedPolyglotSymbol(_, _) =>
-          throw new CompilerError(
-            "Impossible polyglot symbol, should be caught by MethodDefinitions pass."
-          )
-        case BindingsMap.ResolvedPolyglotField(_, _) =>
-          throw new CompilerError(
-            "Impossible polyglot field, should be caught by MethodDefinitions pass."
-          )
-        case _: BindingsMap.ResolvedModuleMethod =>
-          throw new CompilerError(
-            "Impossible module method here, should be caught by MethodDefinitions pass."
-          )
-        case _: BindingsMap.ResolvedExtensionMethod =>
-          throw new CompilerError(
-            "Impossible static method here, should be caught by MethodDefinitions pass."
-          )
-        case _: BindingsMap.ResolvedConversionMethod =>
-          throw new CompilerError(
-            "Impossible conversion method here, should be caught by MethodDefinitions pass."
-          )
+    expr
+      .getMetadata(MethodDefinitions.INSTANCE, classOf[BindingsMap.Resolution])
+      .map { res =>
+        res.target match {
+          case binding @ BindingsMap.ResolvedType(_, _) =>
+            asType(binding)
+          case BindingsMap.ResolvedModule(module) =>
+            asAssociatedType(module.unsafeAsModule())
+          case BindingsMap.ResolvedConstructor(_, _) =>
+            throw new CompilerError(
+              "Impossible here, should be caught by MethodDefinitions pass."
+            )
+          case BindingsMap.ResolvedPolyglotSymbol(_, _) =>
+            throw new CompilerError(
+              "Impossible polyglot symbol, should be caught by MethodDefinitions pass."
+            )
+          case BindingsMap.ResolvedPolyglotField(_, _) =>
+            throw new CompilerError(
+              "Impossible polyglot field, should be caught by MethodDefinitions pass."
+            )
+          case _: BindingsMap.ResolvedModuleMethod =>
+            throw new CompilerError(
+              "Impossible module method here, should be caught by MethodDefinitions pass."
+            )
+          case _: BindingsMap.ResolvedExtensionMethod =>
+            throw new CompilerError(
+              "Impossible static method here, should be caught by MethodDefinitions pass."
+            )
+          case _: BindingsMap.ResolvedConversionMethod =>
+            throw new CompilerError(
+              "Impossible conversion method here, should be caught by MethodDefinitions pass."
+            )
+        }
       }
-    }
 
   private def getTailStatus(
     expression: Expression
@@ -1139,7 +1147,8 @@ class IrToTruffle(
                     )
                   org.enso.common.Asserts.assertInJvm(
                     fun != null,
-                    s"exported symbol (static method) `${staticMethod.name}` needs to be registered first in the module "
+                    s"exported symbol (static method) `${staticMethod.name}` on type '${eigenTp.getName}' " +
+                    s"needs to be registered first in the module '${actualModule.getName.toString}'."
                   )
                   scopeBuilder.registerMethod(
                     scopeAssociatedType,
@@ -1982,16 +1991,6 @@ class IrToTruffle(
               "a Self occurence must be resolved"
             ).target
           )
-        case Name.Special(name, _, _) =>
-          val fun = name match {
-            case Special.NewRef    => context.getBuiltins.special().getNewRef
-            case Special.ReadRef   => context.getBuiltins.special().getReadRef
-            case Special.WriteRef  => context.getBuiltins.special().getWriteRef
-            case Special.RunThread => context.getBuiltins.special().getRunThread
-            case Special.JoinThread =>
-              context.getBuiltins.special().getJoinThread
-          }
-          ConstantObjectNode.build(fun)
         case _: Name.Annotation =>
           throw new CompilerError(
             "Annotation should not be present at codegen time."

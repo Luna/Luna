@@ -2,6 +2,7 @@
 import * as React from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
 
 import BlankIcon from '#/assets/blank.svg'
@@ -26,13 +27,14 @@ import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-import { isCloudCategory } from '#/layouts/CategorySwitcher/Category'
+import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import * as localBackend from '#/services/LocalBackend'
 
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
+import { IndefiniteSpinner } from '#/components/Spinner'
 import type { AssetEvent } from '#/events/assetEvent'
 import { useCutAndPaste } from '#/events/assetListEvent'
 import {
@@ -44,7 +46,7 @@ import {
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-import { useAsset } from '#/layouts/AssetsTable/assetsTableItemsHooks'
+import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import { download } from '#/utilities/download'
@@ -56,8 +58,6 @@ import * as permissions from '#/utilities/permissions'
 import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import invariant from 'tiny-invariant'
-import { IndefiniteSpinner } from '../Spinner'
 
 // =================
 // === Constants ===
@@ -422,6 +422,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
           )
           nodeParentKeysRef.current = { nodeMap: new WeakRef(nodeMap.current), parentKeys }
         }
+
+        if (isLocalCategory(category)) {
+          return true
+        }
+
         return payload.every((payloadItem) => {
           const parentKey = nodeParentKeysRef.current?.parentKeys.get(payloadItem.key)
           const parent = parentKey == null ? null : nodeMap.current.get(parentKey)
@@ -440,6 +445,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         })
       }
     })()
+
     if ((isPayloadMatch && canPaste) || event.dataTransfer.types.includes('Files')) {
       event.preventDefault()
       if (asset.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
@@ -482,7 +488,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, asset.parentId]),
+                    backendQueryOptions(
+                      backend,
+                      'getProjectDetails',
+                      [asset.id, asset.parentId, true],
+                      { staleTime: 0 },
+                    ),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -498,7 +509,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.file: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title]),
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
+                      staleTime: 0,
+                    }),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, asset.title)
@@ -663,7 +676,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       return (
         <>
           {!hidden && (
-            <FocusRing>
+            <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
                 tabIndex={0}

@@ -23,21 +23,18 @@ import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
-// ====================================
-// === createGetProjectDetailsQuery ===
-// ====================================
 /** Default interval for refetching project status when the project is opened. */
 const OPENED_INTERVAL_MS = 30_000
 /**
  * Interval when we open a cloud project.
  * Since opening a cloud project is a long operation, we want to check the status less often.
  */
-const CLOUD_OPENING_INTERVAL_MS = 5_000
+const CLOUD_OPENING_INTERVAL_MS = 2_500
 /**
  * Interval when we open a local project or when we want to sync the project status as soon as
  * possible.
  */
-const ACTIVE_SYNC_INTERVAL_MS = 100
+const LOCAL_OPENING_INTERVAL_MS = 100
 
 const DEFAULT_INTERVAL_MS = 120_000
 
@@ -46,6 +43,12 @@ export interface CreateOpenedProjectQueryOptions {
   readonly assetId: backendModule.Asset<backendModule.AssetType.project>['id']
   readonly parentId: backendModule.Asset<backendModule.AssetType.project>['parentId']
   readonly backend: Backend
+}
+
+/** Whether the user can open projects. */
+export function useCanOpenProjects() {
+  const localBackend = backendProvider.useLocalBackend()
+  return localBackend != null
 }
 
 /** Return a function to update a project asset in the TanStack Query cache. */
@@ -92,12 +95,17 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     networkMode: backend.type === backendModule.BackendType.remote ? 'online' : 'always',
-    refetchInterval: ({ state }) => {
-      const states = [backendModule.ProjectState.opened, backendModule.ProjectState.closed]
+    refetchInterval: ({ state }): number | false => {
+      const staticStates = [backendModule.ProjectState.opened, backendModule.ProjectState.closed]
+
       const openingStates = [
+        backendModule.ProjectState.provisioned,
+        backendModule.ProjectState.scheduled,
         backendModule.ProjectState.openInProgress,
         backendModule.ProjectState.closing,
       ]
+
+      const createdStates = [backendModule.ProjectState.created, backendModule.ProjectState.new]
 
       if (state.status === 'error') {
         return false
@@ -107,32 +115,39 @@ export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOp
         return false
       }
 
+      const currentState = state.data.state.type
+
       if (isLocal) {
-        if (states.includes(state.data.state.type)) {
+        if (createdStates.includes(currentState)) {
+          return LOCAL_OPENING_INTERVAL_MS
+        }
+
+        if (staticStates.includes(state.data.state.type)) {
           return OPENED_INTERVAL_MS
-        } else if (openingStates.includes(state.data.state.type)) {
-          return ACTIVE_SYNC_INTERVAL_MS
-        } else {
-          return DEFAULT_INTERVAL_MS
+        }
+
+        if (openingStates.includes(state.data.state.type)) {
+          return LOCAL_OPENING_INTERVAL_MS
         }
       }
 
-      // Cloud project
-      if (states.includes(state.data.state.type)) {
-        return OPENED_INTERVAL_MS
-      } else if (openingStates.includes(state.data.state.type)) {
+      if (createdStates.includes(currentState)) {
         return CLOUD_OPENING_INTERVAL_MS
-      } else {
-        return DEFAULT_INTERVAL_MS
       }
+
+      // Cloud project
+      if (staticStates.includes(state.data.state.type)) {
+        return OPENED_INTERVAL_MS
+      }
+      if (openingStates.includes(state.data.state.type)) {
+        return CLOUD_OPENING_INTERVAL_MS
+      }
+
+      return DEFAULT_INTERVAL_MS
     },
   })
 }
 createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project', id] as const
-
-// ==============================
-// === useOpenProjectMutation ===
-// ==============================
 
 /** A mutation to open a project. */
 export function useOpenProjectMutation() {
@@ -162,7 +177,7 @@ export function useOpenProjectMutation() {
           executeAsync: inBackground,
           cognitoCredentials: {
             accessToken: session.accessToken,
-            refreshToken: session.accessToken,
+            refreshToken: session.refreshToken,
             clientId: session.clientId,
             expireAt: session.expireAt,
             refreshUrl: session.refreshUrl,
@@ -193,10 +208,6 @@ export function useOpenProjectMutation() {
     },
   })
 }
-
-// ===============================
-// === useCloseProjectMutation ===
-// ===============================
 
 /** Mutation to close a project. */
 export function useCloseProjectMutation() {
@@ -239,10 +250,6 @@ export function useCloseProjectMutation() {
   })
 }
 
-// ================================
-// === useRenameProjectMutation ===
-// ================================
-
 /** Mutation to rename a project. */
 export function useRenameProjectMutation() {
   const client = reactQuery.useQueryClient()
@@ -273,13 +280,10 @@ export function useRenameProjectMutation() {
   })
 }
 
-// ======================
-// === useOpenProject ===
-// ======================
-
 /** A callback to open a project. */
 export function useOpenProject() {
   const client = reactQuery.useQueryClient()
+  const canOpenProjects = useCanOpenProjects()
   const projectsStore = useProjectsStore()
   const addLaunchedProject = useAddLaunchedProject()
   const closeAllProjects = useCloseAllProjects()
@@ -288,6 +292,10 @@ export function useOpenProject() {
   const enableMultitabs = useFeatureFlag('enableMultitabs')
 
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+    if (!canOpenProjects) {
+      return
+    }
+
     if (!enableMultitabs) {
       // Since multiple tabs cannot be opened at the same time, the opened projects need to be closed first.
       if (projectsStore.getState().launchedProjects.length > 0) {
@@ -319,10 +327,6 @@ export function useOpenProject() {
   })
 }
 
-// =====================
-// === useOpenEditor ===
-// =====================
-
 /** A function to open the editor. */
 export function useOpenEditor() {
   const setPage = useSetPage()
@@ -330,10 +334,6 @@ export function useOpenEditor() {
     setPage(projectId)
   })
 }
-
-// =======================
-// === useCloseProject ===
-// =======================
 
 /** A function to close a project. */
 export function useCloseProject() {
@@ -373,10 +373,6 @@ export function useCloseProject() {
     setPage(TabType.drive)
   })
 }
-
-// ===========================
-// === useCloseAllProjects ===
-// ===========================
 
 /** A function to close all projects. */
 export function useCloseAllProjects() {

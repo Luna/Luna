@@ -27,28 +27,29 @@ impl<'s, Inner> NamedOperandConsumer<'s> for InsertApps<Inner>
 where Inner: OperatorConsumer<'s> + OperandConsumer<'s>
 {
     fn push_maybe_named_operand(&mut self, operand: OperandMaybeNamed<'s>) {
+        let prev_applicable = mem::replace(&mut self.prev_applicable, true);
         match operand {
             OperandMaybeNamed::Unnamed(operand) => {
-                if mem::replace(&mut self.prev_applicable, true) {
+                if prev_applicable {
                     self.inner.push_operator(application(Spacing::of_tree(&operand.value)));
                 }
                 self.inner.push_operand(operand)
             }
             OperandMaybeNamed::Named { parens, name, equals, expression } => {
-                if mem::replace(&mut self.prev_applicable, true) {
+                if prev_applicable {
                     let spacing = if let Some((open, _)) = &parens {
                         Spacing::of_token(open)
                     } else {
                         Spacing::of_token(&name)
                     };
                     let precedence =
-                        ModifiedPrecedence::new(spacing, token::Precedence::application(), false);
+                        ModifiedPrecedence::new(spacing, token::Precedence::Application, false);
                     let right_precedence = ModifiedPrecedence::new(
                         // Named applications always have unspaced right-precedence; if it reads
                         // from left to right as a named application, a following operator can't
                         // cause the interpretation to change.
                         Spacing::Unspaced,
-                        token::Precedence::application(),
+                        token::Precedence::Application,
                         false,
                     );
                     let operator = Operator {
@@ -79,16 +80,9 @@ where Inner: OperatorConsumer<'s> + OperandConsumer<'s>
 
 impl<'s, Inner: OperatorConsumer<'s>> OperatorConsumer<'s> for InsertApps<Inner> {
     fn push_operator(&mut self, operator: Operator<'s>) {
-        let prev_applicable = mem::replace(
-            &mut self.prev_applicable,
-            matches!(operator.arity, Arity::Binary { missing: Some(BinaryOperand::Right), .. }),
-        );
-        if prev_applicable
-            && matches!(
-                operator.arity,
-                Arity::Unary { .. } | Arity::Binary { missing: Some(BinaryOperand::Left), .. }
-            )
-        {
+        let prev_applicable =
+            mem::replace(&mut self.prev_applicable, !operator.arity.expects_rhs());
+        if prev_applicable && !operator.arity.expects_lhs() {
             self.inner.push_operator(application(Spacing::Spaced));
         }
         self.inner.push_operator(operator)
@@ -105,7 +99,7 @@ impl<Inner: Finish> Finish for InsertApps<Inner> {
 }
 
 fn application<'s>(spacing: Spacing) -> Operator<'s> {
-    let precedence = ModifiedPrecedence::new(spacing, token::Precedence::application(), false);
+    let precedence = ModifiedPrecedence::new(spacing, token::Precedence::Application, false);
     Operator {
         left_precedence:  Some(precedence),
         right_precedence: precedence,

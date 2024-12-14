@@ -69,7 +69,7 @@ const NORMAL_COLUMN_CSS_CLASSES = `px-cell-x py ${COLUMN_CSS_CLASSES}`
 
 /** CSS classes for every column. */
 export const COLUMN_CSS_CLASS: Readonly<Record<Column, string>> = {
-  [Column.name]: `rounded-rows-skip-level min-w-drive-name-column h-full p-0 border-l-0 ${COLUMN_CSS_CLASSES}`,
+  [Column.name]: `z-10 sticky left-0 bg-dashboard rounded-rows-skip-level min-w-drive-name-column h-full p-0 border-l-0 ${COLUMN_CSS_CLASSES}`,
   [Column.modified]: `min-w-drive-modified-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
   [Column.sharedWith]: `min-w-drive-shared-with-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
   [Column.labels]: `min-w-drive-labels-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
@@ -87,20 +87,32 @@ export function getColumnList(
   user: backend.User,
   backendType: backend.BackendType,
   category: Category,
-) {
+): readonly Column[] {
   const isCloud = backendType === backend.BackendType.remote
   const isEnterprise = user.plan === backend.Plan.enterprise
+
   const isTrash = category.type === 'trash'
+  const isRecent = category.type === 'recent'
+  const isRoot = category.type === 'cloud'
+
+  const sharedWithColumn = () => {
+    if (isTrash) return false
+    if (isRecent) return false
+    if (isRoot) return false
+    return isCloud && isEnterprise && Column.sharedWith
+  }
+
   const columns = [
     Column.name,
     Column.modified,
-    isCloud && (isEnterprise || isTrash) && Column.sharedWith,
+    sharedWithColumn(),
     isCloud && Column.labels,
     // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1525
     // Bring back these columns when they are ready for use again.
     // isCloud && Column.accessedByProjects,
     // isCloud && Column.accessedData,
     isCloud && Column.docs,
-  ]
+  ] as const
+
   return columns.flatMap((column) => (column !== false ? [column] : []))
 }

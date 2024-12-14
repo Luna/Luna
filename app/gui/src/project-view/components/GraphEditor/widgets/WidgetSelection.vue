@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConditionalTeleport from '@/components/ConditionalTeleport.vue'
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { enclosingTopLevelArgument } from '@/components/GraphEditor/widgets/WidgetTopLevelArgument.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
@@ -52,7 +53,7 @@ const activity = shallowRef<VNode>()
 const MAX_DROPDOWN_OVERSIZE_PX = 390
 
 const floatReference = computed(
-  () => enclosingTopLevelArgument(widgetRoot.value, tree) ?? widgetRoot.value,
+  () => enclosingTopLevelArgument(widgetRoot.value, tree.rootElement) ?? widgetRoot.value,
 )
 
 function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidth: boolean) {
@@ -84,7 +85,7 @@ function dropdownStyles(dropdownElement: Ref<HTMLElement | undefined>, limitWidt
           },
         })),
         // Try to keep the dropdown within node's bounds.
-        shift(() => (tree.nodeElement ? { boundary: tree.nodeElement } : {})),
+        shift(() => (tree.rootElement ? { boundary: tree.rootElement } : {})),
         shift(), // Always keep within screen bounds, overriding node bounds.
       ]
     }),
@@ -238,7 +239,7 @@ const innerWidgetInput = computed<WidgetInput>(() => {
 
 const parentSelectionArrow = injectSelectionArrow(true)
 const arrowSuppressed = ref(false)
-const showArrow = computed(() => isHovered.value && !arrowSuppressed.value)
+const showArrow = computed(() => !arrowSuppressed.value && (tree.extended || isHovered.value))
 provideSelectionArrow(
   proxyRefs({
     id: computed(() => {
@@ -463,10 +464,14 @@ declare module '@/providers/widgetRegistry' {
     @pointerout="isHovered = false"
   >
     <NodeWidget :input="innerWidgetInput" />
-    <Teleport v-if="showArrow" defer :disabled="!arrowLocation" :to="arrowLocation">
-      <SvgIcon name="arrow_right_head_only" class="arrow widgetOutOfLayout" />
-    </Teleport>
-    <Teleport v-if="tree.nodeElement" :to="tree.nodeElement">
+    <ConditionalTeleport v-if="showArrow" :disabled="!arrowLocation" :to="arrowLocation">
+      <SvgIcon
+        name="arrow_right_head_only"
+        class="arrow widgetOutOfLayout"
+        :class="{ hovered: isHovered }"
+      />
+    </ConditionalTeleport>
+    <Teleport v-if="tree.rootElement" :to="tree.rootElement">
       <div ref="dropdownElement" :style="floatingStyles" class="widgetOutOfLayout floatingElement">
         <SizeTransition height :duration="100">
           <DropdownWidget
@@ -515,6 +520,9 @@ svg.arrow {
   opacity: 0.5;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
+  &.hovered {
+    opacity: 0.9;
+  }
 }
 
 .activityElement {
