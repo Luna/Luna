@@ -38,7 +38,7 @@ export default function EditableSpan(props: EditableSpanProps) {
   const { className = '', editable = false, children } = props
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {editable && <EditForm {...props} />}
 
       {!editable && (
