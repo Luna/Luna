@@ -210,7 +210,7 @@ public final class TailCall implements MiniPassFactory {
         case IfThenElse ite -> {
           if (isInTailPos) {
             markAsTail(ite);
-            // Note [Analysing Branches in Case Expressions]
+            // Note [Analysing Branches in Conditional Expressions]
             markAsTail(ite.trueBranch());
             if (ite.falseBranchOrNull() != null) {
               markAsTail(ite.falseBranchOrNull());
@@ -220,7 +220,7 @@ public final class TailCall implements MiniPassFactory {
         case Case.Expr e -> {
           if (isInTailPos) {
             markAsTail(ir);
-            // Note [Analysing Branches in Case Expressions]
+            // Note [Analysing Branches in Conditional Expressions]
             e.branches().foreach(b -> markAsTail(b));
           }
         }
@@ -259,7 +259,7 @@ public final class TailCall implements MiniPassFactory {
         case Function function -> collectTailCandicateFunction(function, tailCandidates);
         case IfThenElse ite -> {
           if (isInTailPos) {
-            // Note [Analysing Branches in Case Expressions]
+            // Note [Analysing Branches in Conditional Expressions]
             tailCandidates.put(ite.trueBranch(), true);
             if (ite.falseBranchOrNull() != null) {
               tailCandidates.put(ite.falseBranchOrNull(), true);
@@ -365,7 +365,7 @@ public final class TailCall implements MiniPassFactory {
       switch (caseExpr) {
         case Case.Expr expr -> {
           if (isInTailPos) {
-            // Note [Analysing Branches in Case Expressions]
+            // Note [Analysing Branches in Conditional Expressions]
             expr.branches()
                 .foreach(
                     b -> {
@@ -378,7 +378,7 @@ public final class TailCall implements MiniPassFactory {
       }
     }
 
-    /* Note [Analysing Branches in Case Expressions]
+    /* Note [Analysing Branches in Conditional Expressions]
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      * When performing tail call analysis on a case expression it is very
      * important to recognise that the branches of a case expression should all
