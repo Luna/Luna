@@ -157,7 +157,6 @@ const RESTRICTED_SYNTAXES = [
     message: 'Use `while (true)` instead of `for (;;)`',
   },
   {
-    id: 'no-jsx-strings',
     selector: `:matches(\
             JSXAttribute[name.name=/^(?:alt|error|label|placeholder|text|title|actionButtonLabel|actionText|aria-label)$/][value.raw=/^'|^"|^\`/], \
             JSXText[value=/\\S/], \
@@ -577,7 +576,10 @@ export default [
     rules: {
       'no-restricted-syntax': [
         'error',
-        ...RESTRICTED_SYNTAXES.filter(syntax => syntax.id !== 'no-jsx-strings'),
+        ...RESTRICTED_SYNTAXES.filter(
+          syntax =>
+            syntax.message !== 'Use a `getText()` from `useText` instead of a literal string',
+        ),
       ],
     },
   },
