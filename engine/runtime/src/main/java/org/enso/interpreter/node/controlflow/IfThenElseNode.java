@@ -117,7 +117,7 @@ public final class IfThenElseNode extends ExpressionNode {
         var without = warnings.removeWarnings(cond);
 
         var result = delegate.executeIf(frame, without, trueBranch, falseBranch);
-        return appendWarningNode.executeAppend(null, result, ws);
+        return appendWarningNode.executeAppend(frame, result, ws);
       } catch (UnsupportedMessageException e) {
         var ctx = EnsoContext.get(this);
         throw ctx.raiseAssertionPanic(this, null, e);
