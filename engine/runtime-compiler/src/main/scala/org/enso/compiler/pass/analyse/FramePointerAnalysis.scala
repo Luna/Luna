@@ -323,16 +323,36 @@ case object FramePointerAnalysis extends IRPass {
     ir: IR,
     newMeta: FrameAnalysisMeta
   ): Unit = {
+
+    def toString(ir: IR): String = {
+      ir.getClass().getName() + "@" + Integer.toHexString(
+        System.identityHashCode(ir)
+      )
+    }
+
+    ir match {
+      case ca: CallArgument
+          if ca.location.isDefined && ca.location.orNull.start == 1946 && ca.location.orNull.end == 1950 =>
+        val ex = new Exception("Assigning ca: " + ca)
+        ex.setStackTrace(ex.getStackTrace().slice(0, 20))
+        ex.printStackTrace()
+      case _ =>
+    }
     ir.passData().get(this) match {
       case None =>
         ir.passData()
           .update(this, newMeta)
       case Some(meta) =>
-        val ex = new IllegalStateException(
-          "Unexpected FrameAnalysisMeta associated with IR " + ir + "\nOld: " + meta + " new " + newMeta
-        )
-        ex.setStackTrace(ex.getStackTrace().slice(0, 10))
-        throw ex
+        if (meta != newMeta) {
+          val ex = new IllegalStateException(
+            "Unexpected FrameAnalysisMeta associated with IR " + toString(
+              ir
+            ) + "\n" + ir + "\nOld: " + meta + " new " + newMeta
+          )
+          ex.setStackTrace(ex.getStackTrace().slice(0, 10))
+          ex.printStackTrace()
+          // throw ex
+        }
     }
   }
 
