@@ -46,8 +46,9 @@ export default function EditableSpan(props: EditableSpanProps) {
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 5 }}
+          className={tailwindMerge.twJoin('min-w-0', className)}
         >
-          <Text testId={props['data-testid']} truncate="1" className={className}>
+          <Text testId={props['data-testid']} truncate="1">
             {children}
           </Text>
         </motion.div>
