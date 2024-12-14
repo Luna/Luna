@@ -69,6 +69,20 @@ public class IfThenElseTest {
   }
 
   @Test
+  public void indexSubRange() throws Exception {
+    var code =
+        """
+    check step first = case step of
+      _ -> "Every " + step.to_display_text + (if first == 0 then "" else " from " + first.to_display_text)
+    """;
+
+    var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+
+    assertEquals("Every Prefix", check.execute("Prefix", 0).asString());
+    assertEquals("Every Count from 1", check.execute("Count", 1).asString());
+  }
+
+  @Test
   public void variableDefinedInThen() throws Exception {
     var code = """
     check x = if x then
