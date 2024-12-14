@@ -35,7 +35,7 @@ public final class IfThenElseNode extends ExpressionNode {
 
   IfThenElseNode(ExpressionNode cond, ExpressionNode trueBranch, ExpressionNode falseBranch) {
     this.cond = Objects.requireNonNull(cond);
-    this.trueBranch = trueBranch;
+    this.trueBranch = Objects.requireNonNull(trueBranch);
     this.falseBranch = falseBranch;
     this.with = IfThenElseNodeFactory.WithConditionNodeGen.create();
   }
