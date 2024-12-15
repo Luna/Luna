@@ -15,6 +15,7 @@ import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { useLayoutEffect } from 'react'
 import type { z } from 'zod'
 
+// eslint-disable-next-line no-restricted-syntax
 const MotionText = motion(Text)
 
 /**
@@ -42,16 +43,16 @@ export default function EditableSpan(props: EditableSpanProps) {
       {editable && <EditForm {...props} />}
 
       {!editable && (
-        <motion.div
+        <MotionText
+          className={tailwindMerge.twJoin('min-w-0', className)}
+          testId={props['data-testid']}
+          truncate="1"
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 5 }}
-          className={tailwindMerge.twJoin('min-w-0', className)}
         >
-          <Text testId={props['data-testid']} truncate="1">
-            {children}
-          </Text>
-        </motion.div>
+          {children}
+        </MotionText>
       )}
     </AnimatePresence>
   )
@@ -263,16 +264,20 @@ function ErrorMessage(props: ErrorMessageProps) {
     >
       <motion.div
         layout
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         initial={{ opacity: 0, scaleX: 0.99 }}
         animate={{ opacity: 1, scaleX: 1 }}
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         exit={{ opacity: 0, scaleX: 0.99 }}
         className="pointer-events-none absolute h-full w-full rounded-4xl border-[2px] border-danger"
         data-testid="error-message-outline"
       />
 
       <motion.div
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         initial={{ opacity: 0, x: -4 }}
         animate={{ opacity: 1, x: 0 }}
+        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         exit={{ x: -4, opacity: 0 }}
         data-testid="error-message-container"
         className="absolute bottom-0 right-0 top-0 z-1"
@@ -282,9 +287,12 @@ function ErrorMessage(props: ErrorMessageProps) {
           style={{ transform: `translateX(100%)` }}
         >
           <MotionText
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
             initial={{ filter: 'blur(8px)', opacity: 0, x: -12 }}
             animate={{ filter: 'blur(0px)', opacity: 1, x: 0 }}
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
             exit={{ filter: 'blur(8px)', opacity: 0, x: -12 }}
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
             transition={{ stiffness: 550, damping: 150, mass: 4 }}
             testId="error-message-text"
             variant="body"
