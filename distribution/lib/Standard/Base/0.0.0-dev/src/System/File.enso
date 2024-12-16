@@ -696,6 +696,10 @@ type File
                  file = Examples.data_dir / "my_file"
                  file.write_text "hello"
                  file.delete
+
+       ? Data Links
+         If the file is a data link, this will delete the link itself, not
+         affecting its target.
     delete : Boolean -> Nothing ! File_Error
     delete self (recursive : Boolean = False) -> Nothing ! File_Error =
         Context.Output.if_enabled disabled_message="As writing is disabled, cannot delete file. Press the Write button ▶ to perform the operation." panic=False <|

@@ -319,6 +319,10 @@ type S3_File
          error is thrown.
        - If the Output operations are disabled, a `Forbidden_Operation` panic
          will occur.
+
+       ? Data Links
+         If the file is a data link, this will delete the link itself, not
+         affecting its target.
     delete : Boolean -> Nothing
     delete self (recursive : Boolean = False) =
         if self.exists.not then Error.throw (File_Error.Not_Found self) else

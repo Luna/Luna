@@ -493,6 +493,10 @@ type Enso_File
          removed if this is set to `True`. Defaults to `False`, meaning that the
          operation will fail if the directory is not empty. This option has no
          effect for files or data links.
+
+       ? Data Links
+         If the file is a data link, this will delete the link itself, not
+         affecting its target.
     delete : Boolean -> Nothing
     delete self (recursive : Boolean = False) = if self.enso_path.is_root then Error.throw (Illegal_Argument.Error "The root directory cannot be deleted.") else
         asset = Existing_Enso_Asset.get_asset_reference_for self
