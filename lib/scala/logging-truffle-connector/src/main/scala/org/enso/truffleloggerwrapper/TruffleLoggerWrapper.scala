@@ -22,8 +22,11 @@ class TruffleLoggerWrapper(name: String, masking: Masking) extends Logger {
 
   override def getName: String = underlying.getName
 
-  private def isEnabled(level: Level): Boolean =
+  private def isEnabled(level: Level): Boolean = try {
     underlying.isLoggable(level)
+  } catch {
+    case _: IllegalStateException => false
+  }
 
   private def log(
     level: Level,
