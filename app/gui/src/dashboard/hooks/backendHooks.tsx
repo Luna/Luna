@@ -58,16 +58,8 @@ import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 const MB_BYTES = 1_000_000
 const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES)
 
-// ============================
-// === DefineBackendMethods ===
-// ============================
-
 /** Ensure that the given type contains only names of backend methods. */
 type DefineBackendMethods<T extends keyof Backend> = T
-
-// ======================
-// === MutationMethod ===
-// ======================
 
 /** Names of methods corresponding to mutations. */
 export type MutationMethod = DefineBackendMethods<
@@ -113,10 +105,6 @@ export type MutationMethod = DefineBackendMethods<
   | 'uploadOrganizationPicture'
   | 'uploadUserPicture'
 >
-
-// =======================
-// === useBackendQuery ===
-// =======================
 
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend,
@@ -173,10 +161,6 @@ export function useBackendQuery<Method extends BackendMethods>(
 ) {
   return useQuery(backendQueryOptions(backend, method, args, options))
 }
-
-// ==========================
-// === useBackendMutation ===
-// ==========================
 
 const INVALIDATE_ALL_QUERIES = Symbol('invalidate all queries')
 const INVALIDATION_MAP: Partial<
@@ -266,10 +250,6 @@ export function backendMutationOptions<Method extends MutationMethod>(
     },
   }
 }
-
-// ==================================
-// === useListUserGroupsWithUsers ===
-// ==================================
 
 /** A user group, as well as the users that are a part of the user group. */
 export interface UserGroupInfoWithUsers extends UserGroupInfo {
