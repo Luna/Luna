@@ -1273,11 +1273,10 @@ export default class RemoteBackend extends Backend {
     )
 
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'resolveProjectAssetPath')
+      return await this.throw(response, 'resolveProjectAssetPathBackendError')
     } else {
       const blob = await response.blob()
-      const objUrl = URL.createObjectURL(blob)
-      return objUrl
+      return URL.createObjectURL(blob)
     }
   }
 

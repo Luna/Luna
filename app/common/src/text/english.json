@@ -178,7 +178,7 @@
   "getCustomerPortalUrlBackendError": "Could not get customer portal URL",
   "duplicateLabelError": "This label already exists.",
   "emptyStringError": "This value must not be empty.",
-  "resolveProjectAssetPath": "Could not get asset",
+  "resolveProjectAssetPathBackendError": "Could not get asset",
 
   "directoryAssetType": "folder",
   "directoryDoesNotExistError": "Unable to find directory. Does it exist?",
