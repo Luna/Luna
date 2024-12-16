@@ -27,7 +27,7 @@ class PassManager(
 ) {
   private val logger   = LoggerFactory.getLogger(classOf[PassManager])
   val allPasses        = verifyPassOrdering(passes.flatMap(_.passes))
-  private val reported = new java.util.WeakHashMap[Any, Boolean]()
+  private val reported = new java.util.HashMap[Integer, Boolean]()
 
   /** Computes a valid pass ordering for the compiler.
     *
@@ -173,42 +173,28 @@ class PassManager(
         ) + ":" + ir.showCode()
       }
 
-      val all = ir.preorder()
-      val dup = all
-        .groupBy(identity)
-        .collect { case (x, ys) if ys.lengthCompare(1) > 0 => x }
-        .filter { e =>
-          if (reported.containsKey(e)) {
-            false
-          } else {
-            reported.put(e, true)
+      val all   = ir.preorder()
+      val idMap = new java.util.IdentityHashMap[Any, Boolean]()
+      val duplFound = all.find(e => {
+        if (reported.containsKey(System.identityHashCode(e))) {
+          false
+        } else {
+          if (idMap.containsKey(e)) {
             true
+          } else {
+            idMap.put(e, true)
+            false
           }
         }
-        .toList
-      if (dup.nonEmpty) {
-        logger.error("Duplicates found after " + msg)
-        val map = new java.util.HashMap[IR, java.util.Set[IR]]
+      })
+      if (duplFound.nonEmpty) {
+        reported.put(System.identityHashCode(duplFound.orNull), true)
+        logger.error(
+          "Duplicate found after " + msg + ": " + toString(duplFound.orNull)
+        )
         all.foreach(e => {
-          e.children.foreach(ch => {
-            if (dup.contains(ch)) {
-              var arr = map.get(ch)
-              if (arr == null) {
-                arr = new java.util.HashSet[IR]
-                map.put(ch, arr)
-              }
-              arr.add(e)
-            }
-          })
-        })
-        all.foreach(e => {
-          val refs = map.get(e)
-          if (refs != null && refs.size() > 1) {
-            logger.error("  " + toString(e) + " is referenced by")
-            refs.forEach { p =>
-              logger.error("    " + toString(p))
-            }
-            map.clear()
+          if (e.children().contains(duplFound.orNull)) {
+            logger.error("  referenced by " + toString(e))
           }
         })
       }
