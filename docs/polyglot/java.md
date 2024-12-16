@@ -44,21 +44,21 @@ The dynamic polyglot system is a dynamic runtime lookup for Java objects,
 allowing Enso code to work with them through a runtime reflection-style
 mechanism. It is comprised of the following components:
 
-- `Java.lookup_class : Class.Path -> Maybe Class`: A function that lets users
+- `Java.lookup_class : Text -> Any`: A function that lets users
   look up a class by a given name on the runtime classpath.
-- `Polyglot.instantiate : Class -> Object`: A function that lets users
-  instantiate a class into an object.
 - A whole host of functions on the polyglot type that let you dynamically work
   with object bindings.
 
 An example can be found below:
 
 ```ruby
+from Standard.Base.Polyglot import Java, polyglot
+
 main =
     class = Java.lookup_class "org.enso.example.TestClass"
-    instance = Polyglot.instantiate1 class (x -> x * 2)
+    instance = class.new (x -> x * 2)
     method = Polyglot.get_member instance "callFunctionAndIncrement"
-    Polyglot.execute1 method 10
+    Polyglot.execute method 10
 ```
 
 > The actionables for this section are:
@@ -73,7 +73,7 @@ ecosystem is to download it (including is **transitive dependencies**) from
 libraries. Let's **start from scratch** by creating an _empty Enso project_:
 
 ```bash
-$ bin/enso --new polydemo
+$ bin/ensoup --new polydemo
 $ cd polydemo
 polydemo$ find .
 .
