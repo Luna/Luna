@@ -35,6 +35,7 @@ import * as localBackendModule from '#/services/LocalBackend'
 
 import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
 import {
+  useDeleteAssetsMutation,
   useNewProject,
   useRestoreAssetsMutation,
   useUploadFileWithToastMutation,
@@ -88,6 +89,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
@@ -216,8 +218,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   defaultOpen
                   actionText={`delete the ${asset.type} '${asset.title}' forever`}
                   doDelete={() => {
-                    const ids = new Set([asset.id])
-                    dispatchAssetEvent({ type: AssetEventType.deleteForever, ids })
+                    deleteAssetsMutation.mutate([[asset.id], true])
                   }}
                 />,
               )

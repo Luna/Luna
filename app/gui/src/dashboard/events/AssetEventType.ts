@@ -3,7 +3,6 @@
 /** Possible types of asset state change. */
 enum AssetEventType {
   move = 'move',
-  deleteForever = 'delete-forever',
   download = 'download',
   downloadSelected = 'download-selected',
   removeSelf = 'remove-self',

@@ -8,8 +8,6 @@ import { useStore } from 'zustand'
 
 import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
 
-import AssetEventType from '#/events/AssetEventType'
-
 import {
   canTransferBetweenCategories,
   type Category,
@@ -27,7 +25,6 @@ import * as backendModule from '#/services/Backend'
 
 import Separator from '#/components/styled/Separator'
 import { useDeleteAssetsMutation, useRestoreAssetsMutation } from '#/hooks/backendHooks'
-import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
@@ -73,10 +70,10 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const { getText } = useText()
 
   const isCloud = isCloudCategory(category)
-  const dispatchAssetEvent = useDispatchAssetEvent()
   const selectedKeys = useSelectedKeys()
   const setSelectedKeys = useSetSelectedKeys()
   const driveStore = useDriveStore()
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
 
   const hasPasteData = useStore(driveStore, ({ pasteData }) => {
@@ -99,8 +96,6 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         permissions.tryFindSelfPermission(user, nodeMapRef.current.get(key)?.item.permissions)
           ?.permission === permissions.PermissionAction.own,
     )
-
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
 
   // This is not a React component even though it contains JSX.
   const doDeleteAll = () => {
@@ -192,10 +187,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                     }
                     doDelete={() => {
                       setSelectedKeys(EMPTY_SET)
-                      dispatchAssetEvent({
-                        type: AssetEventType.deleteForever,
-                        ids: selectedKeys,
-                      })
+                      deleteAssetsMutation.mutate([[...selectedKeys], true])
                     }}
                   />,
                 )

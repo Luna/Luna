@@ -52,7 +52,12 @@ import AssetEventType from '#/events/AssetEventType'
 import { useCutAndPaste, type AssetListEvent } from '#/events/assetListEvent'
 import AssetListEventType from '#/events/AssetListEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
-import { backendMutationOptions, useBackendQuery, useUploadFiles } from '#/hooks/backendHooks'
+import {
+  backendMutationOptions,
+  useBackendQuery,
+  useDeleteAssetsMutation,
+  useUploadFiles,
+} from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
@@ -332,6 +337,7 @@ function AssetsTable(props: AssetsTableProps) {
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
 
   const columns = useMemo(
     () =>
@@ -1153,19 +1159,10 @@ function AssetsTable(props: AssetsTableProps) {
         break
       }
       case AssetListEventType.emptyTrash: {
-        if (category.type !== 'trash') {
-          toastAndLog('canOnlyEmptyTrashWhenInTrash')
-        } else if (assetTree.children != null) {
-          const ids = new Set(
-            assetTree.children
-              .map((child) => child.item.id)
-              .filter((id) => !isSpecialReadonlyDirectoryId(id)),
-          )
-          // This is required to prevent an infinite loop.
-          window.setTimeout(() => {
-            dispatchAssetEvent({ type: AssetEventType.deleteForever, ids })
-          })
-        }
+        const ids = (assetTree.children ?? [])
+          .map((child) => child.item.id)
+          .filter((id) => !isSpecialReadonlyDirectoryId(id))
+        deleteAssetsMutation.mutate([ids, true])
         break
       }
       case AssetListEventType.removeSelf: {

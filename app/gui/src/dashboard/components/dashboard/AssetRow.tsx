@@ -467,12 +467,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         }
         break
       }
-      case AssetEventType.deleteForever: {
-        if (event.ids.has(id)) {
-          doDelete(true)
-        }
-        break
-      }
       case AssetEventType.download:
       case AssetEventType.downloadSelected: {
         if (event.type === AssetEventType.downloadSelected ? selected : event.ids.has(asset.id)) {
