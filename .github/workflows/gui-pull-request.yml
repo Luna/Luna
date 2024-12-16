@@ -36,6 +36,7 @@ jobs:
         with:
           files: |
             app/**
+            docs/**/*.md
             package.json
             pnpm-lock.yaml
             pnpm-workspace.yaml
