@@ -1335,6 +1335,10 @@ object Runtime {
       final case class ExpressionNotFound(expressionId: ExpressionId)
           extends SymbolRenameFailed.Error
 
+      @named("symbolRenameFailedSymbolAlreadyExists")
+      final case class SymbolAlreadyExists(val symbol: String)
+          extends SymbolRenameFailed.Error
+
       /** Signals that it was unable to apply edits to the current module contents.
         *
         * @param module the module name

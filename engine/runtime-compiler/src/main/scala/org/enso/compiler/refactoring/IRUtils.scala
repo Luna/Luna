@@ -2,8 +2,9 @@ package org.enso.compiler.refactoring
 
 import org.enso.compiler.core.Implicits.AsMetadata
 import org.enso.compiler.core.{ExternalID, IR, Identifier}
-import org.enso.compiler.core.ir.Name
+import org.enso.compiler.core.ir.{Expression, Name}
 import org.enso.compiler.core.ir.expression.Application
+import org.enso.compiler.core.ir.module.scope.definition.Method
 import org.enso.compiler.data.BindingsMap
 import org.enso.compiler.pass.analyse.DataflowAnalysis
 import org.enso.compiler.pass.resolve.MethodCalls
@@ -29,6 +30,29 @@ trait IRUtils {
       }
     )
     None
+  }
+
+  /** Find definitions with the provided name.
+    *
+    * @param ir the IR where to search the definition
+    * @param name the definition name to look for
+    * @return the list of definitions with the provided name
+    */
+  def findSymbolDefinitions(ir: IR, name: String): Set[IR] = {
+    val builder = Set.newBuilder[IR]
+    IR.preorder(
+      ir,
+      {
+        case expressionBinding: Expression.Binding
+            if expressionBinding.name.name == name =>
+          builder.addOne(expressionBinding)
+        case methodExplicit: Method.Explicit
+            if methodExplicit.methodName.name == name =>
+          builder.addOne(methodExplicit)
+        case _ =>
+      }
+    )
+    builder.result()
   }
 
   /** Find usages of a local defined in the body block.
@@ -63,7 +87,7 @@ trait IRUtils {
     node: Name
   ): Option[Set[Name.Literal]] =
     for {
-      usages <- findDynamicUsages(ir, node)
+      usages <- findDynamicUsages(ir, node.name)
     } yield {
       usages.collect {
         case Application.Prefix(function: Name.Literal, args, _, _, _)
@@ -117,16 +141,16 @@ trait IRUtils {
   /** Find usages of a dynamic dependency in the [[DataflowAnalysis]] metadata.
     *
     * @param ir the syntax tree
-    * @param node the name to look for
+    * @param name the name to look for
     * @return the list of usages of the given name in the `ir`
     */
   private def findDynamicUsages(
     ir: IR,
-    node: Name
+    name: String
   ): Option[Set[IR]] = {
     for {
       metadata <- ir.getMetadata(DataflowAnalysis)
-      key = DataflowAnalysis.DependencyInfo.Type.Dynamic(node.name, None)
+      key = DataflowAnalysis.DependencyInfo.Type.Dynamic(name, None)
       dependents <- metadata.dependents.get(key)
     } yield {
       dependents

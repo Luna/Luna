@@ -58,6 +58,13 @@ final class RefactoringRenameJob(
               )
             )
             Seq()
+          case ex: RefactoringRenameJob.SymbolAlreadyExists =>
+            reply(
+              Api.SymbolRenameFailed(
+                Api.SymbolRenameFailed.SymbolAlreadyExists(ex.symbol)
+              )
+            )
+            Seq()
           case ex: RefactoringRenameJob.FailedToApplyEdits =>
             reply(
               Api.SymbolRenameFailed(
@@ -81,6 +88,11 @@ final class RefactoringRenameJob(
       .findModule(moduleName)
       .orElseThrow(() => new ModuleNotFoundException(moduleName))
     val newSymbolName = MethodNameValidation.normalize(newName)
+    val newSymbolDefs =
+      IRUtils.findSymbolDefinitions(module.getIr, newSymbolName)
+    if (newSymbolDefs.nonEmpty) {
+      throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
+    }
 
     val expression = IRUtils
       .findByExternalId(module.getIr, expressionId)
@@ -178,6 +190,9 @@ object RefactoringRenameJob {
 
   final private class ExpressionNotFound(val expressionId: UUID @ExternalID)
       extends Exception(s"Expression was not found by id [$expressionId].")
+
+  final private class SymbolAlreadyExists(val symbol: String)
+      extends Exception(s"Symbol [$symbol] already exists in scope")
 
   final private class FailedToApplyEdits(val module: String)
       extends Exception(s"Failed to apply edits to module [$module]")
