@@ -1244,3 +1244,15 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
     isSuccess: uploadFileEndMutation.isSuccess,
   }
 }
+
+/** Call "delete" mutations for a list of assets. */
+export function useDeleteAssetsMutation(backend: Backend) {
+  return useMutation({
+    mutationKey: [backend.type, 'deleteAssets'],
+    mutationFn: async ([ids, force]: readonly [ids: readonly AssetId[], force: boolean]) => {
+      return await Promise.allSettled(
+        ids.map((id) => backend.deleteAsset(id, { force }, '(unknown)')),
+      )
+    },
+  })
+}

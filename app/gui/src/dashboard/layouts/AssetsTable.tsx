@@ -851,17 +851,6 @@ function AssetsTable(props: AssetsTableProps) {
       })
   })
 
-  const doDeleteById = useEventCallback(async (assetId: AssetId, forever: boolean = false) => {
-    if (assetId === assetPanelStore.getState().assetPanelProps.item?.id) {
-      resetAssetPanelProps()
-    }
-    const asset = nodeMapRef.current.get(assetId)?.item
-
-    if (asset != null) {
-      return doDelete(asset, forever)
-    }
-  })
-
   const [keyboardSelectedIndex, setKeyboardSelectedIndex] = useState<number | null>(null)
   const mostRecentlySelectedIndexRef = useRef<number | null>(null)
   const selectionStartIndexRef = useRef<number | null>(null)
@@ -1263,24 +1252,6 @@ function AssetsTable(props: AssetsTableProps) {
   const hideColumn = useEventCallback((column: Column) => {
     setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
   })
-
-  const hiddenContextMenu = useMemo(
-    () => (
-      <AssetsTableContextMenu
-        hidden
-        backend={backend}
-        category={category}
-        nodeMapRef={nodeMapRef}
-        rootDirectoryId={rootDirectoryId}
-        event={{ pageX: 0, pageY: 0 }}
-        doCopy={doCopy}
-        doCut={doCut}
-        doPaste={doPaste}
-        doDelete={doDeleteById}
-      />
-    ),
-    [backend, category, rootDirectoryId, doCopy, doCut, doPaste, doDeleteById],
-  )
 
   const onDropzoneDragOver = (event: DragEvent<Element>) => {
     const payload = ASSET_ROWS.lookup(event)
@@ -1784,7 +1755,6 @@ function AssetsTable(props: AssetsTableProps) {
               doCopy={doCopy}
               doCut={doCut}
               doPaste={doPaste}
-              doDelete={doDeleteById}
             />,
           )
         }
@@ -1954,7 +1924,19 @@ function AssetsTable(props: AssetsTableProps) {
                   ref: rootRef,
                 })}
               >
-                {!hidden && hiddenContextMenu}
+                {!hidden && (
+                  <AssetsTableContextMenu
+                    hidden
+                    backend={backend}
+                    category={category}
+                    nodeMapRef={nodeMapRef}
+                    rootDirectoryId={rootDirectoryId}
+                    event={{ pageX: 0, pageY: 0 }}
+                    doCopy={doCopy}
+                    doCut={doCut}
+                    doPaste={doPaste}
+                  />
+                )}
                 {!hidden && (
                   <SelectionBrush
                     targetRef={rootRef}

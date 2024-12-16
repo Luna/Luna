@@ -26,6 +26,7 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import Separator from '#/components/styled/Separator'
+import { useDeleteAssetsMutation } from '#/hooks/backendHooks'
 import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -54,7 +55,6 @@ export interface AssetsTableContextMenuProps {
     newParentKey: backendModule.DirectoryId,
     newParentId: backendModule.DirectoryId,
   ) => void
-  readonly doDelete: (assetId: backendModule.AssetId, forever?: boolean) => Promise<void>
 }
 
 /**
@@ -66,7 +66,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   'use no memo'
   const { hidden = false, backend, category } = props
   const { nodeMapRef, event, rootDirectoryId } = props
-  const { doCopy, doCut, doPaste, doDelete } = props
+  const { doCopy, doCut, doPaste } = props
 
   const { user } = useFullUserSession()
   const { setModal, unsetModal } = useSetModal()
@@ -99,15 +99,15 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
           ?.permission === permissions.PermissionAction.own,
     )
 
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
+
   // This is not a React component even though it contains JSX.
   const doDeleteAll = () => {
     const deleteAll = () => {
       unsetModal()
       setSelectedKeys(EMPTY_SET)
 
-      for (const key of selectedKeys) {
-        void doDelete(key, false)
-      }
+      deleteAssetsMutation.mutate([[...selectedKeys], false])
     }
     if (
       isCloud &&
