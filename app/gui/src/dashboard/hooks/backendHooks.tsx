@@ -50,6 +50,7 @@ import {
 } from '#/services/Backend'
 import LocalBackend from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
+import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
@@ -1255,9 +1256,20 @@ export function useDeleteAssetsMutation(backend: Backend) {
   return useMutation({
     mutationKey: [backend.type, 'deleteAssets'],
     mutationFn: async ([ids, force]: readonly [ids: readonly AssetId[], force: boolean]) => {
-      return await Promise.allSettled(
+      const results = await Promise.allSettled(
         ids.map((id) => backend.deleteAsset(id, { force }, '(unknown)')),
       )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: ids.length,
+        })
+      }
+      return null
     },
     meta: {
       invalidates: [
