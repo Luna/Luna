@@ -30,7 +30,9 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -82,7 +84,7 @@ public final class EnsoContext {
 
   private final EnsoLanguage language;
   private final Env environment;
-  private final HostClassLoader hostClassLoader = new HostClassLoader();
+  private final Map<LibraryName, HostClassLoader> hostClassLoaders = new HashMap<>();
   private final boolean assertionsEnabled;
   private final boolean isPrivateCheckDisabled;
   private final boolean isStaticTypeAnalysisEnabled;
@@ -297,7 +299,7 @@ public final class EnsoContext {
     packageRepository.shutdown();
     guestJava = null;
     topScope = null;
-    hostClassLoader.close();
+    hostClassLoaders.values().forEach(HostClassLoader::close);
     EnsoParser.freeAll();
   }
 
@@ -466,10 +468,16 @@ public final class EnsoContext {
    * Modifies the classpath to use to lookup {@code polyglot java} imports.
    *
    * @param file the file to register
+   * @param pkg Package the file belongs to
    */
   @TruffleBoundary
-  public void addToClassPath(TruffleFile file) {
+  public void addToClassPath(TruffleFile file, Package<TruffleFile> pkg) {
     if (findGuestJava() == null) {
+      var hostClassLoader = hostClassLoaders.get(pkg.libraryName());
+      if (hostClassLoader == null) {
+        hostClassLoader = new HostClassLoader(pkg);
+        hostClassLoaders.put(pkg.libraryName(), hostClassLoader);
+      }
       try {
         var url = file.toUri().toURL();
         hostClassLoader.add(url);
@@ -589,16 +597,32 @@ public final class EnsoContext {
     return getBuiltins().error().makeMissingPolyglotImportError(className);
   }
 
+  /**
+   * Tries to find a Java class by its fully qualified name in all the {@link HostClassLoader host
+   * class loaders}.
+   */
   private Object lookupHostSymbol(String fqn)
       throws ClassNotFoundException, UnknownIdentifierException, UnsupportedMessageException {
-    try {
-      if (findGuestJava() == null) {
-        return environment.asHostSymbol(hostClassLoader.loadClass(fqn));
-      } else {
-        return InteropLibrary.getUncached().readMember(findGuestJava(), fqn);
+    if (findGuestJava() == null) {
+      Class<?> clazz = null;
+      ClassNotFoundException lastEx = null;
+      for (var hostClassLoader : hostClassLoaders.values()) {
+        try {
+          clazz = hostClassLoader.loadClass(fqn);
+          if (clazz != null) {
+            break;
+          }
+        } catch (ClassNotFoundException e) {
+          lastEx = e;
+          continue;
+        }
       }
-    } catch (Error e) {
-      throw new ClassNotFoundException("Error loading " + fqn, e);
+      if (clazz == null) {
+        throw new ClassNotFoundException("Error loading host symbol " + fqn, lastEx);
+      }
+      return environment.asHostSymbol(clazz);
+    } else {
+      return InteropLibrary.getUncached().readMember(findGuestJava(), fqn);
     }
   }
 

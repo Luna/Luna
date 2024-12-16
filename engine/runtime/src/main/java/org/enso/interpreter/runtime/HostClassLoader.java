@@ -1,9 +1,12 @@
 package org.enso.interpreter.runtime;
 
+import com.oracle.truffle.api.TruffleFile;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.enso.pkg.Package;
 import org.graalvm.polyglot.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,12 +28,16 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
   // module layer's class loader.
   private static final ClassLoader polyglotClassLoader = Context.class.getClassLoader();
 
+  private final Package<TruffleFile> pkg;
+
   // polyglotClassLoader will be used only iff `org.enso.runtime` module is not in the
   // boot module layer.
   private static final boolean isRuntimeModInBootLayer;
 
-  public HostClassLoader() {
+  public HostClassLoader(Package<TruffleFile> pkg) {
     super(new URL[0]);
+    this.pkg = pkg;
+    assert pkg.polyglotDir().exists();
   }
 
   static {
@@ -84,5 +91,10 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
   @Override
   public void close() {
     loadedClasses.clear();
+  }
+
+  @Override
+  public String toString() {
+    return "HostClassLoader(" + pkg.libraryName() + ")";
   }
 }
