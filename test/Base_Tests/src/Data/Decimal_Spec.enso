@@ -484,7 +484,7 @@ add_specs suite_builder =
             (Decimal.from_integer -29388920982834 . subtract (Decimal.from_integer 842820) (Math_Context.new 7)) . should_equal (Decimal.from_integer -29388920000000)
             (Decimal.new "-8273762787.3535345" . subtract (Decimal.new "76287273.23434535") (Math_Context.new 10)) . should_equal (Decimal.new "-8350050061")
 
-            (Decimal.from_integer 7297927982888383 . multiply  (Decimal.from_integer 828737) (Math_Context.new 6)) . should_equal (Decimal.from_integer 6048060000000000000000 )
+            (Decimal.from_integer 7297927982888383 . multiply  (Decimal.from_integer 828737) (Math_Context.new 6)) . should_equal (Decimal.from_integer 6048060000000000000000)
             (Decimal.new "893872388.3535345" . multiply  (Decimal.new "72374727737.23434535") (Math_Context.new 14)) . should_equal (Decimal.new "64693770738918000000")
 
             (Decimal.new "909678645268840" . divide (Decimal.new "28029830") (Math_Context.new 6)) . should_equal (Decimal.new "32453900 ")
