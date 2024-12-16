@@ -10,9 +10,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Predicate;
@@ -61,6 +63,7 @@ public class LRUCache<M> {
 
   /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
+  private final Map<String, Set<Integer>> opened = new HashMap<>();
 
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
@@ -109,7 +112,7 @@ public class LRUCache<M> {
       // a rare case so it seems unnecessary.
       logger.log(
           Level.WARNING,
-          "Error in cache file handling; will re-execute without caching: {}",
+          "Error in cache file handling; will re-execute without caching: {0}",
           e.getMessage());
       Item<M> rerequested = itemBuilder.buildItem();
       return new CacheResult<>(rerequested.stream(), rerequested.metadata());
@@ -176,7 +179,23 @@ public class LRUCache<M> {
     }
 
     markCacheEntryUsed(cacheKey);
-    return new CacheResult<>(new FileInputStream(cacheFile), cache.get(cacheKey).metadata());
+    var fis = new FileInputStream(cacheFile) {
+      static int serial = 0;
+      int s;
+      {
+        s = serial;
+        serial++;
+        opened.computeIfAbsent(cacheKey, (k) -> new HashSet<>()).add(s);
+        System.out.println("AAA Opening " + cacheKey + " " + s);
+      }
+      public void close() throws IOException {
+        super.close();
+        assert opened.containsKey(cacheKey) && opened.get(cacheKey).contains(s);
+        opened.get(cacheKey).remove(s);
+        System.out.println("AAA Closing " + cacheKey + " " + s);
+      }
+    };
+    return new CacheResult<>(fis, cache.get(cacheKey).metadata());
   }
 
   /**
@@ -263,6 +282,7 @@ public class LRUCache<M> {
   /** Remove a cache file. */
   private void removeCacheFile(String key, CacheEntry<M> cacheEntry) {
     boolean removed = cacheEntry.responseData.delete();
+    System.out.println("AAA Deleting " + key + " " + opened.get(key).isEmpty() + " " + opened.get(key));
     if (!removed) {
       logger.log(Level.WARNING, "Unable to delete cache file for key {0}", key);
     }
