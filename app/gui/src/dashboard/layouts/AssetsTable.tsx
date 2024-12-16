@@ -52,12 +52,7 @@ import AssetEventType from '#/events/AssetEventType'
 import { useCutAndPaste, type AssetListEvent } from '#/events/assetListEvent'
 import AssetListEventType from '#/events/AssetListEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
-import {
-  backendMutationOptions,
-  useBackendQuery,
-  useDeleteAssetsMutation,
-  useUploadFiles,
-} from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery, useUploadFiles } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
@@ -122,7 +117,6 @@ import {
   type LabelName,
   type ProjectAsset,
 } from '#/services/Backend'
-import { isSpecialReadonlyDirectoryId } from '#/services/RemoteBackend'
 import type { AssetQueryKey } from '#/utilities/AssetQuery'
 import AssetQuery from '#/utilities/AssetQuery'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
@@ -337,7 +331,6 @@ function AssetsTable(props: AssetsTableProps) {
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
 
   const columns = useMemo(
     () =>
@@ -1156,13 +1149,6 @@ function AssetsTable(props: AssetsTableProps) {
           void doDelete(asset, false)
         }
 
-        break
-      }
-      case AssetListEventType.emptyTrash: {
-        const ids = (assetTree.children ?? [])
-          .map((child) => child.item.id)
-          .filter((id) => !isSpecialReadonlyDirectoryId(id))
-        deleteAssetsMutation.mutate([ids, true])
         break
       }
     }

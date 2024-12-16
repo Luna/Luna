@@ -20,7 +20,6 @@ interface AssetListEvents {
   readonly copy: AssetListCopyEvent
   readonly move: AssetListMoveEvent
   readonly delete: AssetListDeleteEvent
-  readonly emptyTrash: AssetListEmptyTrashEvent
 }
 
 /** A type to ensure that {@link AssetListEvents} contains every {@link AssetListEventType}. */
@@ -65,9 +64,6 @@ interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move>
 interface AssetListDeleteEvent extends AssetListBaseEvent<AssetListEventType.delete> {
   readonly key: backend.AssetId
 }
-
-/** A signal to permanently delete all files in Trash. */
-type AssetListEmptyTrashEvent = AssetListBaseEvent<AssetListEventType.emptyTrash>
 
 /** Every possible type of asset list event. */
 export type AssetListEvent = AssetListEvents[keyof AssetListEvents]

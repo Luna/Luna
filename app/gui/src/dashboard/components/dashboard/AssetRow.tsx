@@ -549,19 +549,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         }
         break
       }
-      case AssetEventType.removeSelf: {
-        // This is not triggered from the asset list, so it uses `item.id` instead of `key`.
-        if (event.id === asset.id) {
-          await createPermissionMutation.mutateAsync([
-            {
-              action: null,
-              resourceId: asset.id,
-              actorsIds: [user.userId],
-            },
-          ])
-        }
-        break
-      }
       case AssetEventType.temporarilyAddLabels: {
         const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
         setRowState((oldRowState) =>

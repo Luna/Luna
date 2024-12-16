@@ -6,7 +6,6 @@ enum AssetListEventType {
   copy = 'copy',
   move = 'move',
   delete = 'delete',
-  emptyTrash = 'empty-trash',
 }
 
 export default AssetListEventType
