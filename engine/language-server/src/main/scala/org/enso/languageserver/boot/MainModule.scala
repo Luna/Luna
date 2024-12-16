@@ -320,8 +320,10 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
 
   val extraEngineOptions = new util.HashMap[String, String]()
   if (TruffleOptions.AOT) {
+    log.trace("Running Language Server in AOT mode")
     extraEngineOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   } else {
+    log.trace("Running Language Server in non-AOT mode")
     extraOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   }
 
