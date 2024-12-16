@@ -4,7 +4,11 @@ import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
 import AssetEventType from '#/events/AssetEventType'
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import {
+  backendMutationOptions,
+  useBackendQuery,
+  useDeleteAssetsMutation,
+} from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
@@ -201,7 +205,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
   const backend = useBackend(currentCategory)
   const { user } = useFullUserSession()
   const { data: organization = null } = useBackendQuery(remoteBackend, 'getOrganization', [])
-  const deleteAssetMutation = useMutation(backendMutationOptions(backend, 'deleteAsset'))
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const updateAssetMutation = useMutation(backendMutationOptions(backend, 'updateAsset'))
   const dispatchAssetEvent = useDispatchAssetEvent()
   return useEventCallback(
@@ -218,13 +222,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
         case 'team':
         case 'user': {
           if (to.type === 'trash') {
-            if (from === currentCategory) {
-              dispatchAssetEvent({ type: AssetEventType.delete, ids: new Set(keys) })
-            } else {
-              for (const id of keys) {
-                deleteAssetMutation.mutate([id, { force: false }, '(unknown)'])
-              }
-            }
+            deleteAssetsMutation.mutate([[...keys], false])
           } else if (to.type === 'cloud' || to.type === 'team' || to.type === 'user') {
             newParentId ??=
               to.type === 'cloud' ?

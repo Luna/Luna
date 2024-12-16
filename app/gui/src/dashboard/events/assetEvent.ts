@@ -3,10 +3,6 @@ import type AssetEventType from '#/events/AssetEventType'
 
 import type * as backend from '#/services/Backend'
 
-// ==================
-// === AssetEvent ===
-// ==================
-
 /** Properties common to all asset state change events. */
 interface AssetBaseEvent<Type extends AssetEventType> {
   readonly type: Type
@@ -15,7 +11,6 @@ interface AssetBaseEvent<Type extends AssetEventType> {
 /** All possible events. */
 interface AssetEvents {
   readonly move: AssetMoveEvent
-  readonly delete: AssetDeleteEvent
   readonly deleteForever: AssetDeleteForeverEvent
   readonly restore: AssetRestoreEvent
   readonly download: AssetDownloadEvent
@@ -41,11 +36,6 @@ export interface AssetMoveEvent extends AssetBaseEvent<AssetEventType.move> {
   readonly ids: ReadonlySet<backend.AssetId>
   readonly newParentKey: backend.DirectoryId
   readonly newParentId: backend.DirectoryId
-}
-
-/** A signal to delete assets. */
-export interface AssetDeleteEvent extends AssetBaseEvent<AssetEventType.delete> {
-  readonly ids: ReadonlySet<backend.AssetId>
 }
 
 /** A signal to delete assets forever. */

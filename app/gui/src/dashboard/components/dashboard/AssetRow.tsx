@@ -24,7 +24,6 @@ import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
 import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
-import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
 import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
@@ -301,7 +300,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
@@ -351,7 +349,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const toastAndLog = useToastAndLog()
 
   const uploadFiles = useUploadFiles(backend, category)
-  const createPermissionMutation = useMutation(backendMutationOptions(backend, 'createPermission'))
+  const createPermissionMutation = useMutation(
+    backendMutationOptions(backend, 'createPermission', {
+      meta: {
+        invalidates: [[backend.type, 'listDirectory', asset.parentId]],
+        awaitInvalidates: true,
+      },
+    }),
+  )
   const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
   const insertionVisibility = useStore(driveStore, (driveState) =>
@@ -462,12 +467,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         }
         break
       }
-      case AssetEventType.delete: {
-        if (event.ids.has(id)) {
-          doDelete(false)
-        }
-        break
-      }
       case AssetEventType.deleteForever: {
         if (event.ids.has(id)) {
           doDelete(true)
@@ -564,19 +563,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       }
       case AssetEventType.removeSelf: {
         // This is not triggered from the asset list, so it uses `item.id` instead of `key`.
-        if (event.id === asset.id && user.isEnabled) {
-          try {
-            await createPermissionMutation.mutateAsync([
-              {
-                action: null,
-                resourceId: asset.id,
-                actorsIds: [user.userId],
-              },
-            ])
-            dispatchAssetListEvent({ type: AssetListEventType.delete, key: id })
-          } catch (error) {
-            toastAndLog(null, error)
-          }
+        if (event.id === asset.id) {
+          await createPermissionMutation.mutateAsync([
+            {
+              action: null,
+              resourceId: asset.id,
+              actorsIds: [user.userId],
+            },
+          ])
         }
         break
       }
