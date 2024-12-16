@@ -92,13 +92,20 @@ export function useAssetTree(options: UseAssetTreeOptions) {
     useMemo(
       () => ({
         queryKey: [backend.type, 'refetchListDirectory'],
-        queryFn: () =>
-          queryClient
-            .refetchQueries({
-              queryKey: [backend.type, 'listDirectory'],
-              type: 'active',
-            })
-            .then(() => null),
+        queryFn: async () => {
+          const anyMatchingMutation = queryClient
+            .getMutationCache()
+            .find({ mutationKey: [backend.type], status: 'pending' })
+          if (anyMatchingMutation) {
+            // A mutation is in flight. Skip this re-fetch.
+            return null
+          }
+          await queryClient.refetchQueries({
+            queryKey: [backend.type, 'listDirectory'],
+            type: 'active',
+          })
+          return null
+        },
         refetchInterval:
           enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
         refetchOnMount: 'always',
