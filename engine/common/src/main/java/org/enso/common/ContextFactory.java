@@ -235,17 +235,20 @@ public final class ContextFactory {
           .option("java.UseBindingsLoader", "true")
           .allowCreateThread(true);
     }
-    if (TruffleOptions.AOT) {
-      // In AOT mode one must not use a shared engine; the latter causes issues when initializing
-      // message transport - it is set to `null`.
-      var eng =
-          Engine.newBuilder()
-              .allowExperimentalOptions(true)
-              .serverTransport(messageTransport)
-              .options(engineOptions);
-      builder.engine(eng.build());
-    } else if (messageTransport != null) {
-      builder.serverTransport(messageTransport);
+
+    if (messageTransport != null) {
+      if (TruffleOptions.AOT) {
+        // In AOT mode one must not use a shared engine; the latter causes issues when initializing
+        // message transport - it is set to `null`.
+        var eng =
+            Engine.newBuilder()
+                .allowExperimentalOptions(true)
+                .serverTransport(messageTransport)
+                .options(engineOptions);
+        builder.engine(eng.build());
+      } else {
+        builder.serverTransport(messageTransport);
+      }
     }
 
     var ctx = builder.build();
