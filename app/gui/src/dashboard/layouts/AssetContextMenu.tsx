@@ -34,7 +34,11 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 
 import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
-import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
+import {
+  useNewProject,
+  useRestoreAssetsMutation,
+  useUploadFileWithToastMutation,
+} from '#/hooks/backendHooks'
 import { usePasteData } from '#/providers/DriveProvider'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { normalizePath } from '#/utilities/fileInfo'
@@ -84,6 +88,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
+  const restoreAssetsMutation = useRestoreAssetsMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
   const isCloud = categoryModule.isCloudCategory(category)
@@ -198,7 +203,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             action="undelete"
             label={getText('restoreFromTrashShortcut')}
             doAction={() => {
-              dispatchAssetEvent({ type: AssetEventType.restore, ids: new Set([asset.id]) })
+              restoreAssetsMutation.mutate([asset.id])
             }}
           />
           <ContextMenuEntry

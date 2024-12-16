@@ -12,7 +12,6 @@ interface AssetBaseEvent<Type extends AssetEventType> {
 interface AssetEvents {
   readonly move: AssetMoveEvent
   readonly deleteForever: AssetDeleteForeverEvent
-  readonly restore: AssetRestoreEvent
   readonly download: AssetDownloadEvent
   readonly downloadSelected: AssetDownloadSelectedEvent
   readonly removeSelf: AssetRemoveSelfEvent
@@ -40,11 +39,6 @@ export interface AssetMoveEvent extends AssetBaseEvent<AssetEventType.move> {
 
 /** A signal to delete assets forever. */
 export interface AssetDeleteForeverEvent extends AssetBaseEvent<AssetEventType.deleteForever> {
-  readonly ids: ReadonlySet<backend.AssetId>
-}
-
-/** A signal to restore assets from trash. */
-export interface AssetRestoreEvent extends AssetBaseEvent<AssetEventType.restore> {
   readonly ids: ReadonlySet<backend.AssetId>
 }
 

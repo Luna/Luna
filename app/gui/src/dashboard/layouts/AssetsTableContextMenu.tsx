@@ -26,7 +26,7 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import Separator from '#/components/styled/Separator'
-import { useDeleteAssetsMutation } from '#/hooks/backendHooks'
+import { useDeleteAssetsMutation, useRestoreAssetsMutation } from '#/hooks/backendHooks'
 import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -77,6 +77,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const selectedKeys = useSelectedKeys()
   const setSelectedKeys = useSetSelectedKeys()
   const driveStore = useDriveStore()
+  const restoreAssetsMutation = useRestoreAssetsMutation(backend)
 
   const hasPasteData = useStore(driveStore, ({ pasteData }) => {
     const effectivePasteData =
@@ -167,7 +168,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
             label={getText('restoreAllFromTrashShortcut')}
             doAction={() => {
               unsetModal()
-              dispatchAssetEvent({ type: AssetEventType.restore, ids: selectedKeys })
+              restoreAssetsMutation.mutate([...selectedKeys])
             }}
           />
           {isCloud && (

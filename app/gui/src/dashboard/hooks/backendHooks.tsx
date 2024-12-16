@@ -1280,3 +1280,30 @@ export function useDeleteAssetsMutation(backend: Backend) {
     },
   })
 }
+
+/** Call "restore" mutations for a list of assets. */
+export function useRestoreAssetsMutation(backend: Backend) {
+  return useMutation({
+    mutationKey: [backend.type, 'deleteAssets'],
+    mutationFn: async (ids: readonly AssetId[]) => {
+      const results = await Promise.allSettled(
+        ids.map((id) => backend.undoDeleteAsset(id, '(unknown)')),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: ids.length,
+        })
+      }
+      return null
+    },
+    meta: {
+      invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
+    },
+  })
+}

@@ -276,7 +276,6 @@ export interface AssetsTableState {
   readonly doCut: () => void
   readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
   readonly doDelete: (item: AnyAsset, forever: boolean) => Promise<void>
-  readonly doRestore: (item: AnyAsset) => Promise<void>
   readonly doMove: (newParentKey: DirectoryId, item: AnyAsset) => Promise<void>
 }
 
@@ -372,9 +371,6 @@ function AssetsTable(props: AssetsTableProps) {
   )
   const deleteAssetMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'deleteAsset'), [backend]),
-  )
-  const undoDeleteAssetMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'undoDeleteAsset'), [backend]),
   )
   const updateAssetMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'updateAsset'), [backend]),
@@ -1239,16 +1235,6 @@ function AssetsTable(props: AssetsTableProps) {
     }
   })
 
-  const doRestore = useEventCallback(async (asset: AnyAsset) => {
-    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
-      resetAssetPanelProps()
-    }
-
-    return undoDeleteAssetMutation.mutateAsync([asset.id, asset.title]).catch((error) => {
-      toastAndLog('restoreAssetError', error, asset.title)
-    })
-  })
-
   const hideColumn = useEventCallback((column: Column) => {
     setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
   })
@@ -1296,7 +1282,6 @@ function AssetsTable(props: AssetsTableProps) {
       doCut,
       doPaste,
       doDelete,
-      doRestore,
       doMove,
     }),
     [
@@ -1309,7 +1294,6 @@ function AssetsTable(props: AssetsTableProps) {
       doCut,
       doPaste,
       doDelete,
-      doRestore,
       doMove,
       hideColumn,
       setQuery,

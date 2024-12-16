@@ -4,7 +4,6 @@
 enum AssetEventType {
   move = 'move',
   deleteForever = 'delete-forever',
-  restore = 'restore',
   download = 'download',
   downloadSelected = 'download-selected',
   removeSelf = 'remove-self',

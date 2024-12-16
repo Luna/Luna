@@ -280,7 +280,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
-  const { doRestore, doMove, category, rootDirectoryId, backend } = state
+  const { doMove, category, rootDirectoryId, backend } = state
 
   const driveStore = useDriveStore()
   const queryClient = useQueryClient()
@@ -470,12 +470,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       case AssetEventType.deleteForever: {
         if (event.ids.has(id)) {
           doDelete(true)
-        }
-        break
-      }
-      case AssetEventType.restore: {
-        if (event.ids.has(id)) {
-          await doRestore(asset)
         }
         break
       }
