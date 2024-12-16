@@ -441,7 +441,7 @@ impl JobArchetype for UploadIde {
             "ide upload --backend-source release --backend-release ${{env.ENSO_RELEASE_ID}} --sign-artifacts",
         )
         .cleaning(RELEASE_CLEANING_POLICY)
-        .customize(with_packaging_steps(target.0))
+        .customize(with_packaging_steps(target.0, job::PackagingTarget::Release))
         .build_job("Build IDE", target)
     }
 }
