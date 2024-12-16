@@ -86,6 +86,15 @@ pub mod env {
 
         /// The Google Analytics tag to which Google Analytics events should be sent.
         ENSO_CLOUD_GOOGLE_ANALYTICS_TAG, String;
+
+        /// The authentication token for pushing source maps to Sentry.
+        SENTRY_AUTH_TOKEN, String;
+
+        /// The Sentry organization to push the source maps to.
+        ENSO_CLOUD_SENTRY_ORGANIZATION, String;
+
+        /// The Sentry project to push the source maps to.
+        ENSO_CLOUD_SENTRY_PROJECT, String;
     }
 
     // GUI-specific environment variables

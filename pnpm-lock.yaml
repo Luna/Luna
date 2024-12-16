@@ -184,6 +184,9 @@ importers:
       '@sentry/react':
         specifier: ^7.74.0
         version: 7.118.0(react@18.3.1)
+      '@sentry/vite-plugin':
+        specifier: ^2.22.7
+        version: 2.22.7
       '@stripe/react-stripe-js':
         specifier: ^2.7.1
         version: 2.7.2(@stripe/stripe-js@3.5.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -397,7 +400,7 @@ importers:
         version: 3.25.0(react@18.3.1)
       '@storybook/addon-essentials':
         specifier: ^8.4.2
-        version: 8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))
+        version: 8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)
       '@storybook/addon-interactions':
         specifier: ^8.4.2
         version: 8.4.2(storybook@8.4.2(prettier@3.3.2))
@@ -412,7 +415,7 @@ importers:
         version: 8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)
       '@storybook/react-vite':
         specifier: ^8.4.2
-        version: 8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.24.0)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))
+        version: 8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.24.0)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(webpack-sources@3.2.3)
       '@storybook/test':
         specifier: ^8.4.2
         version: 8.4.2(storybook@8.4.2(prettier@3.3.2))
@@ -421,7 +424,7 @@ importers:
         version: 8.4.2(storybook@8.4.2(prettier@3.3.2))(vue@3.5.2(typescript@5.5.3))
       '@storybook/vue3-vite':
         specifier: ^8.4.2
-        version: 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(vue@3.5.2(typescript@5.5.3))
+        version: 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(vue@3.5.2(typescript@5.5.3))(webpack-sources@3.2.3)
       '@tanstack/react-query-devtools':
         specifier: 5.45.1
         version: 5.45.1(@tanstack/react-query@5.55.0(react@18.3.1))(react@18.3.1)
@@ -2729,9 +2732,63 @@ packages:
     resolution: {integrity: sha512-dERAshKlQLrBscHSarhHyUeGsu652bDTUN1FK0m4e3X48M3I5/s+0N880Qjpe5MprNLcINlaIgdQ9jkisvxjfw==}
     engines: {node: '>=8'}
 
+  '@sentry/babel-plugin-component-annotate@2.22.7':
+    resolution: {integrity: sha512-aa7XKgZMVl6l04NY+3X7BP7yvQ/s8scn8KzQfTLrGRarziTlMGrsCOBQtCNWXOPEbtxAIHpZ9dsrAn5EJSivOQ==}
+    engines: {node: '>= 14'}
+
   '@sentry/browser@7.118.0':
     resolution: {integrity: sha512-8onDOFV1VLEoBuqA5yaJeR3FF1JNuxr5C7p1oN3OwY724iTVqQnOLmZKZaSnHV3RkY67wKDGQkQIie14sc+42g==}
     engines: {node: '>=8'}
+
+  '@sentry/bundler-plugin-core@2.22.7':
+    resolution: {integrity: sha512-ouQh5sqcB8vsJ8yTTe0rf+iaUkwmeUlGNFi35IkCFUQlWJ22qS6OfvNjOqFI19e6eGUXks0c/2ieFC4+9wJ+1g==}
+    engines: {node: '>= 14'}
+
+  '@sentry/cli-darwin@2.39.1':
+    resolution: {integrity: sha512-kiNGNSAkg46LNGatfNH5tfsmI/kCAaPA62KQuFZloZiemTNzhy9/6NJP8HZ/GxGs8GDMxic6wNrV9CkVEgFLJQ==}
+    engines: {node: '>=10'}
+    os: [darwin]
+
+  '@sentry/cli-linux-arm64@2.39.1':
+    resolution: {integrity: sha512-5VbVJDatolDrWOgaffsEM7znjs0cR8bHt9Bq0mStM3tBolgAeSDHE89NgHggfZR+DJ2VWOy4vgCwkObrUD6NQw==}
+    engines: {node: '>=10'}
+    cpu: [arm64]
+    os: [linux, freebsd]
+
+  '@sentry/cli-linux-arm@2.39.1':
+    resolution: {integrity: sha512-DkENbxyRxUrfLnJLXTA4s5UL/GoctU5Cm4ER1eB7XN7p9WsamFJd/yf2KpltkjEyiTuplv0yAbdjl1KX3vKmEQ==}
+    engines: {node: '>=10'}
+    cpu: [arm]
+    os: [linux, freebsd]
+
+  '@sentry/cli-linux-i686@2.39.1':
+    resolution: {integrity: sha512-pXWVoKXCRrY7N8vc9H7mETiV9ZCz+zSnX65JQCzZxgYrayQPJTc+NPRnZTdYdk5RlAupXaFicBI2GwOCRqVRkg==}
+    engines: {node: '>=10'}
+    cpu: [x86, ia32]
+    os: [linux, freebsd]
+
+  '@sentry/cli-linux-x64@2.39.1':
+    resolution: {integrity: sha512-IwayNZy+it7FWG4M9LayyUmG1a/8kT9+/IEm67sT5+7dkMIMcpmHDqL8rWcPojOXuTKaOBBjkVdNMBTXy0mXlA==}
+    engines: {node: '>=10'}
+    cpu: [x64]
+    os: [linux, freebsd]
+
+  '@sentry/cli-win32-i686@2.39.1':
+    resolution: {integrity: sha512-NglnNoqHSmE+Dz/wHeIVRnV2bLMx7tIn3IQ8vXGO5HWA2f8zYJGktbkLq1Lg23PaQmeZLPGlja3gBQfZYSG10Q==}
+    engines: {node: '>=10'}
+    cpu: [x86, ia32]
+    os: [win32]
+
+  '@sentry/cli-win32-x64@2.39.1':
+    resolution: {integrity: sha512-xv0R2CMf/X1Fte3cMWie1NXuHmUyQPDBfCyIt6k6RPFPxAYUgcqgMPznYwVMwWEA1W43PaOkSn3d8ZylsDaETw==}
+    engines: {node: '>=10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@sentry/cli@2.39.1':
+    resolution: {integrity: sha512-JIb3e9vh0+OmQ0KxmexMXg9oZsR/G7HMwxt5BUIKAXZ9m17Xll4ETXTRnRUBT3sf7EpNGAmlQk1xEmVN9pYZYQ==}
+    engines: {node: '>= 10'}
+    hasBin: true
 
   '@sentry/core@7.118.0':
     resolution: {integrity: sha512-ol0xBdp3/K11IMAYSQE0FMxBOOH9hMsb/rjxXWe0hfM5c72CqYWL3ol7voPci0GELJ5CZG+9ImEU1V9r6gK64g==}
@@ -2758,6 +2815,10 @@ packages:
   '@sentry/utils@7.118.0':
     resolution: {integrity: sha512-43qItc/ydxZV1Zb3Kn2M54RwL9XXFa3IAYBO8S82Qvq5YUYmU2AmJ1jgg7DabXlVSWgMA1HntwqnOV3JLaEnTQ==}
     engines: {node: '>=8'}
+
+  '@sentry/vite-plugin@2.22.7':
+    resolution: {integrity: sha512-sYRNiNm4toQGq2BfZSJPdw36em3eQaLu+3NTFpA7Hl4g3Sp2Rt3CYObnW5bxlFEruRhxzvdyB383N9OefVZ6KA==}
+    engines: {node: '>= 14'}
 
   '@shaderfrog/glsl-parser@2.1.5':
     resolution: {integrity: sha512-fw7U8Y7BBV9NZVLs7lyM8lpQ9YUK7XBNJjN4HhkY3nqkKpSiIQ62PVtPYtW7uZME5072QXQNQBhHJzG3t+NH0w==}
@@ -4597,6 +4658,10 @@ packages:
   dotenv-expand@5.1.0:
     resolution: {integrity: sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==}
 
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
+
   dotenv@9.0.2:
     resolution: {integrity: sha512-I9OvvrHp4pIARv4+x9iuewrWycX6CcZtoAu1XrzPxc5UygMJXJZYmBsynku8IkrJwgypE5DGNjDPmPRhDCptUg==}
     engines: {node: '>=10'}
@@ -5163,6 +5228,10 @@ packages:
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
     deprecated: Glob versions prior to v9 are no longer supported
+
+  glob@9.3.5:
+    resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
+    engines: {node: '>=16 || 14 >=14.17'}
 
   global-agent@3.0.0:
     resolution: {integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==}
@@ -6033,6 +6102,10 @@ packages:
   magic-string@0.30.11:
     resolution: {integrity: sha512-+Wri9p0QHMy+545hKww7YAu5NyzF8iomPL/RQazugQ9+Ez4Ic3mERMd8ZTX5rfK944j+560ZJi8iAwgak1Ac7A==}
 
+  magic-string@0.30.8:
+    resolution: {integrity: sha512-ISQTe55T2ao7XtlAStud6qwYPZjE4GK1S/BeVPus4jrq6JuOnQ00YKQC581RWhR122W7msZV263KzVeLoqidyQ==}
+    engines: {node: '>=12'}
+
   magicast@0.3.4:
     resolution: {integrity: sha512-TyDF/Pn36bBji9rWKHlZe+PZb6Mx5V8IHCSxk7X4aljM4e/vyDvZZYwHewdVaqiA0nb3ghfHU/6AUpDxWoER2Q==}
 
@@ -6143,6 +6216,10 @@ packages:
   minimatch@5.1.6:
     resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
+
+  minimatch@8.0.4:
+    resolution: {integrity: sha512-W0Wvr9HyFXZRGIDgCicunpQ299OKXs9RgZfaukz4qAW/pJhcpUfupc9c+OObPOFueNy8VSrZgEmDtk6Kh4WzDA==}
+    engines: {node: '>=16 || 14 >=14.17'}
 
   minimatch@9.0.1:
     resolution: {integrity: sha512-0jWhJpD/MdhPXwPuiRkCbfYfSKp2qnn2eOc279qI7f+osl/l+prKSrvhg157zSYvx/1nmgn2NqdT6k2Z7zSH9w==}
@@ -6769,6 +6846,9 @@ packages:
 
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
+
+  proxy-from-env@1.1.0:
+    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
 
   prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
@@ -7731,6 +7811,9 @@ packages:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
 
+  unplugin@1.0.1:
+    resolution: {integrity: sha512-aqrHaVBWW1JVKBHmGo33T5TxeL0qWzfvjWokObHA9bYmN7eNDkwOxmLjhioHl9878qDFMAaT51XNroRyuz7WxA==}
+
   unplugin@1.15.0:
     resolution: {integrity: sha512-jTPIs63W+DUEDW207ztbaoO7cQ4p5aVaB823LSlxpsFEU3Mykwxf3ZGC/wzxFJeZlASZYgVrWeo7LgOrqJZ8RA==}
     engines: {node: '>=14.0.0'}
@@ -8020,6 +8103,13 @@ packages:
   webidl-conversions@7.0.0:
     resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
     engines: {node: '>=12'}
+
+  webpack-sources@3.2.3:
+    resolution: {integrity: sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==}
+    engines: {node: '>=10.13.0'}
+
+  webpack-virtual-modules@0.5.0:
+    resolution: {integrity: sha512-kyDivFZ7ZM0BVOUteVbDFhlRt7Ah/CSPwJdi8hBpkK7QLumUqdLtVfm/PX/hkcnrvr0i77fO5+TjZ94Pe+C9iw==}
 
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
@@ -10791,6 +10881,8 @@ snapshots:
       '@sentry/types': 7.118.0
       '@sentry/utils': 7.118.0
 
+  '@sentry/babel-plugin-component-annotate@2.22.7': {}
+
   '@sentry/browser@7.118.0':
     dependencies:
       '@sentry-internal/feedback': 7.118.0
@@ -10801,6 +10893,60 @@ snapshots:
       '@sentry/replay': 7.118.0
       '@sentry/types': 7.118.0
       '@sentry/utils': 7.118.0
+
+  '@sentry/bundler-plugin-core@2.22.7':
+    dependencies:
+      '@babel/core': 7.25.2
+      '@sentry/babel-plugin-component-annotate': 2.22.7
+      '@sentry/cli': 2.39.1
+      dotenv: 16.4.7
+      find-up: 5.0.0
+      glob: 9.3.5
+      magic-string: 0.30.8
+      unplugin: 1.0.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@sentry/cli-darwin@2.39.1':
+    optional: true
+
+  '@sentry/cli-linux-arm64@2.39.1':
+    optional: true
+
+  '@sentry/cli-linux-arm@2.39.1':
+    optional: true
+
+  '@sentry/cli-linux-i686@2.39.1':
+    optional: true
+
+  '@sentry/cli-linux-x64@2.39.1':
+    optional: true
+
+  '@sentry/cli-win32-i686@2.39.1':
+    optional: true
+
+  '@sentry/cli-win32-x64@2.39.1':
+    optional: true
+
+  '@sentry/cli@2.39.1':
+    dependencies:
+      https-proxy-agent: 5.0.1
+      node-fetch: 2.7.0
+      progress: 2.0.3
+      proxy-from-env: 1.1.0
+      which: 2.0.2
+    optionalDependencies:
+      '@sentry/cli-darwin': 2.39.1
+      '@sentry/cli-linux-arm': 2.39.1
+      '@sentry/cli-linux-arm64': 2.39.1
+      '@sentry/cli-linux-i686': 2.39.1
+      '@sentry/cli-linux-x64': 2.39.1
+      '@sentry/cli-win32-i686': 2.39.1
+      '@sentry/cli-win32-x64': 2.39.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   '@sentry/core@7.118.0':
     dependencies:
@@ -10835,6 +10981,14 @@ snapshots:
   '@sentry/utils@7.118.0':
     dependencies:
       '@sentry/types': 7.118.0
+
+  '@sentry/vite-plugin@2.22.7':
+    dependencies:
+      '@sentry/bundler-plugin-core': 2.22.7
+      unplugin: 1.0.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   '@shaderfrog/glsl-parser@2.1.5': {}
 
@@ -10883,11 +11037,11 @@ snapshots:
       storybook: 8.4.2(prettier@3.3.2)
       ts-dedent: 2.2.0
 
-  '@storybook/addon-docs@8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))':
+  '@storybook/addon-docs@8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)':
     dependencies:
       '@mdx-js/react': 3.1.0(@types/react@18.3.3)(react@18.3.1)
       '@storybook/blocks': 8.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.4.2(prettier@3.3.2))
-      '@storybook/csf-plugin': 8.4.2(storybook@8.4.2(prettier@3.3.2))
+      '@storybook/csf-plugin': 8.4.2(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)
       '@storybook/react-dom-shim': 8.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.4.2(prettier@3.3.2))
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -10897,12 +11051,12 @@ snapshots:
       - '@types/react'
       - webpack-sources
 
-  '@storybook/addon-essentials@8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))':
+  '@storybook/addon-essentials@8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)':
     dependencies:
       '@storybook/addon-actions': 8.4.2(storybook@8.4.2(prettier@3.3.2))
       '@storybook/addon-backgrounds': 8.4.2(storybook@8.4.2(prettier@3.3.2))
       '@storybook/addon-controls': 8.4.2(storybook@8.4.2(prettier@3.3.2))
-      '@storybook/addon-docs': 8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))
+      '@storybook/addon-docs': 8.4.2(@types/react@18.3.3)(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)
       '@storybook/addon-highlight': 8.4.2(storybook@8.4.2(prettier@3.3.2))
       '@storybook/addon-measure': 8.4.2(storybook@8.4.2(prettier@3.3.2))
       '@storybook/addon-outline': 8.4.2(storybook@8.4.2(prettier@3.3.2))
@@ -10966,9 +11120,9 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@storybook/builder-vite@8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))':
+  '@storybook/builder-vite@8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(webpack-sources@3.2.3)':
     dependencies:
-      '@storybook/csf-plugin': 8.4.2(storybook@8.4.2(prettier@3.3.2))
+      '@storybook/csf-plugin': 8.4.2(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)
       browser-assert: 1.2.1
       storybook: 8.4.2(prettier@3.3.2)
       ts-dedent: 2.2.0
@@ -11000,10 +11154,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@storybook/csf-plugin@8.4.2(storybook@8.4.2(prettier@3.3.2))':
+  '@storybook/csf-plugin@8.4.2(storybook@8.4.2(prettier@3.3.2))(webpack-sources@3.2.3)':
     dependencies:
       storybook: 8.4.2(prettier@3.3.2)
-      unplugin: 1.15.0
+      unplugin: 1.15.0(webpack-sources@3.2.3)
     transitivePeerDependencies:
       - webpack-sources
 
@@ -11038,11 +11192,11 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       storybook: 8.4.2(prettier@3.3.2)
 
-  '@storybook/react-vite@8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.24.0)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))':
+  '@storybook/react-vite@8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.24.0)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(webpack-sources@3.2.3)':
     dependencies:
       '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.0(typescript@5.5.3)(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))
       '@rollup/pluginutils': 5.1.0(rollup@4.24.0)
-      '@storybook/builder-vite': 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))
+      '@storybook/builder-vite': 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(webpack-sources@3.2.3)
       '@storybook/react': 8.4.2(@storybook/test@8.4.2(storybook@8.4.2(prettier@3.3.2)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.4.2(prettier@3.3.2))(typescript@5.5.3)
       find-up: 5.0.0
       magic-string: 0.30.11
@@ -11091,9 +11245,9 @@ snapshots:
     dependencies:
       storybook: 8.4.2(prettier@3.3.2)
 
-  '@storybook/vue3-vite@8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(vue@3.5.2(typescript@5.5.3))':
+  '@storybook/vue3-vite@8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(vue@3.5.2(typescript@5.5.3))(webpack-sources@3.2.3)':
     dependencies:
-      '@storybook/builder-vite': 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))
+      '@storybook/builder-vite': 8.4.2(storybook@8.4.2(prettier@3.3.2))(vite@5.4.10(@types/node@22.9.0)(lightningcss@1.25.1))(webpack-sources@3.2.3)
       '@storybook/vue3': 8.4.2(storybook@8.4.2(prettier@3.3.2))(vue@3.5.2(typescript@5.5.3))
       find-package-json: 1.2.0
       magic-string: 0.30.11
@@ -13079,6 +13233,8 @@ snapshots:
 
   dotenv-expand@5.1.0: {}
 
+  dotenv@16.4.7: {}
+
   dotenv@9.0.2: {}
 
   eastasianwidth@0.2.0: {}
@@ -13837,6 +13993,13 @@ snapshots:
       minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
+
+  glob@9.3.5:
+    dependencies:
+      fs.realpath: 1.0.0
+      minimatch: 8.0.4
+      minipass: 4.2.8
+      path-scurry: 1.11.1
 
   global-agent@3.0.0:
     dependencies:
@@ -14769,6 +14932,10 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
+  magic-string@0.30.8:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.0
+
   magicast@0.3.4:
     dependencies:
       '@babel/parser': 7.25.6
@@ -14857,6 +15024,10 @@ snapshots:
       brace-expansion: 1.1.11
 
   minimatch@5.1.6:
+    dependencies:
+      brace-expansion: 2.0.1
+
+  minimatch@8.0.4:
     dependencies:
       brace-expansion: 2.0.1
 
@@ -15402,6 +15573,8 @@ snapshots:
       react-is: 16.13.1
 
   proto-list@1.2.4: {}
+
+  proxy-from-env@1.1.0: {}
 
   prr@1.0.1:
     optional: true
@@ -16590,10 +16763,19 @@ snapshots:
 
   unpipe@1.0.0: {}
 
-  unplugin@1.15.0:
+  unplugin@1.0.1:
+    dependencies:
+      acorn: 8.14.0
+      chokidar: 3.6.0
+      webpack-sources: 3.2.3
+      webpack-virtual-modules: 0.5.0
+
+  unplugin@1.15.0(webpack-sources@3.2.3):
     dependencies:
       acorn: 8.14.0
       webpack-virtual-modules: 0.6.2
+    optionalDependencies:
+      webpack-sources: 3.2.3
 
   upath@2.0.1: {}
 
@@ -16942,6 +17124,10 @@ snapshots:
   webidl-conversions@3.0.1: {}
 
   webidl-conversions@7.0.0: {}
+
+  webpack-sources@3.2.3: {}
+
+  webpack-virtual-modules@0.5.0: {}
 
   webpack-virtual-modules@0.6.2: {}
 

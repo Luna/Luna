@@ -154,6 +154,18 @@ pub fn expose_gui_vars(step: Step) -> Step {
     expose_cloud_vars(step)
 }
 
+/// Expose variables for debugging purposes.
+pub fn expose_debugging_vars(os: OS, step: Step) -> Step {
+    use crate::ide::web::env::*;
+    match os {
+        OS::Windows => step
+            .with_variable_exposed(SENTRY_AUTH_TOKEN)
+            .with_variable_exposed(ENSO_CLOUD_SENTRY_ORGANIZATION)
+            .with_variable_exposed(ENSO_CLOUD_SENTRY_PROJECT),
+        _ => step,
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct CancelWorkflow;
 
@@ -559,6 +571,7 @@ pub fn expose_os_specific_signing_secret(os: OS, step: Step) -> Step {
 /// * exposing variables defining cloud environment for dashboard.
 pub fn prepare_packaging_steps(os: OS, step: Step) -> Vec<Step> {
     let step = expose_gui_vars(step);
+    let step = expose_debugging_vars(os, step);
     let step = expose_os_specific_signing_secret(os, step);
     vec![step]
 }
