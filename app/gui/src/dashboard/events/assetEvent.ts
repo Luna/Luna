@@ -13,7 +13,6 @@ interface AssetEvents {
   readonly move: AssetMoveEvent
   readonly download: AssetDownloadEvent
   readonly downloadSelected: AssetDownloadSelectedEvent
-  readonly removeSelf: AssetRemoveSelfEvent
   readonly temporarilyAddLabels: AssetTemporarilyAddLabelsEvent
   readonly temporarilyRemoveLabels: AssetTemporarilyRemoveLabelsEvent
   readonly addLabels: AssetAddLabelsEvent
@@ -43,11 +42,6 @@ export interface AssetDownloadEvent extends AssetBaseEvent<AssetEventType.downlo
 
 /** A signal to download the currently selected assets. */
 export type AssetDownloadSelectedEvent = AssetBaseEvent<AssetEventType.downloadSelected>
-
-/** A signal to remove the current user's permissions for an asset. */
-export interface AssetRemoveSelfEvent extends AssetBaseEvent<AssetEventType.removeSelf> {
-  readonly id: backend.AssetId
-}
 
 /** A signal to temporarily add labels to the selected assets. */
 export interface AssetTemporarilyAddLabelsEvent

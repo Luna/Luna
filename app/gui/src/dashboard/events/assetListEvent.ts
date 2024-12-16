@@ -9,10 +9,6 @@ import type * as backend from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
 
-// ======================
-// === AssetListEvent ===
-// ======================
-
 /** Properties common to all asset list events. */
 interface AssetListBaseEvent<Type extends AssetListEventType> {
   readonly type: Type
@@ -25,7 +21,6 @@ interface AssetListEvents {
   readonly move: AssetListMoveEvent
   readonly delete: AssetListDeleteEvent
   readonly emptyTrash: AssetListEmptyTrashEvent
-  readonly removeSelf: AssetListRemoveSelfEvent
 }
 
 /** A type to ensure that {@link AssetListEvents} contains every {@link AssetListEventType}. */
@@ -73,11 +68,6 @@ interface AssetListDeleteEvent extends AssetListBaseEvent<AssetListEventType.del
 
 /** A signal to permanently delete all files in Trash. */
 type AssetListEmptyTrashEvent = AssetListBaseEvent<AssetListEventType.emptyTrash>
-
-/** A signal for a file to remove itself from the asset list, without being deleted. */
-interface AssetListRemoveSelfEvent extends AssetListBaseEvent<AssetListEventType.removeSelf> {
-  readonly id: backend.AssetId
-}
 
 /** Every possible type of asset list event. */
 export type AssetListEvent = AssetListEvents[keyof AssetListEvents]

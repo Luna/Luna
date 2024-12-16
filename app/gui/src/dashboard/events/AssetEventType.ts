@@ -5,7 +5,6 @@ enum AssetEventType {
   move = 'move',
   download = 'download',
   downloadSelected = 'download-selected',
-  removeSelf = 'remove-self',
   temporarilyAddLabels = 'temporarily-add-labels',
   temporarilyRemoveLabels = 'temporarily-remove-labels',
   addLabels = 'add-labels',

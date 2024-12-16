@@ -7,7 +7,6 @@ enum AssetListEventType {
   move = 'move',
   delete = 'delete',
   emptyTrash = 'empty-trash',
-  removeSelf = 'remove-self',
 }
 
 export default AssetListEventType

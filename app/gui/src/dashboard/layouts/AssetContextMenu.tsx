@@ -37,6 +37,7 @@ import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywal
 import {
   useDeleteAssetsMutation,
   useNewProject,
+  useRemoveSelfPermissionMutation,
   useRestoreAssetsMutation,
   useUploadFileWithToastMutation,
 } from '#/hooks/backendHooks'
@@ -91,6 +92,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const closeProject = projectHooks.useCloseProject()
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
+  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
   const isCloud = categoryModule.isCloudCategory(category)
@@ -452,10 +454,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   self={self}
                   eventTarget={eventTarget}
                   doRemoveSelf={() => {
-                    dispatchAssetEvent({
-                      type: AssetEventType.removeSelf,
-                      id: asset.id,
-                    })
+                    removeSelfPermissionMutation.mutate(asset.id)
                   }}
                 />,
               )

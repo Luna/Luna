@@ -26,8 +26,6 @@ import ProjectsProvider, {
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
 
-import AssetListEventType from '#/events/AssetListEventType'
-
 import type * as assetTable from '#/layouts/AssetsTable'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
@@ -45,6 +43,7 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
+import { useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
 import { useSetCategory } from '#/providers/DriveProvider'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
@@ -52,10 +51,6 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery } from '@tanstack/react-query'
 import { DashboardTabPanels } from './DashboardTabPanels'
-
-// =================
-// === Dashboard ===
-// =================
 
 /** Props for {@link Dashboard}s that are common to all platforms. */
 export interface DashboardProps {
@@ -146,6 +141,7 @@ function DashboardInner(props: DashboardProps) {
   const closeProject = projectHooks.useCloseProject()
   const closeAllProjects = projectHooks.useCloseAllProjects()
   const clearLaunchedProjects = useClearLaunchedProjects()
+  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
 
   usePrefetchQuery({
     queryKey: ['loadInitialLocalProject'],
@@ -223,7 +219,7 @@ function DashboardInner(props: DashboardProps) {
   }, [inputBindings])
 
   const doRemoveSelf = eventCallbacks.useEventCallback((project: LaunchedProject) => {
-    dispatchAssetListEvent({ type: AssetListEventType.removeSelf, id: project.id })
+    removeSelfPermissionMutation.mutate(project.id)
     closeProject(project)
   })
 

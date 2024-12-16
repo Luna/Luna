@@ -1165,10 +1165,6 @@ function AssetsTable(props: AssetsTableProps) {
         deleteAssetsMutation.mutate([ids, true])
         break
       }
-      case AssetListEventType.removeSelf: {
-        dispatchAssetEvent({ type: AssetEventType.removeSelf, id: event.id })
-        break
-      }
     }
   })
 

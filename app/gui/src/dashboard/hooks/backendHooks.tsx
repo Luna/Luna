@@ -1307,3 +1307,35 @@ export function useRestoreAssetsMutation(backend: Backend) {
     },
   })
 }
+
+/** Remove the user's own permission from an asset. */
+export function useRemoveSelfPermissionMutation(backend: Backend) {
+  const { user } = useFullUserSession()
+
+  const createPermissionMutation = useMutation(
+    backendMutationOptions(backend, 'createPermission', {
+      meta: {
+        invalidates: [[backend.type, 'listDirectory']],
+        awaitInvalidates: true,
+      },
+    }),
+  )
+
+  return useMutation({
+    mutationKey: [backend.type, 'removeSelfPermission'],
+    mutationFn: async (id: AssetId) => {
+      await createPermissionMutation.mutateAsync([
+        {
+          action: null,
+          resourceId: id,
+          actorsIds: [user.userId],
+        },
+      ])
+      return null
+    },
+    meta: {
+      invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
+    },
+  })
+}
