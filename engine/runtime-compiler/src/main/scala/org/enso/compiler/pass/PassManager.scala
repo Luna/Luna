@@ -25,9 +25,8 @@ class PassManager(
   protected val passes: List[PassGroup],
   passConfiguration: PassConfiguration
 ) {
-  private val logger   = LoggerFactory.getLogger(classOf[PassManager])
-  val allPasses        = verifyPassOrdering(passes.flatMap(_.passes))
-  private val reported = new java.util.HashMap[Integer, Boolean]()
+  private val logger = LoggerFactory.getLogger(classOf[PassManager])
+  val allPasses      = verifyPassOrdering(passes.flatMap(_.passes))
 
   /** Computes a valid pass ordering for the compiler.
     *
@@ -166,41 +165,6 @@ class PassManager(
   ): IRType = {
     val pendingMiniPasses: ListBuffer[MiniPassFactory] = ListBuffer()
 
-    def checkDuplicates(msg: String, ir: IRType): IRType = {
-      def toString(ir: IR): String = {
-        ir.getClass().getName() + "@" + Integer.toHexString(
-          System.identityHashCode(ir)
-        ) + ":" + ir.showCode()
-      }
-
-      val all   = ir.preorder()
-      val idMap = new java.util.IdentityHashMap[Any, Boolean]()
-      val duplFound = all.find(e => {
-        if (reported.containsKey(System.identityHashCode(e))) {
-          false
-        } else {
-          if (idMap.containsKey(e)) {
-            true
-          } else {
-            idMap.put(e, true)
-            false
-          }
-        }
-      })
-      if (duplFound.nonEmpty) {
-        reported.put(System.identityHashCode(duplFound.orNull), true)
-        logger.error(
-          "Duplicate found after " + msg + ": " + toString(duplFound.orNull)
-        )
-        all.foreach(e => {
-          if (e.children().contains(duplFound.orNull)) {
-            logger.error("  referenced by " + toString(e))
-          }
-        })
-      }
-      ir
-    }
-
     def flushMiniPasses(in: IRType): IRType = {
       if (pendingMiniPasses.nonEmpty) {
         val miniPasses =
@@ -210,7 +174,10 @@ class PassManager(
         if (combinedPass != null) {
           logger.trace("  flushing pending mini pass: {}", combinedPass)
           val res = miniPassCompile(combinedPass, in)
-          checkDuplicates("Flushing mini passes: " + combinedPass, res)
+          IRHelpers.checkDuplicates(
+            "Flushing mini passes: " + combinedPass,
+            res
+          )
           res
         } else {
           in
@@ -259,7 +226,7 @@ class PassManager(
               megaPass
             )
             val res = megaPassCompile(megaPass, flushedIR, context)
-            checkDuplicates("" + megaPass.getClass().getName(), res)
+            IRHelpers.checkDuplicates("" + megaPass.getClass().getName(), res)
         }
     }
 
