@@ -231,7 +231,7 @@ export function backendMutationOptions<Method extends MutationMethod>(
   options?: Omit<
     UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
     'mutationFn'
-  >,
+  > & { readonly invalidate?: boolean },
 ): UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>> {
   return {
     ...options,
@@ -240,12 +240,17 @@ export function backendMutationOptions<Method extends MutationMethod>(
     mutationFn: (args) => (backend?.[method] as any)?.(...args),
     networkMode: backend?.type === BackendType.local ? 'always' : 'online',
     meta: {
-      invalidates: [
-        ...(options?.meta?.invalidates ?? []),
-        ...(INVALIDATION_MAP[method]?.map((queryMethod) =>
-          queryMethod === INVALIDATE_ALL_QUERIES ? [backend?.type] : [backend?.type, queryMethod],
-        ) ?? []),
-      ],
+      invalidates:
+        options?.invalidate === false ?
+          []
+        : [
+            ...(options?.meta?.invalidates ?? []),
+            ...(INVALIDATION_MAP[method]?.map((queryMethod) =>
+              queryMethod === INVALIDATE_ALL_QUERIES ?
+                [backend?.type]
+              : [backend?.type, queryMethod],
+            ) ?? []),
+          ],
       awaitInvalidates: options?.meta?.awaitInvalidates ?? true,
     },
   }
@@ -1253,6 +1258,13 @@ export function useDeleteAssetsMutation(backend: Backend) {
       return await Promise.allSettled(
         ids.map((id) => backend.deleteAsset(id, { force }, '(unknown)')),
       )
+    },
+    meta: {
+      invalidates: [
+        [backend.type, 'listDirectory'],
+        [backend.type, 'listAssetVersions'],
+      ],
+      awaitInvalidates: true,
     },
   })
 }
