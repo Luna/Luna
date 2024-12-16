@@ -245,6 +245,15 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         file_datalink = setup.get.file_datalink
         file_datalink.size . should_equal setup.get.file1_content.length
 
+    group_builder.specify full_prefix+"calling is_directory/is_regular_file on a datalink checks the target" pending=pending <|
+        file_datalink = setup.get.file_datalink
+        file_datalink.is_directory . should_be_false
+        file_datalink.is_regular_file . should_be_true
+
+        dir_datalink = setup.get.dir_datalink
+        dir_datalink.is_directory . should_be_true
+        dir_datalink.is_regular_file . should_be_false
+
 type Symlink_Test_Setup
     Value ~target_location ~datalink_location
 
