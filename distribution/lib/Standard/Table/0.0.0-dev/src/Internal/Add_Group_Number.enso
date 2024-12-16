@@ -27,10 +27,10 @@ add_group_number (table:Table) (grouping_method:Grouping_Method) (name:Text) (fr
                     _illegal_if group_by.is_empty "..Unique requires a non-empty 'group_by'" <|
                         grouping = _prepare_group_by table problem_builder group_by
                         AddGroupNumber.numberGroupsUnique table.row_count from step grouping java_problem_aggregator
-                Grouping_Method.Equal_Count group_count order_by ->
-                    _illegal_if (group_count==0) "group_count must be at least 1" <|
+                Grouping_Method.Equal_Bucket_Count bucket_count order_by ->
+                    _illegal_if (bucket_count==0) "bucket_count must be at least 1" <|
                         ordering = _prepare_ordering table problem_builder order_by
-                        AddGroupNumber.numberGroupsEqualCount table.row_count group_count from step (ordering.at 0) (ordering.at 1) java_problem_aggregator
+                        AddGroupNumber.numberGroupsEqualCount table.row_count bucket_count from step (ordering.at 0) (ordering.at 1) java_problem_aggregator
             new_column = Column.from_storage name new_storage
             renamed_table = rename_columns_if_needed table name on_problems Table.new
             problem_builder.attach_problems_before on_problems <| 

@@ -943,7 +943,7 @@ type DB_Table
 
          The following grouping methods are supported:
          - `Unique`: Group rows by the specified columns.
-         - Equal_Count: Create the specified number of groups with the same
+         - Equal_Bucket_Count: Create the specified number of groups with the same
            number of rows in each group (except possibly the last one).
 
        ? Ordering of rows
@@ -1000,7 +1000,7 @@ type DB_Table
                 4 | 2
                 5 | 1
             table = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]]]
-            table2 = tabble.add_group_number (..Equal_Count 3) "g"
+            table2 = tabble.add_group_number (..Equal_Bucket_Count 3) "g"
             table2.at 'g' . to_vector
             # => [0, 0, 1, 1, 2]
             ## table2:
