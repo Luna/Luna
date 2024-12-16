@@ -12,6 +12,7 @@ object Cli {
   val NO_LOG_MASKING     = "no-log-masking"
   val VERBOSE_OPTION     = "verbose"
   val VERSION_OPTION     = "version"
+  val NATIVE_OPTION      = "native-language-server"
   val PROFILING_PATH     = "profiling-path"
   val PROFILING_TIME     = "profiling-time"
   val PROJECTS_DIRECTORY = "projects-directory"
@@ -43,6 +44,13 @@ object Cli {
     val version: cli.Option = cli.Option.builder
       .longOpt(VERSION_OPTION)
       .desc("Checks the version of the Enso executable.")
+      .build()
+
+    val native: cli.Option = cli.Option.builder
+      .longOpt(NATIVE_OPTION)
+      .desc(
+        "(experimental) Attempts to use the native-image of any subprocess."
+      )
       .build()
 
     val json: cli.Option = cli.Option.builder
@@ -164,6 +172,7 @@ object Cli {
       .addOption(option.version)
       .addOption(option.json)
       .addOption(option.noLogMasking)
+      .addOption(option.native)
       .addOption(option.profilingPath)
       .addOption(option.profilingTime)
       .addOption(option.projectsDirectory)

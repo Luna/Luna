@@ -19,6 +19,7 @@ object configuration {
     */
   case class MainProcessConfig(
     logLevel: Level,
+    nativeImage: Boolean,
     profilingPath: Option[Path],
     profilingTime: Option[FiniteDuration]
   )

@@ -89,7 +89,8 @@ class LanguageServerController(
       profilingPath                  = processConfig.profilingPath,
       profilingTime                  = processConfig.profilingTime,
       deferredLoggingServiceEndpoint = loggingServiceDescriptor.getEndpoint,
-      skipGraalVMUpdater             = bootloaderConfig.skipGraalVMUpdater
+      skipGraalVMUpdater             = bootloaderConfig.skipGraalVMUpdater,
+      nativeImage                    = processConfig.nativeImage
     )
 
   override def supervisorStrategy: SupervisorStrategy =

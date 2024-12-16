@@ -2166,13 +2166,18 @@ lazy val `engine-common` = project
     commands += WithDebugCommand.withDebug,
     Test / envVars ++= distributionEnvironmentOverrides,
     libraryDependencies ++= Seq(
-      "org.graalvm.polyglot" % "polyglot" % graalMavenPackagesVersion % "provided"
+      "org.graalvm.polyglot" % "polyglot"    % graalMavenPackagesVersion % "provided",
+      "org.graalvm.truffle"  % "truffle-api" % graalMavenPackagesVersion % "provided"
+    ),
+    libraryDependencies ++= GraalVM.modules.map(
+      _.withConfigurations(Some(Runtime.name))
     ),
     Compile / moduleDependencies ++= {
       Seq(
-        "org.graalvm.polyglot" % "polyglot"  % graalMavenPackagesVersion,
-        "org.slf4j"            % "slf4j-api" % slf4jVersion
-      )
+        "org.graalvm.truffle"  % "truffle-api" % graalMavenPackagesVersion,
+        "org.graalvm.polyglot" % "polyglot"    % graalMavenPackagesVersion,
+        "org.slf4j"            % "slf4j-api"   % slf4jVersion
+      ) ++ GraalVM.modules.map(_.withConfigurations(Some(Runtime.name)))
     },
     Compile / internalModuleDependencies := Seq(
       (`logging-utils` / Compile / exportedModule).value,
@@ -2278,16 +2283,20 @@ lazy val `language-server` = (project in file("engine/language-server"))
       "org.eclipse.jgit"    % "org.eclipse.jgit"        % jgitVersion,
       "org.apache.tika"     % "tika-core"               % tikaVersion               % Test
     ),
+    libraryDependencies ++= GraalVM.modules.map(
+      _.withConfigurations(Some(Runtime.name))
+    ),
     javaModuleName := "org.enso.language.server",
     Compile / moduleDependencies ++=
       Seq(
         "org.graalvm.polyglot"   % "polyglot"         % graalMavenPackagesVersion,
+        "org.graalvm.truffle"    % "truffle-api"      % graalMavenPackagesVersion,
         "org.slf4j"              % "slf4j-api"        % slf4jVersion,
         "commons-cli"            % "commons-cli"      % commonsCliVersion,
         "commons-io"             % "commons-io"       % commonsIoVersion,
         "com.google.flatbuffers" % "flatbuffers-java" % flatbuffersVersion,
         "org.eclipse.jgit"       % "org.eclipse.jgit" % jgitVersion
-      ),
+      ) ++ GraalVM.modules.map(_.withConfigurations(Some(Runtime.name))),
     Compile / internalModuleDependencies := Seq(
       (`akka-wrapper` / Compile / exportedModule).value,
       (`zio-wrapper` / Compile / exportedModule).value,
@@ -3592,6 +3601,9 @@ lazy val `engine-runner` = project
       val epbLang =
         (`runtime-language-epb` / Compile / fullClasspath).value
           .map(_.data.getAbsolutePath)
+      val langServer =
+        (`language-server` / Compile / fullClasspath).value
+          .map(_.data.getAbsolutePath)
       val core = (
         runnerDeps ++
           runtimeDeps ++
@@ -3599,6 +3611,7 @@ lazy val `engine-runner` = project
           replDebugInstr ++
           runtimeServerInstr ++
           idExecInstr ++
+          langServer ++
           epbLang
       ).distinct
       val stdLibsJars =
@@ -3682,6 +3695,7 @@ lazy val `engine-runner` = project
               "-H:IncludeResources=.*Main.enso$",
               "-H:+AddAllCharsets",
               "-H:+IncludeAllLocales",
+              "-H:+UnlockExperimentalVMOptions",
               "-ea",
               // useful perf & debug switches:
               // "-g",
@@ -3698,6 +3712,7 @@ lazy val `engine-runner` = project
               "org.jline",
               "io.methvin.watchservice",
               "zio.internal",
+              "zio",
               "org.enso.runner",
               "sun.awt",
               "sun.java2d",
@@ -3709,7 +3724,8 @@ lazy val `engine-runner` = project
               "akka.http",
               "org.enso.base",
               "org.enso.image",
-              "org.enso.table"
+              "org.enso.table",
+              "org.eclipse.jgit"
             )
           )
       }

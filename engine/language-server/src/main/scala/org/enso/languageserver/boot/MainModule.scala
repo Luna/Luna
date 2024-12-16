@@ -55,6 +55,7 @@ import org.enso.profiling.events.NoopEventsMonitor
 import org.enso.searcher.memory.InMemorySuggestionsRepo
 import org.enso.text.{ContentBasedVersioning, Sha3_224VersionCalculator}
 import org.enso.version.BuildVersion
+import com.oracle.truffle.api.TruffleOptions
 import org.graalvm.polyglot.io.MessageEndpoint
 import org.slf4j.event.Level
 import org.slf4j.LoggerFactory
@@ -63,6 +64,7 @@ import java.io.{File, PrintStream}
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Clock
+import java.util
 import scala.concurrent.duration.DurationInt
 
 /** A main module containing all components of the server.
@@ -305,7 +307,6 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
   val stdIn     = new ObservablePipedInputStream(stdInSink)
 
   val extraOptions = new java.util.HashMap[String, String]()
-  extraOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   extraOptions.put(RuntimeOptions.INTERACTIVE_MODE, "true")
   extraOptions.put(
     RuntimeOptions.LOG_MASKING,
@@ -317,7 +318,14 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     Runtime.getRuntime.availableProcessors().toString
   )
 
-  val builder = ContextFactory
+  val extraEngineOptions = new util.HashMap[String, String]()
+  if (TruffleOptions.AOT) {
+    extraEngineOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
+  } else {
+    extraOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
+  }
+
+  private val builder = ContextFactory
     .create()
     .projectRoot(serverConfig.contentRootPath)
     .logLevel(logLevel)
@@ -328,6 +336,7 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     .err(stdErr)
     .in(stdIn)
     .options(extraOptions)
+    .engineOptions(extraEngineOptions)
     .messageTransport((uri: URI, peerEndpoint: MessageEndpoint) => {
       if (uri.toString == RuntimeServerInfo.URI) {
         val connection = new RuntimeConnector.Endpoint(

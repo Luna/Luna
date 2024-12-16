@@ -7,7 +7,7 @@ module org.enso.language.server {
   requires commons.cli;
   requires flatbuffers.java;
   requires org.apache.commons.io;
-  requires org.graalvm.polyglot;
+  requires org.graalvm.truffle;
   requires org.eclipse.jgit;
   requires org.slf4j;
 
@@ -38,7 +38,6 @@ module org.enso.language.server {
   requires org.enso.task.progress.notifications;
   requires org.enso.ydoc.polyfill;
 
-  exports org.enso.languageserver.boot;
   exports org.enso.languageserver.filemanager to scala.library;
   exports org.enso.languageserver.runtime to scala.library;
   exports org.enso.languageserver.search to scala.library;

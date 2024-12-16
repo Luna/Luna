@@ -32,7 +32,8 @@ class Runner(
   globalConfigurationManager: GlobalRunnerConfigurationManager,
   editionManager: EditionManager,
   environment: Environment,
-  loggerConnection: Future[Option[URI]]
+  loggerConnection: Future[Option[URI]],
+  nativeImage: Boolean
 ) {
 
   /** The current working directory that is a starting point when checking if
@@ -188,23 +189,33 @@ class Runner(
       val context = JVMOptionsContext(enginePackagePath = engine.path)
 
       val manifestOptions =
-        engine.defaultJVMOptions.filter(_.isRelevant).map(_.substitute(context))
+        if (nativeImage) Seq()
+        else
+          engine.defaultJVMOptions
+            .filter(_.isRelevant)
+            .map(_.substitute(context))
       val environmentOptions =
         jvmOptsFromEnvironment.map(_.split(' ').toIndexedSeq).getOrElse(Seq())
       val commandLineOptions = jvmSettings.jvmOptions.map(
         translateJVMOption(_, standardOption = true)
-      ) ++
-        jvmSettings.extraOptions.map(
-          translateJVMOption(_, standardOption = false)
-        )
+      ) ++ (if (nativeImage) Seq()
+            else
+              jvmSettings.extraOptions.map(
+                translateJVMOption(_, standardOption = false)
+              ))
       val componentPath = engine.componentDirPath.toAbsolutePath.normalize
+      val modulePathOptions =
+        if (nativeImage) Seq()
+        else
+          Seq(
+            "--module-path",
+            componentPath.toString,
+            "-m",
+            "org.enso.runner/org.enso.runner.Main"
+          )
       val jvmArguments =
-        manifestOptions ++ environmentOptions ++ commandLineOptions ++ Seq(
-          "--module-path",
-          componentPath.toString,
-          "-m",
-          "org.enso.runner/org.enso.runner.Main"
-        )
+        manifestOptions ++
+        environmentOptions ++ commandLineOptions ++ modulePathOptions
 
       val loggingConnectionArguments =
         if (runSettings.connectLoggerIfAvailable)
@@ -242,6 +253,19 @@ class Runner(
 
     val engineVersion = runSettings.engineVersion
     jvmSettings.javaCommandOverride match {
+      case _ if nativeImage =>
+        runtimeVersionManager.withEngineAndRuntime(engineVersion) {
+          case (engine, runtime) =>
+            val cmd = NativeJavaCommand.apply(engineVersion.toString)
+            if (cmd.executablePath.toFile.exists()) {
+              prepareAndRunCommand(engine, cmd)
+            } else {
+              Logger[Runner].warn(
+                "Unable to locate native Language Server executable at " + cmd.executablePath + ". Reverting to regular invocation"
+              )
+              prepareAndRunCommand(engine, JavaCommand.forRuntime(runtime))
+            }
+        }
       case Some(overriddenCommand) =>
         runtimeVersionManager.withEngine(engineVersion) { engine =>
           prepareAndRunCommand(engine, overriddenCommand)

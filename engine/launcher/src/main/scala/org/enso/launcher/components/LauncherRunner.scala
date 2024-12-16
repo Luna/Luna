@@ -33,7 +33,8 @@ class LauncherRunner(
       configurationManager,
       editionManager,
       environment,
-      loggerConnection
+      loggerConnection,
+      false
     ) {
 
   /** Creates [[RunSettings]] for launching the REPL.

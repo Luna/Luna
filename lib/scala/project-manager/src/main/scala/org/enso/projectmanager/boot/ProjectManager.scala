@@ -293,6 +293,7 @@ object ProjectManager extends ZIOAppDefault with LazyLogging {
         logLevel <- setupLogging(verbosity, logMasking)
         procConf = MainProcessConfig(
           logLevel,
+          options.hasOption(Cli.NATIVE_OPTION),
           opts.profilingPath,
           opts.profilingTime
         )

@@ -8,24 +8,25 @@ import org.enso.runtimeversionmanager.components.GraalRuntime
   * @param javaHomeOverride if set, asks to override the JAVA_HOME environment
   *                         variable when launching the JVM
   */
-case class JavaCommand(
-  executableName: String,
-  javaHomeOverride: Option[String]
+class JavaCommand(
+  val executableName: String,
+  val javaHomeOverride: Option[String]
 )
 
 object JavaCommand {
 
   /** The [[JavaCommand]] representing the system-configured JVM.
     */
-  def systemJavaCommand: JavaCommand = JavaCommand("java", None)
+  def systemJavaCommand: JavaCommand = new JavaCommand("java", None)
 
   /** The [[JavaCommand]] representing a managed [[GraalRuntime]].
     */
   def forRuntime(runtime: GraalRuntime): JavaCommand =
-    JavaCommand(
+    new JavaCommand(
       executableName = runtime.javaExecutable.toAbsolutePath.normalize.toString,
-      javaHomeOverride =
-        Some(runtime.javaHome.toAbsolutePath.normalize.toString)
+      javaHomeOverride = Some(
+        runtime.javaHome.toAbsolutePath.normalize.toString
+      )
     )
 
 }

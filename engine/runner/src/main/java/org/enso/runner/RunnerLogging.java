@@ -53,6 +53,7 @@ final class RunnerLogging {
         if (success) {
           logger.trace("Connected to logging service at [{}]", connectionUri);
         } else {
+          System.err.println("Failed to connect to logging service.");
           throw new RuntimeException("Failed to connect to logging service");
         }
       } catch (InterruptedException | ExecutionException e) {
@@ -65,7 +66,7 @@ final class RunnerLogging {
               () ->
                   loggerSetup.setup(
                       logLevel,
-                      distributionManager.detectPaths().logs(),
+                      distributionManager.paths().logs(),
                       "enso-cli",
                       loggerSetup.getConfig()));
       try {
