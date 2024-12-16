@@ -8,7 +8,6 @@ import { IS_DEV_MODE, isOnElectron } from 'enso-common/src/detect'
 import { z } from 'zod'
 import { createStore, useStore } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { unsafeEntries, unsafeFromEntries } from '../utilities/object'
 import { unsafeWriteValue } from '../utilities/write'
 export const FEATURE_FLAGS_SCHEMA = z.object({
   enableMultitabs: z.boolean(),
@@ -48,6 +47,9 @@ const flagsStore = createStore<FeatureFlagsStore>()(
       name: 'featureFlags',
       version: 1,
       merge: (persistedState, newState) => {
+        /**
+         * Mutates the state with provided feature flags
+         */
         function unsafeMutateFeatureFlags(flags: Partial<FeatureFlags>) {
           unsafeWriteValue(newState, 'featureFlags', {
             ...newState.featureFlags,
