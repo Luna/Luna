@@ -255,7 +255,7 @@ type File
             stream = File_Error.handle_java_exceptions file (file.input_stream_builtin opts)
             Input_Stream.new stream (File_Error.handle_java_exceptions self) associated_source=self
 
-        if self.is_directory then Error.throw (File_Error.IO_Error self "File '"+self.path+"' is a directory") else
+        if self.is_directory_builtin then Error.throw (File_Error.IO_Error self "File '"+self.path+"' is a directory") else
             open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (Data_Link.is_data_link self)
             if open_as_data_link then Data_Link_Helpers.read_data_link_as_stream self open_options action else
                 # We ignore the Data_Link_Access options at this stage:
@@ -523,7 +523,8 @@ type File
          If the file is a data link, this checks whether the target of the data 
          link is a directory.
     is_directory : Boolean
-    is_directory self = @Builtin_Method "File.is_directory"
+    is_directory self =
+        Data_Link_Helpers.is_directory self self.is_directory_builtin
 
     ## GROUP Output
        ICON folder_add
@@ -568,7 +569,8 @@ type File
          If the file is a data link, this checks whether the target of the data 
          link is a regular file.
     is_regular_file : Boolean
-    is_regular_file self = @Builtin_Method "File.is_regular_file"
+    is_regular_file self =
+        Data_Link_Helpers.is_regular_file self self.is_regular_file_builtin
 
     ## GROUP Metadata
        ICON metadata
@@ -832,7 +834,7 @@ type File
     list : Text -> Boolean -> Vector File
     list self name_filter:Text="" recursive:Boolean=False = 
         if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else
-            if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory.") else
+            if self.is_directory_builtin.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory.") else
                 all_files = if recursive then list_descendants self else self.list_immediate_children
                 filtered_files = case name_filter of
                     "" -> all_files

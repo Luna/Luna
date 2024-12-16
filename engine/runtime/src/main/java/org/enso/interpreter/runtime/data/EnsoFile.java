@@ -523,7 +523,7 @@ public final class EnsoFile extends EnsoObject {
     return this.truffleFile.isAbsolute();
   }
 
-  @Builtin.Method
+  @Builtin.Method(name = "is_directory_builtin")
   @TruffleBoundary
   public boolean isDirectory() {
     return this.truffleFile.isDirectory();
@@ -632,7 +632,7 @@ public final class EnsoFile extends EnsoObject {
     return new EnsoFile(this.truffleFile.relativize(other.truffleFile));
   }
 
-  @Builtin.Method
+  @Builtin.Method(name = "is_regular_file_builtin")
   @TruffleBoundary
   public boolean isRegularFile() {
     return this.truffleFile.isRegularFile();
