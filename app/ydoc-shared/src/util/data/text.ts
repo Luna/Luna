@@ -9,37 +9,37 @@ export interface SourceRange {
 declare const brandSourceRangeKey: unique symbol
 export type SourceRangeKey = string & { [brandSourceRangeKey]: never }
 
-/** TODO: Add docs */
+/** Serializes a {@link SourceRange}, making it suitable for use as a key in maps or sets. */
 export function sourceRangeKey({ from, to }: SourceRange): SourceRangeKey {
   return `${from.toString(16)}:${to.toString(16)}` as SourceRangeKey
 }
-/** TODO: Add docs */
+/** Deserializes a {@link SourceRange} that was serialized by {@link sourceRangeKey} */
 export function sourceRangeFromKey(key: SourceRangeKey): SourceRange {
   const [from, to] = key.split(':').map(x => parseInt(x, 16)) as [number, number]
   return { from, to }
 }
 
-/** TODO: Add docs */
+/** @returns Whether the two ranges have the same start and end. */
 export function rangeEquals(a: SourceRange, b: SourceRange): boolean {
   return a.from == b.from && a.to == b.to
 }
 
-/** TODO: Add docs */
+/** @returns Whether the point `b` is within the range `a`. */
 export function rangeIncludes(a: SourceRange, b: number): boolean {
   return a.from <= b && a.to >= b
 }
 
-/** TODO: Add docs */
+/** @returns whether the point `b` is within the range `a`. */
 export function rangeLength(a: SourceRange): number {
   return a.to - a.from
 }
 
-/** TODO: Add docs */
+/** @returns whether range `a` fully contains range `b`. */
 export function rangeEncloses(a: SourceRange, b: SourceRange): boolean {
   return a.from <= b.from && a.to >= b.to
 }
 
-/** TODO: Add docs */
+/** @returns Whether the ranges meet. */
 export function rangeIntersects(a: SourceRange, b: SourceRange): boolean {
   return a.from <= b.to && a.to >= b.from
 }
