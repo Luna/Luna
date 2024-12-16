@@ -67,7 +67,7 @@ type S3_File
        - action: A function that operates on the output stream and returns some
          value. The value is returned from this method.
     with_output_stream : Vector File_Access -> (Output_Stream -> Any ! File_Error) -> Any ! File_Error
-    with_output_stream self (open_options : Vector) action = if self.is_directory then Error.throw (S3_Error.Error "S3 directory cannot be opened as a stream." self.uri) else
+    with_output_stream self (open_options : Vector) action = if self.is_directory_no_follow_links then Error.throw (S3_Error.Error "S3 directory cannot be opened as a stream." self.uri) else
         Context.Output.if_enabled disabled_message="As writing is disabled, cannot write to S3. Press the Write button ▶ to perform the operation." panic=False <|
             open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (Data_Link.is_data_link self)
             if open_as_data_link then Data_Link_Helpers.write_data_link_as_stream self open_options action else
@@ -100,7 +100,7 @@ type S3_File
        - action: A function that operates on the input stream and returns some
          value. The value is returned from this method.
     with_input_stream : Vector File_Access -> (Input_Stream -> Any ! File_Error) -> Any ! S3_Error | Illegal_Argument
-    with_input_stream self (open_options : Vector) action = if self.is_directory then Error.throw (Illegal_Argument.Error "S3 folders cannot be opened as a stream." self.uri) else
+    with_input_stream self (open_options : Vector) action = if self.is_directory_no_follow_links then Error.throw (Illegal_Argument.Error "S3 folders cannot be opened as a stream." self.uri) else
         open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (Data_Link.is_data_link self)
         if open_as_data_link then Data_Link_Helpers.read_data_link_as_stream self open_options action else
             File_Access.ensure_only_allowed_options "with_input_stream" [File_Access.Read, Data_Link_Access.No_Follow] open_options <|
@@ -137,7 +137,7 @@ type S3_File
     @format File_Format.default_widget
     read : File_Format -> Problem_Behavior -> Any ! S3_Error
     read self format=Auto_Detect (on_problems : Problem_Behavior = ..Report_Warning) =
-        if self.is_directory then Error.throw (Illegal_Argument.Error "Cannot `read` a directory, use `list`.") else
+        if self.is_directory_no_follow_links then Error.throw (Illegal_Argument.Error "Cannot `read` a directory, use `list`.") else
             if Data_Link.is_data_link self then Data_Link_Helpers.read_data_link self format on_problems else
                 case format of
                     Auto_Detect ->
@@ -177,7 +177,7 @@ type S3_File
         if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else
             check_name_filter action = if name_filter != "" then Unimplemented.throw "S3 listing with name filter is not currently implemented." else action
             check_recursion action = if recursive then Unimplemented.throw "S3 listing with recursion is not currently implemented." else action
-            check_directory action = if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory." self.uri) else action
+            check_directory action = if self.is_directory_no_follow_links.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory." self.uri) else action
 
             check_directory <| check_recursion <| check_name_filter <|
                 if self.s3_path.bucket == "" then translate_file_errors self <| S3.list_buckets self.credentials . map bucket-> S3_File.Value (S3_Path.Value bucket "") self.credentials else
@@ -348,7 +348,7 @@ type S3_File
     delete_if_exists : Boolean -> Nothing
     delete_if_exists self (recursive : Boolean = False) =
         Context.Output.if_enabled disabled_message="As writing is disabled, cannot delete the file. Press the Write button ▶ to perform the operation." panic=False <|
-            case self.is_directory of
+            case self.is_directory_no_follow_links of
                 True ->
                     # This is a temporary simplified implementation to ensure cleaning up after tests
                     # TODO improve recursive deletion for S3 folders: https://github.com/enso-org/enso/issues/9704
@@ -452,7 +452,7 @@ type S3_File
 
        Returns the extension of the file.
     extension : Text
-    extension self = if self.is_directory then Error.throw (S3_Error.Error "Directories do not have extensions." self.uri) else
+    extension self = if self.is_directory_no_follow_links then Error.throw (S3_Error.Error "Directories do not have extensions." self.uri) else
         find_extension_from_name self.name
 
     ## GROUP Standard.Base.Metadata
@@ -569,7 +569,12 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a directory.
     is_directory : Boolean
-    is_directory self = self.s3_path.is_directory
+    is_directory self = Data_Link_Helpers.is_directory self <|
+        self.is_directory_no_follow_links
+
+    ## PRIVATE
+       Checks if this file is a directory, not following links.
+    private is_directory_no_follow_links self = self.s3_path.is_directory
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
@@ -591,7 +596,8 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a regular file.
     is_regular_file : Boolean
-    is_regular_file self = self.is_directory.not
+    is_regular_file self = Data_Link_Helpers.is_regular_file self <|
+        self.s3_path.is_directory.not
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
