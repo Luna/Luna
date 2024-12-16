@@ -4,20 +4,22 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import type { RendererObject } from 'marked'
 import { marked } from 'marked'
 import { useMemo } from 'react'
+import { useText } from '../../providers/TextProvider'
 import { BUTTON_STYLES, TEXT_STYLE, type TestIdProps } from '../AriaComponents'
 
 /** Props for a {@link MarkdownViewer}. */
 export interface MarkdownViewerProps extends TestIdProps {
   /** Markdown markup to parse and display. */
   readonly text: string
-  readonly imgUrlResolver: (relativePath: string) => Promise<string>
+  readonly imgUrlResolver: (relativePath: string) => Promise<Blob>
   readonly renderer?: RendererObject
 }
 
 const defaultRenderer: RendererObject = {
   /** The renderer for headings. */
   heading({ depth, tokens }) {
-    return `<h${depth} class="${TEXT_STYLE({ variant: 'h1', className: 'my-2' })}">${this.parser.parseInline(tokens)}</h${depth}>`
+    const variant = depth === 1 ? 'h1' : 'subtitle'
+    return `<h${depth} class="${TEXT_STYLE({ variant: variant, className: 'my-2' })}">${this.parser.parseInline(tokens)}</h${depth}>`
   },
   /** The renderer for paragraphs. */
   paragraph({ tokens }) {
@@ -36,8 +38,14 @@ const defaultRenderer: RendererObject = {
     return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="${BUTTON_STYLES({ variant: 'link' }).base()}">${this.parser.parseInline(tokens)}</a>`
   },
   /** The renderer for images. */
-  image({ href, title }) {
-    return `<img src="${href}" alt="${title}" class="my-1 h-auto max-w-full" />`
+  image({ href, title, raw, text }) {
+    const alt = title ?? ''
+
+    return `
+      <object data="${href}" alt="${alt}" type="image/xyz" class="my-1 h-auto max-w-full" data-raw=${raw}>
+        <span class="${TEXT_STYLE({ variant: 'overline', color: 'danger', weight: 'bold', className: 'block px-2 border-l-2 border-current' })}">${text}</span>
+      </object>
+    `
   },
   /** The renderer for code. */
   code({ text }) {
@@ -58,23 +66,30 @@ const defaultRenderer: RendererObject = {
 export function MarkdownViewer(props: MarkdownViewerProps) {
   const { text, imgUrlResolver, renderer = defaultRenderer, testId } = props
 
+  const { getText } = useText()
+
   const markedInstance = useMemo(
-    () => marked.use({ renderer: Object.assign({}, defaultRenderer, renderer), async: true }),
+    () => marked.use({ renderer: Object.assign({}, defaultRenderer, renderer) }),
     [renderer],
   )
 
   const { data: markdownToHtml } = useSuspenseQuery({
-    queryKey: ['markdownToHtml', { text }],
+    queryKey: ['markdownToHtml', { text, imgUrlResolver }],
     queryFn: () =>
       markedInstance.parse(text, {
         async: true,
         walkTokens: async (token) => {
           if (token.type === 'image' && 'href' in token && typeof token.href === 'string') {
-            token.href = await imgUrlResolver(token.href)
+            const href = token.href
+
+            token.raw = href
+            token.href = await imgUrlResolver(href).catch(() => null)
+            token.text = getText('arbitraryFetchImageError')
           }
         },
       }),
   })
+
   return (
     <div
       className="select-text"
