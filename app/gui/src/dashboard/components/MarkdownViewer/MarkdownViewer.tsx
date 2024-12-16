@@ -11,7 +11,7 @@ import { defaultRenderer } from './defaultRenderer'
 export interface MarkdownViewerProps extends TestIdProps {
   /** Markdown markup to parse and display. */
   readonly text: string
-  readonly imgUrlResolver: (relativePath: string) => Promise<Blob>
+  readonly imgUrlResolver: (relativePath: string) => Promise<string>
   readonly renderer?: RendererObject
 }
 
