@@ -2325,7 +2325,7 @@ type Table
     add_row_number self (name:Text="Row") (from:Integer=0) (step:Integer=1) (group_by:(Vector | Text | Integer | Regex)=[]) (order_by:(Vector | Text)=[]) (on_problems:Problem_Behavior=..Report_Warning) =
         Incomparable_Values.handle_errors <| Add_Row_Number.add_row_number self name from step group_by order_by on_problems
 
-    ## PRIVATE add group column, group id
+    ## PRIVATE add group column, group id, bucket, tile
        GROUP Standard.Base.Values
        ICON column_add
        Adds a new column to the table enumerating groups of rows, assigning each
