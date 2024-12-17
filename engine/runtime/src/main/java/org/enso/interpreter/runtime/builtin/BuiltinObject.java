@@ -74,7 +74,9 @@ public abstract class BuiltinObject extends EnsoObject {
     }
     var prevBuiltinType = cachedBuiltinType.builtin;
     if (curBuiltinType != prevBuiltinType) {
-      errMsgSb.append("Builtin type mismatch: ")
+      errMsgSb.append("Builtin type '")
+          .append(curBuiltinType.getType().getQualifiedName())
+          .append("' mismatch: ")
           .append("previous builtin type: ")
           .append(hex(prevBuiltinType))
           .append(", current builtin type: ")
