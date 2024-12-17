@@ -3,9 +3,8 @@ import { useCopyAssetsMutation } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
-
-import type * as backendModule from '#/services/Backend'
 import type Backend from '#/services/Backend'
+import type { AssetId, DirectoryId } from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
 
@@ -19,10 +18,10 @@ export function useCutAndPaste(backend: Backend, category: Category) {
 
   return useEventCallback(
     (
-      newParentKey: backendModule.DirectoryId,
-      newParentId: backendModule.DirectoryId,
+      newParentKey: DirectoryId,
+      newParentId: DirectoryId,
       pasteData: DrivePastePayload,
-      nodeMap: ReadonlyMap<backendModule.AssetId, AnyAssetTreeNode>,
+      nodeMap: ReadonlyMap<AssetId, AnyAssetTreeNode>,
     ) => {
       const ids = Array.from(pasteData.ids)
       const nodes = ids.flatMap((id) => {
