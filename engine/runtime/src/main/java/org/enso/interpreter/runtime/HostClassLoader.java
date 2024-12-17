@@ -81,6 +81,31 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
     }
   }
 
+  /**
+   * Find the library with the specified name inside the {@code polyglot/lib} directory of caller's
+   * project. The search inside the {@code polyglot/lib} directory hierarchy is specified by <a
+   * href="https://bits.netbeans.org/23/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html#jni">NetBeans
+   * JNI specification</a>.
+   *
+   * <p>Note: The current implementation iterates all the {@code polyglot/lib} directories of all
+   * the packages.
+   *
+   * @param libname The library name. Without platform-specific suffix or prefix.
+   * @return Absolute path to the library if found, or null.
+   */
+  @Override
+  protected String findLibrary(String libname) {
+    var pkgRepo = EnsoContext.get(null).getPackageRepository();
+    for (var pkg : pkgRepo.getLoadedPackagesJava()) {
+      var libPath = NativeLibraryFinder.findNativeLibrary(libname, pkg);
+      if (libPath != null) {
+        return libPath;
+      }
+    }
+    logger.trace("Native library {} not found in any package", libname);
+    return null;
+  }
+
   @Override
   public void close() {
     loadedClasses.clear();
