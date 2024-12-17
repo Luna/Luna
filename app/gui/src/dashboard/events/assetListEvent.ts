@@ -90,7 +90,6 @@ export function useCutAndPaste(backend: Backend, category: Category) {
           pasteData.category,
           category,
           pasteData.ids,
-          newParentKey,
           newParentId,
         )
       }

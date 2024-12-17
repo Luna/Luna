@@ -206,13 +206,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
   const moveAssetsMutation = useMoveAssetsMutation(backend)
 
   return useEventCallback(
-    (
-      from: Category,
-      to: Category,
-      keys: Iterable<AssetId>,
-      newParentKey?: DirectoryId | null,
-      newParentId?: DirectoryId | null,
-    ) => {
+    (from: Category, to: Category, keys: Iterable<AssetId>, newParentId?: DirectoryId | null) => {
       switch (from.type) {
         case 'cloud':
         case 'recent':
