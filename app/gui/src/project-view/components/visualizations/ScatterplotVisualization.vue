@@ -707,12 +707,12 @@ watchPostEffect(() => {
   const yScale_ = yScale.value
   const plotData = getPlotData(data.value) as Point[]
   const series = Object.keys(data.value.axis).filter((s) => s != 'x')
-  const colorScale = (d: string) => {
+  const colorScale = (d: Point) => {
     const color = d3.scaleOrdinal(d3.schemeCategory10).domain(series)
     if (data.value.is_multi_series) {
-      return color(d)
+      return color(d.series ?? '')
     }
-    return DEFAULT_FILL_COLOR
+    return d.color ?? DEFAULT_FILL_COLOR
   }
   d3Points.value
     .selectAll<SVGPathElement, unknown>('path')
@@ -730,7 +730,7 @@ watchPostEffect(() => {
       'd',
       symbol.type(matchShape).size((d) => (d.size ?? 0.15) * SIZE_SCALE_MULTIPLER),
     )
-    .style('fill', (d) => colorScale(d.series || ''))
+    .style('fill', (d) => colorScale(d))
     .attr('transform', (d) => `translate(${xScale_(Number(d.x))}, ${yScale_(d.y)})`)
   if (data.value.points.labels === VISIBLE_POINTS) {
     d3Points.value
@@ -893,6 +893,7 @@ config.setToolbar([
     selectedTextOption: yAxisSelected,
     title: 'Choose Y Axis Label',
     heading: 'Y Axis Label: ',
+    disabled: () => !data.value.is_multi_series,
     options: {
       none: {
         label: 'No Label',
