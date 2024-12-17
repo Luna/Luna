@@ -15,6 +15,7 @@ import * as errorModule from '#/utilities/error'
 
 import type * as cognito from '#/authentication/cognito'
 import * as listen from '#/authentication/listen'
+import { useOffline } from '#/hooks/offlineHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 
 // ======================
@@ -188,6 +189,8 @@ const SIX_HOURS_MS = 21_600_000
 function SessionRefresher(props: SessionRefresherProps) {
   const { refreshUserSession, session } = props
 
+  const { isOffline } = useOffline()
+
   reactQuery.useQuery({
     queryKey: ['refreshUserSession', { refreshToken: session.refreshToken }] as const,
     queryFn: () => refreshUserSession(),
@@ -199,6 +202,7 @@ function SessionRefresher(props: SessionRefresherProps) {
     refetchOnWindowFocus: 'always',
     refetchOnReconnect: 'always',
     refetchOnMount: 'always',
+    enabled: !isOffline,
     refetchInterval: () => {
       const expireAt = session.expireAt
 
