@@ -1733,18 +1733,14 @@ function AssetsTable(props: AssetsTableProps) {
       </div>
 }
 
-/**
- * Props for the HiddenColumn component.
- */
+/** Props for the {@link HiddenColumn} component. */
 interface HiddenColumnProps {
   readonly column: Column
   readonly enabledColumns: ReadonlySet<Column>
   readonly onColumnClick: (columns: ReadonlySet<Column>) => void
 }
 
-/**
- * Display a button to show/hide a column.
- */
+/** Display a button to show/hide a column. */
 const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
   const { column, enabledColumns, onColumnClick } = props
 
