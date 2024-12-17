@@ -62,18 +62,10 @@ const ROOT_ELEMENT_ID = 'enso-dashboard'
 /** The fraction of non-erroring interactions that should be sampled by Sentry. */
 const SENTRY_SAMPLE_RATE = 0.005
 
-// ======================
-// === DashboardProps ===
-// ======================
-
 /** Props for the dashboard. */
 export interface DashboardProps extends app.AppProps {
   readonly logger: Logger
 }
-
-// ===========
-// === run ===
-// ===========
 
 /**
  * Entrypoint for the authentication/dashboard app.
@@ -85,7 +77,7 @@ export interface DashboardProps extends app.AppProps {
 export function run(props: DashboardProps) {
   const { vibrancy, supportsDeepLinks, queryClient, logger } = props
   if (
-    // !detect.IS_DEV_MODE &&
+    !detect.IS_DEV_MODE &&
     process.env.ENSO_CLOUD_SENTRY_DSN != null &&
     process.env.ENSO_CLOUD_API_URL != null
   ) {
