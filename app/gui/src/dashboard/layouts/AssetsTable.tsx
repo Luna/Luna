@@ -52,7 +52,12 @@ import AssetEventType from '#/events/AssetEventType'
 import { useCutAndPaste, type AssetListEvent } from '#/events/assetListEvent'
 import AssetListEventType from '#/events/AssetListEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
-import { backendMutationOptions, useBackendQuery, useUploadFiles } from '#/hooks/backendHooks'
+import {
+  backendMutationOptions,
+  useBackendQuery,
+  useCopyAssetsMutation,
+  useUploadFiles,
+} from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
@@ -322,7 +327,6 @@ function AssetsTable(props: AssetsTableProps) {
   const navigator2D = useNavigator2D()
   const toastAndLog = useToastAndLog()
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const setCanCreateAssets = useSetCanCreateAssets()
   const setTargetDirectoryInStore = useSetTargetDirectory()
   const didLoadingProjectManagerFail = useDidLoadingProjectManagerFail()
@@ -364,9 +368,6 @@ function AssetsTable(props: AssetsTableProps) {
   )
   const updateSecretMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
-  )
-  const copyAssetMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'copyAsset'), [backend]),
   )
   const deleteAssetMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'deleteAsset'), [backend]),
@@ -794,23 +795,6 @@ function AssetsTable(props: AssetsTableProps) {
     [driveStore, resetAssetPanelProps, setIsAssetPanelTemporarilyVisible],
   )
 
-  const doCopyOnBackend = useEventCallback(
-    async (newParentId: DirectoryId | null, asset: AnyAsset) => {
-      newParentId = newParentId ?? rootDirectoryId
-
-      return await copyAssetMutation
-        .mutateAsync([
-          asset.id,
-          newParentId,
-          asset.title,
-          nodeMapRef.current.get(newParentId)?.item.title ?? '(unknown)',
-        ])
-        .catch((error) => {
-          toastAndLog('copyAssetError', error, asset.title)
-        })
-    },
-  )
-
   const doMove = useEventCallback(async (newParentId: DirectoryId | null, asset: AnyAsset) => {
     if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
       resetAssetPanelProps()
@@ -1130,12 +1114,6 @@ function AssetsTable(props: AssetsTableProps) {
 
         break
       }
-      case AssetListEventType.copy: {
-        for (const item of event.items) {
-          void doCopyOnBackend(event.newParentId, item)
-        }
-        break
-      }
       case AssetListEventType.move: {
         for (const item of event.items) {
           void doMove(event.newParentId, item)
@@ -1182,7 +1160,8 @@ function AssetsTable(props: AssetsTableProps) {
     setSelectedKeys(EMPTY_SET)
   })
 
-  const cutAndPaste = useCutAndPaste(category)
+  const cutAndPaste = useCutAndPaste(backend, category)
+  const copyAssetsMutation = useCopyAssetsMutation(backend)
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
     unsetModal()
 
@@ -1197,15 +1176,7 @@ function AssetsTable(props: AssetsTableProps) {
       } else {
         toggleDirectoryExpansion(newParentId, true)
         if (pasteData.type === 'copy') {
-          const assets = Array.from(pasteData.data.ids, (id) => nodeMapRef.current.get(id)).flatMap(
-            (asset) => (asset ? [asset.item] : []),
-          )
-          dispatchAssetListEvent({
-            type: AssetListEventType.copy,
-            items: assets,
-            newParentId,
-            newParentKey,
-          })
+          copyAssetsMutation.mutate([[...pasteData.data.ids], newParentId])
         } else {
           cutAndPaste(newParentKey, newParentId, pasteData.data, nodeMapRef.current)
         }

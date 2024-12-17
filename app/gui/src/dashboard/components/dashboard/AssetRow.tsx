@@ -307,7 +307,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const [innerRowState, setRowState] = React.useState<assetsTable.AssetRowState>(
     assetRowUtils.INITIAL_ROW_STATE,
   )
-  const cutAndPaste = useCutAndPaste(category)
+  const cutAndPaste = useCutAndPaste(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)

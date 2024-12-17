@@ -1,11 +1,12 @@
 /** @file Events related to changes in the asset list. */
-import AssetListEventType from '#/events/AssetListEventType'
+import type AssetListEventType from '#/events/AssetListEventType'
+import { useCopyAssetsMutation } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
-import { useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
 
-import type * as backend from '#/services/Backend'
+import type * as backendModule from '#/services/Backend'
+import type Backend from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
 
@@ -17,7 +18,6 @@ interface AssetListBaseEvent<Type extends AssetListEventType> {
 /** All possible events. */
 interface AssetListEvents {
   readonly duplicateProject: AssetListDuplicateProjectEvent
-  readonly copy: AssetListCopyEvent
   readonly move: AssetListMoveEvent
   readonly delete: AssetListDeleteEvent
 }
@@ -36,25 +36,18 @@ type SanityCheck<
 /** A signal to duplicate a project. */
 interface AssetListDuplicateProjectEvent
   extends AssetListBaseEvent<AssetListEventType.duplicateProject> {
-  readonly parentKey: backend.DirectoryId
-  readonly parentId: backend.DirectoryId
-  readonly original: backend.ProjectAsset
-  readonly versionId: backend.S3ObjectVersionId
-}
-
-/** A signal that files should be copied. */
-interface AssetListCopyEvent extends AssetListBaseEvent<AssetListEventType.copy> {
-  readonly newParentKey: backend.DirectoryId
-  readonly newParentId: backend.DirectoryId
-  readonly items: backend.AnyAsset[]
+  readonly parentKey: backendModule.DirectoryId
+  readonly parentId: backendModule.DirectoryId
+  readonly original: backendModule.ProjectAsset
+  readonly versionId: backendModule.S3ObjectVersionId
 }
 
 /** A signal that a file has been moved. */
 interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move> {
-  readonly key: backend.AssetId
-  readonly newParentKey: backend.DirectoryId
-  readonly newParentId: backend.DirectoryId
-  readonly items: backend.AnyAsset[]
+  readonly key: backendModule.AssetId
+  readonly newParentKey: backendModule.DirectoryId
+  readonly newParentId: backendModule.DirectoryId
+  readonly items: backendModule.AnyAsset[]
 }
 
 /**
@@ -62,7 +55,7 @@ interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move>
  * finished.
  */
 interface AssetListDeleteEvent extends AssetListBaseEvent<AssetListEventType.delete> {
-  readonly key: backend.AssetId
+  readonly key: backendModule.AssetId
 }
 
 /** Every possible type of asset list event. */
@@ -72,15 +65,16 @@ export type AssetListEvent = AssetListEvents[keyof AssetListEvents]
  * A hook to copy or move assets as appropriate. Assets are moved, except when performing
  * a cut and paste between the Team Space and the User Space, in which case the asset is copied.
  */
-export function useCutAndPaste(category: Category) {
+export function useCutAndPaste(backend: Backend, category: Category) {
+  const copyAssetsMutation = useCopyAssetsMutation(backend)
   const transferBetweenCategories = useTransferBetweenCategories(category)
-  const dispatchAssetListEvent = useDispatchAssetListEvent()
+
   return useEventCallback(
     (
-      newParentKey: backend.DirectoryId,
-      newParentId: backend.DirectoryId,
+      newParentKey: backendModule.DirectoryId,
+      newParentId: backendModule.DirectoryId,
       pasteData: DrivePastePayload,
-      nodeMap: ReadonlyMap<backend.AssetId, AnyAssetTreeNode>,
+      nodeMap: ReadonlyMap<backendModule.AssetId, AnyAssetTreeNode>,
     ) => {
       const ids = Array.from(pasteData.ids)
       const nodes = ids.flatMap((id) => {
@@ -98,12 +92,7 @@ export function useCutAndPaste(category: Category) {
           nodes.filter((node) => !isTeamPath(node.path)).map((otherItem) => otherItem.item.id)
         : ids
       if (teamToUserItems.length !== 0) {
-        dispatchAssetListEvent({
-          type: AssetListEventType.copy,
-          newParentKey,
-          newParentId,
-          items: teamToUserItems,
-        })
+        copyAssetsMutation.mutate([teamToUserItems.map((item) => item.id), newParentId])
       }
       if (nonTeamToUserIds.length !== 0) {
         transferBetweenCategories(

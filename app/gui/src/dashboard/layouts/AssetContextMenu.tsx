@@ -15,7 +15,6 @@ import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import AssetEventType from '#/events/AssetEventType'
-import AssetListEventType from '#/events/AssetListEventType'
 
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import * as eventListProvider from '#/layouts/Drive/EventListProvider'
@@ -35,6 +34,7 @@ import * as localBackendModule from '#/services/LocalBackend'
 
 import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
 import {
+  useCopyAssetsMutation,
   useDeleteAssetsMutation,
   useNewProject,
   useRemoveSelfPermissionMutation,
@@ -48,10 +48,6 @@ import { mapNonNullish } from '#/utilities/nullable'
 import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
 import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
-
-// ========================
-// === AssetContextMenu ===
-// ========================
 
 /** Props for a {@link AssetContextMenu}. */
 export interface AssetContextMenuProps {
@@ -85,13 +81,13 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
+  const copyAssetsMutation = useCopyAssetsMutation(backend)
   const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
@@ -477,12 +473,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             hidden={hidden}
             action="duplicate"
             doAction={() => {
-              dispatchAssetListEvent({
-                type: AssetListEventType.copy,
-                newParentId: asset.parentId,
-                newParentKey: asset.parentId,
-                items: [asset],
-              })
+              copyAssetsMutation.mutate([[asset.id], asset.parentId])
             }}
           />
         )}

@@ -1308,6 +1308,33 @@ export function useRestoreAssetsMutation(backend: Backend) {
   })
 }
 
+/** Call "restore" mutations for a list of assets. */
+export function useCopyAssetsMutation(backend: Backend) {
+  return useMutation({
+    mutationKey: [backend.type, 'copyAssets'],
+    mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
+      const results = await Promise.allSettled(
+        ids.map((id) => backend.copyAsset(id, parentId, '(unknown)', '(unknown)')),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: ids.length,
+        })
+      }
+      return results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []))
+    },
+    meta: {
+      invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
+    },
+  })
+}
+
 /** Remove the user's own permission from an asset. */
 export function useRemoveSelfPermissionMutation(backend: Backend) {
   const { user } = useFullUserSession()
