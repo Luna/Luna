@@ -57,7 +57,6 @@ export interface AssetContextMenuProps {
   readonly triggerRef: React.MutableRefObject<HTMLElement | null>
   readonly event: Pick<React.MouseEvent, 'pageX' | 'pageY'>
   readonly eventTarget: HTMLElement | null
-  readonly doDelete: () => void
   readonly doCopy: () => void
   readonly doCut: () => void
   readonly doPaste: (
@@ -69,7 +68,7 @@ export interface AssetContextMenuProps {
 /** The context menu for an arbitrary {@link backendModule.Asset}. */
 export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { innerProps, rootDirectoryId, event, eventTarget, hidden = false, triggerRef } = props
-  const { doCopy, doCut, doPaste, doDelete } = props
+  const { doCopy, doCut, doPaste } = props
   const { asset, path: pathRaw, state, setRowState } = innerProps
   const { backend, category, nodeMap } = state
 
@@ -415,18 +414,22 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                     <ConfirmDeleteModal
                       defaultOpen
                       actionText={getText('trashTheAssetTypeTitle', asset.type, asset.title)}
-                      doDelete={doDelete}
+                      doDelete={() => {
+                        deleteAssetsMutation.mutate([[asset.id], false])
+                      }}
                     />,
                   )
                 } else {
-                  doDelete()
+                  deleteAssetsMutation.mutate([[asset.id], false])
                 }
               } else {
                 setModal(
                   <ConfirmDeleteModal
                     defaultOpen
                     actionText={getText('deleteTheAssetTypeTitle', asset.type, asset.title)}
-                    doDelete={doDelete}
+                    doDelete={() => {
+                      deleteAssetsMutation.mutate([[asset.id], false])
+                    }}
                   />,
                 )
               }

@@ -272,8 +272,6 @@ export interface AssetsTableState {
   readonly doCopy: () => void
   readonly doCut: () => void
   readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
-  readonly doDelete: (item: AnyAsset, forever: boolean) => Promise<void>
-  readonly doMove: (newParentKey: DirectoryId, item: AnyAsset) => Promise<void>
 }
 
 /** Data associated with a {@link AssetRow}, used for rendering. */
@@ -355,15 +353,6 @@ function AssetsTable(props: AssetsTableProps) {
   const uploadFiles = useUploadFiles(backend, category)
   const updateSecretMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
-  )
-  const deleteAssetMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'deleteAsset'), [backend]),
-  )
-  const updateAssetMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'updateAsset'), [backend]),
-  )
-  const closeProjectMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'closeProject'), [backend]),
   )
   const cutAndPaste = useCutAndPaste(backend, category)
   const copyAssetsMutation = useCopyAssetsMutation(backend)
@@ -783,41 +772,6 @@ function AssetsTable(props: AssetsTableProps) {
     [driveStore, resetAssetPanelProps, setIsAssetPanelTemporarilyVisible],
   )
 
-  const doMove = useEventCallback(async (newParentId: DirectoryId | null, asset: AnyAsset) => {
-    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
-      resetAssetPanelProps()
-    }
-
-    return updateAssetMutation
-      .mutateAsync([
-        asset.id,
-        { parentDirectoryId: newParentId ?? rootDirectoryId, description: null },
-        asset.title,
-      ])
-      .catch((error) => {
-        toastAndLog('moveAssetError', error, asset.title)
-      })
-  })
-
-  const doDelete = useEventCallback(async (asset: AnyAsset, forever: boolean = false) => {
-    if (asset.id === assetPanelStore.getState().assetPanelProps.item?.id) {
-      resetAssetPanelProps()
-    }
-    if (asset.type === AssetType.directory) {
-      toggleDirectoryExpansion(asset.id, false)
-    }
-
-    if (asset.type === AssetType.project && backend.type === BackendType.local) {
-      await closeProjectMutation.mutateAsync([asset.id, asset.title]).catch(noop)
-    }
-
-    return deleteAssetMutation
-      .mutateAsync([asset.id, { force: forever }, asset.title])
-      .catch((error) => {
-        toastAndLog('deleteAssetError', error, asset.title)
-      })
-  })
-
   const [keyboardSelectedIndex, setKeyboardSelectedIndex] = useState<number | null>(null)
   const mostRecentlySelectedIndexRef = useRef<number | null>(null)
   const selectionStartIndexRef = useRef<number | null>(null)
@@ -1117,8 +1071,6 @@ function AssetsTable(props: AssetsTableProps) {
       doCopy,
       doCut,
       doPaste,
-      doDelete,
-      doMove,
     }),
     [
       backend,
@@ -1129,8 +1081,6 @@ function AssetsTable(props: AssetsTableProps) {
       doCopy,
       doCut,
       doPaste,
-      doDelete,
-      doMove,
       hideColumn,
       setQuery,
     ],

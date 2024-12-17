@@ -2,7 +2,6 @@
 
 /** Possible types of asset state change. */
 enum AssetEventType {
-  move = 'move',
   download = 'download',
   downloadSelected = 'download-selected',
   temporarilyAddLabels = 'temporarily-add-labels',

@@ -279,8 +279,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
   const { initialAssetEvents } = props
-  const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
-  const { doMove, category, rootDirectoryId, backend } = state
+  const { nodeMap, doCopy, doCut, doPaste } = state
+  const { category, rootDirectoryId, backend } = state
 
   const driveStore = useDriveStore()
   const queryClient = useQueryClient()
@@ -393,13 +393,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     }
   }, [grabKeyboardFocusRef, isKeyboardSelected, asset])
 
-  const doDelete = React.useCallback(
-    (forever = false) => {
-      void doDeleteRaw(asset, forever)
-    },
-    [doDeleteRaw, asset],
-  )
-
   const clearDragState = React.useCallback(() => {
     setIsDraggedOver(false)
     setRowState((oldRowState) =>
@@ -461,12 +454,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   eventListProvider.useAssetEventListener(async (event) => {
     switch (event.type) {
-      case AssetEventType.move: {
-        if (event.ids.has(id)) {
-          await doMove(event.newParentKey, asset)
-        }
-        break
-      }
       case AssetEventType.download:
       case AssetEventType.downloadSelected: {
         if (event.type === AssetEventType.downloadSelected ? selected : event.ids.has(asset.id)) {
@@ -698,7 +685,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                         doCopy={doCopy}
                         doCut={doCut}
                         doPaste={doPaste}
-                        doDelete={doDelete}
                       />,
                     )
                   }
@@ -828,7 +814,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               doCopy={doCopy}
               doCut={doCut}
               doPaste={doPaste}
-              doDelete={doDelete}
             />
           )}
         </>

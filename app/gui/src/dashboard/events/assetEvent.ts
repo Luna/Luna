@@ -10,7 +10,6 @@ interface AssetBaseEvent<Type extends AssetEventType> {
 
 /** All possible events. */
 interface AssetEvents {
-  readonly move: AssetMoveEvent
   readonly download: AssetDownloadEvent
   readonly downloadSelected: AssetDownloadSelectedEvent
   readonly temporarilyAddLabels: AssetTemporarilyAddLabelsEvent
@@ -27,13 +26,6 @@ type SanityCheck<
     readonly [Type in keyof typeof AssetEventType]: AssetBaseEvent<(typeof AssetEventType)[Type]>
   } = AssetEvents,
 > = [T]
-
-/** A signal to move multiple assets. */
-export interface AssetMoveEvent extends AssetBaseEvent<AssetEventType.move> {
-  readonly ids: ReadonlySet<backend.AssetId>
-  readonly newParentKey: backend.DirectoryId
-  readonly newParentId: backend.DirectoryId
-}
 
 /** A signal to download assets. */
 export interface AssetDownloadEvent extends AssetBaseEvent<AssetEventType.download> {
