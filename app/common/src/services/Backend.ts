@@ -1065,6 +1065,18 @@ export function assetIsType<Type extends AssetType>(type: Type) {
   return (asset: AnyAsset): asset is Extract<AnyAsset, Asset<Type>> => asset.type === type
 }
 
+/** Extract the type of an id and return a discriminated union containing both id and type. */
+export function extractTypeFromId(id: AssetId): AnyAsset extends infer T ?
+  T extends T ?
+    Pick<T, ('id' | 'type') & keyof T>
+  : never
+: never {
+  return {
+    type: id.match(/^(.+?)-/)?.[1],
+    id,
+  } as never
+}
+
 /** Creates a new placeholder asset id for the given asset type. */
 export function createPlaceholderAssetId<Type extends AssetType>(
   type: Type,
@@ -1658,11 +1670,7 @@ export default abstract class Backend {
     title: string,
   ): Promise<CreatedProject>
   /** Return project details. */
-  abstract getProjectDetails(
-    projectId: ProjectId,
-    directoryId: DirectoryId | null,
-    getPresignedUrl?: boolean,
-  ): Promise<Project>
+  abstract getProjectDetails(projectId: ProjectId, getPresignedUrl?: boolean): Promise<Project>
   /** Return Language Server logs for a project session. */
   abstract getProjectSessionLogs(
     projectSessionId: ProjectSessionId,

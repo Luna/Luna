@@ -48,8 +48,9 @@ import {
   type User,
   type UserGroupInfo,
 } from '#/services/Backend'
-import LocalBackend from '#/services/LocalBackend'
+import LocalBackend, { extractTypeAndId } from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
+import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
@@ -1470,6 +1471,108 @@ export function useDuplicateProjectMutation(backend: Backend) {
             id: project.projectId,
           })
         })
+    },
+  })
+}
+
+/** Call "download" mutations for a list of assets. */
+export function useDownloadAssetsMutation(backend: Backend) {
+  const queryClient = useQueryClient()
+  const toastAndLog = useToastAndLog()
+  const { getText } = useText()
+
+  return useMutation({
+    mutationFn: async (infos: readonly { id: AssetId; title: string }[]) => {
+      const results = await Promise.allSettled(
+        infos.map(async ({ id, title }) => {
+          const asset = backendModule.extractTypeFromId(id)
+          if (backend.type === BackendType.remote) {
+            switch (asset.type) {
+              case backendModule.AssetType.project: {
+                try {
+                  const details = await queryClient.fetchQuery(
+                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, true], {
+                      staleTime: 0,
+                    }),
+                  )
+                  if (details.url != null) {
+                    await backend.download(details.url, `${title}.enso-project`)
+                  } else {
+                    const error: unknown = getText('projectHasNoSourceFilesPhrase')
+                    toastAndLog('downloadProjectError', error, title)
+                  }
+                } catch (error) {
+                  toastAndLog('downloadProjectError', error, title)
+                }
+                break
+              }
+              case backendModule.AssetType.file: {
+                try {
+                  const details = await queryClient.fetchQuery(
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, '(unknown)', true], {
+                      staleTime: 0,
+                    }),
+                  )
+                  if (details.url != null) {
+                    await backend.download(details.url, details.file.fileName ?? '')
+                  } else {
+                    const error: unknown = getText('fileNotFoundPhrase')
+                    toastAndLog('downloadFileError', error, title)
+                  }
+                } catch (error) {
+                  toastAndLog('downloadFileError', error, '(unknown)')
+                }
+                break
+              }
+              case backendModule.AssetType.datalink: {
+                try {
+                  const value = await queryClient.fetchQuery(
+                    backendQueryOptions(backend, 'getDatalink', [asset.id, '(unknown)']),
+                  )
+                  const fileName = `${title}.datalink`
+                  download(
+                    URL.createObjectURL(
+                      new File([JSON.stringify(value)], fileName, {
+                        type: 'application/json+x-enso-data-link',
+                      }),
+                    ),
+                    fileName,
+                  )
+                } catch (error) {
+                  toastAndLog('downloadDatalinkError', error, '(unknown)')
+                }
+                break
+              }
+              default: {
+                toastAndLog('downloadInvalidTypeError')
+                break
+              }
+            }
+          } else {
+            if (asset.type === backendModule.AssetType.project) {
+              const typeAndId = extractTypeAndId(asset.id)
+              const queryString = new URLSearchParams({
+                projectsDirectory: typeAndId.directory,
+              }).toString()
+              await backend.download(
+                `./api/project-manager/projects/${typeAndId.id}/enso-project?${queryString}`,
+                `${title}.enso-project`,
+              )
+            }
+          }
+        }),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: infos.length,
+        })
+      }
+      return null
     },
   })
 }

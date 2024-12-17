@@ -14,10 +14,7 @@ import * as backendProvider from '#/providers/BackendProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
-import AssetEventType from '#/events/AssetEventType'
-
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 
 import ContextMenu from '#/components/ContextMenu'
@@ -36,6 +33,7 @@ import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywal
 import {
   useCopyAssetsMutation,
   useDeleteAssetsMutation,
+  useDownloadAssetsMutation,
   useNewProject,
   useRemoveSelfPermissionMutation,
   useRestoreAssetsMutation,
@@ -79,7 +77,6 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
@@ -87,6 +84,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
   const copyAssetsMutation = useCopyAssetsMutation(backend)
+  const downloadAssetsMutation = useDownloadAssetsMutation(backend)
   const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
@@ -499,7 +497,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             isDisabled={asset.type === backendModule.AssetType.secret}
             action="download"
             doAction={() => {
-              dispatchAssetEvent({ type: AssetEventType.download, ids: new Set([asset.id]) })
+              downloadAssetsMutation.mutate([{ id: asset.id, title: asset.title }])
             }}
           />
         )}

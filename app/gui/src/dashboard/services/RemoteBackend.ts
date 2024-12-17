@@ -746,7 +746,6 @@ export default class RemoteBackend extends Backend {
    */
   override async getProjectDetails(
     projectId: backend.ProjectId,
-    _directoryId: null,
     getPresignedUrl = false,
   ): Promise<backend.Project> {
     const paramsString = new URLSearchParams({

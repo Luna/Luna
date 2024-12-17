@@ -1,7 +1,7 @@
 /** @file A table row for an arbitrary asset. */
 import * as React from 'react'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
 
@@ -26,9 +26,8 @@ import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
-import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
+import { isLocalCategory } from '#/layouts/CategorySwitcher/Category'
 import * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import * as localBackend from '#/services/LocalBackend'
 
 import * as backendModule from '#/services/Backend'
 
@@ -37,7 +36,6 @@ import { IndefiniteSpinner } from '#/components/Spinner'
 import type { AssetEvent } from '#/events/assetEvent'
 import {
   backendMutationOptions,
-  backendQueryOptions,
   useBackendMutationState,
   useUploadFiles,
 } from '#/hooks/backendHooks'
@@ -48,7 +46,6 @@ import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
-import { download } from '#/utilities/download'
 import * as drag from '#/utilities/drag'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
@@ -263,7 +260,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const { category, rootDirectoryId, backend } = state
 
   const driveStore = useDriveStore()
-  const queryClient = useQueryClient()
   const { user } = useFullUserSession()
   const setSelectedKeys = useSetSelectedKeys()
   const selected = useStore(driveStore, ({ visuallySelectedKeys, selectedKeys }) =>
@@ -279,7 +275,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   )
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
@@ -310,8 +305,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     useBackendMutationState(backend, 'undoDeleteAsset', {
       predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
     }).length !== 0
-
-  const isCloud = isCloudCategory(category)
 
   const { data: projectState } = useQuery({
     ...createGetProjectDetailsQuery({
@@ -434,88 +427,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   eventListProvider.useAssetEventListener(async (event) => {
     switch (event.type) {
-      case AssetEventType.download:
-      case AssetEventType.downloadSelected: {
-        if (event.type === AssetEventType.downloadSelected ? selected : event.ids.has(asset.id)) {
-          if (isCloud) {
-            switch (asset.type) {
-              case backendModule.AssetType.project: {
-                try {
-                  const details = await queryClient.fetchQuery(
-                    backendQueryOptions(
-                      backend,
-                      'getProjectDetails',
-                      [asset.id, asset.parentId, true],
-                      { staleTime: 0 },
-                    ),
-                  )
-                  if (details.url != null) {
-                    await backend.download(details.url, `${asset.title}.enso-project`)
-                  } else {
-                    const error: unknown = getText('projectHasNoSourceFilesPhrase')
-                    toastAndLog('downloadProjectError', error, asset.title)
-                  }
-                } catch (error) {
-                  toastAndLog('downloadProjectError', error, asset.title)
-                }
-                break
-              }
-              case backendModule.AssetType.file: {
-                try {
-                  const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
-                      staleTime: 0,
-                    }),
-                  )
-                  if (details.url != null) {
-                    await backend.download(details.url, asset.title)
-                  } else {
-                    const error: unknown = getText('fileNotFoundPhrase')
-                    toastAndLog('downloadFileError', error, asset.title)
-                  }
-                } catch (error) {
-                  toastAndLog('downloadFileError', error, asset.title)
-                }
-                break
-              }
-              case backendModule.AssetType.datalink: {
-                try {
-                  const value = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getDatalink', [asset.id, asset.title]),
-                  )
-                  const fileName = `${asset.title}.datalink`
-                  download(
-                    URL.createObjectURL(
-                      new File([JSON.stringify(value)], fileName, {
-                        type: 'application/json+x-enso-data-link',
-                      }),
-                    ),
-                    fileName,
-                  )
-                } catch (error) {
-                  toastAndLog('downloadDatalinkError', error, asset.title)
-                }
-                break
-              }
-              default: {
-                toastAndLog('downloadInvalidTypeError')
-                break
-              }
-            }
-          } else {
-            if (asset.type === backendModule.AssetType.project) {
-              const projectsDirectory = localBackend.extractTypeAndId(asset.parentId).id
-              const uuid = localBackend.extractTypeAndId(asset.id).id
-              const queryString = new URLSearchParams({ projectsDirectory }).toString()
-              await backend.download(
-                `./api/project-manager/projects/${uuid}/enso-project?${queryString}`,
-                `${asset.title}.enso-project`,
-              )
-            }
-          }
-        }
-        break
-      }
       case AssetEventType.temporarilyAddLabels: {
         const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
         setRowState((oldRowState) =>
