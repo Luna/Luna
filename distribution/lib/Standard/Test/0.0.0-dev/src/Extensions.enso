@@ -562,9 +562,7 @@ Error.should_equal_ignoring_order self that frames_to_skip=0 =
 Any.should_only_contain_elements_in : Any -> Integer -> Spec_Result
 Any.should_only_contain_elements_in self that frames_to_skip=0 =
     loc = Meta.get_source_location 1+frames_to_skip
-    if that.is_a Vector . not then
-        Panic.throw (Illegal_Argument.Error "Expected a Vector, but got a "+that.to_display_text+" (at "+loc+").")
-    self.each element->
+    rhs_error_check that <| self.each element->
         if that.contains element . not then
             msg = "The collection contained an element ("+element.to_text+") which was not expected (at " + loc + ")."
             Test.fail msg
