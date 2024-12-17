@@ -82,7 +82,7 @@ type Tables_And_Table_Types_Data
 
     teardown self =
         self.connection.drop_table self.tinfo
-        self.connection.drop_table self.vinfo
+        self.connection.execute_update "DROP VIEW '"+self.vinfo+"'"
         self.connection.drop_table self.temporary_table
         self.connection.close
 
@@ -388,7 +388,7 @@ create_inmem_connection =
 
 create_file_connection file =
     connection = Database.connect (SQLite.From_File file)
-    connection.execute_update 'CREATE TABLE "Dummy" ("strs" VARCHAR, "ints" INTEGER, "bools" BOOLEAN, "reals" REAL)'
+    connection.execute_update 'CREATE TABLE IF NOT EXISTS "Dummy" ("strs" VARCHAR, "ints" INTEGER, "bools" BOOLEAN, "reals" REAL)'
     connection
 
 type File_Connection
