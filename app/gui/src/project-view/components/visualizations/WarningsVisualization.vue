@@ -2,7 +2,7 @@
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
-import { computed, ref, watchEffect } from 'vue'
+import { computed } from 'vue'
 
 export const name = 'Warnings'
 export const icon = 'exclamation'
