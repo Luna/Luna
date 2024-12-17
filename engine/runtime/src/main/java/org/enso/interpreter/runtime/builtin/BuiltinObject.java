@@ -2,6 +2,7 @@ package org.enso.interpreter.runtime.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -9,10 +10,14 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import java.lang.System;
+import java.util.ArrayList;
+import java.util.List;
 import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
+import org.enso.interpreter.runtime.data.text.Text;
+import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 /**
@@ -43,6 +48,22 @@ public abstract class BuiltinObject extends EnsoObject {
     return true;
   }
 
+  private static List<String> truffleStack() {
+    var stack = new ArrayList<String>();
+    Truffle.getRuntime().iterateFrames((frameInstance) -> {
+      var callNode = frameInstance.getCallNode();
+      if (callNode != null) {
+        var rootNode = callNode.getRootNode();
+        if (rootNode != null) {
+          var fqn = rootNode.getQualifiedName();
+          stack.add(fqn);
+        }
+      }
+      return null;
+    });
+    return stack;
+  }
+
   @ExportMessage
   @TruffleBoundary
   public final Type getType(@Bind("$node") Node node) {
@@ -51,7 +72,9 @@ public abstract class BuiltinObject extends EnsoObject {
       var ctx = EnsoContext.get(node);
       cachedBuiltinType = new BuiltinWithContext(
           ctx.getBuiltins().getBuiltinType(builtinName),
-          ctx);
+          ctx,
+          new RuntimeException(),
+          truffleStack());
     } else {
       assert assertCorrectCachedBuiltin(node);
     }
@@ -86,6 +109,13 @@ public abstract class BuiltinObject extends EnsoObject {
     if (errMsgSb.isEmpty()) {
       return true;
     } else {
+      // Print stack trace of when the builtin type was cached
+      System.out.println("Truffle stack of cached builtin type: ");
+      cachedBuiltinType.truffleStack.forEach(
+          (frame) -> System.out.println("  " + frame));
+      System.out.println();
+      System.out.println("RuntimeException stack of cached builtin type: ");
+      cachedBuiltinType.ex.printStackTrace(System.out);
       throw new AssertionError(errMsgSb.toString());
     }
   }
@@ -122,5 +152,5 @@ public abstract class BuiltinObject extends EnsoObject {
     return Integer.toHexString(System.identityHashCode(obj));
   }
 
-  private record BuiltinWithContext(Builtin builtin, EnsoContext ctx) {}
+  private record BuiltinWithContext(Builtin builtin, EnsoContext ctx, RuntimeException ex, List<String> truffleStack) {}
 }
