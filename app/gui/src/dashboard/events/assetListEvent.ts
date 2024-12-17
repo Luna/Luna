@@ -18,7 +18,6 @@ interface AssetListBaseEvent<Type extends AssetListEventType> {
 /** All possible events. */
 interface AssetListEvents {
   readonly duplicateProject: AssetListDuplicateProjectEvent
-  readonly delete: AssetListDeleteEvent
 }
 
 /** A type to ensure that {@link AssetListEvents} contains every {@link AssetListEventType}. */
@@ -39,14 +38,6 @@ interface AssetListDuplicateProjectEvent
   readonly parentId: backendModule.DirectoryId
   readonly original: backendModule.ProjectAsset
   readonly versionId: backendModule.S3ObjectVersionId
-}
-
-/**
- * A signal that a file has been deleted. This must not be called before the request is
- * finished.
- */
-interface AssetListDeleteEvent extends AssetListBaseEvent<AssetListEventType.delete> {
-  readonly key: backendModule.AssetId
 }
 
 /** Every possible type of asset list event. */
@@ -86,12 +77,7 @@ export function useCutAndPaste(backend: Backend, category: Category) {
         copyAssetsMutation.mutate([teamToUserItems.map((item) => item.id), newParentId])
       }
       if (nonTeamToUserIds.length !== 0) {
-        transferBetweenCategories(
-          pasteData.category,
-          category,
-          pasteData.ids,
-          newParentId,
-        )
+        transferBetweenCategories(pasteData.category, category, pasteData.ids, newParentId)
       }
     },
   )

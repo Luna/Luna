@@ -1063,6 +1063,7 @@ function AssetsTable(props: AssetsTableProps) {
 
   const onAssetListEvent = useEventCallback((event: AssetListEvent) => {
     switch (event.type) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       case AssetListEventType.duplicateProject: {
         const parent = nodeMapRef.current.get(event.parentKey)
         const siblings = parent?.children ?? []
@@ -1115,15 +1116,6 @@ function AssetsTable(props: AssetsTableProps) {
               id: project.projectId,
             })
           })
-
-        break
-      }
-      case AssetListEventType.delete: {
-        const asset = nodeMapRef.current.get(event.key)?.item
-
-        if (asset) {
-          void doDelete(asset, false)
-        }
 
         break
       }
