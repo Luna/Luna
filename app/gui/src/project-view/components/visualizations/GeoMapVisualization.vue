@@ -12,6 +12,7 @@ export const scripts = [
   // The deck.gl scripting API is not available in the ESM module.
   'https://cdn.jsdelivr.net/npm/deck.gl@9.0.38/dist.min.js',
 ]
+export const styles = ['https://api.tiles.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css']
 
 /**
  * Provides a mapbox & deck.gl-based map visualization.
@@ -446,7 +447,6 @@ config.setToolbarOverlay(true)
   <div ref="mapNode" class="GeoMapVisualization" @pointerdown.stop @wheel.stop></div>
 </template>
 
-<style src="mapbox-gl/dist/mapbox-gl.css" />
 <style scoped>
 .GeoMapVisualization {
   height: 100%;
