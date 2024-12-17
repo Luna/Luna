@@ -1,5 +1,6 @@
 /** @file A Markdown viewer component. */
 
+import { useLogger } from '#/providers/LoggerProvider'
 import { useText } from '#/providers/TextProvider'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { RendererObject } from 'marked'
@@ -23,6 +24,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   const { text, imgUrlResolver, renderer = defaultRenderer, testId } = props
 
   const { getText } = useText()
+  const logger = useLogger()
 
   const markedInstance = marked.use({ renderer: Object.assign({}, defaultRenderer, renderer) })
 
@@ -36,7 +38,15 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             const href = token.href
 
             token.raw = href
-            token.href = await args.imgUrlResolver(href).catch(() => null)
+            token.href = await args
+              .imgUrlResolver(href)
+              .then((url) => {
+                return url
+              })
+              .catch((error) => {
+                logger.error(error)
+                return null
+              })
             token.text = getText('arbitraryFetchImageError')
           }
         },

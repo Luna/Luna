@@ -26,13 +26,11 @@ export const defaultRenderer: RendererObject = {
     return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="${BUTTON_STYLES({ variant: 'link' }).base()}">${this.parser.parseInline(tokens)}</a>`
   },
   /** The renderer for images. */
-  image({ href, title, raw, text }) {
+  image({ href, title, raw }) {
     const alt = title ?? ''
 
     return `
-      <object data="${href}" alt="${alt}" type="image/xyz" class="my-1 h-auto max-w-full" data-raw=${raw}>
-        <span class="${TEXT_STYLE({ variant: 'overline', color: 'danger', weight: 'bold', className: 'block px-2 border-l-2 border-current' })}">${text}</span>
-      </object>
+      <img src="${href}" alt="${alt}" class="my-1 h-auto max-w-full" data-raw=${raw}>
     `
   },
   /** The renderer for code. */
