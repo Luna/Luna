@@ -694,26 +694,17 @@ function AssetsTable(props: AssetsTableProps) {
   useEffect(
     () =>
       driveStore.subscribe(({ selectedKeys }) => {
-        let newCanDownload: boolean
-        if (!isCloud) {
-          newCanDownload =
-            selectedKeys.size !== 0 &&
-            Array.from(selectedKeys).every((key) => {
-              const node = nodeMapRef.current.get(key)
-              return node?.item.type === AssetType.project
-            })
-        } else {
-          newCanDownload =
-            selectedKeys.size !== 0 &&
-            Array.from(selectedKeys).every((key) => {
-              const node = nodeMapRef.current.get(key)
-              return (
-                node?.item.type === AssetType.project ||
-                node?.item.type === AssetType.file ||
-                node?.item.type === AssetType.datalink
-              )
-            })
-        }
+        const predicate =
+          isCloud ?
+            (type: AssetType | undefined) =>
+              type === AssetType.project || type === AssetType.file || type === AssetType.datalink
+          : (type: AssetType | undefined) => type === AssetType.project
+        const newCanDownload =
+          selectedKeys.size !== 0 &&
+          Array.from(selectedKeys).every((key) => {
+            const node = nodeMapRef.current.get(key)
+            return predicate(node?.item.type)
+          })
         const currentCanDownload = driveStore.getState().canDownload
         if (currentCanDownload !== newCanDownload) {
           setCanDownload(newCanDownload)

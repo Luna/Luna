@@ -339,9 +339,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   )
   const createPermissionVariables = createPermissionMutation.variables?.[0]
   const isRemovingSelf =
-    createPermissionVariables != null &&
-    createPermissionVariables.action == null &&
-    createPermissionVariables.actorsIds[0] === user.userId
+    createPermissionVariables?.actorsIds[0] === user.userId &&
+    createPermissionVariables.action == null
   const visibility =
     isRemovingSelf ? Visibility.hidden
     : visibilityRaw === Visibility.visible ? insertionVisibility
