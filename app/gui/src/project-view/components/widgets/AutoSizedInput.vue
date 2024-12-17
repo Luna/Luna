@@ -114,6 +114,7 @@ defineExpose({
     :style="inputStyle"
     @pointerdown.stop
     @click.stop
+    @contextmenu.stop
     @keydown.backspace.stop
     @keydown.delete.stop
     @keydown.arrow-left.stop
@@ -141,6 +142,9 @@ defineExpose({
   box-sizing: content-box;
   &:focus {
     outline: none;
+  }
+  &::placeholder {
+    font-style: italic;
   }
 }
 
