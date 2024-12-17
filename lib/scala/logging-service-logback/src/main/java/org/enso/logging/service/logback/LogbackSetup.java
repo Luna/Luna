@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.filter.ThresholdFilter;
+import ch.qos.logback.classic.net.SocketAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
@@ -132,7 +133,7 @@ public final class LogbackSetup extends LoggerSetup {
 
     org.enso.logging.config.SocketAppender appenderConfig = config.getSocketAppender();
 
-    EnsoSocketAppender socketAppender = new EnsoSocketAppender();
+    SocketAppender socketAppender = new SocketAppender();
     socketAppender.setName("enso-socket");
     socketAppender.setIncludeCallerData(false);
     socketAppender.setRemoteHost(hostname);

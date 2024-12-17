@@ -3850,26 +3850,5 @@
 {
   "name":"sun.security.x509.SubjectKeyIdentifierExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-  {
-    "name": "org.enso.languageserver.boot.LanguageServerRunner",
-    "methods": [{
-      "name": "<init>",
-      "parameterTypes":[]
-    },{
-      "name": "runLanguageServer",
-      "parameterTypes":["org.apache.commons.cli.CommandLine", "org.enso.runner.common.ProfilingConfig", "org.slf4j.event.Level"]
-    }
-    ]
-  },
-  {
-    "name": "org.enso.runner.common.LanguageServerApi",
-    "methods": [{
-      "name": "<init>"
-    },{
-      "name": "runLanguageServer",
-      "parameterTypes":["org.apache.commons.cli.CommandLine", "org.enso.runner.common.ProfilingConfig", "org.slf4j.event.Level"]
-    }
-    ]
-  }
+}
 ]
