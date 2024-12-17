@@ -56,6 +56,7 @@ import {
   backendMutationOptions,
   useBackendQuery,
   useCopyAssetsMutation,
+  useMoveAssetsMutation,
   useUploadFiles,
 } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
@@ -378,6 +379,9 @@ function AssetsTable(props: AssetsTableProps) {
   const closeProjectMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'closeProject'), [backend]),
   )
+  const cutAndPaste = useCutAndPaste(backend, category)
+  const copyAssetsMutation = useCopyAssetsMutation(backend)
+  const moveAssetsMutation = useMoveAssetsMutation(backend)
 
   const { rootDirectoryId, rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
   const { isLoading, isError, assetTree } = useAssetTree({
@@ -1114,12 +1118,6 @@ function AssetsTable(props: AssetsTableProps) {
 
         break
       }
-      case AssetListEventType.move: {
-        for (const item of event.items) {
-          void doMove(event.newParentId, item)
-        }
-        break
-      }
       case AssetListEventType.delete: {
         const asset = nodeMapRef.current.get(event.key)?.item
 
@@ -1160,8 +1158,6 @@ function AssetsTable(props: AssetsTableProps) {
     setSelectedKeys(EMPTY_SET)
   })
 
-  const cutAndPaste = useCutAndPaste(backend, category)
-  const copyAssetsMutation = useCopyAssetsMutation(backend)
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
     unsetModal()
 
@@ -1760,12 +1756,10 @@ function AssetsTable(props: AssetsTableProps) {
             event.stopPropagation()
             unsetModal()
 
-            dispatchAssetEvent({
-              type: AssetEventType.move,
-              newParentKey: rootDirectoryId,
-              newParentId: rootDirectoryId,
-              ids: new Set(filtered.map((dragItem) => dragItem.asset.id)),
-            })
+            moveAssetsMutation.mutate([
+              filtered.map((dragItem) => dragItem.asset.id),
+              rootDirectoryId,
+            ])
           }
           handleFileDrop(event)
         }}

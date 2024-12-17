@@ -18,7 +18,6 @@ interface AssetListBaseEvent<Type extends AssetListEventType> {
 /** All possible events. */
 interface AssetListEvents {
   readonly duplicateProject: AssetListDuplicateProjectEvent
-  readonly move: AssetListMoveEvent
   readonly delete: AssetListDeleteEvent
 }
 
@@ -40,14 +39,6 @@ interface AssetListDuplicateProjectEvent
   readonly parentId: backendModule.DirectoryId
   readonly original: backendModule.ProjectAsset
   readonly versionId: backendModule.S3ObjectVersionId
-}
-
-/** A signal that a file has been moved. */
-interface AssetListMoveEvent extends AssetListBaseEvent<AssetListEventType.move> {
-  readonly key: backendModule.AssetId
-  readonly newParentKey: backendModule.DirectoryId
-  readonly newParentId: backendModule.DirectoryId
-  readonly items: backendModule.AnyAsset[]
 }
 
 /**

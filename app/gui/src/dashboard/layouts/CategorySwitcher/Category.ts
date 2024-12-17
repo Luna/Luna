@@ -1,16 +1,13 @@
 /** @file The categories available in the category switcher. */
-import { useMutation } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
-import AssetEventType from '#/events/AssetEventType'
 import {
-  backendMutationOptions,
   useBackendQuery,
   useDeleteAssetsMutation,
+  useMoveAssetsMutation,
 } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import {
@@ -206,8 +203,8 @@ export function useTransferBetweenCategories(currentCategory: Category) {
   const { user } = useFullUserSession()
   const { data: organization = null } = useBackendQuery(remoteBackend, 'getOrganization', [])
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
-  const updateAssetMutation = useMutation(backendMutationOptions(backend, 'updateAsset'))
-  const dispatchAssetEvent = useDispatchAssetEvent()
+  const moveAssetsMutation = useMoveAssetsMutation(backend)
+
   return useEventCallback(
     (
       from: Category,
@@ -229,23 +226,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
                 remoteBackend.rootDirectoryId(user, organization)
               : to.homeDirectoryId
             invariant(newParentId != null, 'The Cloud backend is missing a root directory.')
-            newParentKey ??= newParentId
-            if (from === currentCategory) {
-              dispatchAssetEvent({
-                type: AssetEventType.move,
-                newParentKey,
-                newParentId,
-                ids: new Set(keys),
-              })
-            } else {
-              for (const id of keys) {
-                updateAssetMutation.mutate([
-                  id,
-                  { description: null, parentDirectoryId: newParentId },
-                  '(unknown)',
-                ])
-              }
-            }
+            moveAssetsMutation.mutate([[...keys], newParentId])
           }
           break
         }
@@ -258,23 +239,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
             const parentDirectory = to.type === 'local' ? localBackend?.rootPath() : to.rootPath
             invariant(parentDirectory != null, 'The Local backend is missing a root directory.')
             newParentId ??= newDirectoryId(parentDirectory)
-            newParentKey ??= newParentId
-            if (from === currentCategory) {
-              dispatchAssetEvent({
-                type: AssetEventType.move,
-                newParentKey,
-                newParentId,
-                ids: new Set(keys),
-              })
-            } else {
-              for (const id of keys) {
-                updateAssetMutation.mutate([
-                  id,
-                  { description: null, parentDirectoryId: newParentId },
-                  '(unknown)',
-                ])
-              }
-            }
+            moveAssetsMutation.mutate([[...keys], newParentId])
           }
         }
       }

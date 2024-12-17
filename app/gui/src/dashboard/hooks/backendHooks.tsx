@@ -1308,7 +1308,7 @@ export function useRestoreAssetsMutation(backend: Backend) {
   })
 }
 
-/** Call "restore" mutations for a list of assets. */
+/** Call "copy" mutations for a list of assets. */
 export function useCopyAssetsMutation(backend: Backend) {
   return useMutation({
     mutationKey: [backend.type, 'copyAssets'],
@@ -1330,6 +1330,38 @@ export function useCopyAssetsMutation(backend: Backend) {
     },
     meta: {
       invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
+    },
+  })
+}
+
+/** Call "move" mutations for a list of assets. */
+export function useMoveAssetsMutation(backend: Backend) {
+  return useMutation({
+    mutationKey: [backend.type, 'moveAssets'],
+    mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          backend.updateAsset(id, { description: null, parentDirectoryId: parentId }, '(unknown)'),
+        ),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: ids.length,
+        })
+      }
+      return results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []))
+    },
+    meta: {
+      invalidates: [
+        [backend.type, 'listDirectory'],
+        [backend.type, 'listAssetVersions'],
+      ],
       awaitInvalidates: true,
     },
   })
