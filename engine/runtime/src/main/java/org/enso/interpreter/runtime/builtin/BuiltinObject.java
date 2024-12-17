@@ -1,13 +1,14 @@
 package org.enso.interpreter.runtime.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import java.lang.System;
 import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
@@ -27,7 +28,7 @@ public abstract class BuiltinObject extends EnsoObject {
 
   private final String builtinName;
 
-  @CompilationFinal private Builtin cachedBuiltinType;
+  private BuiltinWithContext cachedBuiltinType;
 
   /**
    * @param builtinName Simple name of the builtin that should be contained in {@link
@@ -43,13 +44,48 @@ public abstract class BuiltinObject extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   public final Type getType(@Bind("$node") Node node) {
     if (cachedBuiltinType == null) {
       CompilerDirectives.transferToInterpreterAndInvalidate();
       var ctx = EnsoContext.get(node);
-      cachedBuiltinType = ctx.getBuiltins().getBuiltinType(builtinName);
+      cachedBuiltinType = new BuiltinWithContext(
+          ctx.getBuiltins().getBuiltinType(builtinName),
+          ctx);
+    } else {
+      assert assertCorrectCachedBuiltin(node);
     }
-    return cachedBuiltinType.getType();
+    return cachedBuiltinType.builtin.getType();
+  }
+
+  private boolean assertCorrectCachedBuiltin(Node node) {
+    assert cachedBuiltinType != null;
+    var curCtx = EnsoContext.get(node);
+    var curBuiltinType = curCtx.getBuiltins().getBuiltinType(builtinName);
+    var prevCtx = cachedBuiltinType.ctx;
+    var errMsgSb = new StringBuilder();
+    if (curCtx != prevCtx) {
+      errMsgSb.append("Context mismatch: ")
+          .append("previous context: ")
+          .append(hex(prevCtx))
+          .append(", current context: ")
+          .append(hex(curCtx))
+          .append(System.lineSeparator());
+    }
+    var prevBuiltinType = cachedBuiltinType.builtin;
+    if (curBuiltinType != prevBuiltinType) {
+      errMsgSb.append("Builtin type mismatch: ")
+          .append("previous builtin type: ")
+          .append(hex(prevBuiltinType))
+          .append(", current builtin type: ")
+          .append(hex(curBuiltinType))
+          .append(System.lineSeparator());
+    }
+    if (errMsgSb.isEmpty()) {
+      return true;
+    } else {
+      throw new AssertionError(errMsgSb.toString());
+    }
   }
 
   /**
@@ -79,4 +115,10 @@ public abstract class BuiltinObject extends EnsoObject {
   public final Type getMetaObject(@Bind("$node") Node node) {
     return getType(node);
   }
+
+  private static final String hex(Object obj) {
+    return Integer.toHexString(System.identityHashCode(obj));
+  }
+
+  private record BuiltinWithContext(Builtin builtin, EnsoContext ctx) {}
 }
