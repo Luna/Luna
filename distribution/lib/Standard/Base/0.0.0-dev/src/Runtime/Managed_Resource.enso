@@ -1,11 +1,10 @@
+## An API for manual resource management.
+
 import project.Any.Any
 import project.Errors.Common.Uninitialized_State
 import project.Meta
 import project.Nothing.Nothing
 from project.Data.Boolean import Boolean, False, True
-
-## An API for manual resource management.
-
 
 ## Resource provides an API for manual management of computation resources.
 
