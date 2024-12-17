@@ -1,5 +1,12 @@
 # Next Next Release
 
+#### Enso IDE
+
+- [ENSO_IDE_MAPBOX_API_TOKEN environment variable should be provided to enable
+  GeoMap visualization][11889].
+
+[11889]: https://github.com/enso-org/enso/pull/11889
+
 #### Enso Language & Runtime
 
 - [Intersection types & type checks][11600]
