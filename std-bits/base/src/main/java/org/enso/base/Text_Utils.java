@@ -70,14 +70,15 @@ public class Text_Utils {
             return false;
         }
 
-        if (s.contains("\r")) {
+        if (s.contains("\u200A") || s.contains("\u200B") || s.contains("\u205F")) {
             return true;
         }
-
-        if (s.matches("\\r")) {
+        if (s.contains("\u2004") || s.contains("\u2005") || s.contains("\u2006") || s.contains("\u2008") || s.contains("\u2009") || s.contains("\u2007")) {
             return true;
         }
-
+        if (s.contains("\r") || s.contains("\n") || s.contains("\t") || s.contains("\u2002") || s.contains("\u00A0") || s.contains("\u3000") || s.contains("\u2002") || s.contains("\u2003")) {
+            return true;
+        }
         return false;
     }
 
