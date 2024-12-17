@@ -41,7 +41,7 @@ object ProvidesWith {
               p <- bindings
                 .get(Fields.Provides)
                 .map(str.decode)
-                .getOrElse(Left(new IOException("Missing provides")))
+                .getOrElse(Left(new IOException("Missing `provides` field")))
               w <- bindings
                 .get(Fields.With)
                 .map(str.decode)
