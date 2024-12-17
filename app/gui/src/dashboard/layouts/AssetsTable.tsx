@@ -93,7 +93,7 @@ import {
   useSetCanDownload,
   useSetNewestFolderId,
   useSetPasteData,
-  useSetSelectedKeys,
+  useSetSelectedAssets,
   useSetTargetDirectory,
   useSetVisuallySelectedKeys,
   useToggleDirectoryExpansion,
@@ -138,6 +138,7 @@ import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -342,7 +343,7 @@ function AssetsTable(props: AssetsTableProps) {
   const [sortInfo, setSortInfo] = useState<SortInfo<SortableColumn> | null>(null)
   const driveStore = useDriveStore()
   const setNewestFolderId = useSetNewestFolderId()
-  const setSelectedKeys = useSetSelectedKeys()
+  const setSelectedAssets = useSetSelectedAssets()
   const setVisuallySelectedKeys = useSetVisuallySelectedKeys()
   const setPasteData = useSetPasteData()
 
@@ -800,7 +801,7 @@ function AssetsTable(props: AssetsTableProps) {
         case ' ': {
           if (event.key === ' ' && event.ctrlKey) {
             const keys = selectedKeys
-            setSelectedKeys(withPresence(keys, item.key, !keys.has(item.key)))
+            setSelectedAssets(withPresence(keys, item.key, !keys.has(item.key)))
           } else {
             switch (item.type) {
               case AssetType.directory: {
@@ -867,7 +868,7 @@ function AssetsTable(props: AssetsTableProps) {
                 if (possibleParent.depth < item.depth) {
                   event.preventDefault()
                   event.stopPropagation()
-                  setSelectedKeys(new Set([possibleParent.key]))
+                  setSelectedAssets([possibleParent.item])
                   setMostRecentlySelectedIndex(index, true)
                   break
                 }
@@ -893,12 +894,12 @@ function AssetsTable(props: AssetsTableProps) {
       case ' ': {
         if (event.ctrlKey && item != null) {
           const keys = selectedKeys
-          setSelectedKeys(withPresence(keys, item.key, !keys.has(item.key)))
+          setSelectedAssets(withPresence(keys, item.key, !keys.has(item.key)))
         }
         break
       }
       case 'Escape': {
-        setSelectedKeys(EMPTY_SET)
+        setSelectedAssets(EMPTY_ARRAY)
         setMostRecentlySelectedIndex(null)
         selectionStartIndexRef.current = null
         break
@@ -938,7 +939,7 @@ function AssetsTable(props: AssetsTableProps) {
           const startIndex = Math.min(index, selectionStartIndexRef.current)
           const endIndex = Math.max(index, selectionStartIndexRef.current) + 1
           const selection = visibleItems.slice(startIndex, endIndex)
-          setSelectedKeys(new Set(selection.map((newItem) => newItem.key)))
+          setSelectedAssets(selection.map((newItem) => newItem.item))
         } else if (event.ctrlKey) {
           event.preventDefault()
           event.stopPropagation()
@@ -948,13 +949,13 @@ function AssetsTable(props: AssetsTableProps) {
           event.stopPropagation()
           const newItem = visibleItems[index]
           if (newItem != null) {
-            setSelectedKeys(new Set([newItem.key]))
+            setSelectedAssets([newItem.item])
           }
           selectionStartIndexRef.current = null
         } else {
           // The arrow key will escape this container. In that case, do not stop propagation
           // and let `navigator2D` navigate to a different container.
-          setSelectedKeys(EMPTY_SET)
+          setSelectedAssets(EMPTY_ARRAY)
           selectionStartIndexRef.current = null
         }
         break
@@ -990,7 +991,7 @@ function AssetsTable(props: AssetsTableProps) {
       type: 'move',
       data: { backendType: backend.type, category, ids: selectedKeys },
     })
-    setSelectedKeys(EMPTY_SET)
+    setSelectedAssets(EMPTY_ARRAY)
   })
 
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
@@ -1122,14 +1123,14 @@ function AssetsTable(props: AssetsTableProps) {
                 event.target.closest('.enso-portal-root')
               : null
             if (!portalRoot && driveStore.getState().selectedKeys.size !== 0) {
-              setSelectedKeys(EMPTY_SET)
+              setSelectedAssets(EMPTY_ARRAY)
               setMostRecentlySelectedIndex(null)
             }
           },
         },
         false,
       ),
-    [setSelectedKeys, inputBindings, setMostRecentlySelectedIndex, driveStore],
+    [setSelectedAssets, inputBindings, setMostRecentlySelectedIndex, driveStore],
   )
 
   const calculateNewKeys = useEventCallback(
@@ -1223,7 +1224,7 @@ function AssetsTable(props: AssetsTableProps) {
     const range = dragSelectionRangeRef.current
     if (range != null) {
       const keys = displayItems.slice(range.start, range.end).map((node) => node.key)
-      setSelectedKeys(calculateNewKeys(event, keys, () => []))
+      setSelectedAssets(calculateNewKeys(event, keys, () => []))
     }
     setVisuallySelectedKeys(null)
     dragSelectionRangeRef.current = null
@@ -1235,7 +1236,7 @@ function AssetsTable(props: AssetsTableProps) {
   })
 
   const grabRowKeyboardFocus = useEventCallback((item: AnyAsset) => {
-    setSelectedKeys(new Set([item.id]))
+    setSelectedAssets([item])
   })
 
   const onRowClick = useEventCallback(({ asset }: AssetRowInnerProps, event: ReactMouseEvent) => {
@@ -1252,7 +1253,7 @@ function AssetsTable(props: AssetsTableProps) {
         return visibleItems.slice(startIndex, endIndex).map((innerItem) => innerItem.key)
       }
     }
-    setSelectedKeys(calculateNewKeys(event, [asset.id], getRange))
+    setSelectedAssets(calculateNewKeys(event, [asset.id], getRange))
     setMostRecentlySelectedIndex(newIndex)
     if (!event.shiftKey) {
       selectionStartIndexRef.current = null
@@ -1264,7 +1265,7 @@ function AssetsTable(props: AssetsTableProps) {
       visibleItems.findIndex((visibleItem) => visibleItem.item.id === item.id),
     )
     selectionStartIndexRef.current = null
-    setSelectedKeys(new Set([item.id]))
+    setSelectedAssets([item])
   })
 
   const onRowDragStart = useEventCallback(
@@ -1278,7 +1279,7 @@ function AssetsTable(props: AssetsTableProps) {
         )
         selectionStartIndexRef.current = null
         newSelectedKeys = new Set([item.id])
-        setSelectedKeys(newSelectedKeys)
+        setSelectedAssets([item])
       }
       const nodes = assetTree.preorderTraversal().filter((node) => newSelectedKeys.has(node.key))
       const payload: AssetRowsDragPayload = nodes.map((node) => ({
@@ -1595,7 +1596,7 @@ function AssetsTable(props: AssetsTableProps) {
           handleFileDrop(event)
         }}
         onClick={() => {
-          setSelectedKeys(EMPTY_SET)
+          setSelectedAssets(EMPTY_ARRAY)
         }}
       >
         <FileTrigger

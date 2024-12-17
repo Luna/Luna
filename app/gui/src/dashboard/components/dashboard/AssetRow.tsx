@@ -13,7 +13,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
 import {
   useDriveStore,
-  useSetSelectedKeys,
+  useSetSelectedAssets,
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
@@ -261,7 +261,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const driveStore = useDriveStore()
   const { user } = useFullUserSession()
-  const setSelectedKeys = useSetSelectedKeys()
+  const setSelectedAssets = useSetSelectedAssets()
   const selected = useStore(driveStore, ({ visuallySelectedKeys, selectedKeys }) =>
     (visuallySelectedKeys ?? selectedKeys).has(id),
   )
@@ -348,8 +348,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const hidden = isDeleting || isRestoring || hiddenRaw || visibility === Visibility.hidden
 
   const setSelected = useEventCallback((newSelected: boolean) => {
-    const { selectedKeys } = driveStore.getState()
-    setSelectedKeys(set.withPresence(selectedKeys, id, newSelected))
+    const { selectedAssets } = driveStore.getState()
+    setSelectedAssets(
+      newSelected ?
+        [...selectedAssets, asset]
+      : selectedAssets.filter((otherAsset) => otherAsset.id !== asset.id),
+    )
   })
 
   React.useEffect(() => {

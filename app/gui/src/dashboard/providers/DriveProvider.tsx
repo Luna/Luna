@@ -10,6 +10,7 @@ import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
 import type {
+  AnyAsset,
   AssetId,
   BackendType,
   DirectoryAsset,
@@ -45,7 +46,8 @@ interface DriveStore {
   readonly expandedDirectoryIds: readonly DirectoryId[]
   readonly setExpandedDirectoryIds: (selectedKeys: readonly DirectoryId[]) => void
   readonly selectedKeys: ReadonlySet<AssetId>
-  readonly setSelectedKeys: (selectedKeys: ReadonlySet<AssetId>) => void
+  readonly selectedAssets: readonly AnyAsset[]
+  readonly setSelectedAssets: (selectedAssets: readonly AnyAsset[]) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
 }
@@ -124,9 +126,16 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         }
       },
       selectedKeys: EMPTY_SET,
-      setSelectedKeys: (selectedKeys) => {
-        if (get().selectedKeys !== selectedKeys) {
-          set({ selectedKeys })
+      selectedAssets: EMPTY_ARRAY,
+      setSelectedAssets: (selectedAssets) => {
+        if (get().selectedAssets !== selectedAssets) {
+          set({
+            selectedAssets,
+            selectedKeys:
+              selectedAssets.length === 0 ?
+                EMPTY_SET
+              : new Set(selectedAssets.map((asset) => asset.id)),
+          })
         }
       },
       visuallySelectedKeys: null,
@@ -249,10 +258,16 @@ export function useSelectedKeys() {
   return zustand.useStore(store, (state) => state.selectedKeys)
 }
 
-/** A function to set the selected keys in the Asset Table. */
-export function useSetSelectedKeys() {
+/** The selected assets in the Asset Table. */
+export function useSelectedAssets() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setSelectedKeys)
+  return zustand.useStore(store, (state) => state.selectedAssets)
+}
+
+/** A function to set the selected assets in the Asset Table. */
+export function useSetSelectedAssets() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setSelectedAssets)
 }
 
 /** The visually selected keys in the Asset Table. */

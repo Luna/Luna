@@ -6,7 +6,7 @@ import * as React from 'react'
 
 import { useStore } from 'zustand'
 
-import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
+import { useDriveStore, useSelectedAssets, useSetSelectedAssets } from '#/providers/DriveProvider'
 
 import {
   canTransferBetweenCategories,
@@ -30,7 +30,7 @@ import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import * as permissions from '#/utilities/permissions'
-import { EMPTY_SET } from '#/utilities/set'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =================
 // === Constants ===
@@ -70,8 +70,8 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const { getText } = useText()
 
   const isCloud = isCloudCategory(category)
-  const selectedKeys = useSelectedKeys()
-  const setSelectedKeys = useSetSelectedKeys()
+  const selectedAssets = useSelectedAssets()
+  const setSelectedAssets = useSetSelectedAssets()
   const driveStore = useDriveStore()
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
   const restoreAssetsMutation = useRestoreAssetsMutation(backend)
@@ -91,38 +91,39 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   // up to date.
   const ownsAllSelectedAssets =
     !isCloud ||
-    Array.from(selectedKeys).every(
-      (key) =>
-        permissions.tryFindSelfPermission(user, nodeMapRef.current.get(key)?.item.permissions)
-          ?.permission === permissions.PermissionAction.own,
+    selectedAssets.every(
+      (asset) =>
+        permissions.tryFindSelfPermission(user, asset.permissions)?.permission ===
+        permissions.PermissionAction.own,
     )
 
   // This is not a React component even though it contains JSX.
   const doDeleteAll = () => {
+    const selectedKeys = selectedAssets.map((asset) => asset.id)
     const deleteAll = () => {
       unsetModal()
-      setSelectedKeys(EMPTY_SET)
+      setSelectedAssets(EMPTY_ARRAY)
 
-      deleteAssetsMutation.mutate([[...selectedKeys], false])
+      deleteAssetsMutation.mutate([selectedKeys, false])
     }
     if (
       isCloud &&
-      [...selectedKeys].every(
+      selectedKeys.every(
         (key) => nodeMapRef.current.get(key)?.item.type !== backendModule.AssetType.directory,
       )
     ) {
       deleteAll()
     } else {
-      const [firstKey] = selectedKeys
+      const firstKey = selectedKeys[0]
       const soleAssetName =
         firstKey != null ? nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)' : '(unknown)'
       setModal(
         <ConfirmDeleteModal
           defaultOpen
           actionText={
-            selectedKeys.size === 1 ?
+            selectedKeys.length === 1 ?
               getText('deleteSelectedAssetActionText', soleAssetName)
-            : getText('deleteSelectedAssetsActionText', selectedKeys.size)
+            : getText('deleteSelectedAssetsActionText', selectedKeys.length)
           }
           doDelete={deleteAll}
         />,
@@ -136,12 +137,9 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
       action="paste"
       label={getText('pasteAllShortcut')}
       doAction={() => {
-        const [firstKey] = selectedKeys
-        const selectedNode =
-          selectedKeys.size === 1 && firstKey != null ? nodeMapRef.current.get(firstKey) : null
-
-        if (selectedNode?.type === backendModule.AssetType.directory) {
-          doPaste(selectedNode.key, selectedNode.item.id)
+        const selected = selectedAssets[0]
+        if (selected?.type === backendModule.AssetType.directory) {
+          doPaste(selected.id, selected.id)
         } else {
           doPaste(rootDirectoryId, rootDirectoryId)
         }
@@ -151,7 +149,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
 
   if (category.type === 'trash') {
     return (
-      selectedKeys.size !== 0 && (
+      selectedAssets.length !== 0 && (
         <ContextMenu
           aria-label={getText('assetsTableContextMenuLabel')}
           hidden={hidden}
@@ -163,7 +161,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
             label={getText('restoreAllFromTrashShortcut')}
             doAction={() => {
               unsetModal()
-              restoreAssetsMutation.mutate([...selectedKeys])
+              restoreAssetsMutation.mutate(selectedAssets.map((asset) => asset.id))
             }}
           />
           {isCloud && (
@@ -172,22 +170,22 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
               action="delete"
               label={getText('deleteAllForeverShortcut')}
               doAction={() => {
-                const [firstKey] = selectedKeys
-                const soleAssetName =
-                  firstKey != null ?
-                    nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)'
-                  : '(unknown)'
+                const asset = selectedAssets[0]
+                const soleAssetName = asset?.title ?? '(unknown)'
                 setModal(
                   <ConfirmDeleteModal
                     defaultOpen
                     actionText={
-                      selectedKeys.size === 1 ?
+                      selectedAssets.length === 1 ?
                         getText('deleteSelectedAssetForeverActionText', soleAssetName)
-                      : getText('deleteSelectedAssetsForeverActionText', selectedKeys.size)
+                      : getText('deleteSelectedAssetsForeverActionText', selectedAssets.length)
                     }
                     doDelete={() => {
-                      setSelectedKeys(EMPTY_SET)
-                      deleteAssetsMutation.mutate([[...selectedKeys], true])
+                      setSelectedAssets(EMPTY_ARRAY)
+                      deleteAssetsMutation.mutate([
+                        selectedAssets.map((otherAsset) => otherAsset.id),
+                        true,
+                      ])
                     }}
                   />,
                 )
@@ -201,7 +199,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   } else if (category.type === 'recent') {
     return null
   } else {
-    const shouldShowAssetMenu = selectedKeys.size !== 0 || pasteAllMenuEntry !== false
+    const shouldShowAssetMenu = selectedAssets.length !== 0 || pasteAllMenuEntry !== false
     const shouldShowGlobalMenu =
       category.type !== 'cloud' || user.plan == null || user.plan === backendModule.Plan.solo
     if (!shouldShowAssetMenu && !shouldShowGlobalMenu) {
@@ -215,7 +213,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         >
           {shouldShowAssetMenu && (
             <>
-              {selectedKeys.size !== 0 && ownsAllSelectedAssets && (
+              {selectedAssets.length !== 0 && ownsAllSelectedAssets && (
                 <ContextMenuEntry
                   hidden={hidden}
                   action="delete"
@@ -223,7 +221,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                   doAction={doDeleteAll}
                 />
               )}
-              {selectedKeys.size !== 0 && isCloud && (
+              {selectedAssets.length !== 0 && isCloud && (
                 <ContextMenuEntry
                   hidden={hidden}
                   action="copy"
@@ -231,7 +229,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                   doAction={doCopy}
                 />
               )}
-              {selectedKeys.size !== 0 && ownsAllSelectedAssets && (
+              {selectedAssets.length !== 0 && ownsAllSelectedAssets && (
                 <ContextMenuEntry
                   hidden={hidden}
                   action="cut"

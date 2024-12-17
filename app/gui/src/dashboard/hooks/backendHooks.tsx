@@ -30,7 +30,7 @@ import DuplicateAssetsModal from '#/modals/DuplicateAssetsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import {
   useSetNewestFolderId,
-  useSetSelectedKeys,
+  useSetSelectedAssets,
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
@@ -620,7 +620,7 @@ export function useNewFolder(backend: Backend, category: Category) {
   const ensureListDirectory = useEnsureListDirectory(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const setNewestFolderId = useSetNewestFolderId()
-  const setSelectedKeys = useSetSelectedKeys()
+  const setSelectedAssets = useSetSelectedAssets()
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
@@ -650,9 +650,8 @@ export function useNewFolder(backend: Backend, category: Category) {
     return await createDirectoryMutation
       .mutateAsync([{ parentId: placeholderItem.parentId, title: placeholderItem.title }])
       .then((result) => {
-        const { id } = result
-        setNewestFolderId(id)
-        setSelectedKeys(new Set([id]))
+        setNewestFolderId(result.id)
+        setSelectedAssets([result])
         return result
       })
   })
@@ -831,7 +830,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const uploadFileMutation = useUploadFileWithToastMutation(backend)
-  const setSelectedKeys = useSetSelectedKeys()
+  const setSelectedAssets = useSetSelectedAssets()
 
   return useEventCallback(
     async (
@@ -886,7 +885,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
       const addIdToSelection = (id: AssetId) => {
         uploadedFileIds.push(id)
         const newIds = new Set(uploadedFileIds)
-        setSelectedKeys(newIds)
+        setSelectedAssets(newIds)
       }
 
       const doUploadFile = async (asset: AnyAsset, method: 'new' | 'update') => {
