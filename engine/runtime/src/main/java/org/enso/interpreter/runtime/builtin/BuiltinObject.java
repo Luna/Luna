@@ -8,7 +8,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
-import java.lang.ref.WeakReference;
 import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
@@ -28,15 +27,7 @@ public abstract class BuiltinObject extends EnsoObject {
 
   private final String builtinName;
 
-  /**
-   * A weak reference to the context in which this node was last executed.
-   *
-   * <p>Inspired by {@link
-   * org.enso.interpreter.node.expression.builtin.meta.EnsoProjectNode#previousCtxRef}
-   */
-  @CompilationFinal private WeakReference<EnsoContext> previousCtxRef = new WeakReference<>(null);
-
-  private Builtin cachedBuiltinType;
+  @CompilationFinal private Builtin cachedBuiltinType;
 
   /**
    * @param builtinName Simple name of the builtin that should be contained in {@link
@@ -53,11 +44,9 @@ public abstract class BuiltinObject extends EnsoObject {
 
   @ExportMessage
   public final Type getType(@Bind("$node") Node node) {
-    var ctx = EnsoContext.get(node);
-    var previousCtx = previousCtxRef.get();
-    if (previousCtx == null || cachedBuiltinType == null || previousCtx != ctx) {
+    if (cachedBuiltinType == null) {
       CompilerDirectives.transferToInterpreterAndInvalidate();
-      previousCtxRef = new WeakReference<>(ctx);
+      var ctx = EnsoContext.get(node);
       cachedBuiltinType = ctx.getBuiltins().getBuiltinType(builtinName);
     }
     return cachedBuiltinType.getType();
