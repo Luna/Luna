@@ -5,10 +5,6 @@ import { ButtonGroup, Dialog, DialogDismiss, Form, Text } from '#/components/Ari
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 
-// ==========================
-// === ConfirmDeleteModal ===
-// ==========================
-
 /** Props for a {@link ConfirmDeleteModal}. */
 export interface ConfirmDeleteModalProps {
   readonly defaultOpen?: boolean
