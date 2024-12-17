@@ -37,6 +37,7 @@ module org.enso.language.server {
   requires org.enso.text.buffer;
   requires org.enso.task.progress.notifications;
   requires org.enso.ydoc.polyfill;
+  requires org.openide.util.lookup.RELEASE180;
 
   exports org.enso.languageserver.filemanager to scala.library;
   exports org.enso.languageserver.runtime to scala.library;
