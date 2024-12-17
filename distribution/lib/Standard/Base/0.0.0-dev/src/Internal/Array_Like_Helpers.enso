@@ -30,6 +30,9 @@ from project.Data.Index_Sub_Range import drop_helper, take_helper
 from project.Data.Ordering import Comparable
 from project.Data.Range.Extensions import all
 
+type Not_Found
+    Value
+
 new_array_proxy_builtin : Integer -> (Integer -> Any) -> Array
 new_array_proxy_builtin length at = @Builtin_Method "Array_Like_Helpers.new_array_proxy_builtin"
 
@@ -216,8 +219,8 @@ find vector condition start ~if_missing =
     predicate = unify_condition_or_predicate condition
     self_len = vector.length
     check_start_valid start self_len used_start->
-        found = used_start.up_to self_len . find (idx -> (predicate (vector.at idx)))
-        if found.is_nothing then if_missing else vector.at found
+        found = used_start.up_to self_len . find (idx -> (predicate (vector.at idx))) if_missing=Not_Found.Value
+        if found == Not_Found.Value then if_missing else vector.at found
 
 transpose vec_of_vecs =
     if vec_of_vecs.is_empty then [] else

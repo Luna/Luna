@@ -9,6 +9,7 @@ import project.Errors.Common.Missing_Argument
 import project.Errors.Common.Type_Error
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Function.Function
+import project.Internal.Array_Like_Helpers.Not_Found
 import project.Math
 import project.Meta
 import project.Metadata.Display
@@ -204,8 +205,8 @@ take_helper length at single_slice slice_ranges range:(Index_Sub_Range | Range |
     Index_Sub_Range.First count -> single_slice 0 (length.min count)
     Index_Sub_Range.Last count -> single_slice length-count length
     Index_Sub_Range.While predicate ->
-        end = 0.up_to length . find i-> (predicate (at i)).not
-        true_end = if end.is_nothing then length else end
+        end = 0.up_to length . find (i-> (predicate (at i)).not) if_missing=Not_Found.Value
+        true_end = if end == Not_Found.Value then length else end
         single_slice 0 true_end
     Index_Sub_Range.By_Index one_or_many_descriptors -> Panic.recover [Index_Out_Of_Bounds, Illegal_Argument] <|
         indices = case one_or_many_descriptors of
@@ -255,8 +256,8 @@ drop_helper length at single_slice slice_ranges range:(Index_Sub_Range | Range |
     Index_Sub_Range.First count -> single_slice count length
     Index_Sub_Range.Last count -> single_slice 0 length-count
     Index_Sub_Range.While predicate ->
-        end = 0.up_to length . find i-> (predicate (at i)).not
-        true_end = if end.is_nothing then length else end
+        end = 0.up_to length . find (i-> (predicate (at i)).not) if_missing=Not_Found.Value
+        true_end = if end == Not_Found.Value then length else end
         single_slice true_end length
     Index_Sub_Range.By_Index one_or_many_descriptors -> Panic.recover [Index_Out_Of_Bounds, Illegal_Argument] <|
         indices = case one_or_many_descriptors of
