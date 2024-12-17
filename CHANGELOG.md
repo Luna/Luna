@@ -5,6 +5,13 @@
 - [Propagate Error ASAP instead of ignoring it][11777].
 
 [11777]: https://github.com/enso-org/enso/pull/11777
+- [Intersection types & type checks][11600]
+- A constructor or type definition with a single inline argument definition was
+  previously allowed to use spaces in the argument definition without
+  parentheses. [This is now a syntax error.][11856]
+
+[11600]: https://github.com/enso-org/enso/pull/11600
+[11856]: https://github.com/enso-org/enso/pull/11856
 
 # Next Release
 
@@ -63,6 +70,8 @@
   be opened on OS X][11755].
 - [Fix some UI elements drawing on top of visualization toolbar dropdown
   menus][11768].
+- [Edges are now colored based on their source component.][11810]
+- [Highlight missing required arguments][11803].
 - [Arrows in some drop-down buttons are now clearly visible][11800]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
@@ -97,6 +106,8 @@
 [11753]: https://github.com/enso-org/enso/pull/11753
 [11761]: https://github.com/enso-org/enso/pull/11761
 [11768]: https://github.com/enso-org/enso/pull/11768
+[11810]: https://github.com/enso-org/enso/pull/11810
+[11803]: https://github.com/enso-org/enso/pull/11803
 [11800]: https://github.com/enso-org/enso/pull/11800
 
 #### Enso Standard Library
@@ -112,6 +123,7 @@
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [The reload button clears the HTTP cache.][11673]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -120,6 +132,7 @@
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
 [11577]: https://github.com/enso-org/enso/pull/11577
+[11673]: https://github.com/enso-org/enso/pull/11673
 
 #### Enso Language & Runtime
 
