@@ -12,9 +12,13 @@ import { defineConfig, type Plugin } from 'vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import wasm from 'vite-plugin-wasm'
 import tailwindConfig from './tailwind.config'
+// @ts-expect-error We don't need to typecheck this file
+import reactCompiler from 'babel-plugin-react-compiler'
+// @ts-expect-error We don't need to typecheck this file
+import syntaxImportAttributes from '@babel/plugin-syntax-import-attributes'
 
 const dynHostnameWsUrl = (port: number) => JSON.stringify(`ws://__HOSTNAME__:${port}`)
-const projectManagerUrl = dynHostnameWsUrl(process.env.E2E === 'true' ? 30536 : 30535)
+const projectManagerUrl = dynHostnameWsUrl(process.env.INTEGRATION_TEST === 'true' ? 30536 : 30535)
 const IS_CLOUD_BUILD = process.env.CLOUD_BUILD === 'true'
 const YDOC_SERVER_URL =
   process.env.ENSO_POLYGLOT_YDOC_SERVER ? JSON.stringify(process.env.ENSO_POLYGLOT_YDOC_SERVER)
@@ -24,11 +28,16 @@ const YDOC_SERVER_URL =
 await readEnvironmentFromFile()
 
 const entrypoint =
-  process.env.E2E === 'true' ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
+  process.env.INTEGRATION_TEST === 'true' ?
+    './src/project-view/test-entrypoint.ts'
+  : './src/entrypoint.ts'
 
 // NOTE(Frizi): This rename is for the sake of forward compatibility with not yet merged config refactor on bazel branch,
 // and because Vite's HTML env replacements only work with import.meta.env variables, not defines.
-process.env.ENSO_IDE_VERSION = process.env.ENSO_CLOUD_DASHBOARD_VERSION
+process.env.ENSO_IDE_VERSION ??= process.env.ENSO_CLOUD_DASHBOARD_VERSION
+console.info(`Building IDE version: ${process.env.ENSO_IDE_VERSION}`)
+
+const isCI = process.env.CI === 'true'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -36,6 +45,7 @@ export default defineConfig({
   cacheDir: fileURLToPath(new URL('../../node_modules/.cache/vite', import.meta.url)),
   publicDir: fileURLToPath(new URL('./public', import.meta.url)),
   envDir: fileURLToPath(new URL('.', import.meta.url)),
+  logLevel: isCI ? 'error' : 'info',
   plugins: [
     wasm(),
     ...(process.env.NODE_ENV === 'development' ? [await VueDevTools()] : []),
@@ -51,8 +61,8 @@ export default defineConfig({
       include: fileURLToPath(new URL('./src/dashboard/**/*.tsx', import.meta.url)),
       babel: {
         plugins: [
-          '@babel/plugin-syntax-import-attributes',
-          ['babel-plugin-react-compiler', { target: '18' }],
+          syntaxImportAttributes,
+          [reactCompiler, { target: '18', enablePreserveExistingMemoizationGuarantees: true }],
         ],
       },
     }),

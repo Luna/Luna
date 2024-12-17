@@ -1,30 +1,33 @@
 import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import { assert, assertDefined } from '../util/assert'
-import type { SourceRangeEdit, SpanTree } from '../util/data/text'
 import {
+  type SourceRange,
+  type SourceRangeEdit,
+  type SourceRangeEditDesc,
+  type SourceRangeKey,
+  type SpanTree,
   applyTextEdits,
   applyTextEditsToSpans,
   enclosingSpans,
+  rangeLength,
+  sourceRangeFromKey,
+  sourceRangeKey,
   textChangeToEdits,
   trimEnd,
 } from '../util/data/text'
-import type { SourceRange, SourceRangeKey } from '../yjsModel'
-import { rangeLength, sourceRangeFromKey, sourceRangeKey } from '../yjsModel'
 import { xxHash128 } from './ffi'
-import * as RawAst from './generated/ast'
-import type { NodeKey, NodeSpanMap } from './idMap'
-import { newExternalId } from './idMap'
+import { type NodeKey, type NodeSpanMap, newExternalId } from './idMap'
 import type { Module, MutableModule } from './mutableModule'
-import { abstract, rawParseBlock, rawParseModule } from './parse'
+import { parseInSameContext } from './parse'
 import { printWithSpans } from './print'
 import { isTokenId } from './token'
-import type { AstId, MutableAst, Owned } from './tree'
 import {
   Assignment,
   Ast,
+  type AstId,
   MutableAssignment,
-  MutableBodyBlock,
+  type MutableAst,
   rewriteRefs,
   syncFields,
   syncNodeMetadata,
@@ -32,7 +35,6 @@ import {
 
 /**
  * Recursion helper for {@link syntaxHash}.
- * @internal
  */
 function hashSubtreeSyntax(ast: Ast, hashesOut: Map<SyntaxHash, Ast[]>): SyntaxHash {
   let content = ''
@@ -53,6 +55,7 @@ function hashSubtreeSyntax(ast: Ast, hashesOut: Map<SyntaxHash, Ast[]>): SyntaxH
 declare const brandHash: unique symbol
 /** See {@link syntaxHash}. */
 type SyntaxHash = string & { [brandHash]: never }
+
 /** Applies the syntax-data hashing function to the input, and brands the result as a `SyntaxHash`. */
 function hashString(input: string): SyntaxHash {
   return xxHash128(input) as SyntaxHash
@@ -84,7 +87,7 @@ function calculateCorrespondence(
   astSpans: NodeSpanMap,
   parsedRoot: Ast,
   parsedSpans: NodeSpanMap,
-  textEdits: SourceRangeEdit[],
+  textEdits: SourceRangeEditDesc[],
   codeAfter: string,
 ): Map<AstId, Ast> {
   const newSpans = new Map<AstId, SourceRange>()
@@ -114,7 +117,7 @@ function calculateCorrespondence(
   for (const [astAfter, partsAfter] of astsMatchingPartsAfter) {
     for (const partAfter of partsAfter) {
       const astBefore = partAfterToAstBefore.get(sourceRangeKey(partAfter))!
-      if (astBefore.typeName() === astAfter.typeName()) {
+      if (astBefore.typeName === astAfter.typeName) {
         ;(rangeLength(newSpans.get(astAfter.id)!) === rangeLength(partAfter) ?
           toSync
         : candidates
@@ -139,7 +142,7 @@ function calculateCorrespondence(
     const unmatchedNewAsts = newAsts.filter(ast => !newIdsMatched.has(ast.id))
     const unmatchedOldAsts = oldHashes.get(hash)?.filter(ast => !oldIdsMatched.has(ast.id)) ?? []
     for (const [unmatchedNew, unmatchedOld] of iter.zip(unmatchedNewAsts, unmatchedOldAsts)) {
-      if (unmatchedNew.typeName() === unmatchedOld.typeName()) {
+      if (unmatchedNew.typeName === unmatchedOld.typeName) {
         toSync.set(unmatchedOld.id, unmatchedNew)
         // Update the matched-IDs indices.
         oldIdsMatched.add(unmatchedOld.id)
@@ -152,13 +155,13 @@ function calculateCorrespondence(
   // movement-matching.
   for (const [beforeId, after] of candidates) {
     if (oldIdsMatched.has(beforeId) || newIdsMatched.has(after.id)) continue
-    if (after.typeName() === ast.module.get(beforeId).typeName()) {
+    if (after.typeName === ast.module.get(beforeId).typeName) {
       toSync.set(beforeId, after)
     }
   }
 
   for (const [idBefore, astAfter] of toSync.entries())
-    assert(ast.module.get(idBefore).typeName() === astAfter.typeName())
+    assert(ast.module.get(idBefore).typeName === astAfter.typeName)
   return toSync
 }
 
@@ -170,23 +173,7 @@ export function applyTextEditsToAst(
 ) {
   const printed = printWithSpans(ast)
   const code = applyTextEdits(printed.code, textEdits)
-  const astModuleRoot = ast.module.root()
-  const rawParsedBlock =
-    ast instanceof MutableBodyBlock && astModuleRoot && ast.is(astModuleRoot) ?
-      rawParseModule(code)
-    : rawParseBlock(code)
-  const rawParsedStatement =
-    ast instanceof MutableBodyBlock ? undefined : (
-      iter.tryGetSoleValue(rawParsedBlock.statements)?.expression
-    )
-  const rawParsedExpression =
-    ast.isExpression() ?
-      rawParsedStatement?.type === RawAst.Tree.Type.ExpressionStatement ?
-        rawParsedStatement.expression
-      : undefined
-    : undefined
-  const rawParsed = rawParsedExpression ?? rawParsedStatement ?? rawParsedBlock
-  const parsed = abstract(ast.module, rawParsed, code)
+  const parsed = parseInSameContext(code, ast)
   const toSync = calculateCorrespondence(
     ast,
     printed.info.nodes,
@@ -195,27 +182,27 @@ export function applyTextEditsToAst(
     textEdits,
     code,
   )
-  syncTree(ast, parsed.root, toSync, ast.module, metadataSource)
+  ast.module.transact(() => syncTree(ast, parsed.root, toSync, ast.module, metadataSource))
 }
 
 /** Replace `target` with `newContent`, reusing nodes according to the correspondence in `toSync`. */
 function syncTree(
   target: MutableAst,
-  newContent: Owned,
+  newContent: Ast,
   toSync: Map<AstId, Ast>,
   edit: MutableModule,
   metadataSource: Module,
 ) {
   const newIdToEquivalent = new Map<AstId, AstId>()
   for (const [beforeId, after] of toSync) newIdToEquivalent.set(after.id, beforeId)
-  const childReplacerFor = (parentId: AstId) => (id: AstId) => {
+  const childSplicerFor = (parentId: AstId) => (id: AstId) => {
     const original = newIdToEquivalent.get(id)
     if (original) {
       const replacement = edit.get(original)
       if (replacement.parentId !== parentId) replacement.fields.set('parent', parentId)
       return original
     } else {
-      const child = edit.get(id)
+      const child = edit.splice(newContent.module.get(id)!)
       if (child.parentId !== parentId) child.fields.set('parent', parentId)
     }
   }
@@ -224,12 +211,16 @@ function syncTree(
   const parent = edit.get(parentId)
   const targetSyncEquivalent = toSync.get(target.id)
   const syncRoot = targetSyncEquivalent?.id === newContent.id ? targetSyncEquivalent : undefined
-  if (!syncRoot) {
-    parent.replaceChild(target.id, newContent)
-    newContent.fields.set('metadata', target.fields.get('metadata').clone())
+  let newRoot: MutableAst
+  if (syncRoot) {
+    newRoot = target
+  } else {
+    const spliced = edit.splice(newContent)
+    parent.replaceChild(target.id, spliced)
+    newRoot = spliced
+    newRoot.fields.set('metadata', target.fields.get('metadata').clone())
     target.fields.get('metadata').set('externalId', newExternalId())
   }
-  const newRoot = syncRoot ? target : newContent
   newRoot.visitRecursive(ast => {
     const syncFieldsFrom = toSync.get(ast.id)
     const editAst = edit.getVersion(ast)
@@ -238,7 +229,7 @@ function syncTree(
         ast instanceof Assignment ?
           metadataSource.get(ast.fields.get('expression').node)
         : undefined
-      syncFields(edit.getVersion(ast), syncFieldsFrom, childReplacerFor(ast.id))
+      syncFields(editAst, syncFieldsFrom, childSplicerFor(ast.id))
       if (editAst instanceof MutableAssignment && originalAssignmentExpression) {
         if (editAst.expression.externalId !== originalAssignmentExpression.externalId)
           editAst.expression.setExternalId(originalAssignmentExpression.externalId)
@@ -248,7 +239,7 @@ function syncTree(
         )
       }
     } else {
-      rewriteRefs(editAst, childReplacerFor(ast.id))
+      rewriteRefs(editAst, childSplicerFor(ast.id))
     }
     return true
   })

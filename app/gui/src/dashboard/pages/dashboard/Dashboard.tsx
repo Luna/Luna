@@ -15,7 +15,6 @@ import * as searchParamsState from '#/hooks/searchParamsStateHooks'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
 import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
-import * as localStorageProvider from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import ProjectsProvider, {
   TabType,
@@ -30,10 +29,10 @@ import ProjectsProvider, {
 import AssetListEventType from '#/events/AssetListEventType'
 
 import type * as assetTable from '#/layouts/AssetsTable'
-import EventListProvider, * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
+import EventListProvider, * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import type * as editor from '#/layouts/Editor'
 import UserBar from '#/layouts/UserBar'
 
@@ -104,7 +103,6 @@ function DashboardInner(props: DashboardProps) {
   const localBackend = backendProvider.useLocalBackend()
   const { modalRef } = modalProvider.useModalRef()
   const { updateModal, unsetModal, setModal } = modalProvider.useSetModal()
-  const { localStorage } = localStorageProvider.useLocalStorage()
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
@@ -115,7 +113,7 @@ function DashboardInner(props: DashboardProps) {
     initialProjectNameRaw != null ? fileURLToPath(initialProjectNameRaw) : null
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
-  const [category, setCategoryRaw] =
+  const [category, setCategoryRaw, resetCategory] =
     searchParamsState.useSearchParamsState<categoryModule.Category>(
       'driveCategory',
       () => (localBackend != null ? { type: 'local' } : { type: 'cloud' }),
@@ -207,7 +205,7 @@ function DashboardInner(props: DashboardProps) {
           }
         },
       }),
-    [inputBindings, modalRef, localStorage, updateModal, setPage, projectsStore],
+    [inputBindings, modalRef, updateModal, setPage, projectsStore],
   )
 
   React.useEffect(() => {
@@ -297,6 +295,7 @@ function DashboardInner(props: DashboardProps) {
             assetManagementApiRef={assetManagementApiRef}
             category={category}
             setCategory={setCategory}
+            resetCategory={resetCategory}
           />
         </aria.Tabs>
 

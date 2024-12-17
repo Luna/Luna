@@ -11,6 +11,11 @@ export const codeEditorBindings = defineKeybinds('code-editor', {
 
 export const documentationEditorBindings = defineKeybinds('documentation-editor', {
   toggle: ['Mod+D'],
+  paste: ['Mod+V'],
+  pasteRaw: ['Mod+Shift+V'],
+})
+
+export const textEditorsBindings = defineKeybinds('text-editors', {
   openLink: ['Mod+PointerMain'],
 })
 

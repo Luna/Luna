@@ -41,6 +41,8 @@ const PAN_MARGINS = {
 }
 const COMPONENT_EDITOR_PADDING = 12
 const ICON_WIDTH = 16
+// Component editor is larger than a typical node, so the edge should touch it a bit higher.
+const EDGE_Y_OFFSET = -6
 
 const cssComponentEditorPadding = `${COMPONENT_EDITOR_PADDING}px`
 
@@ -63,14 +65,12 @@ const emit = defineEmits<{
     firstAppliedReturnType: Typename | undefined,
   ]
   canceled: []
-  selectedSuggestionId: [id: SuggestionId | null]
+  selectedSuggestionId: [id: SuggestionId | undefined]
   isAiPrompt: [boolean]
 }>()
 
 const cbRoot = ref<HTMLElement>()
 const componentList = ref<ComponentInstance<typeof ComponentList>>()
-
-defineExpose({ cbRoot })
 
 const clickOutsideAssociatedElements = (e: PointerEvent) => {
   return props.associatedElements.length === 0 ?
@@ -199,7 +199,9 @@ watchEffect(() => {
     return
   }
   const scenePos = originScenePos.value.add(
-    new Vec2(COMPONENT_EDITOR_PADDING + ICON_WIDTH / 2, 0).scale(clientToSceneFactor.value),
+    new Vec2(COMPONENT_EDITOR_PADDING + ICON_WIDTH / 2, 0)
+      .scale(clientToSceneFactor.value)
+      .add(new Vec2(0, EDGE_Y_OFFSET)),
   )
   graphStore.cbEditedEdge = {
     source,
@@ -235,10 +237,6 @@ const nodeColor = computed(() => {
     if (color) return color
   }
   return 'var(--node-color-no-type)'
-})
-watchEffect(() => {
-  if (!graphStore.cbEditedEdge) return
-  graphStore.cbEditedEdge.color = nodeColor.value
 })
 
 const selectedSuggestionIcon = computed(() => {
@@ -292,7 +290,7 @@ const isVisualizationVisible = ref(true)
 
 // === Documentation Panel ===
 
-watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id ?? null))
+watch(selectedSuggestionId, (id) => emit('selectedSuggestionId', id))
 watch(
   () => input.mode,
   (mode) => emit('isAiPrompt', mode.mode === 'aiPrompt'),

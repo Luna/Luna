@@ -3,14 +3,14 @@ import { WidgetInputIsSpecificMethodCall } from '@/components/GraphEditor/widget
 import TableHeader from '@/components/GraphEditor/widgets/WidgetTableEditor/TableHeader.vue'
 import {
   CELLS_LIMIT,
-  tableNewCallMayBeHandled,
-  useTableNewArgument,
+  tableInputCallMayBeHandled,
+  useTableInputArgument,
   type RowData,
-} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableNewArgument'
+} from '@/components/GraphEditor/widgets/WidgetTableEditor/tableInputArgument'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import AgGridTableView from '@/components/shared/AgGridTableView.vue'
 import { injectGraphNavigator } from '@/providers/graphNavigator'
-import { useTooltipRegistry } from '@/providers/tooltipState'
+import { useTooltipRegistry } from '@/providers/tooltipRegistry'
 import { Score, defineWidget, widgetProps } from '@/providers/widgetRegistry'
 import { WidgetEditHandler } from '@/providers/widgetRegistry/editHandler'
 import { useGraphStore } from '@/stores/graph'
@@ -55,7 +55,7 @@ const config = computed(() => {
   }
 })
 
-const { rowData, columnDefs, moveColumn, moveRow, pasteFromClipboard } = useTableNewArgument(
+const { rowData, columnDefs, moveColumn, moveRow, pasteFromClipboard } = useTableInputArgument(
   () => props.input,
   graph,
   suggestionDb.entries,
@@ -235,12 +235,12 @@ export const widgetDefinition = defineWidget(
   WidgetInputIsSpecificMethodCall({
     module: 'Standard.Table.Table',
     definedOnType: 'Standard.Table.Table.Table',
-    name: 'new',
+    name: 'input',
   }),
   {
     priority: 999,
     score: (props) => {
-      if (!tableNewCallMayBeHandled(props.input.value)) return Score.Mismatch
+      if (!tableInputCallMayBeHandled(props.input.value)) return Score.Mismatch
       return Score.Perfect
     },
   },
@@ -253,7 +253,7 @@ export const widgetDefinition = defineWidget(
     <Suspense>
       <AgGridTableView
         ref="grid"
-        class="grid"
+        class="inner"
         :defaultColDef="defaultColDef"
         :columnDefs="columnDefs"
         :rowData="rowData"
@@ -292,8 +292,49 @@ export const widgetDefinition = defineWidget(
   position: relative;
 }
 
-.grid {
+.inner {
   width: 100%;
   height: 100%;
+}
+
+:deep(.newColumnCell) {
+  display: none;
+}
+
+:deep(.rowIndexCell) {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Those two classes are copied from AgGridTableView component.
+For some reason, Vue cannot load them there, probably because it is used also as Custom Element. */
+:deep(.inner) {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * FIXME: This is a copy of the style defined within AgGridTableView, which has no effect here due to a bug.
+ */
+:deep(.ag-theme-alpine) {
+  --ag-grid-size: 3px;
+  --ag-list-item-height: 20px;
+  --ag-background-color: var(--color-visualization-bg);
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-visualization-bg) 98%, black);
+  --ag-header-background-color: var(--color-visualization-bg);
+  font-family: var(--font-mono);
+
+  :deep(.ag-header) {
+    background: linear-gradient(
+      to top,
+      var(--ag-odd-row-background-color),
+      var(--ag-background-color)
+    );
+  }
+}
+
+/* Separate, actually widget-specific styling. */
+.WidgetTableEditor:deep(.ag-root-wrapper) {
+  --ag-wrapper-border-radius: var(--node-port-border-radius);
+  border: none;
 }
 </style>

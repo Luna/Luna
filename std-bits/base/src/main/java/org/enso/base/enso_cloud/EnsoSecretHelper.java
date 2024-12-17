@@ -163,7 +163,7 @@ public final class EnsoSecretHelper extends SecretValueResolver {
         keyStrings.add(resolvedHeader.getRight());
       }
 
-      return Integer.toString(Arrays.deepHashCode(keyStrings.toArray()));
+      return Integer.toHexString(Arrays.deepHashCode(keyStrings.toArray()));
     }
 
     @Override
@@ -176,14 +176,10 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     }
   }
 
-  private static EnsoHTTPResponseCache getOrCreateCache() {
+  public static EnsoHTTPResponseCache getOrCreateCache() {
     if (cache == null) {
       cache = new EnsoHTTPResponseCache();
     }
-    return cache;
-  }
-
-  public static EnsoHTTPResponseCache getCache() {
     return cache;
   }
 

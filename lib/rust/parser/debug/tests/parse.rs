@@ -346,12 +346,14 @@ fn type_def_full() {
 
 #[test]
 fn type_def_defaults() {
-    let code = ["type Result error ok=Nothing", "    Ok value:ok = Nothing"];
-    test!(code.join("\n"),
+    test!("type Result error ok=Nothing\n    Ok value:ok=Nothing\n    Error (value:e = Nothing)",
         (TypeDef Result #((() (Ident error) () ())
                                (() (Ident ok) () ((Ident Nothing))))
          #(,(Constructor::new("Ok")
-             .with_arg(sexp![(() (Ident value) (":" (Ident ok)) ((Ident Nothing)))])))));
+             .with_arg(sexp![(() (Ident value) (":" (Ident ok)) ((Ident Nothing)))]))
+           ,(Constructor::new("Error")
+             .with_arg(sexp![(() (Ident value) (":" (Ident e)) ((Ident Nothing)))])))));
+    expect_invalid_node("type Result\n    Ok value:ok = Nothing");
 }
 
 #[test]
@@ -1053,6 +1055,14 @@ fn type_signatures() {
 fn type_annotations() {
     test_block!("val = x : Int",
         ,(Assignment::new("val", sexp![(TypeAnnotated (Ident x) ":" (Ident Int))])));
+    test_block!("val = x : A : B : C",
+        ,(Assignment::new("val", sexp![
+          (TypeAnnotated
+           (TypeAnnotated
+            (TypeAnnotated (Ident x)
+             ":" (Ident A))
+            ":" (Ident B))
+           ":" (Ident C))])));
     test_block!("val = foo (x : Int)",
         ,(Assignment::new("val", sexp![
           (App (Ident foo)
@@ -1745,6 +1755,7 @@ fn nonsense_inputs() {
     expect_invalid_node("if (asGuestValue\n  a");
     expect_invalid_node("foo(\n  a");
     expect_invalid_node("(Vector(), true)");
+    expect_invalid_node("x @Builtin_Method \"a\"");
 }
 
 #[test]

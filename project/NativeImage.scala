@@ -1,14 +1,12 @@
-import java.io.File
-import java.nio.file.Path
-
 import sbt._
 import sbt.Keys._
 import sbt.internal.util.ManagedLogger
 import sbtassembly.AssemblyKeys.assembly
 import sbtassembly.AssemblyPlugin.autoImport.assemblyOutputPath
 
+import java.io.File
+import java.nio.file.{Files, Path, Paths}
 import scala.sys.process._
-import java.nio.file.Paths
 
 object NativeImage {
 
@@ -99,7 +97,7 @@ object NativeImage {
   ): Def.Initialize[Task[Unit]] = Def
     .task {
       val log       = state.value.log
-      val targetLoc = artifactFile(targetDir, name, false)
+      val targetLoc = artifactFile(targetDir, name, withExtension = false)
 
       def nativeImagePath(prefix: Path)(path: Path): Path = {
         val base = path.resolve(prefix)
@@ -194,12 +192,7 @@ object NativeImage {
           Seq(s"--initialize-at-run-time=$classes")
         }
 
-      val runtimeCp = (LocalProject("runtime") / Runtime / fullClasspath).value
-      val runnerCp =
-        (LocalProject("engine-runner") / Runtime / fullClasspath).value
-      val ourCp      = (Runtime / fullClasspath).value
-      val cpToSearch = (ourCp ++ runtimeCp ++ runnerCp).distinct
-
+      val ourCp  = (Runtime / fullClasspath).value
       val auxCp  = additionalCp.value
       val fullCp = ourCp.map(_.data.getAbsolutePath) ++ auxCp
       val cpStr  = fullCp.mkString(File.pathSeparator)
@@ -260,7 +253,7 @@ object NativeImage {
         s"Started building $targetLoc native image. The output is captured."
       )
       val retCode    = process.!(processLogger)
-      val targetFile = artifactFile(targetDir, name, true)
+      val targetFile = artifactFile(targetDir, name)
       if (retCode != 0 || !targetFile.exists()) {
         log.error(s"Native Image build of $targetFile failed, with output: ")
         println(sb.toString())
@@ -325,7 +318,7 @@ object NativeImage {
   def artifactFile(
     targetDir: File,
     name: String,
-    withExtension: Boolean = false
+    withExtension: Boolean = true
   ): File = {
     val artifactName =
       if (withExtension && Platform.isWindows) name + ".exe"
@@ -333,6 +326,9 @@ object NativeImage {
     if (targetDir == null) {
       new File(artifactName).getAbsoluteFile()
     } else {
+      if (!targetDir.exists()) {
+        Files.createDirectories(targetDir.toPath)
+      }
       new File(targetDir, artifactName)
     }
   }

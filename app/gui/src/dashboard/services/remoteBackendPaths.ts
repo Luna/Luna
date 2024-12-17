@@ -68,8 +68,6 @@ export const LIST_TAGS_PATH = 'tags'
 export const CREATE_USER_GROUP_PATH = 'usergroups'
 /** Relative HTTP path to the "list user groups" endpoint of the Cloud backend API. */
 export const LIST_USER_GROUPS_PATH = 'usergroups'
-/** Relative HTTP path to the "list versions" endpoint of the Cloud backend API. */
-export const LIST_VERSIONS_PATH = 'versions'
 /** Relative HTTP path to the "create checkout session" endpoint of the Cloud backend API. */
 export const CREATE_CHECKOUT_SESSION_PATH = 'payments/subscriptions'
 /** Relative HTTP path to the "get checkout session" endpoint of the Cloud backend API. */
@@ -110,6 +108,12 @@ export function getProjectContentPath(
   }
   return `projects/${projectId}/files?${searchParams.toString()}`
 }
+
+/** Relative HTTP path to the "get project asset" endpoint of the Cloud backend API. */
+export function getProjectAssetPath(projectId: backend.ProjectId, relativePath: string) {
+  return `projects/${projectId}/files/${relativePath.replace('./', '')}`
+}
+
 /** Relative HTTP path to the "update asset" endpoint of the Cloud backend API. */
 export function updateAssetPath(assetId: backend.AssetId) {
   return `assets/${assetId}`
@@ -134,6 +138,7 @@ export function closeProjectPath(projectId: backend.ProjectId) {
 export function getProjectDetailsPath(projectId: backend.ProjectId) {
   return `projects/${projectId}`
 }
+
 /** Relative HTTP path to the "get project logs" endpoint of the Cloud backend API. */
 export function getProjectSessionLogsPath(projectSessionId: backend.ProjectSessionId) {
   return `project-sessions/${projectSessionId}/logs`

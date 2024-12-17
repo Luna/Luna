@@ -35,7 +35,6 @@ export default function UserGroupUserRow(props: UserGroupUserRowProps) {
   const { getText } = textProvider.useText()
   const isAdmin = currentUser.isOrganizationAdmin
   const contextMenuRef = contextMenuHooks.useContextMenuRef(
-    user.userId,
     getText('userGroupUserContextMenuLabel'),
     () => (
       <ContextMenuEntry
@@ -73,7 +72,7 @@ export default function UserGroupUserRow(props: UserGroupUserRowProps) {
           </ariaComponents.Text>
         </div>
       </aria.Cell>
-      <aria.Cell className="relative bg-transparent p-0 opacity-0 group-hover-2:opacity-100">
+      <aria.Cell className="relative bg-transparent p-0 opacity-0 rounded-rows-have-level group-hover-2:opacity-100">
         {isAdmin && (
           <ariaComponents.DialogTrigger>
             <ariaComponents.Button

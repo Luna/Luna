@@ -41,7 +41,8 @@ export function useInteractOutside(props: UseInteractOutsideProps) {
   const { ref, id, onInteractOutside, isDisabled = false } = props
   const shouldCloseOnInteractOutsideRef = React.useRef(false)
 
-  const { isLatest } = dialogStackProvider.useDialogStackState({ id })
+  const isLatest = dialogStackProvider.useIsLatestDialogStackItem(id)
+
   const onInteractOutsideStartCb = eventCallback.useEventCallback((e: MouseEvent) => {
     // eslint-disable-next-line no-restricted-syntax
     shouldCloseOnInteractOutsideRef.current = !shouldIgnoreInteractOutside(e.target as HTMLElement)
@@ -63,4 +64,15 @@ export function useInteractOutside(props: UseInteractOutsideProps) {
     onInteractOutsideStart: onInteractOutsideStartCb,
     onInteractOutside: onInteractOutsideCb,
   })
+}
+
+/**
+ * Animates the scale of the element.
+ */
+export function animateScale(element: HTMLElement, scale: number) {
+  const duration = 200
+  element.animate(
+    [{ transform: 'scale(1)' }, { transform: `scale(${scale})` }, { transform: 'scale(1)' }],
+    { duration, iterations: 1, direction: 'alternate' },
+  )
 }

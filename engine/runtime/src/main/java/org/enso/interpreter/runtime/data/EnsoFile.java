@@ -54,7 +54,7 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 @Builtin(pkg = "io", name = "File", stdlibName = "Standard.Base.System.File.File")
-public final class EnsoFile implements EnsoObject {
+public final class EnsoFile extends EnsoObject {
   private final TruffleFile truffleFile;
 
   public EnsoFile(TruffleFile truffleFile) {
@@ -80,7 +80,7 @@ public final class EnsoFile implements EnsoObject {
   }
 
   @ExportLibrary(InteropLibrary.class)
-  static final class EnsoOutputStream implements EnsoObject {
+  static final class EnsoOutputStream extends EnsoObject {
     private static final String[] MEMBERS = new String[] {"write", "flush", "close"};
     private final OutputStream os;
 
@@ -183,6 +183,12 @@ public final class EnsoFile implements EnsoObject {
     public String toString() {
       return "EnsoOutputStream";
     }
+
+    @Override
+    @ExportMessage
+    public Object toDisplayString(boolean allowSideEffects) {
+      return toString();
+    }
   }
 
   @Builtin.Method(name = "input_stream_builtin")
@@ -201,7 +207,7 @@ public final class EnsoFile implements EnsoObject {
   }
 
   @ExportLibrary(InteropLibrary.class)
-  static final class EnsoInputStream implements EnsoObject {
+  static final class EnsoInputStream extends EnsoObject {
     private static final String[] MEMBERS =
         new String[] {
           "read", "readAllBytes", "readNBytes", "skipNBytes", "markSupported", "available", "close"
@@ -226,6 +232,12 @@ public final class EnsoFile implements EnsoObject {
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
       return ArrayLikeHelpers.wrapStrings(MEMBERS);
+    }
+
+    @ExportMessage
+    @Override
+    public Object toDisplayString(boolean allowSideEffects) {
+      return "EnsoInputStream";
     }
 
     @TruffleBoundary(allowInlining = true)
@@ -742,7 +754,8 @@ public final class EnsoFile implements EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
-  public static EnsoObject fromString(EnsoContext context, String path)
+  @SuppressWarnings("generic-enso-builtin-type")
+  public static Object fromString(EnsoContext context, String path)
       throws IllegalArgumentException {
     try {
       TruffleFile file = context.getPublicTruffleFile(path);
@@ -774,14 +787,22 @@ public final class EnsoFile implements EnsoObject {
       autoRegister = false)
   @Builtin.Specialize
   @TruffleBoundary
-  public static EnsoObject userHome(EnsoContext context) {
+  @SuppressWarnings("generic-enso-builtin-type")
+  public static Object userHome(EnsoContext context) {
     return fromString(context, System.getProperty("user.home"));
+  }
+
+  @ExportMessage
+  @TruffleBoundary
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    return "(File " + truffleFile.getPath() + ")";
   }
 
   @Override
   @TruffleBoundary
   public String toString() {
-    return "(File " + truffleFile.getPath() + ")";
+    return toDisplayString(false);
   }
 
   @ExportMessage

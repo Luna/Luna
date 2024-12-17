@@ -1,6 +1,7 @@
 import type { NodeDataFromAst } from '@/stores/graph'
 import { Ast } from '@/util/ast'
 import { Prefixes } from '@/util/ast/prefixes'
+import * as Y from 'yjs'
 
 export const prefixes = Prefixes.FromLines({
   enableRecording:
@@ -43,10 +44,9 @@ export function nodeFromAst(ast: Ast.Statement, isOutput: boolean): NodeDataFrom
   const { root, assignment } = nodeRootExpr(ast)
   if (!root) return
   const { innerExpr, matches } = prefixes.extractMatches(root)
-  const type = assignment == null && isOutput ? 'output' : 'component'
   const primaryApplication = primaryApplicationSubject(innerExpr)
   return {
-    type,
+    type: assignment == null && isOutput ? 'output' : 'component',
     outerAst: ast,
     pattern: assignment?.pattern,
     rootExpr: root,
@@ -79,4 +79,16 @@ export function primaryApplicationSubject(
   )
     return
   return { subject: subject.id, accessChain: accessChain.map((ast) => ast.id) }
+}
+
+/** @returns The node's documentation, if this type of node is documentable (currently, this excludes input nodes). */
+export function nodeMutableDocumentation(node: NodeDataFromAst): Y.Text | undefined {
+  if (!node.outerAst.isStatement()) return
+  if (!('mutableDocumentationText' in node.outerAst)) return
+  return node.outerAst.mutableDocumentationText()
+}
+
+/** @returns The node's documentation text. Returns an empty string if the node has no documentation comment. */
+export function nodeDocumentationText(node: NodeDataFromAst): string {
+  return nodeMutableDocumentation(node)?.toJSON() ?? ''
 }

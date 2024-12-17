@@ -75,7 +75,9 @@ export interface ProjectIconProps {
 
 /** An interactive icon indicating the status of a project. */
 export default function ProjectIcon(props: ProjectIconProps) {
-  const { backend, item, isOpened, isDisabled, isPlaceholder } = props
+  const { backend, item, isOpened, isDisabled: isDisabledRaw, isPlaceholder } = props
+  const isUnconditionallyDisabled = !projectHooks.useCanOpenProjects()
+  const isDisabled = isDisabledRaw || isUnconditionallyDisabled
 
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
@@ -93,7 +95,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
       backend,
     }),
     select: (data) => data.state,
-    enabled: !isPlaceholder && isOpened,
+    enabled: !isPlaceholder && isOpened && !isUnconditionallyDisabled,
   })
 
   const status = projectState?.type
@@ -103,9 +105,11 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   const isOtherUserUsingProject =
     isCloud && itemProjectState.openedBy != null && itemProjectState.openedBy !== user.email
+
   const { data: users } = useBackendQuery(backend, 'listUsers', [], {
     enabled: isOtherUserUsingProject,
   })
+
   const userOpeningProject = useMemo(
     () =>
       !isOtherUserUsingProject ? null : (
@@ -113,8 +117,10 @@ export default function ProjectIcon(props: ProjectIconProps) {
       ),
     [isOtherUserUsingProject, itemProjectState.openedBy, users],
   )
+
   const userOpeningProjectTooltip =
     userOpeningProject == null ? null : getText('xIsUsingTheProject', userOpeningProject.name)
+  const disabledTooltip = isUnconditionallyDisabled ? getText('downloadToOpenWorkflow') : null
 
   const state = (() => {
     if (!isOpened && !isPlaceholder) {
@@ -138,7 +144,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   const spinnerState = ((): SpinnerState => {
     if (!isOpened) {
-      return 'initial'
+      return 'loading-slow'
     } else if (isError) {
       return 'initial'
     } else if (status == null) {
@@ -170,7 +176,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
           size="custom"
           variant="icon"
           icon={PlayIcon}
-          aria-label={getText('openInEditor')}
+          aria-label={disabledTooltip ?? getText('openInEditor')}
           tooltipPlacement="left"
           extraClickZone="xsmall"
           isDisabled={isDisabled || projectState?.type === backendModule.ProjectState.closing}
@@ -197,7 +203,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
           />
           <StatelessSpinner
             state={spinnerState}
-            className={tailwindMerge.twMerge(
+            className={tailwindMerge.twJoin(
               'pointer-events-none absolute inset-0',
               isRunningInBackground && 'text-green',
             )}
@@ -216,7 +222,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
               icon={StopIcon}
               aria-label={userOpeningProjectTooltip ?? getText('stopExecution')}
               tooltipPlacement="left"
-              className={tailwindMerge.twMerge(isRunningInBackground && 'text-green')}
+              className={tailwindMerge.twJoin(isRunningInBackground && 'text-green')}
               onPress={doCloseProject}
             />
             <Spinner

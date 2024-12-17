@@ -15,18 +15,17 @@ import {
 import { useUnconnectedEdges, type UnconnectedEdge } from '@/stores/graph/unconnectedEdges'
 import { type ProjectStore } from '@/stores/project'
 import { type SuggestionDbStore } from '@/stores/suggestionDatabase'
-import { assert, bail } from '@/util/assert'
+import { assert, assertDefined, assertNever, bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import type { AstId, Identifier, MutableModule } from '@/util/ast/abstract'
 import { isAstId, isIdentifier } from '@/util/ast/abstract'
-import { RawAst, visitRecursive } from '@/util/ast/raw'
 import { reactiveModule } from '@/util/ast/reactive'
 import { partition } from '@/util/data/array'
 import { stringUnionToArray, type Events } from '@/util/data/observable'
 import { Rect } from '@/util/data/rect'
-import { Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
+import { andThen, Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
-import { normalizeQualifiedName, qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
+import { normalizeQualifiedName, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
 import * as iter from 'enso-common/src/utilities/data/iter'
@@ -52,13 +51,8 @@ import type {
   MethodPointer,
 } from 'ydoc-shared/languageServerTypes'
 import { reachable } from 'ydoc-shared/util/data/graph'
-import type {
-  LocalUserActionOrigin,
-  Origin,
-  SourceRangeKey,
-  VisualizationMetadata,
-} from 'ydoc-shared/yjsModel'
-import { defaultLocalOrigin, sourceRangeKey, visMetadataEquals } from 'ydoc-shared/yjsModel'
+import type { LocalUserActionOrigin, Origin, VisualizationMetadata } from 'ydoc-shared/yjsModel'
+import { defaultLocalOrigin, visMetadataEquals } from 'ydoc-shared/yjsModel'
 import { UndoManager } from 'yjs'
 
 const FALLBACK_BINDING_PREFIX = 'node'
@@ -88,7 +82,7 @@ export class PortViewInstance {
 }
 
 export type GraphStore = ReturnType<typeof useGraphStore>
-export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createContextStore(
+export const [provideGraphStore, useGraphStore] = createContextStore(
   'graph',
   (proj: ProjectStore, suggestionDb: SuggestionDbStore) => {
     proj.setObservedFileName('Main.enso')
@@ -114,7 +108,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     const portInstances = shallowReactive(new Map<PortId, Set<PortViewInstance>>())
     const editedNodeInfo = ref<NodeEditInfo>()
 
-    const moduleSource = reactive(SourceDocument.Empty())
+    const moduleSource = SourceDocument.Empty(reactive)
     const moduleRoot = ref<Ast.BodyBlock>()
     const syncModule = computed(() => moduleRoot.value?.module as Ast.MutableModule | undefined)
 
@@ -146,9 +140,31 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       },
     )
 
-    const methodAst = computed<Result<Ast.FunctionDef>>(() =>
+    const immediateMethodAst = computed<Result<Ast.FunctionDef>>(() =>
       syncModule.value ? getExecutedMethodAst(syncModule.value) : Err('AST not yet initialized'),
     )
+
+    // When renaming a function, we temporarily lose track of edited function AST. Ensure that we
+    // still resolve it before the refactor code change is received.
+    const lastKnownResolvedMethodAstId = ref<AstId>()
+    watch(immediateMethodAst, (ast) => {
+      if (ast.ok) lastKnownResolvedMethodAstId.value = ast.value.id
+    })
+
+    const fallbackMethodAst = computed(() => {
+      const id = lastKnownResolvedMethodAstId.value
+      const ast = id != null ? syncModule.value?.get(id) : undefined
+      if (ast instanceof Ast.FunctionDef) return ast
+      return undefined
+    })
+
+    const methodAst = computed(() => {
+      const imm = immediateMethodAst.value
+      if (imm.ok) return imm
+      const flb = fallbackMethodAst.value
+      if (flb) return Ok(flb)
+      return imm
+    })
 
     const watchContext = useWatchContext()
 
@@ -169,39 +185,30 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     })
 
     watchEffect(() => {
-      if (!methodAst.value.ok || !moduleSource.text) return
-      const method = methodAst.value.value
-      const toRaw = new Map<SourceRangeKey, RawAst.Tree.Function>()
-      visitRecursive(Ast.rawParseModule(moduleSource.text), (node) => {
-        if (node.type === RawAst.Tree.Type.Function) {
-          const start = node.whitespaceStartInCodeParsed + node.whitespaceLengthInCodeParsed
-          const end = start + node.childrenLengthInCodeParsed
-          toRaw.set(sourceRangeKey([start, end]), node)
-          return false
-        }
-        return true
-      })
-      const methodSpan = moduleSource.getSpan(method.id)
-      assert(methodSpan != null)
-      const rawFunc = toRaw.get(sourceRangeKey(methodSpan))
-      const getSpan = (id: AstId) => moduleSource.getSpan(id)
-      db.updateBindings(method, rawFunc, moduleSource.text, getSpan)
+      if (methodAst.value.ok && moduleSource.text)
+        db.updateBindings(methodAst.value.value, moduleSource)
     })
 
-    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
+    const currentMethodPointer = computed((): Result<MethodPointer> => {
       const executionStackTop = proj.executionContext.getStackTop()
       switch (executionStackTop.type) {
         case 'ExplicitCall': {
-          return getMethodAst(executionStackTop.methodPointer, module)
+          return Ok(executionStackTop.methodPointer)
         }
         case 'LocalCall': {
           const exprId = executionStackTop.expressionId
           const info = db.getExpressionInfo(exprId)
           const ptr = info?.methodCall?.methodPointer
           if (!ptr) return Err("Unknown method pointer of execution stack's top frame")
-          return getMethodAst(ptr, module)
+          return Ok(ptr)
         }
+        default:
+          return assertNever(executionStackTop)
       }
+    })
+
+    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
+      return andThen(currentMethodPointer.value, (ptr) => getMethodAst(ptr, module))
     }
 
     function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.FunctionDef> {
@@ -603,7 +610,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         console.error(`BUG: Cannot commit edit: No module root block.`)
         return
       }
-      if (!skipTreeRepair) Ast.repair(root, edit)
+      if (!skipTreeRepair) edit.transact(() => Ast.repair(root, edit))
       syncModule.value!.applyEdit(edit, origin)
     }
 
@@ -615,8 +622,8 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
      *  to `true` for better performance.
      */
     function edit<T>(f: (edit: MutableModule) => T, skipTreeRepair?: boolean): T {
-      const edit = syncModule.value?.edit()
-      assert(edit != null)
+      assertDefined(syncModule.value)
+      const edit = syncModule.value.edit()
       let result
       edit.transact(() => {
         result = f(edit)
@@ -625,17 +632,9 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
           assert(root instanceof Ast.BodyBlock)
           Ast.repair(root, edit)
         }
-        syncModule.value!.applyEdit(edit)
       })
+      syncModule.value.applyEdit(edit)
       return result!
-    }
-
-    /**
-     * Obtain a version of the given `Ast` for direct mutation. The `ast` must exist in the current module.
-     *  This can be more efficient than creating and committing an edit, but skips tree-repair and cannot be aborted.
-     */
-    function getMutable<T extends Ast.Ast>(ast: T): Ast.Mutable<T> {
-      return syncModule.value!.getVersion(ast)
     }
 
     function batchEdits(f: () => void, origin: Origin = defaultLocalOrigin) {
@@ -679,7 +678,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
         profilingInfo: update.profilingInfo ?? [],
         fromCache: update.fromCache ?? false,
         payload: update.payload ?? { type: 'Value' },
-        ...(update.type ? { type: update.type } : {}),
+        type: update.type ?? [],
         ...(update.methodCall ? { methodCall: update.methodCall } : {}),
       }
       proj.computedValueRegistry.processUpdates([update_])
@@ -687,6 +686,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
 
     /** Iterate over code lines, return node IDs from `ids` set in the order of code positions. */
     function pickInCodeOrder(ids: Set<NodeId>): NodeId[] {
+      if (ids.size === 0) return []
       assert(syncModule.value != null)
       const func = unwrap(getExecutedMethodAst(syncModule.value))
       const body = func.bodyExpressions()
@@ -768,8 +768,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       if (expressionInfo?.methodCall == null) return false
 
       const definedOnType = tryQualifiedName(expressionInfo.methodCall.methodPointer.definedOnType)
-      const openModuleName = qnLastSegment(proj.modulePath.value)
-      if (definedOnType.ok && qnLastSegment(definedOnType.value) !== openModuleName) {
+      if (definedOnType.ok && definedOnType.value !== proj.modulePath.value) {
         // Cannot enter node that is not defined on current module.
         // TODO: Support entering nodes in other modules within the same project.
         return false
@@ -807,7 +806,6 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       pickInCodeOrder,
       ensureCorrectNodeOrder,
       batchEdits,
-      getMutable,
       overrideNodeColor,
       getNodeColorOverride,
       setNodeContent,
@@ -833,11 +831,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       addMissingImportsDisregardConflicts,
       isConnectedTarget,
       nodeCanBeEntered,
-      currentMethodPointer() {
-        const currentMethod = proj.executionContext.getStackTop()
-        if (currentMethod.type === 'ExplicitCall') return currentMethod.methodPointer
-        return db.getExpressionInfo(currentMethod.expressionId)?.methodCall?.methodPointer
-      },
+      currentMethodPointer,
       modulePath,
       connectedEdges,
       ...unconnectedEdges,

@@ -2,6 +2,7 @@
 import * as React from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
 
 import BlankIcon from '#/assets/blank.svg'
@@ -9,37 +10,43 @@ import BlankIcon from '#/assets/blank.svg'
 import * as dragAndDropHooks from '#/hooks/dragAndDropHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
-import { useDriveStore, useSetSelectedKeys } from '#/providers/DriveProvider'
+import type { DrivePastePayload } from '#/providers/DriveProvider'
+import {
+  useDriveStore,
+  useSetSelectedKeys,
+  useToggleDirectoryExpansion,
+} from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
-import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-import { isCloudCategory } from '#/layouts/CategorySwitcher/Category'
+import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import * as localBackend from '#/services/LocalBackend'
 
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
+import { IndefiniteSpinner } from '#/components/Spinner'
 import type { AssetEvent } from '#/events/assetEvent'
 import { useCutAndPaste } from '#/events/assetListEvent'
 import {
   backendMutationOptions,
   backendQueryOptions,
-  useAsset,
   useBackendMutationState,
+  useUploadFiles,
 } from '#/hooks/backendHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import { download } from '#/utilities/download'
@@ -51,14 +58,11 @@ import * as permissions from '#/utilities/permissions'
 import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import invariant from 'tiny-invariant'
 
 // =================
 // === Constants ===
 // =================
 
-/** The height of the header row. */
-const HEADER_HEIGHT_PX = 40
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
  * to make a directory row expand.
@@ -81,6 +85,7 @@ export interface AssetRowInnerProps {
 /** Props for an {@link AssetRow}. */
 export interface AssetRowProps {
   readonly isOpened: boolean
+
   readonly isPlaceholder: boolean
   readonly visibility: Visibility | undefined
   readonly id: backendModule.AssetId
@@ -96,6 +101,7 @@ export interface AssetRowProps {
   readonly grabKeyboardFocus: (item: backendModule.AnyAsset) => void
   readonly onClick: (props: AssetRowInnerProps, event: React.MouseEvent) => void
   readonly select: (item: backendModule.AnyAsset) => void
+  readonly isExpanded: boolean
   readonly onDragStart?: (
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
@@ -115,6 +121,12 @@ export interface AssetRowProps {
   readonly onDrop?: (
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
+  ) => void
+  readonly onCutAndPaste?: (
+    newParentKey: backendModule.DirectoryId,
+    newParentId: backendModule.DirectoryId,
+    pasteData: DrivePastePayload,
+    nodeMap: ReadonlyMap<backendModule.AssetId, assetTreeNode.AnyAssetTreeNode>,
   ) => void
 }
 
@@ -166,7 +178,7 @@ const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialR
                 indent.indentClass(depth),
               )}
             >
-              <StatelessSpinner size={24} state="loading-medium" />
+              <IndefiniteSpinner size={24} />
             </div>
           </td>
         </tr>
@@ -229,16 +241,11 @@ type RealAssetRowProps = AssetRowProps & { readonly id: backendModule.RealAssetI
  */
 // eslint-disable-next-line no-restricted-syntax
 const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) {
-  const { id, parentId, state } = props
-  const { category, backend } = state
+  const { id } = props
 
-  const asset = useAsset({
-    backend,
-    parentId,
-    category,
-    assetId: id,
-  })
+  const asset = useAsset(id)
 
+  // should never happen since we only render real assets and they are always defined
   if (asset == null) {
     return null
   }
@@ -267,14 +274,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     columns,
     onClick,
     isPlaceholder,
+    isExpanded,
     type,
     asset,
   } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
-  const { doRestore, doMove, category, scrollContainerRef, rootDirectoryId, backend } = state
-  const { doToggleDirectoryExpansion } = state
+  const { doRestore, doMove, category, rootDirectoryId, backend } = state
 
   const driveStore = useDriveStore()
   const queryClient = useQueryClient()
@@ -291,12 +298,10 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const wasSoleSelectedRef = React.useRef(isSoleSelected)
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const cutAndPaste = useCutAndPaste(category)
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
@@ -304,6 +309,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const [innerRowState, setRowState] = React.useState<assetsTable.AssetRowState>(
     assetRowUtils.INITIAL_ROW_STATE,
   )
+  const cutAndPaste = useCutAndPaste(category)
+  const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)
   const isEditingName = innerRowState.isEditingName || isNewlyCreated
@@ -338,11 +345,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       backend,
     }),
     select: (data) => data.state.type,
-    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder,
+    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder && isOpened,
   })
 
   const toastAndLog = useToastAndLog()
 
+  const uploadFiles = useUploadFiles(backend, category)
   const createPermissionMutation = useMutation(backendMutationOptions(backend, 'createPermission'))
   const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
@@ -414,6 +422,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
           )
           nodeParentKeysRef.current = { nodeMap: new WeakRef(nodeMap.current), parentKeys }
         }
+
+        if (isLocalCategory(category)) {
+          return true
+        }
+
         return payload.every((payloadItem) => {
           const parentKey = nodeParentKeysRef.current?.parentKeys.get(payloadItem.key)
           const parent = parentKey == null ? null : nodeMap.current.get(parentKey)
@@ -432,6 +445,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         })
       }
     })()
+
     if ((isPayloadMatch && canPaste) || event.dataTransfer.types.includes('Files')) {
       event.preventDefault()
       if (asset.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
@@ -474,7 +488,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, asset.parentId]),
+                    backendQueryOptions(
+                      backend,
+                      'getProjectDetails',
+                      [asset.id, asset.parentId, true],
+                      { staleTime: 0 },
+                    ),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -490,7 +509,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.file: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title]),
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
+                      staleTime: 0,
+                    }),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, asset.title)
@@ -655,41 +676,20 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       return (
         <>
           {!hidden && (
-            <FocusRing>
+            <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
                 tabIndex={0}
                 ref={(element) => {
                   rootRef.current = element
 
-                  requestAnimationFrame(() => {
-                    if (
-                      isSoleSelected &&
-                      !wasSoleSelectedRef.current &&
-                      element != null &&
-                      scrollContainerRef.current != null
-                    ) {
-                      const rect = element.getBoundingClientRect()
-                      const scrollRect = scrollContainerRef.current.getBoundingClientRect()
-                      const scrollUp = rect.top - (scrollRect.top + HEADER_HEIGHT_PX)
-                      const scrollDown = rect.bottom - scrollRect.bottom
-
-                      if (scrollUp < 0 || scrollDown > 0) {
-                        scrollContainerRef.current.scrollBy({
-                          top: scrollUp < 0 ? scrollUp : scrollDown,
-                          behavior: 'smooth',
-                        })
-                      }
-                    }
-                    wasSoleSelectedRef.current = isSoleSelected
-                  })
-
                   if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
+                    element.scrollIntoView({ block: 'nearest' })
                     element.focus()
                   }
                 }}
                 className={tailwindMerge.twMerge(
-                  'h-table-row rounded-full transition-all ease-in-out rounded-rows-child [contain-intrinsic-size:40px] [content-visibility:auto]',
+                  'h-table-row rounded-full transition-all ease-in-out  rounded-rows-child',
                   visibility,
                   (isDraggedOver || selected) && 'selected',
                 )}
@@ -707,7 +707,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     window.setTimeout(() => {
                       setSelected(false)
                     })
-                    doToggleDirectoryExpansion(asset.id, asset.id)
+                    toggleDirectoryExpansion(asset.id)
                   }
                 }}
                 onContextMenu={(event) => {
@@ -752,7 +752,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   }
                   if (asset.type === backendModule.AssetType.directory) {
                     dragOverTimeoutHandle.current = window.setTimeout(() => {
-                      doToggleDirectoryExpansion(asset.id, asset.id, true)
+                      toggleDirectoryExpansion(asset.id, true)
                     }, DRAG_EXPAND_DELAY_MS)
                   }
                   // Required because `dragover` does not fire on `mouseenter`.
@@ -800,7 +800,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                       event.preventDefault()
                       event.stopPropagation()
                       unsetModal()
-                      doToggleDirectoryExpansion(directoryId, directoryId, true)
+                      toggleDirectoryExpansion(directoryId, true)
                       const ids = payload
                         .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
                         .map((dragItem) => dragItem.key)
@@ -813,13 +813,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     } else if (event.dataTransfer.types.includes('Files')) {
                       event.preventDefault()
                       event.stopPropagation()
-                      doToggleDirectoryExpansion(directoryId, directoryId, true)
-                      dispatchAssetListEvent({
-                        type: AssetListEventType.uploadFiles,
-                        parentKey: directoryId,
-                        parentId: directoryId,
-                        files: Array.from(event.dataTransfer.files),
-                      })
+                      toggleDirectoryExpansion(directoryId, true)
+                      void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
                     }
                   }
                 }}
@@ -830,6 +825,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
                       <Render
                         isPlaceholder={isPlaceholder}
+                        isExpanded={isExpanded}
                         keyProp={id}
                         isOpened={isOpened}
                         backendType={backend.type}

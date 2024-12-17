@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.warning;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -54,7 +55,7 @@ import org.enso.interpreter.runtime.state.State;
 @ExportLibrary(WarningsLibrary.class)
 @ExportLibrary(ReflectionLibrary.class)
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
-public final class WithWarnings implements EnsoObject {
+public final class WithWarnings extends EnsoObject {
   final Object value;
 
   /**
@@ -183,25 +184,34 @@ public final class WithWarnings implements EnsoObject {
             WarningsLibrary.getUncached(),
             ArrayLikeAtNodeGen.getUncached(),
             ArrayLikeLengthNodeGen.getUncached());
+    var text = warningsToText(warnsMap, where, null);
+    return new PanicException(text, where);
+  }
+
+  @CompilerDirectives.TruffleBoundary
+  public static Text warningsToText(EnsoHashMap warnsMap, Node where, Text prefix)
+      throws PanicException {
     var warns = Warning.fromMapToArray(warnsMap);
     var ctx = EnsoContext.get(where);
     var scopeOfAny = ctx.getBuiltins().any().getDefinitionScope();
     var toText = UnresolvedSymbol.build("to_text", scopeOfAny);
     var node = InteropMethodCallNode.getUncached();
     var state = State.create(ctx);
-
     var text = Text.empty();
     for (var w : warns) {
       try {
-        var wText = node.execute(toText, state, new Object[] {w});
+        var wText = node.execute(toText, state, new Object[] {w.getValue()});
         if (wText instanceof Text t) {
+          if (prefix != null) {
+            text = text.add(prefix);
+          }
           text = text.add(t);
         }
       } catch (ArityException e) {
         throw ctx.raiseAssertionPanic(where, null, e);
       }
     }
-    return new PanicException(text, where);
+    return text;
   }
 
   @ExportMessage
@@ -268,6 +278,19 @@ public final class WithWarnings implements EnsoObject {
   @ExportMessage
   RuntimeException throwException(@Bind("$node") Node node) {
     throw asException(node);
+  }
+
+  @TruffleBoundary
+  @Override
+  @ExportMessage.Ignore
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toDisplayString(allowSideEffects, InteropLibrary.getUncached());
+  }
+
+  @ExportMessage
+  public Object toDisplayString(
+      boolean allowSideEffects, @CachedLibrary("this.value") InteropLibrary interop) {
+    return interop.toDisplayString(value, allowSideEffects);
   }
 
   @Override
