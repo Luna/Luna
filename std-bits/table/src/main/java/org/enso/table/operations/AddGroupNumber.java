@@ -30,7 +30,7 @@ public class AddGroupNumber {
 
     var groupNumberIterator = new StepIterator(start, step);
 
-    long[] numbers = new long[(int) numRows];
+    long[] numbers = new long[Math.toIntExact(numRows)];
 
     Storage<?>[] groupingStorages =
         Arrays.stream(groupingColumns).map(Column::getStorage).toArray(Storage[]::new);
@@ -59,7 +59,7 @@ public class AddGroupNumber {
       Column[] orderingColumns,
       int[] directions,
       ProblemAggregator problemAggregator) {
-    long[] numbers = new long[(int) numRows];
+    long[] numbers = new long[Math.toIntExact(numRows)];
 
     var equalCountGenerator = new EqualCountGenerator(start, step, numRows, groupCount);
 
@@ -72,7 +72,7 @@ public class AddGroupNumber {
           Arrays.stream(orderingColumns).map(Column::getStorage).toArray(Storage[]::new);
       List<OrderedMultiValueKey> keys =
           new ArrayList<>(
-              IntStream.range(0, (int) numRows)
+              IntStream.range(0, Math.toIntExact(numRows))
                   .mapToObj(i -> new OrderedMultiValueKey(orderingStorages, i, directions))
                   .toList());
       keys.sort(null);
@@ -104,7 +104,7 @@ public class AddGroupNumber {
   private static class EqualCountGenerator {
     private final long start;
     private final long step;
-    private long current = 0;
+    private long currentIndex = 0;
     private final long groupSize;
 
     public EqualCountGenerator(long start, long step, long totalCount, long numgroups) {
@@ -114,8 +114,8 @@ public class AddGroupNumber {
     }
 
     public long next() {
-      long toReturn = Math.addExact(start, Math.multiplyExact(step, (current / groupSize)));
-      current = Math.addExact(current, 1L);
+      long toReturn = Math.addExact(start, Math.multiplyExact(step, (currentIndex / groupSize)));
+      currentIndex = Math.addExact(currentIndex, 1L);
       return toReturn;
     }
   }
