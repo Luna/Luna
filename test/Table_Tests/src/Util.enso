@@ -10,28 +10,30 @@ from Standard.Test.Extensions_Helpers import rhs_error_check
 polyglot java import org.enso.base_test_helpers.FileSystemHelper
 
 Table.should_equal : Any -> Integer -> Any
-Table.should_equal self expected frames_to_skip=0 = rhs_error_check expected <|
-    loc = Meta.get_source_location 2+frames_to_skip
-    Panic.catch Test_Failure_Error (table_should_equal_impl self expected loc) error->
-        Test.fail error.payload.message 
+Table.should_equal self expected frames_to_skip=0 =
+    loc = Meta.get_source_location 1+frames_to_skip
+    rhs_error_check expected <|
+        Panic.catch Test_Failure_Error (table_should_equal_impl self expected loc) error->
+            Test.fail error.payload.message
 
 Column.should_equal : Any -> Integer -> Any
-Column.should_equal self expected frames_to_skip=0 = rhs_error_check expected <|
-    loc = Meta.get_source_location 2+frames_to_skip
-    Panic.catch Test_Failure_Error (column_should_equal_impl self expected loc) error->
-        Test.fail error.payload.message
+Column.should_equal self expected frames_to_skip=0 =
+    loc = Meta.get_source_location 1+frames_to_skip
+    rhs_error_check expected <|
+        Panic.catch Test_Failure_Error (column_should_equal_impl self expected loc) error->
+            Test.fail error.payload.message
 
 DB_Table.should_equal : DB_Table -> Integer -> Any
 DB_Table.should_equal self expected frames_to_skip=0 = rhs_error_check expected <|
     t0 = self.read
     t1 = expected.read
-    t0 . should_equal t1 frames_to_skip+2
+    t0 . should_equal t1 frames_to_skip+4
 
 DB_Column.should_equal : DB_Column -> Integer -> Any
 DB_Column.should_equal self expected frames_to_skip=0 = rhs_error_check expected <|
     t0 = self.read
     t1 = expected.read
-    t0 . should_equal t1 frames_to_skip+2
+    t0 . should_equal t1 frames_to_skip+4
 
 type Test_Failure_Error
     ## PRIVATE
