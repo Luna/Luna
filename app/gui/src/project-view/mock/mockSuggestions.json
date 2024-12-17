@@ -1241,5 +1241,25 @@
     "isStatic": false,
     "documentation": "",
     "annotations": ["columns"]
+  },
+  {
+    "type": "method",
+    "module": "local.Mock_Project.Main",
+    "name": "func1",
+    "arguments": [
+      {
+        "name": "arg1",
+        "reprType": "Standard.Base.Any.Any",
+        "isSuspended": false,
+        "hasDefault": false,
+        "defaultValue": null,
+        "tagValues": null
+      }
+    ],
+    "selfType": "local.Mock_Project.Main",
+    "returnType": "Standard.Base.Any.Any",
+    "isStatic": true,
+    "documentation": "",
+    "annotations": []
   }
 ]
