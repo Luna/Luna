@@ -3,7 +3,7 @@ import type { RendererObject } from 'marked'
 import { BUTTON_STYLES, TEXT_STYLE } from '../AriaComponents'
 
 /** The default renderer for Markdown. */
-export const defaultRenderer: RendererObject = {
+export const DEFAULT_RENDERER: Readonly<RendererObject> = {
   /** The renderer for headings. */
   heading({ depth, tokens }) {
     const variant = depth === 1 ? 'h1' : 'subtitle'

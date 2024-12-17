@@ -3,7 +3,7 @@
   "retry": "Retry",
 
   "arbitraryFetchError": "An error occurred while fetching data",
-  "arbitraryFetchImageError": "An error occurred while fetching image",
+  "arbitraryFetchImageError": "An error occurred while fetching an image",
 
   "createFolderError": "Could not create new folder",
   "createProjectError": "Could not create new project",

@@ -6,7 +6,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import type { RendererObject } from 'marked'
 import { marked } from 'marked'
 import { type TestIdProps } from '../AriaComponents'
-import { defaultRenderer } from './defaultRenderer'
+import { DEFAULT_RENDERER } from './defaultRenderer'
 
 /** Props for a {@link MarkdownViewer}. */
 export interface MarkdownViewerProps extends TestIdProps {
@@ -21,12 +21,12 @@ export interface MarkdownViewerProps extends TestIdProps {
  * Parses markdown passed in as a `text` prop into HTML and displays it.
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
-  const { text, imgUrlResolver, renderer = defaultRenderer, testId } = props
+  const { text, imgUrlResolver, renderer = {}, testId } = props
 
   const { getText } = useText()
   const logger = useLogger()
 
-  const markedInstance = marked.use({ renderer: Object.assign({}, defaultRenderer, renderer) })
+  const markedInstance = marked.use({ renderer: Object.assign({}, DEFAULT_RENDERER, renderer) })
 
   const { data: markdownToHtml } = useSuspenseQuery({
     queryKey: ['markdownToHtml', { text, imgUrlResolver, markedInstance }] as const,
