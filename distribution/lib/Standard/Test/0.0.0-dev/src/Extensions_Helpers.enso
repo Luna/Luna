@@ -1,0 +1,11 @@
+from Standard.Base import all
+import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+
+## PRIVATE
+   A helper that ensures that the value in `that` is not an error.
+should_equal_error_check that ~action =
+    case that.is_error of
+        False -> action
+        True ->
+            msg = "Dataflow error provided as expected value for `should_equal`. Use `should_fail_with` instead."+ ' Error stack trace was:\n'+that.get_stack_trace_text
+            Panic.throw (Illegal_Argument.Error msg)

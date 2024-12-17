@@ -3,7 +3,6 @@ private
 from Standard.Base import all
 from Standard.Base.Runtime import assert
 from Standard.Base.Runtime import State
-import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Clue.Clue
 import project.Group.Group
@@ -83,12 +82,3 @@ type Finished_With
        - stack_trace_text: A textual representation of the stack trace for the
          error.
     Error err stack_trace_text
-
-
-## PRIVATE
-should_equal_error_check that ~action =
-    case that.is_error of
-        False -> action
-        True ->
-            msg = "Dataflow error provided as expected value for `should_equal`. Use `should_fail_with` instead."+ ' Error stack trace was:\n'+that.get_stack_trace_text
-            Panic.throw (Illegal_Argument.Error msg)

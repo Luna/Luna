@@ -4,7 +4,7 @@ import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Spec_Result.Spec_Result
 import project.Test.Test
-from project.Helpers import should_equal_error_check
+from project.Extensions_Helpers import should_equal_error_check
 
 ## Expect a function to fail with the provided dataflow error.
 
