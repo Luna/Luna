@@ -145,6 +145,10 @@ pub mod secret {
     // === Github Token ===
     /// A token created for the `enso-ci` user.
     pub const CI_PRIVATE_TOKEN: &str = "CI_PRIVATE_TOKEN";
+
+    // === Sentry ===
+    /// The authentication token for pushing source maps to Sentry.
+    pub const SENTRY_AUTH_TOKEN: &str = "SENTRY_AUTH_TOKEN";
 }
 
 pub mod variables {

@@ -159,7 +159,7 @@ pub fn expose_debugging_vars(os: OS, step: Step) -> Step {
     use crate::ide::web::env::*;
     match os {
         OS::Windows => step
-            .with_variable_exposed(SENTRY_AUTH_TOKEN)
+            .with_secret_exposed(secret::SENTRY_AUTH_TOKEN)
             .with_variable_exposed(ENSO_CLOUD_SENTRY_ORGANIZATION)
             .with_variable_exposed(ENSO_CLOUD_SENTRY_PROJECT),
         _ => step,
