@@ -54,8 +54,8 @@ type Metadata_Data
         [connection, tinfo, t]
 
     teardown self =
-        self.connection.drop_table self.t.name
-        self.connection.drop_table self.tinfo
+        self.connection.drop_table self.t.name if_exists=True
+        self.connection.drop_table self.tinfo if_exists=True
         self.connection.close
 
 
@@ -81,9 +81,9 @@ type Tables_And_Table_Types_Data
         [connection, tinfo, vinfo, temporary_table]
 
     teardown self =
-        self.connection.drop_table self.tinfo
-        self.connection.execute_update "DROP VIEW '"+self.vinfo+"'"
-        self.connection.drop_table self.temporary_table
+        self.connection.drop_table self.tinfo if_exists=True
+        self.connection.execute_update "DROP VIEW IF EXISTS '"+self.vinfo+"'"
+        self.connection.drop_table self.temporary_table if_exists=True
         self.connection.close
 
 
@@ -377,9 +377,7 @@ type Database_File
     Value ~file
 
     create = Database_File.Value <|
-        transient_dir = enso_project.data / "transient"
-        assert transient_dir.exists ("The directory " + transient_dir.path + " should exist (ensured by containing a `.gitignore` file).")
-        f = transient_dir / "sqlite_test.db"
+        f = File.create_temporary_file "sqlite-test" ".db"
         f.delete_if_exists
         f
 
@@ -401,10 +399,6 @@ type File_Connection
         assert tmp_file.exists
         tmp_file
 
-    teardown self =
-        assert self.file.exists
-        self.file.delete
-
 
 add_specs suite_builder =
     in_file_prefix = "[SQLite File] "
@@ -424,9 +418,6 @@ add_specs suite_builder =
 
     suite_builder.group "SQLite_Format should allow connecting to SQLite files" group_builder->
         data = File_Connection.setup database_file
-
-        group_builder.teardown <|
-            data.teardown
 
         group_builder.specify "should recognise a SQLite database file" <|
             Auto_Detect.get_reading_format data.file . should_be_a SQLite_Format

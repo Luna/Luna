@@ -1,4 +1,5 @@
 from Standard.Base import all
+import Standard.Base.Errors.Common.Incomparable_Values
 import Standard.Base.Errors.Common.No_Such_Method
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
@@ -299,7 +300,11 @@ Number.should_equal self that epsilon=0 frames_to_skip=0 =
     loc = Meta.get_source_location 1+frames_to_skip
     rhs_error_check that <|
         matches = case that of
-            n : Number -> self.equals n epsilon
+            n : Number -> self.equals n epsilon . catch Incomparable_Values _->
+                ## Incomparable_Values is thrown if one of the values is NaN.
+                   We fallback to is_same_object_as,
+                   because in tests we actually NaN.should_equal NaN to succeed.
+                self.is_same_object_as n
             _ -> self==that
         case matches of
             True -> Spec_Result.Success
