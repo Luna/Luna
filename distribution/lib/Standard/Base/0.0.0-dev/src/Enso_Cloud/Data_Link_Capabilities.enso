@@ -88,4 +88,4 @@ type File_Like_Data_Link
        link supports writing. If it does not, an error is thrown.
     find data_link_instance (if_not_supported = (Error.throw (Illegal_Argument.Error "The "+(data_link_name data_link_instance)+" is not a link to a file object."))) -> File_Like_Data_Link ! Illegal_Argument =
         handle_no_conversion _ = if_not_supported
-        Panic.catch No_Such_Conversion (File_Like_Data_Link.from data_link_instance) handle_no_conv
+        Panic.catch No_Such_Conversion (File_Like_Data_Link.from data_link_instance) handle_no_conversion
