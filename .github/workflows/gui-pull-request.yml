@@ -81,15 +81,17 @@ jobs:
   required-checks:
     name: Required Checks
     runs-on: ubuntu-latest
-    needs: [gui-checks, storybook]
+    needs: [prettier, gui-checks, storybook]
     if: always()
     steps:
       - name: Checks Summary
         run: |
+          echo "Prettier: ${{ needs.prettier.result }}"
           echo "GUI Checks: ${{ needs.gui-checks.result }}"
           echo "Storybook: ${{ needs.storybook.result }}"
 
           declare -a checks
+          checks+=("${{ needs.prettier.result }}")
           checks+=("${{ needs.gui-checks.result }}")
           checks+=("${{ needs.storybook.result }}")
 
