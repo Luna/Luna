@@ -38,14 +38,11 @@ trait IRUtils {
     * @param name the definition name to look for
     * @return the list of definitions with the provided name
     */
-  def findSymbolDefinitions(ir: IR, name: String): Set[IR] = {
+  def findModuleDefinitions(ir: IR, name: String): Set[IR] = {
     val builder = Set.newBuilder[IR]
     IR.preorder(
       ir,
       {
-        case expressionBinding: Expression.Binding
-            if expressionBinding.name.name == name =>
-          builder.addOne(expressionBinding)
         case methodExplicit: Method.Explicit
             if methodExplicit.methodName.name == name =>
           builder.addOne(methodExplicit)
@@ -53,6 +50,49 @@ trait IRUtils {
       }
     )
     builder.result()
+  }
+
+  /** Find definitions with the provided name.
+    *
+    * @param scope the IR where to search the definition
+    * @param name the definition name to look for
+    * @return the list of definitions with the provided name
+    */
+  def findLocalDefinitions(scope: IR, name: String): Set[IR] = {
+    val builder = Set.newBuilder[IR]
+    IR.preorder(
+      scope,
+      {
+        case expressionBinding: Expression.Binding
+            if expressionBinding.name.name == name =>
+          builder.addOne(expressionBinding)
+        case _ =>
+      }
+    )
+    builder.result()
+  }
+
+  /** Get the [[Expression.Block]] containing the provided expression.
+    *
+    * @param scope the scope where to look
+    * @param expression the expression to look for
+    * @return the block containing the provided expression
+    */
+  def getExpressionBlock(
+    scope: IR,
+    expression: IR
+  ): Option[Expression.Block] = {
+    val blocksBuilder = Set.newBuilder[Expression.Block]
+    IR.preorder(
+      scope,
+      {
+        case block: Expression.Block => blocksBuilder.addOne(block)
+        case _                       =>
+      }
+    )
+    val blocks = blocksBuilder.result()
+
+    blocks.find(block => findById(block, expression.getId).isDefined)
   }
 
   /** Find usages of a local defined in the body block.

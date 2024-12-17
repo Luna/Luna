@@ -88,11 +88,6 @@ final class RefactoringRenameJob(
       .findModule(moduleName)
       .orElseThrow(() => new ModuleNotFoundException(moduleName))
     val newSymbolName = MethodNameValidation.normalize(newName)
-    val newSymbolDefs =
-      IRUtils.findSymbolDefinitions(module.getIr, newSymbolName)
-    if (newSymbolDefs.nonEmpty) {
-      throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
-    }
 
     val expression = IRUtils
       .findByExternalId(module.getIr, expressionId)
@@ -106,6 +101,26 @@ final class RefactoringRenameJob(
       .getOrElse(
         throw new RefactoringRenameJob.OperationNotSupported(expressionId)
       )
+
+    // check if global definition exists
+    methodDefinition.foreach { _ =>
+      val moduleDefs =
+        IRUtils.findModuleDefinitions(module.getIr, newSymbolName)
+      if (moduleDefs.nonEmpty) {
+        throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
+      }
+    }
+
+    // check if local definition exists
+    local.foreach { symbol =>
+      val scopeOpt = IRUtils.getExpressionBlock(module.getIr, symbol)
+      scopeOpt.foreach { scope =>
+        val localDefs = IRUtils.findLocalDefinitions(scope, newSymbolName)
+        if (localDefs.nonEmpty) {
+          throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
+        }
+      }
+    }
 
     def localUsages = local.flatMap(IRUtils.findLocalUsages(module.getIr, _))
     def methodDefinitionUsages = methodDefinition.flatMap(
