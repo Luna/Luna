@@ -47,7 +47,6 @@ import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
 import AssetEventType from '#/events/AssetEventType'
-import { useCutAndPaste } from '#/events/assetListEvent'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   backendMutationOptions,
@@ -56,6 +55,7 @@ import {
   useMoveAssetsMutation,
   useUploadFiles,
 } from '#/hooks/backendHooks'
+import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
