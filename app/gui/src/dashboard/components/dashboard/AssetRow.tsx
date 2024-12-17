@@ -58,19 +58,11 @@ import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 
-// =================
-// === Constants ===
-// =================
-
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
  * to make a directory row expand.
  */
 const DRAG_EXPAND_DELAY_MS = 500
-
-// ================
-// === AssetRow ===
-// ================
 
 /** Common properties for state and setters passed to event handlers on an {@link AssetRow}. */
 export interface AssetRowInnerProps {
@@ -148,18 +140,14 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   }
 })
 
-/**
- * Props for a {@link AssetSpecialRow}.
- */
+/** Props for a {@link AssetSpecialRow}. */
 export interface AssetSpecialRowProps {
   readonly type: backendModule.AssetType
   readonly columnsLength: number
   readonly depth: number
 }
 
-/**
- * Renders a special asset row.
- */
+/** Renders a special asset row. */
 // eslint-disable-next-line no-restricted-syntax
 const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialRowProps) {
   const { type, columnsLength, depth } = props
@@ -230,14 +218,10 @@ const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialR
   }
 })
 
-/**
- * Props for a {@link RealAssetRow}.
- */
+/** Props for a {@link RealAssetRow}. */
 type RealAssetRowProps = AssetRowProps & { readonly id: backendModule.RealAssetId }
 
-/**
- * Renders a real asset row.
- */
+/** Renders a real asset row. */
 // eslint-disable-next-line no-restricted-syntax
 const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) {
   const { id } = props
@@ -252,16 +236,12 @@ const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) 
   return <RealAssetInternalRow {...props} asset={asset} />
 })
 
-/**
- * Internal props for a {@link RealAssetRow}.
- */
+/** Internal props for a {@link RealAssetRow}. */
 export interface RealAssetRowInternalProps extends AssetRowProps {
   readonly asset: backendModule.AnyAsset
 }
 
-/**
- * Internal implementation of a {@link RealAssetRow}.
- */
+/** Internal implementation of a {@link RealAssetRow}. */
 export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const {
     id,
