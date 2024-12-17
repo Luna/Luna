@@ -24,7 +24,7 @@ add_specs suite_builder setup =
             group_builder.specify "add_group_number should report unsupported" <|
                 table_builder = setup.light_table_builder
                 t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
-                t.add_group_number (..Equal_Bucket_Count 3) "g" . should_fail_with (Unsupported_Database_Operation.Error "add_group_number")
+                t.add_group_number (..Equal_Count 3) "g" . should_fail_with (Unsupported_Database_Operation.Error "add_group_number")
 
 add_group_number_specs suite_builder setup =
     prefix = setup.prefix
@@ -50,28 +50,28 @@ add_group_number_specs suite_builder setup =
         group_builder.specify "should add group number by equal counts" <|
             t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
 
-            g0 = t.add_group_number (..Equal_Bucket_Count 3) "g"
+            g0 = t.add_group_number (..Equal_Count 3) "g"
             g0.at 'g' . to_vector . should_equal [0, 0, 1, 1, 2]
 
-            g1 = t.add_group_number (..Equal_Bucket_Count 3 order_by=['x']) "g"
+            g1 = t.add_group_number (..Equal_Count 3 order_by=['x']) "g"
             g1.at 'g' . to_vector . should_equal [0, 0, 1, 1, 2]
 
-            g2 = t.add_group_number (..Equal_Bucket_Count 3 order_by=['y']) "g"
+            g2 = t.add_group_number (..Equal_Count 3 order_by=['y']) "g"
             g2.at 'g' . to_vector . should_equal [2, 1, 1, 0, 0]
 
-            g3 = t.add_group_number (..Equal_Bucket_Count 3 order_by='z') "g"
+            g3 = t.add_group_number (..Equal_Count 3 order_by='z') "g"
             g3.at 'g' . to_vector . should_equal [0, 2, 1, 0, 1]
 
-            g4 = t.add_group_number (..Equal_Bucket_Count 2) "g"
+            g4 = t.add_group_number (..Equal_Count 2) "g"
             g4.at 'g' . to_vector . should_equal [0, 0, 0, 1, 1]
 
-            g5 = t.add_group_number (..Equal_Bucket_Count 2 order_by=['x']) "g"
+            g5 = t.add_group_number (..Equal_Count 2 order_by=['x']) "g"
             g5.at 'g' . to_vector . should_equal [0, 0, 0, 1, 1]
 
-            g6 = t.add_group_number (..Equal_Bucket_Count 2 order_by=['y']) "g"
+            g6 = t.add_group_number (..Equal_Count 2 order_by=['y']) "g"
             g6.at 'g' . to_vector . should_equal [1, 1, 0, 0, 0]
 
-            g7 = t.add_group_number (..Equal_Bucket_Count 2 order_by='z') "g"
+            g7 = t.add_group_number (..Equal_Count 2 order_by='z') "g"
             g7.at 'g' . to_vector . should_equal [0, 1, 1, 0, 0]
 
         group_builder.specify "should add group number by unique values" <|
@@ -89,7 +89,7 @@ add_group_number_specs suite_builder setup =
         group_builder.specify "should add group number by equal counts, with from and step" <|
             t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
 
-            g0 = t.add_group_number (..Equal_Bucket_Count 3) "g" from=10 step=3
+            g0 = t.add_group_number (..Equal_Count 3) "g" from=10 step=3
             g0.at 'g' . to_vector . should_equal [10, 10, 13, 13, 16]
 
         group_builder.specify "must specify group_by with Unique" <|
@@ -110,7 +110,7 @@ add_group_number_specs suite_builder setup =
         group_builder.specify "should fail if columns provided in order_by do not exist" <|
             t = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]], ['z', [1, 5, 4, 2, 3]]]
 
-            t.add_group_number (..Equal_Bucket_Count 3 order_by=['q']) "g" . should_fail_with Missing_Input_Columns
+            t.add_group_number (..Equal_Count 3 order_by=['q']) "g" . should_fail_with Missing_Input_Columns
 
         group_builder.specify "will fail if the row number exceeds Long range" <|
             max_long = Java_Long.MAX_VALUE

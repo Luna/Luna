@@ -174,7 +174,7 @@ make_grouping_method_selector table:Table display:Display=..Always -> Widget =
     columns_selector = Vector_Editor item_editor=column_selector item_default=table.column_names.first.pretty display=display
 
     unique = Option "Unique" "..Unique" [["on", columns_selector]]
-    equal_count = Option "Equal Count" "..Equal_Bucket_Count" [["order_by", columns_selector]]
+    equal_count = Option "Equal Count" "..Equal_Count" [["order_by", columns_selector]]
     names=[unique, equal_count]
 
     Single_Choice display=display values=names
