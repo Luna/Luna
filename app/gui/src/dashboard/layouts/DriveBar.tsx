@@ -21,6 +21,7 @@ import {
 } from '#/components/AriaComponents'
 import AssetEventType from '#/events/AssetEventType'
 import {
+  useClearTrashMutation,
   useNewDatalink,
   useNewFolder,
   useNewProject,
@@ -57,17 +58,12 @@ import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { useFullUserSession } from '../providers/AuthProvider'
 import { AssetPanelToggle } from './AssetPanel'
 
-// ================
-// === DriveBar ===
-// ================
-
 /** Props for a {@link DriveBar}. */
 export interface DriveBarProps {
   readonly backend: Backend
   readonly query: AssetQuery
   readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
   readonly category: Category
-  readonly doEmptyTrash: () => void
   readonly isEmpty: boolean
   readonly shouldDisplayStartModal: boolean
   readonly isDisabled: boolean
@@ -78,16 +74,7 @@ export interface DriveBarProps {
  * and a column display mode switcher.
  */
 export default function DriveBar(props: DriveBarProps) {
-  const {
-    backend,
-    query,
-    setQuery,
-    category,
-    doEmptyTrash,
-    isEmpty,
-    shouldDisplayStartModal,
-    isDisabled,
-  } = props
+  const { backend, query, setQuery, category, isEmpty, shouldDisplayStartModal, isDisabled } = props
 
   const { unsetModal } = useSetModal()
   const { getText } = useText()
@@ -125,6 +112,7 @@ export default function DriveBar(props: DriveBarProps) {
   const getTargetDirectory = useEventCallback(() => driveStore.getState().targetDirectory)
   const rootDirectoryId = useRootDirectoryId(backend, category)
 
+  const clearTrashMutation = useClearTrashMutation(backend)
   const newFolderRaw = useNewFolder(backend, category)
   const newFolder = useEventCallback(async () => {
     const parent = getTargetDirectory()
@@ -223,7 +211,9 @@ export default function DriveBar(props: DriveBarProps) {
 
             <ConfirmDeleteModal
               actionText={getText('allTrashedItemsForever')}
-              doDelete={doEmptyTrash}
+              doDelete={() => {
+                clearTrashMutation.mutate()
+              }}
             />
           </DialogTrigger>
           {pasteDataStatus}

@@ -1398,3 +1398,28 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
     },
   })
 }
+
+/** Remove the user's own permission from an asset. */
+export function useClearTrashMutation(backend: Backend) {
+  const queryClient = useQueryClient()
+  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
+
+  return useMutation({
+    mutationKey: [backend.type, 'clearTrash'],
+    mutationFn: async () => {
+      const trashedItems = await queryClient.ensureQueryData(
+        backendQueryOptions(backend, 'listDirectory', [
+          {
+            parentId: null,
+            labels: null,
+            filterBy: backendModule.FilterBy.trashed,
+            recentProjects: false,
+          },
+          '(unknown)',
+        ]),
+      )
+      await deleteAssetsMutation.mutateAsync([trashedItems.map((item) => item.id), true])
+      return null
+    },
+  })
+}
