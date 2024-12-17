@@ -2687,8 +2687,7 @@ export class BodyBlock extends BaseExpression {
         const whitespace: string =
           (line.statement.whitespace && line.statement.whitespace.length > (indent || '').length ?
             line.statement.whitespace
-          : undefined) ??
-          (indent != null ? indent + '    ' : '')
+          : undefined) ?? (indent != null ? indent + '    ' : '')
         yield { whitespace, node: line.statement.node }
       }
     }
