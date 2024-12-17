@@ -1,29 +1,21 @@
 /** @file Displays information describing a specific version of an asset. */
-import * as React from 'react'
-
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'
 import RestoreIcon from '#/assets/restore.svg'
 
 import * as textProvider from '#/providers/TextProvider'
 
-import AssetListEventType from '#/events/AssetListEventType'
-
 import * as assetDiffView from '#/layouts/AssetDiffView'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
 
 import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 
+import { useDuplicateProjectMutation } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as dateTime from '#/utilities/dateTime'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ====================
-// === AssetVersion ===
-// ====================
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {
@@ -40,18 +32,12 @@ export interface AssetVersionProps {
 export default function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
   const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
+  const duplicateProjectMutation = useDuplicateProjectMutation(backend)
   const isProject = item.type === backendService.AssetType.project
 
   const doDuplicate = useEventCallback(() => {
     if (isProject) {
-      dispatchAssetListEvent({
-        type: AssetListEventType.duplicateProject,
-        parentKey: item.parentId,
-        parentId: item.parentId,
-        original: item,
-        versionId: version.versionId,
-      })
+      duplicateProjectMutation.mutate([item.id, item.title, item.parentId, version.versionId])
     }
   })
 

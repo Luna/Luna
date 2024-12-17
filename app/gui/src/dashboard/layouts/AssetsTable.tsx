@@ -21,8 +21,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import * as z from 'zod'
 
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
-
 import DropFilesImage from '#/assets/drop_files.svg'
 import { FileTrigger, mergeProps } from '#/components/aria'
 import { Button, Text } from '#/components/AriaComponents'
@@ -49,8 +47,7 @@ import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
 import AssetEventType from '#/events/AssetEventType'
-import { useCutAndPaste, type AssetListEvent } from '#/events/assetListEvent'
-import AssetListEventType from '#/events/AssetListEventType'
+import { useCutAndPaste } from '#/events/assetListEvent'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   backendMutationOptions,
@@ -114,20 +111,16 @@ import {
   BackendType,
   getAssetPermissionName,
   Plan,
-  ProjectId,
-  ProjectState,
   type AnyAsset,
   type AssetId,
   type DirectoryAsset,
   type DirectoryId,
   type LabelName,
-  type ProjectAsset,
 } from '#/services/Backend'
 import type { AssetQueryKey } from '#/utilities/AssetQuery'
 import AssetQuery from '#/utilities/AssetQuery'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
-import { toRfc3339 } from '#/utilities/dateTime'
 import type { AssetRowsDragPayload } from '#/utilities/drag'
 import { ASSET_ROWS, LABELS, setDragImageToBlank } from '#/utilities/drag'
 import { fileExtension } from '#/utilities/fileInfo'
@@ -138,7 +131,6 @@ import LocalStorage from '#/utilities/LocalStorage'
 import {
   canPermissionModifyDirectoryContents,
   PermissionAction,
-  tryCreateOwnerPermission,
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
@@ -356,17 +348,11 @@ function AssetsTable(props: AssetsTableProps) {
   const setVisuallySelectedKeys = useSetVisuallySelectedKeys()
   const setPasteData = useSetPasteData()
 
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-
   const nameOfProjectToImmediatelyOpenRef = useRef(initialProjectName)
 
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const uploadFiles = useUploadFiles(backend, category)
-  const duplicateProjectMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'duplicateProject'), [backend]),
-  )
   const updateSecretMutation = useMutation(
     useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
   )
@@ -400,8 +386,6 @@ function AssetsTable(props: AssetsTableProps) {
   const [isDraggingFiles, setIsDraggingFiles] = useState(false)
   const [droppedFilesCount, setDroppedFilesCount] = useState(0)
   const isCloud = backend.type === BackendType.remote
-  /** Events sent when the asset list was still loading. */
-  const queuedAssetListEventsRef = useRef<AssetListEvent[]>([])
   const rootRef = useRef<HTMLDivElement | null>(null)
   const mainDropzoneRef = useRef<HTMLButtonElement | null>(null)
   const lastSelectedIdsRef = useRef<AssetId | ReadonlySet<AssetId> | null>(null)
@@ -1043,92 +1027,6 @@ function AssetsTable(props: AssetsTableProps) {
       document.removeEventListener('click', onClick, { capture: true })
     }
   }, [setMostRecentlySelectedIndex])
-
-  const deleteAsset = useEventCallback((assetId: AssetId) => {
-    const asset = nodeMapRef.current.get(assetId)?.item
-
-    if (asset) {
-      const listDirectoryQuery = queryClient.getQueryCache().find<DirectoryQuery>({
-        queryKey: [backend.type, 'listDirectory', asset.parentId],
-        exact: false,
-      })
-
-      if (listDirectoryQuery?.state.data) {
-        listDirectoryQuery.setData(
-          listDirectoryQuery.state.data.filter((child) => child.id !== assetId),
-        )
-      }
-    }
-  })
-
-  const onAssetListEvent = useEventCallback((event: AssetListEvent) => {
-    switch (event.type) {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      case AssetListEventType.duplicateProject: {
-        const parent = nodeMapRef.current.get(event.parentKey)
-        const siblings = parent?.children ?? []
-        const siblingTitles = new Set(siblings.map((sibling) => sibling.item.title))
-        let index = 1
-        let title = `${event.original.title} (${index})`
-        while (siblingTitles.has(title)) {
-          index += 1
-          title = `${event.original.title} (${index})`
-        }
-
-        const placeholderItem: ProjectAsset = {
-          type: AssetType.project,
-          id: ProjectId(uniqueString()),
-          title,
-          modifiedAt: toRfc3339(new Date()),
-          parentId: event.parentId,
-          permissions: tryCreateOwnerPermission(
-            `${parent?.path ?? ''}/${title}`,
-            category,
-            user,
-            users ?? [],
-            userGroups ?? [],
-          ),
-          projectState: {
-            type: ProjectState.placeholder,
-            volumeId: '',
-            openedBy: user.email,
-          },
-          extension: null,
-          labels: [],
-          description: null,
-          parentsPath: '',
-          virtualParentsPath: '',
-        }
-
-        void duplicateProjectMutation
-          .mutateAsync([event.original.id, event.versionId, placeholderItem.title])
-          .catch((error) => {
-            deleteAsset(placeholderItem.id)
-            toastAndLog('createProjectError', error)
-
-            throw error
-          })
-          .then((project) => {
-            doOpenProject({
-              type: backend.type,
-              parentId: event.parentId,
-              title: placeholderItem.title,
-              id: project.projectId,
-            })
-          })
-
-        break
-      }
-    }
-  })
-
-  eventListProvider.useAssetListEventListener((event) => {
-    if (!isLoading) {
-      onAssetListEvent(event)
-    } else {
-      queuedAssetListEventsRef.current.push(event)
-    }
-  })
 
   const doCopy = useEventCallback(() => {
     unsetModal()

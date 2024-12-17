@@ -1399,7 +1399,7 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
   })
 }
 
-/** Remove the user's own permission from an asset. */
+/** Clear the trash folder. */
 export function useClearTrashMutation(backend: Backend) {
   const queryClient = useQueryClient()
   const deleteAssetsMutation = useDeleteAssetsMutation(backend)
@@ -1420,6 +1420,56 @@ export function useClearTrashMutation(backend: Backend) {
       )
       await deleteAssetsMutation.mutateAsync([trashedItems.map((item) => item.id), true])
       return null
+    },
+  })
+}
+
+/** Duplicate a specific version of a project. */
+export function useDuplicateProjectMutation(backend: Backend) {
+  const queryClient = useQueryClient()
+  const toastAndLog = useToastAndLog()
+  const doOpenProject = useOpenProject()
+
+  return useMutation({
+    mutationFn: async ([id, originalTitle, parentId, versionId]: [
+      id: backendModule.ProjectId,
+      originalTitle: string,
+      parentId: backendModule.DirectoryId,
+      versionId: backendModule.S3ObjectVersionId,
+    ]) => {
+      const siblings = await queryClient.ensureQueryData(
+        backendQueryOptions(backend, 'listDirectory', [
+          {
+            parentId,
+            labels: null,
+            filterBy: backendModule.FilterBy.active,
+            recentProjects: false,
+          },
+          '(unknown)',
+        ]),
+      )
+      const siblingTitles = new Set(siblings.map((sibling) => sibling.title))
+      let index = 1
+      let title = `${originalTitle} (${index})`
+      while (siblingTitles.has(title)) {
+        index += 1
+        title = `${originalTitle} (${index})`
+      }
+
+      await backend
+        .duplicateProject(id, versionId, title)
+        .catch((error) => {
+          toastAndLog('createProjectError', error)
+          throw error
+        })
+        .then((project) => {
+          doOpenProject({
+            type: backend.type,
+            parentId,
+            title,
+            id: project.projectId,
+          })
+        })
     },
   })
 }

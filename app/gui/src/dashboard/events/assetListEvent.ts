@@ -1,5 +1,4 @@
 /** @file Events related to changes in the asset list. */
-import type AssetListEventType from '#/events/AssetListEventType'
 import { useCopyAssetsMutation } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
@@ -9,39 +8,6 @@ import type * as backendModule from '#/services/Backend'
 import type Backend from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
-
-/** Properties common to all asset list events. */
-interface AssetListBaseEvent<Type extends AssetListEventType> {
-  readonly type: Type
-}
-
-/** All possible events. */
-interface AssetListEvents {
-  readonly duplicateProject: AssetListDuplicateProjectEvent
-}
-
-/** A type to ensure that {@link AssetListEvents} contains every {@link AssetListEventType}. */
-// This is meant only as a sanity check, so it is allowed to break lint rules.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type SanityCheck<
-  T extends {
-    readonly [Type in keyof typeof AssetListEventType]: AssetListBaseEvent<
-      (typeof AssetListEventType)[Type]
-    >
-  } = AssetListEvents,
-> = [T]
-
-/** A signal to duplicate a project. */
-interface AssetListDuplicateProjectEvent
-  extends AssetListBaseEvent<AssetListEventType.duplicateProject> {
-  readonly parentKey: backendModule.DirectoryId
-  readonly parentId: backendModule.DirectoryId
-  readonly original: backendModule.ProjectAsset
-  readonly versionId: backendModule.S3ObjectVersionId
-}
-
-/** Every possible type of asset list event. */
-export type AssetListEvent = AssetListEvents[keyof AssetListEvents]
 
 /**
  * A hook to copy or move assets as appropriate. Assets are moved, except when performing
