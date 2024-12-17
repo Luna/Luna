@@ -1134,7 +1134,7 @@ class RuntimeRefactoringTest
       Api.Response(
         requestId,
         Api.SymbolRenameFailed(
-          Api.SymbolRenameFailed.SymbolAlreadyExists(newName)
+          Api.SymbolRenameFailed.DefinitionAlreadyExists(newName)
         )
       )
     )
@@ -1203,7 +1203,7 @@ class RuntimeRefactoringTest
       Api.Response(
         requestId,
         Api.SymbolRenameFailed(
-          Api.SymbolRenameFailed.SymbolAlreadyExists(newName)
+          Api.SymbolRenameFailed.DefinitionAlreadyExists(newName)
         )
       )
     )

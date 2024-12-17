@@ -58,10 +58,10 @@ final class RefactoringRenameJob(
               )
             )
             Seq()
-          case ex: RefactoringRenameJob.SymbolAlreadyExists =>
+          case ex: RefactoringRenameJob.DefinitionAlreadyExists =>
             reply(
               Api.SymbolRenameFailed(
-                Api.SymbolRenameFailed.SymbolAlreadyExists(ex.symbol)
+                Api.SymbolRenameFailed.DefinitionAlreadyExists(ex.name)
               )
             )
             Seq()
@@ -107,7 +107,7 @@ final class RefactoringRenameJob(
       val moduleDefs =
         IRUtils.findModuleDefinitions(module.getIr, newSymbolName)
       if (moduleDefs.nonEmpty) {
-        throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
+        throw new RefactoringRenameJob.DefinitionAlreadyExists(newSymbolName)
       }
     }
 
@@ -117,7 +117,7 @@ final class RefactoringRenameJob(
       scopeOpt.foreach { scope =>
         val localDefs = IRUtils.findLocalDefinitions(scope, newSymbolName)
         if (localDefs.nonEmpty) {
-          throw new RefactoringRenameJob.SymbolAlreadyExists(newSymbolName)
+          throw new RefactoringRenameJob.DefinitionAlreadyExists(newSymbolName)
         }
       }
     }
@@ -206,8 +206,8 @@ object RefactoringRenameJob {
   final private class ExpressionNotFound(val expressionId: UUID @ExternalID)
       extends Exception(s"Expression was not found by id [$expressionId].")
 
-  final private class SymbolAlreadyExists(val symbol: String)
-      extends Exception(s"Symbol [$symbol] already exists in scope")
+  final private class DefinitionAlreadyExists(val name: String)
+      extends Exception(s"Definition [$name] already exists in scope")
 
   final private class FailedToApplyEdits(val module: String)
       extends Exception(s"Failed to apply edits to module [$module]")
