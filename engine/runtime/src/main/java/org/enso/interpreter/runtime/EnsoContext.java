@@ -164,9 +164,6 @@ public final class EnsoContext {
             scala.Option.empty());
     this.home = home;
     this.builtins = new Builtins(this);
-    // Insert default host class loader.
-    var builtinsLibName = new LibraryName(Builtins.NAMESPACE, Builtins.PACKAGE_NAME);
-    this.hostClassLoaders.put(builtinsLibName, new HostClassLoader(null));
     this.notificationHandler = notificationHandler;
     this.lockManager = lockManager;
     this.distributionManager = distributionManager;

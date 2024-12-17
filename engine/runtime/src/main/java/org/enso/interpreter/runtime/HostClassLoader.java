@@ -3,6 +3,7 @@ package org.enso.interpreter.runtime;
 import com.oracle.truffle.api.TruffleFile;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.enso.pkg.Package;
@@ -36,7 +37,7 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
   public HostClassLoader(Package<TruffleFile> pkg) {
     super(new URL[0]);
     this.pkg = pkg;
-    assert pkg == null || pkg.polyglotDir().exists();
+    assert pkg.polyglotDir().exists();
   }
 
   static {
@@ -94,10 +95,6 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
 
   @Override
   public String toString() {
-    if (pkg != null) {
-      return "HostClassLoader(" + pkg.libraryName() + ")";
-    } else {
-      return "HostClassLoader";
-    }
+    return "HostClassLoader(" + pkg.libraryName() + ")";
   }
 }
