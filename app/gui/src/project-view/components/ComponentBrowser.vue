@@ -72,8 +72,6 @@ const emit = defineEmits<{
 const cbRoot = ref<HTMLElement>()
 const componentList = ref<ComponentInstance<typeof ComponentList>>()
 
-defineExpose({ cbRoot })
-
 const clickOutsideAssociatedElements = (e: PointerEvent) => {
   return props.associatedElements.length === 0 ?
       false
@@ -239,10 +237,6 @@ const nodeColor = computed(() => {
     if (color) return color
   }
   return 'var(--node-color-no-type)'
-})
-watchEffect(() => {
-  if (!graphStore.cbEditedEdge) return
-  graphStore.cbEditedEdge.color = nodeColor.value
 })
 
 const selectedSuggestionIcon = computed(() => {
