@@ -1156,11 +1156,19 @@ add_specs suite_builder =
             ExcelConnectionPool.INSTANCE.simulateReloadTestOnly
             check_workbook <| xlsx_sheet.read
             ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 1
+            check_workbook <| xlsx_sheet.read
+            ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 1
+            check_workbook <| xls_sheet.read
+            ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 2
             check_workbook <| xls_sheet.read
             ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 2
             ExcelConnectionPool.INSTANCE.simulateReloadTestOnly
             check_workbook <| xlsx_sheet.read
             ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 1
+            check_workbook <| xlsx_sheet.read
+            ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 1
+            check_workbook <| xls_sheet.read
+            ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 2
             check_workbook <| xls_sheet.read
             ExcelConnectionPool.INSTANCE.getConnectionRecordCount . should_equal 2
 
