@@ -151,7 +151,7 @@ type Data_Link
         # If the content type matches, it is surely a data link.
         if content_type_matches then True else
             ## If the content type does not match, we check the extension even if _different content type was provided_.
-               That is because many HTTP servers will not understand data links and may return a data link with
+               That is because most HTTP servers will not understand data links and may return a data link with
                a content type like `text/plain` or `application/json`. We still want to treat the file as a data link
                if its extension is correct.
             case file_metadata.guess_extension of

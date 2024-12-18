@@ -18,6 +18,7 @@ import project.Errors.File_Error.File_Error
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Errors.Problem_Behavior.Problem_Behavior
 import project.Function.Function
+import project.Internal.Path_Helpers
 import project.Meta
 import project.Metadata.Display
 import project.Metadata.Widget
@@ -356,7 +357,8 @@ type File
              example_append = Examples.data_dir / "scratch_file"
     @subpath get_child_widget
     / : Text -> File
-    / self (subpath : Text) = self.resolve subpath
+    / self (subpath : Text) =
+        Path_Helpers.resolve_many_parts self subpath
 
     ## GROUP Calculations
        ICON folder
@@ -385,9 +387,16 @@ type File
         _ -> self.join [subpaths]
 
     ## PRIVATE
-       Internal method to join two path segments together.
+       Internal method kept for compatibility, we should probably prefer `/` as
+       it is used across all of our file systems.
     resolve : Text -> File
-    resolve self (subpath : Text) = @Builtin_Method "File.resolve"
+    resolve self (subpath : Text) = self / subpath
+
+    ## PRIVATE
+       An internal helper method that resolves a single part (subpath) of a path.
+    resolve_single_part self part:Text -> Any =
+        if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
+            self.resolve_builtin part
 
     ## PRIVATE
        Convert the file descriptor to a JS_Object.

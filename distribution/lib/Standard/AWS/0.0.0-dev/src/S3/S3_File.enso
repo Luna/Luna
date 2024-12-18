@@ -5,6 +5,7 @@ import Standard.Base.Errors.Common.Syntax_Error
 import Standard.Base.Errors.File_Error.File_Error
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Errors.Unimplemented.Unimplemented
+import Standard.Base.Internal.Path_Helpers
 import Standard.Base.Runtime.Context
 import Standard.Base.System.File.Data_Link_Access.Data_Link_Access
 import Standard.Base.System.File.Generic.File_Like.File_Like
@@ -406,7 +407,13 @@ type S3_File
          See: https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-folders.html
     / : Text -> S3_File
     / self subpath =
-        S3_File.Value (self.s3_path.resolve subpath) self.credentials
+        Path_Helpers.resolve_many_parts self subpath
+
+    ## PRIVATE
+       An internal helper method that resolves a single part (subpath) of a path.
+    resolve_single_part self part:Text -> Any =
+        if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
+            S3_File.Value (self.s3_path.resolve part) self.credentials
 
     ## GROUP Standard.Base.Calculations
        ICON folder

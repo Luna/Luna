@@ -451,7 +451,7 @@ public final class EnsoFile extends EnsoObject {
     }
   }
 
-  @Builtin.Method(name = "resolve")
+  @Builtin.Method(name = "resolve_builtin")
   @Builtin.Specialize
   public EnsoFile resolve(String subPath) {
     return new EnsoFile(this.truffleFile.resolve(subPath));
