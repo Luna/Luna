@@ -364,11 +364,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     const directoryId = asset.type === backendModule.AssetType.directory ? id : parentId
     const labelsPayload = drag.LABELS.lookup(event)
     if (labelsPayload) {
+      event.preventDefault()
+      event.stopPropagation()
       setDragTargetAssetId(asset.id)
       const { isDraggingOverSelectedRow } = driveStore.getState()
       if (selected !== isDraggingOverSelectedRow) {
         setIsDraggingOverSelectedRow(selected)
       }
+      return
     }
     const payload = drag.ASSET_ROWS.lookup(event)
     const isPayloadMatch =
