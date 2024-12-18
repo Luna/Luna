@@ -27,7 +27,6 @@ import {
   useTransferBetweenCategories,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
@@ -45,10 +44,6 @@ import { twJoin } from 'tailwind-merge'
 import { AnimatedBackground } from '../components/AnimatedBackground'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
 
-// ============================
-// === Global configuration ===
-// ============================
-
 declare module '#/utilities/LocalStorage' {
   /** */
   interface LocalStorageData {
@@ -57,10 +52,6 @@ declare module '#/utilities/LocalStorage' {
 }
 
 LocalStorage.registerKey('localRootDirectories', { schema: z.string().array().readonly() })
-
-// ========================
-// === CategoryMetadata ===
-// ========================
 
 /** Metadata for a categoryModule.categoryType. */
 interface CategoryMetadata {
@@ -73,10 +64,6 @@ interface CategoryMetadata {
   readonly className?: string
   readonly iconClassName?: string
 }
-
-// ============================
-// === CategorySwitcherItem ===
-// ============================
 
 /** Props for a {@link CategorySwitcherItem}. */
 interface InternalCategorySwitcherItemProps extends CategoryMetadata {
@@ -236,10 +223,6 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
     : element
 }
 
-// ========================
-// === CategorySwitcher ===
-// ========================
-
 /** Props for a {@link CategorySwitcher}. */
 export interface CategorySwitcherProps {
   readonly category: Category
@@ -252,14 +235,16 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   const { user } = authProvider.useFullUserSession()
   const { getText } = textProvider.useText()
   const remoteBackend = backendProvider.useRemoteBackend()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const [, setSearchParams] = useSearchParams()
   const [localRootDirectories, setLocalRootDirectories] =
     useLocalStorageState('localRootDirectories')
   const hasUserAndTeamSpaces = backend.userHasUserAndTeamSpaces(user)
 
   const localBackend = backendProvider.useLocalBackend()
-  const itemProps = { currentCategory: category, setCategory, dispatchAssetEvent }
+  const itemProps = {
+    currentCategory: category,
+    setCategory,
+  } satisfies Partial<InternalCategorySwitcherItemProps>
   const selfDirectoryId = backend.DirectoryId(`directory-${user.userId.replace(/^user-/, '')}`)
 
   const { data: users } = useBackendQuery(remoteBackend, 'listUsers', [])

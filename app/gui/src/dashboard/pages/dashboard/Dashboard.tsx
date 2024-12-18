@@ -30,7 +30,6 @@ import type * as assetTable from '#/layouts/AssetsTable'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
-import EventListProvider, * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import type * as editor from '#/layouts/Editor'
 import UserBar from '#/layouts/UserBar'
 
@@ -64,11 +63,9 @@ export interface DashboardProps {
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
   return (
-    <EventListProvider>
-      <ProjectsProvider>
-        <DashboardInner {...props} />
-      </ProjectsProvider>
-    </EventListProvider>
+    <ProjectsProvider>
+      <DashboardInner {...props} />
+    </ProjectsProvider>
   )
 }
 
@@ -101,7 +98,6 @@ function DashboardInner(props: DashboardProps) {
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const assetManagementApiRef = React.useRef<assetTable.AssetManagementApi | null>(null)
 
   const initialLocalProjectPath =
@@ -157,7 +153,7 @@ function DashboardInner(props: DashboardProps) {
         )
         openProject({
           type: backendModule.BackendType.local,
-          id: localBackendModule.newProjectId(projectManager.UUID(id)),
+          id: localBackendModule.newProjectId(projectManager.UUID(id), localBackend.rootPath()),
           title: projectName,
           parentId: localBackendModule.newDirectoryId(localBackend.rootPath()),
         })
@@ -168,20 +164,27 @@ function DashboardInner(props: DashboardProps) {
   })
 
   React.useEffect(() => {
-    window.projectManagementApi?.setOpenProjectHandler((project) => {
-      setCategory({ type: 'local' })
-      const projectId = localBackendModule.newProjectId(projectManager.UUID(project.id))
-      openProject({
-        type: backendModule.BackendType.local,
-        id: projectId,
-        title: project.name,
-        parentId: localBackendModule.newDirectoryId(backendModule.Path(project.parentDirectory)),
+    if (localBackend) {
+      window.projectManagementApi?.setOpenProjectHandler((project) => {
+        setCategory({ type: 'local' })
+        const projectId = localBackendModule.newProjectId(
+          projectManager.UUID(project.id),
+          localBackend.rootPath(),
+        )
+        openProject({
+          type: backendModule.BackendType.local,
+          id: projectId,
+          title: project.name,
+          parentId: localBackendModule.newDirectoryId(backendModule.Path(project.parentDirectory)),
+        })
       })
-    })
-    return () => {
-      window.projectManagementApi?.setOpenProjectHandler(() => {})
+      return () => {
+        window.projectManagementApi?.setOpenProjectHandler(() => {})
+      }
+    } else {
+      return () => {}
     }
-  }, [dispatchAssetListEvent, openEditor, openProject, setCategory])
+  }, [localBackend, openEditor, openProject, setCategory])
 
   React.useEffect(
     () =>
