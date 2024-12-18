@@ -147,7 +147,6 @@ public class TypeProcessor extends BuiltinsMetadataProcessor<TypeProcessor.TypeM
       out.println("    return switch (builtinName) {");
       out.println("      case \"Long\" -> " + ConstantsGenClass + ".INTEGER;");
       out.println("      case \"Double\" -> " + ConstantsGenClass + ".FLOAT;");
-      out.println("      case \"Text\" -> " + ConstantsGenClass + ".TEXT;");
       lookup.forEach(
           (k, v) ->
               out.println("      case \"" + k + "\" -> " + ConstantsGenClass + "." + v + ";"));
