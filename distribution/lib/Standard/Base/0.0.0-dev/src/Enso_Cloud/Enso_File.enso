@@ -42,6 +42,7 @@ import project.System.Input_Stream.Input_Stream
 import project.System.Output_Stream.Output_Stream
 from project.Data.Boolean import Boolean, False, True
 from project.Data.Text.Extensions import all
+from project.Enso_Cloud.Data_Link_Helpers import data_link_extension
 from project.Enso_Cloud.Internal.Enso_File_Helpers import all
 from project.Enso_Cloud.Public_Utils import get_required_field
 from project.System.File import find_extension_from_name
@@ -564,7 +565,12 @@ type Enso_File
        An internal helper method that resolves a single part (subpath) of a path,
        used by `Path_Resolver`.
     resolve_single_part self part:Text -> Any =
-        if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
+        ## `is_data_link` checks the `asset_type` which requires actually fetching the metadata from the cloud.
+           To avoid performing requests for every part of a path that we are resolving, we rely on the assumption that
+           every data link has a name ending with the `.datalink` extension. Thus we perform the costly check only if
+           we find a good potential candidate for the data link.
+        may_be_data_link = self.name.ends_with data_link_extension
+        if may_be_data_link && Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
             Enso_File.Value (self.enso_path.resolve part)
 
     ## PRIVATE
