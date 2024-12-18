@@ -2,7 +2,11 @@ import sbt.Keys._
 import sbt._
 import sbt.internal.util.ManagedLogger
 import sbt.io.IO
-import sbt.librarymanagement.{ConfigurationFilter, DependencyFilter}
+import sbt.librarymanagement.{
+  ConfigurationFilter,
+  DependencyFilter,
+  ModuleFilter
+}
 
 import java.io.File
 
@@ -19,11 +23,13 @@ object StdBits {
     * @param ignoreScalaLibrary whether to ignore Scala dependencies that are
     *                           added by default be SBT and are not relevant in
     *                           pure-Java projects
+    * @param ignoreDependency A dependency that should be ignored - not copied to the destination
     */
   def copyDependencies(
     destination: File,
     providedJarNames: Seq[String],
-    ignoreScalaLibrary: Boolean
+    ignoreScalaLibrary: Boolean,
+    ignoreDependency: Option[ModuleID] = None
   ): Def.Initialize[Task[Unit]] =
     Def.task {
       val libraryUpdates = (Compile / update).value
@@ -48,12 +54,26 @@ object StdBits {
           !graalVmOrgs.contains(orgName)
         })
       )
+      val moduleFilter = ignoreDependency match {
+        case None => graalModuleFilter
+        case Some(ignoreDepID) =>
+          DependencyFilter.moduleFilter(
+            organization = new SimpleFilter(orgName => {
+              !graalVmOrgs.contains(
+                orgName
+              ) && orgName != ignoreDepID.organization
+            }),
+            name = new SimpleFilter(nm => {
+              nm != ignoreDepID.name
+            })
+          )
+      }
       val unmanagedFiles = (Compile / unmanagedJars).value.map(_.data)
       val relevantFiles =
         libraryUpdates
           .select(
             configuration = configFilter,
-            module        = graalModuleFilter,
+            module        = moduleFilter,
             artifact      = DependencyFilter.artifactFilter()
           ) ++ unmanagedFiles
       val dependencyStore =

@@ -4671,7 +4671,8 @@ lazy val `std-image` = project
         .copyDependencies(
           `image-polyglot-root`,
           Seq("std-image.jar"),
-          ignoreScalaLibrary = true
+          ignoreScalaLibrary = true,
+          ignoreDependency   = Some("org.openpnp" % "opencv" % opencvVersion)
         )
         .value
       result
