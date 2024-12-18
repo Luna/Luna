@@ -5,6 +5,7 @@ import isNetworkError from 'is-network-error'
 // === Constants ===
 // =================
 
+const DEFAULT_TIMEOUT_MS = 10_000
 export const FETCH_SUCCESS_EVENT_NAME = 'fetch-success'
 export const FETCH_ERROR_EVENT_NAME = 'fetch-error'
 
@@ -149,6 +150,8 @@ export default class HttpClient {
       payload = await payload.arrayBuffer()
     }
 
+    const timeout = AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
+
     try {
       // This is an UNSAFE type assertion, however this is a HTTP client
       // and should only be used to query APIs with known response types.
@@ -157,6 +160,7 @@ export default class HttpClient {
         method: options.method,
         headers,
         keepalive: options.keepalive ?? false,
+        signal: timeout,
         ...(payload != null ? { body: payload } : {}),
       })) as ResponseWithTypedJson<T>
       document.dispatchEvent(new Event(FETCH_SUCCESS_EVENT_NAME))
