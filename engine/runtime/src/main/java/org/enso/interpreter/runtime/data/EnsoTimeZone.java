@@ -18,7 +18,7 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(
     pkg = "date",
-    name = "Time_Zone",
+    name = "TimeZone",
     stdlibName = "Standard.Base.Data.Time.Time_Zone.Time_Zone")
 public final class EnsoTimeZone extends BuiltinObject {
 

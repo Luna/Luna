@@ -14,7 +14,7 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
 import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
 
-@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning", name = "Warning")
+@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
 public final class Warning extends BuiltinObject {
   final Object value;

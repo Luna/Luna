@@ -17,7 +17,7 @@ import org.enso.interpreter.runtime.warning.AppendWarningNode;
 import org.enso.interpreter.runtime.warning.WarningsLibrary;
 
 @ExportLibrary(InteropLibrary.class)
-@Builtin(pkg = "immutable", stdlibName = "Standard.Base.Data.Vector.Vector", name = "Vector")
+@Builtin(pkg = "immutable", stdlibName = "Standard.Base.Data.Vector.Vector")
 abstract class Vector extends BuiltinObject {
 
   protected Vector() {}

@@ -10,7 +10,7 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /** A mutable reference type. */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(pkg = "mutable", stdlibName = "Standard.Base.Runtime.Ref.Ref", name = "Ref")
+@Builtin(pkg = "mutable", stdlibName = "Standard.Base.Runtime.Ref.Ref")
 public final class Ref extends BuiltinObject {
   private volatile Object value;
 
@@ -18,7 +18,6 @@ public final class Ref extends BuiltinObject {
   protected String builtinName() {
     return "Ref";
   }
-
 
   /**
    * Creates a new reference.

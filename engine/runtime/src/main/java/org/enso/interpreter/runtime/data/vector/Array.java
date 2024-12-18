@@ -27,7 +27,7 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 /** A primitive boxed array type for use in the runtime. */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(WarningsLibrary.class)
-@Builtin(pkg = "mutable", stdlibName = "Standard.Base.Data.Array.Array", name = "Array")
+@Builtin(pkg = "mutable", stdlibName = "Standard.Base.Data.Array.Array")
 final class Array extends BuiltinObject {
   private final Object[] items;
 

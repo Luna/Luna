@@ -32,10 +32,7 @@ import org.enso.interpreter.runtime.callable.function.Function;
  * ProcessItems} processor.
  */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(
-    pkg = "resource",
-    stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource",
-    name = "Managed_Resource")
+@Builtin(pkg = "resource", stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource")
 public final class ManagedResource extends BuiltinObject {
   private final Object resource;
   private final PhantomReference<ManagedResource> phantomReference;
