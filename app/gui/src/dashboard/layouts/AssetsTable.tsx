@@ -438,36 +438,36 @@ function AssetsTable(props: AssetsTableProps) {
               setIsAssetPanelTemporarilyVisible(false)
             }
           } else {
-            let commonDirectoryKey: AssetId | null = null
-            let otherCandidateDirectoryKey: AssetId | null = null
+            let commonDirectoryId: AssetId | null = null
+            let otherCandidateDirectoryId: AssetId | null = null
             for (const key of selectedKeys) {
               const node = nodeMapRef.current.get(key)
               if (node != null) {
-                if (commonDirectoryKey == null) {
-                  commonDirectoryKey = node.directoryKey
-                  otherCandidateDirectoryKey =
-                    node.item.type === AssetType.directory ? node.key : null
+                if (commonDirectoryId == null) {
+                  commonDirectoryId = node.item.parentId
+                  otherCandidateDirectoryId =
+                    node.item.type === AssetType.directory ? node.item.id : null
                 } else if (
-                  node.key === commonDirectoryKey ||
-                  node.directoryKey === commonDirectoryKey
+                  node.item.id === commonDirectoryId ||
+                  node.item.parentId === commonDirectoryId
                 ) {
-                  otherCandidateDirectoryKey = null
+                  otherCandidateDirectoryId = null
                 } else if (
-                  otherCandidateDirectoryKey != null &&
-                  (node.key === otherCandidateDirectoryKey ||
-                    node.directoryKey === otherCandidateDirectoryKey)
+                  otherCandidateDirectoryId != null &&
+                  (node.item.id === otherCandidateDirectoryId ||
+                    node.item.parentId === otherCandidateDirectoryId)
                 ) {
-                  commonDirectoryKey = otherCandidateDirectoryKey
-                  otherCandidateDirectoryKey = null
+                  commonDirectoryId = otherCandidateDirectoryId
+                  otherCandidateDirectoryId = null
                 } else {
                   // No match; there is no common parent directory for the entire selection.
-                  commonDirectoryKey = null
+                  commonDirectoryId = null
                   break
                 }
               }
             }
             const node =
-              commonDirectoryKey == null ? null : nodeMapRef.current.get(commonDirectoryKey)
+              commonDirectoryId == null ? null : nodeMapRef.current.get(commonDirectoryId)
             if (node != null && node.isType(AssetType.directory)) {
               setTargetDirectory(node)
             }
@@ -496,11 +496,11 @@ function AssetsTable(props: AssetsTableProps) {
     const allVisibleNodes = () =>
       assetTree
         .preorderTraversal((children) =>
-          children.filter((child) => visibilities.get(child.key) !== Visibility.hidden),
+          children.filter((child) => visibilities.get(child.item.id) !== Visibility.hidden),
         )
         .filter(
           (node) =>
-            visibilities.get(node.key) === Visibility.visible &&
+            visibilities.get(node.item.id) === Visibility.visible &&
             node.item.type !== AssetType.specialEmpty &&
             node.item.type !== AssetType.specialLoading,
         )
@@ -672,8 +672,8 @@ function AssetsTable(props: AssetsTableProps) {
 
   useEffect(() => {
     assetTreeRef.current = assetTree
-    const newNodeMap = new Map(assetTree.preorderTraversal().map((asset) => [asset.key, asset]))
-    newNodeMap.set(assetTree.key, assetTree)
+    const newNodeMap = new Map(assetTree.preorderTraversal().map((asset) => [asset.item.id, asset]))
+    newNodeMap.set(assetTree.item.id, assetTree)
     nodeMapRef.current = newNodeMap
   }, [assetTree])
 
@@ -1261,7 +1261,7 @@ function AssetsTable(props: AssetsTableProps) {
 
   const onRowClick = useEventCallback(({ asset }: AssetRowInnerProps, event: ReactMouseEvent) => {
     event.stopPropagation()
-    const newIndex = visibleItems.findIndex((innerItem) => innerItem.key === asset.id)
+    const newIndex = visibleItems.findIndex((innerItem) => innerItem.item.id === asset.id)
     const getRange = () => {
       if (mostRecentlySelectedIndexRef.current == null) {
         return [asset]
@@ -1301,12 +1301,17 @@ function AssetsTable(props: AssetsTableProps) {
         newSelectedKeys = new Set([item.id])
         setSelectedAssets([item])
       }
-      const nodes = assetTree.preorderTraversal().filter((node) => newSelectedKeys.has(node.key))
+      const nodes = assetTree
+        .preorderTraversal()
+        .filter((node) => newSelectedKeys.has(node.item.id))
       const payload: AssetRowsDragPayload = nodes.map((node) => ({
-        key: node.key,
+        key: node.item.id,
         asset: node.item,
       }))
-      event.dataTransfer.setData(ASSETS_MIME_TYPE, JSON.stringify(nodes.map((node) => node.key)))
+      event.dataTransfer.setData(
+        ASSETS_MIME_TYPE,
+        JSON.stringify(nodes.map((node) => node.item.id)),
+      )
       setDragImageToBlank(event)
       ASSET_ROWS.bind(event, payload)
       setModal(
@@ -1319,10 +1324,9 @@ function AssetsTable(props: AssetsTableProps) {
         >
           {nodes.map((node) => (
             <NameColumn
-              key={node.key}
+              key={node.item.id}
               isPlaceholder={node.isPlaceholder()}
               isExpanded={false}
-              keyProp={node.key}
               item={node.item}
               depth={0}
               isOpened={false}
@@ -1426,7 +1430,7 @@ function AssetsTable(props: AssetsTableProps) {
     : displayItems.map((item) => {
         return (
           <AssetRow
-            key={item.key + item.path}
+            key={item.item.id + item.path}
             isPlaceholder={item.isPlaceholder()}
             isExpanded={
               item.item.type === AssetType.directory ?
@@ -1435,15 +1439,15 @@ function AssetsTable(props: AssetsTableProps) {
             }
             onCutAndPaste={cutAndPaste}
             isOpened={openedProjects.some(({ id }) => item.item.id === id)}
-            visibility={visibilities.get(item.key)}
+            visibility={visibilities.get(item.item.id)}
             columns={columns}
             id={item.item.id}
             type={item.item.type}
-            parentId={item.directoryId}
+            parentId={item.item.parentId}
             path={item.path}
             depth={item.depth}
             state={state}
-            hidden={visibilities.get(item.key) === Visibility.hidden}
+            hidden={visibilities.get(item.item.id) === Visibility.hidden}
             isKeyboardSelected={
               keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
             }

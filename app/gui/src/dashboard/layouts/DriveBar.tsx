@@ -115,22 +115,22 @@ export default function DriveBar(props: DriveBarProps) {
   const newFolderRaw = useNewFolder(backend, category)
   const newFolder = useEventCallback(async () => {
     const parent = getTargetDirectory()
-    return await newFolderRaw(parent?.directoryId ?? rootDirectoryId, parent?.path)
+    return await newFolderRaw(parent?.item.parentId ?? rootDirectoryId, parent?.path)
   })
   const uploadFilesRaw = useUploadFiles(backend, category)
   const uploadFiles = useEventCallback(async (files: readonly File[]) => {
     const parent = getTargetDirectory()
-    await uploadFilesRaw(files, parent?.directoryId ?? rootDirectoryId, parent?.path)
+    await uploadFilesRaw(files, parent?.item.parentId ?? rootDirectoryId, parent?.path)
   })
   const newSecretRaw = useNewSecret(backend, category)
   const newSecret = useEventCallback(async (name: string, value: string) => {
     const parent = getTargetDirectory()
-    return await newSecretRaw(name, value, parent?.directoryId ?? rootDirectoryId, parent?.path)
+    return await newSecretRaw(name, value, parent?.item.parentId ?? rootDirectoryId, parent?.path)
   })
   const newDatalinkRaw = useNewDatalink(backend, category)
   const newDatalink = useEventCallback(async (name: string, value: unknown) => {
     const parent = getTargetDirectory()
-    return await newDatalinkRaw(name, value, parent?.directoryId ?? rootDirectoryId, parent?.path)
+    return await newDatalinkRaw(name, value, parent?.item.parentId ?? rootDirectoryId, parent?.path)
   })
   const newProjectRaw = useNewProject(backend, category)
   const newProjectMutation = useMutation({
@@ -142,7 +142,7 @@ export default function DriveBar(props: DriveBarProps) {
       const parent = getTargetDirectory()
       return await newProjectRaw(
         { templateName, templateId },
-        parent?.directoryId ?? rootDirectoryId,
+        parent?.item.parentId ?? rootDirectoryId,
         parent?.path,
       )
     },

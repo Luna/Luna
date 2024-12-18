@@ -125,7 +125,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       new Map(
         Array.from(nodeMap.current.entries()).map(([id, otherAsset]) => [
           id,
-          otherAsset.directoryKey,
+          otherAsset.item.parentId,
         ]),
       )
     )
@@ -155,7 +155,6 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       // see `enabled` property below.
       // eslint-disable-next-line no-restricted-syntax
       assetId: asset.id as backendModule.ProjectId,
-      parentId: asset.parentId,
       backend,
     }),
     enabled: asset.type === backendModule.AssetType.project && canOpenProjects,

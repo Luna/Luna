@@ -41,7 +41,6 @@ const DEFAULT_INTERVAL_MS = 120_000
 /** Options for {@link createGetProjectDetailsQuery}. */
 export interface CreateOpenedProjectQueryOptions {
   readonly assetId: backendModule.Asset<backendModule.AssetType.project>['id']
-  readonly parentId: backendModule.Asset<backendModule.AssetType.project>['parentId']
   readonly backend: Backend
 }
 
@@ -83,13 +82,13 @@ function useSetProjectAsset() {
 
 /** Project status query.  */
 export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOptions) {
-  const { assetId, parentId, backend } = options
+  const { assetId, backend } = options
 
   const isLocal = backend.type === backendModule.BackendType.local
 
   return reactQuery.queryOptions({
     queryKey: createGetProjectDetailsQuery.getQueryKey(assetId),
-    queryFn: () => backend.getProjectDetails(assetId, parentId),
+    queryFn: () => backend.getProjectDetails(assetId),
     meta: { persist: false },
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,

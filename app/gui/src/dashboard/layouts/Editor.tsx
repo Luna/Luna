@@ -21,18 +21,10 @@ import * as backendModule from '#/services/Backend'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as twMerge from '#/utilities/tailwindMerge'
 
-// ====================
-// === StringConfig ===
-// ====================
-
 /** A configuration in which values may be strings or nested configurations. */
 interface StringConfig {
   readonly [key: string]: StringConfig | string
 }
-
-// ========================
-// === GraphEditorProps ===
-// ========================
 
 /** Props for the GUI editor root component. */
 export interface GraphEditorProps {
@@ -46,25 +38,13 @@ export interface GraphEditorProps {
   readonly remoteBackend: Backend | null
 }
 
-// =========================
-// === GraphEditorRunner ===
-// =========================
-
 /**
  * The value passed from the entrypoint to the dashboard, which enables the dashboard to
  * open a new IDE instance.
  */
 export type GraphEditorRunner = React.ComponentType<GraphEditorProps>
 
-// =================
-// === Constants ===
-// =================
-
 const IGNORE_PARAMS_REGEX = new RegExp(`^${appUtils.SEARCH_PARAMS_PREFIX}(.+)$`)
-
-// ==============
-// === Editor ===
-// ==============
 
 /** Props for an {@link Editor}. */
 export interface EditorProps {
@@ -87,7 +67,6 @@ function Editor(props: EditorProps) {
 
   const projectStatusQuery = projectHooks.createGetProjectDetailsQuery({
     assetId: project.id,
-    parentId: project.parentId,
     backend,
   })
 

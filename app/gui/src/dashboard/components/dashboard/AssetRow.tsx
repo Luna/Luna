@@ -307,7 +307,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       // see `enabled` property below.
       // eslint-disable-next-line no-restricted-syntax
       assetId: asset.id as backendModule.ProjectId,
-      parentId: asset.parentId,
       backend,
     }),
     select: (data) => data.state.type,
@@ -362,10 +361,10 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   }, [grabKeyboardFocusRef, isKeyboardSelected, asset])
 
   const onDragOver = (event: React.DragEvent<Element>) => {
-    const directoryKey = asset.type === backendModule.AssetType.directory ? id : parentId
+    const directoryId = asset.type === backendModule.AssetType.directory ? id : parentId
     const payload = drag.ASSET_ROWS.lookup(event)
     const isPayloadMatch =
-      payload != null && payload.every((innerItem) => innerItem.key !== directoryKey)
+      payload != null && payload.every((innerItem) => innerItem.key !== directoryId)
     const canPaste = (() => {
       if (!isPayloadMatch) {
         return false
@@ -374,7 +373,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
           const parentKeys = new Map(
             Array.from(nodeMap.current.entries()).map(([otherId, otherAsset]) => [
               otherId,
-              otherAsset.directoryKey,
+              otherAsset.item.parentId,
             ]),
           )
           nodeParentKeysRef.current = { nodeMap: new WeakRef(nodeMap.current), parentKeys }
@@ -580,7 +579,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                       <Render
                         isPlaceholder={isPlaceholder}
                         isExpanded={isExpanded}
-                        keyProp={id}
                         isOpened={isOpened}
                         backendType={backend.type}
                         item={asset}

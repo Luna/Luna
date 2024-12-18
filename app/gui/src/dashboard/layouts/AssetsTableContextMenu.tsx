@@ -92,9 +92,9 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const ownsAllSelectedAssets =
     !isCloud ||
     selectedAssets.every(
-      (asset) =>
-        permissions.tryFindSelfPermission(user, asset.permissions)?.permission ===
-        permissions.PermissionAction.own,
+      ({ id }) =>
+        permissions.tryFindSelfPermission(user, nodeMapRef.current.get(id)?.item.permissions)
+          ?.permission === permissions.PermissionAction.own,
     )
 
   // This is not a React component even though it contains JSX.

@@ -11,16 +11,11 @@ import PlaceholderColumn from '#/components/dashboard/column/PlaceholderColumn'
 import SharedWithColumn from '#/components/dashboard/column/SharedWithColumn'
 import type { AssetRowState, AssetsTableState } from '#/layouts/AssetsTable'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
-import type { AnyAsset, Asset, AssetId, BackendType } from '#/services/Backend'
+import type { AnyAsset, Asset, BackendType } from '#/services/Backend'
 import type { SortInfo } from '#/utilities/sorting'
-
-// ===================
-// === AssetColumn ===
-// ===================
 
 /** Props for an arbitrary variant of {@link Asset}. */
 export interface AssetColumnProps {
-  readonly keyProp: AssetId
   readonly isOpened: boolean
   readonly item: AnyAsset
   readonly depth: number
