@@ -1,5 +1,4 @@
 import { createContextStore } from '@/providers'
-import { injectGuiConfig, type GuiConfig } from '@/providers/guiConfig'
 import { Awareness } from '@/stores/awareness'
 import { ComputedValueRegistry } from '@/stores/project/computedValueRegistry'
 import {
@@ -43,38 +42,25 @@ import {
 } from 'ydoc-shared/yjsModel'
 import * as Y from 'yjs'
 
-interface LsUrls {
+export interface LsUrls {
   rpcUrl: string
   dataUrl: string
-  ydocUrl: URL
+  ydocUrl: string
 }
 
-function resolveLsUrl(config: GuiConfig): LsUrls {
-  const engine = config.engine
-  if (engine == null) throw new Error('Missing engine configuration')
-  if (engine.rpcUrl != null && engine.dataUrl != null) {
-    const dataUrl = engine.dataUrl
-    const rpcUrl = engine.rpcUrl
-
-    let ydocUrl: URL
-    if (engine.ydocUrl == '') {
-      ydocUrl = new URL(location.origin)
-      ydocUrl.protocol = location.protocol.replace(/^http/, 'ws')
-    } else if (URL.canParse(engine.ydocUrl)) {
-      ydocUrl = new URL(engine.ydocUrl)
-    } else {
-      ydocUrl = new URL(rpcUrl)
-      ydocUrl.port = '1234'
-    }
-    ydocUrl.pathname = '/project'
-
-    return {
-      rpcUrl,
-      dataUrl,
-      ydocUrl,
-    }
+function resolveYDocUrl(rpcUrl: string, url: string): URL {
+  let resolved
+  if (url == '') {
+    resolved = new URL(location.origin)
+    resolved.protocol = location.protocol.replace(/^http/, 'ws')
+  } else if (URL.canParse(url)) {
+    resolved = new URL(url)
+  } else {
+    resolved = new URL(rpcUrl)
+    resolved.port = '1234'
   }
-  throw new Error('Incomplete engine configuration')
+  resolved.pathname = '/project'
+  return resolved
 }
 
 function createLsRpcConnection(clientId: Uuid, url: string, abort: AbortScope): LanguageServer {
@@ -103,7 +89,14 @@ export type ProjectStore = ReturnType<typeof useProjectStore>
  */
 export const [provideProjectStore, useProjectStore] = createContextStore(
   'project',
-  (props: { projectId: string; renameProject: (newName: string) => void }) => {
+  (props: {
+    projectId: string
+    projectName: string
+    projectDisplayedName: string
+    projectNamespace?: string | undefined
+    renameProject: (newName: string) => void
+    engine: LsUrls
+  }) => {
     const { projectId, renameProject: renameProjectBackend } = props
     const abort = useAbortScope()
 
@@ -112,26 +105,20 @@ export const [provideProjectStore, useProjectStore] = createContextStore(
     const doc = new Y.Doc()
     const awareness = new Awareness(doc)
 
-    const config = injectGuiConfig()
-    const projectNameFromCfg = config.value.startup?.project
-    if (projectNameFromCfg == null) throw new Error('Missing project name.')
-    const projectName = ref(projectNameFromCfg)
+    const projectName = ref(props.projectName)
     // Note that `config` is not deeply reactive. This is fine as the config is an immutable object
     // passed in from the dashboard, so the entire object will change if any of its nested
     // properties change.
-    const projectDisplayName = computed(
-      () => config.value.startup?.displayedProjectName ?? projectName,
-    )
+    const projectDisplayName = computed(() => props.projectDisplayedName ?? projectName)
 
     const clientId = random.uuidv4() as Uuid
-    const lsUrls = resolveLsUrl(config.value)
-    const lsRpcConnection = createLsRpcConnection(clientId, lsUrls.rpcUrl, abort)
+    const lsRpcConnection = createLsRpcConnection(clientId, props.engine.rpcUrl, abort)
     const projectRootId = lsRpcConnection.contentRoots.then(
       (roots) => roots.find((root) => root.type === 'Project')?.id,
     )
 
-    const dataConnection = initializeDataConnection(clientId, lsUrls.dataUrl, abort)
-    const rpcUrl = new URL(lsUrls.rpcUrl)
+    const dataConnection = initializeDataConnection(clientId, props.engine.dataUrl, abort)
+    const rpcUrl = new URL(props.engine.rpcUrl)
     const isOnLocalBackend =
       rpcUrl.protocol === 'mock:' ||
       rpcUrl.hostname === 'localhost' ||
@@ -139,9 +126,8 @@ export const [provideProjectStore, useProjectStore] = createContextStore(
       rpcUrl.hostname === '[::1]' ||
       rpcUrl.hostname === '0:0:0:0:0:0:0:1'
 
-    const namespace = computed(() => config.value.engine?.namespace)
     const fullName = computed(() => {
-      const ns = namespace.value
+      const ns = props.projectNamespace
       if (import.meta.env.PROD && ns == null) {
         console.warn(
           'Unknown project\'s namespace. Assuming "local", however it likely won\'t work in cloud',
@@ -157,12 +143,13 @@ export const [provideProjectStore, useProjectStore] = createContextStore(
       return tryQualifiedName(`${fullName.value}.${withDotSeparators}`)
     })
 
+    const ydocUrl = resolveYDocUrl(props.engine.rpcUrl, props.engine.ydocUrl)
     let yDocsProvider: ReturnType<typeof attachProvider> | undefined
     watchEffect((onCleanup) => {
       yDocsProvider = attachProvider(
-        lsUrls.ydocUrl.href,
+        ydocUrl.href,
         'index',
-        { ls: lsUrls.rpcUrl },
+        { ls: props.engine.rpcUrl },
         doc,
         awareness.internal,
       )

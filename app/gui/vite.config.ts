@@ -1,6 +1,4 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin'
-/// <reference types="histoire" />
-
 import react from '@vitejs/plugin-react'
 import vue from '@vitejs/plugin-vue'
 import { COOP_COEP_CORP_HEADERS } from 'enso-common'
@@ -31,7 +29,7 @@ await readEnvironmentFromFile()
 const entrypoint =
   process.env.INTEGRATION_TEST === 'true' ?
     './src/project-view/test-entrypoint.ts'
-  : './src/entrypoint.ts'
+  : './src/index.ts'
 
 // NOTE(Frizi): This rename is for the sake of forward compatibility with not yet merged config refactor on bazel branch,
 // and because Vite's HTML env replacements only work with import.meta.env variables, not defines.
@@ -95,7 +93,7 @@ export default defineConfig({
   resolve: {
     conditions: ['source'],
     alias: {
-      '/src/entrypoint.ts': fileURLToPath(new URL(entrypoint, import.meta.url)),
+      '/src/index.ts': fileURLToPath(new URL(entrypoint, import.meta.url)),
       shared: fileURLToPath(new URL('./shared', import.meta.url)),
       '@': fileURLToPath(new URL('./src/project-view', import.meta.url)),
       '#': fileURLToPath(new URL('./src/dashboard', import.meta.url)),

@@ -3,8 +3,6 @@ import * as React from 'react'
 
 import * as reactQuery from '@tanstack/react-query'
 
-import * as appUtils from '#/appUtils'
-
 import * as gtagHooks from '#/hooks/gtagHooks'
 import * as projectHooks from '#/hooks/projectHooks'
 
@@ -15,53 +13,29 @@ import * as textProvider from '#/providers/TextProvider'
 import * as errorBoundary from '#/components/ErrorBoundary'
 import * as suspense from '#/components/Suspense'
 
-import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as twMerge from '#/utilities/tailwindMerge'
 import { useTimeoutCallback } from '../hooks/timeoutHooks'
 
-// ====================
-// === StringConfig ===
-// ====================
+// eslint-disable-next-line no-restricted-syntax
+import ProjectViewVue from '@/views/ProjectView.vue'
+import { applyPureVueInReact } from 'veaury'
+import type { AllowedComponentProps, VNodeProps } from 'vue'
 
-/** A configuration in which values may be strings or nested configurations. */
-interface StringConfig {
-  readonly [key: string]: StringConfig | string
-}
+// eslint-disable-next-line no-restricted-syntax
+const ProjectView = applyPureVueInReact(ProjectViewVue) as (props: ProjectViewProps) => JSX.Element
 
 // ========================
 // === GraphEditorProps ===
 // ========================
 
 /** Props for the GUI editor root component. */
-export interface GraphEditorProps {
-  readonly config: StringConfig | null
-  readonly projectId: string
-  readonly hidden: boolean
-  readonly ignoreParamsRegex?: RegExp
-  readonly logEvent: (message: string, projectId?: string | null, metadata?: object | null) => void
-  readonly renameProject: (newName: string) => void
-  readonly projectBackend: Backend | null
-  readonly remoteBackend: Backend | null
-}
-
-// =========================
-// === GraphEditorRunner ===
-// =========================
-
-/**
- * The value passed from the entrypoint to the dashboard, which enables the dashboard to
- * open a new IDE instance.
- */
-export type GraphEditorRunner = React.ComponentType<GraphEditorProps>
-
-// =================
-// === Constants ===
-// =================
-
-const IGNORE_PARAMS_REGEX = new RegExp(`^${appUtils.SEARCH_PARAMS_PREFIX}(.+)$`)
+export type ProjectViewProps = Omit<
+  InstanceType<typeof ProjectViewVue>['$props'],
+  keyof AllowedComponentProps | keyof VNodeProps
+>
 
 // ==============
 // === Editor ===
@@ -75,7 +49,6 @@ export interface EditorProps {
   readonly project: LaunchedProject
   readonly hidden: boolean
   readonly ydocUrl: string | null
-  readonly appRunner: GraphEditorRunner | null
   readonly renameProject: (newName: string, projectId: backendModule.ProjectId) => void
   readonly projectId: backendModule.ProjectId
 }
@@ -187,20 +160,13 @@ interface EditorInternalProps extends Omit<EditorProps, 'project'> {
 
 /** An internal editor. */
 function EditorInternal(props: EditorInternalProps) {
-  const { hidden, ydocUrl, appRunner: AppRunner, renameProject, openedProject, backendType } = props
+  const { hidden, ydocUrl, renameProject, openedProject, backendType } = props
 
   const { getText } = textProvider.useText()
   const gtagEvent = gtagHooks.useGtagEvent()
 
   const localBackend = backendProvider.useLocalBackend()
   const remoteBackend = backendProvider.useRemoteBackend()
-
-  const logEvent = React.useCallback(
-    (message: string, projectId?: string | null, metadata?: object | null) => {
-      void remoteBackend.logEvent(message, projectId, metadata)
-    },
-    [remoteBackend],
-  )
 
   React.useEffect(() => {
     if (!hidden) {
@@ -212,7 +178,7 @@ function EditorInternal(props: EditorInternalProps) {
     renameProject(newName, openedProject.projectId)
   })
 
-  const appProps = React.useMemo<GraphEditorProps>(() => {
+  const appProps = React.useMemo<ProjectViewProps>(() => {
     const jsonAddress = openedProject.jsonAddress
     const binaryAddress = openedProject.binaryAddress
     const ydocAddress = openedProject.ydocAddress ?? ydocUrl ?? ''
@@ -225,15 +191,11 @@ function EditorInternal(props: EditorInternalProps) {
       throw new Error(getText('noBinaryEndpointError'))
     } else {
       return {
-        config: {
-          engine: { rpcUrl: jsonAddress, dataUrl: binaryAddress, ydocUrl: ydocAddress },
-          startup: { project: openedProject.packageName, displayedProjectName: openedProject.name },
-          window: { topBarOffset: '0' },
-        },
         projectId: openedProject.projectId,
+        projectName: openedProject.packageName,
+        projectDisplayedName: openedProject.name,
+        engine: { rpcUrl: jsonAddress, dataUrl: binaryAddress, ydocUrl: ydocAddress },
         hidden,
-        ignoreParamsRegex: IGNORE_PARAMS_REGEX,
-        logEvent,
         renameProject: onRenameProject,
         projectBackend,
         remoteBackend,
@@ -244,7 +206,6 @@ function EditorInternal(props: EditorInternalProps) {
     ydocUrl,
     getText,
     hidden,
-    logEvent,
     onRenameProject,
     backendType,
     localBackend,
@@ -253,7 +214,7 @@ function EditorInternal(props: EditorInternalProps) {
 
   // Currently the GUI component needs to be fully rerendered whenever the project is changed. Once
   // this is no longer necessary, the `key` could be removed.
-  return AppRunner == null ? null : <AppRunner key={appProps.projectId} {...appProps} />
+  return <ProjectView key={appProps.projectId} {...appProps} />
 }
 
 export default React.memo(Editor)

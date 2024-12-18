@@ -57,6 +57,7 @@ export function attachProvider(
   doc: Y.Doc,
   awareness: Awareness,
 ) {
+  console.log('Attaching YDoc provider', url, params.ls)
   const ProviderClass = params.ls.startsWith('mock://') ? MockYdocProvider : WebsocketProvider
   const provider = new ProviderClass(url, room, doc, { awareness, params })
   const onSync = () => doc.emit('sync', [true, doc])

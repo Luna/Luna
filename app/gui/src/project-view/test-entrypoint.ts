@@ -8,9 +8,11 @@ import { MockYdocProvider } from '@/util/crdt'
 import { MockWebSocket, MockWebSocketTransport } from '@/util/net'
 import { mockDataHandler, mockLSHandler, mockYdocProvider } from './mock/engine'
 
+import '#/styles.css'
 import '#/tailwind.css'
+import '@/assets/base.css'
+import ProjectView from '@/views/ProjectView.vue'
 import { createApp } from 'vue'
-import { AsyncApp } from './asyncApp'
 
 MockWebSocketTransport.addMock('engine', mockLSHandler)
 MockWebSocket.addMock('data', mockDataHandler)
@@ -24,26 +26,19 @@ window_.fileBrowserApi = {
   },
 }
 
-AsyncApp().then(({ default: App }) => {
-  const app = createApp(App, {
-    config: {
-      startup: {
-        project: 'Mock_Project',
-        displayedProjectName: 'Mock Project',
-      },
-      engine: {
-        rpcUrl: 'mock://engine',
-        dataUrl: 'mock://data',
-        namespace: 'local',
-        projectManagerUrl: '',
-      },
-      window: {
-        topBarOffset: '96',
-      },
-    },
-    projectId: 'project-135af445-bcfb-42fe-aa74-96f95e99c28b',
-    logEvent: () => {},
-    hidden: false,
-  })
-  app.mount('body')
+const app = createApp(ProjectView, {
+  projectId: 'project-135af445-bcfb-42fe-aa74-96f95e99c28b',
+  projectName: 'Mock_Project',
+  projectDisplayedName: 'Mock Project',
+  projectNamespace: 'local',
+  engine: {
+    rpcUrl: 'mock://engine',
+    dataUrl: 'mock://data',
+  },
+  hidden: false,
+  logEvent: () => {},
+  renameProject: () => {
+    throw new Error('Renaming project not supported in test environment.')
+  },
 })
+app.mount('body')
