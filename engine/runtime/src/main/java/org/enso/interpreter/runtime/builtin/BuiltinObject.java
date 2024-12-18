@@ -1,23 +1,19 @@
 package org.enso.interpreter.runtime.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Idempotent;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
-import java.lang.System;
-import java.util.ArrayList;
-import java.util.List;
 import org.enso.interpreter.node.expression.builtin.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
-import org.enso.interpreter.runtime.data.text.Text;
-import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
 /**
@@ -30,9 +26,6 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 public abstract class BuiltinObject extends EnsoObject {
-
-  private BuiltinWithContext cachedBuiltinType;
-
   protected BuiltinObject() {}
 
   @ExportMessage
@@ -40,76 +33,8 @@ public abstract class BuiltinObject extends EnsoObject {
     return true;
   }
 
-  private static List<String> truffleStack() {
-    var stack = new ArrayList<String>();
-    Truffle.getRuntime().iterateFrames((frameInstance) -> {
-      var callNode = frameInstance.getCallNode();
-      if (callNode != null) {
-        var rootNode = callNode.getRootNode();
-        if (rootNode != null) {
-          var fqn = rootNode.getQualifiedName();
-          stack.add(fqn);
-        }
-      }
-      return null;
-    });
-    return stack;
-  }
-
-  @ExportMessage
-  @TruffleBoundary
-  public final Type getType(@Bind("$node") Node node) {
-    if (cachedBuiltinType == null) {
-      CompilerDirectives.transferToInterpreterAndInvalidate();
-      var ctx = EnsoContext.get(node);
-      cachedBuiltinType = new BuiltinWithContext(
-          ctx.getBuiltins().getBuiltinType(builtinName),
-          ctx,
-          new RuntimeException(),
-          truffleStack());
-    } else {
-      assert assertCorrectCachedBuiltin(node);
-    }
-    return cachedBuiltinType.builtin.getType();
-  }
-
-  private boolean assertCorrectCachedBuiltin(Node node) {
-    assert cachedBuiltinType != null;
-    var curCtx = EnsoContext.get(node);
-    var curBuiltinType = curCtx.getBuiltins().getBuiltinType(builtinName);
-    var prevCtx = cachedBuiltinType.ctx;
-    var errMsgSb = new StringBuilder();
-    if (curCtx != prevCtx) {
-      errMsgSb.append("Context mismatch: ")
-          .append("previous context: ")
-          .append(hex(prevCtx))
-          .append(", current context: ")
-          .append(hex(curCtx))
-          .append(System.lineSeparator());
-    }
-    var prevBuiltinType = cachedBuiltinType.builtin;
-    if (curBuiltinType != prevBuiltinType) {
-      errMsgSb.append("Builtin type '")
-          .append(curBuiltinType.getType().getQualifiedName())
-          .append("' mismatch: ")
-          .append("previous builtin type: ")
-          .append(hex(prevBuiltinType))
-          .append(", current builtin type: ")
-          .append(hex(curBuiltinType))
-          .append(System.lineSeparator());
-    }
-    if (errMsgSb.isEmpty()) {
-      return true;
-    } else {
-      // Print stack trace of when the builtin type was cached
-      System.out.println("Truffle stack of cached builtin type: ");
-      cachedBuiltinType.truffleStack.forEach(
-          (frame) -> System.out.println("  " + frame));
-      System.out.println();
-      System.out.println("RuntimeException stack of cached builtin type: ");
-      cachedBuiltinType.ex.printStackTrace(System.out);
-      throw new AssertionError(errMsgSb.toString());
-    }
+  protected final Type getBuiltinType() {
+    return GetType.uncached(this);
   }
 
   /**
@@ -135,14 +60,39 @@ public abstract class BuiltinObject extends EnsoObject {
     return true;
   }
 
-  @ExportMessage
-  public final Type getMetaObject(@Bind("$node") Node node) {
-    return getType(node);
-  }
+  @ExportMessage(name = "getType", library = TypesLibrary.class)
+  @ExportMessage(name = "getMetaObject", library = InteropLibrary.class)
+  public static class GetType {
+    @Specialization(
+        guards = {"cachedReceiverClass == receiver.getClass()", "getCtx(node) == cachedCtx"},
+        limit = "1")
+    public static Type doItCached(
+        BuiltinObject receiver,
+        @Bind("$node") Node node,
+        @Cached("receiver.getClass()") Class<?> cachedReceiverClass,
+        @Cached(value = "getCtx(node)", allowUncached = true) EnsoContext cachedCtx,
+        @Cached(value = "getBuiltinType(cachedReceiverClass, cachedCtx)", allowUncached = true)
+            Builtin cachedBuiltinType) {
+      return cachedBuiltinType.getType();
+    }
 
-  private static final String hex(Object obj) {
-    return Integer.toHexString(System.identityHashCode(obj));
-  }
+    @Fallback
+    public static Type uncached(BuiltinObject receiver) {
+      var receiverClass = receiver.getClass();
+      var ctx = getCtx(null);
+      return getBuiltinType(receiverClass, ctx).getType();
+    }
 
-  private record BuiltinWithContext(Builtin builtin, EnsoContext ctx, RuntimeException ex, List<String> truffleStack) {}
+    public static Builtin getBuiltinType(Class<?> builtinClass, EnsoContext ctx) {
+      var anot = builtinClass.getAnnotation(org.enso.interpreter.dsl.Builtin.class);
+      assert anot != null : "Builtin annotation is missing on class" + builtinClass;
+      var builtinName = anot.name();
+      return ctx.getBuiltins().getBuiltinType(builtinName);
+    }
+
+    @Idempotent
+    public static EnsoContext getCtx(Node node) {
+      return EnsoContext.get(node);
+    }
+  }
 }

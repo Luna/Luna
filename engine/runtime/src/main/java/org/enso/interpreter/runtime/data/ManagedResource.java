@@ -1,12 +1,9 @@
 package org.enso.interpreter.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.nodes.Node;
 import java.lang.ref.PhantomReference;
 import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -101,16 +98,11 @@ public final class ManagedResource extends BuiltinObject {
 
   @ExportMessage
   @TruffleBoundary
-  public String toDisplayString(boolean allowSideEffects, @Bind("$node") Node node) {
-    var type = getType(node);
+  @Override
+  public String toDisplayString(boolean allowSideEffects) {
+    var type = getBuiltinType();
     return type.getName()
         + " "
         + InteropLibrary.getUncached().toDisplayString(resource, allowSideEffects);
-  }
-
-  @ExportMessage.Ignore
-  @Override
-  public Object toDisplayString(boolean allowSideEffects) {
-    throw CompilerDirectives.shouldNotReachHere();
   }
 }
