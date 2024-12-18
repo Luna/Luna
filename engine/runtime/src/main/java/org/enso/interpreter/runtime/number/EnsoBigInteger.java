@@ -11,7 +11,6 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /** Internal wrapper for a {@link BigInteger}. */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(stdlibName = "Standard.Base.Data.Number.Integer", name = "Integer")
 public final class EnsoBigInteger extends BuiltinObject {
   private final BigInteger value;
 

@@ -19,7 +19,6 @@ import org.enso.polyglot.common_utils.Core_Text_Utils;
 
 /** The main runtime type for Enso's Text. */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(stdlibName = "Standard.Base.Data.Text.Text", name = "Text")
 public final class Text extends BuiltinObject {
   private static final Lock LOCK = new ReentrantLock();
   private static final Text EMPTY = new Text("");

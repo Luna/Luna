@@ -24,7 +24,6 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
  */
 @ExportLibrary(InteropLibrary.class)
 @ImportStatic(BranchProfile.class)
-@Builtin(stdlibName = "Standard.Base.Data.Array.Array", name = "Array")
 final class ArrayProxy extends BuiltinObject {
   private final long length;
   private final Object at;
