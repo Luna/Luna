@@ -5,6 +5,7 @@ import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 import project.Spec_Result.Spec_Result
 import project.Test.Test
+from project.Extensions_Helpers import rhs_error_check
 
 ## Expect a function to fail with the provided dataflow error.
 
@@ -73,7 +74,7 @@ Error.should_fail_with self matcher frames_to_skip=0 unwrap_errors=True =
 Any.should_equal : Any -> Integer -> Spec_Result
 Any.should_equal self that frames_to_skip=0 =
     rhs_error_check that
-    loc = Meta.get_source_location 4+frames_to_skip
+    loc = Meta.get_source_location 1+frames_to_skip
     case self == that of
         True -> Spec_Result.Success
         False ->
@@ -274,7 +275,7 @@ Error.should_end_with self that frames_to_skip=0 =
 Error.should_equal : Any -> Integer -> Spec_Result
 Error.should_equal self that frames_to_skip=0 =
     rhs_error_check that
-    Test.fail_match_on_unexpected_error self 2+frames_to_skip
+    Test.fail_match_on_unexpected_error self 1+frames_to_skip
 
 ## Asserts that `self` is within `epsilon` from `that`.
 
@@ -325,7 +326,7 @@ Number.should_equal self that epsilon=0 frames_to_skip=0 =
 Decimal.should_equal : Number -> Float-> Float -> Integer -> Spec_Result
 Decimal.should_equal self that epsilon=0 frames_to_skip=0 =
     rhs_error_check that
-    self.to_float . should_equal that.to_float epsilon frames_to_skip+2
+    self.to_float . should_equal that.to_float epsilon frames_to_skip+1
 
 ## Asserts that `self` value is not an error.
 
