@@ -7,6 +7,7 @@ import project.Enso_Cloud.Enso_User.Enso_User
 import project.Error.Error
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Errors.Unimplemented.Unimplemented
+import project.Internal.Ordering_Helpers.Default_Comparator
 import project.Internal.Path_Helpers
 import project.Nothing.Nothing
 from project.Data.Boolean import Boolean, False, True
@@ -72,3 +73,11 @@ normalize segments =
         ## We need to call normalize again, because technically a path `enso://a/../~/../../~` is a valid path
            that points to the user home and it should be correctly normalized, but requires numerous passes to do so.
         @Tail_Call normalize new_segments
+
+S3_Path_Comparator =
+    compare x y =
+        Ordering.compare x.path_segments y.path_segments
+
+    hash x = Default_Comparator.hash_builtin x
+
+Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator

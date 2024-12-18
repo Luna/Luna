@@ -1,5 +1,6 @@
 from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+import Standard.Base.Internal.Ordering_Helpers.Default_Comparator
 import Standard.Base.Internal.Path_Helpers
 
 import project.Errors.S3_Error
@@ -156,3 +157,11 @@ type Decomposed_S3_Path
         if self.parts.is_empty then Nothing else
             new_parts = self.parts.drop (..Last 1)
             Decomposed_S3_Path.Value new_parts self.go_to_root
+
+S3_Path_Comparator =
+    compare x y =
+        Ordering.compare [x.bucket, x.key] [y.bucket, y.key]
+
+    hash x = Default_Comparator.hash_builtin x
+
+Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
