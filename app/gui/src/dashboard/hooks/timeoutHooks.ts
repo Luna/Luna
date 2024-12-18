@@ -75,7 +75,8 @@ export function useTimeoutCallback(options: UseTimeoutCallbackOptions) {
     return () => {
       stopTimer()
     }
-    // There is no way to enable compiler, but it's not needed.
+    // There is no way to enable compiler, but it's not needed here
+    // as everything is stable.
     // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ms, isDisabled, ...deps])
