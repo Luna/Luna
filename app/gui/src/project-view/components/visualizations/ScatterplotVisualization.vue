@@ -866,41 +866,41 @@ const makeSeriesLabelOptions = () => {
 }
 
 config.setToolbar([
-  {
-    icon: 'select',
-    title: 'Enable Selection',
-    toggle: selectionEnabled,
-  },
-  {
-    icon: 'show_all',
-    title: 'Fit All',
-    onClick: () => zoomToSelected(false),
-  },
-  {
-    icon: 'zoom',
-    title: 'Zoom to Selected',
-    disabled: () => brushExtent.value == null,
-    onClick: zoomToSelected,
-  },
-  {
-    icon: 'add_to_graph_editor',
-    title: 'Create component of selected points',
-    disabled: () => !createNewFilterNodeEnabled.value,
-    onClick: createNewFilterNode,
-  },
-  {
-    type: 'textSelectionMenu',
-    selectedTextOption: yAxisSelected,
-    title: 'Choose Y Axis Label',
-    heading: 'Y Axis Label: ',
-    disabled: () => !data.value.is_multi_series,
-    options: {
-      none: {
-        label: 'No Label',
-      },
-      ...makeSeriesLabelOptions(),
-    },
-  },
+  // {
+  //   icon: 'select',
+  //   title: 'Enable Selection',
+  //   toggle: selectionEnabled,
+  // },
+  // {
+  //   icon: 'show_all',
+  //   title: 'Fit All',
+  //   onClick: () => zoomToSelected(false),
+  // },
+  // {
+  //   icon: 'zoom',
+  //   title: 'Zoom to Selected',
+  //   disabled: () => brushExtent.value == null,
+  //   onClick: zoomToSelected,
+  // },
+  // {
+  //   icon: 'add_to_graph_editor',
+  //   title: 'Create component of selected points',
+  //   disabled: () => !createNewFilterNodeEnabled.value,
+  //   onClick: createNewFilterNode,
+  // },
+  // {
+  //   type: 'textSelectionMenu',
+  //   selectedTextOption: yAxisSelected,
+  //   title: 'Choose Y Axis Label',
+  //   heading: 'Y Axis Label: ',
+  //   disabled: () => !data.value.is_multi_series,
+  //   options: {
+  //     none: {
+  //       label: 'No Label',
+  //     },
+  //     ...makeSeriesLabelOptions(),
+  //   },
+  // },
 ])
 </script>
 
