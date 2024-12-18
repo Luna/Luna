@@ -1568,10 +1568,10 @@ Wrapped_Error.from (that : Map_Error) = Wrapped_Error.Value that that.inner_erro
 type Vector_Comparator
     compare x y =
         min_length = x.length.min y.length
-        choose_shorter =
-            Ordering.compare y.length x.length
+        choose_by_length =
+            Ordering.compare x.length y.length
         go i =
-            if i >= min_length then choose_shorter else
+            if i >= min_length then choose_by_length else
                 x_elem = x.at i
                 y_elem = y.at i
                 Ordering.compare x_elem y_elem . and_then <|

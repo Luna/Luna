@@ -1,5 +1,7 @@
 private
 
+import project.Data.Ordering.Comparable
+import project.Data.Ordering.Ordering
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Enso_File.Enso_File
@@ -74,10 +76,10 @@ normalize segments =
            that points to the user home and it should be correctly normalized, but requires numerous passes to do so.
         @Tail_Call normalize new_segments
 
-S3_Path_Comparator =
+type Enso_File_Comparator
     compare x y =
         Ordering.compare x.path_segments y.path_segments
 
     hash x = Default_Comparator.hash_builtin x
 
-Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
+Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator
