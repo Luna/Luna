@@ -13,6 +13,8 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
 import {
   useDriveStore,
+  useSetDragTargetAssetId,
+  useSetIsDraggingOverSelectedRow,
   useSetLabelsDragPayload,
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
@@ -48,7 +50,6 @@ import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
-import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 
@@ -267,6 +268,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
+  const setIsDraggingOverSelectedRow = useSetIsDraggingOverSelectedRow()
+  const setDragTargetAssetId = useSetDragTargetAssetId()
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
   const grabKeyboardFocusRef = useSyncRef(grabKeyboardFocus)
@@ -358,15 +361,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     }
   }, [grabKeyboardFocusRef, isKeyboardSelected, asset])
 
-  const clearDragState = React.useCallback(() => {
-    setIsDraggedOver(false)
-    setRowState((oldRowState) =>
-      oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
-        oldRowState
-      : object.merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
-    )
-  }, [])
-
   const onDragOver = (event: React.DragEvent<Element>) => {
     const directoryKey = asset.type === backendModule.AssetType.directory ? id : parentId
     const payload = drag.ASSET_ROWS.lookup(event)
@@ -413,6 +407,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       event.preventDefault()
       if (asset.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
         setIsDraggedOver(true)
+        setDragTargetAssetId(asset.id)
+        const { isDraggingOverSelectedRow } = driveStore.getState()
+        if (selected !== isDraggingOverSelectedRow) {
+          setIsDraggingOverSelectedRow(selected)
+        }
       }
     }
   }
@@ -521,7 +520,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   onDragOver(event)
                 }}
                 onDragEnd={(event) => {
-                  clearDragState()
+                  setIsDraggedOver(false)
                   setLabelsDragPayload(null)
                   props.onDragEnd?.(event, asset)
                 }}
@@ -537,14 +536,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     event.relatedTarget instanceof Node &&
                     !event.currentTarget.contains(event.relatedTarget)
                   ) {
-                    clearDragState()
+                    setIsDraggedOver(false)
                   }
                   props.onDragLeave?.(event, asset)
                 }}
                 onDrop={(event) => {
                   if (state.category.type !== 'trash') {
                     props.onDrop?.(event, asset)
-                    clearDragState()
+                    setIsDraggedOver(false)
                     const directoryId =
                       asset.type === backendModule.AssetType.directory ? asset.id : parentId
                     const payload = drag.ASSET_ROWS.lookup(event)

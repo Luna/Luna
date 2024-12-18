@@ -67,6 +67,10 @@ interface DriveStore {
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
   readonly labelsDragPayload: LabelsDragPayload | null
   readonly setLabelsDragPayload: (labelsDragPayload: LabelsDragPayload | null) => void
+  readonly isDraggingOverSelectedRow: boolean
+  readonly setIsDraggingOverSelectedRow: (isDraggingOverSelectedRow: boolean) => void
+  readonly dragTargetAssetId: AssetId | null
+  readonly setDragTargetAssetId: (dragTargetAssetId: AssetId | null) => void
 }
 
 // =======================
@@ -162,6 +166,18 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       setLabelsDragPayload: (labelsDragPayload) => {
         if (get().labelsDragPayload !== labelsDragPayload) {
           set({ labelsDragPayload })
+        }
+      },
+      isDraggingOverSelectedRow: false,
+      setIsDraggingOverSelectedRow: (isDraggingOverSelectedRow) => {
+        if (get().isDraggingOverSelectedRow !== isDraggingOverSelectedRow) {
+          set({ isDraggingOverSelectedRow })
+        }
+      },
+      dragTargetAssetId: null,
+      setDragTargetAssetId: (dragTargetAssetId) => {
+        if (get().dragTargetAssetId !== dragTargetAssetId) {
+          set({ dragTargetAssetId })
         }
       },
     })),
@@ -316,6 +332,33 @@ export function useLabelsDragPayload() {
 export function useSetLabelsDragPayload() {
   const store = useDriveStore()
   return zustand.useStore(store, (state) => state.setLabelsDragPayload)
+}
+
+/**
+ * Whether dragging is currently active for a selected row.
+ * This is true if and only if this row, or another selected row, is being dragged over.
+ */
+export function useIsDraggingOverSelectedRow(selected: boolean) {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => selected && state.isDraggingOverSelectedRow)
+}
+
+/** A function to set whether dragging is currently over a selected row. */
+export function useSetIsDraggingOverSelectedRow() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setIsDraggingOverSelectedRow)
+}
+
+/** Whether the given {@link AssetId} is the one currently being dragged over. */
+export function useIsDragTargetAssetId(assetId: AssetId) {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => assetId === state.dragTargetAssetId)
+}
+
+/** A function to set which {@link AssetId} is the one currently being dragged over. */
+export function useSetDragTargetAssetId() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setDragTargetAssetId)
 }
 
 /** Toggle whether a specific directory is expanded. */

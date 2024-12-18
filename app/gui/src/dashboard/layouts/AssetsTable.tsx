@@ -117,7 +117,6 @@ import {
   type AssetId,
   type DirectoryAsset,
   type DirectoryId,
-  type LabelName,
 } from '#/services/Backend'
 import type { AssetQueryKey } from '#/utilities/AssetQuery'
 import AssetQuery from '#/utilities/AssetQuery'
@@ -280,8 +279,6 @@ export interface AssetsTableState {
 /** Data associated with a {@link AssetRow}, used for rendering. */
 export interface AssetRowState {
   readonly isEditingName: boolean
-  readonly temporarilyAddedLabels: ReadonlySet<LabelName>
-  readonly temporarilyRemovedLabels: ReadonlySet<LabelName>
 }
 
 /** Props for a {@link AssetsTable}. */
