@@ -1592,3 +1592,75 @@ export function useDownloadAssetsMutation(backend: Backend) {
     },
   })
 }
+
+/** Call "add label" mutations for a list of assets. */
+export function useAddAssetsLabelsMutation(backend: Backend) {
+  return useMutation({
+    mutationFn: async ([infos, labelNames]: [
+      infos: readonly {
+        id: AssetId
+        labels: readonly backendModule.LabelName[] | null
+      }[],
+      labelNames: readonly backendModule.LabelName[],
+    ]) => {
+      const results = await Promise.allSettled(
+        infos.map(async ({ id, labels }) => {
+          const newLabels = [
+            ...new Set([
+              ...(labels ?? []),
+              ...labelNames.filter((label) => labels?.includes(label) !== true),
+            ]),
+          ]
+          if (newLabels.length !== labels?.length) {
+            await backend.associateTag(id, newLabels, '(unknown)')
+          }
+        }),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: infos.length,
+        })
+      }
+      return null
+    },
+  })
+}
+
+/** Call "remove label" mutations for a list of assets. */
+export function useRemoveAssetsLabelsMutation(backend: Backend) {
+  return useMutation({
+    mutationFn: async ([infos, labelNames]: [
+      infos: readonly {
+        id: AssetId
+        labels: readonly backendModule.LabelName[] | null
+      }[],
+      labelNames: readonly backendModule.LabelName[],
+    ]) => {
+      const results = await Promise.allSettled(
+        infos.map(async ({ id, labels }) => {
+          const labelNamesSet = new Set(labelNames)
+          const newLabels = (labels ?? []).filter((label) => !labelNamesSet.has(label))
+          if (labels && newLabels.length !== labels.length) {
+            await backend.associateTag(id, newLabels, '(unknown)')
+          }
+        }),
+      )
+      const errors = results.flatMap((result): unknown =>
+        result.status === 'rejected' ? [result.reason] : [],
+      )
+      if (errors.length !== 0) {
+        throw Object.assign(new Error(errors.map(getMessageOrToString).join('\n')), {
+          errors,
+          failed: errors.length,
+          total: infos.length,
+        })
+      }
+      return null
+    },
+  })
+}

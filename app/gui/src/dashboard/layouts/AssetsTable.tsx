@@ -50,9 +50,11 @@ import AssetEventType from '#/events/AssetEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   backendMutationOptions,
+  useAddAssetsLabelsMutation,
   useBackendQuery,
   useCopyAssetsMutation,
   useMoveAssetsMutation,
+  useRemoveAssetsLabelsMutation,
   useUploadFiles,
 } from '#/hooks/backendHooks'
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
@@ -359,6 +361,8 @@ function AssetsTable(props: AssetsTableProps) {
   const cutAndPaste = useCutAndPaste(backend, category)
   const copyAssetsMutation = useCopyAssetsMutation(backend)
   const moveAssetsMutation = useMoveAssetsMutation(backend)
+  const addAssetsLabelsMutation = useAddAssetsLabelsMutation(backend)
+  const removeAssetsLabelsMutation = useRemoveAssetsLabelsMutation(backend)
 
   const { rootDirectoryId, rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
   const { isLoading, isError, assetTree } = useAssetTree({
@@ -1397,33 +1401,30 @@ function AssetsTable(props: AssetsTableProps) {
 
   const onRowDrop = useEventCallback((event: DragEvent<HTMLTableRowElement>, item: AnyAsset) => {
     endAutoScroll()
-    const { selectedKeys } = driveStore.getState()
-    const ids = new Set(selectedKeys.has(item.id) ? selectedKeys : [item.id])
+    const { selectedKeys, selectedAssets } = driveStore.getState()
+    const items = selectedKeys.has(item.id) ? selectedAssets : [item]
     const payload = LABELS.lookup(event)
     if (payload != null) {
       event.preventDefault()
       event.stopPropagation()
       let labelsPresent = 0
-      for (const selectedKey of ids) {
-        const nodeLabels = nodeMapRef.current.get(selectedKey)?.item.labels
-        if (nodeLabels != null) {
-          for (const label of nodeLabels) {
-            if (payload.has(label)) {
-              labelsPresent += 1
-            }
+      for (const selectedItem of items) {
+        for (const label of selectedItem.labels ?? []) {
+          if (payload.has(label)) {
+            labelsPresent += 1
           }
         }
       }
-      const shouldAdd = labelsPresent * 2 < ids.size * payload.size
-      dispatchAssetEvent({
-        type: shouldAdd ? AssetEventType.addLabels : AssetEventType.removeLabels,
-        ids,
-        labelNames: payload,
-      })
+      const shouldAdd = labelsPresent * 2 < items.length * payload.size
+      if (shouldAdd) {
+        addAssetsLabelsMutation.mutate([items, [...payload]])
+      } else {
+        removeAssetsLabelsMutation.mutate([items, [...payload]])
+      }
     } else {
       dispatchAssetEvent({
         type: AssetEventType.temporarilyAddLabels,
-        ids,
+        ids: new Set(items.map((otherItem) => otherItem.id)),
         labelNames: EMPTY_SET,
       })
     }
