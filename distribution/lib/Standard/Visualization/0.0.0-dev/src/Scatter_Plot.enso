@@ -52,6 +52,9 @@ type Point_Data
     Row_Number
 
     ## PRIVATE
+    Colour
+
+    ## PRIVATE
 
        Returns all recognized point data fields.
     all_fields : Vector
@@ -94,6 +97,10 @@ type Point_Data
             candidates.find if_missing=candidates.first is_good
         Point_Data.Row_Number ->
             Point_Data.iota table.row_count
+        Point_Data.Color ->
+            colour_col = Point_Data.Colour.lookup_in table
+            is_good c = (self.is_recognized c).not
+            if is_good colour_col then colour_col else Error.throw Nothing
             
         _ -> Error.throw No_Fallback_Column
 
