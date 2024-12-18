@@ -1,6 +1,4 @@
 /** @file A node in the drive's item tree. */
-import type * as assetEvent from '#/events/assetEvent'
-
 import * as backendModule from '#/services/Backend'
 
 // =====================
@@ -10,14 +8,7 @@ import * as backendModule from '#/services/Backend'
 /** An {@link AssetTreeNode}, but excluding its methods. */
 export type AssetTreeNodeData = Pick<
   AssetTreeNode,
-  | 'children'
-  | 'depth'
-  | 'directoryId'
-  | 'directoryKey'
-  | 'initialAssetEvents'
-  | 'item'
-  | 'key'
-  | 'path'
+  'children' | 'depth' | 'directoryId' | 'directoryKey' | 'item' | 'key' | 'path'
 >
 
 /** All possible variants of {@link AssetTreeNode}s. */
@@ -50,7 +41,6 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
     public readonly children: AnyAssetTreeNode[] | null,
     public readonly depth: number,
     public readonly path: string,
-    public readonly initialAssetEvents: readonly assetEvent.AssetEvent[] | null,
     /**
      * The internal (to the frontend) id of the asset (or the placeholder id for new assets).
      * This must never change, otherwise the component's state is lost when receiving the real id
@@ -77,19 +67,9 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
     directoryId: backendModule.DirectoryId,
     depth: number,
     path: string,
-    initialAssetEvents: readonly assetEvent.AssetEvent[] | null = null,
     key: Asset['id'] = asset.id,
   ): AnyAssetTreeNode {
-    return new AssetTreeNode(
-      asset,
-      directoryKey,
-      directoryId,
-      null,
-      depth,
-      path,
-      initialAssetEvents,
-      key,
-    ).asUnion()
+    return new AssetTreeNode(asset, directoryKey, directoryId, null, depth, path, key).asUnion()
   }
 
   /** Return `this`, coerced into an {@link AnyAssetTreeNode}. */
@@ -118,7 +98,6 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
       update.children === null ? update.children : update.children ?? this.children,
       update.depth ?? this.depth,
       update.path ?? this.path,
-      update.initialAssetEvents ?? this.initialAssetEvents,
       update.key ?? this.key,
     ).asUnion()
   }

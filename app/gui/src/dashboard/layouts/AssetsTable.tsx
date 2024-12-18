@@ -46,7 +46,6 @@ import { IndefiniteSpinner } from '#/components/Spinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
-import AssetEventType from '#/events/AssetEventType'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   backendMutationOptions,
@@ -80,7 +79,6 @@ import {
 import { useAssetsTableItems } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useAssetTree, type DirectoryQuery } from '#/layouts/Drive/assetTreeHooks'
 import { useDirectoryIds } from '#/layouts/Drive/directoryIdsHooks'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import DragModal from '#/modals/DragModal'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
@@ -93,6 +91,7 @@ import {
   useDriveStore,
   useSetCanCreateAssets,
   useSetCanDownload,
+  useSetLabelsDragPayload,
   useSetNewestFolderId,
   useSetPasteData,
   useSetSelectedAssets,
@@ -137,7 +136,7 @@ import {
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
-import { EMPTY_SET, withPresence } from '#/utilities/set'
+import { withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
@@ -321,7 +320,6 @@ function AssetsTable(props: AssetsTableProps) {
   const inputBindings = useInputBindings()
   const navigator2D = useNavigator2D()
   const toastAndLog = useToastAndLog()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const setCanCreateAssets = useSetCanCreateAssets()
   const setTargetDirectoryInStore = useSetTargetDirectory()
   const didLoadingProjectManagerFail = useDidLoadingProjectManagerFail()
@@ -330,6 +328,7 @@ function AssetsTable(props: AssetsTableProps) {
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
+  const setLabelsDragPayload = useSetLabelsDragPayload()
 
   const columns = useMemo(
     () =>
@@ -695,7 +694,7 @@ function AssetsTable(props: AssetsTableProps) {
         },
       })
     }
-  }, [dispatchAssetEvent, getPasteData, hidden, inputBindings, setPasteData])
+  }, [getPasteData, hidden, inputBindings, setPasteData])
 
   useEffect(
     () =>
@@ -1347,56 +1346,10 @@ function AssetsTable(props: AssetsTableProps) {
     },
   )
 
-  const onRowDragOver = useEventCallback(
-    (event: DragEvent<HTMLTableRowElement>, item: AnyAsset) => {
-      onMouseEvent(event)
-      const payload = LABELS.lookup(event)
-      if (payload != null) {
-        event.preventDefault()
-        event.stopPropagation()
-        const { selectedKeys } = driveStore.getState()
-        const idsReference = selectedKeys.has(item.id) ? selectedKeys : item.id
-        // This optimization is required in order to avoid severe lag on Firefox.
-        if (idsReference !== lastSelectedIdsRef.current) {
-          lastSelectedIdsRef.current = idsReference
-          const ids = typeof idsReference === 'string' ? new Set([idsReference]) : idsReference
-          let labelsPresent = 0
-          for (const selectedKey of ids) {
-            const nodeLabels = nodeMapRef.current.get(selectedKey)?.item.labels
-            if (nodeLabels != null) {
-              for (const label of nodeLabels) {
-                if (payload.has(label)) {
-                  labelsPresent += 1
-                }
-              }
-            }
-          }
-          const shouldAdd = labelsPresent * 2 < ids.size * payload.size
-          window.setTimeout(() => {
-            dispatchAssetEvent({
-              type:
-                shouldAdd ?
-                  AssetEventType.temporarilyAddLabels
-                : AssetEventType.temporarilyRemoveLabels,
-              ids,
-              labelNames: payload,
-            })
-          })
-        }
-      }
-    },
-  )
-
   const onRowDragEnd = useEventCallback(() => {
     setIsDraggingFiles(false)
     endAutoScroll()
     lastSelectedIdsRef.current = null
-    const { selectedKeys } = driveStore.getState()
-    dispatchAssetEvent({
-      type: AssetEventType.temporarilyAddLabels,
-      ids: selectedKeys,
-      labelNames: EMPTY_SET,
-    })
   })
 
   const onRowDrop = useEventCallback((event: DragEvent<HTMLTableRowElement>, item: AnyAsset) => {
@@ -1421,12 +1374,7 @@ function AssetsTable(props: AssetsTableProps) {
       } else {
         removeAssetsLabelsMutation.mutate([items, [...payload]])
       }
-    } else {
-      dispatchAssetEvent({
-        type: AssetEventType.temporarilyAddLabels,
-        ids: new Set(items.map((otherItem) => otherItem.id)),
-        labelNames: EMPTY_SET,
-      })
+      setLabelsDragPayload(null)
     }
   })
 
@@ -1496,7 +1444,6 @@ function AssetsTable(props: AssetsTableProps) {
             type={item.item.type}
             parentId={item.directoryId}
             path={item.path}
-            initialAssetEvents={item.initialAssetEvents}
             depth={item.depth}
             state={state}
             hidden={visibilities.get(item.key) === Visibility.hidden}
@@ -1507,7 +1454,6 @@ function AssetsTable(props: AssetsTableProps) {
             onClick={onRowClick}
             select={selectRow}
             onDragStart={onRowDragStart}
-            onDragOver={onRowDragOver}
             onDragEnd={onRowDragEnd}
             onDrop={onRowDrop}
           />
@@ -1550,12 +1496,7 @@ function AssetsTable(props: AssetsTableProps) {
           !event.currentTarget.contains(event.relatedTarget)
         ) {
           lastSelectedIdsRef.current = null
-          const { selectedKeys } = driveStore.getState()
-          dispatchAssetEvent({
-            type: AssetEventType.temporarilyAddLabels,
-            ids: selectedKeys,
-            labelNames: EMPTY_SET,
-          })
+          setLabelsDragPayload(null)
         }
       }}
     >

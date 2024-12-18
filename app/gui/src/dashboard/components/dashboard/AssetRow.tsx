@@ -13,6 +13,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
 import {
   useDriveStore,
+  useSetLabelsDragPayload,
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
@@ -23,17 +24,14 @@ import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
 import FocusRing from '#/components/styled/FocusRing'
-import AssetEventType from '#/events/AssetEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
 import { isLocalCategory } from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
 import { IndefiniteSpinner } from '#/components/Spinner'
-import type { AssetEvent } from '#/events/assetEvent'
 import {
   backendMutationOptions,
   useBackendMutationState,
@@ -80,7 +78,6 @@ export interface AssetRowProps {
   readonly type: backendModule.AssetType
   readonly hidden: boolean
   readonly path: string
-  readonly initialAssetEvents: readonly AssetEvent[] | null
   readonly depth: number
   readonly state: assetsTable.AssetsTableState
   readonly columns: columnUtils.Column[]
@@ -90,10 +87,6 @@ export interface AssetRowProps {
   readonly select: (item: backendModule.AnyAsset) => void
   readonly isExpanded: boolean
   readonly onDragStart?: (
-    event: React.DragEvent<HTMLTableRowElement>,
-    item: backendModule.AnyAsset,
-  ) => void
-  readonly onDragOver?: (
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
   ) => void
@@ -254,7 +247,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     asset,
   } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
-  const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste } = state
   const { category, rootDirectoryId, backend } = state
 
@@ -283,6 +275,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   )
   const cutAndPaste = useCutAndPaste(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
+  const setLabelsDragPayload = useSetLabelsDragPayload()
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)
   const isEditingName = innerRowState.isEditingName || isNewlyCreated
@@ -424,44 +417,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     }
   }
 
-  eventListProvider.useAssetEventListener((event) => {
-    switch (event.type) {
-      case AssetEventType.temporarilyAddLabels: {
-        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
-        setRowState((oldRowState) =>
-          (
-            oldRowState.temporarilyAddedLabels === labels &&
-            oldRowState.temporarilyRemovedLabels === set.EMPTY_SET
-          ) ?
-            oldRowState
-          : object.merge(oldRowState, {
-              temporarilyAddedLabels: labels,
-              temporarilyRemovedLabels: set.EMPTY_SET,
-            }),
-        )
-        break
-      }
-      case AssetEventType.temporarilyRemoveLabels: {
-        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
-        setRowState((oldRowState) =>
-          (
-            oldRowState.temporarilyAddedLabels === set.EMPTY_SET &&
-            oldRowState.temporarilyRemovedLabels === labels
-          ) ?
-            oldRowState
-          : object.merge(oldRowState, {
-              temporarilyAddedLabels: set.EMPTY_SET,
-              temporarilyRemovedLabels: labels,
-            }),
-        )
-        break
-      }
-      default: {
-        return
-      }
-    }
-  }, initialAssetEvents)
-
   switch (type) {
     case backendModule.AssetType.directory:
     case backendModule.AssetType.project:
@@ -557,18 +512,17 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                     }, DRAG_EXPAND_DELAY_MS)
                   }
                   // Required because `dragover` does not fire on `mouseenter`.
-                  props.onDragOver?.(event, asset)
                   onDragOver(event)
                 }}
                 onDragOver={(event) => {
                   if (state.category.type === 'trash') {
                     event.dataTransfer.dropEffect = 'none'
                   }
-                  props.onDragOver?.(event, asset)
                   onDragOver(event)
                 }}
                 onDragEnd={(event) => {
                   clearDragState()
+                  setLabelsDragPayload(null)
                   props.onDragEnd?.(event, asset)
                 }}
                 onDragLeave={(event) => {

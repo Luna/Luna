@@ -15,6 +15,7 @@ import type {
   BackendType,
   DirectoryAsset,
   DirectoryId,
+  LabelName,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
@@ -37,6 +38,12 @@ export type SelectedAssetInfo =
     : never
   : never
 
+/** Payload for labels being dragged. */
+export interface LabelsDragPayload {
+  readonly typeWhenAppliedToSelection: 'add' | 'remove'
+  readonly labels: readonly LabelName[]
+}
+
 /** The state of this zustand store. */
 interface DriveStore {
   readonly category: Category
@@ -58,6 +65,8 @@ interface DriveStore {
   readonly setSelectedAssets: (selectedAssets: readonly SelectedAssetInfo[]) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
+  readonly labelsDragPayload: LabelsDragPayload | null
+  readonly setLabelsDragPayload: (labelsDragPayload: LabelsDragPayload | null) => void
 }
 
 // =======================
@@ -76,10 +85,7 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
 // === ProjectsProvider ===
 // ========================
 
-/**
- * A React provider (and associated hooks) for determining whether the current area
- * containing the current element is focused.
- */
+/** A React provider for Drive-specific metadata. */
 export default function DriveProvider(props: ProjectsProviderProps) {
   const { children } = props
 
@@ -150,6 +156,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       setVisuallySelectedKeys: (visuallySelectedKeys) => {
         if (get().visuallySelectedKeys !== visuallySelectedKeys) {
           set({ visuallySelectedKeys })
+        }
+      },
+      labelsDragPayload: null,
+      setLabelsDragPayload: (labelsDragPayload) => {
+        if (get().labelsDragPayload !== labelsDragPayload) {
+          set({ labelsDragPayload })
         }
       },
     })),
@@ -292,6 +304,18 @@ export function useSetVisuallySelectedKeys() {
   return zustand.useStore(store, (state) => state.setVisuallySelectedKeys, {
     unsafeEnableTransition: true,
   })
+}
+
+/** The visually selected keys in the Asset Table. */
+export function useLabelsDragPayload() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.labelsDragPayload)
+}
+
+/** A function to set the visually selected keys in the Asset Table. */
+export function useSetLabelsDragPayload() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setLabelsDragPayload)
 }
 
 /** Toggle whether a specific directory is expanded. */
