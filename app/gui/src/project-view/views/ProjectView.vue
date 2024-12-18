@@ -82,9 +82,9 @@ provideVisibility(computed(() => !props.hidden))
   position: absolute;
 }
 
-.GraphEditor {
+.endo-dashboard .GraphEditor {
   /* Compensate for top bar, render the app below it. */
-  top: calc(var(--row-height) + var(--top-level-gap, 0px) + var(--top-bar-margin, 0px) + 16px);
+  top: calc(var(--row-height) + 16px);
   flex: 1;
 }
 

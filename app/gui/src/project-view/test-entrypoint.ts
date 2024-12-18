@@ -11,8 +11,9 @@ import { mockDataHandler, mockLSHandler, mockYdocProvider } from './mock/engine'
 import '#/styles.css'
 import '#/tailwind.css'
 import '@/assets/base.css'
-import ProjectView from '@/views/ProjectView.vue'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createApp } from 'vue'
+import App from '../App.vue'
 
 MockWebSocketTransport.addMock('engine', mockLSHandler)
 MockWebSocket.addMock('data', mockDataHandler)
@@ -26,19 +27,24 @@ window_.fileBrowserApi = {
   },
 }
 
-const app = createApp(ProjectView, {
-  projectId: 'project-135af445-bcfb-42fe-aa74-96f95e99c28b',
-  projectName: 'Mock_Project',
-  projectDisplayedName: 'Mock Project',
-  projectNamespace: 'local',
-  engine: {
-    rpcUrl: 'mock://engine',
-    dataUrl: 'mock://data',
-  },
-  hidden: false,
-  logEvent: () => {},
-  renameProject: () => {
-    throw new Error('Renaming project not supported in test environment.')
+const app = createApp(App, {
+  projectViewOnly: {
+    options: {
+      projectId: 'project-135af445-bcfb-42fe-aa74-96f95e99c28b',
+      projectName: 'Mock_Project',
+      projectDisplayedName: 'Mock Project',
+      projectNamespace: 'local',
+      engine: {
+        rpcUrl: 'mock://engine',
+        dataUrl: 'mock://data',
+      },
+      hidden: false,
+      logEvent: () => {},
+      renameProject: () => {
+        throw new Error('Renaming project not supported in test environment.')
+      },
+    },
   },
 })
+app.use(VueQueryPlugin)
 app.mount('body')
