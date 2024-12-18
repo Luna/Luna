@@ -45,7 +45,7 @@ function selectNode() {
 }
 
 function handleWidgetUpdates(update: WidgetUpdate) {
-  if (!update.notDirectInteraction) {
+  if (update.directInteraction) {
     selectNode()
   }
   const edit = update.edit ?? graph.startEdit()

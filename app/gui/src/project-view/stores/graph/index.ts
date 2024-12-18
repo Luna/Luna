@@ -335,7 +335,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
             // Skip ports on already deleted nodes.
             if (nodeId && deletedNodes.has(nodeId)) continue
 
-            updatePortValue(edit, usage, undefined, true)
+            updatePortValue(edit, usage, undefined, false)
           }
           const outerAst = edit.getVersion(node.outerAst)
           if (outerAst.isStatement()) Ast.deleteFromParentBlock(outerAst)
@@ -586,14 +586,14 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       edit: MutableModule,
       id: PortId,
       value: Ast.Owned<Ast.MutableExpression> | undefined,
-      notDirectInteraction?: boolean,
+      directInteraction: boolean = true,
     ): boolean {
       const update = getPortPrimaryInstance(id)?.onUpdate
       if (!update) return false
       update({
         edit,
         portUpdate: { value, origin: id },
-        notDirectInteraction: notDirectInteraction ?? false,
+        directInteraction,
       })
       return true
     }

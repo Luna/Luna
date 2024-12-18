@@ -172,10 +172,10 @@ export interface WidgetUpdate {
     | { metadataKey: string; metadata: unknown }
   )
   /**
-   * Set to true if the updated is not caused by direct interaction with the origin widget,
-   * (for example updates of ports connected to a removed node).
+   * Set to true if the updated is caused by direct interaction with the origin widget - a usual case.
+   * An example if _nondirect_ interaction is an update of a port connected to a removed node).
    */
-  notDirectInteraction?: boolean
+  directInteraction: boolean
 }
 
 /**

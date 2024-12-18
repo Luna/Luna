@@ -1,4 +1,4 @@
-# Next Next Release
+# Next Release
 
 #### Enso Language & Runtime
 
@@ -6,11 +6,12 @@
 - A constructor or type definition with a single inline argument definition was
   previously allowed to use spaces in the argument definition without
   parentheses. [This is now a syntax error.][11856]
+- [Fixed nodes being selected after deleting other nodes or connections.][11902]
 
 [11600]: https://github.com/enso-org/enso/pull/11600
 [11856]: https://github.com/enso-org/enso/pull/11856
 
-# Next Release
+# Enso 2024.4
 
 #### Enso IDE
 
