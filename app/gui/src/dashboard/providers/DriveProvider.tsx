@@ -153,13 +153,13 @@ export function useDriveStore() {
 /** The category of the Asset Table. */
 export function useCategory() {
   const store = useDriveStore()
-  return useStore(store, (state) => state.category)
+  return useStore(store, (state) => state.category, { unsafeEnableTransition: true })
 }
 
 /** A function to set the category of the Asset Table. */
 export function useSetCategory() {
   const store = useDriveStore()
-  return useStore(store, (state) => state.setCategory)
+  return useStore(store, (state) => state.setCategory, { unsafeEnableTransition: true })
 }
 
 /** The target directory of the Asset Table selection. */
@@ -231,7 +231,9 @@ export function useExpandedDirectoryIds() {
 /** A function to set the expanded directoyIds in the Asset Table. */
 export function useSetExpandedDirectoryIds() {
   const store = useDriveStore()
-  const privateSetExpandedDirectoryIds = useStore(store, (state) => state.setExpandedDirectoryIds)
+  const privateSetExpandedDirectoryIds = useStore(store, (state) => state.setExpandedDirectoryIds, {
+    unsafeEnableTransition: true,
+  })
   return useEventCallback((expandedDirectoryIds: readonly DirectoryId[]) => {
     React.startTransition(() => {
       privateSetExpandedDirectoryIds(expandedDirectoryIds)
@@ -254,13 +256,13 @@ export function useSetSelectedKeys() {
 /** The visually selected keys in the Asset Table. */
 export function useVisuallySelectedKeys() {
   const store = useDriveStore()
-  return useStore(store, (state) => state.selectedKeys)
+  return useStore(store, (state) => state.selectedKeys, { unsafeEnableTransition: true })
 }
 
 /** A function to set the visually selected keys in the Asset Table. */
 export function useSetVisuallySelectedKeys() {
   const store = useDriveStore()
-  return useStore(store, (state) => state.setVisuallySelectedKeys)
+  return useStore(store, (state) => state.setVisuallySelectedKeys, { unsafeEnableTransition: true })
 }
 
 /** Toggle whether a specific directory is expanded. */
