@@ -17,14 +17,13 @@ import org.enso.interpreter.runtime.data.text.Text;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(
     pkg = "date",
-    name = EnsoTimeOfDay.builtinName,
+    name = "Time_Of_Day",
     stdlibName = "Standard.Base.Data.Time.Time_Of_Day.Time_Of_Day")
 public final class EnsoTimeOfDay extends BuiltinObject {
-  static final String builtinName = "Time_Of_Day";
+
   private final LocalTime localTime;
 
   public EnsoTimeOfDay(LocalTime localTime) {
-    super(builtinName);
     this.localTime = localTime;
   }
 

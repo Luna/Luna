@@ -31,17 +31,9 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(TypesLibrary.class)
 public abstract class BuiltinObject extends EnsoObject {
 
-  private final String builtinName;
-
   private BuiltinWithContext cachedBuiltinType;
 
-  /**
-   * @param builtinName Simple name of the builtin that should be contained in {@link
-   *     org.enso.interpreter.runtime.builtin.Builtins#builtinsByName}.
-   */
-  protected BuiltinObject(String builtinName) {
-    this.builtinName = builtinName;
-  }
+  protected BuiltinObject() {}
 
   @ExportMessage
   public final boolean hasType() {

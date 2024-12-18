@@ -35,7 +35,7 @@ import java.lang.annotation.*;
  * org.enso.interpreter.node.expression.builtin.example}.
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Builtin {
   /**
    * @return the name of the subpackage for the generated method node.

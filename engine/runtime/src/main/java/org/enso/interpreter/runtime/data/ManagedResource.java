@@ -38,9 +38,8 @@ import org.enso.interpreter.runtime.callable.function.Function;
 @Builtin(
     pkg = "resource",
     stdlibName = "Standard.Base.Runtime.Managed_Resource.Managed_Resource",
-    name = ManagedResource.builtinName)
+    name = "Managed_Resource")
 public final class ManagedResource extends BuiltinObject {
-  static final String builtinName = "Managed_Resource";
   private final Object resource;
   private final PhantomReference<ManagedResource> phantomReference;
 
@@ -53,7 +52,6 @@ public final class ManagedResource extends BuiltinObject {
   public ManagedResource(
       Object resource,
       java.util.function.Function<ManagedResource, PhantomReference<ManagedResource>> factory) {
-    super(builtinName);
     this.resource = resource;
     this.phantomReference = factory.apply(this);
   }
