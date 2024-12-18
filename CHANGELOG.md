@@ -1,3 +1,22 @@
+# Next Next Release
+
+#### Enso IDE
+
+- [Round ‘Add component’ button under the component menu replaced by a small
+  button protruding from the output port.][11836].
+
+[11836]: https://github.com/enso-org/enso/pull/11836
+
+#### Enso Language & Runtime
+
+- [Intersection types & type checks][11600]
+- A constructor or type definition with a single inline argument definition was
+  previously allowed to use spaces in the argument definition without
+  parentheses. [This is now a syntax error.][11856]
+
+[11600]: https://github.com/enso-org/enso/pull/11600
+[11856]: https://github.com/enso-org/enso/pull/11856
+
 # Next Release
 
 #### Enso IDE
@@ -108,6 +127,7 @@
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [The reload button clears the HTTP cache.][11673]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -116,6 +136,7 @@
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
 [11577]: https://github.com/enso-org/enso/pull/11577
+[11673]: https://github.com/enso-org/enso/pull/11673
 
 #### Enso Language & Runtime
 
