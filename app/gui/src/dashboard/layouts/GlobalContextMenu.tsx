@@ -31,7 +31,6 @@ export interface GlobalContextMenuProps {
   readonly backend: Backend
   readonly category: Category
   readonly rootDirectoryId: DirectoryId
-  readonly directoryKey: DirectoryId | null
   readonly directoryId: DirectoryId | null
   readonly path: string | null
   readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
@@ -49,7 +48,6 @@ export const GlobalContextMenu = function GlobalContextMenu(props: GlobalContext
     hidden = false,
     backend,
     category,
-    directoryKey = null,
     directoryId = null,
     path,
     rootDirectoryId,
@@ -148,7 +146,7 @@ export const GlobalContextMenu = function GlobalContextMenu(props: GlobalContext
           }}
         />
       )}
-      {isCloud && directoryKey == null && hasPasteData && (
+      {isCloud && directoryId == null && hasPasteData && (
         <ContextMenuEntry
           hidden={hidden}
           action="paste"

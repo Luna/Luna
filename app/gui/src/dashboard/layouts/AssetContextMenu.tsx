@@ -509,7 +509,6 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             backend={backend}
             category={category}
             rootDirectoryId={rootDirectoryId}
-            directoryKey={asset.id}
             directoryId={asset.id}
             path={path}
             doPaste={doPaste}
