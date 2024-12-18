@@ -19,9 +19,9 @@ import {
   Text,
   useVisualTooltip,
 } from '#/components/AriaComponents'
-import AssetEventType from '#/events/AssetEventType'
 import {
   useClearTrashMutation,
+  useDownloadAssetsMutation,
   useNewDatalink,
   useNewFolder,
   useNewProject,
@@ -37,7 +37,6 @@ import {
   isCloudCategory,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
-import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import StartModal from '#/layouts/StartModal'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import UpsertDatalinkModal from '#/modals/UpsertDatalinkModal'
@@ -80,7 +79,6 @@ export default function DriveBar(props: DriveBarProps) {
   const { getText } = useText()
   const driveStore = useDriveStore()
   const inputBindings = useInputBindings()
-  const dispatchAssetEvent = useDispatchAssetEvent()
   const canCreateAssets = useCanCreateAssets()
   const createAssetButtonsRef = React.useRef<HTMLDivElement>(null)
   const isCloud = isCloudCategory(category)
@@ -112,6 +110,7 @@ export default function DriveBar(props: DriveBarProps) {
   const getTargetDirectory = useEventCallback(() => driveStore.getState().targetDirectory)
   const rootDirectoryId = useRootDirectoryId(backend, category)
 
+  const downloadAssetsMutation = useDownloadAssetsMutation(backend)
   const clearTrashMutation = useClearTrashMutation(backend)
   const newFolderRaw = useNewFolder(backend, category)
   const newFolder = useEventCallback(async () => {
@@ -328,7 +327,8 @@ export default function DriveBar(props: DriveBarProps) {
                 aria-label={getText('downloadFiles')}
                 onPress={() => {
                   unsetModal()
-                  dispatchAssetEvent({ type: AssetEventType.downloadSelected })
+                  const { selectedAssets } = driveStore.getState()
+                  downloadAssetsMutation.mutate(selectedAssets)
                 }}
               />
             </div>
