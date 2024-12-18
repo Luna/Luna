@@ -1,3 +1,5 @@
+private
+
 from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
@@ -6,9 +8,7 @@ import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
    operations is not an error.
    The left-hand side may be an error and that will cause a test failure.
    But the right-hand side being an error is bad test design and should be fixed.
-rhs_error_check that ~action =
-    case that.is_error of
-        False -> action
-        True ->
-            msg = "Dataflow error ("+that.to_display_text+") provided as expected value. Use `should_fail_with` or change the test."+ ' Error stack trace was:\n'+that.get_stack_trace_text
-            Panic.throw (Illegal_Argument.Error msg)
+rhs_error_check that =
+    if that.is_error then
+        msg = "Dataflow error ("+that.to_display_text+") provided as expected value. Use `should_fail_with` or change the test."+ ' Error stack trace was:\n'+that.get_stack_trace_text
+        Panic.throw (Illegal_Argument.Error msg)
