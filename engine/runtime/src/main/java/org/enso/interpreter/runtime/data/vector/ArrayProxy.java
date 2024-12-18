@@ -13,6 +13,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /**
@@ -23,12 +24,12 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
  */
 @ExportLibrary(InteropLibrary.class)
 @ImportStatic(BranchProfile.class)
+@Builtin(stdlibName = "Standard.Base.Data.Array.Array", name = "Array")
 final class ArrayProxy extends BuiltinObject {
   private final long length;
   private final Object at;
 
   private ArrayProxy(long length, Object at) {
-    super("Array");
     assert length >= 0;
     assert InteropLibrary.getUncached().isExecutable(at);
     this.length = length;

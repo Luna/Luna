@@ -6,10 +6,12 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.math.BigInteger;
+import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /** Internal wrapper for a {@link BigInteger}. */
 @ExportLibrary(InteropLibrary.class)
+@Builtin(stdlibName = "Standard.Base.Data.Number.Integer", name = "Integer")
 public final class EnsoBigInteger extends BuiltinObject {
   private final BigInteger value;
 
@@ -19,7 +21,6 @@ public final class EnsoBigInteger extends BuiltinObject {
    * @param value the value to wrap.
    */
   public EnsoBigInteger(BigInteger value) {
-    super("Integer");
     assert (value.bitLength() > 63) : "Too small BigInteger: " + value;
     this.value = value;
   }
