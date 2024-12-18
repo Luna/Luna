@@ -71,31 +71,34 @@ public abstract class BuiltinObject extends EnsoObject {
   @ExportMessage(name = "getType", library = TypesLibrary.class)
   @ExportMessage(name = "getMetaObject", library = InteropLibrary.class)
   public static class GetType {
+
+    /**
+     * Caching on class of the receiver - as long as there is the same class, its {@link
+     * #builtinName()} method will return the same value. Note that we don't want to cache on the
+     * builtin name, as that would create a separate polymorph cache for every instance of the
+     * receiver.
+     */
     @Specialization(
         guards = {"cachedReceiverClass == receiver.getClass()", "getCtx(node) == cachedCtx"},
         limit = "1")
     public static Type doItCached(
         BuiltinObject receiver,
         @Bind("$node") Node node,
-        @Cached("receiver.getClass()") Class<?> cachedReceiverClass,
+        @Cached("receiver.getClass()") Class<? extends BuiltinObject> cachedReceiverClass,
         @Cached(value = "getCtx(node)", allowUncached = true) EnsoContext cachedCtx,
-        @Cached(value = "getBuiltinType(cachedReceiverClass, cachedCtx)", allowUncached = true)
+        @Cached(value = "getBuiltinType(receiver, cachedCtx)", allowUncached = true)
             Builtin cachedBuiltinType) {
       return cachedBuiltinType.getType();
     }
 
     @Fallback
     public static Type uncached(BuiltinObject receiver) {
-      var receiverClass = receiver.getClass();
       var ctx = getCtx(null);
-      return getBuiltinType(receiverClass, ctx).getType();
+      return getBuiltinType(receiver, ctx).getType();
     }
 
-    public static Builtin getBuiltinType(Class<?> builtinClass, EnsoContext ctx) {
-      var anot = builtinClass.getAnnotation(org.enso.interpreter.dsl.Builtin.class);
-      assert anot != null : "Builtin annotation is missing on class" + builtinClass;
-      var builtinName = anot.name();
-      return ctx.getBuiltins().getBuiltinType(builtinName);
+    public static Builtin getBuiltinType(BuiltinObject receiver, EnsoContext ctx) {
+      return ctx.getBuiltins().getBuiltinType(receiver.builtinName());
     }
 
     @Idempotent
