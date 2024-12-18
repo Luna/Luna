@@ -87,8 +87,6 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     return (effectivePasteData?.data.ids.size ?? 0) > 0
   })
 
-  // This works because all items are mutated, ensuring their value stays
-  // up to date.
   const ownsAllSelectedAssets =
     !isCloud ||
     selectedAssets.every(
