@@ -1628,6 +1628,10 @@ export function useAddAssetsLabelsMutation(backend: Backend) {
       }
       return null
     },
+    meta: {
+      invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
+    },
   })
 }
 
@@ -1661,6 +1665,10 @@ export function useRemoveAssetsLabelsMutation(backend: Backend) {
         })
       }
       return null
+    },
+    meta: {
+      invalidates: [[backend.type, 'listDirectory']],
+      awaitInvalidates: true,
     },
   })
 }
