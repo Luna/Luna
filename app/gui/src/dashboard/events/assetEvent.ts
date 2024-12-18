@@ -12,8 +12,6 @@ interface AssetBaseEvent<Type extends AssetEventType> {
 interface AssetEvents {
   readonly temporarilyAddLabels: AssetTemporarilyAddLabelsEvent
   readonly temporarilyRemoveLabels: AssetTemporarilyRemoveLabelsEvent
-  readonly addLabels: AssetAddLabelsEvent
-  readonly removeLabels: AssetRemoveLabelsEvent
 }
 
 /** A type to ensure that {@link AssetEvents} contains every {@link AssetEventType}. */
@@ -35,18 +33,6 @@ export interface AssetTemporarilyAddLabelsEvent
 /** A signal to temporarily remove labels from the selected assets. */
 export interface AssetTemporarilyRemoveLabelsEvent
   extends AssetBaseEvent<AssetEventType.temporarilyRemoveLabels> {
-  readonly ids: ReadonlySet<backend.AssetId>
-  readonly labelNames: ReadonlySet<backend.LabelName>
-}
-
-/** A signal to add labels to the selected assets. */
-export interface AssetAddLabelsEvent extends AssetBaseEvent<AssetEventType.addLabels> {
-  readonly ids: ReadonlySet<backend.AssetId>
-  readonly labelNames: ReadonlySet<backend.LabelName>
-}
-
-/** A signal to remove labels from the selected assets. */
-export interface AssetRemoveLabelsEvent extends AssetBaseEvent<AssetEventType.removeLabels> {
   readonly ids: ReadonlySet<backend.AssetId>
   readonly labelNames: ReadonlySet<backend.LabelName>
 }

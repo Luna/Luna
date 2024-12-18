@@ -42,7 +42,6 @@ import {
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
-import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
@@ -319,8 +318,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     enabled: asset.type === backendModule.AssetType.project && !isPlaceholder && isOpened,
   })
 
-  const toastAndLog = useToastAndLog()
-
   const uploadFiles = useUploadFiles(backend, category)
   const createPermissionMutation = useMutation(
     backendMutationOptions(backend, 'createPermission', {
@@ -330,7 +327,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       },
     }),
   )
-  const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
   const insertionVisibility = useStore(driveStore, (driveState) =>
     driveState.pasteData?.type === 'move' && driveState.pasteData.data.ids.has(id) ?
@@ -428,7 +424,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     }
   }
 
-  eventListProvider.useAssetEventListener(async (event) => {
+  eventListProvider.useAssetEventListener((event) => {
     switch (event.type) {
       case AssetEventType.temporarilyAddLabels: {
         const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
@@ -458,50 +454,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               temporarilyRemovedLabels: labels,
             }),
         )
-        break
-      }
-      case AssetEventType.addLabels: {
-        setRowState((oldRowState) =>
-          oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
-            oldRowState
-          : object.merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
-        )
-        const labels = asset.labels
-        if (
-          event.ids.has(id) &&
-          (labels == null || [...event.labelNames].some((label) => !labels.includes(label)))
-        ) {
-          const newLabels = [
-            ...(labels ?? []),
-            ...[...event.labelNames].filter((label) => labels?.includes(label) !== true),
-          ]
-          try {
-            await associateTagMutation.mutateAsync([asset.id, newLabels, asset.title])
-          } catch (error) {
-            toastAndLog(null, error)
-          }
-        }
-        break
-      }
-      case AssetEventType.removeLabels: {
-        setRowState((oldRowState) =>
-          oldRowState.temporarilyAddedLabels === set.EMPTY_SET ?
-            oldRowState
-          : object.merge(oldRowState, { temporarilyAddedLabels: set.EMPTY_SET }),
-        )
-        const labels = asset.labels
-        if (
-          event.ids.has(id) &&
-          labels != null &&
-          [...event.labelNames].some((label) => labels.includes(label))
-        ) {
-          const newLabels = labels.filter((label) => !event.labelNames.has(label))
-          try {
-            await associateTagMutation.mutateAsync([asset.id, newLabels, asset.title])
-          } catch (error) {
-            toastAndLog(null, error)
-          }
-        }
         break
       }
       default: {

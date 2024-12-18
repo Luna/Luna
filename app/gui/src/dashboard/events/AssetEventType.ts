@@ -4,8 +4,6 @@
 enum AssetEventType {
   temporarilyAddLabels = 'temporarily-add-labels',
   temporarilyRemoveLabels = 'temporarily-remove-labels',
-  addLabels = 'add-labels',
-  removeLabels = 'remove-labels',
 }
 
 export default AssetEventType
