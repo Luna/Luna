@@ -61,13 +61,7 @@ export interface SessionProviderProps {
 function createSessionQuery(userSession: (() => Promise<cognito.UserSession | null>) | null) {
   return reactQuery.queryOptions({
     queryKey: ['userSession'],
-    queryFn: async () => {
-      const session = (await userSession?.().catch(() => null)) ?? null
-      return session
-    },
-    refetchOnWindowFocus: 'always',
-    refetchOnMount: 'always',
-    refetchOnReconnect: 'always',
+    queryFn: () => userSession?.().catch(() => null) ?? null,
   })
 }
 
