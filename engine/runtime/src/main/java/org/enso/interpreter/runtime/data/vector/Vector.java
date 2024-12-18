@@ -19,6 +19,9 @@ import org.enso.interpreter.runtime.warning.WarningsLibrary;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(pkg = "immutable", stdlibName = "Standard.Base.Data.Vector.Vector")
 abstract class Vector extends BuiltinObject {
+  private static final Vector EMPTY_LONG = new Long(new long[0]);
+  private static final Vector EMPTY_DOUBLE = new Double(new double[0]);
+  private static final Vector EMPTY_VECTOR = new EnsoOnly(new Object[0]);
 
   protected Vector() {}
 
@@ -93,7 +96,7 @@ abstract class Vector extends BuiltinObject {
 
   static Vector fromLongArray(long[] arr) {
     if (arr == null || arr.length == 0) {
-      return new Long(new long[0]);
+      return EMPTY_LONG;
     } else {
       return new Long(arr);
     }
@@ -101,7 +104,7 @@ abstract class Vector extends BuiltinObject {
 
   static Vector fromDoubleArray(double[] arr) {
     if (arr == null || arr.length == 0) {
-      return new Double(new double[0]);
+      return EMPTY_DOUBLE;
     } else {
       return new Double(arr);
     }
@@ -109,7 +112,7 @@ abstract class Vector extends BuiltinObject {
 
   static Vector fromEnsoOnlyArray(Object[] arr) {
     if (arr == null || arr.length == 0) {
-      return new EnsoOnly(new Object[0]);
+      return EMPTY_VECTOR;
     } else {
       return new EnsoOnly(arr);
     }
