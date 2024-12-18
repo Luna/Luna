@@ -26,7 +26,6 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 public abstract class BuiltinObject extends EnsoObject {
-  protected BuiltinObject() {}
 
   @ExportMessage
   public final boolean hasType() {
