@@ -10,7 +10,6 @@ interface AssetBaseEvent<Type extends AssetEventType> {
 
 /** All possible events. */
 interface AssetEvents {
-  readonly downloadSelected: AssetDownloadSelectedEvent
   readonly temporarilyAddLabels: AssetTemporarilyAddLabelsEvent
   readonly temporarilyRemoveLabels: AssetTemporarilyRemoveLabelsEvent
   readonly addLabels: AssetAddLabelsEvent
@@ -25,9 +24,6 @@ type SanityCheck<
     readonly [Type in keyof typeof AssetEventType]: AssetBaseEvent<(typeof AssetEventType)[Type]>
   } = AssetEvents,
 > = [T]
-
-/** A signal to download the currently selected assets. */
-export type AssetDownloadSelectedEvent = AssetBaseEvent<AssetEventType.downloadSelected>
 
 /** A signal to temporarily add labels to the selected assets. */
 export interface AssetTemporarilyAddLabelsEvent

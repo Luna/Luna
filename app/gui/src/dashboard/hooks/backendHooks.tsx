@@ -32,6 +32,7 @@ import {
   useSetNewestFolderId,
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
+  type SelectedAssetInfo,
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -54,6 +55,7 @@ import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 // The number of bytes in 1 megabyte.
@@ -651,7 +653,7 @@ export function useNewFolder(backend: Backend, category: Category) {
       .mutateAsync([{ parentId: placeholderItem.parentId, title: placeholderItem.title }])
       .then((result) => {
         setNewestFolderId(result.id)
-        setSelectedAssets([result])
+        setSelectedAssets([{ type: AssetType.directory, ...result, labels: EMPTY_ARRAY }])
         return result
       })
   })
@@ -881,11 +883,10 @@ export function useUploadFiles(backend: Backend, category: Category) {
         ...files.map(({ asset, file }) => [asset.id, file] as const),
         ...projects.map(({ asset, file }) => [asset.id, file] as const),
       ])
-      const uploadedFileIds: AssetId[] = []
-      const addIdToSelection = (id: AssetId) => {
-        uploadedFileIds.push(id)
-        const newIds = new Set(uploadedFileIds)
-        setSelectedAssets(newIds)
+      const uploadedFileInfos: SelectedAssetInfo[] = []
+      const addToSelection = (info: SelectedAssetInfo) => {
+        uploadedFileInfos.push(info)
+        setSelectedAssets(uploadedFileInfos)
       }
 
       const doUploadFile = async (asset: AnyAsset, method: 'new' | 'update') => {
@@ -911,7 +912,15 @@ export function useUploadFiles(backend: Backend, category: Category) {
                   file,
                 )
                 .then(({ id }) => {
-                  addIdToSelection(id)
+                  addToSelection({
+                    type: AssetType.project,
+                    // This is SAFE, because it is guarded behind `assetIsProject`.
+                    // eslint-disable-next-line no-restricted-syntax
+                    id: id as backendModule.ProjectId,
+                    parentId: asset.parentId,
+                    title,
+                    labels: EMPTY_ARRAY,
+                  })
                 })
                 .catch((error) => {
                   toastAndLog('uploadProjectError', error)
@@ -924,7 +933,15 @@ export function useUploadFiles(backend: Backend, category: Category) {
               await uploadFileMutation
                 .mutateAsync({ fileId, fileName: title, parentDirectoryId: asset.parentId }, file)
                 .then(({ id }) => {
-                  addIdToSelection(id)
+                  addToSelection({
+                    type: AssetType.file,
+                    // This is SAFE, because it is guarded behind `assetIsFile`.
+                    // eslint-disable-next-line no-restricted-syntax
+                    id: id as backendModule.FileId,
+                    parentId: asset.parentId,
+                    title,
+                    labels: EMPTY_ARRAY,
+                  })
                 })
 
               break

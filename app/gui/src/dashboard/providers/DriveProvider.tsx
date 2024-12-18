@@ -29,6 +29,14 @@ export interface DrivePastePayload {
   readonly ids: ReadonlySet<AssetId>
 }
 
+/** The subset of asset information required for selections. */
+export type SelectedAssetInfo =
+  AnyAsset extends infer T ?
+    T extends T ?
+      Pick<T, keyof T & ('id' | 'labels' | 'parentId' | 'title' | 'type')>
+    : never
+  : never
+
 /** The state of this zustand store. */
 interface DriveStore {
   readonly category: Category
@@ -46,8 +54,8 @@ interface DriveStore {
   readonly expandedDirectoryIds: readonly DirectoryId[]
   readonly setExpandedDirectoryIds: (selectedKeys: readonly DirectoryId[]) => void
   readonly selectedKeys: ReadonlySet<AssetId>
-  readonly selectedAssets: readonly AnyAsset[]
-  readonly setSelectedAssets: (selectedAssets: readonly AnyAsset[]) => void
+  readonly selectedAssets: readonly SelectedAssetInfo[]
+  readonly setSelectedAssets: (selectedAssets: readonly SelectedAssetInfo[]) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
 }

@@ -97,6 +97,7 @@ import {
   useSetTargetDirectory,
   useSetVisuallySelectedKeys,
   useToggleDirectoryExpansion,
+  type SelectedAssetInfo,
 } from '#/providers/DriveProvider'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
@@ -134,7 +135,7 @@ import {
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
-import { EMPTY_SET, setPresence, withPresence } from '#/utilities/set'
+import { EMPTY_SET, withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
@@ -792,16 +793,19 @@ function AssetsTable(props: AssetsTableProps) {
   }, [navigator2D, setMostRecentlySelectedIndex])
 
   const onKeyDown = (event: KeyboardEvent) => {
-    const { selectedKeys } = driveStore.getState()
+    const { selectedAssets } = driveStore.getState()
     const prevIndex = mostRecentlySelectedIndexRef.current
     const item = prevIndex == null ? null : visibleItems[prevIndex]
-    if (selectedKeys.size === 1 && item != null) {
+    if (selectedAssets.length === 1 && item != null) {
       switch (event.key) {
         case 'Enter':
         case ' ': {
           if (event.key === ' ' && event.ctrlKey) {
-            const keys = selectedKeys
-            setSelectedAssets(withPresence(keys, item.key, !keys.has(item.key)))
+            setSelectedAssets(
+              selectedAssets.some((asset) => asset.id === item.item.id) ?
+                selectedAssets.filter((asset) => asset.id !== item.item.id)
+              : [...selectedAssets, item.item],
+            )
           } else {
             switch (item.type) {
               case AssetType.directory: {
@@ -893,8 +897,11 @@ function AssetsTable(props: AssetsTableProps) {
     switch (event.key) {
       case ' ': {
         if (event.ctrlKey && item != null) {
-          const keys = selectedKeys
-          setSelectedAssets(withPresence(keys, item.key, !keys.has(item.key)))
+          setSelectedAssets(
+            selectedAssets.some((asset) => asset.id === item.item.id) ?
+              selectedAssets.filter((asset) => asset.id !== item.item.id)
+            : [...selectedAssets, item.item],
+          )
         }
         break
       }
@@ -1133,35 +1140,46 @@ function AssetsTable(props: AssetsTableProps) {
     [setSelectedAssets, inputBindings, setMostRecentlySelectedIndex, driveStore],
   )
 
-  const calculateNewKeys = useEventCallback(
-    (event: MouseEvent | ReactMouseEvent, keys: AssetId[], getRange: () => AssetId[]) => {
+  const calculateNewSelection = useEventCallback(
+    (
+      event: MouseEvent | ReactMouseEvent,
+      assets: readonly SelectedAssetInfo[],
+      getRange: () => readonly SelectedAssetInfo[],
+    ) => {
       event.stopPropagation()
-      let result = new Set<AssetId>()
+      let result: readonly SelectedAssetInfo[] = []
       inputBindings.handler({
         selectRange: () => {
-          result = new Set(getRange())
+          result = getRange()
         },
         selectAdditionalRange: () => {
-          const { selectedKeys } = driveStore.getState()
-          result = new Set([...selectedKeys, ...getRange()])
+          const { selectedAssets } = driveStore.getState()
+          const newAssetsMap = new Map(
+            [...selectedAssets, ...getRange()].map((asset) => [asset.id, asset]),
+          )
+          result = [...newAssetsMap.values()]
         },
         selectAdditional: () => {
-          const { selectedKeys } = driveStore.getState()
-          const newSelectedKeys = new Set(selectedKeys)
+          const { selectedKeys, selectedAssets } = driveStore.getState()
           let count = 0
-          for (const key of keys) {
-            if (selectedKeys.has(key)) {
+          for (const asset of assets) {
+            if (selectedKeys.has(asset.id)) {
               count += 1
             }
           }
-          for (const key of keys) {
-            const add = count * 2 < keys.length
-            setPresence(newSelectedKeys, key, add)
+          const add = count * 2 < assets.length
+          if (add) {
+            const newAssetsMap = new Map(
+              [...selectedAssets, ...assets].map((asset) => [asset.id, asset]),
+            )
+            result = [...newAssetsMap.values()]
+          } else {
+            const newIds = new Set(assets.map((asset) => asset.id))
+            result = selectedAssets.filter((asset) => !newIds.has(asset.id))
           }
-          result = newSelectedKeys
         },
         [DEFAULT_HANDLER]: () => {
-          result = new Set(keys)
+          result = assets
         },
       })(event, false)
       return result
@@ -1212,8 +1230,10 @@ function AssetsTable(props: AssetsTableProps) {
       if (range == null) {
         setVisuallySelectedKeys(null)
       } else {
-        const keys = displayItems.slice(range.start, range.end).map((node) => node.key)
-        setVisuallySelectedKeys(calculateNewKeys(event, keys, () => []))
+        const assets = displayItems.slice(range.start, range.end).map((node) => node.item)
+        setVisuallySelectedKeys(
+          new Set(calculateNewSelection(event, assets, () => []).map((asset) => asset.id)),
+        )
       }
     }
   })
@@ -1223,8 +1243,8 @@ function AssetsTable(props: AssetsTableProps) {
     onMouseEvent(event)
     const range = dragSelectionRangeRef.current
     if (range != null) {
-      const keys = displayItems.slice(range.start, range.end).map((node) => node.key)
-      setSelectedAssets(calculateNewKeys(event, keys, () => []))
+      const assets = displayItems.slice(range.start, range.end).map((node) => node.item)
+      setSelectedAssets(calculateNewSelection(event, assets, () => []))
     }
     setVisuallySelectedKeys(null)
     dragSelectionRangeRef.current = null
@@ -1244,16 +1264,16 @@ function AssetsTable(props: AssetsTableProps) {
     const newIndex = visibleItems.findIndex((innerItem) => innerItem.key === asset.id)
     const getRange = () => {
       if (mostRecentlySelectedIndexRef.current == null) {
-        return [asset.id]
+        return [asset]
       } else {
         const index1 = mostRecentlySelectedIndexRef.current
         const index2 = newIndex
         const startIndex = Math.min(index1, index2)
         const endIndex = Math.max(index1, index2) + 1
-        return visibleItems.slice(startIndex, endIndex).map((innerItem) => innerItem.key)
+        return visibleItems.slice(startIndex, endIndex).map(({ item }) => item)
       }
     }
-    setSelectedAssets(calculateNewKeys(event, [asset.id], getRange))
+    setSelectedAssets(calculateNewSelection(event, [asset], getRange))
     setMostRecentlySelectedIndex(newIndex)
     if (!event.shiftKey) {
       selectionStartIndexRef.current = null
