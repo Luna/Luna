@@ -28,6 +28,9 @@ importers:
         specifier: ^5.5.3
         version: 5.5.3
     devDependencies:
+      '@bazel/ibazel':
+        specifier: ^0.25.0
+        version: 0.25.0
       '@eslint/js':
         specifier: ^9.13.0
         version: 9.13.0
@@ -1407,6 +1410,10 @@ packages:
 
   '@bazel/bazelisk@1.22.1':
     resolution: {integrity: sha512-/6alNETOXfchBoZtWewamOU4b0i7ccRlu3HQ8dXvtlUDm0SFHTdNqd1kubXQpKu8mmVUiWjPIM+stC+7SZv5vA==}
+    hasBin: true
+
+  '@bazel/ibazel@0.25.0':
+    resolution: {integrity: sha512-dtosfsuZCSaqlUe5EyxNdaN7Gow0Y+ZJixdlciytcSieUcB/1lXPFTx6OihxhjgtTHkeFovlQ/QbvArRPnk+nQ==}
     hasBin: true
 
   '@bcoe/v8-coverage@0.2.3':
@@ -8980,6 +8987,8 @@ snapshots:
       '@babel/helper-validator-identifier': 7.25.9
 
   '@bazel/bazelisk@1.22.1': {}
+
+  '@bazel/ibazel@0.25.0': {}
 
   '@bcoe/v8-coverage@0.2.3': {}
 

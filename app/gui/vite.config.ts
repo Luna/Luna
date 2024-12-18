@@ -19,7 +19,7 @@ const isE2E = process.env.INTEGRATION_TEST === 'true'
 
 const entrypoint = isE2E ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
 
-process.env.ENSO_IDE_YDOC_SERVER_URL ||= isDevMode ? 'ws://__HOSTNAME__:59776' : undefined
+process.env.ENSO_IDE_YDOC_SERVER_URL ||= isDevMode ? 'ws://__HOSTNAME__:5976' : undefined
 process.env.ENSO_IDE_PROJECT_MANAGER_URL ||= isDevMode ? 'ws://__HOSTNAME__:30535' : undefined
 
 // https://vitejs.dev/config/
