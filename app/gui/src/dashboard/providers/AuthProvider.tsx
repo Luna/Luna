@@ -693,3 +693,10 @@ export function useFullUserSession(): FullUserSession {
 
   return session
 }
+
+/** A React context hook returning the user session for a user that is fully logged in. */
+export function useUser() {
+  const { user } = useFullUserSession()
+
+  return user
+}

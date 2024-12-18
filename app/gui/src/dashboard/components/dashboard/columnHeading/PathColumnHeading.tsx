@@ -1,31 +1,32 @@
-/** @file A heading for the "Docs" column. */
-import DocsIcon from '#/assets/docs.svg'
+/** @file A heading for the "Path" column. */
+import DirectoryIcon from '#/assets/folder.svg'
 import { Button, Text } from '#/components/AriaComponents'
-import type { AssetColumnHeadingProps } from '#/components/dashboard/column'
-import { Column } from '#/components/dashboard/column/columnUtils'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useText } from '#/providers/TextProvider'
+import type { AssetColumnHeadingProps } from '../column'
+import { Column } from '../column/columnUtils'
 
-/** A heading for the "Docs" column. */
-export default function DocsColumnHeading(props: AssetColumnHeadingProps) {
-  const { hideColumn } = props
+/** A heading for the "Path" column. */
+export default function PathColumnHeading(props: AssetColumnHeadingProps) {
+  const { hideColumn, sortInfo, setSortInfo } = props
+
   const { getText } = useText()
 
   const hideThisColumn = useEventCallback(() => {
-    hideColumn(Column.docs)
+    hideColumn(Column.path)
   })
 
   return (
     <div className="flex h-table-row w-full items-center gap-icon-with-text">
       <Button
         variant="icon"
-        icon={DocsIcon}
-        aria-label={getText('docsColumnHide')}
+        icon={DirectoryIcon}
+        aria-label={getText('pathColumnHide')}
         tooltip={false}
         onPress={hideThisColumn}
       />
       <Text weight="bold" truncate="1" color="custom">
-        {getText('docsColumnName')}
+        {getText('pathColumnName')}
       </Text>
     </div>
   )

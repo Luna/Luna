@@ -25,7 +25,9 @@ export default function LabelsColumnHeading(props: AssetColumnHeadingProps) {
         tooltip={false}
         onPress={hideThisColumn}
       />
-      <Text className="fond-semibold text-sm">{getText('labelsColumnName')}</Text>
+      <Text weight="bold" truncate="1" color="custom">
+        {getText('labelsColumnName')}
+      </Text>
     </div>
   )
 }

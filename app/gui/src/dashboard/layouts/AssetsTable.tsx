@@ -1889,107 +1889,113 @@ function AssetsTable(props: AssetsTableProps) {
     </div>
   )
 
-  return !isCloud && didLoadingProjectManagerFail ?
+  if (!isCloud && didLoadingProjectManagerFail) {
+    return (
       <ErrorDisplay
         error={getText('couldNotConnectToPM')}
         resetErrorBoundary={reconnectToProjectManager}
       />
-    : <div className="relative grow contain-strict">
-        <div
-          data-testid="extra-columns"
-          className="absolute right-3 top-0.5 isolate z-1 flex self-end p-2"
-        >
-          <FocusArea direction="horizontal">
-            {(columnsBarProps) => (
-              <div
-                {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
-                  className: 'inline-flex gap-icons',
-                  onFocus: () => {
-                    setKeyboardSelectedIndex(null)
-                  },
-                })}
-              >
-                {hiddenColumns.map((column) => (
-                  <HiddenColumn
-                    key={column}
-                    column={column}
-                    enabledColumns={enabledColumns}
-                    onColumnClick={setEnabledColumns}
-                  />
-                ))}
-              </div>
-            )}
-          </FocusArea>
-        </div>
+    )
+  }
 
-        <FocusArea direction="vertical">
-          {(innerProps) => (
-            <IsolateLayout className="isolate h-full w-full">
-              <div
-                {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
-                  className:
-                    'flex-1 overflow-auto container-size w-full h-full scroll-p-24 scroll-smooth',
-                  onKeyDown,
-                  onBlur: (event) => {
-                    if (
-                      event.relatedTarget instanceof HTMLElement &&
-                      !event.currentTarget.contains(event.relatedTarget)
-                    ) {
-                      setKeyboardSelectedIndex(null)
-                    }
-                  },
-                  onDragEnter: updateIsDraggingFiles,
-                  onDragOver: updateIsDraggingFiles,
-                  onDragLeave: (event) => {
-                    if (
-                      !(event.relatedTarget instanceof Node) ||
-                      !event.currentTarget.contains(event.relatedTarget)
-                    ) {
-                      lastSelectedIdsRef.current = null
-                    }
-                  },
-                  onDragEnd: () => {
-                    setIsDraggingFiles(false)
-                  },
-                  ref: rootRef,
-                })}
-              >
-                {!hidden && hiddenContextMenu}
-                {!hidden && (
-                  <SelectionBrush
-                    targetRef={rootRef}
-                    margin={16}
-                    onDrag={onSelectionDrag}
-                    onDragEnd={onSelectionDragEnd}
-                    onDragCancel={onSelectionDragCancel}
-                  />
-                )}
-                <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
-                </div>
-              </div>
-            </IsolateLayout>
+  return (
+    <div className="relative grow contain-strict">
+      <div
+        data-testid="extra-columns"
+        className="absolute right-3 top-0.5 isolate z-1 flex self-end p-2"
+      >
+        <FocusArea direction="horizontal">
+          {(columnsBarProps) => (
+            <div
+              {...mergeProps<JSX.IntrinsicElements['div']>()(columnsBarProps, {
+                className: 'inline-flex gap-icons',
+                onFocus: () => {
+                  setKeyboardSelectedIndex(null)
+                },
+              })}
+            >
+              {hiddenColumns.map((column) => (
+                <HiddenColumn
+                  key={column}
+                  column={column}
+                  enabledColumns={enabledColumns}
+                  onColumnClick={setEnabledColumns}
+                />
+              ))}
+            </div>
           )}
         </FocusArea>
-        {isDraggingFiles && !isMainDropzoneVisible && (
-          <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
-            <div
-              className="pointer-events-auto flex items-center justify-center gap-3 rounded-default bg-selected-frame px-8 py-6 text-primary/50 backdrop-blur-3xl transition-all"
-              onDragEnter={onDropzoneDragOver}
-              onDragOver={onDropzoneDragOver}
-              onDragEnd={() => {
-                setIsDraggingFiles(false)
-              }}
-              onDrop={(event) => {
-                handleFileDrop(event)
-              }}
-            >
-              <SvgMask src={DropFilesImage} className="size-8" />
-              {dropzoneText}
-            </div>
-          </div>
-        )}
       </div>
+
+      <FocusArea direction="vertical">
+        {(innerProps) => (
+          <IsolateLayout className="isolate h-full w-full">
+            <div
+              {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
+                className:
+                  'flex-1 overflow-auto container-size w-full h-full scroll-p-24 scroll-smooth',
+                onKeyDown,
+                onBlur: (event) => {
+                  if (
+                    event.relatedTarget instanceof HTMLElement &&
+                    !event.currentTarget.contains(event.relatedTarget)
+                  ) {
+                    setKeyboardSelectedIndex(null)
+                  }
+                },
+                onDragEnter: updateIsDraggingFiles,
+                onDragOver: updateIsDraggingFiles,
+                onDragLeave: (event) => {
+                  if (
+                    !(event.relatedTarget instanceof Node) ||
+                    !event.currentTarget.contains(event.relatedTarget)
+                  ) {
+                    lastSelectedIdsRef.current = null
+                  }
+                },
+                onDragEnd: () => {
+                  setIsDraggingFiles(false)
+                },
+                ref: rootRef,
+              })}
+            >
+              {!hidden && hiddenContextMenu}
+              {!hidden && (
+                <SelectionBrush
+                  targetRef={rootRef}
+                  margin={16}
+                  onDrag={onSelectionDrag}
+                  onDragEnd={onSelectionDragEnd}
+                  onDragCancel={onSelectionDragCancel}
+                />
+              )}
+              <div className="flex h-max min-h-full w-max min-w-full flex-col">
+                <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
+              </div>
+            </div>
+          </IsolateLayout>
+        )}
+      </FocusArea>
+      {isDraggingFiles && !isMainDropzoneVisible && (
+        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2">
+          <div
+            className="pointer-events-auto flex items-center justify-center gap-3 rounded-default bg-selected-frame px-8 py-6 text-primary/50 backdrop-blur-3xl transition-all"
+            onDragEnter={onDropzoneDragOver}
+            onDragOver={onDropzoneDragOver}
+            onDragEnd={() => {
+              setIsDraggingFiles(false)
+            }}
+            onDrop={(event) => {
+              handleFileDrop(event)
+            }}
+          >
+            <SvgMask src={DropFilesImage} className="size-8" />
+            {dropzoneText}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 /**
@@ -2027,6 +2033,7 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
       icon={COLUMN_ICONS[column]}
       aria-label={getText(COLUMN_SHOW_TEXT_ID[column])}
       onPress={onPress}
+      className="opacity-50"
     />
   )
 })

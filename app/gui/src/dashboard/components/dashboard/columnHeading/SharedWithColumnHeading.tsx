@@ -27,7 +27,9 @@ export default function SharedWithColumnHeading(props: AssetColumnHeadingProps) 
       />
 
       <div className="flex items-center gap-1">
-        <Text className="text-sm font-semibold">{getText('sharedWithColumnName')}</Text>
+        <Text weight="bold" truncate="1" color="custom">
+          {getText('sharedWithColumnName')}
+        </Text>
       </div>
     </div>
   )

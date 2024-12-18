@@ -38,7 +38,7 @@ export default function TabBar<T extends object>(props: TabBarProps<T>) {
   return (
     <AnimatedBackground>
       <div className={classes}>
-        <aria.TabList<T> className="flex h-12 shrink-0 grow" {...rest} />
+        <aria.TabList<T> className="flex h-12 shrink-0 grow pl-4" {...rest} />
       </div>
     </AnimatedBackground>
   )
@@ -102,33 +102,34 @@ export function Tab(props: TabProps) {
           className="h-full w-full rounded-t-3xl pl-4 pr-4"
           underlayElement={UNDERLAY_ELEMENT}
         >
-          <div className="relative z-1 flex h-full w-full items-center justify-center gap-3">
-            <motion.div
-              variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
-              initial="inactive"
-              animate={!isSelected && isHovered ? 'active' : 'inactive'}
-              className="absolute -inset-x-2.5 inset-y-2 -z-1 rounded-3xl bg-dashboard transition-colors duration-300"
-            />
-
-            {typeof icon === 'string' ?
-              <SvgMask
-                src={icon}
-                className={tailwindMerge.twJoin(
-                  onClose && 'group-hover:hidden focus-visible:hidden',
-                )}
+          <ariaComponents.Text
+            truncate="1"
+            className="max-w-40"
+            color={isActive || isHovered ? 'primary' : 'disabled'}
+          >
+            <div className="relative z-1 flex h-full w-full items-center justify-center gap-3">
+              <motion.div
+                variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
+                initial="inactive"
+                animate={!isSelected && isHovered ? 'active' : 'inactive'}
+                className="absolute -inset-x-2.5 inset-y-2 -z-1 rounded-3xl bg-dashboard transition-colors duration-300"
               />
-            : icon}
-
-            <ariaComponents.Text truncate="1" className="max-w-40">
+              {typeof icon === 'string' ?
+                <SvgMask
+                  src={icon}
+                  className={tailwindMerge.twJoin(
+                    onClose && 'group-hover:hidden focus-visible:hidden',
+                  )}
+                />
+              : icon}
               {children}
-            </ariaComponents.Text>
-
-            {onClose && (
-              <div className="relative">
-                <ariaComponents.CloseButton onPress={onClose} />
-              </div>
-            )}
-          </div>
+              {onClose && (
+                <div className="relative">
+                  <ariaComponents.CloseButton onPress={onClose} />
+                </div>
+              )}
+            </div>
+          </ariaComponents.Text>
         </AnimatedBackground.Item>
       )}
     </aria.Tab>
