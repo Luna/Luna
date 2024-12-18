@@ -35,7 +35,9 @@ function accepted() {
   editing.end()
   if (props.input.value instanceof Ast.TextLiteral) {
     const edit = graph.startEdit()
-    edit.getVersion(props.input.value).setRawTextContent(editedContents.value)
+    const value = edit.getVersion(props.input.value)
+    if (value.rawTextContent === editedContents.value) return
+    value.setRawTextContent(editedContents.value)
     props.onUpdate({ edit })
   } else {
     let value: Ast.Owned<Ast.MutableTextLiteral>
