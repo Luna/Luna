@@ -188,15 +188,23 @@ public abstract class InvokeConversionNode extends BaseNode {
       Object self,
       EnsoMultiValue that,
       Object[] arguments,
+      @Shared("typeOfNode") @Cached TypeOfNode dispatch,
       @Cached EnsoMultiValue.CastToNode castTo) {
     var type = extractType(self);
-    var result = castTo.findTypeOrNull(type, that, true, true);
-    if (result == null) {
-      throw new PanicException(
-          EnsoContext.get(this).getBuiltins().error().makeNoSuchConversion(type, self, conversion),
-          this);
+    var hasBeenCastTo = dispatch.findAllTypesOrNull(that, false);
+    if (hasBeenCastTo != null) {
+      for (var t : hasBeenCastTo) {
+        var val = castTo.findTypeOrNull(t, that, false, false);
+        assert val != null;
+        var result = execute(frame, state, conversion, self, val, arguments);
+        if (result != null) {
+          return result;
+        }
+      }
     }
-    return result;
+    throw new PanicException(
+        EnsoContext.get(this).getBuiltins().error().makeNoSuchConversion(type, self, conversion),
+        this);
   }
 
   @Specialization
