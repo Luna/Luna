@@ -73,6 +73,11 @@ final class Array extends BuiltinObject {
     return items;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Array";
+  }
+
   /**
    * Marks the object as array-like for Polyglot APIs.
    *

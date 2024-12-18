@@ -14,6 +14,12 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 public final class Ref extends BuiltinObject {
   private volatile Object value;
 
+  @Override
+  protected String builtinName() {
+    return "Ref";
+  }
+
+
   /**
    * Creates a new reference.
    *

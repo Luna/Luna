@@ -41,6 +41,11 @@ public final class Text extends BuiltinObject {
     this.contents = contents;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Text";
+  }
+
   @Builtin.Method(
       description =
           """

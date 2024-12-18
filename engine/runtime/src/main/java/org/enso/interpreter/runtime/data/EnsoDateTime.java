@@ -27,6 +27,11 @@ public final class EnsoDateTime extends BuiltinObject {
     this.dateTime = dateTime;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Date_Time";
+  }
+
   @Builtin.Method(
       name = "epoch_start",
       description = "Return the Enso start of the Epoch",

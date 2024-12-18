@@ -27,6 +27,11 @@ public final class EnsoTimeOfDay extends BuiltinObject {
     this.localTime = localTime;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Time_Of_Day";
+  }
+
   @Builtin.Method(
       name = "new_builtin",
       description = "Constructs a new Time_OF_Day from an hour",

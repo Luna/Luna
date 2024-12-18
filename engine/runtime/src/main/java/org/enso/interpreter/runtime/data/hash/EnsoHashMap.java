@@ -52,6 +52,11 @@ public final class EnsoHashMap extends BuiltinObject {
     return new EnsoHashMap(EnsoHashMapBuilder.create());
   }
 
+  @Override
+  protected String builtinName() {
+    return "Dictionary";
+  }
+
   EnsoHashMapBuilder getMapBuilder(
       VirtualFrame frame, boolean readOnly, HashCodeNode hashCodeNode, EqualsNode equalsNode) {
     if (readOnly) {

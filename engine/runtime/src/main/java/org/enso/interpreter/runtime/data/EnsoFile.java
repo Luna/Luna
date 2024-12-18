@@ -62,6 +62,11 @@ public final class EnsoFile extends BuiltinObject {
     this.truffleFile = truffleFile;
   }
 
+  @Override
+  protected String builtinName() {
+    return "File";
+  }
+
   @Builtin.Method(name = "output_stream_builtin")
   @Builtin.WrapException(from = IOException.class)
   @Builtin.Specialize

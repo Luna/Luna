@@ -53,6 +53,11 @@ public final class ManagedResource extends BuiltinObject {
     this.phantomReference = factory.apply(this);
   }
 
+  @Override
+  protected String builtinName() {
+    return "Managed_Resource";
+  }
+
   /**
    * @return the underlying resource
    */

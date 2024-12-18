@@ -40,6 +40,11 @@ final class ArrayProxy extends BuiltinObject {
     return new ArrayProxy(length, at);
   }
 
+  @Override
+  protected String builtinName() {
+    return "Array";
+  }
+
   @ExportMessage
   public boolean hasArrayElements() {
     return true;

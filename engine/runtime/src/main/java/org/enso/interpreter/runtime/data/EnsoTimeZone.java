@@ -28,6 +28,11 @@ public final class EnsoTimeZone extends BuiltinObject {
     this.zone = zone;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Time_Zone";
+  }
+
   @Builtin.Method(description = "Get the unique identifier for your system's current timezone.")
   @CompilerDirectives.TruffleBoundary
   public Text zoneId() {

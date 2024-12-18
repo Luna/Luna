@@ -26,6 +26,11 @@ public final class EnsoDuration extends BuiltinObject {
     this.duration = duration;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Duration";
+  }
+
   @Builtin.Method(
       name = "new_builtin",
       description =

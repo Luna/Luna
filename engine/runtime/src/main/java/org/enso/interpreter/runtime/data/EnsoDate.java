@@ -21,6 +21,11 @@ public final class EnsoDate extends BuiltinObject {
     this.date = date;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Date";
+  }
+
   @Builtin.Method(description = "Return current Date", autoRegister = false)
   @CompilerDirectives.TruffleBoundary
   public static EnsoDate today() {

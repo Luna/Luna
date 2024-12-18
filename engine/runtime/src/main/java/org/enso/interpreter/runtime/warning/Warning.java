@@ -27,6 +27,11 @@ public final class Warning extends BuiltinObject {
     this.sequenceId = sequenceId;
   }
 
+  @Override
+  protected String builtinName() {
+    return "Warning";
+  }
+
   @Builtin.Method(name = "value", description = "Gets the payload of the warning.")
   @SuppressWarnings("generic-enso-builtin-type")
   public Object getValue() {

@@ -33,6 +33,13 @@ public abstract class BuiltinObject extends EnsoObject {
     return true;
   }
 
+  /**
+   * Returns the name of the builtin as saved inside {@link Builtins#builtinsByName}.
+   * Not fully qualified.
+   * @return
+   */
+  protected abstract String builtinName();
+
   protected final Type getBuiltinType() {
     return GetType.uncached(this);
   }
