@@ -13,7 +13,7 @@ import {
   Element,
   Table,
 } from '@lezer/markdown'
-import { assertDefined } from 'ydoc-shared/util/assert'
+import { assertDefined } from '../util/assert'
 
 function getType({ parser }: { parser: MarkdownParser }, name: string) {
   const ty = parser.nodeSet.types.find(ty => ty.name === name)

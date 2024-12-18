@@ -1,7 +1,7 @@
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
+import { useStore } from '#/utilities/zustand'
 import { describe, expect, it } from 'vitest'
-import { useStore } from 'zustand'
 import { DirectoryId } from '../../services/Backend'
 import DriveProvider, { useDriveStore } from '../DriveProvider'
 

@@ -53,7 +53,7 @@ export default defineConfig({
         ],
       },
     }),
-    ...(isDevMode ? [await projectManagerShim()] : []),
+    await projectManagerShim(),
   ],
   optimizeDeps: {
     entries: fileURLToPath(new URL('./index.html', import.meta.url)),
@@ -101,7 +101,10 @@ export default defineConfig({
     },
   },
 })
+
 async function projectManagerShim(): Promise<Plugin> {
+  if (!isDevMode) return { name: 'project-manager-shim' }
+
   const module = await import('./project-manager-shim-middleware')
   return {
     name: 'project-manager-shim',

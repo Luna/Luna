@@ -19,7 +19,7 @@ import type {
   RefAttributes,
 } from 'react'
 import invariant from 'tiny-invariant'
-import { useStore } from 'zustand'
+import { useStore } from '#/utilities/zustand'
 import type { FieldPath, FieldStateProps, TSchema, UseFormRegisterReturn } from '../Form'
 import { Form } from '../Form'
 import { Text } from '../Text'

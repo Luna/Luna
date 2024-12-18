@@ -58,11 +58,12 @@ SRCS = [
         "project-manager-shim-middleware/**",
     ],
     [ICON_GENERATED_DIR + "/**"],
-)
+) + npm_link_targets()
+
 
 vite_bin.vite(
-    name = "vite_build",
-    srcs = SRCS + npm_link_targets(),
+    name = "build",
+    srcs = SRCS,
     args = [
         "build",
         "--mode=bazel",
@@ -80,8 +81,16 @@ vite_bin.vite_binary(
     chdir = package_name(),
     data = [
         "vite.config.ts",
-        ":vite_build",
+        ":build",
     ],
+)
+
+vite_bin.vite_binary(
+    name = "vite",
+    chdir = package_name(),
+    data = SRCS,
+    # Under ibazel, let vite hot-reload changed files rather than restart it
+    tags = ["ibazel_notify_changes"],
 )
 
 js_binary(
@@ -107,10 +116,10 @@ js_run_binary(
     name = "dist",
     srcs = [
         "node_modules/dotenv",
-        ":vite_build",
+        ":build",
     ] + glob([".env*"]),
     args = [
-        "$(rootpath :vite_build)",
+        "$(rootpath :build)",
         package_name() + "/env_replaced",
         package_name(),
     ],

@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 
-import { useStore } from 'zustand'
+import { useStore } from '#/utilities/zustand'
 
 import { useDriveStore, useSelectedKeys, useSetSelectedKeys } from '#/providers/DriveProvider'
 

@@ -13,7 +13,6 @@
 
 /* eslint-disable jsdoc/check-tag-names */
 
-// @ts-expect-error missing dotenv typings
 import * as dotenv from 'dotenv'
 import Buffer from 'node:buffer'
 import { createHash } from 'node:crypto'

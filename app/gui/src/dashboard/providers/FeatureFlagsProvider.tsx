@@ -5,9 +5,10 @@
  * Feature flags are used to enable or disable certain features in the application.
  */
 import LocalStorage from '#/utilities/LocalStorage'
+import { createStore, useStore } from '#/utilities/zustand'
 import type { ReactNode } from 'react'
 import { z } from 'zod'
-import { createStore, useStore } from 'zustand'
+
 import { persist } from 'zustand/middleware'
 
 declare module '#/utilities/LocalStorage' {

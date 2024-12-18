@@ -6,13 +6,13 @@ import {
   type SuggestionId,
 } from '@/stores/suggestionDatabase/entry'
 import { compareOpt } from '@/util/compare'
+import { isSome } from '@/util/data/opt'
 import { Range } from '@/util/data/range'
+import { unwrap } from '@/util/data/result'
 import { displayedIconOf } from '@/util/getIconName'
 import type { Icon } from '@/util/iconMetadata/iconName'
 import type { QualifiedName } from '@/util/qualifiedName'
 import { qnLastSegmentIndex, tryQualifiedName } from '@/util/qualifiedName'
-import { isSome } from 'ydoc-shared/src/util/data/opt'
-import { unwrap } from 'ydoc-shared/src/util/data/result'
 
 interface ComponentLabelInfo {
   label: string

@@ -1,8 +1,8 @@
 /** @file The React provider (and associated hooks) for providing reactive events. */
 import * as React from 'react'
 
+import { createStore, type StoreApi, useStore } from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
-import { createStore, type StoreApi, useStore } from 'zustand'
 
 import type * as assetEvent from '#/events/assetEvent'
 import type * as assetListEvent from '#/events/assetListEvent'
