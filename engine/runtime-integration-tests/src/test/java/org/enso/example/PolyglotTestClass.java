@@ -5,6 +5,7 @@ import org.graalvm.polyglot.Value;
 
 public final class PolyglotTestClass {
   private PolyglotTestClass() {}
+
   public static boolean isPolyglotDate_Object(Object obj) {
     return obj instanceof Value polyglotVal && polyglotVal.isDate();
   }
