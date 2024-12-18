@@ -13,7 +13,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import org.enso.interpreter.dsl.Builtin;
 import org.enso.interpreter.runtime.builtin.BuiltinObject;
 
 /**
