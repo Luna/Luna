@@ -616,3 +616,11 @@ translate_file_errors related_file result =
         s3_path = S3_Path.Value error.bucket error.key
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
+
+## PRIVATE
+   Sort S3 files by bucket and path.
+sort_s3_files s3_files =
+    s3_file_sort_key s3_file =
+        s3_path = s3_file.path
+        [s3_path.bucket, s3.path.key]
+    s3_files.sort on=s3_file_sort_key
