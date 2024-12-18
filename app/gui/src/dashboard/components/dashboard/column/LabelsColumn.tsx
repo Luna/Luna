@@ -37,10 +37,10 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
   const { getText } = textProvider.useText()
   const { data: labels } = backendHooks.useBackendQuery(backend, 'listTags', [])
   const driveStore = useDriveStore()
-  const showDraggedLabels = useStore(
+  const showDraggedLabelsFallback = useStore(
     driveStore,
-    ({ selectedKeys, isDraggingOverSelectedRow, dragTargetAssetId }) =>
-      isDraggingOverSelectedRow ? selectedKeys.has(item.id) : item.id === dragTargetAssetId,
+    ({ selectedKeys, isDraggingOverSelectedRow }) =>
+      isDraggingOverSelectedRow && selectedKeys.has(item.id),
   )
   const labelsByName = React.useMemo(() => {
     return new Map(labels?.map((label) => [label.value, label]))
@@ -50,15 +50,23 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
     category.type !== 'trash' &&
     (self?.permission === permissions.PermissionAction.own ||
       self?.permission === permissions.PermissionAction.admin)
-  const temporarilyAddedLabels = useStore(driveStore, ({ labelsDragPayload }) =>
-    showDraggedLabels && labelsDragPayload?.typeWhenAppliedToSelection === 'add' ?
-      labelsDragPayload.labels
+  const temporarilyAddedLabels = useStore(driveStore, ({ labelsDragPayload, dragTargetAssetId }) =>
+    (
+      showDraggedLabelsFallback ? labelsDragPayload?.typeWhenAppliedToSelection === 'add'
+      : item.id === dragTargetAssetId
+    ) ?
+      labelsDragPayload?.labels ?? EMPTY_ARRAY
     : EMPTY_ARRAY,
   )
-  const temporarilyRemovedLabels = useStore(driveStore, ({ labelsDragPayload }) =>
-    showDraggedLabels && labelsDragPayload?.typeWhenAppliedToSelection === 'remove' ?
-      labelsDragPayload.labels
-    : EMPTY_ARRAY,
+  const temporarilyRemovedLabels = useStore(
+    driveStore,
+    ({ labelsDragPayload, dragTargetAssetId }) =>
+      (
+        showDraggedLabelsFallback ? labelsDragPayload?.typeWhenAppliedToSelection === 'remove'
+        : item.id === dragTargetAssetId
+      ) ?
+        labelsDragPayload?.labels ?? EMPTY_ARRAY
+      : EMPTY_ARRAY,
   )
 
   return (
