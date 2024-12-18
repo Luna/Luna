@@ -57,7 +57,7 @@ import Visibility from '#/utilities/Visibility'
  * The amount of time (in milliseconds) the drag item must be held over this component
  * to make a directory row expand.
  */
-const DRAG_EXPAND_DELAY_MS = 500
+const DRAG_EXPAND_DELAY_MS = 1_500
 
 /** Common properties for state and setters passed to event handlers on an {@link AssetRow}. */
 export interface AssetRowInnerProps {
@@ -507,7 +507,10 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   if (dragOverTimeoutHandle.current != null) {
                     window.clearTimeout(dragOverTimeoutHandle.current)
                   }
-                  if (asset.type === backendModule.AssetType.directory) {
+                  if (
+                    asset.type === backendModule.AssetType.directory &&
+                    drag.LABELS.lookup(event) == null
+                  ) {
                     dragOverTimeoutHandle.current = window.setTimeout(() => {
                       toggleDirectoryExpansion(asset.id, true)
                     }, DRAG_EXPAND_DELAY_MS)
