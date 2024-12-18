@@ -2,6 +2,7 @@ from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Internal.Ordering_Helpers.Default_Comparator
 import Standard.Base.Internal.Path_Helpers
+from Standard.Base.Data.Ordering import comparable_via
 
 import project.Errors.S3_Error
 import project.S3.S3
@@ -164,4 +165,5 @@ S3_Path_Comparator =
 
     hash x = Default_Comparator.hash_builtin x
 
-Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
+#Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
+Comparable.from that:S3_Path = comparable_via (p-> [p.bucket, p.key])

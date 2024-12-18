@@ -13,6 +13,7 @@ import project.Internal.Ordering_Helpers.Default_Comparator
 import project.Internal.Path_Helpers
 import project.Nothing.Nothing
 from project.Data.Boolean import Boolean, False, True
+from project.Data.Ordering import comparable_via
 from project.Data.Text.Extensions import all
 
 ## PRIVATE
@@ -82,4 +83,5 @@ type Enso_File_Comparator
 
     hash x = Default_Comparator.hash_builtin x
 
-Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator
+#Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator
+Comparable.from that:Enso_File = comparable_via that .path_segments
