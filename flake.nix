@@ -31,8 +31,8 @@
               # === Graal dependencies ===
               libxcrypt-legacy
               # === Rust dependencies ===
-	      openssl.dev
-	      pkg-config
+              openssl.dev
+              pkg-config
             ] ++ (if !isOnLinux then [
               # === macOS-specific dependencies ===
               darwin.apple_sdk.frameworks.IOKit # Required by `enso-formatter`.
