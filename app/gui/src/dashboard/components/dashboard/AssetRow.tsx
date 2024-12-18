@@ -362,6 +362,14 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const onDragOver = (event: React.DragEvent<Element>) => {
     const directoryId = asset.type === backendModule.AssetType.directory ? id : parentId
+    const labelsPayload = drag.LABELS.lookup(event)
+    if (labelsPayload) {
+      setDragTargetAssetId(asset.id)
+      const { isDraggingOverSelectedRow } = driveStore.getState()
+      if (selected !== isDraggingOverSelectedRow) {
+        setIsDraggingOverSelectedRow(selected)
+      }
+    }
     const payload = drag.ASSET_ROWS.lookup(event)
     const isPayloadMatch =
       payload != null && payload.every((innerItem) => innerItem.key !== directoryId)
@@ -406,11 +414,6 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
       event.preventDefault()
       if (asset.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
         setIsDraggedOver(true)
-        setDragTargetAssetId(asset.id)
-        const { isDraggingOverSelectedRow } = driveStore.getState()
-        if (selected !== isDraggingOverSelectedRow) {
-          setIsDraggingOverSelectedRow(selected)
-        }
       }
     }
   }

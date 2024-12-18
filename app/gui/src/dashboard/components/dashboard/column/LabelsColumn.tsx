@@ -40,7 +40,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
   const showDraggedLabels = useStore(
     driveStore,
     ({ selectedKeys, isDraggingOverSelectedRow, dragTargetAssetId }) =>
-      isDraggingOverSelectedRow && item.id === dragTargetAssetId && selectedKeys.has(item.id),
+      isDraggingOverSelectedRow ? selectedKeys.has(item.id) : item.id === dragTargetAssetId,
   )
   const labelsByName = React.useMemo(() => {
     return new Map(labels?.map((label) => [label.value, label]))
@@ -101,7 +101,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
             {label}
           </Label>
         ))}
-      {...[...temporarilyAddedLabels]
+      {...temporarilyAddedLabels
         .filter((label) => item.labels?.includes(label) !== true)
         .map((label) => (
           <Label
