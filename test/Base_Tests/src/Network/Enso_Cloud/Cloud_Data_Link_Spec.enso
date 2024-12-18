@@ -235,10 +235,10 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         (dir_datalink / "file1.txt").path . should_equal (setup.get.target_subdir / "file1.txt").path
 
         # It should also work if multiple parts are provided in one sub-path and one of them is a data link:
-        (setup.get.datalink_location / "symlink-test-subdir/to-directory.datalink/file1.txt") . read . should_equal setup.get.file1_content
+        (setup.get.datalink_location / "to-directory.datalink/file1.txt") . read . should_equal setup.get.file1_content
         
         # Or when the path is resolved from a string:
-        crossing_path = setup.get.datalink_location.path+"/symlink-test-subdir/to-directory.datalink/file1.txt"
+        crossing_path = setup.get.datalink_location.path+"/to-directory.datalink/file1.txt"
         File.new crossing_path . read . should_equal setup.get.file1_content
 
     group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" pending=pending <|
