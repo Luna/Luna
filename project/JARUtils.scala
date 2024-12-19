@@ -24,8 +24,11 @@ object JARUtils {
     extractPrefix: String,
     outputJarPath: Path,
     extractedFilesDir: Path,
-    renameFunc: String => Option[String]
+    renameFunc: String => Option[String],
+    logger: sbt.util.Logger
   ): Unit = {
+    ensureDirExists(outputJarPath.getParent, logger)
+    ensureDirExists(extractedFilesDir, logger)
     Using(new JarFile(inputJarPath.toFile)) { inputJar =>
       Using(new JarOutputStream(Files.newOutputStream(outputJarPath))) {
         outputJar =>
@@ -34,21 +37,61 @@ object JARUtils {
               renameFunc(entry.getName) match {
                 case Some(strippedEntryName) =>
                   assert(!strippedEntryName.startsWith("/"))
+                  assert(extractedFilesDir.toFile.exists)
                   val destFile = extractedFilesDir.resolve(strippedEntryName)
-                  Files.createDirectories(destFile.getParent)
+                  if (!destFile.getParent.toFile.exists) {
+                    Files.createDirectories(destFile.getParent)
+                  }
                   Using(inputJar.getInputStream(entry)) { is =>
                     Files.copy(is, destFile)
-                  }
+                  }.recover({ case e: IOException =>
+                    logger.err(
+                      s"Failed to extract $entry to $destFile: ${e.getMessage}"
+                    )
+                    e.printStackTrace(System.err)
+                  })
                 case None => ()
               }
             } else {
               outputJar.putNextEntry(new JarEntry(entry.getName))
               Using(inputJar.getInputStream(entry)) { is =>
                 is.transferTo(outputJar)
-              }
+              }.recover({ case e: IOException =>
+                logger.err(
+                  s"Failed to copy $entry to output JAR: ${e.getMessage}"
+                )
+                e.printStackTrace(System.err)
+              })
               outputJar.closeEntry()
             }
           }
+      }.recover({ case e: IOException =>
+        logger.err(
+          s"Failed to create output JAR at $outputJarPath: ${e.getMessage}"
+        )
+        e.printStackTrace(System.err)
+      })
+    }.recover({ case e: IOException =>
+      logger.err(
+        s"Failed to extract files from $inputJarPath to $extractedFilesDir: ${e.getMessage}"
+      )
+      e.printStackTrace(System.err)
+    })
+  }
+
+  private def ensureDirExists(
+    path: Path,
+    logger: sbt.util.Logger
+  ): Unit = {
+    if (path != null) {
+      try {
+        Files.createDirectories(path)
+      } catch {
+        case e: IOException =>
+          logger.err(
+            s"Failed to create parent directories for $path: ${e.getMessage}"
+          )
+          e.printStackTrace(System.err)
       }
     }
   }
