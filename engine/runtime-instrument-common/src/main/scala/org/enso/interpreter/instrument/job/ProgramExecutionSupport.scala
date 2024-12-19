@@ -99,7 +99,13 @@ object ProgramExecutionSupport {
         if (VisualizationResult.isInterruptedException(value.getValue)) {
           value.getValue match {
             case e: AbstractTruffleException =>
-              // Bail out early. Any references to the value will return `No_Such_Method` exception
+              sendInterruptedExpressionUpdate(
+                contextId,
+                executionFrame.syncState,
+                value
+              )
+              // Bail out early. Any references to this value that do not expect
+              // Interrupted error will likely return `No_Such_Method` otherwise.
               throw new ThreadInterruptedException(e);
             case _ =>
           }
@@ -384,6 +390,49 @@ object ProgramExecutionSupport {
 
     case ex: ServiceException =>
       Api.ExecutionResult.Failure(ex.getMessage, None)
+  }
+
+  private def sendInterruptedExpressionUpdate(
+    contextId: ContextId,
+    syncState: UpdatesSynchronizationState,
+    value: ExpressionValue
+  )(implicit ctx: RuntimeContext): Unit = {
+    val expressionId = value.getExpressionId
+    val methodCall   = toMethodCall(value)
+    if (
+      !syncState.isExpressionSync(expressionId) ||
+      (methodCall.isDefined && !syncState.isMethodPointerSync(
+        expressionId
+      ))
+    ) {
+      val payload = Api.ExpressionUpdate.Payload.PendingInterrupted
+      ctx.endpoint.sendToClient(
+        Api.Response(
+          Api.ExpressionUpdates(
+            contextId,
+            Set(
+              Api.ExpressionUpdate(
+                value.getExpressionId,
+                Option(value.getTypes).map(_.toVector),
+                methodCall,
+                value.getProfilingInfo.map { case e: ExecutionTime =>
+                  Api.ProfilingInfo.ExecutionTime(e.getNanoTimeElapsed)
+                }.toVector,
+                value.wasCached(),
+                value.isTypeChanged || value.isFunctionCallChanged,
+                payload
+              )
+            )
+          )
+        )
+      )
+
+      syncState.setExpressionSync(expressionId)
+      ctx.state.expressionExecutionState.setExpressionExecuted(expressionId)
+      if (methodCall.isDefined) {
+        syncState.setMethodPointerSync(expressionId)
+      }
+    }
   }
 
   private def sendExpressionUpdate(

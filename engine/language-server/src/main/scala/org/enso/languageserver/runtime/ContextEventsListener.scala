@@ -233,6 +233,9 @@ final class ContextEventsListener(
       case Api.ExpressionUpdate.Payload.Pending(m, p) =>
         ContextRegistryProtocol.ExpressionUpdate.Payload.Pending(m, p)
 
+      case Api.ExpressionUpdate.Payload.PendingInterrupted =>
+        ContextRegistryProtocol.ExpressionUpdate.Payload.PendingInterrupted
+
       case Api.ExpressionUpdate.Payload.DataflowError(trace) =>
         ContextRegistryProtocol.ExpressionUpdate.Payload.DataflowError(trace)
 
