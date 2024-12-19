@@ -501,7 +501,8 @@ object TestMessages {
             Vector(Api.ProfilingInfo.ExecutionTime(0)),
             false,
             true,
-            Api.ExpressionUpdate.Payload.Pending(None, None, wasInterrupted = true)
+            Api.ExpressionUpdate.Payload
+              .Pending(None, None, wasInterrupted = true)
           )
         }
       )

@@ -161,8 +161,11 @@ object Runtime {
         /** Indicates that an expression is pending a computation
           */
         @named("expressionUpdatePayloadPending")
-        case class Pending(message: Option[String], progress: Option[Double], wasInterrupted: Boolean = false)
-            extends Payload
+        case class Pending(
+          message: Option[String],
+          progress: Option[Double],
+          wasInterrupted: Boolean = false
+        ) extends Payload
 
         /** Indicates that the expression was computed to an error.
           *
