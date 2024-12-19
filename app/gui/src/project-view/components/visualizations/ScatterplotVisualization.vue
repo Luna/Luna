@@ -7,6 +7,7 @@ import { Pattern } from '@/util/ast/match'
 import { getTextWidthBySizeAndFamily } from '@/util/measurement'
 import { defineKeybinds } from '@/util/visualizationBuiltins'
 import { computed, ref, watch, watchEffect, watchPostEffect } from 'vue'
+import { ToolbarItem } from './toolbar'
 
 export const name = 'Scatter Plot'
 export const icon = 'points'
@@ -865,43 +866,61 @@ const makeSeriesLabelOptions = () => {
   return seriesOptions
 }
 
-config.setToolbar([
-  // {
-  //   icon: 'select',
-  //   title: 'Enable Selection',
-  //   toggle: selectionEnabled,
-  // },
-  // {
-  //   icon: 'show_all',
-  //   title: 'Fit All',
-  //   onClick: () => zoomToSelected(false),
-  // },
-  // {
-  //   icon: 'zoom',
-  //   title: 'Zoom to Selected',
-  //   disabled: () => brushExtent.value == null,
-  //   onClick: zoomToSelected,
-  // },
-  // {
-  //   icon: 'add_to_graph_editor',
-  //   title: 'Create component of selected points',
-  //   disabled: () => !createNewFilterNodeEnabled.value,
-  //   onClick: createNewFilterNode,
-  // },
-  // {
-  //   type: 'textSelectionMenu',
-  //   selectedTextOption: yAxisSelected,
-  //   title: 'Choose Y Axis Label',
-  //   heading: 'Y Axis Label: ',
-  //   disabled: () => !data.value.is_multi_series,
-  //   options: {
-  //     none: {
-  //       label: 'No Label',
-  //     },
-  //     ...makeSeriesLabelOptions(),
-  //   },
-  // },
-])
+const createEnableSelectionButton = (): ToolbarItem => ({
+  icon: 'select',
+  title: 'Enable Selection',
+  toggle: selectionEnabled,
+})
+
+const createFitAllButton = (): ToolbarItem => ({
+  icon: 'show_all',
+  title: 'Fit All',
+  onClick: () => zoomToSelected(false),
+})
+
+const createZoomButton = (): ToolbarItem => ({
+  icon: 'zoom',
+  title: 'Zoom to Selected',
+  disabled: () => brushExtent.value == null,
+  onClick: zoomToSelected,
+})
+
+const createNewNodes = (): ToolbarItem => ({
+  icon: 'add_to_graph_editor',
+  title: 'Create component of selected points',
+  disabled: () => !createNewFilterNodeEnabled.value,
+  onClick: createNewFilterNode,
+})
+
+const createTextSelectionButton = (): ToolbarItem => ({
+  type: 'textSelectionMenu',
+  selectedTextOption: yAxisSelected,
+  title: 'Choose Y Axis Label',
+  heading: 'Y Axis Label: ',
+  options: {
+    none: {
+      label: 'No Label',
+    },
+    ...makeSeriesLabelOptions(),
+  },
+})
+
+function useScatterplotVizToolbar() {
+  const enableSelectionButton = createEnableSelectionButton()
+  const fitAllButton = createFitAllButton()
+  const zoomButton = createZoomButton()
+  const newNodeButton = createNewNodes()
+  const textSelectionButton = createTextSelectionButton()
+  return computed(() => [
+    enableSelectionButton,
+    fitAllButton,
+    zoomButton,
+    newNodeButton,
+    ...(data.value.is_multi_series ? [textSelectionButton] : []),
+  ])
+}
+
+config.setToolbar(useScatterplotVizToolbar())
 </script>
 
 <template>
