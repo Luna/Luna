@@ -17,7 +17,7 @@ import syntaxImportAttributes from '@babel/plugin-syntax-import-attributes'
 const isDevMode = process.env.NODE_ENV === 'development'
 const isE2E = process.env.INTEGRATION_TEST === 'true'
 
-const entrypoint = isE2E ? './src/project-view/e2e-entrypoint.ts' : './src/entrypoint.ts'
+const entrypoint = isE2E ? './src/project-view/test-entrypoint.ts' : './src/entrypoint.ts'
 
 process.env.ENSO_IDE_YDOC_SERVER_URL ||= isDevMode ? 'ws://__HOSTNAME__:5976' : undefined
 process.env.ENSO_IDE_PROJECT_MANAGER_URL ||= isDevMode ? 'ws://__HOSTNAME__:30535' : undefined
