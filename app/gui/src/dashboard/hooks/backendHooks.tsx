@@ -11,6 +11,7 @@ import {
   type Mutation,
   type MutationKey,
   type UseMutationOptions,
+  type UseMutationResult,
   type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query'
@@ -55,7 +56,6 @@ import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 // The number of bytes in 1 megabyte.
@@ -653,7 +653,7 @@ export function useNewFolder(backend: Backend, category: Category) {
       .mutateAsync([{ parentId: placeholderItem.parentId, title: placeholderItem.title }])
       .then((result) => {
         setNewestFolderId(result.id)
-        setSelectedAssets([{ type: AssetType.directory, ...result, labels: EMPTY_ARRAY }])
+        setSelectedAssets([{ type: AssetType.directory, ...result }])
         return result
       })
   })
@@ -919,7 +919,6 @@ export function useUploadFiles(backend: Backend, category: Category) {
                     id: id as backendModule.ProjectId,
                     parentId: asset.parentId,
                     title,
-                    labels: EMPTY_ARRAY,
                   })
                 })
                 .catch((error) => {
@@ -940,7 +939,6 @@ export function useUploadFiles(backend: Backend, category: Category) {
                     id: id as backendModule.FileId,
                     parentId: asset.parentId,
                     title,
-                    labels: EMPTY_ARRAY,
                   })
                 })
 
@@ -1145,6 +1143,40 @@ export function useUploadFileWithToastMutation(
   return mutation
 }
 
+export function useBackendMutation<Method extends MutationMethod>(
+  backend: Backend,
+  method: Method,
+  options?: Omit<
+    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
+    'mutationFn'
+  >,
+): UseMutationResult<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>
+export function useBackendMutation<Method extends MutationMethod>(
+  backend: Backend | null,
+  method: Method,
+  options?: Omit<
+    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
+    'mutationFn'
+  >,
+): UseMutationResult<
+  Awaited<ReturnType<Backend[Method]>> | undefined,
+  Error,
+  Parameters<Backend[Method]>
+>
+/** A memoized mutation for a given backend method. */
+export function useBackendMutation<Method extends MutationMethod>(
+  backend: Backend | null,
+  method: Method,
+  options?: Omit<
+    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
+    'mutationFn'
+  >,
+) {
+  return useMutation(
+    useMemo(() => backendMutationOptions(backend, method, options), [backend, method, options]),
+  )
+}
+
 /**
  * Call "upload file" mutations for a file.
  * Always uses multipart upload for Cloud backend.
@@ -1159,20 +1191,16 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
       toastAndLog('uploadLargeFileError', error)
     },
   } = options
-  const uploadFileStartMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'uploadFileStart'), [backend]),
+  const uploadFileStartMutation = useBackendMutation(backend, 'uploadFileStart')
+  const uploadFileChunkMutation = useBackendMutation(
+    backend,
+    'uploadFileChunk',
+    useMemo(() => ({ retry: chunkRetries }), [chunkRetries]),
   )
-  const uploadFileChunkMutation = useMutation(
-    useMemo(
-      () => backendMutationOptions(backend, 'uploadFileChunk', { retry: chunkRetries }),
-      [backend, chunkRetries],
-    ),
-  )
-  const uploadFileEndMutation = useMutation(
-    useMemo(
-      () => backendMutationOptions(backend, 'uploadFileEnd', { retry: endRetries }),
-      [backend, endRetries],
-    ),
+  const uploadFileEndMutation = useBackendMutation(
+    backend,
+    'uploadFileEnd',
+    useMemo(() => ({ retry: endRetries }), [endRetries]),
   )
   const [variables, setVariables] =
     useState<[params: backendModule.UploadFileRequestParams, file: File]>()
