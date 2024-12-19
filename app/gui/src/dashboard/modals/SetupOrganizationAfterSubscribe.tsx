@@ -4,7 +4,7 @@ import * as React from 'react'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as router from 'react-router'
 
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
 
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
@@ -60,8 +60,8 @@ export function SetupOrganizationAfterSubscribe() {
   const [hideModal, setHideModal] = React.useState(false)
 
   const queryClient = useQueryClient()
-  const updateOrganization = useMutation(backendMutationOptions(backend, 'updateOrganization'))
-  const createDefaultUserGroup = useMutation(backendMutationOptions(backend, 'createUserGroup'))
+  const updateOrganization = useBackendMutation(backend, 'updateOrganization')
+  const createDefaultUserGroup = useBackendMutation(backend, 'createUserGroup')
 
   const shouldSetOrgName = PLANS_TO_SPECIFY_ORG_NAME.includes(userPlan) && organizationName === ''
   const shouldSetDefaultUserGroup =

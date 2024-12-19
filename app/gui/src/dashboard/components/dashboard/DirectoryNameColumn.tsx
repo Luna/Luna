@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import FolderIcon from '#/assets/folder.svg'
 import FolderArrowIcon from '#/assets/folder_arrow.svg'
 
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
 
 import { useDriveStore, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
 import * as textProvider from '#/providers/TextProvider'
@@ -48,7 +48,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
     storeState.expandedDirectoryIds.includes(item.id),
   )
 
-  const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))
+  const updateDirectoryMutation = useBackendMutation(backend, 'updateDirectory')
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {

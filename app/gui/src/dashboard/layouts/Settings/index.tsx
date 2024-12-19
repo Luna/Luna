@@ -7,7 +7,7 @@ import BurgerMenuIcon from '#/assets/burger_menu.svg'
 import { Heading, MenuTrigger } from '#/components/aria'
 import { Button, Popover, Text } from '#/components/AriaComponents'
 import { useStrictPortalContext } from '#/components/Portal'
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
@@ -62,10 +62,8 @@ export default function Settings() {
   const { data: organization = null } = useBackendQuery(backend, 'getOrganization', [])
   const isQueryBlank = !/\S/.test(query)
 
-  const updateUser = useMutation(backendMutationOptions(backend, 'updateUser')).mutateAsync
-  const updateOrganization = useMutation(
-    backendMutationOptions(backend, 'updateOrganization'),
-  ).mutateAsync
+  const updateUser = useBackendMutation(backend, 'updateUser').mutateAsync
+  const updateOrganization = useBackendMutation(backend, 'updateOrganization').mutateAsync
 
   const [localRootDirectory, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
   const updateLocalRootPath = useEventCallback((value: string) => {

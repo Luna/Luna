@@ -13,7 +13,7 @@ import PermissionSelector from '#/components/dashboard/PermissionSelector'
 import Modal from '#/components/Modal'
 import { PaywallAlert } from '#/components/Paywall'
 import FocusArea from '#/components/styled/FocusArea'
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
 import { usePaywall } from '#/hooks/billing'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
@@ -136,10 +136,8 @@ export default function ManagePermissionsModal<Asset extends AnyAsset = AnyAsset
   )
   const selfId = getAssetPermissionId(self)
 
-  const inviteUserMutation = useMutation(backendMutationOptions(remoteBackend, 'inviteUser'))
-  const createPermissionMutation = useMutation(
-    backendMutationOptions(remoteBackend, 'createPermission'),
-  )
+  const inviteUserMutation = useBackendMutation(remoteBackend, 'inviteUser')
+  const createPermissionMutation = useBackendMutation(remoteBackend, 'createPermission')
 
   const canAdd = useMemo(
     () => [

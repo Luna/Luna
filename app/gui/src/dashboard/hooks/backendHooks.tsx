@@ -626,7 +626,7 @@ export function useNewFolder(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-  const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
+  const createDirectoryMutation = useBackendMutation(backend, 'createDirectory')
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
     toggleDirectoryExpansion(parentId, true)
@@ -670,7 +670,7 @@ export function useNewProject(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-  const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
+  const createProjectMutation = useBackendMutation(backend, 'createProject')
 
   return useEventCallback(
     async (
@@ -749,7 +749,7 @@ export function useNewSecret(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-  const createSecretMutation = useMutation(backendMutationOptions(backend, 'createSecret'))
+  const createSecretMutation = useBackendMutation(backend, 'createSecret')
 
   return useEventCallback(
     async (
@@ -788,7 +788,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
-  const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
+  const createDatalinkMutation = useBackendMutation(backend, 'createDatalink')
 
   return useEventCallback(
     async (

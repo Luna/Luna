@@ -7,7 +7,7 @@ import * as z from 'zod'
 import { ButtonGroup, DialogDismiss, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
 import FocusArea from '#/components/styled/FocusArea'
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -35,7 +35,7 @@ export default function NewLabelModal(props: NewLabelModalProps) {
   const labelNamesRef = useSyncRef(labelNames)
   const leastUsedColor = React.useMemo(() => findLeastUsedColor(labels), [labels])
 
-  const createTag = useMutation(backendMutationOptions(backend, 'createTag')).mutateAsync
+  const createTag = useBackendMutation(backend, 'createTag').mutateAsync
 
   return (
     <Popover>

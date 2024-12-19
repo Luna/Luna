@@ -1,7 +1,7 @@
 /** @file The icon and name of a {@link backendModule.ProjectAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
 import * as projectHooks from '#/hooks/projectHooks'
 
 import * as authProvider from '#/providers/AuthProvider'
@@ -71,7 +71,7 @@ export default function ProjectNameColumn(props: ProjectNameColumnProps) {
   const isOtherUserUsingProject =
     isCloud && projectState.openedBy != null && projectState.openedBy !== user.email
 
-  const updateProjectMutation = useMutation(backendMutationOptions(backend, 'updateProject'))
+  const updateProjectMutation = useBackendMutation(backend, 'updateProject')
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {

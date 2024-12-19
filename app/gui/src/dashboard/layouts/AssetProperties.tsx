@@ -19,7 +19,7 @@ import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -181,12 +181,14 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
     pathComputed == null ? null
     : isCloud ? encodeURI(pathComputed)
     : pathComputed
-  const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
-  const editDescriptionMutation = useMutation(
-    // Provide an extra `mutationKey` so that it has its own loading state.
-    backendMutationOptions(backend, 'updateAsset', { mutationKey: ['editDescription'] }),
+  const createDatalinkMutation = useBackendMutation(backend, 'createDatalink')
+  // Provide an extra `mutationKey` so that it has its own loading state.
+  const editDescriptionMutation = useBackendMutation(
+    backend,
+    'updateAsset',
+    React.useMemo(() => ({ mutationKey: ['editDescription'] }), []),
   )
-  const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
+  const updateSecretMutation = useBackendMutation(backend, 'updateSecret')
   const displayedDescription =
     editDescriptionMutation.variables?.[0] === item.id ?
       editDescriptionMutation.variables[1].description ?? item.description

@@ -7,7 +7,7 @@ import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/
 import ColorPicker from '#/components/ColorPicker'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -43,8 +43,8 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const [color, setColor] = useState<LChColor | null>(null)
   const leastUsedColor = useMemo(() => findLeastUsedColor(allLabels ?? []), [allLabels])
 
-  const createTagMutation = useMutation(backendMutationOptions(backend, 'createTag'))
-  const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
+  const createTagMutation = useBackendMutation(backend, 'createTag')
+  const associateTagMutation = useBackendMutation(backend, 'associateTag')
 
   const form = Form.useForm({
     schema: (z) =>
