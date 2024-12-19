@@ -54,3 +54,41 @@ test('delete and restore (keyboard)', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       await expect(rows).toHaveCount(1)
     }))
+
+test('clear trash', ({ page }) =>
+  mockAllAndLogin({ page })
+    .createFolder()
+    .createFolder()
+    .createFolder()
+    .newEmptyProject()
+    .newEmptyProject()
+    .newEmptyProject()
+    .driveTable.withRows(async (rows) => {
+      await expect(rows).toHaveCount(6)
+    })
+    .withModPressed((self) =>
+      self.driveTable.withRows(async (rows) => {
+        const rowEls = await rows.all()
+        await Promise.all(rowEls.map((row) => row.click()))
+      }),
+    )
+    .press('OsDelete')
+    .driveTable.rightClickRow(0)
+    .contextMenu.moveFolderToTrash()
+    .driveTable.expectPlaceholderRow()
+    .goToCategory.trash()
+    .driveTable.withRows(async (rows) => {
+      await expect(rows).toHaveCount(1)
+    })
+    .driveTable.rightClickRow(0)
+    .contextMenu.restoreFromTrash()
+    .driveTable.expectTrashPlaceholderRow()
+    .goToCategory.cloud()
+    .expectStartModal()
+    .withStartModal(async (startModal) => {
+      await expect(startModal).toBeVisible()
+    })
+    .close()
+    .driveTable.withRows(async (rows) => {
+      await expect(rows).toHaveCount(1)
+    }))
