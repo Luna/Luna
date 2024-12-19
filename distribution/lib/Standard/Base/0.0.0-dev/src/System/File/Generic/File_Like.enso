@@ -1,4 +1,5 @@
 import project.Data.Text.Text
+import project.Enso_Cloud.Data_Link.Data_Link_From_File
 import project.System.File.File
 import project.System.File_Format_Metadata.File_Format_Metadata
 
@@ -29,3 +30,8 @@ File_Like.from (that : Text) = File_Like.from (File.new that)
    If a conversion to `File_Format_Metadata` is needed, we delegate to the underlying file.
    Every `File_Like` should be able to provide its file format metadata.
 File_Format_Metadata.from (that : File_Like) = File_Format_Metadata.from that.underlying
+
+## PRIVATE
+   Files may sometimes be converted to File_Like.
+   If they implement `Data_Link_From_File`, we want to inherit that.
+Data_Link_From_File.from (that : File_Like) = Data_Link_From_File.from that.underlying
