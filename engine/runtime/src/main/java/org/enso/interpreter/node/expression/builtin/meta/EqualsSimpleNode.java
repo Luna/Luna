@@ -155,7 +155,7 @@ abstract class EqualsSimpleNode extends Node {
     return EqualsAndInfo.FALSE;
   }
 
-  @Specialization
+  @Specialization(guards = "!isMulti(other)")
   EqualsAndInfo equalsDoubleInterop(
       double self,
       Object other,
@@ -345,7 +345,11 @@ abstract class EqualsSimpleNode extends Node {
     assert typesOther != null;
     for (var t : typesSelf) {
       var selfValue = castNode.findTypeOrNull(t, self, false, false);
+      assert selfValue != null;
       var otherValue = castNode.findTypeOrNull(t, other, false, false);
+      if (otherValue == null) {
+        return EqualsAndInfo.FALSE;
+      }
       var res = delegate.execute(frame, selfValue, otherValue);
       if (!res.isTrue()) {
         return res;
@@ -353,7 +357,11 @@ abstract class EqualsSimpleNode extends Node {
     }
     for (var t : typesOther) {
       var selfValue = castNode.findTypeOrNull(t, self, false, false);
+      if (selfValue == null) {
+        return EqualsAndInfo.FALSE;
+      }
       var otherValue = castNode.findTypeOrNull(t, other, false, false);
+      assert otherValue != null;
       var res = delegate.execute(frame, selfValue, otherValue);
       if (!res.isTrue()) {
         return res;
@@ -477,6 +485,10 @@ abstract class EqualsSimpleNode extends Node {
 
   static boolean isPrimitiveValue(Object object) {
     return object instanceof Boolean || object instanceof Long || object instanceof Double;
+  }
+
+  static boolean isEnsoObject(Object v) {
+    return v instanceof EnsoObject;
   }
 
   static boolean isNotMulti(Object v) {

@@ -96,11 +96,14 @@ add_specs suite_builder =
         downcast_b = abc : B
         downcast_c = abc : C
 
-        group_builder.specify "Ordering.compare and multi value" <|
+        group_builder.specify "Ordering and multi value" <|
             Ordering.compare a b . catch Any e->
                 e.should_equal (Standard.Base.Errors.Common.Incomparable_Values.Error a b)
 
             Ordering.compare a downcast_a . should_equal Ordering.Equal
+
+            Ordering.hash a . should_equal (Ordering.hash downcast_a)
+
             Ordering.compare a downcast_ab . catch Any e->
                 e.should_equal (Standard.Base.Errors.Common.Incomparable_Values.Error a downcast_ab)
             Ordering.compare a abc . catch Any e->
