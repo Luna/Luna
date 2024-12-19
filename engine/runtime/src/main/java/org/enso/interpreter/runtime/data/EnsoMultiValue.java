@@ -23,6 +23,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
@@ -36,22 +37,16 @@ import org.graalvm.collections.Pair;
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
 public final class EnsoMultiValue extends EnsoObject {
-
-  @CompilationFinal(dimensions = 1)
-  private final Type[] types;
-
-  @CompilationFinal private final int methodDispatchTypes;
+  private final MultiType dispatch;
+  private final MultiType extra;
 
   @CompilationFinal(dimensions = 1)
   private final Object[] values;
 
-  private EnsoMultiValue(Type[] types, int dispatchTypes, Object[] values) {
-    this.types = types;
-    this.methodDispatchTypes = dispatchTypes;
-    assert types.length == values.length;
+  private EnsoMultiValue(MultiType dispatch, MultiType extra, Object[] values) {
+    this.dispatch = dispatch;
+    this.extra = extra;
     this.values = values;
-    assert !Stream.of(values).anyMatch(v -> v instanceof EnsoMultiValue)
-        : "Avoid double wrapping " + Arrays.toString(values);
   }
 
   /**
@@ -69,7 +64,11 @@ public final class EnsoMultiValue extends EnsoObject {
     assert dispatchTypes > 0;
     assert dispatchTypes <= types.length;
     assert types.length == values.length;
-    return new EnsoMultiValue(types, dispatchTypes, values);
+    assert !Stream.of(values).anyMatch(v -> v instanceof EnsoMultiValue)
+        : "Avoid double wrapping " + Arrays.toString(values);
+    var dt = MultiType.create(types, 0, dispatchTypes);
+    var et = MultiType.create(types, dispatchTypes, types.length);
+    return new EnsoMultiValue(dt, et, values);
   }
 
   @ExportMessage
@@ -84,15 +83,15 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   final Type getType() {
-    return types[0];
+    return dispatch.types[0];
   }
 
   @ExportMessage
   final Type[] allTypes(boolean includeExtraTypes) {
-    if (includeExtraTypes || methodDispatchTypes == types.length) {
-      return types.clone();
+    if (!includeExtraTypes) {
+      return dispatch.allTypesWith(null);
     } else {
-      return Arrays.copyOf(types, methodDispatchTypes);
+      return dispatch.allTypesWith(extra);
     }
   }
 
@@ -153,14 +152,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isBoolean(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.BOOLEAN;
   }
 
   @ExportMessage
   boolean asBoolean(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.BOOLEAN) {
       return iop.asBoolean(both.value());
     }
@@ -169,14 +168,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isString(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.STRING;
   }
 
   @ExportMessage
   String asString(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.STRING) {
       return iop.asString(both.value());
     }
@@ -185,50 +184,50 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isNumber(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER;
   }
 
   @ExportMessage
   boolean fitsInByte(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInByte(both.value());
   }
 
   @ExportMessage
   boolean fitsInShort(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInShort(both.value());
   }
 
   @ExportMessage
   boolean fitsInInt(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInInt(both.value());
   }
 
   @ExportMessage
   boolean fitsInLong(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInLong(both.value());
   }
 
   @ExportMessage
   boolean fitsInFloat(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInFloat(both.value());
   }
 
   @ExportMessage
   boolean fitsInDouble(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInDouble(both.value());
   }
 
   @ExportMessage
   byte asByte(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asByte(both.value());
     }
@@ -238,7 +237,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   short asShort(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asShort(both.value());
     }
@@ -248,7 +247,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   int asInt(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asInt(both.value());
     }
@@ -258,7 +257,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   long asLong(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asLong(both.value());
     }
@@ -268,7 +267,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   float asFloat(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asFloat(both.value());
     }
@@ -278,7 +277,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   double asDouble(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asDouble(both.value());
     }
@@ -287,14 +286,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean fitsInBigInteger(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.NUMBER && iop.fitsInBigInteger(both.value());
   }
 
   @ExportMessage
   BigInteger asBigInteger(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.NUMBER) {
       return iop.asBigInteger(both.value());
     }
@@ -303,14 +302,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isTime(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.DATE_TIME_ZONE && iop.isTime(both.value());
   }
 
   @ExportMessage
   LocalTime asTime(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.DATE_TIME_ZONE) {
       return iop.asTime(both.value());
     }
@@ -319,14 +318,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isDate(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.DATE_TIME_ZONE && iop.isDate(both.value());
   }
 
   @ExportMessage
   LocalDate asDate(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.DATE_TIME_ZONE) {
       return iop.asDate(both.value());
     }
@@ -335,14 +334,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isTimeZone(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.DATE_TIME_ZONE && iop.isTimeZone(both.value());
   }
 
   @ExportMessage
   ZoneId asTimeZone(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.DATE_TIME_ZONE) {
       return iop.asTimeZone(both.value());
     }
@@ -351,14 +350,14 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   boolean isDuration(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     return both.type() == InteropType.DURATION;
   }
 
   @ExportMessage
   Duration asDuration(@Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop)
       throws UnsupportedMessageException {
-    var both = InteropType.find(values, methodDispatchTypes, iop);
+    var both = InteropType.find(values, dispatch.types.length, iop);
     if (both.type() == InteropType.DURATION) {
       return iop.asDuration(both.value());
     }
@@ -375,7 +374,7 @@ public final class EnsoMultiValue extends EnsoObject {
   Object getMembers(
       boolean includeInternal, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
     var names = new TreeSet<String>();
-    for (var i = 0; i < methodDispatchTypes; i++) {
+    for (var i = 0; i < dispatch.types.length; i++) {
       try {
         var members = iop.getMembers(values[i]);
         var len = iop.getArraySize(members);
@@ -392,7 +391,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   boolean isMemberInvocable(
       String name, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < methodDispatchTypes; i++) {
+    for (var i = 0; i < dispatch.types.length; i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return true;
       }
@@ -409,7 +408,7 @@ public final class EnsoMultiValue extends EnsoObject {
           ArityException,
           UnsupportedTypeException,
           UnknownIdentifierException {
-    for (var i = 0; i < methodDispatchTypes; i++) {
+    for (var i = 0; i < dispatch.types.length; i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return iop.invokeMember(values[i], name, args);
       }
@@ -420,7 +419,10 @@ public final class EnsoMultiValue extends EnsoObject {
   @TruffleBoundary
   @Override
   public String toString() {
-    return Arrays.stream(types).map(t -> t.getName()).collect(Collectors.joining(" & "));
+    var dt = Arrays.stream(dispatch.types);
+    var et = Arrays.stream(extra.types);
+    var both = Stream.concat(dt, et);
+    return both.map(t -> t.getName()).collect(Collectors.joining(" & "));
   }
 
   /** Casts {@link EnsoMultiValue} to requested type effectively. */
@@ -457,25 +459,34 @@ public final class EnsoMultiValue extends EnsoObject {
     @Specialization
     Object castsToAType(Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
       var ctx = EnsoContext.get(this);
-      var max = allTypes ? mv.types.length : mv.methodDispatchTypes;
-      for (var i = 0; i < max; i++) {
-        for (var t : mv.types[i].allTypes(ctx)) {
-          if (t == type) {
-            if (reorderOnly) {
-              var copyTypes = mv.types.clone();
-              var copyValues = mv.values.clone();
-              copyTypes[i] = mv.types[0];
-              copyValues[i] = mv.values[0];
-              copyTypes[0] = mv.types[i];
-              copyValues[0] = mv.values[i];
-              return EnsoMultiValue.create(copyTypes, 1, copyValues);
-            } else {
-              return mv.values[i];
+      var dispatchIndex = mv.dispatch.find(ctx, type);
+      var i =
+          switch (dispatchIndex) {
+            case -1 -> {
+              if (allTypes) {
+                var extraIndex = mv.extra.find(ctx, type);
+                yield extraIndex == -1 ? -1 : mv.dispatch.types.length + extraIndex;
+              } else {
+                yield -1;
+              }
             }
-          }
+            default -> dispatchIndex;
+          };
+      if (i != -1) {
+        if (reorderOnly) {
+          var copyTypes = mv.dispatch.allTypesWith(mv.extra);
+          var copyValues = mv.values.clone();
+          copyTypes[0] = copyTypes[i];
+          copyValues[0] = copyValues[i];
+          copyTypes[i] = mv.dispatch.types[0];
+          copyValues[i] = mv.values[0];
+          return EnsoMultiValue.create(copyTypes, 1, copyValues);
+        } else {
+          return mv.values[i];
         }
+      } else {
+        return null;
       }
-      return null;
     }
   }
 
@@ -490,16 +501,86 @@ public final class EnsoMultiValue extends EnsoObject {
       MethodResolverNode node, UnresolvedSymbol symbol) {
     var ctx = EnsoContext.get(node);
     Pair<Function, Type> foundAnyMethod = null;
-    for (var i = 0; i < methodDispatchTypes; i++) {
-      var t = types[i];
+    for (var t : dispatch.types) {
       var fnAndType = node.execute(t, symbol);
       if (fnAndType != null) {
-        if (methodDispatchTypes == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {
+        if (dispatch.types.length == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {
           return Pair.create(fnAndType.getLeft(), t);
         }
         foundAnyMethod = fnAndType;
       }
     }
     return foundAnyMethod;
+  }
+
+  /**
+   * Internal representation of {@code Type[]} that supports identity comparision with {@code ==} to
+   * support inline caching of values.
+   */
+  private static final class MultiType {
+    private static final ConcurrentHashMap<MultiType, MultiType> ALL_TYPES =
+        new ConcurrentHashMap<>();
+
+    @CompilationFinal(dimensions = 1)
+    private final Type[] types;
+
+    private MultiType(Type[] types) {
+      this.types = types;
+    }
+
+    static MultiType create(Type[] types, int from, int to) {
+      var mt = new MultiType(Arrays.copyOfRange(types, from, to));
+      return ALL_TYPES.computeIfAbsent(mt, java.util.function.Function.identity());
+    }
+
+    private int find(EnsoContext ctx, Type type) {
+      for (var i = 0; i < types.length; i++) {
+        for (var t : types[i].allTypes(ctx)) {
+          if (t == type) {
+            return i;
+          }
+        }
+      }
+      return -1;
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 7;
+      hash = 89 * hash + Arrays.deepHashCode(this.types);
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      final MultiType other = (MultiType) obj;
+      return Arrays.deepEquals(this.types, other.types);
+    }
+
+    private Type[] allTypesWith(MultiType nextOrNull) {
+      if (nextOrNull == null || nextOrNull.types.length == 0) {
+        return this.types.clone();
+      } else {
+        var next = nextOrNull;
+        var arr = new Type[this.types.length + next.types.length];
+        System.arraycopy(this.types, 0, arr, 0, types.length);
+        System.arraycopy(next.types, 0, arr, types.length, next.types.length);
+        return arr;
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "MultiType{" + "types=" + Arrays.toString(types) + '}';
+    }
   }
 }
