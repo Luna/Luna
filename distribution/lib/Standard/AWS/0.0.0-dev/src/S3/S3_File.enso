@@ -52,7 +52,7 @@ type S3_File
     new (uri : Text = S3.uri_prefix) credentials:AWS_Credential=..Default =
         parsed_path = S3_Path.parse uri
         root = S3_File.Value parsed_path.bucket_root credentials
-        root.resolve_many_parts parsed_path.key
+        root / parsed_path.key
 
     ## PRIVATE
     private Value (s3_path : S3_Path) credentials:AWS_Credential
