@@ -269,9 +269,7 @@ impl Processor {
         let context = self.context();
         let target = self.target::<Target>();
         let job = self.resolve_build_job(job);
-        let info = self.write_build_info_file();
         async move {
-            info.await?;
             let job = job.await?;
             target?.build(context, job).await
         }
@@ -493,16 +491,6 @@ impl Processor {
                 .upload_asset_file_with_custom_name(&artifacts.image_checksum, add_prefix)
                 .await?;
             Ok(())
-        }
-        .boxed()
-    }
-
-    pub fn write_build_info_file(&self) -> BoxFuture<'static, Result> {
-        let build_info_get = self.js_build_info();
-        let build_info_path = self.context.inner.repo_root.join(&*enso_build::ide::web::BUILD_INFO);
-        async move {
-            let build_info = build_info_get.await?;
-            build_info_path.write_as_json(&build_info)
         }
         .boxed()
     }

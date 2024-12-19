@@ -22,6 +22,10 @@ ts_project(
     resolve_json_module = True,
     root_dir = "src",
     tsconfig = ":tsconfig",
+    validate = select({
+        "@platforms//os:windows": False,
+        "//conditions:default": True,
+    }),
     deps = npm_link_targets(),
 )
 

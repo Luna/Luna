@@ -5,7 +5,7 @@
  */
 /// <reference types="vite/client" />
 import type * as saveAccessToken from 'enso-common/src/accessToken'
-import { $Config } from './src/config'
+import type { $Config } from './src/config'
 
 // =============
 // === Types ===

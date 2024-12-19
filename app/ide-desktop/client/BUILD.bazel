@@ -19,6 +19,10 @@ ts_project(
     resolve_json_module = True,
     source_map = True,
     tsconfig = "//app/ide-desktop/lib/project-manager-shim:tsconfig",
+    validate = select({
+        "@platforms//os:windows": False,
+        "//conditions:default": True,
+    }),
     visibility = ["//visibility:public"],
     deps = ["//app/ide-desktop:tsconfig"] + npm_link_targets(),
 )

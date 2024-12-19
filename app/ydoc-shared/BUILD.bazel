@@ -27,6 +27,10 @@ ts_project(
     out_dir = "dist",
     root_dir = "src",
     tsconfig = ":tsconfig",
+    validate = select({
+        "@platforms//os:windows": False,
+        "//conditions:default": True,
+    }),
     visibility = ["//visibility:public"],
     deps = npm_link_targets(),
 )
@@ -52,6 +56,10 @@ ts_project(
     name = "parser-codegen-tsc",
     srcs = glob(["parser-codegen/*.ts"]),
     tsconfig = ":parser-codegen-tsconfig",
+    validate = select({
+        "@platforms//os:windows": False,
+        "//conditions:default": True,
+    }),
     deps = npm_link_targets(),
 )
 

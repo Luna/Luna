@@ -77,16 +77,16 @@ vite_bin.vite(
 
 vite_bin.vite_binary(
     name = "vite_preview",
-    args = ["preview"],
+    args = ["preview", "--outDir", "../../$(rootpath :dist)"],
     chdir = package_name(),
     data = [
         "vite.config.ts",
-        ":build",
+        ":dist",
     ],
 )
 
 vite_bin.vite_binary(
-    name = "vite",
+    name = "dev_server",
     chdir = package_name(),
     data = SRCS,
     # Under ibazel, let vite hot-reload changed files rather than restart it

@@ -97,7 +97,9 @@ async function processAllFiles() {
   await Promise.all(
     allFiles.map(async (file) => {
       if (!file.isFile() && !file.isSymbolicLink()) return
-      const inputPath = path.join(file.path, file.name)
+      // On windows we get '\\' separated paths from `fs` APIs, but the `path/posix` module is
+      // always assuming '/' separator, therefore we have to normalize that.
+      const inputPath = path.join(file.path.replace(/\\/g, '/'), file.name)
       const projectPath = path.relative(inputDirectory, inputPath)
       if (/config-[0-9a-zA-Z]+\.js$/.test(projectPath)) await processReplacements(projectPath)
       else if (projectPath === 'index.html') deferredThunks.push(() => processIndex(projectPath))
@@ -118,32 +120,39 @@ const patternRegex = /\(\(%__(.*?)__%\)\)/g
  * @param {string} projectPath File path relative to input directory
  */
 async function processReplacements(projectPath) {
-  const newContent = (await readOriginalFile(projectPath))
-    .toString()
-    .replace(patternRegex, (pattern, envName) => {
-      const envValue = process.env[pattern]
-      if (
-        Object.prototype.hasOwnProperty.call(process.env, envName) &&
-        typeof envValue === 'string'
-      ) {
-        return envValue
-      }
-      const envFileValue = combinedEnvs[envName]
-      if (
-        Object.prototype.hasOwnProperty.call(combinedEnvs, envName) &&
-        typeof envFileValue === 'string'
-      ) {
-        return envFileValue
-      } else {
-        errors.push(
-          new Error(
-            `Missing environment variable for replacemnet pattern ${pattern} in file ${projectPath}`,
-          ),
-        )
-        return pattern
-      }
-    })
+  const originalContent = (await readOriginalFile(projectPath)).toString()
+  const newContent = applyReplacements(originalContent, projectPath)
   await writeProjectFile(await updateHashInFilename(projectPath, newContent), newContent)
+}
+
+/**
+ * @param {string} content File content to apply replacements to.
+ * @param {string} projectPath File path relative to input directory, used for error reporting only.
+ */
+function applyReplacements(content, projectPath) {
+  return content.replace(patternRegex, (pattern, envName) => {
+    const envValue = process.env[pattern]
+    if (
+      Object.prototype.hasOwnProperty.call(process.env, envName) &&
+      typeof envValue === 'string'
+    ) {
+      return envValue
+    }
+    const envFileValue = combinedEnvs[envName]
+    if (
+      Object.prototype.hasOwnProperty.call(combinedEnvs, envName) &&
+      typeof envFileValue === 'string'
+    ) {
+      return envFileValue
+    } else {
+      errors.push(
+        new Error(
+          `Missing environment variable for replacemnet pattern ${pattern} in file ${projectPath}`,
+        ),
+      )
+      return pattern
+    }
+  })
 }
 
 /**
@@ -164,14 +173,19 @@ async function reportUnexpectedPatterns(fileContents, projectPath) {
  * @param {string} projectPath File path relative to input directory
  */
 async function processIndex(projectPath) {
-  const newContent = (await readOriginalFile(projectPath))
-    .toString()
-    // Only attempt to replace simple project-relative paths.
-    .replace(/((?:src|href)="\/)([0-9a-zA-Z/.-]+)(")/g, (_, prefix, path, postfix) => {
+  const originalContent = (await readOriginalFile(projectPath)).toString()
+  // Produced index file can reference ENV variables, therefore we need to
+  // apply replacements on it as well.
+  const afterReplaces = applyReplacements(originalContent, projectPath)
+  // Only attempt to replace simple project-relative paths.
+  const newContent = afterReplaces.replace(
+    /((?:src|href)="\/)([0-9a-zA-Z/.-]+)(")/g,
+    (_, prefix, path, postfix) => {
       const newPath = fileRenames.get(path) ?? path
       if (path != newPath) console.error('Rename in index:', '/' + path, '->', '/' + newPath)
       return prefix + newPath + postfix
-    })
+    },
+  )
   await writeProjectFile(projectPath, newContent)
 }
 
