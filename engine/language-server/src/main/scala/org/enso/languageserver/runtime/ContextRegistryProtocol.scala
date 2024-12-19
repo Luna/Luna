@@ -233,7 +233,7 @@ object ContextRegistryProtocol {
 
       /** Indicates that an expression is pending a computation
         */
-      case class Pending(message: Option[String], progress: Option[Double])
+      case class Pending(message: Option[String], progress: Option[Double], wasInterrupted: Boolean)
           extends Payload
 
       /** Indicates that an expression's computation has been interrupted and shall be retried.
