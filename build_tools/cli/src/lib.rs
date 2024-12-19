@@ -680,7 +680,7 @@ pub async fn main_internal(config: Option<Config>) -> Result {
         Target::Ide(ide) => ctx.handle_ide(ide).await?,
         Target::GitClean(options) => {
             let arg::git_clean::Options { dry_run, cache, build_script } = options;
-            let mut exclusions = vec![".idea"];
+            let mut exclusions: Vec<&str> = vec![".idea"];
             if !build_script {
                 exclusions.push("target/rust/buildscript");
             }
@@ -694,6 +694,9 @@ pub async fn main_internal(config: Option<Config>) -> Result {
                 //
                 // Related npm issue: https://github.com/npm/npm/issues/19091
                 ide_ci::fs::tokio::remove_dir_if_exists(ctx.repo_root.join("node_modules")).await?;
+                ide_ci::fs::tokio::remove_dir_if_exists(ctx.repo_root.join("bazel-enso")).await?;
+                ide_ci::fs::tokio::remove_dir_if_exists(ctx.repo_root.join("bazel-out")).await?;
+                ide_ci::fs::tokio::remove_dir_if_exists(ctx.repo_root.join("bazel-bin")).await?;
             }
 
             let git_clean = clean::clean_except_for(&ctx.repo_root, exclusions, dry_run);
