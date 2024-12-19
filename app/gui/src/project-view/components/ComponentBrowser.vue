@@ -72,8 +72,6 @@ const emit = defineEmits<{
 const cbRoot = ref<HTMLElement>()
 const componentList = ref<ComponentInstance<typeof ComponentList>>()
 
-defineExpose({ cbRoot })
-
 const clickOutsideAssociatedElements = (e: PointerEvent) => {
   return props.associatedElements.length === 0 ?
       false
@@ -240,10 +238,6 @@ const nodeColor = computed(() => {
   }
   return 'var(--node-color-no-type)'
 })
-watchEffect(() => {
-  if (!graphStore.cbEditedEdge) return
-  graphStore.cbEditedEdge.color = nodeColor.value
-})
 
 const selectedSuggestionIcon = computed(() => {
   return selectedSuggestion.value ? suggestionEntryToIcon(selectedSuggestion.value) : undefined
@@ -384,7 +378,7 @@ const handler = componentBrowserBindings.handler({
       :nodeSize="inputSize"
       :nodePosition="nodePosition"
       :scale="1"
-      :isCircularMenuVisible="false"
+      :isComponentMenuVisible="false"
       :isFullscreen="false"
       :isFullscreenAllowed="false"
       :isResizable="false"

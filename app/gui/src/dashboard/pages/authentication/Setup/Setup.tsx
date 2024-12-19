@@ -314,6 +314,7 @@ const BASE_STEPS: Step[] = [
     /** Final setup step. */
     component: function AllSetStep({ goToPreviousStep }) {
       const { getText } = textProvider.useText()
+
       const navigate = useNavigate()
       const queryClient = useQueryClient()
 
@@ -330,11 +331,7 @@ const BASE_STEPS: Step[] = [
             iconPosition="end"
             onPress={() =>
               queryClient.invalidateQueries().then(() => {
-                navigate(
-                  DASHBOARD_PATH +
-                    '?' +
-                    new URLSearchParams({ startModalDefaultOpen: 'true' }).toString(),
-                )
+                navigate(DASHBOARD_PATH)
               })
             }
           >

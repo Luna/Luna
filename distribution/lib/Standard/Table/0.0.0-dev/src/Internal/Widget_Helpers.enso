@@ -94,11 +94,11 @@ make_column_name_multi_selector table display:Display=..Always add_regex:Boolean
 
 ## PRIVATE
    Make a column reference by name selector.
-make_column_ref_by_name_selector table display:Display=..Always add_text:Boolean=False add_regex:Boolean=False add_number:Boolean=False add_boolean:Boolean=False add_named_pattern:Boolean=False add_date:Boolean=False add_time:Boolean=False add_date_time:Boolean=False add_nothing:Boolean=False =
+make_column_ref_by_name_selector table display:Display=..Always add_text:Boolean=False add_regex:Boolean=False add_number:Boolean=False add_boolean:Boolean=False add_named_pattern:Boolean=False add_date:Boolean=False add_time:Boolean=False add_date_time:Boolean=False add_nothing:Boolean=False columns_first:Boolean=False =
     constants = make_any_selector add_text=add_text add_regex=add_regex add_named_pattern=add_named_pattern add_number=add_number add_boolean=add_boolean add_date=add_date add_time=add_time add_date_time=add_date_time add_nothing=add_nothing . values
     expression = if table.is_nothing then [] else [Option "<Expression>" "(expr '["+table.column_names.first+"]')"]
     col_names = if table.is_nothing then [] else table.column_names.map (name -> Option name "(..Name "+name.pretty+")")
-    values = constants + expression + col_names
+    values = if columns_first then col_names + constants + expression else constants + expression + col_names
     Single_Choice values=values display=display
 
 ## PRIVATE
@@ -167,6 +167,17 @@ make_join_condition_selector table display:Display=..Always cache=Nothing =
 
     item_editor = Single_Choice display=display values=names
     Vector_Editor item_editor=item_editor item_default="(..Equals "+table.column_names.first.pretty+")" display=display
+
+## PRIVATE
+make_grouping_method_selector table:Table display:Display=..Always -> Widget =
+    column_selector = make_column_name_selector table display=Display.Always
+    columns_selector = Vector_Editor item_editor=column_selector item_default=table.column_names.first.pretty display=display
+
+    unique = Option "Unique" "..Unique" [["on", columns_selector]]
+    equal_count = Option "Equal Count" "..Equal_Count" [["order_by", columns_selector]]
+    names=[unique, equal_count]
+
+    Single_Choice display=display values=names
 
 ## PRIVATE
    Make a column name selector.

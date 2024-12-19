@@ -1,5 +1,5 @@
 /** @file Metadata for rendering each settings section. */
-import type { HTMLInputAutoCompleteAttribute, ReactNode } from 'react'
+import type { HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute, ReactNode } from 'react'
 
 import type { QueryClient } from '@tanstack/react-query'
 import * as z from 'zod'
@@ -18,7 +18,7 @@ import { ACTION_TO_TEXT_ID } from '#/components/MenuEntry'
 import { BINDINGS } from '#/configurations/inputBindings'
 import type { PaywallFeatureName } from '#/hooks/billing'
 import type { ToastAndLogCallback } from '#/hooks/toastAndLogHooks'
-import { passwordSchema, passwordWithPatternSchema } from '#/pages/authentication/schemas'
+import { passwordWithPatternSchema } from '#/pages/authentication/schemas'
 import type { GetText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import {
@@ -101,7 +101,8 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
               z
                 .object({
                   username: z.string().email(getText('invalidEmailValidationError')),
-                  currentPassword: passwordSchema(getText),
+                  // We don't want to validate the current password.
+                  currentPassword: z.string(),
                   newPassword: passwordWithPatternSchema(getText),
                   confirmNewPassword: z.string(),
                 })
@@ -138,17 +139,20 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
                 nameId: 'userCurrentPasswordSettingsInput',
                 name: 'currentPassword',
                 autoComplete: 'current-assword',
+                type: 'password',
               },
               {
                 nameId: 'userNewPasswordSettingsInput',
                 name: 'newPassword',
                 autoComplete: 'new-password',
                 descriptionId: 'passwordValidationMessage',
+                type: 'password',
               },
               {
                 nameId: 'userConfirmNewPasswordSettingsInput',
                 name: 'confirmNewPassword',
                 autoComplete: 'new-password',
+                type: 'password',
               },
             ],
             getVisible: (context) => {
@@ -385,7 +389,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
     sections: [
       {
         nameId: 'userGroupsSettingsSection',
-        columnClassName: 'h-3/5 lg:h-[unset] overflow-auto',
+        columnClassName: 'lg:h-[unset] overflow-auto h-auto',
         entries: [
           {
             type: 'custom',
@@ -396,7 +400,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
       {
         nameId: 'userGroupsUsersSettingsSection',
         column: 2,
-        columnClassName: 'h-2/5 lg:h-[unset] overflow-auto',
+        columnClassName: 'lg:h-[unset] overflow-auto h-auto',
         entries: [
           {
             type: 'custom',
@@ -514,6 +518,13 @@ export interface SettingsContext {
   readonly setPreferredTimeZone: (preferredTimeZone: string | undefined) => void
 }
 
+/**
+ * Possible values for the `type` property of {@link SettingsInputData}.
+ *
+ * TODO: Add support for other types.
+ */
+export type SettingsInputType = Extract<HTMLInputTypeAttribute, 'email' | 'password' | 'text'>
+
 /** Metadata describing an input in a {@link SettingsFormEntryData}. */
 export interface SettingsInputData<T> {
   readonly nameId: TextId & `${string}SettingsInput`
@@ -524,6 +535,7 @@ export interface SettingsInputData<T> {
   /** Defaults to `true`. */
   readonly editable?: boolean | ((context: SettingsContext) => boolean)
   readonly descriptionId?: TextId
+  readonly type?: SettingsInputType
 }
 
 /** Metadata describing a settings entry that is a form. */

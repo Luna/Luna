@@ -36,13 +36,6 @@ const STATUS_NOT_AUTHORIZED = 401
 /** HTTP status indicating that authorized user doesn't have access to the given resource */
 const STATUS_NOT_ALLOWED = 403
 
-/** The number of milliseconds in one day. */
-const ONE_DAY_MS = 86_400_000
-
-// =============
-// === Types ===
-// =============
-
 /** The format of all errors returned by the backend. */
 interface RemoteBackendError {
   readonly type: string
@@ -50,10 +43,6 @@ interface RemoteBackendError {
   readonly message: string
   readonly param: string
 }
-
-// ============================
-// === responseIsSuccessful ===
-// ============================
 
 /** Whether a response has a success HTTP status code (200-299). */
 function responseIsSuccessful(response: Response) {
@@ -105,11 +94,6 @@ export interface ListTagsResponseBody {
   readonly tags: readonly backend.Label[]
 }
 
-/** HTTP response body for the "list versions" endpoint. */
-export interface ListVersionsResponseBody {
-  readonly versions: readonly [backend.Version, ...backend.Version[]]
-}
-
 // =====================
 // === RemoteBackend ===
 // =====================
@@ -119,12 +103,6 @@ export interface ListVersionsResponseBody {
  * human-readable text.
  */
 type GetText = ReturnType<typeof textProvider.useText>['getText']
-
-/** Information for a cached default version. */
-interface DefaultVersionInfo {
-  readonly version: backend.VersionNumber
-  readonly lastUpdatedEpochMs: number
-}
 
 /** Options for {@link RemoteBackend.post} private method. */
 interface RemoteBackendPostOptions {
@@ -136,7 +114,6 @@ export default class RemoteBackend extends Backend {
   readonly type = backend.BackendType.remote
   // FIXME: For mock endpoint only, remove when backend is ready.
   readonly projectExecutions: backend.ProjectExecution[] = []
-  private defaultVersions: Partial<Record<backend.VersionType, DefaultVersionInfo>> = {}
   private user: object.Mutable<backend.User> | null = null
 
   /**
@@ -903,18 +880,23 @@ export default class RemoteBackend extends Backend {
    * Return details for a project.
    * @throws An error if a non-successful status code (not 200-299) was received.
    */
-  override async getProjectDetails(projectId: backend.ProjectId): Promise<backend.Project> {
-    const path = remoteBackendPaths.getProjectDetailsPath(projectId)
+  override async getProjectDetails(
+    projectId: backend.ProjectId,
+    _directoryId: null,
+    getPresignedUrl = false,
+  ): Promise<backend.Project> {
+    const paramsString = new URLSearchParams({
+      presigned: `${getPresignedUrl}`,
+    }).toString()
+    const path = `${remoteBackendPaths.getProjectDetailsPath(projectId)}?${paramsString}`
     const response = await this.get<backend.ProjectRaw>(path)
     if (!responseIsSuccessful(response)) {
       return await this.throw(response, 'getProjectDetailsBackendError')
     } else {
       const project = await response.json()
-      const ideVersion =
-        project.ide_version ?? (await this.getDefaultVersion(backend.VersionType.ide))
       return {
         ...project,
-        ideVersion,
+        ideVersion: project.ide_version,
         engineVersion: project.engine_version,
         jsonAddress: project.address != null ? backend.Address(`${project.address}json`) : null,
         binaryAddress: project.address != null ? backend.Address(`${project.address}binary`) : null,
@@ -1095,8 +1077,12 @@ export default class RemoteBackend extends Backend {
   override async getFileDetails(
     fileId: backend.FileId,
     title: string,
+    getPresignedUrl = false,
   ): Promise<backend.FileDetails> {
-    const path = remoteBackendPaths.getFileDetailsPath(fileId)
+    const searchParams = new URLSearchParams({
+      presigned: `${getPresignedUrl}`,
+    }).toString()
+    const path = `${remoteBackendPaths.getFileDetailsPath(fileId)}?${searchParams}`
     const response = await this.get<backend.FileDetails>(path)
     if (!responseIsSuccessful(response)) {
       return await this.throw(response, 'getFileDetailsBackendError', title)
@@ -1313,27 +1299,6 @@ export default class RemoteBackend extends Backend {
   }
 
   /**
-   * Return a list of backend or IDE versions.
-   * @throws An error if a non-successful status code (not 200-299) was received.
-   */
-  override async listVersions(
-    params: backend.ListVersionsRequestParams,
-  ): Promise<readonly backend.Version[]> {
-    const paramsString = new URLSearchParams({
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
-      version_type: params.versionType,
-      default: String(params.default),
-    }).toString()
-    const path = remoteBackendPaths.LIST_VERSIONS_PATH + '?' + paramsString
-    const response = await this.get<ListVersionsResponseBody>(path)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'listVersionsBackendError', params.versionType)
-    } else {
-      return (await response.json()).versions
-    }
-  }
-
-  /**
    * Create a payment checkout session.
    * @throws An error if a non-successful status code (not 200-299) was received.
    */
@@ -1447,24 +1412,6 @@ export default class RemoteBackend extends Backend {
       return Promise.reject(new Error('Not implemented.'))
     } else {
       return await response.text()
-    }
-  }
-
-  /** Get the default version given the type of version (IDE or backend). */
-  private async getDefaultVersion(versionType: backend.VersionType) {
-    const cached = this.defaultVersions[versionType]
-    const nowEpochMs = Number(new Date())
-    if (cached != null && nowEpochMs - cached.lastUpdatedEpochMs < ONE_DAY_MS) {
-      return cached.version
-    } else {
-      const version = (await this.listVersions({ versionType, default: true }))[0]?.number
-      if (version == null) {
-        return await this.throw(null, 'getDefaultVersionBackendError', versionType)
-      } else {
-        const info: DefaultVersionInfo = { version, lastUpdatedEpochMs: nowEpochMs }
-        this.defaultVersions[versionType] = info
-        return info.version
-      }
     }
   }
 

@@ -17,7 +17,6 @@ import GraphNodeOutputPorts from '@/components/GraphEditor/GraphNodeOutputPorts.
 import GraphVisualization from '@/components/GraphEditor/GraphVisualization.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import PointFloatingMenu from '@/components/PointFloatingMenu.vue'
-import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'
@@ -136,7 +135,8 @@ const availableMessage = computed<Message | undefined>(() => {
       const text = rawText?.split(' (at')[0]
       if (!text) return undefined
       const alwaysShow = !inputExternalIds().some((id) => getDataflowError(id) === rawText)
-      return { type: 'error', text, alwaysShow } satisfies Message
+      const type = rawText.includes('Missing_Argument') ? 'missing' : 'error'
+      return { type, text, alwaysShow } satisfies Message
     }
     case 'Value': {
       const warning = info.payload.warnings?.value
@@ -499,7 +499,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
       :nodeSize="nodeSize"
       :scale="navigator?.scale ?? 1"
       :nodePosition="nodePosition"
-      :isCircularMenuVisible="menuVisible"
+      :isComponentMenuVisible="menuVisible"
       :currentType="props.node.vis?.identifier"
       :dataSource="dataSource"
       :typename="expressionInfo?.typename"
@@ -561,17 +561,15 @@ const showMenuAt = ref<{ x: number; y: number }>()
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
         :forceVisible="nodeHovered"
+        @newNodeClick="
+          setSoleSelected(), emit('createNodes', [{ commit: false, content: undefined }])
+        "
         @portClick="(...args) => emit('outputPortClick', ...args)"
         @portDoubleClick="(...args) => emit('outputPortDoubleClick', ...args)"
         @update:hoverAnim="emit('update:hoverAnim', $event)"
         @update:nodeHovered="outputHovered = $event"
       />
     </svg>
-    <SmallPlusButton
-      v-if="menuVisible"
-      :class="isVisualizationVisible ? 'afterNode' : 'belowMenu'"
-      @createNodes="setSoleSelected(), emit('createNodes', $event)"
-    />
   </div>
   <PointFloatingMenu v-if="showMenuAt" :point="showMenuAt" @close="showMenuAt = undefined">
     <ComponentContextMenu @close="showMenuAt = undefined" />
@@ -640,7 +638,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
   opacity: 1;
 }
 
-.CircularMenu {
+.ComponentMenu {
   z-index: 25;
   &.partial {
     z-index: 1;

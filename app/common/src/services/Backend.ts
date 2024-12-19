@@ -512,18 +512,6 @@ export interface Label {
   readonly color: LChColor
 }
 
-/**
- * Type of application that a {@link Version} applies to.
- *
- * We keep track of both backend and IDE versions, so that we can update the two independently.
- * However the format of the version numbers is the same for both, so we can use the same type for
- * both. We just need this enum to disambiguate.
- */
-export enum VersionType {
-  backend = 'Backend',
-  ide = 'Ide',
-}
-
 /** Stability of an IDE or backend version. */
 export enum VersionLifecycle {
   stable = 'Stable',
@@ -536,14 +524,6 @@ export enum VersionLifecycle {
 export interface VersionNumber {
   readonly value: string
   readonly lifecycle: VersionLifecycle
-}
-
-/** A version describing a release of the backend or IDE. */
-export interface Version {
-  readonly number: VersionNumber
-  readonly ami: Ami | null
-  readonly created: dateTime.Rfc3339DateTime
-  readonly version_type: VersionType
 }
 
 /** Credentials that need to be passed to libraries to give them access to the Cloud API. */
@@ -1534,12 +1514,6 @@ export interface UploadPictureRequestParams {
   readonly fileName: string | null
 }
 
-/** URL query string parameters for the "list versions" endpoint. */
-export interface ListVersionsRequestParams {
-  readonly versionType: VersionType
-  readonly default: boolean
-}
-
 // ==============================
 // === detectVersionLifecycle ===
 // ==============================
@@ -1845,6 +1819,7 @@ export default abstract class Backend {
   abstract getProjectDetails(
     projectId: ProjectId,
     directoryId: DirectoryId | null,
+    getPresignedUrl?: boolean,
   ): Promise<Project>
   /** Return Language Server logs for a project session. */
   abstract getProjectSessionLogs(
@@ -1881,7 +1856,11 @@ export default abstract class Backend {
   /** Change the name of a file. */
   abstract updateFile(fileId: FileId, body: UpdateFileRequestBody, title: string): Promise<void>
   /** Return file details. */
-  abstract getFileDetails(fileId: FileId, title: string): Promise<FileDetails>
+  abstract getFileDetails(
+    fileId: FileId,
+    title: string,
+    getPresignedUrl?: boolean,
+  ): Promise<FileDetails>
   /** Create a Datalink. */
   abstract createDatalink(body: CreateDatalinkRequestBody): Promise<DatalinkInfo>
   /** Return a Datalink. */
@@ -1918,8 +1897,6 @@ export default abstract class Backend {
   abstract deleteUserGroup(userGroupId: UserGroupId, name: string): Promise<void>
   /** Return all user groups in the organization. */
   abstract listUserGroups(): Promise<readonly UserGroupInfo[]>
-  /** Return a list of backend or IDE versions. */
-  abstract listVersions(params: ListVersionsRequestParams): Promise<readonly Version[]>
   /** Create a payment checkout session. */
   abstract createCheckoutSession(body: CreateCheckoutSessionRequestBody): Promise<CheckoutSession>
   /** Get the status of a payment checkout session. */
@@ -1944,4 +1921,18 @@ export default abstract class Backend {
 
   /** Resolve the path of an asset relative to a project. */
   abstract resolveProjectAssetPath(projectId: ProjectId, relativePath: string): Promise<string>
+}
+
+// ==============================
+// ====== Custom Errors =========
+// ==============================
+
+/** Error thrown when a directory does not exist. */
+export class DirectoryDoesNotExistError extends Error {
+  /**
+   * Create a new instance of the {@link DirectoryDoesNotExistError} class.
+   */
+  constructor() {
+    super('Directory does not exist.')
+  }
 }

@@ -221,9 +221,10 @@ export default class LocalBackend extends Backend {
         if (parentIdRaw === this.projectManager.rootDirectory) {
           // Auto create the root directory
           await this.projectManager.createDirectory(this.projectManager.rootDirectory)
+
           result = []
         } else {
-          throw new Error('Directory does not exist.')
+          throw new backend.DirectoryDoesNotExistError()
         }
       }
     }
@@ -515,23 +516,6 @@ export default class LocalBackend extends Backend {
         return { asset }
       }
     }
-  }
-
-  /** Return a list of engine versions. */
-  override async listVersions(params: backend.ListVersionsRequestParams) {
-    const engineVersions = await this.projectManager.listAvailableEngineVersions()
-    const engineVersionToVersion = (version: projectManager.EngineVersion): backend.Version => ({
-      ami: null,
-      created: toRfc3339(new Date()),
-      number: {
-        value: version.version,
-        lifecycle: backend.detectVersionLifecycle(version.version),
-      },
-      // The names come from a third-party API and cannot be changed.
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
-      version_type: params.versionType,
-    })
-    return engineVersions.versions.map(engineVersionToVersion)
   }
 
   // === Endpoints that intentionally do not work on the Local Backend ===
