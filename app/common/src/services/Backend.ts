@@ -14,7 +14,7 @@ export const S3_CHUNK_SIZE_BYTES = 10_000_000
 // ================
 
 /** Unique identifier for an organization. */
-export type OrganizationId = newtype.Newtype<string, 'OrganizationId'>
+export type OrganizationId = newtype.Newtype<`organization-${string}`, 'OrganizationId'>
 export const OrganizationId = newtype.newtypeConstructor<OrganizationId>()
 
 /** Unique identifier for a user in an organization. */
@@ -22,11 +22,11 @@ export type UserId = newtype.Newtype<string, 'UserId'>
 export const UserId = newtype.newtypeConstructor<UserId>()
 
 /** Unique identifier for a user group. */
-export type UserGroupId = newtype.Newtype<string, 'UserGroupId'>
+export type UserGroupId = newtype.Newtype<`usergroup-${string}`, 'UserGroupId'>
 export const UserGroupId = newtype.newtypeConstructor<UserGroupId>()
 
 /** Unique identifier for a directory. */
-export type DirectoryId = newtype.Newtype<string, 'DirectoryId'>
+export type DirectoryId = newtype.Newtype<`directory-${string}`, 'DirectoryId'>
 export const DirectoryId = newtype.newtypeConstructor<DirectoryId>()
 
 /**
@@ -142,7 +142,7 @@ export function isPlaceholderUserGroupId(id: string) {
  * being created on the backend.
  */
 export function newPlaceholderUserGroupId() {
-  return UserGroupId(`${PLACEHOLDER_USER_GROUP_PREFIX}${uniqueString.uniqueString()}`)
+  return UserGroupId(`${PLACEHOLDER_USER_GROUP_PREFIX}${uniqueString.uniqueString()}` as const)
 }
 
 // =============
@@ -829,7 +829,7 @@ export function createRootDirectoryAsset(directoryId: DirectoryId): DirectoryAss
     title: '(root)',
     id: directoryId,
     modifiedAt: dateTime.toRfc3339(new Date()),
-    parentId: DirectoryId(''),
+    parentId: DirectoryId('directory-'),
     permissions: [],
     projectState: null,
     extension: null,
@@ -904,7 +904,7 @@ export function createPlaceholderDirectoryAsset(
 ): DirectoryAsset {
   return {
     type: AssetType.directory,
-    id: DirectoryId(createPlaceholderId()),
+    id: DirectoryId(`directory-${createPlaceholderId()}` as const),
     title,
     parentId,
     permissions: assetPermissions,
@@ -1076,7 +1076,7 @@ export function createPlaceholderAssetId<Type extends AssetType>(
   let result: AssetId
   switch (assetType) {
     case AssetType.directory: {
-      result = DirectoryId(id)
+      result = DirectoryId(`directory-${id}` as const)
       break
     }
     case AssetType.project: {

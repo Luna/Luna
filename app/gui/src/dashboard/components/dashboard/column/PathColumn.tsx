@@ -5,6 +5,7 @@ import SvgMask from '#/components/SvgMask'
 import { backendQueryOptions } from '#/hooks/backendHooks'
 import { useUser } from '#/providers/AuthProvider'
 import { DirectoryId } from '#/services/Backend'
+import { extractIdFromDirectoryId, extractIdFromUserGroupId } from '#/services/RemoteBackend'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { AssetColumnProps } from '../column'
 
@@ -20,13 +21,26 @@ export default function PathColumn(props: AssetColumnProps) {
   const { data: allUserGroups } = useSuspenseQuery(
     backendQueryOptions(state.backend, 'listUserGroups', []),
   )
-  const { rootDirectoryId, userGroups } = useUser()
+  const { rootDirectoryId, userGroups, organizationId } = useUser()
 
   const userGroupsById = new Map(
-    userGroups?.map((id) => [id, allUserGroups.find((group) => group.id === id)]),
-  )
+    userGroups?.map((id) => {
+      const foundGroup = allUserGroups.find((group) => group.id === id)
 
-  console.log({ userGroupsById })
+      if (foundGroup == null) {
+        return [
+          extractIdFromUserGroupId(id),
+          {
+            groupName: 'Unknown',
+            id,
+            organizationId,
+          },
+        ]
+      }
+
+      return [extractIdFromUserGroupId(foundGroup.id), foundGroup]
+    }),
+  )
 
   const finalPath = (() => {
     const result = []
@@ -36,8 +50,8 @@ export default function PathColumn(props: AssetColumnProps) {
         result.push('My Files')
       }
 
-      if (userGroupsById.has(rootDirectoryInPath)) {
-        result.push(userGroupsById.get(rootDirectoryInPath)?.groupName)
+      if (userGroupsById.has(extractIdFromDirectoryId(rootDirectoryInPath))) {
+        result.push(userGroupsById.get(extractIdFromDirectoryId(rootDirectoryInPath))?.groupName)
       }
     }
 
@@ -47,8 +61,6 @@ export default function PathColumn(props: AssetColumnProps) {
 
     return result
   })()
-
-  console.log({ virtualParentsPath, parentsPath, splittedPath, rootDirectoryId, finalPath })
 
   if (finalPath.length === 0) {
     return <></>

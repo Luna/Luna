@@ -38,7 +38,7 @@ export default function TabBar<T extends object>(props: TabBarProps<T>) {
   return (
     <AnimatedBackground>
       <div className={classes}>
-        <aria.TabList<T> className="flex h-12 shrink-0 grow pl-4" {...rest} />
+        <aria.TabList<T> className="flex h-12 shrink-0 grow px-2" {...rest} />
       </div>
     </AnimatedBackground>
   )
@@ -99,7 +99,7 @@ export function Tab(props: TabProps) {
       {({ isSelected, isHovered }) => (
         <AnimatedBackground.Item
           isSelected={isSelected}
-          className="h-full w-full rounded-t-3xl pl-4 pr-4"
+          className="h-full w-full rounded-t-3xl px-4"
           underlayElement={UNDERLAY_ELEMENT}
         >
           <ariaComponents.Text

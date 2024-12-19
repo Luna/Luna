@@ -48,15 +48,41 @@ function responseIsSuccessful(response: Response) {
   return response.status >= STATUS_SUCCESS_FIRST && response.status <= STATUS_SUCCESS_LAST
 }
 
-// ====================================
-// === isSpecialReadonlyDirectoryId ===
-// ====================================
-
 /** Whether the given directory is a special directory that cannot be written to. */
 export function isSpecialReadonlyDirectoryId(id: backend.AssetId) {
   return (
     id === remoteBackendPaths.USERS_DIRECTORY_ID || id === remoteBackendPaths.TEAMS_DIRECTORY_ID
   )
+}
+
+/**
+ * Extract the ID from the given user group ID.
+ * Removes the `usergroup-` prefix.
+ * @param id - The user group ID.
+ * @returns The ID.
+ */
+export function extractIdFromUserGroupId(id: backend.UserGroupId) {
+  return id.replace(/^usergroup-/, '')
+}
+
+/**
+ * Extract the ID from the given organization ID.
+ * Removes the `organization-` prefix.
+ * @param id - The organization ID.
+ * @returns The ID.
+ */
+export function extractIdFromOrganizationId(id: backend.OrganizationId) {
+  return id.replace(/^organization-/, '')
+}
+
+/**
+ * Extract the ID from the given directory ID.
+ * Removes the `directory-` prefix.
+ * @param id - The directory ID.
+ * @returns The ID.
+ */
+export function extractIdFromDirectoryId(id: backend.DirectoryId) {
+  return id.replace(/^directory-/, '')
 }
 
 // =============
@@ -191,7 +217,9 @@ export default class RemoteBackend extends Backend {
       case backend.Plan.team:
       case backend.Plan.enterprise: {
         return organization == null ? null : (
-            backend.DirectoryId(`directory-${organization.id.replace(/^organization-/, '')}`)
+            backend.DirectoryId(
+              `directory-${organization.id.replace(/^organization-/, '')}` as const,
+            )
           )
       }
     }
