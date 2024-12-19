@@ -116,6 +116,9 @@ export const [provideProjectStore, useProjectStore] = createContextStore(
     const projectNameFromCfg = config.value.startup?.project
     if (projectNameFromCfg == null) throw new Error('Missing project name.')
     const projectName = ref(projectNameFromCfg)
+    const projectDisplayName = computed(
+      () => config.value.startup?.displayedProjectName ?? projectName,
+    )
 
     const clientId = random.uuidv4() as Uuid
     const lsUrls = resolveLsUrl(config.value)
@@ -384,6 +387,7 @@ export const [provideProjectStore, useProjectStore] = createContextStore(
         return observedFileName.value
       },
       id: projectId,
+      displayName: readonly(projectDisplayName),
       name: readonly(projectName),
       isOnLocalBackend,
       executionContext,

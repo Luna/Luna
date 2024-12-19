@@ -34,7 +34,7 @@ export function useStackNavigator(projectStore: ProjectStore, graphStore: GraphS
   }
 
   function stackItemToLabel(item: StackItem, isStackRoot: boolean): string {
-    if (isStackRoot && isProjectEntryPoint(item)) return projectStore.name
+    if (isStackRoot && isProjectEntryPoint(item)) return projectStore.displayName
     const methodName = graphStore.db.stackItemToMethodName(item)
     return methodName ?? 'unknown'
   }

@@ -13,12 +13,8 @@ import url from 'node:url'
 
 const DEBUG = process.env.DEBUG_TEST === 'true'
 const isCI = process.env.CI === 'true'
-const isProd = process.env.PROD === 'true'
 
-const TIMEOUT_MS =
-  DEBUG ? 100_000_000
-  : isCI ? 25_000
-  : 15_000
+const TIMEOUT_MS = DEBUG ? 100_000_000 : 25_000
 
 // We tend to use less CPU on CI to reduce the number of failures due to timeouts.
 // Instead of using workers on CI, we use shards to run tests in parallel.
@@ -158,10 +154,7 @@ export default defineConfig({
         INTEGRATION_TEST: 'true',
         ENSO_IDE_PROJECT_MANAGER_URL: 'ws://__HOSTNAME__:30536',
       },
-      command:
-        isCI || isProd ?
-          `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`
-        : `corepack pnpm exec vite dev --port ${ports.projectView}`,
+      command: `corepack pnpm build && corepack pnpm exec vite preview --port ${ports.projectView} --strictPort`,
       // Build from scratch apparently can take a while on CI machines.
       timeout: 240 * 1000,
       port: ports.projectView,
