@@ -9,6 +9,7 @@ import Standard.Base.Errors.Common.Floating_Point_Equality
 import Standard.Base.Errors.Common.Incomparable_Values
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
 import Standard.Base.Errors.Common.Type_Error
+import Standard.Base.Errors.Common.Missing_Argument
 import Standard.Base.Errors.Deprecated.Deprecated
 import Standard.Base.Errors.File_Error.File_Error
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
@@ -24,11 +25,13 @@ import Standard.Table.Columns_To_Add.Columns_To_Add
 import Standard.Table.Columns_To_Keep.Columns_To_Keep
 import Standard.Table.Expression.Expression
 import Standard.Table.Expression.Expression_Error
+import Standard.Table.Grouping_Method.Grouping_Method
 import Standard.Table.Internal.Add_Row_Number
 import Standard.Table.Internal.Column_Naming_Helper.Column_Naming_Helper
 import Standard.Table.Internal.Constant_Column.Constant_Column
 import Standard.Table.Internal.Display_Helpers
 import Standard.Table.Internal.Join_Kind_Cross.Join_Kind_Cross
+import Standard.Table.Internal.Match_Columns_Helpers
 import Standard.Table.Internal.Problem_Builder.Problem_Builder
 import Standard.Table.Internal.Replace_Helpers
 import Standard.Table.Internal.Table_Helpers
@@ -38,7 +41,6 @@ import Standard.Table.Internal.Table_Ref.Table_Ref
 import Standard.Table.Internal.Unique_Name_Strategy.Unique_Name_Strategy
 import Standard.Table.Internal.Value_Type_Helpers
 import Standard.Table.Internal.Widget_Helpers
-import Standard.Table.Internal.Match_Columns_Helpers
 import Standard.Table.Row.Row
 import Standard.Table.Rows_To_Read.Rows_To_Read
 import Standard.Table.Value_Type.By_Type
@@ -403,7 +405,7 @@ type DB_Table
             result = self.updated_columns (new_columns.map _.as_internal)
             Warning.attach (Deprecated.Warning "Standard.Database.DB_Table.DB_Table" "remove_columns_by_type" "Deprecated: use `remove_columns` with a `By_Type` instead.") result
 
-    ## ALIAS select_blank_fields, select_missing_columns, select_na, filter_blank_columns
+    ## ALIAS filter_blank_columns, select_blank_fields, select_missing_columns, select_na
        GROUP Standard.Base.Selections
        ICON select_column
 
@@ -621,7 +623,7 @@ type DB_Table
                     Warning.with_suspended new_names names->
                         self.updated_columns (self.internal_columns.map c-> c.rename (names.at c.name))
 
-    ## ALIAS rename, header
+    ## ALIAS header, rename
        GROUP Standard.Base.Metadata
        ICON table_edit
        Returns a new table with the columns renamed based on entries in the
@@ -924,6 +926,99 @@ type DB_Table
                 renamed_table = Add_Row_Number.rename_columns_if_needed self name on_problems rebuild_table
                 updated_table = renamed_table.updated_columns (renamed_table.internal_columns + [new_column])
                 updated_table.as_subquery
+
+    ## PRIVATE add group column, group id, bucket, tile
+       GROUP Standard.Base.Values
+       ICON column_add
+       Adds a new column to the table enumerating groups of rows, assigning each
+       row to one group number. All rows in each group will get the same number.
+
+       Arguments:
+       - grouping_method: Specifies how to group the rows; see "Grouping
+         Methods", below.
+       - name: The name of the new column. Defaults to "Group".
+       - from: The starting value for the enumeration. Defaults to 0.
+       - step: The amount to increment the enumeration by. Defaults to 1.
+
+       ? Grouping Methods
+
+         The following grouping methods are supported:
+         - `Unique`: Group rows by the specified columns.
+         - Equal_Count: Create the specified number of groups with the same
+           number of rows in each group (except possibly the last one).
+
+       ? Ordering of rows
+
+         Note that the ordering of rows from the original table is preserved in
+         all cases. The grouping and ordering settings can affect how the group
+         numbers are assigned, depending on the grouping method.  The order of
+         the rows itself is not changed by this operation.
+
+       ! Error Conditions
+
+         - If the columns specified in `group_by` or `order_by` are not present
+           in the table, a `Missing_Input_Columns` error is raised.
+         - If the column with the same name as provided `name` already exists,
+           a `Duplicate_Output_Column_Names` problem is reported and the
+           existing column is renamed to avoid the clash.
+         - If grouping on floating point numbers, a `Floating_Point_Equality`
+           problem is reported.
+
+       > Example
+         Assign group numbers based on unique values of the first two columns.
+
+            ## table:
+                x | y | z
+               ---+---+---
+                1 | 0 | 2
+                0 | 1 | 0
+                1 | 2 | 0
+                0 | 1 | 1
+                1 | 0 | 1
+                1 | 2 | 1
+            table = table_builder [['x', [1, 0, 1, 0, 1, 1]], ['y', [0, 1, 2, 1, 0, 2]], ['z' [2, 0, 0, 1, 1, 1]]]
+            table2 = table.add_group_number (..Unique group_by=['x', 'y']) "g"
+            table2.at 'g' . to_vector
+            # => [0, 1, 2, 1, 0, 2]
+            ## table2:
+                x | y | z | g
+               ---+---+---+---
+                1 | 0 | 2 | 0
+                0 | 1 | 0 | 1
+                1 | 2 | 0 | 2
+                0 | 1 | 1 | 1
+                1 | 0 | 1 | 2
+                1 | 2 | 1 | 0
+
+       > Example
+         Divide rows into three groups.
+            ## table:
+                x | y
+               ---+---
+                1 | 5
+                2 | 4
+                3 | 3
+                4 | 2
+                5 | 1
+            table = table_builder [['x', [1, 2, 3, 4, 5]], ['y', [5, 4, 3, 2, 1]]]
+            table2 = tabble.add_group_number (..Equal_Count 3) "g"
+            table2.at 'g' . to_vector
+            # => [0, 0, 1, 1, 2]
+            ## table2:
+                x | y | g
+               ---+---+---
+                1 | 5 | 0
+                2 | 4 | 0
+                3 | 3 | 1
+                4 | 2 | 1
+                5 | 1 | 2
+    @name (Widget.Text_Input display=..Always)
+    @from (Widget.Numeric_Input display=..Always)
+    @group_by (Widget_Helpers.make_column_name_multi_selector display=..When_Modified)
+    @order_by (Widget_Helpers.make_order_by_selector display=..When_Modified)
+    add_group_number self (grouping_method:Grouping_Method=..Unique) (name:Text="Group") (from:Integer=0) (step:Integer=1) (on_problems:Problem_Behavior=..Report_Warning) -> Table =
+        _ = [grouping_method, name, from, step, on_problems]
+        Error.throw (Unsupported_Database_Operation.Error "add_group_number")
 
 
     ## ALIAS order_by
@@ -1417,7 +1512,7 @@ type DB_Table
         _ = [columns, case_sensitivity, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "duplicates")
 
-    ## ALIAS merge, xlookup, vlookup, hlookup, lookup
+    ## ALIAS hlookup, lookup, merge, vlookup, xlookup
        GROUP Standard.Base.Calculations
        ICON join
        Joins two tables according to the specified join conditions.
@@ -1495,7 +1590,7 @@ type DB_Table
     @join_kind Widget_Helpers.make_join_kind_selector
     @on Widget_Helpers.make_join_condition_selector
     join : DB_Table -> Join_Kind -> Join_Condition | Text | Vector (Join_Condition | Text) -> Text -> Problem_Behavior -> DB_Table
-    join self right (join_kind : Join_Kind = ..Left_Outer) (on : Join_Condition | Text | Vector (Join_Condition | Text) = (default_join_condition self join_kind)) (right_prefix:Text="Right ") (on_problems:Problem_Behavior=..Report_Warning) =
+    join self right=(Missing_Argument.throw "right") (join_kind : Join_Kind = ..Left_Outer) (on : Join_Condition | Text | Vector (Join_Condition | Text) = (default_join_condition self join_kind)) (right_prefix:Text="Right ") (on_problems:Problem_Behavior=..Report_Warning) =
         Feature.Join.if_supported_else_throw self.connection.dialect "join" <|
             self.join_or_cross_join right join_kind on right_prefix on_problems
 
@@ -1610,7 +1705,7 @@ type DB_Table
             on_problems.attach_problems_before limit_problems <|
                 self.join_or_cross_join right join_kind=Join_Kind_Cross on=[] right_prefix on_problems
 
-    ## ALIAS join, xlookup, vlookup, hlookup, lookup
+    ## ALIAS hlookup, join, lookup, vlookup, xlookup
        GROUP Standard.Base.Calculations
        ICON join
        Merges this table with a lookup table.
@@ -1970,7 +2065,7 @@ type DB_Table
 
                         DB_Table.Value union_alias self.connection new_columns new_ctx
 
-    ## ALIAS group by, summarize, count, count distinct, sum, average, mean, median, percentile, mode, standard deviation, variance, minimum, maximum, first, last, shortest, longest
+    ## ALIAS average, count, count distinct, first, group by, last, longest, maximum, mean, median, minimum, mode, percentile, shortest, standard deviation, sum, summarize, variance
        GROUP Standard.Base.Calculations
        ICON transform4
 
@@ -2309,7 +2404,7 @@ type DB_Table
         _ = [columns, format, locale, error_on_missing_columns, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "format")
 
-    ## ALIAS tokenize, parse
+    ## ALIAS parse, tokenize
        GROUP Standard.Base.Conversions
        ICON split
        Splits a column of text into a set of new columns.
@@ -2335,7 +2430,7 @@ type DB_Table
         _ = [column, delimiter, column_count.columns_to_split, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "split_to_columns")
 
-    ## ALIAS tokenize, parse
+    ## ALIAS parse, tokenize
        GROUP Standard.Base.Conversions
        ICON split
        Splits a column of text into a set of new rows.
@@ -2351,7 +2446,7 @@ type DB_Table
         _ = [column, delimiter]
         Error.throw (Unsupported_Database_Operation.Error "split_to_rows")
 
-    ## ALIAS split, parse, regex
+    ## ALIAS parse, regex, split
        GROUP Standard.Base.Conversions
        ICON split
        Tokenizes a column of text into a set of new columns using a regular
@@ -2380,7 +2475,7 @@ type DB_Table
         _ = [column, pattern, case_sensitivity, column_count, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "tokenize_to_columns")
 
-    ## ALIAS split, parse, regex
+    ## ALIAS parse, regex, split
        GROUP Standard.Base.Conversions
        ICON split
        Tokenizes a column of text into a set of new rows using a regular
@@ -2403,7 +2498,7 @@ type DB_Table
         _ = [column, pattern, case_sensitivity, at_least_one_row]
         Error.throw (Unsupported_Database_Operation.Error "tokenize_to_rows")
 
-    ## ALIAS split, tokenize, regex
+    ## ALIAS regex, split, tokenize
        GROUP Standard.Base.Conversions
        ICON split
        Converts a Text column into new columns using a regular expression
@@ -2568,7 +2663,7 @@ type DB_Table
         _ = [columns, shrink_types, error_on_missing_columns, on_problems]
         Error.throw (Unsupported_Database_Operation.Error "auto_cast")
 
-    ## ALIAS drop_missing_rows, dropna, remove_blank_rows, remove_empty_rows, remove_missing_rows, filter_empty_rows, drop_empty_rows
+    ## ALIAS drop_empty_rows, drop_missing_rows, dropna, filter_empty_rows, remove_blank_rows, remove_empty_rows, remove_missing_rows
        GROUP Standard.Base.Selections
        ICON preparation
        Remove rows which are all blank or containing blank values.
@@ -2604,7 +2699,7 @@ type DB_Table
         table = self.connection.read_statement sql
         table.at column_name . at 0
 
-    ## ALIAS load, import
+    ## ALIAS import, load
        GROUP Standard.Base.Input
        ICON data_input
        Returns a materialized dataframe containing rows of this table.
@@ -2781,7 +2876,7 @@ type DB_Table
     to_text : Text
     to_text self = "(Database Table "+self.name.to_text+")"
 
-    ## ALIAS export, save, output, to_file
+    ## ALIAS export, output, save, to_file
        GROUP Standard.Base.Output
        ICON data_output
        This function writes the table into a file.
@@ -3001,7 +3096,7 @@ type DB_Table
             transformer col = col.text_cleanse remove
             Table_Helpers.replace_columns_with_transformed_columns self from transformer
 
-    ## ALIAS cumulative, count, sum, total, minimum, maximum, sum, mean, product, variance, standard deviation
+    ## ALIAS count, cumulative, maximum, mean, minimum, product, standard deviation, sum, sum, total, variance
        GROUP Standard.Base.Values
        ICON data_input
        Adds a new column to the table with a running calculation.
