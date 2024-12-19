@@ -11,7 +11,7 @@ import InviteUsersModal from '#/modals/InviteUsersModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
-import type RemoteBackend from '#/services/RemoteBackend'
+import type RemoteBackend from '@common/services/RemoteBackend'
 
 const LIST_USERS_STALE_TIME_MS = 60_000
 

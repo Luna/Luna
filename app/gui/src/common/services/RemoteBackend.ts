@@ -155,7 +155,7 @@ import {
   updateAssetPath,
   updateDirectoryPath,
   updateSecretPath,
-} from '#/services/remoteBackendPaths'
+} from '@common/services/remoteBackendPaths'
 
 import type HttpClient from '#/utilities/HttpClient'
 

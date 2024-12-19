@@ -72,10 +72,10 @@ import {
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import LocalBackend from '#/services/LocalBackend'
-import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
+import LocalBackend from '@common/services/LocalBackend'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '@common/services/remoteBackendPaths'
 
 // The number of bytes in 1 megabyte.
 const MB_BYTES = 1_000_000

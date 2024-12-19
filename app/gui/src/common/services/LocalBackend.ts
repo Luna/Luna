@@ -58,7 +58,8 @@ import { download } from '@common/utilities/download'
 import { tryGetMessage } from '@common/utilities/error'
 import { uniqueString } from '@common/utilities/uniqueString'
 
-import type ProjectManager from '#/services/ProjectManager'
+import { APP_BASE_URL } from '#/utilities/appBaseUrl'
+import type ProjectManager from '@common/services/ProjectManager'
 import {
   FileSystemEntryType,
   MissingComponentAction,
@@ -66,8 +67,7 @@ import {
   ProjectName,
   UUID,
   type IpWithSocket,
-} from '#/services/ProjectManager'
-import { APP_BASE_URL } from '#/utilities/appBaseUrl'
+} from '@common/services/ProjectManager'
 
 /** Convert a {@link IpWithSocket} to a {@link Address}. */
 function ipWithSocketToAddress(ipWithSocket: IpWithSocket) {

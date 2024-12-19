@@ -51,10 +51,10 @@ import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { TabType } from '#/providers/ProjectsProvider'
 import { useText } from '#/providers/TextProvider'
-import { newDirectoryId } from '#/services/LocalBackend'
-import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import LocalStorage from '#/utilities/LocalStorage'
 import { tv } from '#/utilities/tailwindVariants'
+import { newDirectoryId } from '@common/services/LocalBackend'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '@common/services/remoteBackendPaths'
 
 // ============================
 // === Global configuration ===
