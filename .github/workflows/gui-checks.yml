@@ -143,7 +143,7 @@ jobs:
       - name: 📺 Install Playwright Browsers
         working-directory: app/gui
         run: pnpm run playwright:install
-        
+
       - name: ⚙️ Compile
         id: compile
         run: pnpm run compile

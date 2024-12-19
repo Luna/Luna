@@ -1,5 +1,7 @@
 //! Model of a workflow definition and related utilities.
 
+use serde_yaml::Value;
+
 use crate::prelude::*;
 
 use crate::convert_case::ToKebabCase;
@@ -76,33 +78,19 @@ pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
 }
 
-pub fn setup_bazel_non_windows() -> Step {
+pub fn setup_bazel() -> Step {
     Step {
         name: Some("Setup bazel environment".into()),
-        uses: Some("bazel-contrib/setup-bazel@0.9.0".into()),
-        with: Some(step::Argument::Other(BTreeMap::from([
-            ("bazelisk-cache".to_string(), serde_yaml::Value::Bool(true)),
-            ("disk-cache".to_string(), serde_yaml::Value::Bool(true)),
-            ("repository-cache".to_string(), serde_yaml::Value::Bool(true)),
-        ]))),
-        r#if: Some(is_non_windows_runner()),
-        ..default()
-    }
-}
-
-pub fn setup_bazel_windows() -> Step {
-    Step {
-        name: Some("Setup bazel environment".into()),
-        uses: Some("bazel-contrib/setup-bazel@0.9.0".into()),
+        uses: Some("bazel-contrib/setup-bazel@09f3a72".into()),
         with: Some(step::Argument::Other(BTreeMap::from([
             (
-                "bazelrc".to_string(),
-                serde_yaml::Value::String("startup --output_base=c:/_bazel".into()),
+                "output-base".to_string(),
+                Value::String(format!("${{{{ {} && 'c:/_bazel' || '' }}}}", is_windows_runner())),
             ),
-            // TODO: We want to have the caches enabled, but for now it won't work with manually
-            // set output base on windows.
+            ("bazelisk-cache".to_string(), Value::Bool(true)),
+            ("disk-cache".to_string(), Value::Bool(true)),
+            ("repository-cache".to_string(), Value::Bool(true)),
         ]))),
-        r#if: Some(is_windows_runner()),
         ..default()
     }
 }
@@ -970,7 +958,7 @@ impl Step {
     pub fn with_custom_argument(
         mut self,
         name: impl Into<String>,
-        value: impl Into<serde_yaml::Value>,
+        value: impl Into<Value>,
     ) -> Self {
         match &mut self.with {
             Some(step::Argument::Other(map)) => {
@@ -1042,11 +1030,11 @@ pub mod step {
         GitHubScript {
             script: String,
         },
-        Other(BTreeMap<String, serde_yaml::Value>),
+        Other(BTreeMap<String, Value>),
     }
 
     impl Argument {
-        pub fn new_other(name: impl Into<String>, value: impl Into<serde_yaml::Value>) -> Self {
+        pub fn new_other(name: impl Into<String>, value: impl Into<Value>) -> Self {
             Argument::Other(BTreeMap::from_iter([(name.into(), value.into())]))
         }
     }
