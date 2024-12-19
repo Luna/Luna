@@ -1,9 +1,11 @@
 import project.Any.Any
 import project.Data.List.List
+import project.Data.Text.Regex.Regex
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Error.Error
 import project.Errors.Illegal_Argument.Illegal_Argument
+from project.Data.Boolean import Boolean, False, True
 from project.Data.Text.Extensions import all
 
 ## PRIVATE
@@ -31,9 +33,13 @@ normalize_segments (segments : Vector) (get_name : Any -> Text) -> Vector ! Ille
    `f.resolve_single_part "/" . resolve_single_part "a/" . resolve_single_part "b/" . resolve_single_part "c"`.
    Keeping the delimiter is needed for some systems to be able to distinguish
    directories from regular files (e.g. S3).
-resolve_many_parts (base_file : Any) (subpath : Text) =
+resolve_many_parts (base_file : Any) (subpath : Text) (windows_delimiter : Boolean = False) =
+    delimiters = if windows_delimiter then "/\" else "/"
     ## This matches either a string of non-slash characters followed by a slash,
        a single slash with no characters attached to it, or a string of
        non-slash characters with no slash at the end.
-    parts = subpath.tokenize "[^/]*/|[^/]+"
+       With one delimiter this should be equivalent to: [^/]*/|[^/]+
+       Enabling `windows_delimiter` also allows it to break on the backslash.
+    regex = Regex.compile "[^"+delimiters+"]*["+delimiters+"]|[^"+delimiters+"]+"
+    parts = subpath.tokenize regex
     parts.fold base_file f-> part-> f.resolve_single_part part
