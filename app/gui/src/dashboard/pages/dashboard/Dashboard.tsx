@@ -43,11 +43,11 @@ import ProjectsProvider, {
   useSetPage,
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
-import { newDirectoryId, newProjectId } from '#/services/LocalBackend'
-import { UUID } from '#/services/ProjectManager'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import { document } from '#/utilities/sanitizedEventTargets'
+import { newDirectoryId, newProjectId } from '@common/services/LocalBackend'
+import { UUID } from '@common/services/ProjectManager'
 import { DashboardTabBar } from './DashboardTabBar'
 import { DashboardTabPanels } from './DashboardTabPanels'
 

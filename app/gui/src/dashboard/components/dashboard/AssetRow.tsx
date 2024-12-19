@@ -53,7 +53,7 @@ import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
 import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
 import * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import * as localBackend from '#/services/LocalBackend'
+import * as localBackend from '@common/services/LocalBackend'
 
 import { Text } from '#/components/AriaComponents'
 import { IndefiniteSpinner } from '#/components/Spinner'

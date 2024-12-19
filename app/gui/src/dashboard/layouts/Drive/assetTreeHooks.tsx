@@ -20,8 +20,8 @@ import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
 import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
-import { ROOT_PARENT_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import AssetTreeNode, { type AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
+import { ROOT_PARENT_DIRECTORY_ID } from '@common/services/remoteBackendPaths'
 
 /** Return type of the query function for the `listDirectory` query. */
 export type DirectoryQuery = readonly AnyAsset[] | undefined

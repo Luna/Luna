@@ -47,7 +47,7 @@ import { useText } from '#/providers/TextProvider'
 import { Dialog } from '#/components/AriaComponents'
 import { Result } from '#/components/Result'
 
-import type RemoteBackend from '#/services/RemoteBackend'
+import type { RemoteBackend } from '@common/services/RemoteBackend'
 
 import {
   CognitoErrorType,

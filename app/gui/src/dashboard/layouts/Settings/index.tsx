@@ -20,7 +20,7 @@ import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import { Path } from '#/services/ProjectManager'
+import { Path } from '@common/services/ProjectManager'
 import {
   ALL_SETTINGS_TABS,
   SETTINGS_DATA,

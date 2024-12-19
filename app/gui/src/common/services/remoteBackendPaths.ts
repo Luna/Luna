@@ -1,4 +1,5 @@
 /** @file Paths used by the `RemoteBackend`. */
+import { newtypeConstructor, type Newtype } from '../utilities/data/newtype'
 import type {
   AssetId,
   CheckoutSessionId,
@@ -11,8 +12,7 @@ import type {
   TagId,
   UserGroupId,
   UserId,
-} from '@common/services/Backend'
-import { newtypeConstructor, type Newtype } from '@common/utilities/data/newtype'
+} from './Backend'
 
 /** Relative HTTP path to the "list users" endpoint of the Cloud backend API. */
 export const LIST_USERS_PATH = 'users'
@@ -203,7 +203,6 @@ export function getCheckoutSessionPath(checkoutSessionId: CheckoutSessionId) {
 
 /** Unique identifier for a directory. */
 type DirectoryId = Newtype<string, 'DirectoryId'>
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 const DirectoryId = newtypeConstructor<DirectoryId>()
 export const ROOT_PARENT_DIRECTORY_ID = DirectoryId('')
 /** The ID of the directory containing the home directories of all users. */

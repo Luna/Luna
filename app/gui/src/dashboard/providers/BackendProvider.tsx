@@ -12,9 +12,9 @@ import * as common from 'enso-common'
 import { type Category, isCloudCategory } from '#/layouts/CategorySwitcher/Category'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type LocalBackend from '#/services/LocalBackend'
-import { ProjectManagerEvents } from '#/services/ProjectManager'
-import type RemoteBackend from '#/services/RemoteBackend'
+import type { LocalBackend } from '@common/services/LocalBackend'
+import { ProjectManagerEvents } from '@common/services/ProjectManager'
+import type { RemoteBackend } from '@common/services/RemoteBackend'
 
 /** State contained in a `BackendContext`. */
 export interface BackendContextType {

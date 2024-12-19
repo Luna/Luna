@@ -46,8 +46,6 @@ import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { usePasteData } from '#/providers/DriveProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import { extractTypeAndId } from '#/services/LocalBackend'
-import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import {
   canPermissionModifyDirectoryContents,
   isTeamPath,
@@ -55,6 +53,8 @@ import {
   PermissionAction,
   tryFindSelfPermission,
 } from '#/utilities/permissions'
+import { extractTypeAndId } from '@common/services/LocalBackend'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '@common/services/remoteBackendPaths'
 import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
 
 /** Props for a {@link AssetContextMenu}. */

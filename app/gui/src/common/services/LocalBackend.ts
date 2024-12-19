@@ -58,7 +58,8 @@ import { download } from '@common/utilities/download'
 import { tryGetMessage } from '@common/utilities/error'
 import { uniqueString } from '@common/utilities/uniqueString'
 
-import type ProjectManager from '#/services/ProjectManager'
+import { APP_BASE_URL } from '#/utilities/appBaseUrl'
+import type ProjectManager from '@common/services/ProjectManager'
 import {
   FileSystemEntryType,
   MissingComponentAction,
@@ -66,8 +67,7 @@ import {
   ProjectName,
   UUID,
   type IpWithSocket,
-} from '#/services/ProjectManager'
-import { APP_BASE_URL } from '#/utilities/appBaseUrl'
+} from '@common/services/ProjectManager'
 
 /** Convert a {@link IpWithSocket} to a {@link Address}. */
 function ipWithSocketToAddress(ipWithSocket: IpWithSocket) {
@@ -140,7 +140,7 @@ export function extractTypeAndId<Id extends AssetId>(id: Id): AssetTypeAndId {
  * Class for sending requests to the Project Manager API endpoints.
  * This is used instead of the cloud backend API when managing local projects from the dashboard.
  */
-export default class LocalBackend extends Backend {
+export class LocalBackend extends Backend {
   readonly type = BackendType.local
   /** All files that have been uploaded to the Project Manager. */
   uploadedFiles: Map<string, UploadedLargeAsset> = new Map()

@@ -28,6 +28,7 @@ import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useLogger } from '#/providers/LoggerProvider'
 import { useText } from '#/providers/TextProvider'
+import { twMerge } from '#/utilities/tailwindMerge'
 import {
   ChatMessageDataType,
   type ChatClientMessageData,
@@ -36,8 +37,7 @@ import {
   type ReactionSymbol,
   type ThreadData,
   type ThreadId,
-} from '#/services/Chat'
-import { twMerge } from '#/utilities/tailwindMerge'
+} from '@common/services/Chat'
 
 /** Create a {@link ChatMessageId}. */
 const MessageId = newtypeConstructor<ChatMessageId>()

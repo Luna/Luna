@@ -105,13 +105,13 @@ import ModalProvider, { useSetModal } from '#/providers/ModalProvider'
 import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import SessionProvider from '#/providers/SessionProvider'
 import { useText } from '#/providers/TextProvider'
-import LocalBackend from '#/services/LocalBackend'
-import ProjectManager, * as projectManager from '#/services/ProjectManager'
-import RemoteBackend from '#/services/RemoteBackend'
 import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 import { isElementPartOfMonaco, isElementTextInput } from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
+import { LocalBackend } from '@common/services/LocalBackend'
+import ProjectManager, * as projectManager from '@common/services/ProjectManager'
+import { RemoteBackend } from '@common/services/RemoteBackend'
 
 declare module '#/utilities/LocalStorage' {
   /** */

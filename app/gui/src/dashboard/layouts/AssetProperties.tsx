@@ -41,10 +41,10 @@ import { useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend } from '#/providers/BackendProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
-import { extractTypeAndId } from '#/services/LocalBackend'
 import { PermissionAction, tryFindSelfPermission } from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
 import { useStore } from '#/utilities/zustand'
+import { extractTypeAndId } from '@common/services/LocalBackend'
 
 const ASSET_PROPERTIES_VARIANTS = tv({
   base: '',

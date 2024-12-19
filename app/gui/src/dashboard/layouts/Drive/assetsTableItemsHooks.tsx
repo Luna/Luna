@@ -9,12 +9,12 @@ import { PermissionAction } from '@common/utilities/permissions'
 
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import { Column } from '#/components/dashboard/column/columnUtils'
-import type { DirectoryId } from '#/services/ProjectManager'
 import type AssetQuery from '#/utilities/AssetQuery'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import Visibility from '#/utilities/Visibility'
 import { SortDirection, type SortInfo } from '#/utilities/sorting'
 import { createStore, useStore } from '#/utilities/zustand'
+import type { DirectoryId } from '@common/services/ProjectManager'
 import invariant from 'tiny-invariant'
 
 /** Options for {@link useAssetsTableItems}. */

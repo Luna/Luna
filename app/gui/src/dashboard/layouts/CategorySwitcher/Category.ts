@@ -19,7 +19,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
-import { newDirectoryId } from '#/services/LocalBackend'
+import { newDirectoryId } from '@common/services/LocalBackend'
 
 const PATH_SCHEMA = z.string().refine((s): s is Path => true)
 const DIRECTORY_ID_SCHEMA = z.string().refine((s): s is DirectoryId => true)
