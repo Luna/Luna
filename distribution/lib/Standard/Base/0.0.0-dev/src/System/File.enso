@@ -44,6 +44,7 @@ from project.System.File_Format import Auto_Detect, File_Format
 polyglot java import java.io.File as Java_File
 polyglot java import java.io.InputStream as Java_Input_Stream
 polyglot java import java.io.OutputStream as Java_Output_Stream
+polyglot java import java.nio.file.Path as Java_Path
 polyglot java import java.nio.file.StandardCopyOption
 polyglot java import java.nio.file.StandardOpenOption
 polyglot java import java.time.ZonedDateTime
@@ -81,7 +82,7 @@ type File
              example_new = File.new Examples.csv_path
     new : (Text | File) -> Any ! Illegal_Argument
     new path = case path of
-        _ : Text -> if path.contains "://" . not then resolve_path path else
+        _ : Text -> if path.contains "://" . not then resolve_local_file path else
             protocol = path.split "://" . first
             file_system = FileSystemSPI.get_type protocol False
             if file_system.is_nothing then Error.throw (Illegal_Argument.Error "Unsupported protocol "+protocol) else
@@ -928,13 +929,25 @@ get_file path = @Builtin_Method "File.get_file"
      relative to the project's location.
    - if running locally, the path is resolved to a local file, relative to the
      current working directory.
-resolve_path (path : Text) -> File | Enso_File =
-    local_file = get_file path
-    # Absolute files always resolve to themselves.
-    if local_file.is_absolute then local_file else
-        case Enso_File.cloud_project_parent_directory of
-            Nothing -> local_file
-            base_cloud_directory -> base_cloud_directory / path
+resolve_local_file (path : Text) =
+    java_path = Java_Path.of path
+    root_file = case java_path.isAbsolute of
+        ## If the path is absolute we extract its root.
+        True -> get_file java_path.getRoot.toString
+
+        ## If the path is relative, the root is either the current working
+           directory or the cloud project directory.
+        False -> case Enso_File.cloud_project_parent_directory of
+            Nothing -> get_cwd
+            base_cloud_directory -> base_cloud_directory
+    remaining_path_as_text = case java_path.isAbsolute of
+        # For relative files, the remaining path is the whole thing.
+        False -> path
+
+        ## For absolute files, we construct the absolute file
+           and then relativize it relative to the root.
+        True -> root_file.relativize (get_file path) . path
+    root_file / remaining_path_as_text
 
 ## PRIVATE
 get_child_widget : File -> Widget

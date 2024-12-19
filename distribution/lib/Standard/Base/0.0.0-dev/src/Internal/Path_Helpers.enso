@@ -33,8 +33,9 @@ normalize_segments (segments : Vector) (get_name : Any -> Text) -> Vector ! Ille
    `f.resolve_single_part "/" . resolve_single_part "a/" . resolve_single_part "b/" . resolve_single_part "c"`.
    Keeping the delimiter is needed for some systems to be able to distinguish
    directories from regular files (e.g. S3).
-resolve_many_parts (base_file : Any) (subpath : Text) (windows_delimiter : Boolean = False) =
-    delimiters = if windows_delimiter then "/\" else "/"
+resolve_many_parts (base_file : Any) (subpath : Text) (windows_delimiter : Boolean = True) =
+    # The `\` is doubled to escape it in the regex.
+    delimiters = if windows_delimiter then "/\\" else "/"
     ## This matches either a string of non-slash characters followed by a slash,
        a single slash with no characters attached to it, or a string of
        non-slash characters with no slash at the end.
