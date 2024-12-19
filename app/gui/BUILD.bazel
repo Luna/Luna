@@ -50,7 +50,6 @@ SRCS = [
     "tailwind.config.ts",
     "package.json",
     "index.html",
-    ".env.bazel",
 ] + glob(
     [
         "src/**",
@@ -60,17 +59,18 @@ SRCS = [
     [ICON_GENERATED_DIR + "/**"],
 ) + npm_link_targets()
 
+ENV_FILES = glob([".env*"])
 
 vite_bin.vite(
-    name = "build",
-    srcs = SRCS,
+    name = "dist",
+    srcs = SRCS + ENV_FILES,
     args = [
         "build",
-        "--mode=bazel",
+        "--mode=production",
     ],
     chdir = package_name(),
     env = {
-        "NODE_ENV": "production",
+        "NODE_ENV": getenv("NODE_ENV"),
     },
     out_dirs = ["dist"],
 )
@@ -107,29 +107,30 @@ js_run_binary(
     visibility = ["//visibility:public"],
 )
 
-js_binary(
-    name = "script_env_replacer",
-    entry_point = "scripts/envReplacer.mjs",
-)
+# TODO: Make env replacement a separate post-build step.
+# js_binary(
+#     name = "script_env_replacer",
+#     entry_point = "scripts/envReplacer.mjs",
+# )
 
-js_run_binary(
-    name = "dist",
-    srcs = [
-        "node_modules/dotenv",
-        ":build",
-    ] + glob([".env*"]),
-    args = [
-        "$(rootpath :build)",
-        package_name() + "/env_replaced",
-        package_name(),
-    ],
-    env = {
-        "NODE_ENV": getenv("NODE_ENV"),
-    },
-    out_dirs = ["env_replaced"],
-    tool = ":script_env_replacer",
-    visibility = ["//visibility:public"],
-)
+# js_run_binary(
+#     name = "dist",
+#     srcs = [
+#         "node_modules/dotenv",
+#         ":build",
+#     ] + glob([".env*"]),
+#     args = [
+#         "$(rootpath :build)",
+#         package_name() + "/env_replaced",
+#         package_name(),
+#     ],
+#     env = {
+#         "NODE_ENV": getenv("NODE_ENV"),
+#     },
+#     out_dirs = ["env_replaced"],
+#     tool = ":script_env_replacer",
+#     visibility = ["//visibility:public"],
+# )
 
 # Convenience rule to output built artifacts to the filesystem, so JS tooling can see them.
 # Important! Make sure the output of this rule is NOT used during the build process, which

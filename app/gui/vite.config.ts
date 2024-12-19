@@ -96,6 +96,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           config: ['./src/config'],
+          entrypoint: ['./src/entrypoint'],
         },
       },
     },
