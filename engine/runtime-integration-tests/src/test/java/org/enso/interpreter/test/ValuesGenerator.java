@@ -874,11 +874,11 @@ public final class ValuesGenerator {
     var leak = ContextUtils.leakContext(ctx);
     var numberTextTypes =
         new Type[] {
-          leak.getBuiltins().number().getNumber(), leak.getBuiltins().text(),
+          leak.getBuiltins().number().getInteger(), leak.getBuiltins().text(),
         };
     var textNumberTypes =
         new Type[] {
-          leak.getBuiltins().text(), leak.getBuiltins().number().getNumber(),
+          leak.getBuiltins().text(), leak.getBuiltins().number().getInteger(),
         };
     var collect = new ArrayList<Value>();
     var toEnso = HostValueToEnsoNode.getUncached();
