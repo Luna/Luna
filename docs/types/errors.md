@@ -99,7 +99,7 @@ In both situations (if the file exists or not) both `IO.println` statements are
 executed and the execution of `test` function thus prints both
 `Opening the gates!` as well as `Gates were opened!`.
 
-### Unused Broken Values
+### Detection of Unused Broken Values
 
 Should the last statement (e.g. `content`) of the `test` function defined in
 previous section be missing, then the _broken value_ assigned to `content`
@@ -112,8 +112,8 @@ test.enso:3:3: warning: Unused variable content.
       |   ^~~~~~~
 ```
 
-The combination of _compiler warning_, _propagation_ and _promotion_ of _broken
-values_ ensures `File_Error` and other _broken values_ are **never lost**
+The combination of _detection_, _propagation_ and _promotion_ of _broken values_
+ensures `File_Error` and other _broken values_ are **never lost**
 (unintentionally). Should _loosing a broken value_ be a goal, one can change the
 line in question to:
 
