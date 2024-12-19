@@ -101,11 +101,12 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 5173,
+  },
 })
 
 async function projectManagerShim(): Promise<Plugin> {
-  if (!isDevMode) return { name: 'project-manager-shim' }
-
   const module = await import('./project-manager-shim-middleware')
   return {
     name: 'project-manager-shim',
