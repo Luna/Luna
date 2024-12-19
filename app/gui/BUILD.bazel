@@ -107,7 +107,7 @@ js_run_binary(
     visibility = ["//visibility:public"],
 )
 
-# TODO: Make env replacement a separate post-build step.
+# TODO: Maybe make env replacement a separate post-build step, TBD.
 # js_binary(
 #     name = "script_env_replacer",
 #     entry_point = "scripts/envReplacer.mjs",

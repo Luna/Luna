@@ -101,7 +101,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
 
   return (
     <Collection items={tabPanels}>
-      {(tabPanelProps) => (
+      {(tabPanelProps: aria.TabPanelProps) => (
         <Suspense>
           <ErrorBoundary>
             <aria.TabPanel {...tabPanelProps} />
