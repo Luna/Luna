@@ -5,7 +5,6 @@ import sbt.io.IO
 import sbt.librarymanagement.{
   ConfigurationFilter,
   DependencyFilter,
-  ModuleFilter
 }
 
 import java.io.File
