@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import invariant from 'tiny-invariant'
 
 import { Plan } from '@common/services/Backend'
-import type { TextId } from '../../../../../../../common/src/text'
+import type { TextId } from '@common/text'
 
 import OpenInNewTabIcon from '#/assets/open.svg'
 import { Button } from '#/components/AriaComponents'

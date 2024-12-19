@@ -6,5 +6,5 @@
     "checkJs": true,
     "skipLibCheck": false
   },
-  "include": ["./src/", "../types/"]
+  "include": ["./src/"]
 }

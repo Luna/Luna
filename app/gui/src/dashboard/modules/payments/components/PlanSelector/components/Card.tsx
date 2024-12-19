@@ -5,7 +5,7 @@
  */
 import * as React from 'react'
 
-import type * as text from '../../../../../../../../common/src/text'
+import type * as text from '@common/text'
 
 import Check from '#/assets/check_mark.svg'
 

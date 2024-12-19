@@ -1,6 +1,6 @@
 /** @file Types and constants related to `Column`s. */
 import { BackendType, Plan, type User } from '@common/services/Backend'
-import type { TextId } from '../../../../../../common/src/text'
+import type { TextId } from '@common/text'
 
 import AccessedByProjectsIcon from '#/assets/accessed_by_projects.svg'
 import AccessedDataIcon from '#/assets/accessed_data.svg'

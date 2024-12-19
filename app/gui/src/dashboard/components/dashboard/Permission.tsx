@@ -12,8 +12,8 @@ import {
   type Backend,
   type UserPermissionIdentifier,
 } from '@common/services/Backend'
+import type { TextId } from '@common/text'
 import { merge } from '@common/utilities/data/object'
-import type { TextId } from '../../../../../common/src/text'
 
 import { Text } from '#/components/AriaComponents'
 import PermissionSelector from '#/components/dashboard/PermissionSelector'

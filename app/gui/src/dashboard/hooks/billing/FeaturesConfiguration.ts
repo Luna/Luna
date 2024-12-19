@@ -1,6 +1,6 @@
 /** @file Paywall configuration for different plans. */
 import { Plan } from '@common/services/Backend'
-import type { TextId } from '../../../../../common/src/text'
+import type { TextId } from '@common/text'
 
 /** Registered paywall features. */
 export const PAYWALL_FEATURES = {

@@ -1,6 +1,4 @@
-/**
- * @file Global setup for dashboard tests.
- */
+/** @file Global setup for dashboard tests. */
 
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'

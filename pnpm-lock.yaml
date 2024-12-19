@@ -79,6 +79,10 @@ importers:
       lib0:
         specifier: ^0.2.85
         version: 0.2.94
+    devDependencies:
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.9.0
 
   app/gui:
     dependencies:
