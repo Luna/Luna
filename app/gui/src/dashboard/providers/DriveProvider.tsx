@@ -1,7 +1,7 @@
 /** @file The React provider (and associated hooks) for Data Catalog state. */
 import * as React from 'react'
 
-import { createStore, type StoreApi, useStore } from '#/utilities/zustand'
+import { createStore, useStore, type StoreApi } from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'

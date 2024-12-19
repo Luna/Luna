@@ -54,11 +54,8 @@ export function useStore<State, Slice>(
   options: UseStoreOptions<Slice> = {},
 ) {
   const { unsafeEnableTransition = false, areEqual } = options
-
   const prevUnsafeEnableTransition = useRef(unsafeEnableTransition)
-
   const equalityFunction = resolveAreEqual(areEqual)
-
   return useNonCompilableConditionalStore(
     store,
     selector,

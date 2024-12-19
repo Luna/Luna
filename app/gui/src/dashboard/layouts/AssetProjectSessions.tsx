@@ -1,7 +1,7 @@
 /** @file A list of previous versions of an asset. */
 import * as reactQuery from '@tanstack/react-query'
 
-import { assetPanelStore } from '#/layouts/AssetPanel/AssetPanelState'
+import { assetPanelStore } from '#/layouts/AssetPanel'
 import AssetProjectSession from '#/layouts/AssetProjectSession'
 
 import type Backend from '#/services/Backend'

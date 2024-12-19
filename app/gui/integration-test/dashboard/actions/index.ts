@@ -1,5 +1,6 @@
 /** @file Various actions, locators, and constants used in end-to-end tests. */
 import path from 'node:path'
+import url from 'node:url'
 
 import { expect, test, type Page } from '@playwright/test'
 
@@ -27,7 +28,7 @@ export const TEXT = TEXTS.english
 
 /** Get the path to the auth file. */
 export function getAuthFilePath() {
-  const __dirname = path.dirname(new URL(import.meta.url).pathname)
+  const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
   return path.join(__dirname, '../../../playwright/.auth/user.json')
 }
 
