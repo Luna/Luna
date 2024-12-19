@@ -14,7 +14,6 @@ if (GOOGLE_ANALYTICS_TAG != null) {
 window.dataLayer = window.dataLayer || []
 
 /** Google Analytics tag function. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function gtag(action: 'config' | 'event' | 'js' | 'set', ...args: unknown[]) {
   // @ts-expect-error This is explicitly not given types as it is a mistake to acess this
   // anywhere else.
