@@ -87,9 +87,10 @@ jobs:
           fail-on-warning: false
 
       - name: ❌ Fail if any check failed
-        if: always() && (steps.prettier.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
+        if: always() && (steps.lint.outcome == 'failure' || steps.compile.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.unit-tests.outcome == 'failure')
         run: |
           echo "Lint outcome: ${{ steps.lint.outcome }}"
+          echo "Compile outcome: ${{ steps.compile.outcome }}"
           echo "Typecheck outcome: ${{ steps.typecheck.outcome }}"
           echo "Unit tests outcome: ${{ steps.unit-tests.outcome }}"
           exit 1
