@@ -107,6 +107,7 @@ import {
   AssetType,
   BackendType,
   getAssetPermissionName,
+  IS_OPENING_OR_OPENED,
   Plan,
   ProjectId,
   ProjectState,
@@ -1726,6 +1727,11 @@ function AssetsTable(props: AssetsTableProps) {
         </td>
       </tr>
     : displayItems.map((item) => {
+        const isOpenedByYou = openedProjects.some(({ id }) => item.item.id === id)
+        const isOpenedOnTheBackend =
+          item.item.projectState?.type != null ?
+            IS_OPENING_OR_OPENED[item.item.projectState.type]
+          : false
         return (
           <AssetRow
             key={item.key + item.path}
@@ -1736,7 +1742,7 @@ function AssetsTable(props: AssetsTableProps) {
               : false
             }
             onCutAndPaste={cutAndPaste}
-            isOpened={openedProjects.some(({ id }) => item.item.id === id)}
+            isOpened={isOpenedByYou || isOpenedOnTheBackend}
             visibility={visibilities.get(item.key)}
             columns={columns}
             id={item.item.id}
