@@ -1,8 +1,8 @@
 /** @file An entry in a menu. */
 import * as React from 'react'
 
-import type * as text from '@common/text'
 import * as detect from '@common/utilities/detect'
+import type * as text from '../../../../common/src/text'
 
 import BlankIcon from '#/assets/blank.svg'
 

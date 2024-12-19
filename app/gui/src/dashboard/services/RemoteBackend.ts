@@ -87,10 +87,10 @@ import {
   type UserGroupInfo,
   type UserId,
 } from '@common/services/Backend'
-import type { Replacements, TextId } from '@common/text'
 import { merge, omit, type Mutable } from '@common/utilities/data/object'
 import { IS_DEV_MODE } from '@common/utilities/detect'
 import { download } from '@common/utilities/download'
+import type { Replacements, TextId } from '../../../../common/src/text'
 
 import type { Logger } from '#/providers/LoggerProvider'
 import type { GetText } from '#/providers/TextProvider'

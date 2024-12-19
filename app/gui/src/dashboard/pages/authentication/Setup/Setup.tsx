@@ -6,7 +6,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import invariant from 'tiny-invariant'
 
 import { Plan } from '@common/services/Backend'
-import type { TextId } from '@common/text'
+import type { TextId } from '../../../../../../common/src/text'
 
 import { DASHBOARD_PATH, LOGIN_PATH } from '#/appUtils'
 import ArrowRight from '#/assets/arrow_right.svg'

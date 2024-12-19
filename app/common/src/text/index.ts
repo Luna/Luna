@@ -1,10 +1,5 @@
 /** @file Functions related to displaying text. */
-
 import ENGLISH from './english.json' with { type: 'json' }
-
-// =============
-// === Types ===
-// =============
 
 /** Possible languages in which to display text. */
 export enum Language {
@@ -151,10 +146,6 @@ interface PlaceholderOverrides {
 export interface Replacements
   extends PlaceholderOverrides,
     Record<Exclude<TextId, keyof PlaceholderOverrides>, []> {}
-
-// =================
-// === Constants ===
-// =================
 
 export const TEXTS: Readonly<Record<Language, Texts>> = {
   [Language.english]: ENGLISH,

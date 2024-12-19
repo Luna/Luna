@@ -1,7 +1,7 @@
 /** @file */
 import { toast, type Id } from 'react-toastify'
 
-import type { Replacements, TextId } from '@common/text'
+import type { Replacements, TextId } from '../../../../common/src/text'
 
 import { useLogger } from '#/providers/LoggerProvider'
 import { useText } from '#/providers/TextProvider'

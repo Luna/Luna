@@ -11,6 +11,7 @@
     "./src/iter": "./src/iter.ts",
     "./src/buildUtils": "./src/buildUtils.js",
     "./src/string": "./src/string.ts",
+    "./src/text": "./src/text/index.ts",
     "./src/types": "./src/types.d.ts"
   },
   "scripts": {

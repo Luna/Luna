@@ -12,9 +12,9 @@ import {
   type OrganizationInfo,
   type User,
 } from '@common/services/Backend'
-import type { TextId } from '@common/text'
 import { normalizePath } from '@common/utilities/data/fileInfo'
 import { pick, unsafeEntries } from '@common/utilities/data/object'
+import type { TextId } from '../../../../../common/src/text'
 
 import ComputerIcon from '#/assets/computer.svg'
 import CreditCardIcon from '#/assets/credit_card.svg'

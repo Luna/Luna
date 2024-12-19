@@ -11,8 +11,14 @@ import {
   type PropsWithChildren,
 } from 'react'
 
-import { Language, LANGUAGE_TO_LOCALE, TEXTS, type Replacements, type TextId } from '@common/text'
 import { unsafeMutable } from '@common/utilities/data/object'
+import {
+  Language,
+  LANGUAGE_TO_LOCALE,
+  TEXTS,
+  type Replacements,
+  type TextId,
+} from '../../../../common/src/text'
 
 /** State contained in a `TextContext`. */
 export interface TextContextType {

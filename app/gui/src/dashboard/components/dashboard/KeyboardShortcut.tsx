@@ -1,8 +1,8 @@
 /** @file A visual representation of a keyboard shortcut. */
 import * as React from 'react'
 
-import type * as text from '@common/text'
 import * as detect from '@common/utilities/detect'
+import type * as text from '../../../../../common/src/text'
 
 import CommandKeyIcon from '#/assets/command_key.svg'
 import CtrlKeyIcon from '#/assets/ctrl_key.svg'

@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 
 import { ProjectState } from '@common/services/Backend'
-import type { TextId } from '@common/text'
+import type { TextId } from '../../../../common/src/text'
 
 import { AnimatedBackground } from '#/components/AnimatedBackground'
 import { Tab as AriaTab, TabList, type TabListProps } from '#/components/aria'

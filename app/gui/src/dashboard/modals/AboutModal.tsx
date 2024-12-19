@@ -1,7 +1,7 @@
 /** @file Modal for confirming delete of any type of asset. */
 import * as React from 'react'
 
-import type * as text from '@common/text'
+import type * as text from '../../../../common/src/text'
 
 import LogoIcon from '#/assets/enso_logo.svg'
 

@@ -1,6 +1,6 @@
 /** @file The tab bar for the dashboard page. */
 import type { ProjectId } from '@common/services/Backend'
-import type { TextId } from '@common/text'
+import type { TextId } from '../../../../../common/src/text'
 
 import DriveIcon from '#/assets/drive.svg'
 import NetworkIcon from '#/assets/network.svg'
