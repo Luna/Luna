@@ -53,6 +53,11 @@ jobs:
             ${{ runner.os }}-gui
 
       # Next Tasks are depend on Typecheck, because we build libraries at this stage
+      - name: ⚙️ Compile
+        id: compile
+        continue-on-error: true
+        run: pnpm run compile
+
       - name: 🧠 Typecheck
         id: typecheck
         continue-on-error: true
