@@ -262,11 +262,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       throw new Error(`Asset ${assetId} not found`)
     }
 
-    console.log('editAsset', {
-      asset,
-      rest,
-    })
-
     const updated = object.merge(asset, rest)
 
     addAsset(updated)
@@ -899,7 +894,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     )
 
     await patch(remoteBackendPaths.updateAssetPath(GLOB_ASSET_ID), (route, request) => {
-      console.log('updateAssetPath', request.url())
       const maybeId = request.url().match(/[/]assets[/]([^?]+)/)?.[1]
 
       if (!maybeId) throw new Error('updateAssetPath: Missing asset ID in path')
@@ -997,8 +991,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     await put(remoteBackendPaths.projectUpdatePath(GLOB_PROJECT_ID), async (route, request) => {
       const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
 
-      console.log('maybeId', maybeId)
-
       if (!maybeId) return route.fulfill({ status: HTTP_STATUS_NOT_FOUND })
 
       const projectId = backend.ProjectId(maybeId)
@@ -1009,19 +1001,9 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
 
       const newTitle = body.projectName
 
-      console.log('newTitle', {
-        newTitle,
-        maybeId,
-      })
-
       if (newTitle == null) {
         return route.fulfill({ status: HTTP_STATUS_BAD_REQUEST })
       }
-
-      console.log('editAsset', {
-        projectId,
-        newTitle,
-      })
 
       return route.fulfill({
         json: editAsset(projectId, { title: newTitle }),
