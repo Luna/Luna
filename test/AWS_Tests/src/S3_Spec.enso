@@ -261,6 +261,16 @@ add_specs suite_builder =
                 r3.should_be_a Vector
                 r3.map .name . should_contain object_name
 
+        group_builder.specify "should be able to list buckets by constructing a root object" <|
+            with_default_credentials <|
+                just_s3 = File.new "s3://"
+                just_s3.list . map .path . should_contain root.path
+
+        group_builder.specify "should be able to construct bucket reference by resolving a path from root" <|
+            with_default_credentials <|
+                just_s3 = File.new "s3://"
+                (just_s3 / bucket_name).path . should_equal root.path
+
         group_builder.specify "will fail if no credentials are provided and no Default credentials are available" pending=(if AWS_Credential.is_default_credential_available then "Default AWS credentials are defined in the environment and this test has no way of overriding them, so it is impossible to test this scenario in such environment.") <|
             root_without_credentials = S3_File.new "s3://"+bucket_name+"/"
             r = root_without_credentials.list
