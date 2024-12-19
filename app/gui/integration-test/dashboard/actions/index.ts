@@ -72,8 +72,7 @@ async function login({ page }: MockParams, email = 'email@example.com', password
 async function waitForLoaded(page: Page) {
   await page.waitForLoadState()
 
-  await expect(page.getByTestId('spinner')).toHaveCount(0)
-  await expect(page.getByTestId('loading-app-message')).not.toBeVisible({ timeout: 30_000 })
+  await expect(page.getByTestId('loading-screen')).toHaveCount(0, { timeout: 30_000 })
 }
 
 /** Wait for the dashboard to load. */

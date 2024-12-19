@@ -157,11 +157,11 @@ test("can't start an already running by another user", ({ page }) =>
   }).driveTable.withRows(async (rows) => {
     const row = rows.first()
     const startProjectButton = row.getByTestId('open-project')
+    const stopProjectButton = row.getByTestId('stop-project')
 
     await expect(row).toBeVisible()
     await expect(row.getByTestId('switch-to-project')).not.toBeVisible()
-    await expect(startProjectButton).toBeDisabled()
-    await expect(startProjectButton).toHaveAccessibleName(
-      getText('xIsUsingTheProject', 'Test User'),
-    )
+    await expect(startProjectButton).not.toBeVisible()
+    await expect(stopProjectButton).toBeDisabled()
+    await expect(stopProjectButton).toHaveAccessibleName(getText('xIsUsingTheProject', 'Test User'))
   }))
