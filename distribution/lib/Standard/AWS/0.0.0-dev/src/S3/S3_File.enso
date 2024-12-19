@@ -5,6 +5,7 @@ import Standard.Base.Enso_Cloud.Data_Link_Helpers
 import Standard.Base.Errors.Common.Syntax_Error
 import Standard.Base.Errors.File_Error.File_Error
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+import Standard.Base.Errors.Illegal_State.Illegal_State
 import Standard.Base.Errors.Unimplemented.Unimplemented
 import Standard.Base.Internal.Path_Helpers
 import Standard.Base.Runtime.Context
@@ -105,7 +106,7 @@ type S3_File
          value. The value is returned from this method.
     with_input_stream : Vector File_Access -> (Input_Stream -> Any ! File_Error) -> Any ! S3_Error | Illegal_Argument
     with_input_stream self (open_options : Vector) action = if self.is_directory_no_follow_links then Error.throw (Illegal_Argument.Error "S3 folders cannot be opened as a stream." self.uri) else
-        open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (self.is_data_link)
+        open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && self.is_data_link
         if open_as_data_link then Data_Link_Helpers.read_data_link_as_stream self open_options action else
             File_Access.ensure_only_allowed_options "with_input_stream" [File_Access.Read, Data_Link_Access.No_Follow] open_options <|
                 response_body = translate_file_errors self <| S3.get_object self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
@@ -178,7 +179,7 @@ type S3_File
          thrown as these are currently unsupported.
     list : Text -> Boolean -> Vector S3_File
     list self name_filter:Text="" recursive:Boolean=False =
-        if self.is_data_link then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else
+        if self.is_data_link then _s3_file_as_data_link self . list name_filter=name_filter recursive=recursive else
             check_name_filter action = if name_filter != "" then Unimplemented.throw "S3 listing with name filter is not currently implemented." else action
             check_recursion action = if recursive then Unimplemented.throw "S3 listing with recursion is not currently implemented." else action
             check_directory action = if self.is_directory_no_follow_links.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory." self.uri) else action
@@ -415,7 +416,7 @@ type S3_File
     ## PRIVATE
        An internal helper method that resolves a single part (subpath) of a path.
     resolve_single_part self part:Text -> Any =
-        if self.is_data_link then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
+        if self.is_data_link then _s3_file_as_data_link self . resolve_single_part part else
             S3_File.Value (self.s3_path.resolve part) self.credentials
 
     ## GROUP Standard.Base.Calculations
@@ -517,7 +518,7 @@ type S3_File
          thrown.
        - If the object is not accessible, an `S3_Error` is thrown.
     size : Integer
-    size self = if self.is_data_link then Data_Link_Helpers.interpret_data_link_target_as_file self . size else
+    size self = if self.is_data_link then _s3_file_as_data_link self . size else
         if self.is_directory then Error.throw (S3_Error.Error "size can only be called on files." self.uri) else
             content_length = translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . contentLength
             if content_length.is_nothing then Error.throw (S3_Error.Error "ContentLength header is missing." self.uri) else content_length
@@ -579,12 +580,12 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a directory.
     is_directory : Boolean
-    is_directory self = Data_Link_Helpers.is_directory self <|
+    is_directory self = Data_Link_Helpers.is_directory (_without_trailing_slash self) <|
         self.is_directory_no_follow_links
 
     ## PRIVATE
        Checks if this file is a directory, not following links.
-    private is_directory_no_follow_links self = self.s3_path.is_directory
+    private is_directory_no_follow_links self = self.is_data_link.not && self.s3_path.is_directory
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
@@ -606,12 +607,60 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a regular file.
     is_regular_file : Boolean
-    is_regular_file self = Data_Link_Helpers.is_regular_file self <|
+    is_regular_file self = Data_Link_Helpers.is_regular_file (_without_trailing_slash self) <|
         self.s3_path.is_directory.not
 
     ## PRIVATE
     is_data_link self -> Boolean =
-        Data_Link.is_data_link_name self.name
+        ## First we perform the cheap check of the necessary condition - if the
+           name contains the correct extension.
+        may_be_data_link = Data_Link.is_data_link_name self.name
+        if may_be_data_link.not then False else
+            ## If the file _may_ be a data link we now need to verify it further.
+               On S3 this is complicated because there is no direct notion of
+               directories, so a path `s3://Bucket/a.datalink/b` can mean both
+               that `a.datalink` is a data link file, or just that `b` is a
+               regular file inside a weirdly named 'directory' `a.datalink`.
+
+               To distinguish these scenarios we use the following heuristics:
+               - if the entity under the given path `s3://Bucket/a.datalink`
+                 exists, that means there is a file, so we treat it as a data link.
+               - if that entity does not exist, but there are entities under the
+                 path `s3://Bucket/a.datalink/`, we treat it as a directory.
+               - if that entity does not exist and there are no 'child entities'
+                 we determine the treatment based on the exact path containing a
+                 trailing slash character - if the path was
+                 `s3://Bucket/a.datalink`, that will be a data link (e.g. this
+                 may be passed as destination of a write method while creating a
+                 new link), but if it contains a slash
+                 (`s3://Bucket/a.datalink/`) that will be treated as a directory.
+
+               We acknowledge an edge case where both objects
+               `s3://Bucket/a.datalink` and `s3://Bucket/a.datalink/b` exist
+               (since the concept of directories in S3 is 'simulated' and there
+               is nothing preventing such aliasing). In that case, we treat the
+               first object (`s3://Bucket/a.datalink`) as a data link, thus
+               rendering `s3://Bucket/a.datalink/b` inaccessible. This is not
+               ideal, but we report a warning. Note that the user cannot create
+               such situation from Enso because once the entity starts to exist
+               (either as data link or as directory) it cannot be interpreted as
+               the other one. We can still encounter such scenarios in buckets
+               created externally.
+            exists_entity = exists_entity_direct (_without_trailing_slash self)
+            has_children = has_children_entities self
+            IO.println "potential data link "+self.path+", exists_entity: "+exists_entity.to_text+", has_children: "+has_children.to_text
+            clash = exists_entity && has_children
+            r = case clash of
+                True ->
+                    warning = Illegal_State.Error "The S3 path ["+self.path+"] is ambiguous - its key is both a data link object and a directory containing other objects. The data link will be used."
+                    Warning.attach warning True
+                False ->
+                    if exists_entity then True else
+                        if has_children then False else
+                            has_trailing_slash = self.s3_path.is_directory
+                            has_trailing_slash.not
+            IO.println "is_data_link? "+r.to_text
+            r
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
@@ -654,7 +703,7 @@ File_Format_Metadata.from (that : S3_File) = File_Format_Metadata.Value that.uri
 File_Like.from (that : S3_File) = File_Like.Value that
 
 ## PRIVATE
-Writable_File.from (that : S3_File) = if that.is_data_link then Data_Link_Helpers.interpret_data_link_as_writable_file that else
+Writable_File.from (that : S3_File) = if that.is_data_link then Data_Link_Helpers.interpret_data_link_as_writable_file (_without_trailing_slash that) else
     Writable_File.Value that S3_File_Write_Strategy.instance
 
 ## PRIVATE
@@ -667,3 +716,29 @@ translate_file_errors related_file result =
         s3_path = S3_Path.Value error.bucket error.key
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
+
+## PRIVATE
+   Checks if an object exists under the given key _directly_.
+   This is different from `exists` which will be true if any child objects exist
+   under a given directory key. This method, however, will only return true if
+   an object with the exact key exists and is not just an empty marker (as used
+   sometimes to mark directories).
+exists_entity_direct (f : S3_File) -> Boolean =
+    size = S3.raw_head f.s3_path.bucket f.s3_path.key f.credentials . contentLength
+    if size.is_error then False else size > 0
+
+## PRIVATE
+has_children_entities (f : S3_File) -> Boolean =
+    pair = S3.read_bucket f.s3_path.bucket f.s3_path.key f.credentials delimiter=S3_Path.delimiter max_count=1
+    if pair.is_error then False else
+        pair.first.is_empty.not || pair.second.is_empty.not
+
+## PRIVATE
+   Ensure the file has no trailing slash.
+   This is needed when treating a possible directory as a data link entity - to
+   find its S3 object we need to strip the trailing slash if it has one.
+private _without_trailing_slash (f : S3_File) -> S3_File =
+    S3_File.Value f.s3_path.without_trailing_slash f.credentials
+
+private _s3_file_as_data_link (f : S3_File) =
+    Data_Link_Helpers.interpret_data_link_target_as_file (_without_trailing_slash f)

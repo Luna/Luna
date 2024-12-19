@@ -96,6 +96,10 @@ type S3_Path
     ## PRIVATE
     bucket_root self -> S3_Path = S3_Path.Value self.bucket ""
 
+    ## PRIVATE
+    without_trailing_slash self -> S3_Path =
+        if self.key.ends_with S3_Path.delimiter then S3_Path.Value self.bucket (self.key.drop (..Last 1)) else self
+
 ## PRIVATE
 type Path_Entry
     ## PRIVATE

@@ -239,7 +239,10 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         
         # Or when the path is resolved from a string:
         crossing_path = setup.get.datalink_location.path+"/to-directory.datalink/file1.txt"
-        File.new crossing_path . read . should_equal setup.get.file1_content
+
+        # Some backends may need additional setup to resolve raw text paths.
+        setup.get.with_prepared_environment_for_file_new <|
+            File.new crossing_path . read . should_equal setup.get.file1_content
 
     group_builder.specify full_prefix+"calling size on a datalink checks the size of the target" pending=pending <|
         file_datalink = setup.get.file_datalink
@@ -256,7 +259,9 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
 
     # We want this to work, because it is possible for filesystems not aware of Enso to contain directories named with the `.datalink` suffix and Enso should still be able to cope with that.
     group_builder.specify full_prefix+"a directory with name 'just-a-directory.datalink' is still handled correctly" pending=pending <|
-        just_a_directory = setup.get.datalink_location / "just-a-directory.datalink"
+        # Some backends (e.g. S3) need the `/` suffix to distinguish a file from directory.
+        directory_name = "just-a-directory.datalink" + (if setup.get.needs_directory_suffix then "/" else "")
+        just_a_directory = setup.get.datalink_location / directory_name
         just_a_directory.create_directory . should_equal just_a_directory
         just_a_directory.is_directory . should_be_true
         just_a_directory.is_regular_file . should_be_false
@@ -265,7 +270,7 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         (just_a_directory / "file.txt").read . should_equal "test"
 
 type Symlink_Test_Setup
-    Value ~target_location ~datalink_location
+    Value ~target_location ~datalink_location needs_directory_suffix:Boolean with_prepared_environment_for_file_new:Function
 
     # The trailing slash is needed e.g. for the S3 backend to treat the path as directory.
     target_subdir self = self.target_location / "symlink-test-subdir/"
@@ -277,9 +282,11 @@ type Symlink_Test_Setup
         expected_size = 1234
         Vector.fill expected_size "a" . join
 
-    make ~target_location ~datalink_location create_data_link -> Lazy_Ref =
+    ## PRIVATE
+       Arguments: TODO
+    make ~target_location ~datalink_location create_data_link needs_directory_suffix:Boolean=False with_prepared_environment_for_file_new:Function|Nothing=Nothing -> Lazy_Ref =
         Lazy_Ref.Value <|
-            setup = Symlink_Test_Setup.Value target_location datalink_location
+            setup = Symlink_Test_Setup.Value target_location datalink_location needs_directory_suffix (with_prepared_environment_for_file_new.if_nothing (x->x))
             setup.target_subdir.create_directory . should_equal setup.target_subdir
             file1 = (setup.target_subdir / "file1.txt")
             file2 = (setup.target_subdir / "file2.txt")
