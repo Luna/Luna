@@ -95,6 +95,15 @@ object ProgramExecutionSupport {
     val onComputedValueCallback: Consumer[ExpressionValue] = { value =>
       if (callStack.isEmpty) {
         logger.log(Level.FINEST, s"ON_COMPUTED ${value.getExpressionId}")
+
+        if (VisualizationResult.isInterruptedException(value.getValue)) {
+          value.getValue match {
+            case e: AbstractTruffleException =>
+              // Bail out early. Any references to the value will return `No_Such_Method` exception
+              throw new ThreadInterruptedException(e);
+            case _ =>
+          }
+        }
         sendExpressionUpdate(contextId, executionFrame.syncState, value)
         sendVisualizationUpdates(
           contextId,
