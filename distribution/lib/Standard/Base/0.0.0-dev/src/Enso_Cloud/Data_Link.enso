@@ -4,6 +4,7 @@ import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Errors.Missing_Data_Link_Library
 import project.Error.Error
+import project.Errors.Common.No_Such_Conversion
 import project.Errors.File_Error.File_Error
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Errors.Illegal_State.Illegal_State
@@ -167,7 +168,7 @@ type Data_Link
     ## PRIVATE
        Checks if the given file represents a data link.
     is_data_link_file (file : Any) -> Boolean =
-        data_link_from_file = Panic.catch Type_Error (file : Data_Link_From_File) _->
+        data_link_from_file = Panic.catch No_Such_Conversion (Data_Link_From_File.from file) _->
             Panic.throw (Illegal_State.Error "The file system associated with file "+file.to_display_text+" does not have data link support.")
         data_link_from_file.is_data_link
 
