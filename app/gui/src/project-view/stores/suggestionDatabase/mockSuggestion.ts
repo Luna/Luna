@@ -3,7 +3,7 @@ import {
   type SuggestionEntryArgument,
 } from '@/stores/suggestionDatabase/entry'
 import { SuggestionUpdateProcessor } from '@/stores/suggestionDatabase/lsUpdate'
-import { ANY_TYPE } from '@/util/ensoTypes'
+import { ANY_TYPE_QN } from '@/util/ensoTypes'
 import { isQualifiedName, qnParent, qnSplit } from '@/util/qualifiedName'
 import * as lsTypes from 'ydoc-shared/languageServerTypes/suggestions'
 import { assert } from 'ydoc-shared/util/assert'
@@ -56,7 +56,7 @@ export function makeConstructor(fqn: string): SuggestionEntry {
 /** Mock a type method suggestion entry. */
 export function makeMethod(
   fqn: string,
-  returnType: string = ANY_TYPE,
+  returnType: string = ANY_TYPE_QN,
   isStatic: boolean = false,
 ): SuggestionEntry {
   assert(isQualifiedName(fqn))
@@ -77,12 +77,12 @@ export function makeMethod(
 }
 
 /** Mock a static type method suggestion entry. */
-export function makeStaticMethod(fqn: string, returnType: string = ANY_TYPE): SuggestionEntry {
+export function makeStaticMethod(fqn: string, returnType: string = ANY_TYPE_QN): SuggestionEntry {
   return makeMethod(fqn, returnType, true)
 }
 
 /** Mock a module method suggestion entry. */
-export function makeModuleMethod(fqn: string, returnType: string = ANY_TYPE): SuggestionEntry {
+export function makeModuleMethod(fqn: string, returnType: string = ANY_TYPE_QN): SuggestionEntry {
   assert(isQualifiedName(fqn))
   const [module, name] = qnSplit(fqn)
   assert(module != null)
@@ -102,7 +102,7 @@ export function makeModuleMethod(fqn: string, returnType: string = ANY_TYPE): Su
 export function makeFunction(
   definedIn: string,
   name: string,
-  returnType: string = ANY_TYPE,
+  returnType: string = ANY_TYPE_QN,
 ): SuggestionEntry {
   return makeEntry({
     type: 'function',
@@ -118,7 +118,7 @@ export function makeFunction(
 export function makeLocal(
   definedIn: string,
   name: string,
-  returnType: string = ANY_TYPE,
+  returnType: string = ANY_TYPE_QN,
 ): SuggestionEntry {
   return makeEntry({
     type: 'local',
@@ -130,7 +130,7 @@ export function makeLocal(
 }
 
 /** Mock a suggestion entry argument specification. */
-export function makeArgument(name: string, type: string = ANY_TYPE): SuggestionEntryArgument {
+export function makeArgument(name: string, type: string = ANY_TYPE_QN): SuggestionEntryArgument {
   return {
     name,
     reprType: type,

@@ -8,7 +8,7 @@ import {
 import { compareOpt } from '@/util/compare'
 import { isSome } from '@/util/data/opt'
 import { Range } from '@/util/data/range'
-import { ANY_TYPE } from '@/util/ensoTypes'
+import { ANY_TYPE_QN } from '@/util/ensoTypes'
 import { displayedIconOf } from '@/util/getIconName'
 import type { Icon } from '@/util/iconName'
 import type { QualifiedName } from '@/util/qualifiedName'
@@ -114,7 +114,7 @@ export function makeComponentList(db: SuggestionDb, filtering: Filtering): Compo
   function* matchSuggestions() {
     // All types are descendants of `Any`, so we can safely prepopulate it here.
     // This way, we will use it even when `selfArg` is not a valid qualified name.
-    const additionalSelfTypes: QualifiedName[] = [ANY_TYPE]
+    const additionalSelfTypes: QualifiedName[] = [ANY_TYPE_QN]
     if (filtering.selfArg?.type === 'known') {
       const maybeName = tryQualifiedName(filtering.selfArg.typename)
       if (maybeName.ok) populateAdditionalSelfTypes(db, additionalSelfTypes, maybeName.value)
@@ -138,7 +138,7 @@ export function makeComponentList(db: SuggestionDb, filtering: Filtering): Compo
 function populateAdditionalSelfTypes(db: SuggestionDb, list: QualifiedName[], name: QualifiedName) {
   let entry = db.getEntryByQualifiedName(name)
   // We don’t need to add `Any` to the list, because the caller already did that.
-  while (entry != null && entry.parentType != null && entry.parentType !== ANY_TYPE) {
+  while (entry != null && entry.parentType != null && entry.parentType !== ANY_TYPE_QN) {
     list.push(entry.parentType)
     entry = db.getEntryByQualifiedName(entry.parentType)
   }
