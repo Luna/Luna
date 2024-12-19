@@ -81,7 +81,7 @@ pub fn is_github_hosted() -> String {
 pub fn setup_bazel() -> Step {
     Step {
         name: Some("Setup bazel environment".into()),
-        uses: Some("bazel-contrib/setup-bazel@09f3a72".into()),
+        uses: Some("bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85".into()),
         with: Some(step::Argument::Other(BTreeMap::from([
             (
                 "output-base".to_string(),

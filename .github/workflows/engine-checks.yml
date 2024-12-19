@@ -22,7 +22,7 @@ jobs:
       - Linux
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -74,7 +74,7 @@ jobs:
       - Windows
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -126,7 +126,7 @@ jobs:
       - Linux
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -189,7 +189,7 @@ jobs:
       - Windows
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -252,7 +252,7 @@ jobs:
       - Linux
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -318,7 +318,7 @@ jobs:
       - Windows
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
@@ -384,7 +384,7 @@ jobs:
       - Linux
     steps:
       - name: Setup bazel environment
-        uses: bazel-contrib/setup-bazel@09f3a72
+        uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
           bazelisk-cache: true
           disk-cache: true
