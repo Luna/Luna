@@ -25,8 +25,7 @@ type S3_Path
                         bucket = (without_prefix.take first_slash_index)
                         if bucket == "" then Error.throw (Illegal_Argument.Error "Invalid S3 path: empty bucket name with key name.") else
                             key = (without_prefix.drop first_slash_index+1)
-                            normalized = Decomposed_S3_Path.parse key . normalize . key
-                            S3_Path.Value bucket normalized
+                            S3_Path.Value bucket key
 
     ## PRIVATE
     to_text self -> Text =
@@ -93,6 +92,9 @@ type S3_Path
        S3 does not treat `/` in any special way, it allows using any character as a
        path delimiter. In the future we could allow customizing it.
     delimiter -> Text = "/"
+
+    ## PRIVATE
+    bucket_root self -> S3_Path = S3_Path.Value self.bucket ""
 
 ## PRIVATE
 type Path_Entry

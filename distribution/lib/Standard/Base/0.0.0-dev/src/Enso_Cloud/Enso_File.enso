@@ -60,7 +60,8 @@ type Enso_File
     new : Text -> Enso_File ! Not_Found
     new (path : Text) =
         resolved_path = Enso_Path.parse path
-        resolved_path.if_not_error <| Enso_File.Value resolved_path
+        # Traverse the path to possibly pick up any data links.
+        resolved_path.path_segments.fold Enso_File.root .resolve_single_part
 
     ## PRIVATE
     private Value (enso_path : Enso_Path)
