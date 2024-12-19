@@ -121,18 +121,29 @@ add_specs suite_builder =
                 . insert a "A"
                 . insert b "B"
                 . insert c "C"
+                . insert downcast_ab "AB_"
+                . insert downcast_ba "BA_"
                 . insert downcast_a "A_"
                 . insert downcast_b "B_"
                 . insert downcast_c "C_"
                 . insert abc "Multi"
 
-            # dict . get a . should_equal "A" # sometimes it is A and sometimes it is Multi
-            # dict . get b . should_equal "B"
-            # dict . get c . should_equal "C" # sometimes it is C and sometimes it is Multi
-            dict . get downcast_a . should_equal "Multi"
-            dict . get downcast_b . should_equal "Multi"
-            dict . get downcast_c . should_equal "Multi"
+            # downcast single value is equal to the value
+            dict . get downcast_a . should_equal "A_"
+            dict . get downcast_b . should_equal "B_"
+            dict . get downcast_c . should_equal "C_"
+
+            # hence "A" ,"B", "C" were replaced
+            dict . get a . should_equal "A_"
+            dict . get b . should_equal "B_"
+            dict . get c . should_equal "C_"
+
+            # multi value must be equal to all its values
             dict . get abc . should_equal "Multi"
+
+            # order of types in multi value isn't important
+            dict . get downcast_ab . should_equal "BA_"
+            dict . get downcast_ba . should_equal "BA_"
 
 main filter=Nothing =
     suite = Test.build suite_builder->
