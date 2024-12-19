@@ -1787,8 +1787,8 @@ function AssetsTable(props: AssetsTableProps) {
         }
       }}
     >
-      <table className="rr-block isolate table-fixed border-collapse rounded-rows">
-        <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
+      <table className="isolate table-fixed border-collapse rounded-rows">
+        <thead className="sticky top-0 z-[11] bg-dashboard">{headerRow}</thead>
         <tbody ref={bodyRef}>
           {itemRows}
           <tr className="hidden h-row first:table-row">

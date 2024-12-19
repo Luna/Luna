@@ -38,12 +38,7 @@ export function useDirectoryIds(options: UseDirectoryIdsOptions) {
   const privateExpandedDirectoryIds = useExpandedDirectoryIds()
   const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
-<<<<<<<< HEAD:app/gui/src/dashboard/layouts/Drive/directoryIdsHooks.ts
   const [localRootDirectory] = useLocalRootDirectoryState()
-========
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
-
->>>>>>>> develop:app/gui/src/dashboard/layouts/Drive/directoryIdsHooks.tsx
   const rootDirectoryId = useMemo(() => {
     const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null
     const id =

@@ -125,10 +125,33 @@ const nodeMetadataKeys = allKeys<NodeMetadataFields>({
 export type NodeMetadata = FixedMapView<NodeMetadataFields & MetadataFields>
 export type MutableNodeMetadata = FixedMap<NodeMetadataFields & MetadataFields>
 
+export const astTypes = [
+  'App',
+  'Assignment',
+  'BodyBlock',
+  'ExpressionStatement',
+  'FunctionDef',
+  'Generic',
+  'Group',
+  'Ident',
+  'Import',
+  'Invalid',
+  'NegationApp',
+  'NumericLiteral',
+  'OprApp',
+  'PropertyAccess',
+  'TextLiteral',
+  'UnaryOprApp',
+  'AutoscopedIdentifier',
+  'Vector',
+  'Wildcard',
+] as const
+export type AstType = (typeof astTypes)[number]
+
 /** @internal */
 interface RawAstFields {
   id: AstId
-  type: string
+  type: AstType
   parent: AstId | undefined
   metadata: FixedMap<MetadataFields>
 }
@@ -227,7 +250,7 @@ export abstract class Ast {
   }
 
   /** TODO: Add docs */
-  typeName(): string {
+  get typeName(): AstType {
     return this.fields.get('type')
   }
 
@@ -2681,17 +2704,13 @@ export class BodyBlock extends BaseExpression {
 
   /** TODO: Add docs */
   *concreteChildren({ indent }: PrintContext): IterableIterator<RawConcreteChild> {
-    let linesIndent: string | undefined = undefined
     for (const line of this.fields.get('lines')) {
       yield preferUnspaced(line.newline)
       if (line.statement) {
         const whitespace: string =
-          linesIndent ??
           (line.statement.whitespace && line.statement.whitespace.length > (indent || '').length ?
             line.statement.whitespace
-          : undefined) ??
-          (indent != null ? indent + '    ' : '')
-        linesIndent = whitespace
+          : undefined) ?? (indent != null ? indent + '    ' : '')
         yield { whitespace, node: line.statement.node }
       }
     }
