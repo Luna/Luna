@@ -392,7 +392,12 @@ interface ExpressionUpdate {
 An information about the computed value.
 
 ```typescript
-type ExpressionUpdatePayload = Value | DataflowError | Panic | Pending | PendingInterrupted;
+type ExpressionUpdatePayload =
+  | Value
+  | DataflowError
+  | Panic
+  | Pending
+  | PendingInterrupted;
 
 /** Indicates that the expression was computed to a value. */
 interface Value {
@@ -428,7 +433,7 @@ interface Pending {
 
 /** Indicates that the computation of the expression has been interrupted
  * and will retried */
-interface PendingInterrupted { }
+interface PendingInterrupted {}
 
 /** Information about warnings associated with the value. */
 interface Warnings {
