@@ -111,7 +111,7 @@ type Data_Link
        Arguments:
        - file: The file to read the configuration from.
     read_raw_config (file : File_Like) -> Text =
-        if Data_Link.is_data_link file . not then
+        if Data_Link.is_data_link_file file . not then
             Panic.throw (Illegal_Argument.Error " Data_Link should only be used for reading config of Data Links, but "+file.to_display_text+" is not a Data Link.")
         options = [File_Access.Read, Data_Link_Access.No_Follow]
         bytes = file.underlying.with_input_stream options input_stream->
@@ -130,7 +130,7 @@ type Data_Link
          existing file. By default, the operation will fail if the file already
          exists.
     write_raw_config (file : File_Like) (raw_content : Text) (replace_existing : Boolean = False) =
-        if Data_Link.is_data_link file.underlying . not then
+        if Data_Link.is_data_link_file file.underlying . not then
             Panic.throw (Illegal_Argument.Error " Data_Link should only be used for writing config to Data Links, but "+file.to_display_text+" is not a Data Link.")
         exist_options = if replace_existing then [File_Access.Create, File_Access.Truncate_Existing] else [File_Access.Create_New]
         options = exist_options + [File_Access.Write, Data_Link_Access.No_Follow]
@@ -141,8 +141,13 @@ type Data_Link
         r.if_not_error file.underlying
 
     ## PRIVATE
-       Checks if the given file is a data-link.
-    is_data_link (file_metadata : File_Format_Metadata) -> Boolean =
+       Checks if the given entity is a data link, based on its metadata (content type and file name).
+
+       ! Files
+         For regular files, it is preferred to use the `is_data_link_file` method,
+         as it can rely on custom logic that may be more efficient and more
+         precise (e.g. correctly distinguishing links from directories with unexpected name suffix).
+    is_data_link_from_metadata (file_metadata : File_Format_Metadata) -> Boolean =
         content_type_matches = case file_metadata.interpret_content_type of
             content_type : Content_Type_Metadata ->
                 content_type.base_type == data_link_content_type
@@ -158,3 +163,27 @@ type Data_Link
                 extension : Text ->
                     extension == data_link_extension
                 Nothing -> False
+
+    ## PRIVATE
+       Checks if the given file represents a data link.
+    is_data_link_file (file : Any) -> Boolean =
+        data_link_from_file = Panic.catch Type_Error (file : Data_Link_From_File) _->
+            Panic.throw (Illegal_State.Error "The file system associated with file "+file.to_display_text+" does not have data link support.")
+        data_link_from_file.is_data_link
+
+    ## PRIVATE
+       Checks if the given file name ends with the `.datalink` suffix associated with data links.
+       This is a necessary but not sufficient condition for a file to be a data link,
+       various file systems may impose additional constraints.
+    is_data_link_name (name : Text) -> Boolean =
+        name.ends_with data_link_extension
+
+## PRIVATE
+   A type class that file systems can implement to indicate their custom logic for handling data links.
+   A type that implements this type class should provide `is_data_link` method.
+type Data_Link_From_File
+    Value underlying
+
+    ## PRIVATE
+       Checks if the given file is a data-link.
+    is_data_link self -> Boolean = self.underlying.is_data_link

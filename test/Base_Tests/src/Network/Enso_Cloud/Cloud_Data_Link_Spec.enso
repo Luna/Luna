@@ -254,6 +254,16 @@ add_symlink_spec group_builder prefix setup:Lazy_Ref pending=Nothing =
         dir_datalink.is_directory . should_be_true
         dir_datalink.is_regular_file . should_be_false
 
+    # We want this to work, because it is possible for filesystems not aware of Enso to contain directories named with the `.datalink` suffix and Enso should still be able to cope with that.
+    group_builder.specify full_prefix+"a directory with name 'just-a-directory.datalink' is still handled correctly" pending=pending <|
+        just_a_directory = setup.get.datalink_location / "just-a-directory.datalink"
+        just_a_directory.create_directory . should_equal just_a_directory
+        just_a_directory.is_directory . should_be_true
+        just_a_directory.is_regular_file . should_be_false
+
+        "test".write (just_a_directory / "file.txt") . should_equal (just_a_directory / "file.txt")
+        (just_a_directory / "file.txt").read . should_equal "test"
+
 type Symlink_Test_Setup
     Value ~target_location ~datalink_location
 

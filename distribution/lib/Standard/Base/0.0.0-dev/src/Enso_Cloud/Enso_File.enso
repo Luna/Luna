@@ -8,6 +8,7 @@ import project.Data.Time.Date_Time.Date_Time
 import project.Data.Time.Date_Time_Formatter.Date_Time_Formatter
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Data_Link.Data_Link
+import project.Enso_Cloud.Data_Link.Data_Link_From_File
 import project.Enso_Cloud.Data_Link_Helpers
 import project.Enso_Cloud.Enso_User.Enso_User
 import project.Enso_Cloud.Errors.Enso_Cloud_Error
@@ -128,7 +129,7 @@ type Enso_File
          If the file is a data link that points to a file, the size of the 
          target file will be returned.
     size : Integer
-    size self -> Integer = if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . size else
+    size self -> Integer = if Data_Link.is_data_link_file self then Data_Link_Helpers.interpret_data_link_target_as_file self . size else
         asset = Existing_Enso_Asset.get_asset_reference_for self
         if asset.asset_type != Enso_Asset_Type.File then Error.throw (Illegal_Argument.Error "`size` can only be queried for files.") else
             metadata = asset.get_file_description |> get_required_field "metadata"
@@ -300,6 +301,15 @@ type Enso_File
     is_regular_file self = Data_Link_Helpers.is_regular_file self <|
         Existing_Enso_Asset.get_asset_reference_for self . asset_type == Enso_Asset_Type.File
 
+    ## PRIVATE
+    is_data_link self -> Boolean =
+        ## Checking the `asset_type` requires actually fetching the metadata from the cloud.
+           To avoid performing requests for every part of a path that we are resolving, we rely on the assumption that
+           every data link has a name ending with the `.datalink` extension. Thus we perform the costly check only if
+           we find a good potential candidate for the data link.
+        may_be_data_link = Data_Link.is_data_link_name self.name
+        may_be_data_link && (self.asset_type == Enso_Asset_Type.Data_Link)
+
     ## GROUP Metadata
        ICON folder
        Finds the parent Enso_File for this file.
@@ -340,7 +350,7 @@ type Enso_File
     with_output_stream : Vector File_Access -> (Output_Stream -> Any ! File_Error) -> Any ! File_Error
     with_output_stream self (open_options : Vector) action =
         Context.Output.if_enabled disabled_message="As writing is disabled, cannot write to a file. Press the Write button ▶ to perform the operation." panic=False <|
-            is_data_link = Data_Link.is_data_link self
+            is_data_link = Data_Link.is_data_link_file self
             open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && is_data_link
             if open_as_data_link then Data_Link_Helpers.write_data_link_as_stream self open_options action else
                 if open_options.contains File_Access.Append then Unimplemented.throw "Enso_File currently does not support appending to a file. Instead you may read it, modify and then write the new contents." else
@@ -370,7 +380,7 @@ type Enso_File
        if it returns exceptionally).
     with_input_stream : Vector File_Access -> (Input_Stream -> Any ! File_Error) -> Any ! File_Error | Illegal_Argument
     with_input_stream self (open_options : Vector) action =
-        open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (Data_Link.is_data_link self)
+        open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && (Data_Link.is_data_link_file self)
         if open_as_data_link then Data_Link_Helpers.read_data_link_as_stream self open_options action else
             File_Access.ensure_only_allowed_options "with_input_stream" [File_Access.Read, Data_Link_Access.No_Follow] open_options <|
                 asset = Existing_Enso_Asset.get_asset_reference_for self
@@ -464,7 +474,7 @@ type Enso_File
        Lists assets contained in this directory.
     list : Text -> Boolean -> Vector Enso_File
     list self (name_filter:Text="") recursive:Boolean=False =
-        if Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else
+        if Data_Link.is_data_link_file self then Data_Link_Helpers.interpret_data_link_target_as_file self . list name_filter=name_filter recursive=recursive else
             if name_filter != "" then Error.throw (Illegal_Argument.Error "Filtering by name is currently not supported in Enso_File.") else
                 if recursive then Error.throw (Illegal_Argument.Error "Recursive listing is currently not supported in Enso_File.") else
                     if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory.") else
@@ -565,12 +575,7 @@ type Enso_File
        An internal helper method that resolves a single part (subpath) of a path,
        used by `Path_Resolver`.
     resolve_single_part self part:Text -> Any =
-        ## `is_data_link` checks the `asset_type` which requires actually fetching the metadata from the cloud.
-           To avoid performing requests for every part of a path that we are resolving, we rely on the assumption that
-           every data link has a name ending with the `.datalink` extension. Thus we perform the costly check only if
-           we find a good potential candidate for the data link.
-        may_be_data_link = self.name.ends_with data_link_extension
-        if may_be_data_link && Data_Link.is_data_link self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
+        if Data_Link.is_data_link_file self then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
             Enso_File.Value (self.enso_path.resolve part)
 
     ## PRIVATE
@@ -624,5 +629,8 @@ File_Format_Metadata.from (that:Enso_File) =
 File_Like.from (that : Enso_File) = File_Like.Value that
 
 ## PRIVATE
-Writable_File.from (that : Enso_File) = if Data_Link.is_data_link that then Data_Link_Helpers.interpret_data_link_as_writable_file that else
+Writable_File.from (that : Enso_File) = if Data_Link.is_data_link_file that then Data_Link_Helpers.interpret_data_link_as_writable_file that else
     Writable_File.Value that Enso_File_Write_Strategy.instance
+
+## PRIVATE
+Data_Link_From_File.from (that : Enso_File) = Data_Link_From_File.Value that
