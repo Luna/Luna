@@ -1,7 +1,7 @@
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
 import { transpose } from '@common/utilities/data/array'
-import * as iter from '@common/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import Papa from 'papaparse'
 import { computed } from 'vue'
 import { DEFAULT_COLUMN_PREFIX, NOTHING_NAME } from './tableInputArgument'

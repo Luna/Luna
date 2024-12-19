@@ -1,6 +1,6 @@
 import { assertDefined, assertEqual } from '@/util/assert'
 import type { NonEmptyArray } from '@/util/data/array'
-import * as iter from '@common/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 
 /**
  * Map that supports Object-based keys.

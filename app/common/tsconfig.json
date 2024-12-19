@@ -6,11 +6,5 @@
     "checkJs": true,
     "skipLibCheck": false
   },
-  "include": [
-    "./src/",
-    "./src/text/english.json",
-    "../types/",
-    "../gui/src/common/services/tanstackQueryClient.ts",
-    "../gui/src/common/services/backendQuery.ts"
-  ]
+  "include": ["./src/", "../types/"]
 }

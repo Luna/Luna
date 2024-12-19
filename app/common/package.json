@@ -8,10 +8,15 @@
     "./src/config.json": "./src/config.json",
     "./src/accessToken": "./src/accessToken.ts",
     "./src/appConfig": "./src/appConfig.js",
+    "./src/iter": "./src/iter.ts",
     "./src/buildUtils": "./src/buildUtils.js",
+    "./src/string": "./src/string.ts",
     "./src/types": "./src/types.d.ts"
   },
   "scripts": {
     "lint": "eslint ./src --cache --max-warnings=0"
+  },
+  "dependencies": {
+    "lib0": "^0.2.85"
   }
 }

@@ -1,4 +1,4 @@
-import * as iter from '@common/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import diff from 'fast-diff'
 import { type DeepReadonly } from '../../ast'
 

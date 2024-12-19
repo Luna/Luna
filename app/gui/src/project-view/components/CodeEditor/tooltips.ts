@@ -13,8 +13,8 @@ import {
   tooltips,
   type TooltipView,
 } from '@codemirror/view'
+import * as iter from '@common/utilities/data/iter'
 import { type SyntaxNode } from '@lezer/common'
-import * as iter from 'enso-common/src/utilities/data/iter'
 import { h, markRaw, toValue } from 'vue'
 import { syntaxNodeAncestors } from 'ydoc-shared/util/lezer'
 

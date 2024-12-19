@@ -1,5 +1,5 @@
 import { createContextStore } from '@/providers'
-import * as iter from '@common/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import {
   computed,
   onUnmounted,

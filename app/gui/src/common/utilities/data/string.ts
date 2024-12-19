@@ -1,7 +1,5 @@
 /** @file Utilities for manipulating strings. */
-
-/** See http://www.unicode.org/reports/tr18/#Line_Boundaries */
-export const LINE_BOUNDARIES = /\r\n|[\n\v\f\r\x85\u2028\u2029]/g
+export * from 'enso-common/src/string'
 
 /** Return the given string, but with the first letter uppercased. */
 export function capitalizeFirst(string: string) {

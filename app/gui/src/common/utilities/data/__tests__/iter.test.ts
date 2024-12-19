@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import * as iter from '../iter'
+import * as iter from 'enso-common/src/iter'
 
 interface IteratorCase<T> {
   iterable: Iterable<T>

@@ -27,8 +27,8 @@ import { andThen, Err, mapOk, Ok, unwrap, type Result } from '@/util/data/result
 import { Vec2 } from '@/util/data/vec2'
 import { normalizeQualifiedName, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
-import * as iter from '@common/utilities/data/iter'
 import { computedAsync } from '@vueuse/core'
+import * as iter from 'enso-common/src/iter'
 import { map, set } from 'lib0'
 import {
   computed,

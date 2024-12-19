@@ -2,7 +2,7 @@ import type { NodeCreationOptions } from '@/composables/nodeCreation'
 import type { Node } from '@/stores/graph'
 import { nodeDocumentationText } from '@/util/ast/node'
 import { Vec2 } from '@/util/data/vec2'
-import * as iter from '@common/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import type { NodeMetadataFields } from 'ydoc-shared/ast'
 import { parseTsvData, tableToEnsoExpression } from './widgets/WidgetTableEditor/tableParsing'
 
