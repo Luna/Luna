@@ -1,15 +1,17 @@
 ---
 layout: developer-doc
-title: Errors
+title: Errors & Panics
 category: types
 tags: [types, errors]
 order: 12
 ---
 
-# Errors
+# Errors & Panics
 
-Enso supports two notions of errors. One is the standard exceptions model, while
-the other is a theory of _broken values_ that propagate through computations.
+Enso supports two notions of errors. One is the standard exceptions model (built
+around `Panic.throw` and related methods), while the other is a theory of
+_broken values_ that propagate through computations (represented by `Error` and
+created by `Error.throw` method).
 
 > [!WARNING] The actionables for this section are:
 >
@@ -19,18 +21,16 @@ the other is a theory of _broken values_ that propagate through computations.
 
 <!-- MarkdownTOC levels="2,3" autolink="true" -->
 
-- [Async Exceptions](#async-exceptions)
+- [Exceptions/Panics](#errors--panics)
 - [Broken Values](#broken-values)
 
 <!-- /MarkdownTOC -->
 
-## Async Exceptions
+## Exceptions/Panics
 
 > [!WARNING] The actionables for this section are:
 >
-> - why is this called _"asynchronous"_ when the `Panic` is raised
->   synchronously?
-> - Formalise the model of async exceptions as implemented.
+> - Formalise the model of `Panic.throw` as implemented.
 
 ## Broken Values
 
