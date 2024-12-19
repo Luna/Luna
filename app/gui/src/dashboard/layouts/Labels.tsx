@@ -94,8 +94,10 @@ export default function Labels(props: LabelsProps) {
                             count += 1
                           }
                         }
+                        console.log(count, selectedAssets.length)
                         setLabelsDragPayload({
-                          typeWhenAppliedToSelection: count * 2 < selectedAssets.length ? 'add' : 'remove',
+                          typeWhenAppliedToSelection:
+                            count * 2 < selectedAssets.length ? 'add' : 'remove',
                           labels: payloadLabels,
                         })
                         setModal(
