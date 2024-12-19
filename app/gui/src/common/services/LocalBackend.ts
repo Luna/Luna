@@ -140,7 +140,7 @@ export function extractTypeAndId<Id extends AssetId>(id: Id): AssetTypeAndId {
  * Class for sending requests to the Project Manager API endpoints.
  * This is used instead of the cloud backend API when managing local projects from the dashboard.
  */
-export default class LocalBackend extends Backend {
+export class LocalBackend extends Backend {
   readonly type = BackendType.local
   /** All files that have been uploaded to the Project Manager. */
   uploadedFiles: Map<string, UploadedLargeAsset> = new Map()

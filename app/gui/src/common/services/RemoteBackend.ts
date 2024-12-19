@@ -226,7 +226,7 @@ interface RemoteBackendPostOptions {
 }
 
 /** Class for sending requests to the Cloud backend API endpoints. */
-export default class RemoteBackend extends Backend {
+export class RemoteBackend extends Backend {
   readonly type = BackendType.remote
   private user: Mutable<User> | null = null
 
@@ -268,7 +268,6 @@ export default class RemoteBackend extends Backend {
         response == null || response.headers.get('Content-Type') !== 'application/json' ?
           { message: 'unknown error' }
           // This is SAFE only when the response has been confirmed to have an erroring status code.
-          // eslint-disable-next-line no-restricted-syntax
         : ((await response.json()) as RemoteBackendError)
       const message = `${this.getText(textId, ...replacements)}: ${error.message}.`
       this.logger.error(message)
@@ -436,7 +435,7 @@ export default class RemoteBackend extends Backend {
   /** Upload a new profile picture for the current user. */
   override async uploadUserPicture(params: UploadPictureRequestParams, file: Blob): Promise<User> {
     const paramsString = new URLSearchParams({
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
+      // eslint-disable-next-line camelcase
       ...(params.fileName != null ? { file_name: params.fileName } : {}),
     }).toString()
     const path = `${UPLOAD_USER_PICTURE_PATH}?${paramsString}`
@@ -504,7 +503,7 @@ export default class RemoteBackend extends Backend {
     file: Blob,
   ): Promise<OrganizationInfo> {
     const paramsString = new URLSearchParams({
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
+      // eslint-disable-next-line camelcase
       ...(params.fileName != null ? { file_name: params.fileName } : {}),
     }).toString()
     const path = `${UPLOAD_ORGANIZATION_PICTURE_PATH}?${paramsString}`
@@ -594,7 +593,6 @@ export default class RemoteBackend extends Backend {
       const ret = (await response.json()).assets
         .map((asset) =>
           merge(asset, {
-            // eslint-disable-next-line no-restricted-syntax
             type: asset.id.match(/^(.+?)-/)?.[1] as AssetType,
             // `Users` and `Teams` folders are virtual, so their children incorrectly have
             // the organization root id as their parent id.

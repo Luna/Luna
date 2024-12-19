@@ -109,9 +109,9 @@ import { APP_BASE_URL } from '#/utilities/appBaseUrl'
 import { isElementPartOfMonaco, isElementTextInput } from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
-import LocalBackend from '@common/services/LocalBackend'
+import { LocalBackend } from '@common/services/LocalBackend'
 import ProjectManager, * as projectManager from '@common/services/ProjectManager'
-import RemoteBackend from '@common/services/RemoteBackend'
+import { RemoteBackend } from '@common/services/RemoteBackend'
 
 declare module '#/utilities/LocalStorage' {
   /** */
