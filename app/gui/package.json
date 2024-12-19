@@ -166,7 +166,7 @@
     "@types/d3": "^7.4.0",
     "@types/hash-sum": "^1.0.0",
     "@types/jsdom": "^21.1.1",
-    "@types/mapbox-gl": "^2.7.13",
+    "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^22.9.0",
     "@types/papaparse": "^5.3.15",
     "@types/react": "^18.0.27",
