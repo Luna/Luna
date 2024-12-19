@@ -68,7 +68,7 @@ async function graalSignables(resourcesDir: string): Promise<Signable[]> {
 /** Parts of the Enso Engine distribution that need to be signed by us in an extra step. */
 async function ensoPackageSignables(resourcesDir: string): Promise<Signable[]> {
   // Archives, and their content that need to be signed in an extra step. If a new archive is
-  // added to the engine dependencies this also needs to be added here.` If an archive is not added
+  // added to the engine dependencies this also needs to be added here. If an archive is not added
   // here, it will show up as a failure to notarise the IDE. The offending archive will be named
   // in the error message provided by Apple and can then be added here.
   const engineDir = `${resourcesDir}/enso/dist/*`
