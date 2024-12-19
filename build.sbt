@@ -4483,6 +4483,7 @@ def stdLibComponentRoot(name: String): File =
 val `base-polyglot-root`  = stdLibComponentRoot("Base") / "polyglot" / "java"
 val `table-polyglot-root` = stdLibComponentRoot("Table") / "polyglot" / "java"
 val `image-polyglot-root` = stdLibComponentRoot("Image") / "polyglot" / "java"
+val `image-native-libs`   = stdLibComponentRoot("Image") / "polyglot" / "lib"
 val `google-api-polyglot-root` =
   stdLibComponentRoot("Google_Api") / "polyglot" / "java"
 val `database-polyglot-root` =
@@ -4650,6 +4651,10 @@ lazy val `std-table` = project
   )
   .dependsOn(`std-base` % "provided")
 
+lazy val extractNativeLibs = taskKey[Unit](
+  "Helper task to extract native libraries from OpenCV JAR"
+)
+
 lazy val `std-image` = project
   .in(file("std-bits") / "image")
   .settings(
@@ -4665,8 +4670,11 @@ lazy val `std-image` = project
       "org.netbeans.api"     % "org-openide-util-lookup" % netbeansApiVersion        % "provided",
       "org.openpnp"          % "opencv"                  % opencvVersion
     ),
-    Compile / packageBin := Def.task {
-      val result = (Compile / packageBin).value
+    // Extract native libraries from opencv.jar, and put them under
+    // Standard/Image/polyglot/lib directory. The minimized opencv.jar will
+    // be put under Standard/Image/polyglot/java directory.
+    extractNativeLibs := {
+      // Ensure dependencies are first copied.
       val _ = StdBits
         .copyDependencies(
           `image-polyglot-root`,
@@ -4675,6 +4683,44 @@ lazy val `std-image` = project
           ignoreDependency   = Some("org.openpnp" % "opencv" % opencvVersion)
         )
         .value
+      val extractPrefix = "nu/pattern/opencv"
+      def renameFunc(entryName: String): Option[String] = {
+        val strippedEntryName = entryName.substring(extractPrefix.length + 1)
+        if (
+          strippedEntryName.contains("linux/ARM") ||
+          strippedEntryName.contains("linux/x86_32") ||
+          strippedEntryName.contains("README.md")
+        ) {
+          None
+        } else {
+          Some(strippedEntryName.replace("osx", "macos"))
+        }
+      }
+      val logger = streams.value.log
+      val openCvJar = JPMSUtils
+        .filterModulesFromUpdate(
+          update.value,
+          Seq("org.openpnp" % "opencv" % opencvVersion),
+          logger,
+          moduleName.value,
+          scalaBinaryVersion.value,
+          shouldContainAll = true
+        )
+        .head
+      val outputJarPath     = (`image-polyglot-root` / "opencv.jar").toPath
+      val extractedFilesDir = `image-native-libs`.toPath
+      JARUtils.extractFilesFromJar(
+        openCvJar.toPath,
+        extractPrefix,
+        outputJarPath,
+        extractedFilesDir,
+        renameFunc,
+        logger
+      )
+    },
+    Compile / packageBin := Def.task {
+      val result = (Compile / packageBin).value
+      val _      = extractNativeLibs.value
       result
     }.value
   )
