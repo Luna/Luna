@@ -1,15 +1,13 @@
 /** @file The input for viewing and changing the organization's profile picture. */
-import type { ChangeEvent } from 'react'
-
 import type { Backend } from '@common/services/Backend'
 
 import { useMutation } from '@tanstack/react-query'
 
 import DefaultUserIcon from '#/assets/default_user.svg'
-import { Input, Label, Text } from '#/components/aria'
+import { Label, Text } from '#/components/aria'
+import { Form, HiddenFile } from '#/components/AriaComponents'
 import FocusRing from '#/components/styled/FocusRing'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useText } from '#/providers/TextProvider'
 
 /** Props for a {@link OrganizationProfilePictureInput}. */
@@ -22,28 +20,22 @@ export default function OrganizationProfilePictureInput(
   props: OrganizationProfilePictureInputProps,
 ) {
   const { backend } = props
-  const toastAndLog = useToastAndLog()
   const { getText } = useText()
   const { data: organization } = useBackendQuery(backend, 'getOrganization', [])
 
   const uploadOrganizationPicture = useMutation(
     backendMutationOptions(backend, 'uploadOrganizationPicture'),
-  ).mutate
+  )
 
-  const doUploadOrganizationPicture = (event: ChangeEvent<HTMLInputElement>) => {
-    const image = event.target.files?.[0]
-    if (image == null) {
-      toastAndLog('noNewProfilePictureError')
-    } else {
-      uploadOrganizationPicture([{ fileName: image.name }, image])
-    }
-    // Reset selected files, otherwise the file input will do nothing if the same file is
-    // selected again. While technically not undesired behavior, it is unintuitive for the user.
-    event.target.value = ''
-  }
+  const form = Form.useForm({
+    schema: (z) => z.object({ picture: z.instanceof(File) }),
+    onSubmit: async ({ picture }) => {
+      await uploadOrganizationPicture.mutateAsync([{ fileName: picture.name }, picture])
+    },
+  })
 
   return (
-    <>
+    <Form form={form}>
       <FocusRing within>
         <Label
           data-testid="organization-profile-picture-input"
@@ -53,17 +45,12 @@ export default function OrganizationProfilePictureInput(
             src={organization?.picture ?? DefaultUserIcon}
             className="pointer-events-none h-full w-full"
           />
-          <Input
-            type="file"
-            className="focus-child w-0"
-            accept="image/*"
-            onChange={doUploadOrganizationPicture}
-          />
+          <HiddenFile autoSubmit form={form} name="picture" />
         </Label>
       </FocusRing>
       <Text className="w-profile-picture-caption py-profile-picture-caption-y">
         {getText('organizationProfilePictureWarning')}
       </Text>
-    </>
+    </Form>
   )
 }
