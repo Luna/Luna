@@ -116,8 +116,8 @@ jobs:
       fail-fast: false
       max-parallel: 24
       matrix:
-        shardIndex: [1, 2, 3, 4, 5, 6]
-        shardTotal: [6]
+        shardIndex: [1, 2, 3, 4]
+        shardTotal: [4]
 
     steps:
       - uses: actions/checkout@v4
@@ -143,6 +143,10 @@ jobs:
       - name: 📺 Install Playwright Browsers
         working-directory: app/gui
         run: pnpm run playwright:install
+        
+      - name: ⚙️ Compile
+        id: compile
+        run: pnpm run compile
 
       - name: 🎭 Playwright Tests
         working-directory: app/gui
