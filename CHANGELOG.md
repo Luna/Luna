@@ -1,5 +1,15 @@
 # Next Next Release
 
+#### Enso IDE
+
+- [ENSO_IDE_MAPBOX_API_TOKEN environment variable should be provided to enable
+  GeoMap visualization][11889].
+- [Round ‘Add component’ button under the component menu replaced by a small
+  button protruding from the output port.][11836].
+
+[11889]: https://github.com/enso-org/enso/pull/11889
+[11836]: https://github.com/enso-org/enso/pull/11836
+
 #### Enso Language & Runtime
 
 - [Propagate Error ASAP instead of ignoring it][11777].
@@ -124,6 +134,7 @@
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [Added `add_group_number` to the in-memory database.[11818]
 - [The reload button clears the HTTP cache.][11673]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
@@ -133,6 +144,7 @@
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
 [11577]: https://github.com/enso-org/enso/pull/11577
+[11818]: https://github.com/enso-org/enso/pull/11818
 [11673]: https://github.com/enso-org/enso/pull/11673
 
 #### Enso Language & Runtime
