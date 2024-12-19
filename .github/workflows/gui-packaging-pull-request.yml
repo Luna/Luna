@@ -38,7 +38,7 @@ jobs:
     secrets: inherit
 
   required-checks:
-    name: Required Checks
+    name: GUI Packaging Required Checks
     runs-on: ubuntu-latest
     needs: [gui-packaging]
     if: always()
