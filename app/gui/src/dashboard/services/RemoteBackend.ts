@@ -1218,7 +1218,6 @@ export default class RemoteBackend extends Backend {
     // Prevent events from being logged in dev mode, since we are often using production environment
     // and are polluting real logs.
     if (detect.IS_DEV_MODE) {
-      // eslint-disable-next-line no-restricted-syntax
       return
     }
 
