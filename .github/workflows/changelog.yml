@@ -16,12 +16,18 @@ jobs:
     runs-on:
       - X64
     steps:
-      - name: Setup bazel environment
+      - if: runner.os != 'Windows'
+        name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@0.9.0
         with:
           bazelisk-cache: true
           disk-cache: true
           repository-cache: true
+      - if: runner.os == 'Windows'
+        name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelrc: startup --output_base=c:/_bazel
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0

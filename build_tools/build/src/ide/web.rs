@@ -58,6 +58,12 @@ pub mod env {
         /// The Sentry DSN for error reporting in this environment.
         ENSO_IDE_SENTRY_DSN, String;
 
+        /// The Sentry organization to push the source maps to.
+        ENSO_IDE_SENTRY_ORGANIZATION, String;
+
+        /// The Sentry project to push the source maps to.
+        ENSO_IDE_SENTRY_PROJECT, String;
+
         /// Stripe's publishable key for client-side operations.
         ENSO_IDE_STRIPE_KEY, String;
 

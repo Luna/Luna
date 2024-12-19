@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import react from '@vitejs/plugin-react'
 import vue from '@vitejs/plugin-vue'
 import { COOP_COEP_CORP_HEADERS } from 'enso-common'
@@ -54,6 +55,18 @@ export default defineConfig({
       },
     }),
     await projectManagerShim(),
+    ...((
+      process.env.SENTRY_AUTH_TOKEN != null &&
+      process.env.ENSO_IDE_SENTRY_ORGANIZATION != null &&
+      process.env.ENSO_IDE_SENTRY_PROJECT != null
+    ) ?
+      [
+        sentryVitePlugin({
+          org: process.env.ENSO_IDE_SENTRY_ORGANIZATION,
+          project: process.env.ENSO_IDE_SENTRY_PROJECT,
+        }),
+      ]
+    : []),
   ],
   optimizeDeps: {
     entries: fileURLToPath(new URL('./index.html', import.meta.url)),
@@ -92,6 +105,7 @@ export default defineConfig({
   build: {
     // dashboard chunk size is larger than the default warning limit
     chunkSizeWarningLimit: 700,
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks: {

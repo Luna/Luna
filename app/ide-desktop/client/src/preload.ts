@@ -30,6 +30,7 @@ const NAVIGATION_API_KEY = 'navigationApi'
 const MENU_API_KEY = 'menuApi'
 const SYSTEM_API_KEY = 'systemApi'
 const VERSION_INFO_KEY = 'versionInfo'
+const MAPBOX_API_TOKEN_KEY = 'mapBoxApiToken'
 
 // =========================
 // === exposeInMainWorld ===
@@ -204,3 +205,9 @@ exposeInMainWorld(SYSTEM_API_KEY, {
 // ====================
 
 exposeInMainWorld(VERSION_INFO_KEY, debug.VERSION_INFO)
+
+// ==================
+// === MapBox API ===
+// ==================
+
+exposeInMainWorld(MAPBOX_API_TOKEN_KEY, () => process.env.ENSO_IDE_MAPBOX_API_TOKEN || '')
