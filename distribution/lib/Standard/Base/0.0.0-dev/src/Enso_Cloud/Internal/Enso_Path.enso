@@ -13,7 +13,6 @@ import project.Internal.Ordering_Helpers.Default_Comparator
 import project.Internal.Path_Helpers
 import project.Nothing.Nothing
 from project.Data.Boolean import Boolean, False, True
-from project.Data.Ordering import comparable_via
 from project.Data.Text.Extensions import all
 
 ## PRIVATE
@@ -77,11 +76,9 @@ normalize segments =
            that points to the user home and it should be correctly normalized, but requires numerous passes to do so.
         @Tail_Call normalize new_segments
 
-type Enso_File_Comparator
-    compare x y =
-        Ordering.compare x.path_segments y.path_segments
+type Enso_Path_Comparator
+    compare x y = Ordering.compare x.path_segments y.path_segments
 
     hash x = Default_Comparator.hash_builtin x
 
-#Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator
-Comparable.from that:Enso_File = comparable_via that .path_segments
+Comparable.from that:Enso_Path = Comparable.new that Enso_Path_Comparator

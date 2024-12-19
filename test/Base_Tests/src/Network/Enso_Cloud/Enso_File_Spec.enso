@@ -44,7 +44,8 @@ add_specs suite_builder setup:Cloud_Tests_Setup = suite_builder.group "Enso Clou
     group_builder.specify "list should sort its output" <|
         r = Enso_File.home.list
         r.should_be_a Vector
-        r . should_equal r.sort
+        r . should_equal (r.sort on=.path)
+        r . should_equal (r.sort on=.enso_path)
 
     group_builder.specify "should allow to create and delete a directory" <|
         my_name = "my_test_dir-" + (Random.uuid.take 5)

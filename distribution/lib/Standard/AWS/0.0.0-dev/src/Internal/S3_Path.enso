@@ -2,7 +2,6 @@ from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Internal.Ordering_Helpers.Default_Comparator
 import Standard.Base.Internal.Path_Helpers
-from Standard.Base.Data.Ordering import comparable_via
 
 import project.Errors.S3_Error
 import project.S3.S3
@@ -160,10 +159,8 @@ type Decomposed_S3_Path
             Decomposed_S3_Path.Value new_parts self.go_to_root
 
 S3_Path_Comparator =
-    compare x y =
-        Ordering.compare [x.bucket, x.key] [y.bucket, y.key]
+    compare x y = Ordering.compare [x.bucket, x.key] [y.bucket, y.key]
 
     hash x = Default_Comparator.hash_builtin x
 
-#Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
-Comparable.from that:S3_Path = comparable_via (p-> [p.bucket, p.key])
+Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator

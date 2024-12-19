@@ -193,14 +193,5 @@ type Ordering
     from_sign sign = if sign == 0 then Ordering.Equal else
         if sign > 0 then Ordering.Greater else Ordering.Less
 
-type Via_Comparator
-    Value f
-
-    compare self x y = Ordering.compare (self.f x) (self.f y)
-
-    hash x = Default_Comparator.hash_builtin x
-
-comparable_via that f = Comparable.new that (Via_Comparator.Value f)
-
 ## PRIVATE
 Comparable.from (that:Ordering) = Comparable.new that Ordering_Comparator

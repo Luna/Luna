@@ -179,7 +179,7 @@ type S3_File
             check_recursion action = if recursive then Unimplemented.throw "S3 listing with recursion is not currently implemented." else action
             check_directory action = if self.is_directory.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory." self.uri) else action
 
-            results = check_directory <| check_recursion <| check_name_filter <|
+            check_directory <| check_recursion <| check_name_filter <|
                 if self.s3_path.bucket == "" then translate_file_errors self <| S3.list_buckets self.credentials . map bucket-> S3_File.Value (S3_Path.Value bucket "") self.credentials else
                     pair = translate_file_errors self <| S3.read_bucket self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
                     bucket = self.s3_path.bucket
@@ -187,8 +187,7 @@ type S3_File
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
                     files = pair.second . map key->
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
-                    sub_folders + files
-            results.sort on=.path
+                    sub_folders + files . sort on=.s3_path
 
     ## ALIAS load bytes, open bytes
        ICON data_input
@@ -617,11 +616,3 @@ translate_file_errors related_file result =
         s3_path = S3_Path.Value error.bucket error.key
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
-
-## PRIVATE
-   Sort S3 files by bucket and path.
-sort_s3_files s3_files =
-    s3_file_sort_key s3_file =
-        s3_path = s3_file.path
-        [s3_path.bucket, s3.path.key]
-    s3_files.sort on=s3_file_sort_key
