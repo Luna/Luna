@@ -194,6 +194,7 @@ export default [
       '**/.cache/**',
       '**/playwright-report',
       '**/dist',
+      '**/test-results',
       '**/mockDist',
       '**/build.mjs',
       '**/*.timestamp-*.mjs',

@@ -146,6 +146,11 @@
           "@vue/compiler-dom": "*",
           "@vue/server-renderer": "*"
         }
+      },
+      "@storybook/core": {
+        "dependencies": {
+          "@storybook/react-vite": "*"
+        }
       }
     },
     "onlyBuiltDependencies": [
