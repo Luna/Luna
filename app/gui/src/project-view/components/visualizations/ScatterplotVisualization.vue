@@ -866,32 +866,6 @@ const makeSeriesLabelOptions = () => {
   return seriesOptions
 }
 
-const createEnableSelectionButton = (): ToolbarItem => ({
-  icon: 'select',
-  title: 'Enable Selection',
-  toggle: selectionEnabled,
-})
-
-const createFitAllButton = (): ToolbarItem => ({
-  icon: 'show_all',
-  title: 'Fit All',
-  onClick: () => zoomToSelected(false),
-})
-
-const createZoomButton = (): ToolbarItem => ({
-  icon: 'zoom',
-  title: 'Zoom to Selected',
-  disabled: () => brushExtent.value == null,
-  onClick: zoomToSelected,
-})
-
-const createNewNodes = (): ToolbarItem => ({
-  icon: 'add_to_graph_editor',
-  title: 'Create component of selected points',
-  disabled: () => !createNewFilterNodeEnabled.value,
-  onClick: createNewFilterNode,
-})
-
 const createTextSelectionButton = (): ToolbarItem => ({
   type: 'textSelectionMenu',
   selectedTextOption: yAxisSelected,
@@ -906,16 +880,30 @@ const createTextSelectionButton = (): ToolbarItem => ({
 })
 
 function useScatterplotVizToolbar() {
-  const enableSelectionButton = createEnableSelectionButton()
-  const fitAllButton = createFitAllButton()
-  const zoomButton = createZoomButton()
-  const newNodeButton = createNewNodes()
   const textSelectionButton = createTextSelectionButton()
   return computed(() => [
-    enableSelectionButton,
-    fitAllButton,
-    zoomButton,
-    newNodeButton,
+    {
+      icon: 'select',
+      title: 'Enable Selection',
+      toggle: selectionEnabled,
+    },
+    {
+      icon: 'show_all',
+      title: 'Fit All',
+      onClick: () => zoomToSelected(false),
+    },
+    {
+      icon: 'zoom',
+      title: 'Zoom to Selected',
+      disabled: () => brushExtent.value == null,
+      onClick: zoomToSelected,
+    },
+    {
+      icon: 'add_to_graph_editor',
+      title: 'Create component of selected points',
+      disabled: () => !createNewFilterNodeEnabled.value,
+      onClick: createNewFilterNode,
+    },
     ...(data.value.is_multi_series ? [textSelectionButton] : []),
   ])
 }
