@@ -36,9 +36,12 @@ export default function ConfirmDeleteModal(props: ConfirmDeleteModalProps) {
   return (
     <Dialog title={getText('areYouSure')} role="alertdialog" modalProps={{ defaultOpen }}>
       <Form schema={z.object({})} method="dialog" onSubmit={doDelete} onSubmitSuccess={unsetModal}>
-        <Text className="relative">
-          {getText(cannotUndo ? 'confirmPromptCannotUndo' : 'confirmPrompt', actionText)}
-        </Text>
+        <Text className="relative">{getText('confirmPrompt', actionText)}</Text>
+        {cannotUndo && (
+          <Text className="relative" weight="bold">
+            {getText('thisOperationCannotBeUndone')}
+          </Text>
+        )}
 
         <ButtonGroup>
           <Form.Submit variant="delete" className="relative">

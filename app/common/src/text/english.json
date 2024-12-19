@@ -447,7 +447,7 @@
   "youHaveNoFiles": "This folder is empty. You can create a project using the buttons above.",
   "placeholderChatPrompt": "Login or register to access live chat with our support team.",
   "confirmPrompt": "Do you really want to $0?",
-  "confirmPromptCannotUndo": "Do you really want to $0? This operation is final and cannot be undone.",
+  "thisOperationCannotBeUndone": "This operation is final and cannot be undone.",
   "couldNotInviteUser": "Could not invite user $0",
   "inviteFormSeatsLeft": "You have $0 seats left on your plan. Upgrade to invite more",
   "inviteFormSeatsLeftError": "You have exceed the number of seats on your plan by $0",
