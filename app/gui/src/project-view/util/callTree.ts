@@ -117,7 +117,7 @@ export class ArgumentPlaceholder extends Argument {
 
   /** TODO: Add docs */
   get value(): WidgetInputValue {
-    return this.argInfo.defaultValue
+    return this.argInfo.defaultValue === null ? undefined : this.argInfo.defaultValue
   }
 
   /** TODO: Add docs */

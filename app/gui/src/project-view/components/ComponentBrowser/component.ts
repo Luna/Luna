@@ -8,11 +8,11 @@ import {
 import { compareOpt } from '@/util/compare'
 import { isSome } from '@/util/data/opt'
 import { Range } from '@/util/data/range'
+import { ANY_TYPE } from '@/util/ensoTypes'
 import { displayedIconOf } from '@/util/getIconName'
 import type { Icon } from '@/util/iconName'
 import type { QualifiedName } from '@/util/qualifiedName'
 import { qnLastSegmentIndex, tryQualifiedName } from '@/util/qualifiedName'
-import { unwrap } from 'ydoc-shared/util/data/result'
 
 interface ComponentLabelInfo {
   label: string
@@ -108,8 +108,6 @@ export function makeComponent({ id, entry, match }: ComponentInfo): Component {
     group: entry.groupIndex,
   }
 }
-
-const ANY_TYPE = unwrap(tryQualifiedName('Standard.Base.Any.Any'))
 
 /** Create {@link Component} list from filtered suggestions. */
 export function makeComponentList(db: SuggestionDb, filtering: Filtering): Component[] {
