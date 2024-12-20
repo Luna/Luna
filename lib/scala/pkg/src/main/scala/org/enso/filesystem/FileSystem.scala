@@ -64,6 +64,12 @@ trait FileSystem[F] {
     */
   def getSegments(file: F): java.lang.Iterable[String]
 
+  /** Returns absolute path of the given file.
+    * @param file
+    * @return
+    */
+  def getAbsolutePath(file: F): String
+
   /** Gets the name of the given file.
     *
     * @param file
@@ -231,5 +237,9 @@ object FileSystem {
       Files
         .readAttributes(file.toPath, classOf[BasicFileAttributes])
         .creationTime()
+
+    override def getAbsolutePath(file: File): String = {
+      file.getAbsolutePath
+    }
   }
 }

@@ -4,6 +4,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.enso.interpreter.runtime.util.TruffleFileSystem;
+import org.enso.pkg.NativeLibraryFinder;
 import org.graalvm.polyglot.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +99,7 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
   protected String findLibrary(String libname) {
     var pkgRepo = EnsoContext.get(null).getPackageRepository();
     for (var pkg : pkgRepo.getLoadedPackagesJava()) {
-      var libPath = NativeLibraryFinder.findNativeLibrary(libname, pkg);
+      var libPath = NativeLibraryFinder.findNativeLibrary(libname, pkg, TruffleFileSystem.INSTANCE);
       if (libPath != null) {
         return libPath;
       }

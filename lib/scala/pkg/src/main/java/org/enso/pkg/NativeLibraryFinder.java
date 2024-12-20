@@ -1,19 +1,14 @@
-package org.enso.interpreter.runtime;
+package org.enso.pkg;
 
-import com.oracle.truffle.api.TruffleFile;
 import java.util.Locale;
-import org.enso.pkg.Package;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.enso.filesystem.FileSystem;
 
 /**
  * Helper class to find native libraries in packages. The search algorithm complies to the <a
  * href="https://bits.netbeans.org/23/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html#jni">NetBeans
  * JNI specification</a>.
  */
-final class NativeLibraryFinder {
-
-  private static final Logger logger = LoggerFactory.getLogger(NativeLibraryFinder.class);
+public final class NativeLibraryFinder {
 
   private NativeLibraryFinder() {}
 
@@ -24,29 +19,25 @@ final class NativeLibraryFinder {
    * @param pkg the package to search in.
    * @return null if not found, absolute path otherwise.
    */
-  static String findNativeLibrary(String libName, Package<TruffleFile> pkg) {
+  public static <T> String findNativeLibrary(String libName, Package<T> pkg, FileSystem<T> fs) {
     var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
     var osName = simpleOsName();
     var libNameWithSuffix = System.mapLibraryName(libName);
-    var libDir = pkg.polyglotDir().resolve("lib");
-    if (!libDir.exists()) {
-      logger.trace("Native library directory {} does not exist", libDir);
+    var libDir = fs.getChild(pkg.polyglotDir(), "lib");
+    if (!fs.exists(libDir)) {
       return null;
     }
-    var nativeLib = libDir.resolve(libNameWithSuffix);
-    if (nativeLib.exists()) {
-      logger.trace("Found native library {}", nativeLib);
-      return nativeLib.getAbsoluteFile().getPath();
+    var nativeLib = fs.getChild(libDir, libNameWithSuffix);
+    if (fs.exists(nativeLib)) {
+      return fs.getAbsolutePath(nativeLib);
     }
-    nativeLib = libDir.resolve(arch).resolve(libNameWithSuffix);
-    if (nativeLib.exists()) {
-      logger.trace("Found native library {}", nativeLib);
-      return nativeLib.getAbsoluteFile().getPath();
+    nativeLib = fs.getChild(fs.getChild(libDir, arch), libNameWithSuffix);
+    if (fs.exists(nativeLib)) {
+      return fs.getAbsolutePath(nativeLib);
     }
-    nativeLib = libDir.resolve(arch).resolve(osName).resolve(libNameWithSuffix);
-    if (nativeLib.exists()) {
-      logger.trace("Found native library {}", nativeLib);
-      return nativeLib.getAbsoluteFile().getPath();
+    nativeLib = fs.getChild(fs.getChild(fs.getChild(libDir, arch), osName), libName);
+    if (fs.exists(nativeLib)) {
+      return fs.getAbsolutePath(nativeLib);
     }
     return null;
   }
