@@ -452,7 +452,7 @@ private _op_return_kind op -> Expression_Kind =
     if return_bool_ops.contains op then Expression_Kind.Boolean_Condition else Expression_Kind.Value
 
 private _op_needs_to_materialize_null_checks op -> Boolean =
-    ["FILL_NULL", "COALESCE", "COUNT_IS_NULL", "COUNT_EMPTY", "COUNT_NOT_EMPTY", "COUNT", "SUM", "AVG", "LONGEST", "SHORTEST", "COUNT_DISTINCT", "COUNT_DISTINCT_INCLUDE_NULL", "STDDEV_POP", "STDDEV_SAMP", "CONCAT", "CONCAT_QUOTE_IF_NEEDED"].contains op
+    ["FILL_NULL", "COALESCE", "COUNT_IS_NULL", "COUNT_EMPTY", "COUNT_NOT_EMPTY", "COUNT", "SUM", "AVG", "LONGEST", "SHORTEST", "COUNT_DISTINCT", "COUNT_DISTINCT_INCLUDE_NULL", "STDDEV_POP", "STDDEV_SAMP", "CONCAT", "CONCAT_QUOTE_IF_NEEDED", "MIN", "MAX"].contains op
 
 ## PRIVATE
 make_dialect_operations =
