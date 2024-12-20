@@ -580,8 +580,12 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a directory.
     is_directory : Boolean
-    is_directory self = Data_Link_Helpers.is_directory (_without_trailing_slash self) <|
-        self.is_directory_no_follow_links
+    is_directory self =
+        case self.is_data_link of
+            True ->
+                _s3_file_as_data_link self . is_directory
+                    . catch Illegal_Argument _->False
+            False -> self.s3_path.is_directory
 
     ## PRIVATE
        Checks if this file is a directory, not following links.
@@ -607,8 +611,13 @@ type S3_File
          If the file is a data link, this checks whether the target of the data 
          link is a regular file.
     is_regular_file : Boolean
-    is_regular_file self = Data_Link_Helpers.is_regular_file (_without_trailing_slash self) <|
-        self.s3_path.is_directory.not
+    is_regular_file self =
+        case self.is_data_link of
+            True ->
+                _s3_file_as_data_link self . is_directory . not
+                    . catch Illegal_Argument _->False
+            False ->
+                self.s3_path.is_directory.not
 
     ## PRIVATE
     is_data_link self -> Boolean =
