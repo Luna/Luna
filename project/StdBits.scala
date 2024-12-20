@@ -2,10 +2,7 @@ import sbt.Keys._
 import sbt._
 import sbt.internal.util.ManagedLogger
 import sbt.io.IO
-import sbt.librarymanagement.{
-  ConfigurationFilter,
-  DependencyFilter,
-}
+import sbt.librarymanagement.{ConfigurationFilter, DependencyFilter}
 
 import java.io.File
 
@@ -104,6 +101,68 @@ object StdBits {
           }
       }
     }
+
+  /** Extract native libraries from `opencv.jar` and put them under
+    * `Standard/Image/polyglot/lib` directory. The minimized `opencv.jar` will
+    * be put under `Standard/Image/polyglot/java` directory.
+    * @param imagePolyglotRoot root dir of Std image polyglot dir
+    * @param imageNativeLibs root dir of Std image lib dir
+    * @return
+    */
+  def extractNativeLibsFromOpenCV(
+    imagePolyglotRoot: File,
+    imageNativeLibs: File,
+    opencvVersion: String
+  ): Def.Initialize[Task[Unit]] = Def.task {
+    // Ensure dependencies are first copied.
+    val _ = StdBits
+      .copyDependencies(
+        imagePolyglotRoot,
+        Seq("std-image.jar", "opencv.jar"),
+        ignoreScalaLibrary = true,
+        ignoreDependency   = Some("org.openpnp" % "opencv" % opencvVersion)
+      )
+      .value
+    val extractPrefix = "nu/pattern/opencv"
+    def renameFunc(entryName: String): Option[String] = {
+      val strippedEntryName = entryName.substring(extractPrefix.length + 1)
+      if (
+        strippedEntryName.contains("linux/ARM") ||
+        strippedEntryName.contains("linux/x86_32") ||
+        strippedEntryName.contains("README.md")
+      ) {
+        None
+      } else {
+        Some(
+          strippedEntryName
+            .replace("osx", "macos")
+            .replace("x86_64", "amd64")
+        )
+      }
+    }
+    val logger = streams.value.log
+    val openCvJar = JPMSUtils
+      .filterModulesFromUpdate(
+        update.value,
+        Seq("org.openpnp" % "opencv" % opencvVersion),
+        logger,
+        moduleName.value,
+        scalaBinaryVersion.value,
+        shouldContainAll = true
+      )
+      .head
+    val outputJarPath     = (imagePolyglotRoot / "opencv.jar").toPath
+    val extractedFilesDir = imageNativeLibs.toPath
+    JARUtils.extractFilesFromJar(
+      openCvJar.toPath,
+      extractPrefix,
+      outputJarPath,
+      extractedFilesDir,
+      renameFunc,
+      logger,
+      streams.value.cacheStoreFactory
+    )
+  }
 
   private def updateDependency(
     jar: File,

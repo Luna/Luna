@@ -4674,50 +4674,13 @@ lazy val `std-image` = project
     // Standard/Image/polyglot/lib directory. The minimized opencv.jar will
     // be put under Standard/Image/polyglot/java directory.
     extractNativeLibs := {
-      // Ensure dependencies are first copied.
-      val _ = StdBits
-        .copyDependencies(
+      StdBits
+        .extractNativeLibsFromOpenCV(
           `image-polyglot-root`,
-          Seq("std-image.jar", "opencv.jar"),
-          ignoreScalaLibrary = true,
-          ignoreDependency   = Some("org.openpnp" % "opencv" % opencvVersion)
+          `image-native-libs`,
+          opencvVersion
         )
         .value
-      val extractPrefix = "nu/pattern/opencv"
-      def renameFunc(entryName: String): Option[String] = {
-        val strippedEntryName = entryName.substring(extractPrefix.length + 1)
-        if (
-          strippedEntryName.contains("linux/ARM") ||
-          strippedEntryName.contains("linux/x86_32") ||
-          strippedEntryName.contains("README.md")
-        ) {
-          None
-        } else {
-          Some(strippedEntryName.replace("osx", "macos"))
-        }
-      }
-      val logger = streams.value.log
-      val openCvJar = JPMSUtils
-        .filterModulesFromUpdate(
-          update.value,
-          Seq("org.openpnp" % "opencv" % opencvVersion),
-          logger,
-          moduleName.value,
-          scalaBinaryVersion.value,
-          shouldContainAll = true
-        )
-        .head
-      val outputJarPath     = (`image-polyglot-root` / "opencv.jar").toPath
-      val extractedFilesDir = `image-native-libs`.toPath
-      JARUtils.extractFilesFromJar(
-        openCvJar.toPath,
-        extractPrefix,
-        outputJarPath,
-        extractedFilesDir,
-        renameFunc,
-        logger,
-        streams.value.cacheStoreFactory
-      )
     },
     Compile / packageBin := Def.task {
       val result = (Compile / packageBin).value
