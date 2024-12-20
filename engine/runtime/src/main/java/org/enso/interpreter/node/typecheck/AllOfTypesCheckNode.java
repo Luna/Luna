@@ -52,7 +52,7 @@ final class AllOfTypesCheckNode extends AbstractTypeCheckNode {
       values[at] = result;
       at++;
     }
-    return EnsoMultiValue.create(valueTypes, valueTypes.length, values);
+    return EnsoMultiValue.NewNode.getUncached().newValue(valueTypes, valueTypes.length, values);
   }
 
   @Override

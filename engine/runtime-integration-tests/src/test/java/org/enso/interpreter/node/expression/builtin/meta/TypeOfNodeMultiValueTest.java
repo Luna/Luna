@@ -90,15 +90,19 @@ public class TypeOfNodeMultiValueTest {
       var rawValue = ContextUtils.unwrapValue(ctx(), polyValue);
       var rawType = ContextUtils.unwrapValue(ctx(), t);
       if (rawType instanceof Type type) {
-        var singleMultiValue = EnsoMultiValue.create(new Type[] {type}, 1, new Object[] {rawValue});
+        var singleMultiValue =
+            EnsoMultiValue.NewNode.getUncached()
+                .newValue(new Type[] {type}, 1, new Object[] {rawValue});
         var n = t.getMetaSimpleName();
         data.add(new Object[] {singleMultiValue, n, 0});
         var rawInt = (Type) ContextUtils.unwrapValue(ctx(), g.typeInteger());
         var secondMultiValue =
-            EnsoMultiValue.create(new Type[] {rawInt, type}, 2, new Object[] {5L, rawValue});
+            EnsoMultiValue.NewNode.getUncached()
+                .newValue(new Type[] {rawInt, type}, 2, new Object[] {5L, rawValue});
         data.add(new Object[] {secondMultiValue, n, 1});
         var firstMultiValue =
-            EnsoMultiValue.create(new Type[] {type, rawInt}, 2, new Object[] {rawValue, 6L});
+            EnsoMultiValue.NewNode.getUncached()
+                .newValue(new Type[] {type, rawInt}, 2, new Object[] {rawValue, 6L});
         data.add(new Object[] {firstMultiValue, n, 0});
       } else {
         if (!t.isHostObject()) {

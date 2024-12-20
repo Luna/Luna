@@ -50,26 +50,51 @@ public final class EnsoMultiValue extends EnsoObject {
     this.values = values;
   }
 
-  /**
-   * Creates new instance of EnsoMultiValue from provided information.
-   *
-   * @param types all the types this value can be {@link CastToNode cast to}
-   * @param dispatchTypes the (subset of) types that the value is cast to currently - bigger than
-   *     {@code 0} and at most {@code type.length}
-   * @param values value of each of the provided {@code types}
-   * @return non-{@code null} multi value instance
-   */
-  @NeverDefault
-  public static EnsoMultiValue create(
-      @NeverDefault Type[] types, @NeverDefault int dispatchTypes, @NeverDefault Object... values) {
-    assert dispatchTypes > 0;
-    assert dispatchTypes <= types.length;
-    assert types.length == values.length;
-    assert !Stream.of(values).anyMatch(v -> v instanceof EnsoMultiValue)
-        : "Avoid double wrapping " + Arrays.toString(values);
-    var dt = MultiType.create(types, 0, dispatchTypes);
-    var et = MultiType.create(types, dispatchTypes, types.length);
-    return new EnsoMultiValue(dt, et, values);
+  /** Creates new instance of EnsoMultiValue from provided information. */
+  @GenerateUncached
+  public abstract static class NewNode extends Node {
+    private static final String INLINE_CACHE_LIMIT = "5";
+
+    @NeverDefault
+    public static NewNode create() {
+      return EnsoMultiValueFactory.NewNodeGen.create();
+    }
+
+    @NeverDefault
+    public static NewNode getUncached() {
+      return EnsoMultiValueFactory.NewNodeGen.getUncached();
+    }
+
+    /**
+     * Creates new multi value from provided information.
+     *
+     * @param types all the types this value can be {@link CastToNode cast to}
+     * @param dispatchTypes the (subset of) types that the value is cast to currently - bigger than
+     *     {@code 0} and at most {@code type.length}
+     * @param values value of each of the provided {@code types}
+     * @return non-{@code null} multi value instance
+     */
+    @NeverDefault
+    public EnsoMultiValue newValue(
+        @NeverDefault Type[] types,
+        @NeverDefault int dispatchTypes,
+        @NeverDefault Object... values) {
+      assert dispatchTypes > 0;
+      assert dispatchTypes <= types.length;
+      assert types.length == values.length;
+      assert !Stream.of(values).anyMatch(v -> v instanceof EnsoMultiValue)
+          : "Avoid double wrapping " + Arrays.toString(values);
+      var dt = executeTypes(types, 0, dispatchTypes);
+      var et = executeTypes(types, dispatchTypes, types.length);
+      return new EnsoMultiValue(dt, et, values);
+    }
+
+    abstract MultiType executeTypes(Type[] types, int from, int to);
+
+    @Specialization
+    final MultiType createMultiType(Type[] types, int from, int to) {
+      return MultiType.create(types, from, to);
+    }
   }
 
   @ExportMessage
@@ -460,7 +485,7 @@ public final class EnsoMultiValue extends EnsoObject {
           copyValues[0] = copyValues[i];
           copyTypes[i] = mv.dispatch.types[0];
           copyValues[i] = mv.values[0];
-          return EnsoMultiValue.create(copyTypes, 1, copyValues);
+          return EnsoMultiValue.NewNode.getUncached().newValue(copyTypes, 1, copyValues);
         } else {
           return mv.values[i];
         }
