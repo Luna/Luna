@@ -26,11 +26,7 @@ final class NativeLibraryFinder {
    */
   static String findNativeLibrary(String libName, Package<TruffleFile> pkg) {
     var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
-    if (arch.contains(" ")) {
-      // Strip version information from the architecture string.
-      arch = arch.substring(0, arch.indexOf(' '));
-    }
-    var osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+    var osName = simpleOsName();
     var libNameWithSuffix = System.mapLibraryName(libName);
     var libDir = pkg.polyglotDir().resolve("lib");
     if (!libDir.exists()) {
@@ -53,5 +49,22 @@ final class NativeLibraryFinder {
       return nativeLib.getAbsoluteFile().getPath();
     }
     return null;
+  }
+
+  private static String simpleOsName() {
+    var osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+    if (osName.contains(" ")) {
+      // Strip version
+      osName = osName.substring(0, osName.indexOf(' '));
+    }
+    if (osName.contains("linux")) {
+      return "linux";
+    } else if (osName.contains("mac")) {
+      return "macos";
+    } else if (osName.contains("windows")) {
+      return "windows";
+    } else {
+      throw new IllegalStateException("Unsupported OS: " + osName);
+    }
   }
 }
