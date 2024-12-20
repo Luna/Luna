@@ -1,5 +1,5 @@
 /** @file Hooks for interacting with the backend. */
-import { useId, useMemo, useState } from 'react'
+import { useId, useState } from 'react'
 
 import {
   queryOptions,
@@ -285,19 +285,17 @@ export function useListUserGroupsWithUsers(
 ): readonly UserGroupInfoWithUsers[] | null {
   const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const listUsersQuery = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  return useMemo(() => {
-    if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
-      return null
-    } else {
-      const result = listUserGroupsQuery.data.map((userGroup) => {
-        const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
-          user.userGroups?.includes(userGroup.id),
-        )
-        return { ...userGroup, users: usersInGroup }
-      })
-      return result
-    }
-  }, [listUserGroupsQuery.data, listUsersQuery.data])
+  if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
+    return null
+  } else {
+    const result = listUserGroupsQuery.data.map((userGroup) => {
+      const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
+        user.userGroups?.includes(userGroup.id),
+      )
+      return { ...userGroup, users: usersInGroup }
+    })
+    return result
+  }
 }
 
 /** Options for {@link listDirectoryQueryOptions}. */
@@ -568,15 +566,13 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
   })
   const [localRootDirectory] = useLocalStorageState('localRootDirectory')
 
-  return useMemo(() => {
-    const localRootPath = localRootDirectory != null ? backendModule.Path(localRootDirectory) : null
-    const id =
-      'homeDirectoryId' in category ?
-        category.homeDirectoryId
-      : backend.rootDirectoryId(user, organization, localRootPath)
-    invariant(id, 'Missing root directory')
-    return id
-  }, [category, backend, user, organization, localRootDirectory])
+  const localRootPath = localRootDirectory != null ? backendModule.Path(localRootDirectory) : null
+  const id =
+    'homeDirectoryId' in category ?
+      category.homeDirectoryId
+    : backend.rootDirectoryId(user, organization, localRootPath)
+  invariant(id, 'Missing root directory')
+  return id
 }
 
 /** Return query data for the children of a directory, fetching it if it does not exist. */
@@ -1186,9 +1182,7 @@ export function useBackendMutation<Method extends MutationMethod>(
     'mutationFn'
   >,
 ) {
-  return useMutation(
-    useMemo(() => backendMutationOptions(backend, method, options), [backend, method, options]),
-  )
+  return useMutation(backendMutationOptions(backend, method, options))
 }
 
 /**
@@ -1206,16 +1200,10 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
     },
   } = options
   const uploadFileStartMutation = useBackendMutation(backend, 'uploadFileStart')
-  const uploadFileChunkMutation = useBackendMutation(
-    backend,
-    'uploadFileChunk',
-    useMemo(() => ({ retry: chunkRetries }), [chunkRetries]),
-  )
-  const uploadFileEndMutation = useBackendMutation(
-    backend,
-    'uploadFileEnd',
-    useMemo(() => ({ retry: endRetries }), [endRetries]),
-  )
+  const uploadFileChunkMutation = useBackendMutation(backend, 'uploadFileChunk', {
+    retry: chunkRetries,
+  })
+  const uploadFileEndMutation = useBackendMutation(backend, 'uploadFileEnd', { retry: endRetries })
   const [variables, setVariables] =
     useState<[params: backendModule.UploadFileRequestParams, file: File]>()
   const [sentMb, setSentMb] = useState(0)
