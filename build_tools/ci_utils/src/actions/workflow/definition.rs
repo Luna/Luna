@@ -83,8 +83,7 @@ pub fn setup_bin_bash() -> Step {
         name: Some("Add Git\\bash.exe to PATH".into()),
         r#if: Some(is_windows_runner()),
         shell: Some(Shell::Cmd),
-
-        run: Some(r#"echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%"#.into()),
+        run: Some(r#"echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%"#.into()),
         ..default()
     }
 }
