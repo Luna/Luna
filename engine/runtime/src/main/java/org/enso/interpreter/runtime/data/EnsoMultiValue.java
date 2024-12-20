@@ -2,6 +2,7 @@ package org.enso.interpreter.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -432,6 +433,8 @@ public final class EnsoMultiValue extends EnsoObject {
   /** Casts {@link EnsoMultiValue} to requested type effectively. */
   @GenerateUncached
   public abstract static class CastToNode extends Node {
+    private static final String INLINE_CACHE_LIMIT = "5";
+
     /**
      * Casts value in a multi value into specific type.
      *
@@ -444,38 +447,11 @@ public final class EnsoMultiValue extends EnsoObject {
      */
     public final Object findTypeOrNull(
         Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
-      return executeCast(type, mv, reorderOnly, allTypes);
-    }
-
-    abstract Object executeCast(
-        Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes);
-
-    @NeverDefault
-    public static CastToNode create() {
-      return EnsoMultiValueFactory.CastToNodeGen.create();
-    }
-
-    @NeverDefault
-    public static CastToNode getUncached() {
-      return EnsoMultiValueFactory.CastToNodeGen.getUncached();
-    }
-
-    @Specialization
-    Object castsToAType(Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
-      var ctx = EnsoContext.get(this);
-      var dispatchIndex = mv.dispatch.find(ctx, type);
-      var i =
-          switch (dispatchIndex) {
-            case -1 -> {
-              if (allTypes) {
-                var extraIndex = mv.extra.find(ctx, type);
-                yield extraIndex == -1 ? -1 : mv.dispatch.types.length + extraIndex;
-              } else {
-                yield -1;
-              }
-            }
-            default -> dispatchIndex;
-          };
+      var i = executeFindIndex(type, mv.dispatch);
+      if (i == -1 && allTypes) {
+        var extraIndex = executeFindIndex(type, mv.extra);
+        i = extraIndex == -1 ? -1 : mv.dispatch.types.length + extraIndex;
+      }
       if (i != -1) {
         if (reorderOnly) {
           var copyTypes = mv.dispatch.allTypesWith(mv.extra);
@@ -491,6 +467,37 @@ public final class EnsoMultiValue extends EnsoObject {
       } else {
         return null;
       }
+    }
+
+    abstract int executeFindIndex(Type type, MultiType mt);
+
+    @NeverDefault
+    public static CastToNode create() {
+      return EnsoMultiValueFactory.CastToNodeGen.create();
+    }
+
+    @NeverDefault
+    public static CastToNode getUncached() {
+      return EnsoMultiValueFactory.CastToNodeGen.getUncached();
+    }
+
+    @Specialization(
+        guards = {"type == cachedType", "mt == cachedMt"},
+        limit = INLINE_CACHE_LIMIT)
+    int findsCachedIndexOfAType(
+        Type type,
+        MultiType mt,
+        @Cached("type") Type cachedType,
+        @Cached("mt") MultiType cachedMt,
+        @Cached(allowUncached = true, value = "findsAnIndexOfAType(type, mt)") int cachedIndex) {
+      return cachedIndex;
+    }
+
+    @Specialization(replaces = "findsCachedIndexOfAType")
+    int findsAnIndexOfAType(Type type, MultiType mt) {
+      var ctx = EnsoContext.get(this);
+      var index = mt.find(ctx, type);
+      return index;
     }
   }
 
@@ -521,7 +528,7 @@ public final class EnsoMultiValue extends EnsoObject {
    * Internal representation of {@code Type[]} that supports identity comparision with {@code ==} to
    * support inline caching of values.
    */
-  private static final class MultiType {
+  static final class MultiType {
     private static final ConcurrentHashMap<MultiType, MultiType> ALL_TYPES =
         new ConcurrentHashMap<>();
 
