@@ -1,6 +1,4 @@
 /** @file A modal for creating a new label. */
-import * as React from 'react'
-
 import * as z from 'zod'
 
 import { ButtonGroup, DialogDismiss, Form, Input, Popover, Text } from '#/components/AriaComponents'
@@ -27,12 +25,9 @@ export default function NewLabelModal(props: NewLabelModalProps) {
   const { backend } = props
   const { getText } = useText()
   const labels = useBackendQuery(backend, 'listTags', EMPTY_ARRAY).data ?? EMPTY_ARRAY
-  const labelNames = React.useMemo(
-    () => new Set<string>(labels.map((label) => label.value)),
-    [labels],
-  )
+  const labelNames = new Set<string>(labels.map((label) => label.value))
   const labelNamesRef = useSyncRef(labelNames)
-  const leastUsedColor = React.useMemo(() => findLeastUsedColor(labels), [labels])
+  const leastUsedColor = findLeastUsedColor(labels)
 
   const createTag = useBackendMutation(backend, 'createTag').mutateAsync
 

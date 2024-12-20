@@ -1,5 +1,5 @@
 /** @file A modal to select labels for an asset. */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
@@ -40,7 +40,7 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const toastAndLog = useToastAndLog()
   const { data: allLabels } = useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
   const [color, setColor] = useState<LChColor | null>(null)
-  const leastUsedColor = useMemo(() => findLeastUsedColor(allLabels ?? EMPTY_ARRAY), [allLabels])
+  const leastUsedColor = findLeastUsedColor(allLabels ?? EMPTY_ARRAY)
 
   const createTagMutation = useBackendMutation(backend, 'createTag')
   const associateTagMutation = useBackendMutation(backend, 'associateTag')
@@ -76,11 +76,9 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const query = Form.useWatch({ control: form.control, name: 'name' })
   const labels = Form.useWatch({ control: form.control, name: 'labels' })
 
-  const regex = useMemo(() => new RegExp(regexEscape(query), 'i'), [query])
-  const canSelectColor = useMemo(
-    () => query !== '' && (allLabels ?? []).filter((label) => regex.test(label.value)).length === 0,
-    [allLabels, query, regex],
-  )
+  const regex = new RegExp(regexEscape(query), 'i')
+  const canSelectColor =
+    query !== '' && (allLabels ?? []).filter((label) => regex.test(label.value)).length === 0
   const canCreateNewLabel = canSelectColor
 
   return (
