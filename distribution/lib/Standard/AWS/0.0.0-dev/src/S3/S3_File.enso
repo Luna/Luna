@@ -27,6 +27,8 @@ import project.Internal.S3_File_Write_Strategy
 import project.Internal.S3_Path.S3_Path
 import project.S3.S3
 
+polyglot java import org.enso.aws.file_system.S3DataLinkCache
+
 ## Represents an S3 file or folder
    If the path ends with a slash, it is a folder. Otherwise, it is a file.
 type S3_File
@@ -75,6 +77,7 @@ type S3_File
     with_output_stream self (open_options : Vector) action = if self.is_directory_no_follow_links then Error.throw (S3_Error.Error "S3 directory cannot be opened as a stream." self.uri) else
         Context.Output.if_enabled disabled_message="As writing is disabled, cannot write to S3. Press the Write button ▶ to perform the operation." panic=False <|
             open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && self.is_data_link
+            _invalidate_caches_on_write self
             if open_as_data_link then Data_Link_Helpers.write_data_link_as_stream self open_options action else
                 if open_options.contains File_Access.Append then Error.throw (S3_Error.Error "S3 does not support appending to a file. Instead you may read it, modify and then write the new contents." self.uri) else
                     File_Access.ensure_only_allowed_options "with_output_stream" [File_Access.Write, File_Access.Create_New, File_Access.Truncate_Existing, File_Access.Create, Data_Link_Access.No_Follow] open_options <|
@@ -87,7 +90,7 @@ type S3_File
                                 result = tmp_file.with_output_stream [File_Access.Write] action
                                 # Only proceed if the write succeeded
                                 result.if_not_error <|
-                                    (translate_file_errors self <| S3.upload_file tmp_file self.s3_path.bucket self.s3_path.key self.credentials) . if_not_error <|
+                                    (_translate_file_errors self <| S3.upload_file tmp_file self.s3_path.bucket self.s3_path.key self.credentials) . if_not_error <|
                                         result
 
 
@@ -109,7 +112,7 @@ type S3_File
         open_as_data_link = (open_options.contains Data_Link_Access.No_Follow . not) && self.is_data_link
         if open_as_data_link then Data_Link_Helpers.read_data_link_as_stream self open_options action else
             File_Access.ensure_only_allowed_options "with_input_stream" [File_Access.Read, Data_Link_Access.No_Follow] open_options <|
-                response_body = translate_file_errors self <| S3.get_object self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
+                response_body = _translate_file_errors self <| S3.get_object self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
                 response_body.with_stream action
 
     ## ALIAS load, open, import
@@ -146,7 +149,7 @@ type S3_File
             if self.is_data_link then Data_Link_Helpers.read_data_link self format on_problems else
                 case format of
                     Auto_Detect ->
-                        response = translate_file_errors self <| S3.get_object self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
+                        response = _translate_file_errors self <| S3.get_object self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
                         response.decode Auto_Detect
                     _ ->
                         metadata = File_Format_Metadata.Value path=self.path name=self.name
@@ -185,8 +188,8 @@ type S3_File
             check_directory action = if self.is_directory_no_follow_links.not then Error.throw (Illegal_Argument.Error "Cannot `list` a non-directory." self.uri) else action
 
             check_directory <| check_recursion <| check_name_filter <|
-                if self.s3_path.bucket == "" then translate_file_errors self <| S3.list_buckets self.credentials . map bucket-> S3_File.Value (S3_Path.Value bucket "") self.credentials else
-                    pair = translate_file_errors self <| S3.read_bucket self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
+                if self.s3_path.bucket == "" then _translate_file_errors self <| S3.list_buckets self.credentials . map bucket-> S3_File.Value (S3_Path.Value bucket "") self.credentials else
+                    pair = _translate_file_errors self <| S3.read_bucket self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter
                     bucket = self.s3_path.bucket
                     sub_folders = pair.first . map key->
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
@@ -266,7 +269,7 @@ type S3_File
                         if s3_destination == self then (if self.exists then self else Error.throw (File_Error.Not_Found self)) else
                             if replace_existing.not && s3_destination.exists then Error.throw (File_Error.Already_Exists destination) else
                                 destination_path = s3_destination.s3_path
-                                translate_file_errors self <| S3.copy_object self.s3_path.bucket self.s3_path.key destination_path.bucket destination_path.key self.credentials
+                                _translate_file_errors self <| S3.copy_object self.s3_path.bucket self.s3_path.key destination_path.bucket destination_path.key self.credentials
                                     . if_not_error destination_writable.file_for_return
                     _ -> generic_copy self destination_writable replace_existing
 
@@ -361,7 +364,7 @@ type S3_File
                     if children.is_empty.not && recursive.not then Error.throw (File_Error.Directory_Not_Empty self) else
                         r = children.map child-> child.delete_if_exists recursive
                         r.if_not_error self
-                False -> translate_file_errors self <| S3.delete_object self.s3_path.bucket self.s3_path.key self.credentials . if_not_error Nothing
+                False -> _translate_file_errors self <| S3.delete_object self.s3_path.bucket self.s3_path.key self.credentials . if_not_error Nothing
 
     ## GROUP Output
        ICON folder_add
@@ -380,6 +383,7 @@ type S3_File
        result.
     create_directory : File
     create_directory self =
+        _invalidate_caches_on_write self
         warning = S3_Warning.Warning "The `create_directory` on `S3_File` is only kept for compatibility, it does not do anything. To make sure a directory reports as `exists` you must put some files into it."
         Warning.attach warning self
 
@@ -498,8 +502,8 @@ type S3_File
          It does not tell anything about existence of the data link target.
     exists : Boolean
     exists self = if self.s3_path.bucket == "" then True else
-        raw_result = if self.s3_path.is_root then translate_file_errors self <| S3.head self.s3_path.bucket "" self.credentials . is_error . not else
-            pair = translate_file_errors self <| S3.read_bucket self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter max_count=1
+        raw_result = if self.s3_path.is_root then _translate_file_errors self <| S3.head self.s3_path.bucket "" self.credentials . is_error . not else
+            pair = _translate_file_errors self <| S3.read_bucket self.s3_path.bucket self.s3_path.key self.credentials delimiter=S3_Path.delimiter max_count=1
             pair.second.contains self.s3_path.key
         raw_result.catch S3_Bucket_Not_Found _->False
 
@@ -520,7 +524,7 @@ type S3_File
     size : Integer
     size self = if self.is_data_link then _s3_file_as_data_link self . size else
         if self.is_directory then Error.throw (S3_Error.Error "size can only be called on files." self.uri) else
-            content_length = translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . contentLength
+            content_length = _translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . contentLength
             if content_length.is_nothing then Error.throw (S3_Error.Error "ContentLength header is missing." self.uri) else content_length
 
     ## GROUP Standard.Base.Metadata
@@ -556,7 +560,7 @@ type S3_File
     last_modified_time : Date_Time ! File_Error
     last_modified_time self =
         if self.is_directory then Error.throw (S3_Error.Error "`last_modified_time` can only be called on files." self.uri) else
-            instant = translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . lastModified
+            instant = _translate_file_errors self <| S3.raw_head self.s3_path.bucket self.s3_path.key self.credentials . lastModified
             if instant.is_nothing then Error.throw (S3_Error.Error "Missing information for: lastModified" self.uri) else
                 instant.at_zone Time_Zone.system
 
@@ -625,51 +629,8 @@ type S3_File
            name contains the correct extension.
         may_be_data_link = Data_Link.is_data_link_name self.name
         if may_be_data_link.not then False else
-            ## If the file _may_ be a data link we now need to verify it further.
-               On S3 this is complicated because there is no direct notion of
-               directories, so a path `s3://Bucket/a.datalink/b` can mean both
-               that `a.datalink` is a data link file, or just that `b` is a
-               regular file inside a weirdly named 'directory' `a.datalink`.
-
-               To distinguish these scenarios we use the following heuristics:
-               - if the entity under the given path `s3://Bucket/a.datalink`
-                 exists, that means there is a file, so we treat it as a data link.
-               - if that entity does not exist, but there are entities under the
-                 path `s3://Bucket/a.datalink/`, we treat it as a directory.
-               - if that entity does not exist and there are no 'child entities'
-                 we determine the treatment based on the exact path containing a
-                 trailing slash character - if the path was
-                 `s3://Bucket/a.datalink`, that will be a data link (e.g. this
-                 may be passed as destination of a write method while creating a
-                 new link), but if it contains a slash
-                 (`s3://Bucket/a.datalink/`) that will be treated as a directory.
-
-               We acknowledge an edge case where both objects
-               `s3://Bucket/a.datalink` and `s3://Bucket/a.datalink/b` exist
-               (since the concept of directories in S3 is 'simulated' and there
-               is nothing preventing such aliasing). In that case, we treat the
-               first object (`s3://Bucket/a.datalink`) as a data link, thus
-               rendering `s3://Bucket/a.datalink/b` inaccessible. This is not
-               ideal, but we report a warning. Note that the user cannot create
-               such situation from Enso because once the entity starts to exist
-               (either as data link or as directory) it cannot be interpreted as
-               the other one. We can still encounter such scenarios in buckets
-               created externally.
-            exists_entity = exists_entity_direct (_without_trailing_slash self)
-            has_children = has_children_entities self
-            IO.println "potential data link "+self.path+", exists_entity: "+exists_entity.to_text+", has_children: "+has_children.to_text
-            clash = exists_entity && has_children
-            r = case clash of
-                True ->
-                    warning = Illegal_State.Error "The S3 path ["+self.path+"] is ambiguous - its key is both a data link object and a directory containing other objects. The data link will be used."
-                    Warning.attach warning True
-                False ->
-                    if exists_entity then True else
-                        if has_children then False else
-                            has_trailing_slash = self.s3_path.is_directory
-                            has_trailing_slash.not
-            IO.println "is_data_link? "+r.to_text
-            r
+            ttl = Duration.new seconds=30
+            S3DataLinkCache.INSTANCE.getOrCompute self.path (_-> _check_is_data_link self) ttl
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
@@ -720,30 +681,13 @@ Data_Link_From_File.from (that : S3_File) = Data_Link_From_File.Value that
 
 ## PRIVATE
    A helper that translates lower level S3 errors to file-system errors.
-translate_file_errors related_file result =
+private _translate_file_errors related_file result =
     result.catch S3_Key_Not_Found error->
         s3_path = S3_Path.Value error.bucket error.key
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
 
-## PRIVATE
-   Checks if an object exists under the given key _directly_.
-   This is different from `exists` which will be true if any child objects exist
-   under a given directory key. This method, however, will only return true if
-   an object with the exact key exists and is not just an empty marker (as used
-   sometimes to mark directories).
-exists_entity_direct (f : S3_File) -> Boolean =
-    size = S3.raw_head f.s3_path.bucket f.s3_path.key f.credentials . contentLength
-    if size.is_error then False else size > 0
-
-## PRIVATE
-has_children_entities (f : S3_File) -> Boolean =
-    pair = S3.read_bucket f.s3_path.bucket f.s3_path.key f.credentials delimiter=S3_Path.delimiter max_count=1
-    if pair.is_error then False else
-        pair.first.is_empty.not || pair.second.is_empty.not
-
-## PRIVATE
-   Ensure the file has no trailing slash.
+## Ensure the file has no trailing slash.
    This is needed when treating a possible directory as a data link entity - to
    find its S3 object we need to strip the trailing slash if it has one.
 private _without_trailing_slash (f : S3_File) -> S3_File =
@@ -751,3 +695,73 @@ private _without_trailing_slash (f : S3_File) -> S3_File =
 
 private _s3_file_as_data_link (f : S3_File) =
     Data_Link_Helpers.interpret_data_link_target_as_file (_without_trailing_slash f)
+
+## If the file _may_ be a data link we now need to verify it further.
+   On S3 this is complicated because there is no direct notion of
+   directories, so a path `s3://Bucket/a.datalink/b` can mean both
+   that `a.datalink` is a data link file, or just that `b` is a
+   regular file inside a weirdly named 'directory' `a.datalink`.
+
+   To distinguish these scenarios we use the following heuristics:
+   - if the entity under the given path `s3://Bucket/a.datalink`
+     exists, that means there is a file, so we treat it as a data link.
+   - if that entity does not exist, but there are entities under the
+     path `s3://Bucket/a.datalink/`, we treat it as a directory.
+   - if that entity does not exist and there are no 'child entities'
+     we determine the treatment based on the exact path containing a
+     trailing slash character - if the path was
+     `s3://Bucket/a.datalink`, that will be a data link (e.g. this
+     may be passed as destination of a write method while creating a
+     new link), but if it contains a slash
+     (`s3://Bucket/a.datalink/`) that will be treated as a directory.
+
+   We acknowledge an edge case where both objects
+   `s3://Bucket/a.datalink` and `s3://Bucket/a.datalink/b` exist
+   (since the concept of directories in S3 is 'simulated' and there
+   is nothing preventing such aliasing). In that case, we treat the
+   first object (`s3://Bucket/a.datalink`) as a data link, thus
+   rendering `s3://Bucket/a.datalink/b` inaccessible. This is not
+   ideal, but we report a warning. Note that the user cannot create
+   such situation from Enso because once the entity starts to exist
+   (either as data link or as directory) it cannot be interpreted as
+   the other one. We can still encounter such scenarios in buckets
+   created externally.
+private _check_is_data_link (f : S3_File) =
+    Runtime.assert (Data_Link.is_data_link_name f.name) "This should only be run on potential data links."
+
+    exists_entity = _exists_entity_direct (_without_trailing_slash f)
+    has_children = _has_children_entities f
+    IO.println "potential data link "+f.path+", exists_entity: "+exists_entity.to_text+", has_children: "+has_children.to_text
+    clash = exists_entity && has_children
+    r = case clash of
+        True ->
+            warning = Illegal_State.Error "The S3 path ["+f.path+"] is ambiguous - its key is both a data link object and a directory containing other objects. The data link will be used."
+            Warning.attach warning True
+        False ->
+            if exists_entity then True else
+                if has_children then False else
+                    has_trailing_slash = f.s3_path.is_directory
+                    has_trailing_slash.not
+    IO.println "is_data_link? "+r.to_text
+    r
+
+
+## Checks if an object exists under the given key _directly_.
+   This is different from `exists` which will be true if any child objects exist
+   under a given directory key. This method, however, will only return true if
+   an object with the exact key exists and is not just an empty marker (as used
+   sometimes to mark directories).
+private _exists_entity_direct (f : S3_File) -> Boolean =
+    size = S3.raw_head f.s3_path.bucket f.s3_path.key f.credentials . contentLength
+    if size.is_error then False else size > 0
+
+private _has_children_entities (f : S3_File) -> Boolean =
+    pair = S3.read_bucket f.s3_path.bucket f.s3_path.key f.credentials delimiter=S3_Path.delimiter max_count=1
+    if pair.is_error then False else
+        pair.first.is_empty.not || pair.second.is_empty.not
+
+private _invalidate_caches_on_write (f : S3_File) =
+    S3DataLinkCache.INSTANCE.invalidateEntry (_without_trailing_slash f).path
+    parent = f.parent
+    if parent.is_nothing.not then
+        S3DataLinkCache.INSTANCE.invalidatePrefix (_without_trailing_slash parent).path
