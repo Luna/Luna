@@ -78,6 +78,15 @@ pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
 }
 
+pub fn setup_msys() -> Step {
+    Step {
+        name: Some("Setup MSYS2".into()),
+        uses: Some("msys2/setup-msys2@v2".into()),
+        r#if: Some(is_windows_runner()),
+        ..default()
+    }
+}
+
 pub fn setup_bazel() -> Step {
     Step {
         name: Some("Setup bazel environment".into()),
