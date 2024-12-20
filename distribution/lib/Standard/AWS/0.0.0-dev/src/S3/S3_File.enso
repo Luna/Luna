@@ -756,9 +756,9 @@ private _exists_entity_direct (f : S3_File) -> Boolean =
     if size.is_error then False else size > 0
 
 private _has_children_entities (f : S3_File) -> Boolean =
-    pair = S3.read_bucket f.s3_path.bucket f.s3_path.key f.credentials delimiter=S3_Path.delimiter max_count=1
-    if pair.is_error then False else
-        pair.first.is_empty.not || pair.second.is_empty.not
+    pair = S3.read_bucket f.s3_path.bucket f.s3_path.key f.credentials delimiter=S3_Path.delimiter max_count=2
+    entries = pair.first + pair.second
+    entries.filter (k-> k != f.s3_path.key) . is_empty . not
 
 private _invalidate_caches_on_write (f : S3_File) =
     S3DataLinkCache.INSTANCE.invalidateEntry (_without_trailing_slash f).path
