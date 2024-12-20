@@ -4678,7 +4678,7 @@ lazy val `std-image` = project
       val _ = StdBits
         .copyDependencies(
           `image-polyglot-root`,
-          Seq("std-image.jar"),
+          Seq("std-image.jar", "opencv.jar"),
           ignoreScalaLibrary = true,
           ignoreDependency   = Some("org.openpnp" % "opencv" % opencvVersion)
         )
@@ -4715,7 +4715,8 @@ lazy val `std-image` = project
         outputJarPath,
         extractedFilesDir,
         renameFunc,
-        logger
+        logger,
+        streams.value.cacheStoreFactory
       )
     },
     Compile / packageBin := Def.task {

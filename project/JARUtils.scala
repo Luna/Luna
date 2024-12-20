@@ -1,3 +1,7 @@
+import sbt.{IO, Tracked}
+import sbt.std.Streams
+import sbt.util.{CacheStoreFactory, FileInfo}
+
 import java.io.IOException
 import java.nio.file.{Files, Path}
 import java.util.jar.{JarEntry, JarFile, JarOutputStream}
@@ -25,10 +29,29 @@ object JARUtils {
     outputJarPath: Path,
     extractedFilesDir: Path,
     renameFunc: String => Option[String],
-    logger: sbt.util.Logger
+    logger: sbt.util.Logger,
+    cacheStoreFactory: CacheStoreFactory
   ): Unit = {
-    ensureDirExists(outputJarPath.getParent, logger)
-    ensureDirExists(extractedFilesDir, logger)
+    val dependencyStore = cacheStoreFactory.make("extract-jar-files")
+    // Make sure that the actual file extraction is done only iff some of the cached files change.
+    val cachedFiles = Set(
+      inputJarPath.toFile,
+    )
+    var shouldExtract = false
+    Tracked.diffInputs(dependencyStore, FileInfo.hash)(cachedFiles) {
+      report =>
+        shouldExtract = report.modified.nonEmpty || report.removed.nonEmpty || report.added.nonEmpty
+    }
+
+    if (!shouldExtract) {
+      logger.debug("No changes in the input JAR, skipping extraction.")
+      return
+    } else {
+      logger.info(s"Extracting files with prefix '${extractPrefix}' from $inputJarPath to $extractedFilesDir.")
+    }
+
+    ensureDirExistsAndIsClean(outputJarPath.getParent, logger)
+    ensureDirExistsAndIsClean(extractedFilesDir, logger)
     Using(new JarFile(inputJarPath.toFile)) { inputJar =>
       Using(new JarOutputStream(Files.newOutputStream(outputJarPath))) {
         outputJar =>
@@ -79,17 +102,22 @@ object JARUtils {
     })
   }
 
-  private def ensureDirExists(
+  private def ensureDirExistsAndIsClean(
     path: Path,
     logger: sbt.util.Logger
   ): Unit = {
-    if (path != null) {
+    require(path != null)
+    val dir = path.toFile
+    if (dir.exists && dir.isDirectory) {
+      // Clean previous contents
+      IO.delete(IO.listFiles(dir))
+    } else {
       try {
-        Files.createDirectories(path)
+        IO.createDirectory(dir)
       } catch {
         case e: IOException =>
           logger.err(
-            s"Failed to create parent directories for $path: ${e.getMessage}"
+            s"Failed to create directory $path: ${e.getMessage}"
           )
           e.printStackTrace(System.err)
       }
