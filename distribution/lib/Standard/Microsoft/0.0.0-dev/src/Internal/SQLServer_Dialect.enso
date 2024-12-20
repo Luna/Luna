@@ -471,15 +471,15 @@ private _make_iif arguments:Vector -> SQL_Builder =
 
 ## PRIVATE
 agg_count_is_null = Base_Generator.lift_unary_op "COUNT_IS_NULL" arg->
-    SQL_Builder.code "SUM(CASE WHEN " ++ arg.paren ++ " IS NULL THEN 1 ELSE 0 END)"
+    SQL_Builder.code "COALESCE(SUM(CASE WHEN " ++ arg.paren ++ " IS NULL THEN 1 ELSE 0 END), 0)"
 
 ## PRIVATE
 agg_count_empty = Base_Generator.lift_unary_op "COUNT_EMPTY" arg->
-    SQL_Builder.code "SUM(CASE WHEN (" ++ arg.paren ++ " IS NULL) OR (" ++ arg.paren ++ " = '') THEN 1 ELSE 0 END)"
+    SQL_Builder.code "COALESCE(SUM(CASE WHEN (" ++ arg.paren ++ " IS NULL) OR (" ++ arg.paren ++ " = '') THEN 1 ELSE 0 END), 0)"
 
 ## PRIVATE
 agg_count_not_empty = Base_Generator.lift_unary_op "COUNT_NOT_EMPTY" arg->
-    SQL_Builder.code "SUM(CASE WHEN (" ++ arg.paren ++ " IS NOT NULL) AND (" ++ arg.paren ++ " != '') THEN 1 ELSE 0 END)"
+    SQL_Builder.code "COALESCE(SUM(CASE WHEN (" ++ arg.paren ++ " IS NOT NULL) AND (" ++ arg.paren ++ " != '') THEN 1 ELSE 0 END), 0)"
 
 
 ## PRIVATE
