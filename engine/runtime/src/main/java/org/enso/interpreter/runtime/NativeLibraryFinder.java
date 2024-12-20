@@ -25,7 +25,11 @@ final class NativeLibraryFinder {
    * @return null if not found, absolute path otherwise.
    */
   static String findNativeLibrary(String libName, Package<TruffleFile> pkg) {
-    var arch = System.getProperty("os.arch");
+    var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+    if (arch.contains(" ")) {
+      // Strip version information from the architecture string.
+      arch = arch.substring(0, arch.indexOf(' '));
+    }
     var osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     var libNameWithSuffix = System.mapLibraryName(libName);
     var libDir = pkg.polyglotDir().resolve("lib");
