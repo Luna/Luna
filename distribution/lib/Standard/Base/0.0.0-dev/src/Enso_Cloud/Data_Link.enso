@@ -188,3 +188,8 @@ type Data_Link_From_File
     ## PRIVATE
        Checks if the given file is a data-link.
     is_data_link self -> Boolean = self.underlying.is_data_link
+
+## PRIVATE
+   Files may sometimes be converted to File_Like.
+   If they implement `Data_Link_From_File`, we want to inherit that implementation.
+Data_Link_From_File.from (that : File_Like) = Data_Link_From_File.from that.underlying
