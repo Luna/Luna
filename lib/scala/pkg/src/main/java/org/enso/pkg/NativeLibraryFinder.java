@@ -1,6 +1,11 @@
 package org.enso.pkg;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import org.enso.filesystem.FileSystem;
 
 /**
@@ -20,26 +25,50 @@ public final class NativeLibraryFinder {
    * @return null if not found, absolute path otherwise.
    */
   public static <T> String findNativeLibrary(String libName, Package<T> pkg, FileSystem<T> fs) {
-    var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
-    var osName = simpleOsName();
     var libNameWithSuffix = System.mapLibraryName(libName);
-    var libDir = pkg.nativeLibraryDir();
-    if (!fs.exists(libDir)) {
-      return null;
-    }
-    var nativeLib = fs.getChild(libDir, libNameWithSuffix);
-    if (fs.exists(nativeLib)) {
-      return fs.getAbsolutePath(nativeLib);
-    }
-    nativeLib = fs.getChild(fs.getChild(libDir, arch), libNameWithSuffix);
-    if (fs.exists(nativeLib)) {
-      return fs.getAbsolutePath(nativeLib);
-    }
-    nativeLib = fs.getChild(fs.getChild(fs.getChild(libDir, arch), osName), libNameWithSuffix);
-    if (fs.exists(nativeLib)) {
-      return fs.getAbsolutePath(nativeLib);
+    for (var dir : searchPath(pkg, fs)) {
+      if (!fs.exists(dir)) {
+        return null;
+      }
+      var nativeLib = fs.getChild(dir, libNameWithSuffix);
+      if (fs.exists(nativeLib)) {
+        return fs.getAbsolutePath(nativeLib);
+      }
     }
     return null;
+  }
+
+  /** Returns set of native libraries for the given package for the current OS and architecture. */
+  public static <T> Set<T> listAllNativeLibraries(Package<T> pkg, FileSystem<T> fs) {
+    var nativeLibs = new HashSet<T>();
+    for (var dir : searchPath(pkg, fs)) {
+      if (!fs.exists(dir)) {
+        return nativeLibs;
+      }
+      try {
+        fs.list(dir)
+            .forEach(
+                file -> {
+                  if (fs.isRegularFile(file)) {
+                    nativeLibs.add(file);
+                  }
+                });
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    return nativeLibs;
+  }
+
+  private static <T> List<T> searchPath(Package<T> pkg, FileSystem<T> fs) {
+    var searchPath = new ArrayList<T>();
+    var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+    var osName = simpleOsName();
+    var libDir = pkg.nativeLibraryDir();
+    searchPath.add(libDir);
+    searchPath.add(fs.getChild(libDir, arch));
+    searchPath.add(fs.getChild(fs.getChild(libDir, arch), osName));
+    return searchPath;
   }
 
   private static String simpleOsName() {
