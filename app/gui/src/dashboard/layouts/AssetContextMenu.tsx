@@ -31,12 +31,12 @@ import * as localBackendModule from '#/services/LocalBackend'
 
 import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
 import {
-  useCopyAssetsMutation,
-  useDeleteAssetsMutation,
+  copyAssetsMutationOptions,
+  deleteAssetsMutationOptions,
+  restoreAssetsMutationOptions,
   useDownloadAssetsMutation,
   useNewProject,
   useRemoveSelfPermissionMutation,
-  useRestoreAssetsMutation,
   useUploadFileWithToastMutation,
 } from '#/hooks/backendHooks'
 import { usePasteData } from '#/providers/DriveProvider'
@@ -81,9 +81,9 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
-  const restoreAssetsMutation = useRestoreAssetsMutation(backend)
-  const copyAssetsMutation = useCopyAssetsMutation(backend)
+  const deleteAssetsMutation = reactQuery.useMutation(deleteAssetsMutationOptions(backend))
+  const restoreAssetsMutation = reactQuery.useMutation(restoreAssetsMutationOptions(backend))
+  const copyAssetsMutation = reactQuery.useMutation(copyAssetsMutationOptions(backend))
   const downloadAssetsMutation = useDownloadAssetsMutation(backend)
   const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()

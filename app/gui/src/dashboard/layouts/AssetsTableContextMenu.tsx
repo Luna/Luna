@@ -24,12 +24,13 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import Separator from '#/components/styled/Separator'
-import { useDeleteAssetsMutation, useRestoreAssetsMutation } from '#/hooks/backendHooks'
+import { deleteAssetsMutationOptions, restoreAssetsMutationOptions } from '#/hooks/backendHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import * as permissions from '#/utilities/permissions'
+import { useMutation } from '@tanstack/react-query'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =================
@@ -73,8 +74,8 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
   const selectedAssets = useSelectedAssets()
   const setSelectedAssets = useSetSelectedAssets()
   const driveStore = useDriveStore()
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
-  const restoreAssetsMutation = useRestoreAssetsMutation(backend)
+  const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
+  const restoreAssetsMutation = useMutation(restoreAssetsMutationOptions(backend))
 
   const hasPasteData = useStore(driveStore, ({ pasteData }) => {
     const effectivePasteData =

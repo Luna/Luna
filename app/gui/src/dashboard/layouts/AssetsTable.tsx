@@ -48,12 +48,12 @@ import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
+  addAssetsLabelsMutationOptions,
   backendMutationOptions,
-  useAddAssetsLabelsMutation,
+  copyAssetsMutationOptions,
+  moveAssetsMutationOptions,
+  removeAssetsLabelsMutationOptions,
   useBackendQuery,
-  useCopyAssetsMutation,
-  useMoveAssetsMutation,
-  useRemoveAssetsLabelsMutation,
   useUploadFiles,
 } from '#/hooks/backendHooks'
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
@@ -355,10 +355,10 @@ function AssetsTable(props: AssetsTableProps) {
     useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
   )
   const cutAndPaste = useCutAndPaste(backend, category)
-  const copyAssetsMutation = useCopyAssetsMutation(backend)
-  const moveAssetsMutation = useMoveAssetsMutation(backend)
-  const addAssetsLabelsMutation = useAddAssetsLabelsMutation(backend)
-  const removeAssetsLabelsMutation = useRemoveAssetsLabelsMutation(backend)
+  const copyAssetsMutation = useMutation(copyAssetsMutationOptions(backend))
+  const moveAssetsMutation = useMutation(moveAssetsMutationOptions(backend))
+  const addAssetsLabelsMutation = useMutation(addAssetsLabelsMutationOptions(backend))
+  const removeAssetsLabelsMutation = useMutation(removeAssetsLabelsMutationOptions(backend))
 
   const { rootDirectoryId, rootDirectory, expandedDirectoryIds } = useDirectoryIds({ category })
   const { isLoading, isError, assetTree } = useAssetTree({

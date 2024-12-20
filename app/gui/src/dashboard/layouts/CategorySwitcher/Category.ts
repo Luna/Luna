@@ -3,9 +3,9 @@ import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
 import {
+  deleteAssetsMutationOptions,
+  moveAssetsMutationOptions,
   useBackendQuery,
-  useDeleteAssetsMutation,
-  useMoveAssetsMutation,
 } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
@@ -20,6 +20,7 @@ import {
   type UserGroupInfo,
 } from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
+import { useMutation } from '@tanstack/react-query'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 const PATH_SCHEMA = z.string().refine((s): s is Path => true)
@@ -207,8 +208,8 @@ export function useTransferBetweenCategories(currentCategory: Category) {
     'getOrganization',
     EMPTY_ARRAY,
   )
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
-  const moveAssetsMutation = useMoveAssetsMutation(backend)
+  const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
+  const moveAssetsMutation = useMutation(moveAssetsMutationOptions(backend))
 
   return useEventCallback(
     (from: Category, to: Category, keys: Iterable<AssetId>, newParentId?: DirectoryId | null) => {

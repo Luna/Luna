@@ -1,5 +1,5 @@
 /** @file Events related to changes in the asset list. */
-import { useCopyAssetsMutation } from '#/hooks/backendHooks'
+import { copyAssetsMutationOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
 import type { DrivePastePayload } from '#/providers/DriveProvider'
@@ -7,13 +7,14 @@ import type Backend from '#/services/Backend'
 import type { AssetId, DirectoryId } from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import { isTeamPath, isUserPath } from '#/utilities/permissions'
+import { useMutation } from '@tanstack/react-query'
 
 /**
  * A hook to copy or move assets as appropriate. Assets are moved, except when performing
  * a cut and paste between the Team Space and the User Space, in which case the asset is copied.
  */
 export function useCutAndPaste(backend: Backend, category: Category) {
-  const copyAssetsMutation = useCopyAssetsMutation(backend)
+  const copyAssetsMutation = useMutation(copyAssetsMutationOptions(backend))
   const transferBetweenCategories = useTransferBetweenCategories(category)
 
   return useEventCallback(

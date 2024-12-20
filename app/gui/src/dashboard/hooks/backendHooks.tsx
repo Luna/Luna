@@ -1299,8 +1299,8 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
 }
 
 /** Call "delete" mutations for a list of assets. */
-export function useDeleteAssetsMutation(backend: Backend) {
-  return useMutation({
+export function deleteAssetsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationKey: [backend.type, 'deleteAssets'],
     mutationFn: async ([ids, force]: readonly [ids: readonly AssetId[], force: boolean]) => {
       const results = await Promise.allSettled(
@@ -1329,8 +1329,8 @@ export function useDeleteAssetsMutation(backend: Backend) {
 }
 
 /** Call "restore" mutations for a list of assets. */
-export function useRestoreAssetsMutation(backend: Backend) {
-  return useMutation({
+export function restoreAssetsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationKey: [backend.type, 'deleteAssets'],
     mutationFn: async (ids: readonly AssetId[]) => {
       const results = await Promise.allSettled(
@@ -1356,8 +1356,8 @@ export function useRestoreAssetsMutation(backend: Backend) {
 }
 
 /** Call "copy" mutations for a list of assets. */
-export function useCopyAssetsMutation(backend: Backend) {
-  return useMutation({
+export function copyAssetsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationKey: [backend.type, 'copyAssets'],
     mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
       const results = await Promise.allSettled(
@@ -1383,8 +1383,8 @@ export function useCopyAssetsMutation(backend: Backend) {
 }
 
 /** Call "move" mutations for a list of assets. */
-export function useMoveAssetsMutation(backend: Backend) {
-  return useMutation({
+export function moveAssetsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationKey: [backend.type, 'moveAssets'],
     mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
       const results = await Promise.allSettled(
@@ -1449,7 +1449,7 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
 /** Clear the trash folder. */
 export function useClearTrashMutation(backend: Backend) {
   const queryClient = useQueryClient()
-  const deleteAssetsMutation = useDeleteAssetsMutation(backend)
+  const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
 
   return useMutation({
     mutationKey: [backend.type, 'clearTrash'],
@@ -1624,8 +1624,8 @@ export function useDownloadAssetsMutation(backend: Backend) {
 }
 
 /** Call "add label" mutations for a list of assets. */
-export function useAddAssetsLabelsMutation(backend: Backend) {
-  return useMutation({
+export function addAssetsLabelsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationFn: async ([infos, labelNames]: [
       infos: readonly {
         id: AssetId
@@ -1701,9 +1701,4 @@ export function removeAssetsLabelsMutationOptions(backend: Backend) {
       awaitInvalidates: true,
     },
   })
-}
-
-/** Call "remove label" mutations for a list of assets. */
-export function useRemoveAssetsLabelsMutation(backend: Backend) {
-  return useMutation(removeAssetsLabelsMutationOptions(backend))
 }
