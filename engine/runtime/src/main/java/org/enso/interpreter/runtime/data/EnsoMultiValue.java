@@ -528,6 +528,7 @@ public final class EnsoMultiValue extends EnsoObject {
       this.types = types;
     }
 
+    @TruffleBoundary
     static MultiType create(Type[] types, int from, int to) {
       var mt = new MultiType(Arrays.copyOfRange(types, from, to));
       return ALL_TYPES.computeIfAbsent(mt, java.util.function.Function.identity());
@@ -545,6 +546,7 @@ public final class EnsoMultiValue extends EnsoObject {
     }
 
     @Override
+    @TruffleBoundary
     public int hashCode() {
       int hash = 7;
       hash = 89 * hash + Arrays.deepHashCode(this.types);
@@ -552,6 +554,7 @@ public final class EnsoMultiValue extends EnsoObject {
     }
 
     @Override
+    @TruffleBoundary
     public boolean equals(Object obj) {
       if (this == obj) {
         return true;
@@ -579,6 +582,7 @@ public final class EnsoMultiValue extends EnsoObject {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
       return "MultiType{" + "types=" + Arrays.toString(types) + '}';
     }
