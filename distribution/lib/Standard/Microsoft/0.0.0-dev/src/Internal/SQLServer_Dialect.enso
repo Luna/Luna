@@ -237,8 +237,7 @@ type SQLServer_Dialect
     generate_collate self collation_name:Text -> Text = Base_Generator.default_generate_collate collation_name quote_char=""
 
     ## PRIVATE
-    check_aggregate_support : Aggregate_Column -> Boolean ! Unsupported_Database_Operation
-    check_aggregate_support self aggregate =
+    check_aggregate_support self aggregate:Aggregate_Column -> Boolean ! Unsupported_Database_Operation =
         unsupported name =
             Error.throw (Unsupported_Database_Operation.Error name) 
         case aggregate of
@@ -257,8 +256,8 @@ type SQLServer_Dialect
             Last _ _ _ _ -> unsupported "Last"
             Maximum _ _ -> True
             Minimum _ _ -> True
-            Shortest _ _ -> unsupported "Shortest"
-            Longest _ _ -> unsupported "Longest"
+            Shortest _ _ -> True
+            Longest _ _ -> True
             Standard_Deviation _ _ _ -> True
             Concatenate _ _ _ _ _ _ -> True
             Sum _ _ -> True
