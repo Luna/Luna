@@ -71,11 +71,11 @@ jobs:
       - self-hosted
       - Windows
     steps:
-    - name: Check bash.exe availability
-      shell: cmd
-      run: |
-        where bash.exe || echo "bash.exe not found in PATH"
-        echo "PATH=%PATH%"
+      - name: Check bash.exe availability
+        shell: cmd
+        run: |
+          where bash.exe || echo "bash.exe not found in PATH"
+          echo "PATH=%PATH%"
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
