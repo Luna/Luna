@@ -54,8 +54,6 @@ public class AnyToTest {
     conv style v = case style of
         0 -> v.to Integer
         1 -> v:Integer
-        2 -> v.to Text
-        3 -> v:Text
         99 -> eq
 
     """;
@@ -69,6 +67,48 @@ public class AnyToTest {
               var bothValue = ctx.asValue(both);
               var asIntegerTo = conv.execute(0, bothValue);
               var asIntegerCast = conv.execute(1, bothValue);
+              var equals = conv.execute(99, null);
+              return equals.execute(asIntegerTo, asIntegerCast);
+            });
+    assertTrue("Any.to and : give the same result", eq.asBoolean());
+  }
+
+  @Test
+  public void multiValueToText() throws Exception {
+    multiValueToText(2);
+  }
+
+  @Test
+  public void multiValueToTextHidden() throws Exception {
+    multiValueToText(1);
+  }
+
+  private void multiValueToText(int dispatchLength) throws Exception {
+    var ensoCtx = ContextUtils.leakContext(ctx);
+    var types =
+        new Type[] {ensoCtx.getBuiltins().number().getInteger(), ensoCtx.getBuiltins().text()};
+    var code =
+        """
+    from Standard.Base import all
+
+    private eq a b = a == b
+
+    conv style:Integer v = case style of
+        2 -> v.to Text
+        3 -> v:Text
+        99 -> eq
+
+    """;
+    var conv =
+        ContextUtils.evalModule(ctx, Source.newBuilder("enso", code, "conv.enso").build(), "conv");
+    var both = EnsoMultiValue.create(types, dispatchLength, new Object[] {2L, Text.create("Two")});
+    var eq =
+        ContextUtils.executeInContext(
+            ctx,
+            () -> {
+              var bothValue = ctx.asValue(both);
+              var asIntegerCast = conv.execute(3, bothValue);
+              var asIntegerTo = conv.execute(2, bothValue);
               var equals = conv.execute(99, null);
               return equals.execute(asIntegerTo, asIntegerCast);
             });
