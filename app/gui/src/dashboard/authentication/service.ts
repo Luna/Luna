@@ -82,7 +82,9 @@ export interface NestedAmplifyConfig {
 export function toNestedAmplifyConfig(config: AmplifyConfig): NestedAmplifyConfig {
   return {
     region: config.region,
-    endpoint: config.endpoint,
+    // endpoint: config.endpoint,
+    // TODO: Use the endpoint when it is working.
+    endpoint: undefined,
     userPoolId: config.userPoolId,
     userPoolWebClientId: config.userPoolWebClientId,
     oauth: {
