@@ -45,6 +45,7 @@ from project.System.Internal.File_Builtins import all
 polyglot java import java.io.File as Java_File
 polyglot java import java.io.InputStream as Java_Input_Stream
 polyglot java import java.io.OutputStream as Java_Output_Stream
+polyglot java import java.nio.file.InvalidPathException
 polyglot java import java.nio.file.Path as Java_Path
 polyglot java import java.nio.file.StandardCopyOption
 polyglot java import java.nio.file.StandardOpenOption
@@ -399,7 +400,8 @@ type File
        An internal helper method that resolves a single part (subpath) of a path.
     resolve_single_part self part:Text -> Any =
         if self.is_data_link then Data_Link_Helpers.interpret_data_link_target_as_file self . resolve_single_part part else
-            self.resolve_builtin part
+            handle_invalid_path part <|
+                self.resolve_builtin part
 
     ## PRIVATE
        Convert the file descriptor to a JS_Object.
@@ -737,7 +739,7 @@ type File
                because the conversion would already start resolving the data link too soon.
             destination_writable = Writable_File.from destination
             r = case destination_writable.file of
-                _ : File -> local_file_copy self destination_writable.file replace_existing
+                _ : File -> _local_file_copy self destination_writable.file replace_existing
                 _ -> destination_writable.copy_from_local self replace_existing
             r.if_not_error destination_writable.file_for_return
 
@@ -755,7 +757,7 @@ type File
                because the conversion would already start resolving the data link too soon.
             destination_writable = Writable_File.from destination
             r = case destination_writable.file of
-                _ : File -> local_file_move self destination_writable.file replace_existing
+                _ : File -> _local_file_move self destination_writable.file replace_existing
                 _ ->
                     r = destination_writable.copy_from_local self replace_existing
                     r.if_not_error <|
@@ -913,12 +915,7 @@ list_descendants file =
 get_cwd : File
 get_cwd = @Builtin_Method "File.get_cwd"
 
-## PRIVATE
-
-   Gets a file corresponding to the provided path.
-
-   Arguments:
-   - path: The path to obtain a file at.
+## The builtin that returns a File instance for a given path.
 get_file : Text -> File
 get_file path = @Builtin_Method "File.get_file"
 
@@ -930,7 +927,7 @@ get_file path = @Builtin_Method "File.get_file"
      relative to the project's location.
    - if running locally, the path is resolved to a local file, relative to the
      current working directory.
-resolve_local_file (path : Text) =
+resolve_local_file (path : Text) = handle_invalid_path path <|
     java_path = Java_Path.of path
     root_file = case java_path.isAbsolute of
         ## If the path is absolute we extract its root.
@@ -983,14 +980,18 @@ Writable_File.from (that : File) = if that.is_data_link then Data_Link_Helpers.i
 ## PRIVATE
 Data_Link_From_File.from (that : File) = Data_Link_From_File.Value that
 
-## PRIVATE
-local_file_copy (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
+private _local_file_copy (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
     File_Error.handle_java_exceptions source <|
         copy_options = if replace_existing then [StandardCopyOption.REPLACE_EXISTING.to_text] else []
         source.copy_builtin destination copy_options
 
-## PRIVATE
-local_file_move (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
+private _local_file_move (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
     File_Error.handle_java_exceptions source <|
         copy_options = if replace_existing then [StandardCopyOption.REPLACE_EXISTING.to_text] else []
         source.move_builtin destination copy_options
+
+## On some filesystems some paths may be invalid,
+   we want to catch the Java exception and turn it into an Enso error.
+private handle_invalid_path ~path ~action =
+    Panic.catch InvalidPathException action caught_panic->
+        Error.throw (Illegal_Argument.Error "The path "+path.to_display_text+" is invalid: "+caught_panic.payload.getMessage)

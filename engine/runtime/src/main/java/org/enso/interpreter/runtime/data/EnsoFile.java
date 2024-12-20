@@ -452,6 +452,7 @@ public final class EnsoFile extends EnsoObject {
   }
 
   @Builtin.Method(name = "resolve_builtin")
+  @Builtin.WrapException(from = IllegalArgumentException.class)
   @Builtin.Specialize
   public EnsoFile resolve(String subPath) {
     return new EnsoFile(this.truffleFile.resolve(subPath));
@@ -745,21 +746,13 @@ public final class EnsoFile extends EnsoObject {
           "Takes the text representation of a path and returns a TruffleFile corresponding to it.",
       autoRegister = false)
   @Builtin.Specialize
+  @Builtin.WrapException(from = IllegalArgumentException.class)
+  @Builtin.WrapException(from = UnsupportedOperationException.class)
   @TruffleBoundary
   @SuppressWarnings("generic-enso-builtin-type")
-  public static Object fromString(EnsoContext context, String path)
-      throws IllegalArgumentException {
-    try {
-      TruffleFile file = context.getPublicTruffleFile(path);
-      return new EnsoFile(file);
-    } catch (IllegalArgumentException | UnsupportedOperationException ex) {
-      var err =
-          context
-              .getBuiltins()
-              .error()
-              .makeUnsupportedArgumentsError(new Object[] {Text.create(path)}, ex.getMessage());
-      return DataflowError.withDefaultTrace(err, null);
-    }
+  public static Object fromString(EnsoContext context, String path) {
+    TruffleFile file = context.getPublicTruffleFile(path);
+    return new EnsoFile(file);
   }
 
   @Builtin.Method(
