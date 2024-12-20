@@ -448,7 +448,7 @@ type Enso_File
                             file = Enso_File.Value (self.enso_path.resolve asset.name)
                             Asset_Cache.update file asset
                             file
-                        results.sort on=.enso_path
+                        results.sort
 
     ## GROUP Output
        ICON folder_add
@@ -584,3 +584,11 @@ File_Like.from (that : Enso_File) = File_Like.Value that
 ## PRIVATE
 Writable_File.from (that : Enso_File) = if Data_Link.is_data_link that then Data_Link_Helpers.interpret_data_link_as_writable_file that else
     Writable_File.Value that Enso_File_Write_Strategy.instance
+
+type Enso_File_Comparator
+    compare x y = Ordering.compare x.enso_path y.enso_path
+
+    hash x = Enso_File_Comparator.hash_builtin x
+    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+
+Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator

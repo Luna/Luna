@@ -187,7 +187,7 @@ type S3_File
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
                     files = pair.second . map key->
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
-                    (sub_folders + files) . sort on=(x-> x.s3_path)
+                    (sub_folders + files) . sort
 
     ## ALIAS load bytes, open bytes
        ICON data_input
@@ -616,3 +616,11 @@ translate_file_errors related_file result =
         s3_path = S3_Path.Value error.bucket error.key
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
+
+type S3_File_Comparator
+    compare x y = Ordering.compare x.s3_path y.s3_path
+
+    hash x = S3_File_Comparator.hash_builtin x
+    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+
+Comparable.from that:S3_File = Comparable.new that S3_File_Comparator
