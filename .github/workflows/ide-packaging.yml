@@ -23,7 +23,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -77,7 +77,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -131,7 +131,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -198,7 +198,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -267,7 +267,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -353,7 +353,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Add Git\bash.exe to PATH
-        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        run: echo PATH="C:\Program Files\Git\bin;%PATH%" >> %GITHUB_ENV%
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
