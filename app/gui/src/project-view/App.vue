@@ -56,6 +56,7 @@ watch(
   { immediate: true },
 )
 
+// This comment runs CI
 useEventListener(window, 'beforeunload', () => logger.send('ide_project_closed'))
 
 const appConfig = computed(() => {
