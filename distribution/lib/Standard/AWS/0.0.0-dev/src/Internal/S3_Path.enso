@@ -116,7 +116,7 @@ type Path_Entry
 ## PRIVATE
 type Decomposed_S3_Path
     ## PRIVATE
-    Value (parts : Vector Path_Entry) (go_to_root : Boolean)
+    Value (parts : Vector Path_Entry)
 
     ## PRIVATE
        Reconstructs the original path.
@@ -128,37 +128,33 @@ type Decomposed_S3_Path
     ## PRIVATE
     parse (key : Text) -> Decomposed_S3_Path =
         has_directory_suffix = key.ends_with S3_Path.delimiter
-        has_root_prefix = key.starts_with S3_Path.delimiter
         parts = key.split S3_Path.delimiter . filter (p-> p.is_empty.not)
         entries = case has_directory_suffix of
             True -> parts.map Path_Entry.Directory
             False ->
                 if parts.is_empty then [] else
                     (parts.drop (..Last 1) . map Path_Entry.Directory) + [Path_Entry.File parts.last]
-        Decomposed_S3_Path.Value entries has_root_prefix
+        Decomposed_S3_Path.Value entries
 
     ## PRIVATE
     join (paths : Vector Decomposed_S3_Path) -> Decomposed_S3_Path =
         if paths.is_empty then Error.throw (Illegal_Argument.Error "Cannot join an empty list of paths.") else
-            last_root_ix = paths.last_index_of (.go_to_root)
-            without_ignored_paths = if last_root_ix.is_nothing then paths else
-                paths.drop last_root_ix
-            flattened = without_ignored_paths.flat_map .parts
+            flattened = paths.flat_map .parts
             # Any `File` parts from the middle are now transformed to `Directory`:
             aligned = flattened.map_with_index ix-> part-> case part of
                 Path_Entry.Directory _ -> part
                 Path_Entry.File name ->
                     is_last = ix == flattened.length-1
                     if is_last then part else Path_Entry.Directory name
-            Decomposed_S3_Path.Value aligned (last_root_ix.is_nothing.not)
+            Decomposed_S3_Path.Value aligned
 
     ## PRIVATE
     normalize self -> Decomposed_S3_Path ! S3_Error =
         new_parts = Path_Helpers.normalize_segments self.parts .name
-        Decomposed_S3_Path.Value new_parts self.go_to_root
+        Decomposed_S3_Path.Value new_parts
 
     ## PRIVATE
     parent self -> Decomposed_S3_Path | Nothing =
         if self.parts.is_empty then Nothing else
             new_parts = self.parts.drop (..Last 1)
-            Decomposed_S3_Path.Value new_parts self.go_to_root
+            Decomposed_S3_Path.Value new_parts
