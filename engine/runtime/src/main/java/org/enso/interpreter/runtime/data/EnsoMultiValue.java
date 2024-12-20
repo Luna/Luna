@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.data;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -99,7 +100,7 @@ public final class EnsoMultiValue extends EnsoObject {
         Type[] types,
         int from,
         int to,
-        @Cached(value = "clone(types)", dimensions = 1) Type[] cachedTypes,
+        @Cached(value = "clone(types, from, to)", dimensions = 1) Type[] cachedTypes,
         @Cached("createMultiType(cachedTypes, from, to)") MultiType result) {
       return result;
     }
@@ -109,17 +110,21 @@ public final class EnsoMultiValue extends EnsoObject {
       return MultiType.create(types, from, to);
     }
 
-    static final Type[] clone(Type[] types) {
-      return types.clone();
+    @TruffleBoundary
+    static final Type[] clone(Type[] types, int from, int to) {
+      return Arrays.copyOfRange(types, from, to);
     }
 
     @ExplodeLoop
-    static final boolean compareTypes(Type[] t1, Type[] t2, int from, int to) {
-      if (t1.length != t2.length) {
+    static final boolean compareTypes(Type[] cached, Type[] arr, int from, int to) {
+      CompilerAsserts.partialEvaluationConstant(cached);
+      if (cached.length != to - from) {
         return false;
       }
-      for (var i = from; i < to; i++) {
-        if (t1[i] != t2[i]) {
+      CompilerAsserts.partialEvaluationConstant(cached.length);
+      for (var i = 0; i < cached.length; i++) {
+        CompilerAsserts.partialEvaluationConstant(cached[i]);
+        if (cached[i] != arr[from++]) {
           return false;
         }
       }
@@ -486,9 +491,27 @@ public final class EnsoMultiValue extends EnsoObject {
   }
 
   /** Casts {@link EnsoMultiValue} to requested type effectively. */
-  @GenerateUncached
-  public abstract static class CastToNode extends Node {
-    private static final String INLINE_CACHE_LIMIT = "5";
+  public static final class CastToNode extends Node {
+    private static final CastToNode UNCACHED =
+        new CastToNode(FindIndexNode.getUncached(), NewNode.getUncached());
+    @Child private FindIndexNode findNode;
+    @Child private NewNode newNode;
+
+    private CastToNode(FindIndexNode f, NewNode n) {
+      this.findNode = f;
+      this.newNode = n;
+    }
+
+    @NeverDefault
+    public static CastToNode create() {
+      return new CastToNode(FindIndexNode.create(), NewNode.create());
+    }
+
+    @NeverDefault
+    @TruffleBoundary
+    public static CastToNode getUncached() {
+      return UNCACHED;
+    }
 
     /**
      * Casts value in a multi value into specific type.
@@ -502,9 +525,9 @@ public final class EnsoMultiValue extends EnsoObject {
      */
     public final Object findTypeOrNull(
         Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
-      var i = executeFindIndex(type, mv.dispatch);
+      var i = findNode.executeFindIndex(type, mv.dispatch);
       if (i == -1 && allTypes) {
-        var extraIndex = executeFindIndex(type, mv.extra);
+        var extraIndex = findNode.executeFindIndex(type, mv.extra);
         i = extraIndex == -1 ? -1 : mv.dispatch.types.length + extraIndex;
       }
       if (i != -1) {
@@ -515,7 +538,7 @@ public final class EnsoMultiValue extends EnsoObject {
           copyValues[0] = copyValues[i];
           copyTypes[i] = mv.dispatch.types[0];
           copyValues[i] = mv.values[0];
-          return EnsoMultiValue.NewNode.getUncached().newValue(copyTypes, 1, copyValues);
+          return newNode.newValue(copyTypes, 1, copyValues);
         } else {
           return mv.values[i];
         }
@@ -523,17 +546,22 @@ public final class EnsoMultiValue extends EnsoObject {
         return null;
       }
     }
+  }
+
+  @GenerateUncached
+  abstract static class FindIndexNode extends Node {
+    private static final String INLINE_CACHE_LIMIT = "5";
 
     abstract int executeFindIndex(Type type, MultiType mt);
 
     @NeverDefault
-    public static CastToNode create() {
-      return EnsoMultiValueFactory.CastToNodeGen.create();
+    public static FindIndexNode create() {
+      return EnsoMultiValueFactory.FindIndexNodeGen.create();
     }
 
     @NeverDefault
-    public static CastToNode getUncached() {
-      return EnsoMultiValueFactory.CastToNodeGen.getUncached();
+    public static FindIndexNode getUncached() {
+      return EnsoMultiValueFactory.FindIndexNodeGen.getUncached();
     }
 
     @Specialization(
