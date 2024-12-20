@@ -439,7 +439,7 @@ private _op_return_kind op -> Expression_Kind =
     if return_bool_ops.contains op then Expression_Kind.Boolean_Condition else Expression_Kind.Value
 
 private _op_needs_to_materialize_null_checks op -> Boolean =
-    ["FILL_NULL", "COALESCE", "COUNT_IS_NULL", "COUNT_EMPTY", "COUNT_NOT_EMPTY", "COUNT", "SUM", "AVG", "LONGEST", "SHORTEST", "COUNT_DISTINCT", "COUNT_DISTINCT_INCLUDE_NULL"].contains op
+    ["FILL_NULL", "COALESCE", "COUNT_IS_NULL", "COUNT_EMPTY", "COUNT_NOT_EMPTY", "COUNT", "SUM", "AVG", "LONGEST", "SHORTEST", "COUNT_DISTINCT", "COUNT_DISTINCT_INCLUDE_NULL", "STDDEV_POP", "STDDEV_SAMP"].contains op
 
 ## PRIVATE
 make_dialect_operations =
@@ -449,8 +449,8 @@ make_dialect_operations =
     arith_extensions = [floating_point_div, mod_op, decimal_div, decimal_mod, ["ROW_MIN", Base_Generator.make_function "LEAST"], ["ROW_MAX", Base_Generator.make_function "GREATEST"]]
     bool = [bool_or]
 
-    stddev_pop = ["STDDEV_POP", Base_Generator.make_function "stddev_pop"]
-    stddev_samp = ["STDDEV_SAMP", Base_Generator.make_function "stddev_samp"]
+    stddev_pop = ["STDDEV_POP", Base_Generator.make_function "STDEVP"]
+    stddev_samp = ["STDDEV_SAMP", Base_Generator.make_function "STDEV"]
     stats = [agg_median, agg_mode, agg_percentile, stddev_pop, stddev_samp]
     date_ops = [["year", Base_Generator.make_function "year"], make_datepart "quarter", ["month", Base_Generator.make_function "month"], make_datepart "week" "iso_week", ["day", Base_Generator.make_function "day"], make_datepart "hour", make_datepart "minute", make_datepart "day_of_year" "dayofyear", make_day_of_week, make_datepart "second", make_datepart "millisecond", make_extract_microsecond, ["date_add", make_date_add], ["date_diff", make_date_diff], ["date_trunc_to_day", make_date_trunc_to_day]]
     special_overrides = [is_empty, ["IIF", _make_iif]]
