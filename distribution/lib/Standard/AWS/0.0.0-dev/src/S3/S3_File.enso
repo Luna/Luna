@@ -731,9 +731,8 @@ private _check_is_data_link (f : S3_File) =
 
     exists_entity = _exists_entity_direct (_without_trailing_slash f)
     has_children = _has_children_entities f
-    IO.println "potential data link "+f.path+", exists_entity: "+exists_entity.to_text+", has_children: "+has_children.to_text
     clash = exists_entity && has_children
-    r = case clash of
+    case clash of
         True ->
             warning = Illegal_State.Error "The S3 path ["+f.path+"] is ambiguous - its key is both a data link object and a directory containing other objects. The data link will be used."
             Warning.attach warning True
@@ -742,8 +741,6 @@ private _check_is_data_link (f : S3_File) =
                 if has_children then False else
                     has_trailing_slash = f.s3_path.is_directory
                     has_trailing_slash.not
-    IO.println "is_data_link? "+r.to_text
-    r
 
 
 ## Checks if an object exists under the given key _directly_.
