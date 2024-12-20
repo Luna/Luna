@@ -124,7 +124,7 @@ add_aggregate_specs suite_builder setup =
             materialized.columns.at 0 . name . should_equal "Count Distinct Index Flag"
             materialized.columns.at 0 . at 0 . should_equal 20
 
-        group_builder.specify "should be able to compute sum and average of values" <|
+        group_builder.specify "should be able to compute sum and average of valuesx" <|
             grouped = data.table.aggregate columns=[Sum "Value", Sum "ValueWithNothing", Average "Value", Average "ValueWithNothing"]
             materialized = materialize grouped
             Problems.assume_no_problems materialized
