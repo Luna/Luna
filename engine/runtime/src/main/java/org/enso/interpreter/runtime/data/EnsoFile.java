@@ -525,8 +525,8 @@ public final class EnsoFile extends EnsoObject {
 
   @Builtin.Method(name = "is_directory_builtin")
   @TruffleBoundary
-  public boolean isDirectory() {
-    return this.truffleFile.isDirectory();
+  public static boolean isDirectory(EnsoFile file) {
+    return file.truffleFile.isDirectory();
   }
 
   @Builtin.Method(name = "create_directory_builtin")
