@@ -21,6 +21,9 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -73,6 +76,9 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -125,6 +131,9 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -188,6 +197,9 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -251,6 +263,9 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -317,6 +332,9 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
@@ -383,6 +401,9 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - if: runner.os == 'Windows'
+        name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:
