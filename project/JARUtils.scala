@@ -35,19 +35,21 @@ object JARUtils {
     val dependencyStore = cacheStoreFactory.make("extract-jar-files")
     // Make sure that the actual file extraction is done only iff some of the cached files change.
     val cachedFiles = Set(
-      inputJarPath.toFile,
+      inputJarPath.toFile
     )
     var shouldExtract = false
-    Tracked.diffInputs(dependencyStore, FileInfo.hash)(cachedFiles) {
-      report =>
-        shouldExtract = report.modified.nonEmpty || report.removed.nonEmpty || report.added.nonEmpty
+    Tracked.diffInputs(dependencyStore, FileInfo.hash)(cachedFiles) { report =>
+      shouldExtract =
+        report.modified.nonEmpty || report.removed.nonEmpty || report.added.nonEmpty
     }
 
     if (!shouldExtract) {
       logger.debug("No changes in the input JAR, skipping extraction.")
       return
     } else {
-      logger.info(s"Extracting files with prefix '${extractPrefix}' from $inputJarPath to $extractedFilesDir.")
+      logger.info(
+        s"Extracting files with prefix '${extractPrefix}' from $inputJarPath to $extractedFilesDir."
+      )
     }
 
     ensureDirExistsAndIsClean(outputJarPath.getParent, logger)
