@@ -78,11 +78,12 @@ pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
 }
 
-pub fn setup_msys() -> Step {
+pub fn setup_bin_bash() -> Step {
     Step {
-        name: Some("Setup MSYS2".into()),
-        uses: Some("msys2/setup-msys2@v2".into()),
+        name: Some("Add Git\\bash.exe to PATH".into()),
         r#if: Some(is_windows_runner()),
+        shell: Some(Shell::Cmd),
+        run: Some(r#"set "PATH=C:\Program Files\Git\bin;%PATH%""#.into()),
         ..default()
     }
 }

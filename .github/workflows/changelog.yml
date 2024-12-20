@@ -17,8 +17,9 @@ jobs:
       - X64
     steps:
       - if: runner.os == 'Windows'
-        name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
+        name: Add Git\bash.exe to PATH
+        run: set "PATH=C:\Program Files\Git\bin;%PATH%"
+        shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
         with:

@@ -18,7 +18,7 @@ use ide_ci::actions::workflow::definition::is_windows_runner;
 use ide_ci::actions::workflow::definition::run;
 use ide_ci::actions::workflow::definition::setup_artifact_api;
 use ide_ci::actions::workflow::definition::setup_bazel;
-use ide_ci::actions::workflow::definition::setup_msys;
+use ide_ci::actions::workflow::definition::setup_bin_bash;
 use ide_ci::actions::workflow::definition::setup_wasm_pack_step;
 use ide_ci::actions::workflow::definition::shell;
 use ide_ci::actions::workflow::definition::wrap_expression;
@@ -378,7 +378,7 @@ pub fn runs_on(os: OS, runner_type: RunnerType) -> Vec<RunnerLabel> {
 /// Initial CI job steps: check out the source code and set up the environment.
 pub fn setup_script_steps() -> Vec<Step> {
     let mut ret = vec![
-        setup_msys(),
+        setup_bin_bash(),
         setup_bazel(),
         setup_wasm_pack_step(),
         setup_artifact_api(),
