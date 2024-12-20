@@ -94,7 +94,7 @@ public final class EnsoMultiValue extends EnsoObject {
     abstract MultiType executeTypes(Type[] types, int from, int to);
 
     @Specialization(
-        guards = {"compareTypes(types, cachedTypes, from, to)"},
+        guards = {"compareTypes(cachedTypes, types, from, to)"},
         limit = INLINE_CACHE_LIMIT)
     final MultiType cachedMultiType(
         Type[] types,
