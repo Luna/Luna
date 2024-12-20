@@ -231,6 +231,9 @@ type Postgres_Dialect
         if cast_to.is_nothing then expression else
             SQL_Expression.Operation "CAST" [expression, SQL_Expression.Literal cast_to]
 
+    ## PRIVATE
+       Add an extra cast to adjust the output type of aggregate operations.
+       Some DBs do CAST(SUM(x) AS FLOAT) others do SUM(CAST(x AS FLOAT)).
     cast_aggregate_columns self op_kind:Text columns:(Vector Internal_Column) =
         self.cast_op_type op_kind columns (SQL_Expression.Operation op_kind (columns.map c->c.expression))
 
