@@ -1356,7 +1356,13 @@ function AssetsTable(props: AssetsTableProps) {
   const onRowDrop = useEventCallback((event: DragEvent<HTMLTableRowElement>, item: AnyAsset) => {
     endAutoScroll()
     const { selectedKeys } = driveStore.getState()
-    const items = selectedKeys.has(item.id) ? selectedAssets : [item]
+    const items =
+      selectedKeys.has(item.id) ?
+        [...selectedKeys].flatMap((id) => {
+          const otherItem = nodeMapRef.current.get(id)
+          return otherItem ? [otherItem.item] : []
+        })
+      : [item]
     const payload = LABELS.lookup(event)
     if (payload != null) {
       event.preventDefault()

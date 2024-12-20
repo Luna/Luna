@@ -1665,7 +1665,7 @@ export function addAssetsLabelsMutationOptions(backend: Backend) {
   })
 }
 
-/** Calling "remove label" mutations for a list of assets. */
+/** Call "remove label" mutations for a list of assets. */
 export function removeAssetsLabelsMutationOptions(backend: Backend) {
   return mutationOptions({
     mutationFn: async ([infos, labelNames]: [

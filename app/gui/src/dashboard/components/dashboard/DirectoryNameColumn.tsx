@@ -1,10 +1,8 @@
 /** @file The icon and name of a {@link backendModule.DirectoryAsset}. */
-import { useMutation } from '@tanstack/react-query'
-
 import FolderIcon from '#/assets/folder.svg'
 import FolderArrowIcon from '#/assets/folder_arrow.svg'
 
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 
 import { useDriveStore, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
 import * as textProvider from '#/providers/TextProvider'
@@ -23,10 +21,6 @@ import * as object from '#/utilities/object'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import * as validation from '#/utilities/validation'
-
-// =====================
-// === DirectoryName ===
-// =====================
 
 /** Props for a {@link DirectoryNameColumn}. */
 export interface DirectoryNameColumnProps extends column.AssetColumnProps {

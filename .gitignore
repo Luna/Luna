@@ -190,3 +190,9 @@ test-results/
 test-traces/
 playwright-report/
 playwright/.cache/
+
+#########
+## Git ##
+#########
+
+/.mailmap
