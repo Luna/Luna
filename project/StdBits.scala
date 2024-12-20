@@ -124,6 +124,9 @@ object StdBits {
       )
       .value
     val extractPrefix = "nu/pattern/opencv"
+
+    // Make sure that the native libs in the `lib` directory complies with
+    // `org.enso.interpreter.runtime.NativeLibraryFinder`
     def renameFunc(entryName: String): Option[String] = {
       val strippedEntryName = entryName.substring(extractPrefix.length + 1)
       if (
@@ -135,11 +138,15 @@ object StdBits {
       } else {
         Some(
           strippedEntryName
-            .replace("osx", "macos")
-            .replace("x86_64", "amd64")
+            .replace("linux/x86_64", "amd64/linux")
+            .replace("windows/x86_64", "amd64/windows")
+            .replace("windows/x86_32", "x86_32/windows")
+            .replace("osx/ARMv8", "ARMv8/macos")
+            .replace("osx/x86_64", "amd64/macos")
         )
       }
     }
+
     val logger = streams.value.log
     val openCvJar = JPMSUtils
       .filterModulesFromUpdate(
