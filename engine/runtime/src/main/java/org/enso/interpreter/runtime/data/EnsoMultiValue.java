@@ -16,6 +16,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -91,9 +92,38 @@ public final class EnsoMultiValue extends EnsoObject {
 
     abstract MultiType executeTypes(Type[] types, int from, int to);
 
-    @Specialization
+    @Specialization(
+        guards = {"compareTypes(types, cachedTypes, from, to)"},
+        limit = INLINE_CACHE_LIMIT)
+    final MultiType cachedMultiType(
+        Type[] types,
+        int from,
+        int to,
+        @Cached(value = "clone(types)", dimensions = 1) Type[] cachedTypes,
+        @Cached("createMultiType(cachedTypes, from, to)") MultiType result) {
+      return result;
+    }
+
+    @Specialization(replaces = "cachedMultiType")
     final MultiType createMultiType(Type[] types, int from, int to) {
       return MultiType.create(types, from, to);
+    }
+
+    static final Type[] clone(Type[] types) {
+      return types.clone();
+    }
+
+    @ExplodeLoop
+    static final boolean compareTypes(Type[] t1, Type[] t2, int from, int to) {
+      if (t1.length != t2.length) {
+        return false;
+      }
+      for (var i = from; i < to; i++) {
+        if (t1[i] != t2[i]) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 
