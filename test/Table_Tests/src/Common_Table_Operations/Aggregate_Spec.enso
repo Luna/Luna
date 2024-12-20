@@ -1771,7 +1771,7 @@ add_aggregate_specs suite_builder setup =
             problems.at 0 . location . should_equal "Float"
 
     if is_database then
-        suite_builder.group prefix+"Table.aggregate should report unsupported operations but not block other aggregations in warning mode" pending="TODO" group_builder->
+        suite_builder.group prefix+"Table.aggregate should report unsupported operations but not block other aggregations in warning mode" group_builder->
             expect_sum_and_unsupported_errors error_count result = within_table result <|
                 result.column_count . should_equal 1
                 result.row_count . should_equal 1
@@ -1817,7 +1817,7 @@ add_aggregate_specs suite_builder setup =
                     expect_sum_and_unsupported_errors 2 <|
                         table.aggregate columns=[Sum "X", Shortest "Y", Longest "Y"]
 
-            if test_selection.text_concat.not && (setup.prefix.contains "Snowflake" . not) then
+            if test_selection.text_concat.not && (setup.prefix.contains "Snowflake" . not && setup.prefix.contains "SQLServer" . not) then
                 group_builder.specify "with Concatenate" <|
                     table = table_builder [["X", [1,2,3]], ["Y", ["a", "bb", "ccc"]]]
                     expect_sum_and_unsupported_errors 1 <|
