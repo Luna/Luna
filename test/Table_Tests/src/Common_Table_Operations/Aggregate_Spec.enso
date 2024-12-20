@@ -1262,7 +1262,7 @@ add_aggregate_specs suite_builder setup =
             loc = Meta.get_source_location 2
             Test.fail "Expected a Nothing or NaN but got: "+value.to_text+" (at "+loc+")."
 
-    suite_builder.group prefix+"Table.aggregate should correctly handle infinities" group_builder->
+    if setup.flagged ..Supports_Infinity then suite_builder.group prefix+"Table.aggregate should correctly handle infinities" group_builder->
         pos_inf = 1/0
         neg_inf = -1/0
 
