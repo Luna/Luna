@@ -66,7 +66,7 @@ maybe_grey_text (text : Text) (config : Suite_Config) =
 print_single_result : Text -> Test_Result -> Suite_Config -> Nothing
 print_single_result (group_name : Text) (test_result : Test_Result) (config : Suite_Config) =
     times_suffix =
-        times = test_result.time_taken.to_display_text
+        times = test_result.time_taken.total_milliseconds.to_text + "ms"
         "[" + times + "]"
 
     decorate_stack_trace = case config.use_ansi_colors && config.caller_project_root.is_nothing.not of
