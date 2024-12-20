@@ -265,6 +265,8 @@ add_specs suite_builder =
             r = root.list
             r.should_be_a Vector
             r . should_equal (r.sort on=(x-> x.path))
+            # Check sorting directly.
+            r . reverse . sort . should_equal r
 
         group_builder.specify "will fail if no credentials are provided and no Default credentials are available" pending=(if AWS_Credential.is_default_credential_available then "Default AWS credentials are defined in the environment and this test has no way of overriding them, so it is impossible to test this scenario in such environment.") <|
             root_without_credentials = S3_File.new "s3://"+bucket_name+"/"
