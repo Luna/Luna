@@ -20,6 +20,7 @@ import { EVENT_TYPES, EventType, type Event } from '#/services/Backend'
 import { formatDateTime } from '#/utilities/dateTime'
 import { nextSortDirection, SortDirection, type SortInfo } from '#/utilities/sorting'
 import { twMerge } from '#/utilities/tailwindMerge'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =================
 // === Constants ===
@@ -73,14 +74,14 @@ export interface ActivityLogSettingsSectionProps {
 export default function ActivityLogSettingsSection(props: ActivityLogSettingsSectionProps) {
   const { backend } = props
   const { getText } = useText()
-  const [types, setTypes] = React.useState<readonly EventType[]>([])
-  const [typeIndices, setTypeIndices] = React.useState<readonly number[]>(() => [])
-  const [emails, setEmails] = React.useState<readonly string[]>([])
-  const [emailIndices, setEmailIndices] = React.useState<readonly number[]>(() => [])
+  const [types, setTypes] = React.useState<readonly EventType[]>(EMPTY_ARRAY)
+  const [typeIndices, setTypeIndices] = React.useState<readonly number[]>(EMPTY_ARRAY)
+  const [emails, setEmails] = React.useState<readonly string[]>(EMPTY_ARRAY)
+  const [emailIndices, setEmailIndices] = React.useState<readonly number[]>(EMPTY_ARRAY)
   const [sortInfo, setSortInfo] = React.useState<SortInfo<ActivityLogSortableColumn> | null>(null)
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const allEmails = React.useMemo(() => (users ?? []).map((user) => user.email), [users])
-  const logsQuery = useBackendQuery(backend, 'getLogEvents', [])
+  const logsQuery = useBackendQuery(backend, 'getLogEvents', EMPTY_ARRAY)
   const logs = logsQuery.data
 
   const form = Form.useForm({ schema: createActivityLogSchema() })

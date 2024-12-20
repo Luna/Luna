@@ -310,7 +310,7 @@ function AssetsTable(props: AssetsTableProps) {
   const queryClient = useQueryClient()
   const { user } = useFullUserSession()
   const backend = useBackend(category)
-  const { data: labels } = useBackendQuery(backend, 'listTags', [])
+  const { data: labels } = useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
   const { setModal, unsetModal } = useSetModal()
   const { localStorage } = useLocalStorage()
   const { getText } = useText()

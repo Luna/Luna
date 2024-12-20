@@ -1,9 +1,7 @@
 /** @file A modal to create a user group. */
 import * as React from 'react'
 
-import { useMutation } from '@tanstack/react-query'
-
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as modalProvider from '#/providers/ModalProvider'
@@ -18,6 +16,7 @@ import type Backend from '#/services/Backend'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =========================
 // === NewUserGroupModal ===
@@ -36,7 +35,7 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const [name, setName] = React.useState('')
-  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
+  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const userGroups = listUserGroupsQuery.data ?? null
   const userGroupNames = React.useMemo(
     () =>
@@ -49,9 +48,7 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
     userGroupNames != null && userGroupNames.has(string.normalizeName(name)) ?
       getText('duplicateUserGroupError')
     : null
-  const createUserGroup = useMutation(
-    backendMutationOptions(backend, 'createUserGroup'),
-  ).mutateAsync
+  const createUserGroup = useBackendMutation(backend, 'createUserGroup').mutateAsync
   const canSubmit = nameError == null && name !== '' && userGroupNames != null
 
   const onSubmit = async () => {

@@ -19,6 +19,7 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { UserId, type User } from '#/services/Backend'
 import { twMerge } from '#/utilities/tailwindMerge'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import UserRow from './UserRow'
 
 /** Props for a {@link MembersTable}. */
@@ -36,13 +37,13 @@ export default function MembersTable(props: MembersTableProps) {
   const { user } = useFullUserSession()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
-  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set())
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(() => new Set())
   const rootRef = useRef<HTMLTableElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLTableSectionElement>(null)
   const userWithPlaceholder = useMemo(() => ({ isPlaceholder: false, ...user }), [user])
 
-  const { data: allUsers } = useBackendQuery(backend, 'listUsers', [])
+  const { data: allUsers } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
 
   const users = useMemo(
     () => allUsers ?? (populateWithSelf ? [userWithPlaceholder] : null),

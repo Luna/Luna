@@ -643,7 +643,8 @@ interface LabelsProps {
 const Labels = React.memo(function Labels(props: LabelsProps) {
   const { isCloud, query, setQuery, backend, querySource, baseQuery } = props
 
-  const labels = backendHooks.useBackendQuery(backend, 'listTags', []).data ?? []
+  const labels =
+    backendHooks.useBackendQuery(backend, 'listTags', array.EMPTY_ARRAY).data ?? array.EMPTY_ARRAY
 
   const labelOnPress = useEventCallback(
     (event: aria.PressEvent | React.MouseEvent<HTMLButtonElement>, label?: BackendLabel) => {

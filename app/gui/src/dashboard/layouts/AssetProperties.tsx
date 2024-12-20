@@ -1,8 +1,6 @@
 /** @file Display and modify the properties of an asset. */
 import * as React from 'react'
 
-import { useMutation } from '@tanstack/react-query'
-
 import PenIcon from '#/assets/pen.svg'
 import { Heading } from '#/components/aria'
 import {
@@ -19,7 +17,7 @@ import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -37,6 +35,7 @@ import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { useStore } from '../utilities/zustand'
 
 const ASSET_PROPERTIES_VARIANTS = tv({
@@ -161,7 +160,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
     close: closeSpotlight,
   })
 
-  const labels = useBackendQuery(backend, 'listTags', []).data ?? []
+  const labels = useBackendQuery(backend, 'listTags', EMPTY_ARRAY).data ?? EMPTY_ARRAY
   const self = permissions.tryFindSelfPermission(user, item.permissions)
   const ownsThisAsset = self?.permission === permissions.PermissionAction.own
   const canEditThisAsset =

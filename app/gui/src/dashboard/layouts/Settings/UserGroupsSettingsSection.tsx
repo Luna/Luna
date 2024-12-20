@@ -28,6 +28,7 @@ import {
   type UserGroupInfo,
 } from '#/services/Backend'
 import { twMerge } from '#/utilities/tailwindMerge'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import UserGroupRow from './UserGroupRow'
 import UserGroupUserRow from './UserGroupUserRow'
 
@@ -47,7 +48,7 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
   const { getText } = useText()
   const { user } = useFullUserSession()
   const toastAndLog = useToastAndLog()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const userGroups = useListUserGroupsWithUsers(backend)
   const rootRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLTableSectionElement>(null)

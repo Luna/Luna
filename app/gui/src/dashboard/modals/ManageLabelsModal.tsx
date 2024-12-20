@@ -1,13 +1,11 @@
 /** @file A modal to select labels for an asset. */
 import { useEffect, useMemo, useState } from 'react'
 
-import { useMutation } from '@tanstack/react-query'
-
 import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
-import { backendMutationOptions, useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -15,6 +13,7 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { findLeastUsedColor, LabelName, type AnyAsset, type LChColor } from '#/services/Backend'
 import { regexEscape } from '#/utilities/string'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =========================
 // === ManageLabelsModal ===
@@ -39,9 +38,9 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const { unsetModal } = useSetModal()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
-  const { data: allLabels } = useBackendQuery(backend, 'listTags', [])
+  const { data: allLabels } = useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
   const [color, setColor] = useState<LChColor | null>(null)
-  const leastUsedColor = useMemo(() => findLeastUsedColor(allLabels ?? []), [allLabels])
+  const leastUsedColor = useMemo(() => findLeastUsedColor(allLabels ?? EMPTY_ARRAY), [allLabels])
 
   const createTagMutation = useBackendMutation(backend, 'createTag')
   const associateTagMutation = useBackendMutation(backend, 'associateTag')

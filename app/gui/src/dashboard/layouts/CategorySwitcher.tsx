@@ -40,6 +40,7 @@ import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackend
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
 import { tv } from '#/utilities/tailwindVariants'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { twJoin } from 'tailwind-merge'
 import { AnimatedBackground } from '../components/AnimatedBackground'
 import { useEventCallback } from '../hooks/eventCallbackHooks'
@@ -247,8 +248,8 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   } satisfies Partial<InternalCategorySwitcherItemProps>
   const selfDirectoryId = backend.DirectoryId(`directory-${user.userId.replace(/^user-/, '')}`)
 
-  const { data: users } = useBackendQuery(remoteBackend, 'listUsers', [])
-  const { data: teams } = useBackendQuery(remoteBackend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(remoteBackend, 'listUsers', EMPTY_ARRAY)
+  const { data: teams } = useBackendQuery(remoteBackend, 'listUserGroups', EMPTY_ARRAY)
   const usersById = React.useMemo<ReadonlyMap<backend.DirectoryId, backend.User>>(
     () =>
       new Map(
