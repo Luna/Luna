@@ -42,7 +42,6 @@ import org.enso.interpreter.runtime.data.text.Text;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeAtNode;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeLengthNode;
-import org.enso.interpreter.runtime.error.DataflowError;
 import org.enso.interpreter.runtime.error.PanicException;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 
@@ -478,7 +477,8 @@ public final class EnsoFile extends EnsoObject {
   @TruffleBoundary
   public static EnsoDateTime getLastModifiedTime(EnsoFile file) throws IOException {
     return new EnsoDateTime(
-        ZonedDateTime.ofInstant(file.truffleFile.getLastModifiedTime().toInstant(), ZoneOffset.UTC));
+        ZonedDateTime.ofInstant(
+            file.truffleFile.getLastModifiedTime().toInstant(), ZoneOffset.UTC));
   }
 
   @Builtin.Method(name = "posix_permissions_builtin")
