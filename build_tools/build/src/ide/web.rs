@@ -67,6 +67,9 @@ pub mod env {
         /// Stripe's publishable key for client-side operations.
         ENSO_IDE_STRIPE_KEY, String;
 
+        // Endpoint used for proxying username/password based authentication.
+        ENSO_IDE_AUTH_ENDPOINT, String;
+
         /// The ID of the Amplify user pool for authentication.
         ENSO_IDE_COGNITO_USER_POOL_ID, String;
 

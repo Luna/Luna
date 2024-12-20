@@ -135,6 +135,10 @@ pub fn expose_gui_vars(step: Step) -> Step {
         .with_variable_exposed_as(variables::ENSO_CLOUD_SENTRY_DSN, ide_env::ENSO_IDE_SENTRY_DSN)
         .with_variable_exposed_as(variables::ENSO_CLOUD_STRIPE_KEY, ide_env::ENSO_IDE_STRIPE_KEY)
         .with_variable_exposed_as(
+            variables::ENSO_CLOUD_AUTH_ENDPOINT,
+            ide_env::ENSO_IDE_AUTH_ENDPOINT,
+        )
+        .with_variable_exposed_as(
             variables::ENSO_CLOUD_COGNITO_USER_POOL_ID,
             ide_env::ENSO_IDE_COGNITO_USER_POOL_ID,
         )

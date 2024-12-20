@@ -33,7 +33,7 @@ import * as listen from '#/authentication/listen'
  */
 export interface AmplifyConfig {
   readonly region: string
-  readonly endpoint: string
+  readonly endpoint: string | undefined
   readonly userPoolId: string
   readonly userPoolWebClientId: string
   readonly urlOpener: ((url: string, redirectUrl: string) => void) | null
@@ -67,7 +67,7 @@ interface OauthAmplifyConfig {
 /** Same as {@link AmplifyConfig}, but in a format recognized by the AWS Amplify library. */
 export interface NestedAmplifyConfig {
   readonly region: string
-  readonly endpoint: string
+  readonly endpoint: string | undefined
   readonly userPoolId: string
   readonly userPoolWebClientId: string
   readonly oauth: OauthAmplifyConfig
@@ -185,7 +185,7 @@ function loadAmplifyConfig(
   const signInOutRedirect =
     supportsDeepLinks ? `${common.DEEP_LINK_SCHEME}://auth` : window.location.origin
   return {
-    endpoint: $config.AUTH_ENDPOINT ?? '',
+    endpoint: $config.AUTH_ENDPOINT,
     userPoolId: $config.COGNITO_USER_POOL_ID ?? '',
     userPoolWebClientId: $config.COGNITO_USER_POOL_WEB_CLIENT_ID ?? '',
     domain: $config.COGNITO_DOMAIN ?? '',
