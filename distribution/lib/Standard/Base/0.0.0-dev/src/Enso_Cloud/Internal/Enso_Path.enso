@@ -2,6 +2,7 @@ private
 
 import project.Data.Ordering.Comparable
 import project.Data.Ordering.Ordering
+import project.Data.Ordering.Vector_Lexicographic_Order
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Enso_File.Enso_File
@@ -77,7 +78,7 @@ normalize segments =
         @Tail_Call normalize new_segments
 
 type Enso_Path_Comparator
-    compare x y = Ordering.compare x.path_segments y.path_segments
+    compare x y = Vector_Lexicographic_Order.compare x.path_segments y.path_segments
 
     hash x = Enso_Path_Comparator.hash_builtin x
     hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"

@@ -4,7 +4,6 @@ import project.Data.Filter_Condition.Filter_Condition
 import project.Data.Index_Sub_Range.Index_Sub_Range
 import project.Data.List.List
 import project.Data.Numbers.Integer
-import project.Data.Ordering.Ordering
 import project.Data.Pair.Pair
 import project.Data.Range.Range
 import project.Data.Sort_Direction.Sort_Direction
@@ -1565,24 +1564,3 @@ type No_Wrap
 
 ## PRIVATE
 Wrapped_Error.from (that : Map_Error) = Wrapped_Error.Value that that.inner_error
-
-type Vector_Comparator
-    compare x y =
-        min_length = x.length.min y.length
-        when_prefixes_equal =
-            ## At this point, if the vectors are the same length, then they are
-               identical; otherwise, the shorter one is lesser.
-            if x.length == y.length then Ordering.Equal else
-                Ordering.compare x.length y.length
-        go i =
-            if i >= min_length then when_prefixes_equal else
-                x_elem = x.at i
-                y_elem = y.at i
-                Ordering.compare x_elem y_elem . and_then <|
-                    @Tail_Call go (i + 1)
-        k = go 0
-        k
-
-    hash x = Default_Comparator.hash_builtin x
-
-Comparable.from (that : Vector) = Comparable.new that Vector_Comparator

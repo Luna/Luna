@@ -158,7 +158,7 @@ type Decomposed_S3_Path
             Decomposed_S3_Path.Value new_parts self.go_to_root
 
 type S3_Path_Comparator
-    compare x y = Ordering.compare [x.bucket, x.key] [y.bucket, y.key]
+    compare x y = Ordering.compare x.bucket y.bucket . and_then Ordering.compare x.key y.key
 
     hash x = S3_Path_Comparator.hash_builtin x
     hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
