@@ -1,5 +1,7 @@
 package org.enso.base.cache;
 
+import org.graalvm.polyglot.Value;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,7 +21,7 @@ public class APIRequestCache {
     cache.clear();
   }
 
-  public Object getOrCompute(String key, Function<String, Object> compute, Duration ttl) {
+  public Object getOrCompute(String key, Function<String, Value> compute, Duration ttl) {
     if (ttl == null) {
       // If the TTL is null, we deliberately ignore the cache.
       return compute.apply(key);
@@ -53,7 +55,7 @@ public class APIRequestCache {
     }
   }
 
-  public void put(String key, Object value, Duration ttl) {
+  public void put(String key, Value value, Duration ttl) {
     if (ttl == null) {
       // If the TTL is null, we deliberately ignore the cache.
       return;
@@ -69,5 +71,5 @@ public class APIRequestCache {
 
   private LocalDateTime firstToExpire = null;
 
-  private record CacheEntry(Object value, LocalDateTime expiresAt) {}
+  private record CacheEntry(Value value, LocalDateTime expiresAt) {}
 }
