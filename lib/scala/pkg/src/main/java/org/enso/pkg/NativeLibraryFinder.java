@@ -23,7 +23,7 @@ public final class NativeLibraryFinder {
     var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
     var osName = simpleOsName();
     var libNameWithSuffix = System.mapLibraryName(libName);
-    var libDir = fs.getChild(pkg.polyglotDir(), "lib");
+    var libDir = pkg.nativeLibraryDir();
     if (!fs.exists(libDir)) {
       return null;
     }
