@@ -228,6 +228,9 @@ type SQLServer_Dialect
         if cast_to.is_nothing then expression else
             SQL_Expression.Operation "CAST" [expression, SQL_Expression.Literal cast_to]
 
+    cast_aggregate_columns self op_kind:Text columns:(Vector Internal_Column) =
+        SQL_Expression.Operation op_kind (columns.map c->(self.cast_op_type op_kind columns (Internals_Access.column_expression c)))
+
     ## PRIVATE
     prepare_fetch_types_query : SQL_Expression -> Context -> SQL_Statement
     prepare_fetch_types_query self expression context =
