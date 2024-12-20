@@ -57,6 +57,7 @@ import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 // The number of bytes in 1 megabyte.
@@ -126,14 +127,14 @@ function mutationOptions<
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
@@ -141,7 +142,7 @@ export function backendQueryOptions<Method extends BackendMethods>(
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ) {
@@ -157,14 +158,14 @@ export function backendQueryOptions<Method extends BackendMethods>(
 export function useBackendQuery<Method extends BackendMethods>(
   backend: Backend,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryResult<Awaited<ReturnType<Backend[Method]>>>
 export function useBackendQuery<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryResult<Awaited<ReturnType<Backend[Method]>> | undefined>
@@ -172,7 +173,7 @@ export function useBackendQuery<Method extends BackendMethods>(
 export function useBackendQuery<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
-  args: Parameters<Backend[Method]>,
+  args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ) {
@@ -282,8 +283,8 @@ export interface UserGroupInfoWithUsers extends UserGroupInfo {
 export function useListUserGroupsWithUsers(
   backend: Backend,
 ): readonly UserGroupInfoWithUsers[] | null {
-  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
-  const listUsersQuery = useBackendQuery(backend, 'listUsers', [])
+  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const listUsersQuery = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   return useMemo(() => {
     if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
       return null
@@ -637,8 +638,8 @@ export function useNewFolder(backend: Backend, category: Category) {
   const setNewestFolderId = useSetNewestFolderId()
   const setSelectedAssets = useSetSelectedAssets()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const createDirectoryMutation = useBackendMutation(backend, 'createDirectory')
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
@@ -681,8 +682,8 @@ export function useNewProject(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const createProjectMutation = useBackendMutation(backend, 'createProject')
 
   return useEventCallback(
@@ -760,8 +761,8 @@ export function useNewProject(backend: Backend, category: Category) {
 export function useNewSecret(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const createSecretMutation = useBackendMutation(backend, 'createSecret')
 
   return useEventCallback(
@@ -799,8 +800,8 @@ export function useNewSecret(backend: Backend, category: Category) {
 export function useNewDatalink(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const createDatalinkMutation = useBackendMutation(backend, 'createDatalink')
 
   return useEventCallback(
@@ -842,8 +843,8 @@ export function useUploadFiles(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { setModal } = useSetModal()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
   const uploadFileMutation = useUploadFileWithToastMutation(backend)
   const setSelectedAssets = useSetSelectedAssets()
 
