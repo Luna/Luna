@@ -35,7 +35,7 @@ public final class NativeLibraryFinder {
     if (fs.exists(nativeLib)) {
       return fs.getAbsolutePath(nativeLib);
     }
-    nativeLib = fs.getChild(fs.getChild(fs.getChild(libDir, arch), osName), libName);
+    nativeLib = fs.getChild(fs.getChild(fs.getChild(libDir, arch), osName), libNameWithSuffix);
     if (fs.exists(nativeLib)) {
       return fs.getAbsolutePath(nativeLib);
     }
