@@ -487,7 +487,7 @@ make_dialect_operations =
 
     stddev_pop = ["STDDEV_POP", Base_Generator.make_function "STDEVP"]
     stddev_samp = ["STDDEV_SAMP", Base_Generator.make_function "STDEV"]
-    stats = [agg_median, agg_mode, agg_percentile, stddev_pop, stddev_samp]
+    stats = [stddev_pop, stddev_samp]
     date_ops = [["year", Base_Generator.make_function "year"], make_datepart "quarter", ["month", Base_Generator.make_function "month"], make_datepart "week" "iso_week", ["day", Base_Generator.make_function "day"], make_datepart "hour", make_datepart "minute", make_datepart "day_of_year" "dayofyear", make_day_of_week, make_datepart "second", make_datepart "millisecond", make_extract_microsecond, ["date_add", make_date_add], ["date_diff", make_date_diff], ["date_trunc_to_day", make_date_trunc_to_day]]
     special_overrides = [is_empty, ["IIF", _make_iif]]
     other = [["RUNTIME_ERROR", make_runtime_error_op]]
@@ -516,23 +516,6 @@ agg_count_empty = Base_Generator.lift_unary_op "COUNT_EMPTY" arg->
 ## PRIVATE
 agg_count_not_empty = Base_Generator.lift_unary_op "COUNT_NOT_EMPTY" arg->
     SQL_Builder.code "COALESCE(SUM(CASE WHEN (" ++ arg.paren ++ " IS NOT NULL) AND (" ++ arg.paren ++ " != '') THEN 1 ELSE 0 END), 0)"
-
-
-## PRIVATE
-agg_median = Base_Generator.lift_unary_op "MEDIAN" arg->
-    median = SQL_Builder.code "MEDIAN(" ++ arg ++ ")"
-    has_nan = SQL_Builder.code "BOOLOR_AGG(" ++ arg ++ " = 'NaN'::Double)"
-    SQL_Builder.code "CASE WHEN " ++ has_nan ++ " THEN 'NaN'::Double ELSE " ++ median ++ " END"
-
-## PRIVATE
-agg_mode = Base_Generator.lift_unary_op "MODE" arg->
-    SQL_Builder.code "MODE(" ++ arg ++ ")"
-
-## PRIVATE
-agg_percentile = Base_Generator.lift_binary_op "PERCENTILE" p-> expr->
-    percentile = SQL_Builder.code "percentile_cont(" ++ p ++ ") WITHIN GROUP (ORDER BY " ++ expr ++ ")"
-    has_nan = SQL_Builder.code "BOOLOR_AGG(" ++ expr ++ " = 'NaN'::Double)"
-    SQL_Builder.code "CASE WHEN " ++ has_nan ++ " THEN 'NaN' ELSE " ++ percentile ++ " END"
 
 ## PRIVATE
 agg_shortest = Base_Generator.lift_unary_op "SHORTEST" arg->
