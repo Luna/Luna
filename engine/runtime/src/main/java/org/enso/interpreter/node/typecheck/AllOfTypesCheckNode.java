@@ -13,11 +13,13 @@ final class AllOfTypesCheckNode extends AbstractTypeCheckNode {
 
   @Children private AbstractTypeCheckNode[] checks;
   @Child private TypesLibrary types;
+  @Child private EnsoMultiValue.NewNode newNode;
 
   AllOfTypesCheckNode(String name, AbstractTypeCheckNode[] checks) {
     super(name);
     this.checks = checks;
     this.types = TypesLibrary.getFactory().createDispatched(checks.length);
+    this.newNode = EnsoMultiValue.NewNode.create();
   }
 
   AbstractTypeCheckNode[] getChecks() {
@@ -52,7 +54,7 @@ final class AllOfTypesCheckNode extends AbstractTypeCheckNode {
       values[at] = result;
       at++;
     }
-    return EnsoMultiValue.NewNode.getUncached().newValue(valueTypes, valueTypes.length, values);
+    return newNode.newValue(valueTypes, valueTypes.length, values);
   }
 
   @Override

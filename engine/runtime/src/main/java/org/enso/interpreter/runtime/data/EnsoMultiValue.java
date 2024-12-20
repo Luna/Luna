@@ -101,7 +101,7 @@ public final class EnsoMultiValue extends EnsoObject {
         int from,
         int to,
         @Cached(value = "clone(types, from, to)", dimensions = 1) Type[] cachedTypes,
-        @Cached("createMultiType(cachedTypes, from, to)") MultiType result) {
+        @Cached("createMultiType(types, from, to)") MultiType result) {
       return result;
     }
 
