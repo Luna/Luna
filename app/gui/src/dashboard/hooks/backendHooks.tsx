@@ -8,6 +8,7 @@ import {
   useQuery,
   useQueryClient,
   useSuspenseQuery,
+  type DefaultError,
   type Mutation,
   type MutationKey,
   type UseMutationOptions,
@@ -109,6 +110,18 @@ export type MutationMethod = DefineBackendMethods<
   | 'uploadOrganizationPicture'
   | 'uploadUserPicture'
 >
+
+/** An identity function to help in constructing options for a mutation. */
+function mutationOptions<
+  TData = unknown,
+  TError = DefaultError,
+  TVariables = void,
+  TContext = unknown,
+>(
+  options: UseMutationOptions<TData, TError, TVariables, TContext>,
+): UseMutationOptions<TData, TError, TVariables, TContext> {
+  return options
+}
 
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend,
@@ -1663,9 +1676,9 @@ export function useAddAssetsLabelsMutation(backend: Backend) {
   })
 }
 
-/** Call "remove label" mutations for a list of assets. */
-export function useRemoveAssetsLabelsMutation(backend: Backend) {
-  return useMutation({
+/** Calling "remove label" mutations for a list of assets. */
+export function removeAssetsLabelsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationFn: async ([infos, labelNames]: [
       infos: readonly {
         id: AssetId
@@ -1699,4 +1712,9 @@ export function useRemoveAssetsLabelsMutation(backend: Backend) {
       awaitInvalidates: true,
     },
   })
+}
+
+/** Call "remove label" mutations for a list of assets. */
+export function useRemoveAssetsLabelsMutation(backend: Backend) {
+  return useMutation(removeAssetsLabelsMutationOptions(backend))
 }
