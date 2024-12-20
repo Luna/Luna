@@ -1,18 +1,18 @@
 package org.enso.base.cache;
 
-import org.graalvm.polyglot.Value;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.function.Function;
+import org.graalvm.polyglot.Value;
 
 /**
- * A cache that can be used to save results of requests to some API to avoid re-fetching them every time.
+ * A cache that can be used to save results of requests to some API to avoid re-fetching them every
+ * time.
  *
- * <p>The cache is supposed to store the already processed (parsed etc.) result, that is relatively small.
- * If the result is not cached or the cache entry is expired, the cache will recompute the value using the
- * provided callback.
+ * <p>The cache is supposed to store the already processed (parsed etc.) result, that is relatively
+ * small. If the result is not cached or the cache entry is expired, the cache will recompute the
+ * value using the provided callback.
  */
 public class APIRequestCache {
   private final HashMap<String, CacheEntry> cache = new HashMap<>();
@@ -48,10 +48,15 @@ public class APIRequestCache {
   }
 
   public void cleanExpiredEntries() {
-    boolean hasExpiredEntries = firstToExpire != null && firstToExpire.isBefore(LocalDateTime.now());
+    boolean hasExpiredEntries =
+        firstToExpire != null && firstToExpire.isBefore(LocalDateTime.now());
     if (hasExpiredEntries) {
       cache.entrySet().removeIf(entry -> entry.getValue().expiresAt.isBefore(LocalDateTime.now()));
-      firstToExpire = cache.values().stream().map(CacheEntry::expiresAt).min(LocalDateTime::compareTo).orElse(null);
+      firstToExpire =
+          cache.values().stream()
+              .map(CacheEntry::expiresAt)
+              .min(LocalDateTime::compareTo)
+              .orElse(null);
     }
   }
 
