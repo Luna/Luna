@@ -26,7 +26,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
@@ -40,13 +39,13 @@ import org.graalvm.collections.Pair;
 @ExportLibrary(TypesLibrary.class)
 @ExportLibrary(InteropLibrary.class)
 public final class EnsoMultiValue extends EnsoObject {
-  private final MultiType dispatch;
-  private final MultiType extra;
+  private final EnsoMultiType dispatch;
+  private final EnsoMultiType extra;
 
   @CompilationFinal(dimensions = 1)
   private final Object[] values;
 
-  private EnsoMultiValue(MultiType dispatch, MultiType extra, Object[] values) {
+  private EnsoMultiValue(EnsoMultiType dispatch, EnsoMultiType extra, Object[] values) {
     this.dispatch = dispatch;
     this.extra = extra;
     this.values = values;
@@ -91,23 +90,23 @@ public final class EnsoMultiValue extends EnsoObject {
       return new EnsoMultiValue(dt, et, values);
     }
 
-    abstract MultiType executeTypes(Type[] types, int from, int to);
+    abstract EnsoMultiType executeTypes(Type[] types, int from, int to);
 
     @Specialization(
         guards = {"compareTypes(cachedTypes, types, from, to)"},
         limit = INLINE_CACHE_LIMIT)
-    final MultiType cachedMultiType(
+    final EnsoMultiType cachedMultiType(
         Type[] types,
         int from,
         int to,
         @Cached(value = "clone(types, from, to)", dimensions = 1) Type[] cachedTypes,
-        @Cached("createMultiType(types, from, to)") MultiType result) {
+        @Cached("createMultiType(types, from, to)") EnsoMultiType result) {
       return result;
     }
 
     @Specialization(replaces = "cachedMultiType")
-    final MultiType createMultiType(Type[] types, int from, int to) {
-      return MultiType.create(types, from, to);
+    final EnsoMultiType createMultiType(Type[] types, int from, int to) {
+      return EnsoMultiType.findOrCreateSlow(types, from, to);
     }
 
     @TruffleBoundary
@@ -144,7 +143,7 @@ public final class EnsoMultiValue extends EnsoObject {
 
   @ExportMessage
   final Type getType() {
-    return dispatch.types[0];
+    return dispatch.firstType();
   }
 
   @ExportMessage
@@ -212,7 +211,7 @@ public final class EnsoMultiValue extends EnsoObject {
   }
 
   private InteropType.Value findInteropTypeValue(InteropLibrary iop) {
-    return InteropType.find(values, dispatch.types.length, iop);
+    return InteropType.find(values, dispatch.typesLength(), iop);
   }
 
   @ExportMessage
@@ -439,7 +438,7 @@ public final class EnsoMultiValue extends EnsoObject {
   Object getMembers(
       boolean includeInternal, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
     var names = new TreeSet<String>();
-    for (var i = 0; i < dispatch.types.length; i++) {
+    for (var i = 0; i < dispatch.typesLength(); i++) {
       try {
         var members = iop.getMembers(values[i]);
         var len = iop.getArraySize(members);
@@ -456,7 +455,7 @@ public final class EnsoMultiValue extends EnsoObject {
   @ExportMessage
   boolean isMemberInvocable(
       String name, @Shared("interop") @CachedLibrary(limit = "10") InteropLibrary iop) {
-    for (var i = 0; i < dispatch.types.length; i++) {
+    for (var i = 0; i < dispatch.typesLength(); i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return true;
       }
@@ -473,7 +472,7 @@ public final class EnsoMultiValue extends EnsoObject {
           ArityException,
           UnsupportedTypeException,
           UnknownIdentifierException {
-    for (var i = 0; i < dispatch.types.length; i++) {
+    for (var i = 0; i < dispatch.typesLength(); i++) {
       if (iop.isMemberInvocable(values[i], name)) {
         return iop.invokeMember(values[i], name, args);
       }
@@ -484,27 +483,25 @@ public final class EnsoMultiValue extends EnsoObject {
   @TruffleBoundary
   @Override
   public String toString() {
-    var dt = Arrays.stream(dispatch.types);
-    var et = Arrays.stream(extra.types);
-    var both = Stream.concat(dt, et);
-    return both.map(t -> t.getName()).collect(Collectors.joining(" & "));
+    var both = dispatch.allTypesWith(extra);
+    return Stream.of(both).map(t -> t.getName()).collect(Collectors.joining(" & "));
   }
 
   /** Casts {@link EnsoMultiValue} to requested type effectively. */
   public static final class CastToNode extends Node {
     private static final CastToNode UNCACHED =
-        new CastToNode(FindIndexNode.getUncached(), NewNode.getUncached());
-    @Child private FindIndexNode findNode;
+        new CastToNode(EnsoMultiType.FindIndexNode.getUncached(), NewNode.getUncached());
+    @Child private EnsoMultiType.FindIndexNode findNode;
     @Child private NewNode newNode;
 
-    private CastToNode(FindIndexNode f, NewNode n) {
+    private CastToNode(EnsoMultiType.FindIndexNode f, NewNode n) {
       this.findNode = f;
       this.newNode = n;
     }
 
     @NeverDefault
     public static CastToNode create() {
-      return new CastToNode(FindIndexNode.create(), NewNode.create());
+      return new CastToNode(EnsoMultiType.FindIndexNode.create(), NewNode.create());
     }
 
     @NeverDefault
@@ -528,7 +525,7 @@ public final class EnsoMultiValue extends EnsoObject {
       var i = findNode.executeFindIndex(type, mv.dispatch);
       if (i == -1 && allTypes) {
         var extraIndex = findNode.executeFindIndex(type, mv.extra);
-        i = extraIndex == -1 ? -1 : mv.dispatch.types.length + extraIndex;
+        i = extraIndex == -1 ? -1 : mv.dispatch.typesLength() + extraIndex;
       }
       if (i != -1) {
         if (reorderOnly) {
@@ -536,7 +533,7 @@ public final class EnsoMultiValue extends EnsoObject {
           var copyValues = mv.values.clone();
           copyTypes[0] = copyTypes[i];
           copyValues[0] = copyValues[i];
-          copyTypes[i] = mv.dispatch.types[0];
+          copyTypes[i] = mv.dispatch.firstType();
           copyValues[i] = mv.values[0];
           return newNode.newValue(copyTypes, 1, copyValues);
         } else {
@@ -545,42 +542,6 @@ public final class EnsoMultiValue extends EnsoObject {
       } else {
         return null;
       }
-    }
-  }
-
-  @GenerateUncached
-  abstract static class FindIndexNode extends Node {
-    private static final String INLINE_CACHE_LIMIT = "5";
-
-    abstract int executeFindIndex(Type type, MultiType mt);
-
-    @NeverDefault
-    public static FindIndexNode create() {
-      return EnsoMultiValueFactory.FindIndexNodeGen.create();
-    }
-
-    @NeverDefault
-    public static FindIndexNode getUncached() {
-      return EnsoMultiValueFactory.FindIndexNodeGen.getUncached();
-    }
-
-    @Specialization(
-        guards = {"type == cachedType", "mt == cachedMt"},
-        limit = INLINE_CACHE_LIMIT)
-    int findsCachedIndexOfAType(
-        Type type,
-        MultiType mt,
-        @Cached("type") Type cachedType,
-        @Cached("mt") MultiType cachedMt,
-        @Cached(allowUncached = true, value = "findsAnIndexOfAType(type, mt)") int cachedIndex) {
-      return cachedIndex;
-    }
-
-    @Specialization(replaces = "findsCachedIndexOfAType")
-    int findsAnIndexOfAType(Type type, MultiType mt) {
-      var ctx = EnsoContext.get(this);
-      var index = mt.find(ctx, type);
-      return index;
     }
   }
 
@@ -595,90 +556,15 @@ public final class EnsoMultiValue extends EnsoObject {
       MethodResolverNode node, UnresolvedSymbol symbol) {
     var ctx = EnsoContext.get(node);
     Pair<Function, Type> foundAnyMethod = null;
-    for (var t : dispatch.types) {
+    for (var t : dispatch.allTypesWith(null)) {
       var fnAndType = node.execute(t, symbol);
       if (fnAndType != null) {
-        if (dispatch.types.length == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {
+        if (dispatch.typesLength() == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {
           return Pair.create(fnAndType.getLeft(), t);
         }
         foundAnyMethod = fnAndType;
       }
     }
     return foundAnyMethod;
-  }
-
-  /**
-   * Internal representation of {@code Type[]} that supports identity comparision with {@code ==} to
-   * support inline caching of values.
-   */
-  static final class MultiType {
-    private static final ConcurrentHashMap<MultiType, MultiType> ALL_TYPES =
-        new ConcurrentHashMap<>();
-
-    @CompilationFinal(dimensions = 1)
-    private final Type[] types;
-
-    private MultiType(Type[] types) {
-      this.types = types;
-    }
-
-    @TruffleBoundary
-    static MultiType create(Type[] types, int from, int to) {
-      var mt = new MultiType(Arrays.copyOfRange(types, from, to));
-      return ALL_TYPES.computeIfAbsent(mt, java.util.function.Function.identity());
-    }
-
-    private int find(EnsoContext ctx, Type type) {
-      for (var i = 0; i < types.length; i++) {
-        for (var t : types[i].allTypes(ctx)) {
-          if (t == type) {
-            return i;
-          }
-        }
-      }
-      return -1;
-    }
-
-    @Override
-    @TruffleBoundary
-    public int hashCode() {
-      int hash = 7;
-      hash = 89 * hash + Arrays.deepHashCode(this.types);
-      return hash;
-    }
-
-    @Override
-    @TruffleBoundary
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      final MultiType other = (MultiType) obj;
-      return Arrays.deepEquals(this.types, other.types);
-    }
-
-    private Type[] allTypesWith(MultiType nextOrNull) {
-      if (nextOrNull == null || nextOrNull.types.length == 0) {
-        return this.types.clone();
-      } else {
-        var next = nextOrNull;
-        var arr = new Type[this.types.length + next.types.length];
-        System.arraycopy(this.types, 0, arr, 0, types.length);
-        System.arraycopy(next.types, 0, arr, types.length, next.types.length);
-        return arr;
-      }
-    }
-
-    @Override
-    @TruffleBoundary
-    public String toString() {
-      return "MultiType{" + "types=" + Arrays.toString(types) + '}';
-    }
   }
 }
