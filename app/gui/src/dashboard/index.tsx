@@ -38,8 +38,7 @@ import { MotionGlobalConfig } from 'framer-motion'
 export type { GraphEditorRunner } from '#/layouts/Editor'
 
 const HTTP_STATUS_BAD_REQUEST = 400
-const API_HOST =
-  process.env.ENSO_CLOUD_API_URL != null ? new URL(process.env.ENSO_CLOUD_API_URL).host : null
+const API_HOST = $config.API_URL != null ? new URL($config.API_URL).host : null
 const ARE_ANIMATIONS_DISABLED =
   window.DISABLE_ANIMATIONS === true ||
   localStorage.getItem('disableAnimations') === 'true' ||
