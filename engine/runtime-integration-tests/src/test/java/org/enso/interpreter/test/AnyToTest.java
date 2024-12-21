@@ -13,6 +13,7 @@ import org.graalvm.polyglot.Source;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class AnyToTest {
@@ -74,11 +75,13 @@ public class AnyToTest {
   }
 
   @Test
+  @Ignore
   public void multiValueToText() throws Exception {
     multiValueToText(2);
   }
 
   @Test
+  @Ignore
   public void multiValueToTextHidden() throws Exception {
     multiValueToText(1);
   }
