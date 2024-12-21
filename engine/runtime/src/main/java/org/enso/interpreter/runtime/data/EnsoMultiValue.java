@@ -131,6 +131,17 @@ public final class EnsoMultiValue extends EnsoObject {
     }
   }
 
+  /**
+   * The "dispatch identity" of the multi value. If two multivalues have the same identity, they are
+   * going to resolve methods the same way.
+   *
+   * @return an opaque object that can be used for caching dispatch logic
+   */
+  public final Object getDispatchId() {
+    // intentionally typed as Object to avoid exposing EnsoMultiType
+    return dispatch;
+  }
+
   @ExportMessage
   boolean hasType() {
     return true;
