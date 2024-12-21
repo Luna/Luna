@@ -33,7 +33,6 @@ import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
-import { TabType } from '#/providers/ProjectsProvider'
 import * as textProvider from '#/providers/TextProvider'
 import * as backend from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
@@ -436,7 +435,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                 onPress={() => {
                   setSearchParams({
                     [`${SEARCH_PARAMS_PREFIX}SettingsTab`]: JSON.stringify('local'),
-                    [`${SEARCH_PARAMS_PREFIX}page`]: JSON.stringify(TabType.settings),
+                    [`${SEARCH_PARAMS_PREFIX}page`]: JSON.stringify('settings'),
                   })
                 }}
               />

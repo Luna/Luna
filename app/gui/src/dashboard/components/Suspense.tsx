@@ -7,22 +7,19 @@
 
 import * as React from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
+import { useIsFetching } from '@tanstack/react-query'
 
-import * as debounceValue from '#/hooks/debounceValueHooks'
-import * as offlineHooks from '#/hooks/offlineHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import * as result from '#/components/Result'
-
+import { Result, type ResultProps } from '#/components/Result'
+import { useDebounceValue } from '#/hooks/debounceValueHooks'
+import { useOffline } from '#/hooks/offlineHooks'
+import { useText } from '#/providers/TextProvider'
 import * as loader from './Loader'
 
 /** Props for {@link Suspense} component. */
 export interface SuspenseProps extends React.SuspenseProps {
   readonly loaderProps?: loader.LoaderProps
   readonly offlineFallback?: React.ReactNode
-  readonly offlineFallbackProps?: result.ResultProps
+  readonly offlineFallbackProps?: ResultProps
 }
 
 const OFFLINE_FETCHING_TOGGLE_DELAY_MS = 250
@@ -76,13 +73,13 @@ interface LoaderProps extends loader.LoaderProps {
 export function Loader(props: LoaderProps) {
   const { fallback, offlineFallbackProps, offlineFallback, ...loaderProps } = props
 
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
 
-  const { isOffline } = offlineHooks.useOffline()
+  const { isOffline } = useOffline()
 
-  const paused = reactQuery.useIsFetching({ fetchStatus: 'paused' })
+  const paused = useIsFetching({ fetchStatus: 'paused' })
 
-  const fetching = reactQuery.useIsFetching({
+  const fetching = useIsFetching({
     predicate: (query) =>
       query.state.fetchStatus === 'fetching' ||
       query.state.status === 'pending' ||
@@ -91,7 +88,7 @@ export function Loader(props: LoaderProps) {
 
   // we use small debounce to avoid flickering when query is resolved,
   // but fallback is still showing
-  const shouldDisplayOfflineMessage = debounceValue.useDebounceValue(
+  const shouldDisplayOfflineMessage = useDebounceValue(
     isOffline && paused >= 0 && fetching === 0,
     OFFLINE_FETCHING_TOGGLE_DELAY_MS,
   )
@@ -99,7 +96,7 @@ export function Loader(props: LoaderProps) {
   if (shouldDisplayOfflineMessage) {
     return (
       offlineFallback ?? (
-        <result.Result status="info" title={getText('offlineTitle')} {...offlineFallbackProps} />
+        <Result status="info" title={getText('offlineTitle')} {...offlineFallbackProps} />
       )
     )
   } else {

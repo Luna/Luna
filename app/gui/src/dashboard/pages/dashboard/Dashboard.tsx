@@ -17,13 +17,13 @@ import * as backendProvider from '#/providers/BackendProvider'
 import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import ProjectsProvider, {
-  TabType,
   useClearLaunchedProjects,
   useLaunchedProjects,
   usePage,
   useProjectsStore,
   useSetPage,
   type LaunchedProject,
+  type TabType,
 } from '#/providers/ProjectsProvider'
 
 import AssetListEventType from '#/events/AssetListEventType'
@@ -136,8 +136,6 @@ function DashboardInner(props: DashboardProps) {
   const projectsStore = useProjectsStore()
   const page = usePage()
   const launchedProjects = useLaunchedProjects()
-  // There is no shared enum type, but the other union member is the same type.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
   const selectedProject = launchedProjects.find((p) => p.id === page) ?? null
 
   const setPage = useSetPage()
@@ -194,8 +192,8 @@ function DashboardInner(props: DashboardProps) {
           updateModal((oldModal) => {
             if (oldModal == null) {
               const currentPage = projectsStore.getState().page
-              if (currentPage === TabType.settings) {
-                setPage(TabType.drive)
+              if (currentPage === 'settings') {
+                setPage('drive')
               }
             }
             return null
@@ -228,7 +226,7 @@ function DashboardInner(props: DashboardProps) {
   })
 
   const onSignOut = eventCallbacks.useEventCallback(() => {
-    setPage(TabType.drive)
+    setPage('drive')
     closeAllProjects()
     clearLaunchedProjects()
   })
@@ -256,7 +254,7 @@ function DashboardInner(props: DashboardProps) {
   })
 
   const goToSettings = eventCallbacks.useEventCallback(() => {
-    setPage(TabType.settings)
+    setPage('settings')
   })
 
   return (

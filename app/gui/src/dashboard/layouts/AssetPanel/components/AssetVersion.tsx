@@ -1,6 +1,4 @@
 /** @file Displays information describing a specific version of an asset. */
-import * as React from 'react'
-
 import CompareIcon from '#/assets/compare.svg'
 import DuplicateIcon from '#/assets/duplicate.svg'
 import RestoreIcon from '#/assets/restore.svg'
@@ -18,8 +16,8 @@ import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as dateTime from '#/utilities/dateTime'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import * as dateTime from 'enso-common/src/utilities/data/dateTime'
 
 // ====================
 // === AssetVersion ===

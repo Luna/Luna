@@ -180,6 +180,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
           tooltipPlacement="left"
           extraClickZone="xsmall"
           isDisabled={isDisabled || projectState?.type === backendModule.ProjectState.closing}
+          className="shrink-0"
           onPress={doOpenProject}
         />
       )

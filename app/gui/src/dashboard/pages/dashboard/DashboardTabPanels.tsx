@@ -12,7 +12,7 @@ import Drive from '#/layouts/Drive'
 import type { GraphEditorRunner } from '#/layouts/Editor'
 import Editor from '#/layouts/Editor'
 import Settings from '#/layouts/Settings'
-import { TabType, useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
+import { useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
 import type { ProjectId } from '#/services/Backend'
 import { Collection } from 'react-aria-components'
 
@@ -57,7 +57,8 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
 
   const tabPanels = [
     {
-      id: TabType.drive,
+      id: 'drive',
+      shouldForceMount: true,
       className: 'flex min-h-0 grow [&[data-inert]]:hidden',
       children: (
         <Drive
@@ -65,7 +66,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
           category={category}
           setCategory={setCategory}
           resetCategory={resetCategory}
-          hidden={page !== TabType.drive}
+          hidden={page !== 'drive'}
           initialProjectName={initialProjectName}
         />
       ),
@@ -77,8 +78,6 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
       className: 'flex min-h-0 grow [&[data-inert]]:hidden',
       children: (
         <Editor
-          // There is no shared enum type, but the other union member is the same type.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
           hidden={page !== project.id}
           ydocUrl={ydocUrl}
           project={project}
@@ -93,7 +92,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
     })),
 
     {
-      id: TabType.settings,
+      id: 'settings',
       className: 'flex min-h-0 grow',
       children: <Settings />,
     },

@@ -1,13 +1,14 @@
 /** @file Tabs for the asset panel. Contains the visual state for the tabs and animations. */
+import { memo, useCallback, useRef, type ReactNode } from 'react'
+
+import { AnimatePresence, motion } from 'framer-motion'
+
 import { AnimatedBackground } from '#/components/AnimatedBackground'
 import type { TabListProps, TabPanelProps, TabPanelRenderProps, TabProps } from '#/components/aria'
 import { Tab, TabList, TabPanel, Tabs, type TabsProps } from '#/components/aria'
 import { useVisualTooltip } from '#/components/AriaComponents'
 import { Suspense } from '#/components/Suspense'
 import SvgMask from '#/components/SvgMask'
-import { AnimatePresence, motion } from 'framer-motion'
-import type { ReactNode } from 'react'
-import { memo, useCallback, useRef } from 'react'
 
 /** Display a set of tabs. */
 export function AssetPanelTabs(props: TabsProps) {
@@ -36,7 +37,7 @@ export interface AssetPanelTabProps extends TabProps {
 
 const UNDERLAY_ELEMENT = (
   <>
-    <div className="h-full w-full rounded-r-2xl bg-background-hex" />
+    <div className="bg-background-hex h-full w-full rounded-r-2xl" />
     <div className="absolute -top-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background-hex)_70%)]" />
     <div className="absolute -bottom-5 left-0 aspect-square w-5 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background-hex)_70%)]" />
   </>
