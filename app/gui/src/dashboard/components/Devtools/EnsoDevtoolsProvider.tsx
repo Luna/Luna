@@ -1,22 +1,17 @@
-/**
- * @file
- * This file provides a zustand store that contains the state of the Enso devtools.
- */
-import { type PaywallFeatureName, PAYWALL_FEATURES } from '#/hooks/billing'
-import { unsafeEntries, unsafeFromEntries } from '#/utilities/object'
-import * as zustand from '#/utilities/zustand'
-import { IS_DEV_MODE } from 'enso-common/src/detect'
+/** @file This file provides a zustand store that contains the state of the Enso devtools. */
 import { MotionGlobalConfig } from 'framer-motion'
 import { persist } from 'zustand/middleware'
+
+import { unsafeEntries, unsafeFromEntries } from '@common/utilities/data/object'
+import { IS_DEV_MODE } from '@common/utilities/detect'
+
+import { type PaywallFeatureName, PAYWALL_FEATURES } from '#/hooks/billing'
+import { createStore, useStore } from '#/utilities/zustand'
 
 /** Configuration for a paywall feature. */
 export interface PaywallDevtoolsFeatureConfiguration {
   readonly isForceEnabled: boolean | null
 }
-
-// =========================
-// === EnsoDevtoolsStore ===
-// =========================
 
 /** The state of this zustand store. */
 interface EnsoDevtoolsStore {
@@ -31,7 +26,7 @@ interface EnsoDevtoolsStore {
   readonly setAnimationsDisabled: (animationsDisabled: boolean) => void
 }
 
-export const ensoDevtoolsStore = zustand.createStore<EnsoDevtoolsStore>()(
+export const ensoDevtoolsStore = createStore<EnsoDevtoolsStore>()(
   persist(
     (set) => ({
       showDevtools: IS_DEV_MODE,
@@ -78,45 +73,37 @@ export const ensoDevtoolsStore = zustand.createStore<EnsoDevtoolsStore>()(
   ),
 )
 
-// ===============================
-// === useEnableVersionChecker ===
-// ===============================
-
 /** A function to set whether the version checker is forcibly shown/hidden. */
 export function useEnableVersionChecker() {
-  return zustand.useStore(ensoDevtoolsStore, (state) => state.showVersionChecker, {
+  return useStore(ensoDevtoolsStore, (state) => state.showVersionChecker, {
     unsafeEnableTransition: true,
   })
 }
 
-// ==================================
-// === useSetEnableVersionChecker ===
-// ==================================
-
 /** A function to set whether the version checker is forcibly shown/hidden. */
 export function useSetEnableVersionChecker() {
-  return zustand.useStore(ensoDevtoolsStore, (state) => state.setEnableVersionChecker, {
+  return useStore(ensoDevtoolsStore, (state) => state.setEnableVersionChecker, {
     unsafeEnableTransition: true,
   })
 }
 
 /** A function to get whether animations are disabled. */
 export function useAnimationsDisabled() {
-  return zustand.useStore(ensoDevtoolsStore, (state) => state.animationsDisabled, {
+  return useStore(ensoDevtoolsStore, (state) => state.animationsDisabled, {
     unsafeEnableTransition: true,
   })
 }
 
 /** A function to set whether animations are disabled. */
 export function useSetAnimationsDisabled() {
-  return zustand.useStore(ensoDevtoolsStore, (state) => state.setAnimationsDisabled, {
+  return useStore(ensoDevtoolsStore, (state) => state.setAnimationsDisabled, {
     unsafeEnableTransition: true,
   })
 }
 
 /** A hook that provides access to the paywall devtools. */
 export function usePaywallDevtools() {
-  return zustand.useStore(
+  return useStore(
     ensoDevtoolsStore,
     (state) => ({
       features: state.paywallFeatures,
@@ -128,7 +115,7 @@ export function usePaywallDevtools() {
 
 /** A hook that provides access to the show devtools state. */
 export function useShowDevtools() {
-  return zustand.useStore(ensoDevtoolsStore, (state) => state.showDevtools, {
+  return useStore(ensoDevtoolsStore, (state) => state.showDevtools, {
     unsafeEnableTransition: true,
   })
 }

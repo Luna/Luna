@@ -1,23 +1,14 @@
 /** @file The input for viewing and changing the user's profile picture. */
-import * as React from 'react'
-
 import { useMutation } from '@tanstack/react-query'
 
+import type { Backend } from '@common/services/Backend'
+
 import DefaultUserIcon from '#/assets/default_user.svg'
-
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
+import { Label } from '#/components/aria'
+import { Form, HiddenFile, Text } from '#/components/AriaComponents'
 import FocusRing from '#/components/styled/FocusRing'
-
-import { Form, HiddenFile } from '#/components/AriaComponents'
-import type Backend from '#/services/Backend'
-
-// ===========================
-// === ProfilePictureInput ===
-// ===========================
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useText } from '#/providers/TextProvider'
 
 /** Props for a {@link ProfilePictureInput}. */
 export interface ProfilePictureInputProps {
@@ -28,7 +19,7 @@ export interface ProfilePictureInputProps {
 export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   const { backend } = props
   const { data: user } = useBackendQuery(backend, 'usersMe', [])
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
 
   const uploadUserPicture = useMutation(backendMutationOptions(backend, 'uploadUserPicture'))
 
@@ -42,7 +33,7 @@ export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   return (
     <Form form={form}>
       <FocusRing within>
-        <aria.Label
+        <Label
           data-testid="user-profile-picture-input"
           className="flex h-profile-picture-large w-profile-picture-large cursor-pointer items-center overflow-clip rounded-full transition-colors hover:bg-frame"
         >
@@ -51,11 +42,11 @@ export default function ProfilePictureInput(props: ProfilePictureInputProps) {
             className="pointer-events-none h-full w-full"
           />
           <HiddenFile autoSubmit form={form} name="picture" />
-        </aria.Label>
+        </Label>
       </FocusRing>
-      <aria.Text className="w-profile-picture-caption py-profile-picture-caption-y">
+      <Text className="w-profile-picture-caption py-profile-picture-caption-y">
         {getText('profilePictureWarning')}
-      </aria.Text>
+      </Text>
     </Form>
   )
 }

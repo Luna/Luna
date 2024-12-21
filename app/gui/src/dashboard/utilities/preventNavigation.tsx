@@ -1,11 +1,12 @@
 /** @file A React hook to prevent navigation. */
 import { useEffect } from 'react'
 
+import { isOnElectron } from '@common/utilities/detect'
+
 import { Button, ButtonGroup, Dialog, Text } from '#/components/AriaComponents'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import { isOnElectron } from 'enso-common/src/detect'
 
 let shouldClose = false
 

@@ -4,13 +4,8 @@ import SvgButton from '@/components/SvgButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useBackend } from '@/composables/backend'
 import type { ToValue } from '@/util/reactivity'
-import type {
-  DirectoryAsset,
-  DirectoryId,
-  FileAsset,
-  FileId,
-} from 'enso-common/src/services/Backend'
-import Backend, { assetIsDirectory, assetIsFile } from 'enso-common/src/services/Backend'
+import type { DirectoryAsset, DirectoryId, FileAsset, FileId } from '@common/services/Backend'
+import Backend, { assetIsDirectory, assetIsFile } from '@common/services/Backend'
 import { computed, ref, toValue, watch } from 'vue'
 
 const emit = defineEmits<{

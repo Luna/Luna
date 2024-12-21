@@ -3,16 +3,8 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import process from 'node:process'
 
-// =================
-// === Constants ===
-// =================
-
 /** Indent size for outputting JSON. */
 export const INDENT_SIZE = 4
-
-// ===================
-// === Environment ===
-// ===================
 
 /** Get the environment variable value.
  * @param {string} name - The name of the environment variable.
@@ -49,10 +41,6 @@ export function requireEnvPathExist(name) {
     )
   }
 }
-
-// ======================
-// === String Helpers ===
-// ======================
 
 /** Get the common prefix of the two strings.
  * @param {string} a - the first string.

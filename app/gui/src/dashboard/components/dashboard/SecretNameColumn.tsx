@@ -1,59 +1,46 @@
-/** @file The icon and name of a {@link backendModule.SecretAsset}. */
+/** @file The icon and name of a {@link SecretAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
+import type { SecretAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
+
 import KeyIcon from '#/assets/key.svg'
-
-import { backendMutationOptions } from '#/hooks/backendHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as modalProvider from '#/providers/ModalProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import type * as column from '#/components/dashboard/column'
+import { Text } from '#/components/AriaComponents'
+import type { AssetColumnProps } from '#/components/dashboard/column'
 import SvgMask from '#/components/SvgMask'
-
+import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import UpsertSecretModal from '#/modals/UpsertSecretModal'
-
-import type * as backendModule from '#/services/Backend'
-
-import * as eventModule from '#/utilities/event'
-import * as indent from '#/utilities/indent'
-import * as object from '#/utilities/object'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// =====================
-// === ConnectorName ===
-// =====================
+import { useSetModal } from '#/providers/ModalProvider'
+import { isDoubleClick, isSingleClick } from '#/utilities/event'
+import { indentClass } from '#/utilities/indent'
+import { twMerge } from '#/utilities/tailwindMerge'
 
 /** Props for a {@link SecretNameColumn}. */
-export interface SecretNameColumnProps extends column.AssetColumnProps {
-  readonly item: backendModule.SecretAsset
+export interface SecretNameColumnProps extends AssetColumnProps {
+  readonly item: SecretAsset
 }
 
-/**
- * The icon and name of a {@link backendModule.SecretAsset}.
- * @throws {Error} when the asset is not a {@link backendModule.SecretAsset}.
- * This should never happen.
- */
+/** The icon and name of a {@link SecretAsset}. */
 export default function SecretNameColumn(props: SecretNameColumnProps) {
   const { item, selected, state, rowState, setRowState, isEditable, depth } = props
   const { backend } = state
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const { setModal } = modalProvider.useSetModal()
+  const toastAndLog = useToastAndLog()
+  const { setModal } = useSetModal()
 
   const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {
-      setRowState(object.merger({ isEditingName }))
+      setRowState(merger({ isEditingName }))
     }
   }
 
   return (
     <div
-      className={tailwindMerge.twMerge(
+      className={twMerge(
         'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
-        indent.indentClass(depth),
+        indentClass(depth),
       )}
       onKeyDown={(event) => {
         if (rowState.isEditingName && event.key === 'Enter') {
@@ -61,9 +48,9 @@ export default function SecretNameColumn(props: SecretNameColumnProps) {
         }
       }}
       onClick={(event) => {
-        if (eventModule.isSingleClick(event) && selected) {
+        if (isSingleClick(event) && selected) {
           setIsEditing(true)
-        } else if (eventModule.isDoubleClick(event) && isEditable) {
+        } else if (isDoubleClick(event) && isEditable) {
           event.stopPropagation()
           setModal(
             <UpsertSecretModal
@@ -83,13 +70,9 @@ export default function SecretNameColumn(props: SecretNameColumnProps) {
     >
       <SvgMask src={KeyIcon} className="m-name-column-icon size-4" />
       {/* Secrets cannot be renamed. */}
-      <ariaComponents.Text
-        data-testid="asset-row-name"
-        font="naming"
-        className="grow bg-transparent"
-      >
+      <Text data-testid="asset-row-name" font="naming" className="grow bg-transparent">
         {item.title}
-      </ariaComponents.Text>
+      </Text>
     </div>
   )
 }

@@ -1,48 +1,39 @@
-/**
- * @file
- *
- * Hooks for paywall-related functionality.
- */
-import * as eventCallbackHooks from '#/hooks/eventCallbackHooks'
+/** @file Hooks for paywall-related functionality. */
+import type { Plan } from '@common/services/Backend'
 
-import * as devtools from '#/components/Devtools'
-
-import type * as backend from '#/services/Backend'
-
-import * as paywallConfiguration from './FeaturesConfiguration'
-import * as paywallFeatures from './paywallFeaturesHooks'
+import { usePaywallDevtools } from '#/components/Devtools'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { mapPlanOnPaywall, type PaywallFeatureName } from './FeaturesConfiguration'
+import { usePaywallFeatures } from './paywallFeaturesHooks'
 
 /** Props for the {@link usePaywall} hook. */
 export interface UsePaywallProps {
-  readonly plan?: backend.Plan | undefined
+  readonly plan?: Plan | undefined
 }
 
 /** A hook that provides paywall-related functionality. */
 export function usePaywall(props: UsePaywallProps) {
   const { plan } = props
 
-  const { getFeature } = paywallFeatures.usePaywallFeatures()
-  const { features } = devtools.usePaywallDevtools()
-  const paywallLevel = paywallConfiguration.mapPlanOnPaywall(plan)
+  const { getFeature } = usePaywallFeatures()
+  const { features } = usePaywallDevtools()
+  const paywallLevel = mapPlanOnPaywall(plan)
 
-  const getPaywallLevel = eventCallbackHooks.useEventCallback(
-    (specifiedPlan: backend.Plan | undefined) =>
-      paywallConfiguration.mapPlanOnPaywall(specifiedPlan),
+  const getPaywallLevel = useEventCallback((specifiedPlan: Plan | undefined) =>
+    mapPlanOnPaywall(specifiedPlan),
   )
 
-  const isFeatureUnderPaywall = eventCallbackHooks.useEventCallback(
-    (feature: paywallConfiguration.PaywallFeatureName) => {
-      const featureConfig = getFeature(feature)
-      const { isForceEnabled } = features[feature]
-      const { level } = featureConfig
+  const isFeatureUnderPaywall = useEventCallback((feature: PaywallFeatureName) => {
+    const featureConfig = getFeature(feature)
+    const { isForceEnabled } = features[feature]
+    const { level } = featureConfig
 
-      if (isForceEnabled == null) {
-        return level > paywallLevel
-      } else {
-        return !isForceEnabled
-      }
-    },
-  )
+    if (isForceEnabled == null) {
+      return level > paywallLevel
+    } else {
+      return !isForceEnabled
+    }
+  })
 
   return {
     paywallLevel,

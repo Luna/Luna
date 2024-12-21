@@ -9,7 +9,7 @@ import { Err, Ok, type Result, transposeResult, unwrapOrWithLog } from '@/util/d
 import { qnLastSegment, type QualifiedName } from '@/util/qualifiedName'
 import type { ToValue } from '@/util/reactivity'
 import type { ColDef } from 'ag-grid-enterprise'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import { computed, toValue } from 'vue'
 import type { ColumnSpecificHeaderParams } from './TableHeader.vue'
 

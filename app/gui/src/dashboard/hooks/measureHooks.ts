@@ -3,10 +3,12 @@
  *
  * This file contains the useMeasure hook, which is used to measure the size and position of an element.
  */
+import { useEffect, useRef, useState } from 'react'
+
 import { frame, useMotionValue } from 'framer-motion'
 
-import { useEffect, useRef, useState } from 'react'
-import { unsafeMutable } from '../utilities/object'
+import { unsafeMutable } from '@common/utilities/data/object'
+
 import { useDebouncedCallback } from './debounceCallbackHooks'
 import { useEventCallback } from './eventCallbackHooks'
 import { useUnmount } from './unmountHooks'

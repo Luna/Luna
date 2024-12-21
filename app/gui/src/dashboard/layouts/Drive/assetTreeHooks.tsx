@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 
 import { useIsFetching, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import type { DirectoryId } from 'enso-common/src/services/Backend'
+import type { DirectoryId } from '@common/services/Backend'
 import {
   assetIsDirectory,
   createRootDirectoryAsset,
@@ -12,7 +12,7 @@ import {
   createSpecialLoadingAsset,
   type AnyAsset,
   type DirectoryAsset,
-} from 'enso-common/src/services/Backend'
+} from '@common/services/Backend'
 
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'

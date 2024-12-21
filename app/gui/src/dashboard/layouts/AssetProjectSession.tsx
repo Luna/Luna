@@ -1,12 +1,11 @@
 /** @file Displays information describing a specific version of an asset. */
-import LogsIcon from '#/assets/logs.svg'
+import type { Backend, ProjectAsset, ProjectSession } from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
+import LogsIcon from '#/assets/logs.svg'
 import { Button, DialogTrigger } from '#/components/AriaComponents'
 import ProjectLogsModal from '#/modals/ProjectLogsModal'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import type { ProjectAsset, ProjectSession } from '#/services/Backend'
-import { formatDateTime } from '#/utilities/dateTime'
 
 /** Props for a {@link AssetProjectSession}. */
 export interface AssetProjectSessionProps {

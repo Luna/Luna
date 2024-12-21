@@ -95,6 +95,7 @@ export default defineConfig({
       shared: fileURLToPath(new URL('./shared', import.meta.url)),
       '@': fileURLToPath(new URL('./src/project-view', import.meta.url)),
       '#': fileURLToPath(new URL('./src/dashboard', import.meta.url)),
+      '@common': fileURLToPath(new URL('./src/common', import.meta.url)),
     },
   },
   envPrefix: 'ENSO_IDE_',

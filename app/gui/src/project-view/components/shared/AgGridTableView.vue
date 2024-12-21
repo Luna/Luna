@@ -67,6 +67,7 @@ export const commonContextMenuActions = {
  */
 import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
 import { useAutoBlur } from '@/util/autoBlur'
+import { LINE_BOUNDARIES } from '@common/utilities/data/string'
 import type {
   CellEditingStartedEvent,
   CellEditingStoppedEvent,
@@ -84,8 +85,7 @@ import type {
   RowHeightParams,
   SortChangedEvent,
 } from 'ag-grid-enterprise'
-import * as iter from 'enso-common/src/utilities/data/iter'
-import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
+import * as iter from 'enso-common/src/iter'
 import { type ComponentInstance, reactive, shallowRef, watch } from 'vue'
 import { clipboardNodeData, writeClipboard } from '../GraphEditor/clipboard'
 import {

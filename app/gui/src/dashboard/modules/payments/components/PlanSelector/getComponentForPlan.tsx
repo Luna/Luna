@@ -1,33 +1,26 @@
-/**
- * @file
- *
- * This file contains the logic to get the component for a given plan.
- */
-import * as React from 'react'
+/** @file This file contains the logic to get the component for a given plan. */
+import type { ReactNode } from 'react'
 
 import invariant from 'tiny-invariant'
 
-import type * as text from 'enso-common/src/text'
+import { Plan } from '@common/services/Backend'
+import type { TextId } from '@common/text'
 
 import OpenInNewTabIcon from '#/assets/open.svg'
+import { Button } from '#/components/AriaComponents'
+import { useText, type GetText } from '#/providers/TextProvider'
 
-import * as textProvider from '#/providers/TextProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-
-import * as backendModule from '#/services/Backend'
-
-import * as constants from '../../constants'
+import { PLAN_TO_TEXT_ID } from '../../constants'
 import { SubscribeButton, type SubscribeButtonProps } from './components'
 
 /** The component for a plan. */
 export interface ComponentForPlan {
-  readonly pricing: text.TextId
-  readonly features: text.TextId
-  readonly title: text.TextId
-  readonly subtitle: text.TextId
-  readonly learnMore: () => React.ReactNode
-  readonly submitButton: (props: SubscribeButtonProps) => React.ReactNode
+  readonly pricing: TextId
+  readonly features: TextId
+  readonly title: TextId
+  readonly subtitle: TextId
+  readonly learnMore: () => ReactNode
+  readonly submitButton: (props: SubscribeButtonProps) => ReactNode
   readonly elevated?: boolean
 }
 
@@ -35,7 +28,7 @@ export interface ComponentForPlan {
  * Get the component for a given plan.
  * @throws Error if the plan is invalid.
  */
-export function getComponentPerPlan(plan: backendModule.Plan, getText: textProvider.GetText) {
+export function getComponentPerPlan(plan: Plan, getText: GetText) {
   const result = COMPONENT_PER_PLAN[plan]
 
   // We double-check that the plan exists in the map.
@@ -48,21 +41,22 @@ export function getComponentPerPlan(plan: backendModule.Plan, getText: textProvi
   }
 }
 
-const COMPONENT_PER_PLAN: Record<backendModule.Plan, ComponentForPlan> = {
+const COMPONENT_PER_PLAN: Record<Plan, ComponentForPlan> = {
   free: {
     learnMore: () => null,
     pricing: 'freePlanPricing',
     features: 'freePlanFeatures',
-    title: constants.PLAN_TO_TEXT_ID['free'],
+    title: PLAN_TO_TEXT_ID['free'],
     subtitle: 'freePlanSubtitle',
     submitButton: (props) => <SubscribeButton {...props} isDisabled={true} />,
   },
-  [backendModule.Plan.solo]: {
+  [Plan.solo]: {
     learnMore: () => {
-      const { getText } = textProvider.useText()
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { getText } = useText()
 
       return (
-        <ariaComponents.Button
+        <Button
           variant="link"
           href="https://enso.org/pricing"
           target="_blank"
@@ -71,21 +65,22 @@ const COMPONENT_PER_PLAN: Record<backendModule.Plan, ComponentForPlan> = {
           size="medium"
         >
           {getText('learnMore')}
-        </ariaComponents.Button>
+        </Button>
       )
     },
     pricing: 'soloPlanPricing',
     submitButton: SubscribeButton,
     features: 'soloPlanFeatures',
     subtitle: 'soloPlanSubtitle',
-    title: constants.PLAN_TO_TEXT_ID['solo'],
+    title: PLAN_TO_TEXT_ID['solo'],
   },
-  [backendModule.Plan.team]: {
+  [Plan.team]: {
     learnMore: () => {
-      const { getText } = textProvider.useText()
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { getText } = useText()
 
       return (
-        <ariaComponents.Button
+        <Button
           variant="link"
           href="https://enso.org/pricing"
           target="_blank"
@@ -94,22 +89,23 @@ const COMPONENT_PER_PLAN: Record<backendModule.Plan, ComponentForPlan> = {
           size="medium"
         >
           {getText('learnMore')}
-        </ariaComponents.Button>
+        </Button>
       )
     },
     pricing: 'teamPlanPricing',
     features: 'teamPlanFeatures',
-    title: constants.PLAN_TO_TEXT_ID['team'],
+    title: PLAN_TO_TEXT_ID['team'],
     subtitle: 'teamPlanSubtitle',
     elevated: true,
     submitButton: SubscribeButton,
   },
-  [backendModule.Plan.enterprise]: {
+  [Plan.enterprise]: {
     learnMore: () => {
-      const { getText } = textProvider.useText()
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { getText } = useText()
 
       return (
-        <ariaComponents.Button
+        <Button
           variant="link"
           href="https://enso.org/pricing"
           target="_blank"
@@ -118,20 +114,21 @@ const COMPONENT_PER_PLAN: Record<backendModule.Plan, ComponentForPlan> = {
           size="medium"
         >
           {getText('learnMore')}
-        </ariaComponents.Button>
+        </Button>
       )
     },
     pricing: 'enterprisePlanPricing',
     features: 'enterprisePlanFeatures',
-    title: constants.PLAN_TO_TEXT_ID['enterprise'],
+    title: PLAN_TO_TEXT_ID['enterprise'],
     subtitle: 'enterprisePlanSubtitle',
     submitButton: () => {
-      const { getText } = textProvider.useText()
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { getText } = useText()
 
       return (
-        <ariaComponents.Button fullWidth isDisabled variant="outline" size="medium" rounded="full">
+        <Button fullWidth isDisabled variant="outline" size="medium" rounded="full">
           {getText('comingSoon')}
-        </ariaComponents.Button>
+        </Button>
       )
     },
   },

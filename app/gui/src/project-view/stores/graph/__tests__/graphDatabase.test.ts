@@ -1,7 +1,7 @@
 import { asNodeId, GraphDb } from '@/stores/graph/graphDatabase'
 import { Ast } from '@/util/ast'
+import * as iter from '@common/utilities/data/iter'
 import assert from 'assert'
-import * as iter from 'enso-common/src/utilities/data/iter'
 import { expect, test } from 'vitest'
 import { watchEffect } from 'vue'
 import type { AstId } from 'ydoc-shared/ast'

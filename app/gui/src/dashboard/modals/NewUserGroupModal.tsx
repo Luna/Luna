@@ -1,52 +1,55 @@
 /** @file A modal to create a user group. */
-import * as React from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
+import { type Backend } from '@common/services/Backend'
+import { normalizeName } from '@common/utilities/data/string'
 
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
+import { FieldError, Heading, Input, Label, TextField } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'
 import Modal from '#/components/Modal'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
+import { twMerge } from '#/utilities/tailwindMerge'
 
-import type Backend from '#/services/Backend'
-
-import * as eventModule from '#/utilities/event'
-import * as string from '#/utilities/string'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// =========================
-// === NewUserGroupModal ===
-// =========================
+/**
+ * Search for an ancestor `form` element and try to submit it.
+ * @deprecated
+ */
+function submitForm(event: { readonly target: Element }) {
+  const closestForm = event.target.closest('form')
+  if (closestForm != null) {
+    closestForm.requestSubmit()
+  }
+}
 
 /** Props for a {@link NewUserGroupModal}. */
 export interface NewUserGroupModalProps {
   readonly backend: Backend
-  readonly event?: Pick<React.MouseEvent, 'pageX' | 'pageY'>
+  readonly event?: Pick<MouseEvent, 'pageX' | 'pageY'>
 }
 
 /** A modal to create a user group. */
 export default function NewUserGroupModal(props: NewUserGroupModalProps) {
   const { backend, event: positionEvent } = props
-  const { unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const [name, setName] = React.useState('')
+  const { unsetModal } = useSetModal()
+  const { getText } = useText()
+  const toastAndLog = useToastAndLog()
+  const [name, setName] = useState('')
   const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
   const userGroups = listUserGroupsQuery.data ?? null
-  const userGroupNames = React.useMemo(
+  const userGroupNames = useMemo(
     () =>
       userGroups == null ? null : (
-        new Set(userGroups.map((group) => string.normalizeName(group.groupName)))
+        new Set(userGroups.map((group) => normalizeName(group.groupName)))
       ),
     [userGroups],
   )
   const nameError =
-    userGroupNames != null && userGroupNames.has(string.normalizeName(name)) ?
+    userGroupNames != null && userGroupNames.has(normalizeName(name)) ?
       getText('duplicateUserGroupError')
     : null
   const createUserGroup = useMutation(
@@ -68,10 +71,7 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
   return (
     <Modal
       centered={positionEvent == null}
-      className={tailwindMerge.twMerge(
-        'bg-dim',
-        positionEvent != null && 'absolute size-full overflow-hidden',
-      )}
+      className={twMerge('bg-dim', positionEvent != null && 'absolute size-full overflow-hidden')}
     >
       <form
         tabIndex={-1}
@@ -90,28 +90,26 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
           void onSubmit()
         }}
       >
-        <aria.Heading className="relative text-sm font-semibold">
-          {getText('newUserGroup')}
-        </aria.Heading>
-        <aria.TextField
+        <Heading className="relative text-sm font-semibold">{getText('newUserGroup')}</Heading>
+        <TextField
           className="relative flex flex-col"
           value={name}
           onChange={setName}
           isInvalid={nameError != null}
         >
           <div className="flex items-center">
-            <aria.Label className="text w-modal-label">{getText('name')}</aria.Label>
-            <aria.Input
+            <Label className="text w-modal-label">{getText('name')}</Label>
+            <Input
               autoFocus
               size={1}
               placeholder={getText('userGroupNamePlaceholder')}
               className="text grow rounded-full border border-primary/10 bg-transparent px-input-x invalid:border-red-700/60"
             />
           </div>
-          <aria.FieldError className="text-red-700/90">{nameError}</aria.FieldError>
-        </aria.TextField>
+          <FieldError className="text-red-700/90">{nameError}</FieldError>
+        </TextField>
         <ButtonGroup className="relative">
-          <Button variant="submit" isDisabled={!canSubmit} onPress={eventModule.submitForm}>
+          <Button variant="submit" isDisabled={!canSubmit} onPress={submitForm}>
             {getText('create')}
           </Button>
           <Button variant="outline" onPress={unsetModal}>

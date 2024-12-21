@@ -31,22 +31,20 @@
  * `kind` field provides a unique string that can be used to brand the error in place of the
  * `internalCode`, when rethrowing the error.
  */
-import * as amplify from '@aws-amplify/auth'
-import * as cognito from 'amazon-cognito-identity-js'
-import * as results from 'ts-results'
+import { Auth, CognitoHostedUIIdentityProvider, type SignUpParams } from '@aws-amplify/auth'
+import {
+  CognitoUser,
+  type ChallengeName,
+  type CognitoUserSession,
+} from 'amazon-cognito-identity-js'
+import { Err, Result } from 'ts-results'
 
-import * as detect from 'enso-common/src/detect'
+import { toRfc3339, type Rfc3339DateTime } from '@common/utilities/data/dateTime'
+import { isOnElectron } from '@common/utilities/detect'
+import type { AccessToken } from 'enso-common/src/accessToken'
 
-import type * as loggerProvider from '#/providers/LoggerProvider'
-
-import * as dateTime from '#/utilities/dateTime'
-import type * as saveAccessToken from 'enso-common/src/accessToken'
-
-import * as service from '#/authentication/service'
-
-// =================
-// === Constants ===
-// =================
+import { toNestedAmplifyConfig, type AmplifyConfig } from '#/authentication/service'
+import type { Logger } from '#/providers/LoggerProvider'
 
 /**
  * String used to identify the GitHub federated identity provider in AWS Amplify.
@@ -64,7 +62,7 @@ const SEC_MS = 1_000
 
 // The names come from a third-party API and cannot be changed.
 /* eslint-disable @typescript-eslint/naming-convention */
-/** Attributes returned from {@link amplify.Auth.currentUserInfo}. */
+/** Attributes returned from {@link Auth.currentUserInfo}. */
 interface UserAttributes {
   readonly email: string
   readonly email_verified: boolean
@@ -82,9 +80,9 @@ export type MfaType = 'NOMFA' | 'SMS_MFA' | 'SOFTWARE_TOKEN_MFA' | 'TOTP'
  *
  * The `NO_CHALLENGE` value is used when the user is not currently facing any challenge.
  */
-export type UserSessionChallenge = cognito.ChallengeName | 'NO_CHALLENGE'
+export type UserSessionChallenge = ChallengeName | 'NO_CHALLENGE'
 
-/** User information returned from {@link amplify.Auth.currentUserInfo}. */
+/** User information returned from {@link Auth.currentUserInfo}. */
 interface UserInfo {
   readonly username: string
   readonly id: undefined
@@ -191,14 +189,14 @@ interface CognitoError {
 /**
  * Thin wrapper around Cognito endpoints from the AWS Amplify library with error handling added.
  * This way, the methods don't throw all errors, but define exactly which errors they return.
- * The caller can then handle them via pattern matching on the {@link results.Result} type.
+ * The caller can then handle them via pattern matching on the {@link Result} type.
  */
 export class Cognito {
   /** Create a new Cognito wrapper. */
   constructor(
-    private readonly logger: loggerProvider.Logger,
+    private readonly logger: Logger,
     private readonly supportsDeepLinks: boolean,
-    private readonly amplifyConfig: service.AmplifyConfig,
+    private readonly amplifyConfig: AmplifyConfig,
   ) {
     /**
      * Amplify expects `Auth.configure` to be called before any other `Auth` methods are
@@ -206,12 +204,12 @@ export class Cognito {
      * object containing them, we ensure that `Auth.configure` is called before any other `Auth`
      * methods are called.
      */
-    const nestedAmplifyConfig = service.toNestedAmplifyConfig(amplifyConfig)
-    amplify.Auth.configure(nestedAmplifyConfig)
+    const nestedAmplifyConfig = toNestedAmplifyConfig(amplifyConfig)
+    Auth.configure(nestedAmplifyConfig)
   }
 
   /** Save the access token to a file for further reuse. */
-  saveAccessToken(accessTokenPayload: saveAccessToken.AccessToken | null) {
+  saveAccessToken(accessTokenPayload: AccessToken | null) {
     this.amplifyConfig.saveAccessToken?.(accessTokenPayload)
   }
 
@@ -221,7 +219,7 @@ export class Cognito {
    * Will refresh the {@link UserSession} if it has expired.
    */
   async userSession() {
-    return amplify.Auth.currentSession()
+    return Auth.currentSession()
       .then((result) => parseUserSession(result, this.amplifyConfig.userPoolWebClientId))
       .catch(() => null)
   }
@@ -233,7 +231,7 @@ export class Cognito {
   async organizationId() {
     // This `any` comes from a third-party API and cannot be avoided.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const userInfo: UserInfo = await amplify.Auth.currentUserInfo()
+    const userInfo: UserInfo = await Auth.currentUserInfo()
     return userInfo.attributes['custom:organizationId'] ?? null
   }
 
@@ -241,7 +239,7 @@ export class Cognito {
   async email() {
     // This `any` comes from a third-party API and cannot be avoided.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const userInfo: UserInfo = await amplify.Auth.currentUserInfo()
+    const userInfo: UserInfo = await Auth.currentUserInfo()
     return userInfo.attributes.email
   }
 
@@ -251,9 +249,9 @@ export class Cognito {
    * Does not rely on federated identity providers (e.g., Google or GitHub).
    */
   async signUp(username: string, password: string, organizationId: string | null) {
-    const result = await results.Result.wrapAsync(async () => {
+    const result = await Result.wrapAsync(async () => {
       const params = intoSignUpParams(this.supportsDeepLinks, username, password, organizationId)
-      await amplify.Auth.signUp(params)
+      await Auth.signUp(params)
     })
     return result.mapErr(intoAmplifyErrorOrThrow).mapErr(intoSignUpErrorOrThrow)
   }
@@ -267,8 +265,8 @@ export class Cognito {
    * address is verified, the user can sign in.
    */
   async confirmSignUp(email: string, code: string) {
-    const result = await results.Result.wrapAsync(async () => {
-      await amplify.Auth.confirmSignUp(email, code)
+    const result = await Result.wrapAsync(async () => {
+      await Auth.confirmSignUp(email, code)
     })
     return result.mapErr(intoAmplifyErrorOrThrow).mapErr(intoConfirmSignUpErrorOrThrow)
   }
@@ -282,8 +280,8 @@ export class Cognito {
    */
   async signInWithGoogle() {
     const customState = this.customState()
-    const provider = amplify.CognitoHostedUIIdentityProvider.Google
-    await amplify.Auth.federatedSignIn({
+    const provider = CognitoHostedUIIdentityProvider.Google
+    await Auth.federatedSignIn({
       provider,
       ...(customState != null ? { customState } : {}),
     })
@@ -297,7 +295,7 @@ export class Cognito {
    * After the user has granted access, the browser will be redirected to the application.
    */
   async signInWithGitHub() {
-    await amplify.Auth.federatedSignIn({
+    await Auth.federatedSignIn({
       customProvider: GITHUB_PROVIDER,
     })
   }
@@ -308,12 +306,12 @@ export class Cognito {
    * Does not rely on external identity providers (e.g., Google or GitHub).
    */
   async signInWithPassword(username: string, password: string) {
-    const result = await results.Result.wrapAsync(async () => {
+    const result = await Result.wrapAsync(async () => {
       // This `any` comes from a third-party API and cannot be avoided.
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const maybeUser = await amplify.Auth.signIn(username, password)
+      const maybeUser = await Auth.signIn(username, password)
 
-      if (maybeUser instanceof cognito.CognitoUser) {
+      if (maybeUser instanceof CognitoUser) {
         return maybeUser
       } else {
         // eslint-disable-next-line no-restricted-properties
@@ -330,24 +328,22 @@ export class Cognito {
 
   /** Refresh the current user session. */
   async refreshUserSession() {
-    const result = await results.Result.wrapAsync(async () => {
+    const result = await Result.wrapAsync(async () => {
       const currentUser = await currentAuthenticatedUser()
-      const refreshToken = (await amplify.Auth.currentSession()).getRefreshToken()
+      const refreshToken = (await Auth.currentSession()).getRefreshToken()
 
       if (refreshToken.getToken() === '') {
         throw new Error('Refresh token is empty, cannot refresh session, Please sign in again.')
       }
 
-      return await new Promise<cognito.CognitoUserSession>((resolve, reject) => {
-        currentUser
-          .unwrap()
-          .refreshSession(refreshToken, (error, session: cognito.CognitoUserSession) => {
-            if (error instanceof Error) {
-              reject(error)
-            } else {
-              resolve(session)
-            }
-          })
+      return await new Promise<CognitoUserSession>((resolve, reject) => {
+        currentUser.unwrap().refreshSession(refreshToken, (error, session: CognitoUserSession) => {
+          if (error instanceof Error) {
+            reject(error)
+          } else {
+            resolve(session)
+          }
+        })
       })
     })
 
@@ -368,11 +364,11 @@ export class Cognito {
     // also has the unintended consequence of delaying the sign out process by a few seconds (until
     // the timeout occurs).
     try {
-      await amplify.Auth.signOut()
+      await Auth.signOut()
     } catch (error) {
       this.logger.error('Sign out failed', error)
     } finally {
-      await amplify.Auth.signOut()
+      await Auth.signOut()
     }
   }
 
@@ -384,8 +380,8 @@ export class Cognito {
    * automatically.
    */
   async forgotPassword(email: string) {
-    const result = await results.Result.wrapAsync(async () => {
-      await amplify.Auth.forgotPassword(email)
+    const result = await Result.wrapAsync(async () => {
+      await Auth.forgotPassword(email)
     })
     return result.mapErr(intoAmplifyErrorOrThrow).mapErr(intoForgotPasswordErrorOrThrow)
   }
@@ -398,8 +394,8 @@ export class Cognito {
    * along with the verification code, changing the user's password.
    */
   async forgotPasswordSubmit(email: string, code: string, password: string) {
-    const result = await results.Result.wrapAsync(async () => {
-      await amplify.Auth.forgotPasswordSubmit(email, code, password)
+    const result = await Result.wrapAsync(async () => {
+      await Auth.forgotPasswordSubmit(email, code, password)
     })
     return result.mapErr(intoForgotPasswordSubmitErrorOrThrow)
   }
@@ -416,12 +412,12 @@ export class Cognito {
     const cognitoUserResult = await currentAuthenticatedUser()
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
-      const result = await results.Result.wrapAsync(async () => {
-        await amplify.Auth.changePassword(cognitoUser, oldPassword, newPassword)
+      const result = await Result.wrapAsync(async () => {
+        await Auth.changePassword(cognitoUser, oldPassword, newPassword)
       })
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
@@ -432,9 +428,7 @@ export class Cognito {
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
 
-      const result = (
-        await results.Result.wrapAsync(() => amplify.Auth.setupTOTP(cognitoUser))
-      ).map((data) => {
+      const result = (await Result.wrapAsync(() => Auth.setupTOTP(cognitoUser))).map((data) => {
         const str = 'otpauth://totp/AWSCognito:' + email + '?secret=' + data + '&issuer=' + 'Enso'
 
         return { secret: data, url: str } as const
@@ -442,7 +436,7 @@ export class Cognito {
 
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
@@ -454,12 +448,12 @@ export class Cognito {
     const cognitoUserResult = await currentAuthenticatedUser()
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
-      const result = await results.Result.wrapAsync(async () => {
-        await amplify.Auth.verifyTotpToken(cognitoUser, totpToken)
+      const result = await Result.wrapAsync(async () => {
+        await Auth.verifyTotpToken(cognitoUser, totpToken)
       })
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
@@ -468,12 +462,12 @@ export class Cognito {
     const cognitoUserResult = await currentAuthenticatedUser()
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
-      const result = await results.Result.wrapAsync(
-        async () => await amplify.Auth.setPreferredMFA(cognitoUser, mfaMethod),
+      const result = await Result.wrapAsync(
+        async () => await Auth.setPreferredMFA(cognitoUser, mfaMethod),
       )
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
@@ -482,13 +476,13 @@ export class Cognito {
     const cognitoUserResult = await currentAuthenticatedUser()
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
-      const result = await results.Result.wrapAsync(async () => {
+      const result = await Result.wrapAsync(async () => {
         // eslint-disable-next-line no-restricted-syntax
-        return (await amplify.Auth.getPreferredMFA(cognitoUser)) as MfaType
+        return (await Auth.getPreferredMFA(cognitoUser)) as MfaType
       })
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
@@ -502,23 +496,21 @@ export class Cognito {
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
 
-      return (
-        await results.Result.wrapAsync(() => amplify.Auth.verifyTotpToken(cognitoUser, totpToken))
-      ).mapErr(intoAmplifyErrorOrThrow)
+      return (await Result.wrapAsync(() => Auth.verifyTotpToken(cognitoUser, totpToken))).mapErr(
+        intoAmplifyErrorOrThrow,
+      )
     } else {
-      return results.Err(cognitoUserResult.val)
+      return Err(cognitoUserResult.val)
     }
   }
 
   /** Confirm the sign in with the MFA token. */
   async confirmSignIn(
-    user: amplify.CognitoUser,
+    user: CognitoUser,
     confirmationCode: string,
     mfaType: 'SMS_MFA' | 'SOFTWARE_TOKEN_MFA',
   ) {
-    const result = await results.Result.wrapAsync(() =>
-      amplify.Auth.confirmSignIn(user, confirmationCode, mfaType),
-    )
+    const result = await Result.wrapAsync(() => Auth.confirmSignIn(user, confirmationCode, mfaType))
 
     return result.mapErr(intoAmplifyErrorOrThrow)
   }
@@ -544,7 +536,7 @@ export class Cognito {
    * See: https://github.com/aws-amplify/amplify-js/issues/3391#issuecomment-756473970
    */
   private customState() {
-    return detect.isOnElectron() ? window.location.pathname : null
+    return isOnElectron() ? window.location.pathname : null
   }
 }
 
@@ -571,7 +563,7 @@ export interface UserSession {
   /** URL to refresh the access token. */
   readonly refreshUrl: string
   /** Time when the access token will expire, date and time in ISO 8601 format (UTC timezone). */
-  readonly expireAt: dateTime.Rfc3339DateTime
+  readonly expireAt: Rfc3339DateTime
   /** Cognito app integration client ID. */
   readonly clientId: string
 }
@@ -580,7 +572,7 @@ export interface UserSession {
  * Parse a `CognitoUserSession` into a {@link UserSession}.
  * @throws If the `email` field of the payload is not a string.
  */
-function parseUserSession(session: cognito.CognitoUserSession, clientId: string): UserSession {
+function parseUserSession(session: CognitoUserSession, clientId: string): UserSession {
   const payload: Readonly<Record<string, unknown>> = session.getIdToken().payload
   const email = payload.email
   const refreshUrl = extractRefreshUrlFromSession(session)
@@ -590,7 +582,7 @@ function parseUserSession(session: cognito.CognitoUserSession, clientId: string)
   } else {
     const expirationTimestamp = session.getAccessToken().getExpiration()
 
-    const expireAt = dateTime.toRfc3339(new Date(expirationTimestamp * SEC_MS))
+    const expireAt = toRfc3339(new Date(expirationTimestamp * SEC_MS))
 
     return {
       email,
@@ -608,7 +600,7 @@ function parseUserSession(session: cognito.CognitoUserSession, clientId: string)
  * @see https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html
  * @throws Error if the `iss` field of the payload is not a valid URL.
  */
-function extractRefreshUrlFromSession(session: cognito.CognitoUserSession): string {
+function extractRefreshUrlFromSession(session: CognitoUserSession): string {
   const { iss } = session.getAccessToken().payload
 
   if (typeof iss !== 'string') {
@@ -639,13 +631,13 @@ export function intoCurrentSessionErrorType(error: unknown): CognitoErrorType.no
 // === SignUp ===
 // ==============
 
-/** Format a username and password as an {@link amplify.SignUpParams}. */
+/** Format a username and password as an {@link SignUpParams}. */
 function intoSignUpParams(
   supportsDeepLinks: boolean,
   username: string,
   password: string,
   organizationId: string | null,
-): amplify.SignUpParams {
+): SignUpParams {
   return {
     username,
     password,
@@ -881,7 +873,7 @@ export function intoForgotPasswordSubmitErrorOrThrow(error: unknown): ForgotPass
  * to {@link AmplifyError}s.
  */
 async function currentAuthenticatedUser() {
-  const result = await results.Result.wrapAsync(
+  const result = await Result.wrapAsync(
     /**
      * The interface provided by Amplify declares that the return type is
      * `Promise<CognitoUser | any>`, but TypeScript automatically converts it to `Promise<any>`.
@@ -889,7 +881,7 @@ async function currentAuthenticatedUser() {
      * `Promise<CognitoUser>`.
      */
     // eslint-disable-next-line no-restricted-syntax
-    () => amplify.Auth.currentAuthenticatedUser() as Promise<amplify.CognitoUser>,
+    () => Auth.currentAuthenticatedUser() as Promise<CognitoUser>,
   )
   return result.mapErr(intoAmplifyErrorOrThrow)
 }

@@ -1,19 +1,21 @@
 /** @file Documentation display for an asset. */
+import { useCallback } from 'react'
+
+import { useSuspenseQuery } from '@tanstack/react-query'
+
+import { AssetType, type Asset, type Backend } from '@common/services/Backend'
+
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'
+import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
+import { assetPanelStore } from '#/layouts/AssetPanel'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import type { Asset } from '#/services/Backend'
-import { AssetType } from '#/services/Backend'
 import { useStore } from '#/utilities/zustand'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
-import * as ast from 'ydoc-shared/ast'
-import { splitFileContents } from 'ydoc-shared/ensoFile'
-import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionContent'
-import { assetPanelStore } from '../AssetPanel'
 
-/** Props for a {@link AssetDocs}. */
+import { MutableFunctionDef, parseModule } from 'ydoc-shared/ast'
+import { splitFileContents } from 'ydoc-shared/ensoFile'
+
+/** Props for an {@link AssetDocs}. */
 export interface AssetDocsProps {
   readonly backend: Backend
 }
@@ -49,10 +51,10 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
     ...versionContentQueryOptions({ backend, projectId: item.id, metadata: false }),
     select: (data) => {
       const { code } = splitFileContents(data)
-      const module = ast.parseModule(code)
+      const module = parseModule(code)
 
       for (const statement of module.statements()) {
-        if (statement instanceof ast.MutableFunctionDef && statement.name.code() === 'main') {
+        if (statement instanceof MutableFunctionDef && statement.name.code() === 'main') {
           return statement.mutableDocumentationMarkdown().toJSON()
         }
       }

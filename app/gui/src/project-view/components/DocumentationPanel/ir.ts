@@ -3,7 +3,7 @@ import type { SuggestionEntry, SuggestionId } from '@/stores/suggestionDatabase/
 import { SuggestionKind, entryQn } from '@/stores/suggestionDatabase/entry'
 import type { Doc } from '@/util/docParser'
 import type { QualifiedName } from '@/util/qualifiedName'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import type { SuggestionEntryArgument } from 'ydoc-shared/languageServerTypes/suggestions'
 
 // === Types ===

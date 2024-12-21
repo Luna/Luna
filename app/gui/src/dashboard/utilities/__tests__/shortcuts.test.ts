@@ -1,13 +1,9 @@
 /** @file Tests for `dateTime.ts`. */
 import * as v from 'vitest'
 
-import * as detect from 'enso-common/src/detect'
+import * as detect from '@common/utilities/detect'
 
 import * as shortcutsModule from '#/utilities/inputBindings'
-
-// =============
-// === Tests ===
-// =============
 
 // NOTE: macOS using the meta key has not been tested, as it is not possible to override
 // `navigator.userAgent`.

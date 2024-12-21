@@ -4,8 +4,8 @@ import { type ComponentButtons, injectComponentButtons } from '@/providers/compo
 import { type Node } from '@/stores/graph'
 import { type Button, reactiveButton } from '@/util/button'
 import { type ToValue } from '@/util/reactivity'
-import * as iter from 'enso-common/src/utilities/data/iter'
-import { type DisjointKeysUnion } from 'enso-common/src/utilities/data/object'
+import { type DisjointKeysUnion } from '@common/utilities/data/object'
+import * as iter from 'enso-common/src/iter'
 import { computed, type ComputedRef, type Ref, ref, toValue } from 'vue'
 
 export type SelectionButtons = Record<

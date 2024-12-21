@@ -1,47 +1,39 @@
 /** @file */
-import * as toastify from 'react-toastify'
+import { toast, type Id } from 'react-toastify'
 
-import type * as text from 'enso-common/src/text'
+import type { Replacements, TextId } from '@common/text'
 
-import * as loggerProvider from '#/providers/LoggerProvider'
-import * as textProvider from '#/providers/TextProvider'
+import { useLogger } from '#/providers/LoggerProvider'
+import { useText } from '#/providers/TextProvider'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as errorModule from '#/utilities/error'
-
-// ===========================
-// === ToastAndLogCallback ===
-// ===========================
+import { getMessageOrToString, type MustNotBeKnown } from '@common/utilities/error'
 
 /** The type of the `toastAndLog` function returned by {@link useToastAndLog}. */
 export type ToastAndLogCallback = ReturnType<typeof useToastAndLog>
-
-// ======================
-// === useToastAndLog ===
-// ======================
 
 /**
  * Return a function to send a toast with rendered error message. The same message is also logged
  * as an error.
  */
 export function useToastAndLogWithId() {
-  const { getText } = textProvider.useText()
-  const logger = loggerProvider.useLogger()
+  const { getText } = useText()
+  const logger = useLogger()
 
   return useEventCallback(
-    <K extends text.TextId, T>(
-      toastId: toastify.Id,
+    <K extends TextId, T>(
+      toastId: Id,
       textId: K | null,
-      ...[error, ...replacements]: text.Replacements[K] extends readonly [] ?
-        [error?: Error | errorModule.MustNotBeKnown<T>]
-      : [error: Error | errorModule.MustNotBeKnown<T> | null, ...replacements: text.Replacements[K]]
+      ...[error, ...replacements]: Replacements[K] extends readonly [] ?
+        [error?: Error | MustNotBeKnown<T>]
+      : [error: Error | MustNotBeKnown<T> | null, ...replacements: Replacements[K]]
     ) => {
       const messagePrefix =
         textId == null ? null
           // This is SAFE, as `replacements` is only `[]` if it was already `[]`.
           // See the above conditional type.
           // eslint-disable-next-line no-restricted-syntax
-        : getText(textId, ...(replacements as text.Replacements[K]))
+        : getText(textId, ...(replacements as Replacements[K]))
       const message =
         error == null ?
           `${messagePrefix ?? ''}.`
@@ -50,8 +42,8 @@ export function useToastAndLogWithId() {
           // `MustNotBeKnown<T>`.
         : `${
             messagePrefix != null ? messagePrefix + ': ' : ''
-          }${errorModule.getMessageOrToString<unknown>(error)}`
-      toastify.toast.update(toastId, {
+          }${getMessageOrToString<unknown>(error)}`
+      toast.update(toastId, {
         type: 'error',
         render: message,
         isLoading: false,
@@ -67,22 +59,22 @@ export function useToastAndLogWithId() {
  * as an error.
  */
 export function useToastAndLog() {
-  const { getText } = textProvider.useText()
-  const logger = loggerProvider.useLogger()
+  const { getText } = useText()
+  const logger = useLogger()
 
   return useEventCallback(
-    <K extends text.TextId, T>(
+    <K extends TextId, T>(
       textId: K | null,
-      ...[error, ...replacements]: text.Replacements[K] extends readonly [] ?
-        [error?: Error | errorModule.MustNotBeKnown<T>]
-      : [error: Error | errorModule.MustNotBeKnown<T> | null, ...replacements: text.Replacements[K]]
+      ...[error, ...replacements]: Replacements[K] extends readonly [] ?
+        [error?: Error | MustNotBeKnown<T>]
+      : [error: Error | MustNotBeKnown<T> | null, ...replacements: Replacements[K]]
     ) => {
       const messagePrefix =
         textId == null ? null
           // This is SAFE, as `replacements` is only `[]` if it was already `[]`.
           // See the above conditional type.
           // eslint-disable-next-line no-restricted-syntax
-        : getText(textId, ...(replacements as text.Replacements[K]))
+        : getText(textId, ...(replacements as Replacements[K]))
       const message =
         error == null ?
           `${messagePrefix ?? ''}.`
@@ -91,8 +83,8 @@ export function useToastAndLog() {
           // `MustNotBeKnown<T>`.
         : `${
             messagePrefix != null ? messagePrefix + ': ' : ''
-          }${errorModule.getMessageOrToString<unknown>(error)}`
-      const id = toastify.toast.error(message)
+          }${getMessageOrToString<unknown>(error)}`
+      const id = toast.error(message)
       logger.error(message)
       return id
     },

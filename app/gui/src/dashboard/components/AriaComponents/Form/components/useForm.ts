@@ -1,20 +1,17 @@
-/**
- * @file
- *
- * A hook that returns a form instance.
- */
-import * as sentry from '@sentry/react'
+/** @file A hook that returns a form instance. */
 import * as React from 'react'
 
 import * as zodResolver from '@hookform/resolvers/zod'
+import * as sentry from '@sentry/react'
+import { useMutation } from '@tanstack/react-query'
 import * as reactHookForm from 'react-hook-form'
 import invariant from 'tiny-invariant'
+
+import { isJSError, tryGetMessage } from '@common/utilities/error'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline, useOfflineChange } from '#/hooks/offlineHooks'
 import { useText } from '#/providers/TextProvider'
-import * as errorUtils from '#/utilities/error'
-import { useMutation } from '@tanstack/react-query'
 import * as schemaModule from './schema'
 import type * as types from './types'
 
@@ -163,18 +160,18 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
           return result
         } catch (error) {
-          const isJSError = errorUtils.isJSError(error)
+          const errorIsJSError = isJSError(error)
 
-          if (isJSError) {
+          if (errorIsJSError) {
             sentry.captureException(error, {
               contexts: { form: { values: fieldValues } },
             })
           }
 
           const message =
-            isJSError ?
+            errorIsJSError ?
               getText('arbitraryFormErrorMessage')
-            : errorUtils.tryGetMessage(error, getText('arbitraryFormErrorMessage'))
+            : tryGetMessage(error, getText('arbitraryFormErrorMessage'))
 
           setFormError(message)
           // We need to throw the error to make the mutation fail

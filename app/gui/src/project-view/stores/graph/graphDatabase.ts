@@ -25,7 +25,7 @@ import {
   resumeShallowReactivity,
   syncSetDiff,
 } from '@/util/reactivity'
-import * as objects from 'enso-common/src/utilities/data/object'
+import * as objects from '@common/utilities/data/object'
 import * as set from 'lib0/set'
 import { reactive, ref, shallowReactive, type Ref, type WatchStopHandle } from 'vue'
 import { type SourceDocument } from 'ydoc-shared/ast/sourceDocument'

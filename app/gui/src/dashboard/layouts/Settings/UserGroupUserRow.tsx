@@ -1,40 +1,31 @@
 /** @file A row of the user groups table representing a user. */
+import type { User, UserGroupInfo } from '@common/services/Backend'
+
 import Cross2 from '#/assets/cross2.svg'
-
-import * as contextMenuHooks from '#/hooks/contextMenuHooks'
-
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
-import * as ariaComponents from '#/components/AriaComponents'
+import { Cell, Row } from '#/components/aria'
+import { Button, DialogTrigger, Text } from '#/components/AriaComponents'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
-
+import { useContextMenuRef } from '#/hooks/contextMenuHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
-
-import type * as backend from '#/services/Backend'
-
 import { useFullUserSession } from '#/providers/AuthProvider'
-
-// ========================
-// === UserGroupUserRow ===
-// ========================
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 
 /** Props for a {@link UserGroupUserRow}. */
 export interface UserGroupUserRowProps {
-  readonly user: backend.User
-  readonly userGroup: backend.UserGroupInfo
-  readonly doRemoveUserFromUserGroup: (user: backend.User, userGroup: backend.UserGroupInfo) => void
+  readonly user: User
+  readonly userGroup: UserGroupInfo
+  readonly doRemoveUserFromUserGroup: (user: User, userGroup: UserGroupInfo) => void
 }
 
 /** A row of the user groups table representing a user. */
 export default function UserGroupUserRow(props: UserGroupUserRowProps) {
   const { user, userGroup, doRemoveUserFromUserGroup } = props
   const { user: currentUser } = useFullUserSession()
-  const { setModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
+  const { setModal } = useSetModal()
+  const { getText } = useText()
   const isAdmin = currentUser.isOrganizationAdmin
-  const contextMenuRef = contextMenuHooks.useContextMenuRef(
+  const contextMenuRef = useContextMenuRef(
     getText('userGroupUserContextMenuLabel'),
     () => (
       <ContextMenuEntry
@@ -60,28 +51,28 @@ export default function UserGroupUserRow(props: UserGroupUserRowProps) {
   )
 
   return (
-    <aria.Row
+    <Row
       id={`_key-${userGroup.id}-${user.userId}`}
       className="group h-row select-none rounded-rows-child"
       ref={contextMenuRef}
     >
-      <aria.Cell className="border-x-2 border-transparent bg-clip-padding py-0 rounded-rows-skip-level last:border-r-0">
+      <Cell className="border-x-2 border-transparent bg-clip-padding py-0 rounded-rows-skip-level last:border-r-0">
         <div className="ml-6 flex h-row items-center justify-center rounded-full px-cell-x">
-          <ariaComponents.Text nowrap truncate="1" weight="semibold">
+          <Text nowrap truncate="1" weight="semibold">
             {user.name}
-          </ariaComponents.Text>
+          </Text>
         </div>
-      </aria.Cell>
-      <aria.Cell className="relative bg-transparent p-0 opacity-0 rounded-rows-have-level group-hover-2:opacity-100">
+      </Cell>
+      <Cell className="relative bg-transparent p-0 opacity-0 rounded-rows-have-level group-hover-2:opacity-100">
         {isAdmin && (
-          <ariaComponents.DialogTrigger>
-            <ariaComponents.Button
+          <DialogTrigger>
+            <Button
               size="custom"
               variant="custom"
               className="absolute right-full mr-4 size-4 -translate-y-1/2"
             >
               <img src={Cross2} className="size-4" />
-            </ariaComponents.Button>
+            </Button>
             <ConfirmDeleteModal
               actionText={getText(
                 'removeUserFromUserGroupActionText',
@@ -93,9 +84,9 @@ export default function UserGroupUserRow(props: UserGroupUserRowProps) {
                 doRemoveUserFromUserGroup(user, userGroup)
               }}
             />
-          </ariaComponents.DialogTrigger>
+          </DialogTrigger>
         )}
-      </aria.Cell>
-    </aria.Row>
+      </Cell>
+    </Row>
   )
 }

@@ -1,4 +1,4 @@
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import * as map from 'lib0/map'
 import { assert, assertDefined } from '../util/assert'
 import {

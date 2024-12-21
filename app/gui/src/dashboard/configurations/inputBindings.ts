@@ -1,5 +1,5 @@
 /** @file Shortcuts for the dashboard application. */
-import * as detect from 'enso-common/src/detect'
+import * as detect from '@common/utilities/detect'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'

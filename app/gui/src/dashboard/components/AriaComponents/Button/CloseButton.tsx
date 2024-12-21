@@ -3,7 +3,7 @@ import DismissIcon from '#/assets/dismiss.svg'
 import { Button, type ButtonProps } from '#/components/AriaComponents/Button'
 import { useText } from '#/providers/TextProvider'
 import { twMerge } from '#/utilities/tailwindMerge'
-import { isOnMacOS } from 'enso-common/src/detect'
+import { isOnMacOS } from '@common/utilities/detect'
 import { memo } from 'react'
 
 // ===================

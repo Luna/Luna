@@ -2,20 +2,38 @@
  * @file Main dashboard component, responsible for listing user's projects as well as other
  * interactive components.
  */
-import * as React from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import * as detect from 'enso-common/src/detect'
+import { usePrefetchQuery } from '@tanstack/react-query'
 
-import { DashboardTabBar } from './DashboardTabBar'
+import { BackendType, Path } from '@common/services/Backend'
+import { baseName } from '@common/utilities/data/fileInfo'
+import { isOnElectron, platform, Platform } from '@common/utilities/detect'
 
-import * as eventCallbacks from '#/hooks/eventCallbackHooks'
-import * as projectHooks from '#/hooks/projectHooks'
-import * as searchParamsState from '#/hooks/searchParamsStateHooks'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
-import * as modalProvider from '#/providers/ModalProvider'
+import { Tabs } from '#/components/aria'
+import Page from '#/components/Page'
+import AssetListEventType from '#/events/AssetListEventType'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import {
+  useCloseAllProjects,
+  useCloseProject,
+  useOpenEditor,
+  useOpenProject,
+} from '#/hooks/projectHooks'
+import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
+import type { AssetManagementApi } from '#/layouts/AssetsTable'
+import { CATEGORY_SCHEMA, type Category } from '#/layouts/CategorySwitcher/Category'
+import Chat from '#/layouts/Chat'
+import ChatPlaceholder from '#/layouts/ChatPlaceholder'
+import EventListProvider, { useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'
+import type { GraphEditorRunner } from '#/layouts/Editor'
+import UserBar from '#/layouts/UserBar'
+import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useBackend, useLocalBackend } from '#/providers/BackendProvider'
+import { useSetCategory } from '#/providers/DriveProvider'
+import { useInputBindings } from '#/providers/InputBindingsProvider'
+import { useModalRef, useSetModal } from '#/providers/ModalProvider'
 import ProjectsProvider, {
   TabType,
   useClearLaunchedProjects,
@@ -25,43 +43,19 @@ import ProjectsProvider, {
   useSetPage,
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
-
-import AssetListEventType from '#/events/AssetListEventType'
-
-import type * as assetTable from '#/layouts/AssetsTable'
-import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import Chat from '#/layouts/Chat'
-import ChatPlaceholder from '#/layouts/ChatPlaceholder'
-import EventListProvider, * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import type * as editor from '#/layouts/Editor'
-import UserBar from '#/layouts/UserBar'
-
-import * as aria from '#/components/aria'
-import Page from '#/components/Page'
-
-import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
-
-import * as backendModule from '#/services/Backend'
-import * as localBackendModule from '#/services/LocalBackend'
-import * as projectManager from '#/services/ProjectManager'
-
-import { useSetCategory } from '#/providers/DriveProvider'
-import { baseName } from '#/utilities/fileInfo'
+import { newDirectoryId, newProjectId } from '#/services/LocalBackend'
+import { UUID } from '#/services/ProjectManager'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
-import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import { usePrefetchQuery } from '@tanstack/react-query'
+import { document } from '#/utilities/sanitizedEventTargets'
+import { DashboardTabBar } from './DashboardTabBar'
 import { DashboardTabPanels } from './DashboardTabPanels'
-
-// =================
-// === Dashboard ===
-// =================
 
 /** Props for {@link Dashboard}s that are common to all platforms. */
 export interface DashboardProps {
   /** Whether the application may have the local backend running. */
   readonly supportsLocalBackend: boolean
-  readonly appRunner: editor.GraphEditorRunner | null
+  readonly appRunner: GraphEditorRunner | null
   readonly initialProjectName: string | null
   readonly ydocUrl: string | null
 }
@@ -83,7 +77,7 @@ function fileURLToPath(url: string): string | null {
     const parsed = new URL(url)
     if (parsed.protocol === 'file:') {
       return decodeURIComponent(
-        detect.platform() === detect.Platform.windows ?
+        platform() === Platform.windows ?
           // On Windows, we must remove leading `/` from URL.
           parsed.pathname.slice(1)
         : parsed.pathname,
@@ -99,39 +93,37 @@ function fileURLToPath(url: string): string | null {
 /** The component that contains the entire UI. */
 function DashboardInner(props: DashboardProps) {
   const { appRunner, initialProjectName: initialProjectNameRaw, ydocUrl } = props
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const { modalRef } = modalProvider.useModalRef()
-  const { updateModal, unsetModal, setModal } = modalProvider.useSetModal()
-  const inputBindings = inputBindingsProvider.useInputBindings()
-  const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const { modalRef } = useModalRef()
+  const { updateModal, unsetModal, setModal } = useSetModal()
+  const inputBindings = useInputBindings()
+  const [isHelpChatOpen, setIsHelpChatOpen] = useState(false)
 
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const assetManagementApiRef = React.useRef<assetTable.AssetManagementApi | null>(null)
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
+  const assetManagementApiRef = useRef<AssetManagementApi | null>(null)
 
   const initialLocalProjectPath =
     initialProjectNameRaw != null ? fileURLToPath(initialProjectNameRaw) : null
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
-  const [category, setCategoryRaw, resetCategory] =
-    searchParamsState.useSearchParamsState<categoryModule.Category>(
-      'driveCategory',
-      () => (localBackend != null ? { type: 'local' } : { type: 'cloud' }),
-      (value): value is categoryModule.Category =>
-        categoryModule.CATEGORY_SCHEMA.safeParse(value).success,
-    )
+  const [category, setCategoryRaw, resetCategory] = useSearchParamsState<Category>(
+    'driveCategory',
+    () => (localBackend != null ? { type: 'local' } : { type: 'cloud' }),
+    (value): value is Category => CATEGORY_SCHEMA.safeParse(value).success,
+  )
 
-  const initialCategory = React.useRef(category)
+  const initialCategory = useRef(category)
   const setStoreCategory = useSetCategory()
-  React.useEffect(() => {
+  useEffect(() => {
     setStoreCategory(initialCategory.current)
   }, [setStoreCategory])
 
-  const setCategory = eventCallbacks.useEventCallback((newCategory: categoryModule.Category) => {
+  const setCategory = useEventCallback((newCategory: Category) => {
     setCategoryRaw(newCategory)
     setStoreCategory(newCategory)
   })
-  const backend = backendProvider.useBackend(category)
+  const backend = useBackend(category)
 
   const projectsStore = useProjectsStore()
   const page = usePage()
@@ -141,10 +133,10 @@ function DashboardInner(props: DashboardProps) {
   const selectedProject = launchedProjects.find((p) => p.id === page) ?? null
 
   const setPage = useSetPage()
-  const openEditor = projectHooks.useOpenEditor()
-  const openProject = projectHooks.useOpenProject()
-  const closeProject = projectHooks.useCloseProject()
-  const closeAllProjects = projectHooks.useCloseAllProjects()
+  const openEditor = useOpenEditor()
+  const openProject = useOpenProject()
+  const closeProject = useCloseProject()
+  const closeAllProjects = useCloseAllProjects()
   const clearLaunchedProjects = useClearLaunchedProjects()
 
   usePrefetchQuery({
@@ -160,10 +152,10 @@ function DashboardInner(props: DashboardProps) {
           projectName,
         )
         openProject({
-          type: backendModule.BackendType.local,
-          id: localBackendModule.newProjectId(projectManager.UUID(id)),
+          type: BackendType.local,
+          id: newProjectId(UUID(id)),
           title: projectName,
-          parentId: localBackendModule.newDirectoryId(localBackend.rootPath()),
+          parentId: newDirectoryId(localBackend.rootPath()),
         })
       }
       return null
@@ -171,15 +163,15 @@ function DashboardInner(props: DashboardProps) {
     staleTime: Infinity,
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.projectManagementApi?.setOpenProjectHandler((project) => {
       setCategory({ type: 'local' })
-      const projectId = localBackendModule.newProjectId(projectManager.UUID(project.id))
+      const projectId = newProjectId(UUID(project.id))
       openProject({
-        type: backendModule.BackendType.local,
+        type: BackendType.local,
         id: projectId,
         title: project.name,
-        parentId: localBackendModule.newDirectoryId(backendModule.Path(project.parentDirectory)),
+        parentId: newDirectoryId(Path(project.parentDirectory)),
       })
     })
     return () => {
@@ -187,9 +179,9 @@ function DashboardInner(props: DashboardProps) {
     }
   }, [dispatchAssetListEvent, openEditor, openProject, setCategory])
 
-  React.useEffect(
+  useEffect(
     () =>
-      inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
+      inputBindings.attach(document.body, 'keydown', {
         closeModal: () => {
           updateModal((oldModal) => {
             if (oldModal == null) {
@@ -208,10 +200,10 @@ function DashboardInner(props: DashboardProps) {
     [inputBindings, modalRef, updateModal, setPage, projectsStore],
   )
 
-  React.useEffect(() => {
-    if (detect.isOnElectron()) {
+  useEffect(() => {
+    if (isOnElectron()) {
       // We want to handle the back and forward buttons in electron the same way as in the browser.
-      return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
+      return inputBindings.attach(document.body, 'keydown', {
         goBack: () => {
           window.navigationApi.goBack()
         },
@@ -222,18 +214,18 @@ function DashboardInner(props: DashboardProps) {
     }
   }, [inputBindings])
 
-  const doRemoveSelf = eventCallbacks.useEventCallback((project: LaunchedProject) => {
+  const doRemoveSelf = useEventCallback((project: LaunchedProject) => {
     dispatchAssetListEvent({ type: AssetListEventType.removeSelf, id: project.id })
     closeProject(project)
   })
 
-  const onSignOut = eventCallbacks.useEventCallback(() => {
+  const onSignOut = useEventCallback(() => {
     setPage(TabType.drive)
     closeAllProjects()
     clearLaunchedProjects()
   })
 
-  const doOpenShareModal = eventCallbacks.useEventCallback(() => {
+  const doOpenShareModal = useEventCallback(() => {
     if (assetManagementApiRef.current != null && selectedProject != null) {
       const asset = assetManagementApiRef.current.getAsset(selectedProject.id)
       const self = tryFindSelfPermission(user, asset?.permissions)
@@ -255,7 +247,7 @@ function DashboardInner(props: DashboardProps) {
     }
   })
 
-  const goToSettings = eventCallbacks.useEventCallback(() => {
+  const goToSettings = useEventCallback(() => {
     setPage(TabType.settings)
   })
 
@@ -268,7 +260,7 @@ function DashboardInner(props: DashboardProps) {
           unsetModal()
         }}
       >
-        <aria.Tabs
+        <Tabs
           className="relative flex min-h-full grow select-none flex-col container-size"
           selectedKey={page}
           onSelectionChange={(newPage) => {
@@ -297,7 +289,7 @@ function DashboardInner(props: DashboardProps) {
             setCategory={setCategory}
             resetCategory={resetCategory}
           />
-        </aria.Tabs>
+        </Tabs>
 
         {process.env.ENSO_CLOUD_CHAT_URL != null ?
           <Chat

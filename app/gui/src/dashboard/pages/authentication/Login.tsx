@@ -1,8 +1,8 @@
 /** @file Login component responsible for rendering and interactions in sign in flow. */
 import * as router from 'react-router-dom'
 
+import { isOnElectron } from '@common/utilities/detect'
 import { CLOUD_DASHBOARD_DOMAIN } from 'enso-common'
-import { isOnElectron } from 'enso-common/src/detect'
 
 import { DASHBOARD_PATH, FORGOT_PASSWORD_PATH, REGISTRATION_PATH } from '#/appUtils'
 import ArrowRightIcon from '#/assets/arrow_right.svg'

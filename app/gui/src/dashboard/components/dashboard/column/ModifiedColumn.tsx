@@ -1,7 +1,8 @@
 /** @file A column displaying the time at which the asset was last modified. */
+import { formatDateTime } from '@common/utilities/data/dateTime'
+
 import { Text } from '#/components/AriaComponents'
 import type { AssetColumnProps } from '#/components/dashboard/column'
-import { formatDateTime } from '#/utilities/dateTime'
 
 /** A column displaying the time at which the asset was last modified. */
 export default function ModifiedColumn(props: AssetColumnProps) {

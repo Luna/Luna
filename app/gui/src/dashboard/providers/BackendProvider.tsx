@@ -6,19 +6,15 @@ import * as React from 'react'
 
 import invariant from 'tiny-invariant'
 
+import { BackendType } from '@common/services/Backend'
 import * as common from 'enso-common'
 
 import { type Category, isCloudCategory } from '#/layouts/CategorySwitcher/Category'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { BackendType } from '#/services/Backend'
 import type LocalBackend from '#/services/LocalBackend'
 import { ProjectManagerEvents } from '#/services/ProjectManager'
 import type RemoteBackend from '#/services/RemoteBackend'
-
-// ======================
-// === BackendContext ===
-// ======================
 
 /** State contained in a `BackendContext`. */
 export interface BackendContextType {
@@ -47,10 +43,6 @@ export interface BackendProviderProps extends Readonly<React.PropsWithChildren> 
   readonly remoteBackend: RemoteBackend | null
   readonly localBackend: LocalBackend | null
 }
-
-// =======================
-// === BackendProvider ===
-// =======================
 
 /** A React Provider that lets components get and set the current backend. */
 export default function BackendProvider(props: BackendProviderProps) {
@@ -87,10 +79,6 @@ export default function BackendProvider(props: BackendProviderProps) {
   )
 }
 
-// ========================
-// === useRemoteBackend ===
-// ========================
-
 /**
  * Get the Remote Backend.
  * @throws {Error} when no Remote Backend exists. This should never happen.
@@ -103,18 +91,10 @@ export function useRemoteBackend() {
   return remoteBackend
 }
 
-// =======================
-// === useLocalBackend ===
-// =======================
-
 /** Get the Local Backend. */
 export function useLocalBackend() {
   return React.useContext(BackendContext).localBackend
 }
-
-// ==================
-// === useBackend ===
-// ==================
 
 /**
  * Get the corresponding backend for the given property.

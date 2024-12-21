@@ -1,0 +1,42 @@
+/** @file Tests for `dateTime.ts`. */
+import { expect, test } from 'vitest'
+
+import { formatDateTimeChatFriendly, toRfc3339 } from '../dateTime'
+
+/** The number of milliseconds in a minute. */
+const MIN_MS = 60_000
+
+/** Remove all UTC offset from a {@link Date}. Daylight savings-aware. */
+function convertUTCToLocal(date: Date) {
+  const offsetMins = date.getTimezoneOffset()
+  return new Date(Number(date) + offsetMins * MIN_MS)
+}
+
+/** Adds a UTC offset to a {@link Date}. Daylight savings-aware. */
+function convertLocalToUTC(date: Date) {
+  const offsetMins = date.getTimezoneOffset()
+  return new Date(Number(date) - offsetMins * MIN_MS)
+}
+
+test.each([
+  { date: new Date(0), string: '1970-01-01T00:00:00.000Z' },
+  {
+    date: convertLocalToUTC(new Date(2001, 1, 3)),
+    string: '2001-02-03T00:00:00.000Z',
+  },
+])('Date and time serialization', ({ date, string }) => {
+  expect(toRfc3339(date)).toBe(string)
+})
+
+test.each([
+  {
+    date: convertUTCToLocal(new Date(0)),
+    chatString: `01/01/1970 00:00 AM`,
+  },
+  {
+    date: new Date(2001, 1, 3),
+    chatString: `03/02/2001 00:00 AM`,
+  },
+])('Date and time serialization', ({ date, chatString }) => {
+  expect(formatDateTimeChatFriendly(date)).toBe(chatString)
+})

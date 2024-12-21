@@ -1,12 +1,13 @@
 /** @file Plan selector component. */
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { Plan, PLANS } from '@common/services/Backend'
+
 import { DIALOG_BACKGROUND } from '#/components/AriaComponents'
 import { usePaywall } from '#/hooks/billing'
 import { useAuth } from '#/providers/AuthProvider'
 import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
-import { Plan, PLANS } from '#/services/Backend'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
 import { Card } from './components'

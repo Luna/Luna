@@ -1,7 +1,7 @@
 import type { PortId } from '@/providers/portInfo'
 import type { ConnectedEdge } from '@/stores/graph/index'
 import { Vec2 } from '@/util/data/vec2'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import { computed, ref, watch, type WatchSource } from 'vue'
 import type { AstId } from 'ydoc-shared/ast'
 

@@ -1,45 +1,39 @@
-/** @file The icon and name of a {@link backendModule.FileAsset}. */
+/** @file The icon and name of a {@link FileAsset}. */
 import { useMutation } from '@tanstack/react-query'
 
-import { backendMutationOptions } from '#/hooks/backendHooks'
+import { BackendType, isNewTitleValid, type FileAsset } from '@common/services/Backend'
+import { merger } from '@common/utilities/data/object'
+import { isWhitespaceOnly } from '@common/utilities/data/string'
 
-import type * as column from '#/components/dashboard/column'
+import type { AssetColumnProps } from '#/components/dashboard/column'
 import EditableSpan from '#/components/EditableSpan'
 import SvgMask from '#/components/SvgMask'
-
-import * as backendModule from '#/services/Backend'
-
-import * as eventModule from '#/utilities/event'
-import * as fileIcon from '#/utilities/fileIcon'
-import * as indent from '#/utilities/indent'
-import * as object from '#/utilities/object'
-import * as string from '#/utilities/string'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ================
-// === FileName ===
-// ================
+import { backendMutationOptions } from '#/hooks/backendHooks'
+import { isSingleClick } from '#/utilities/event'
+import { fileIcon } from '#/utilities/fileIcon'
+import { indentClass } from '#/utilities/indent'
+import { twJoin } from '#/utilities/tailwindMerge'
 
 /** Props for a {@link FileNameColumn}. */
-export interface FileNameColumnProps extends column.AssetColumnProps {
-  readonly item: backendModule.FileAsset
+export interface FileNameColumnProps extends AssetColumnProps {
+  readonly item: FileAsset
 }
 
 /**
- * The icon and name of a {@link backendModule.FileAsset}.
- * @throws {Error} when the asset is not a {@link backendModule.FileAsset}.
+ * The icon and name of a {@link FileAsset}.
+ * @throws {Error} when the asset is not a {@link FileAsset}.
  * This should never happen.
  */
 export default function FileNameColumn(props: FileNameColumnProps) {
   const { item, selected, state, rowState, setRowState, isEditable, depth } = props
   const { backend, nodeMap } = state
-  const isCloud = backend.type === backendModule.BackendType.remote
+  const isCloud = backend.type === BackendType.remote
 
   const updateFileMutation = useMutation(backendMutationOptions(backend, 'updateFile'))
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {
-      setRowState(object.merger({ isEditingName }))
+      setRowState(merger({ isEditingName }))
     }
   }
 
@@ -49,7 +43,7 @@ export default function FileNameColumn(props: FileNameColumnProps) {
   const doRename = async (newTitle: string) => {
     if (isEditable) {
       setIsEditing(false)
-      if (string.isWhitespaceOnly(newTitle)) {
+      if (isWhitespaceOnly(newTitle)) {
         // Do nothing.
       } else if (!isCloud && newTitle !== item.title) {
         await updateFileMutation.mutateAsync([item.id, { title: newTitle }, item.title])
@@ -59,9 +53,9 @@ export default function FileNameColumn(props: FileNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twJoin(
+      className={twJoin(
         'flex h-table-row w-auto min-w-48 max-w-96 items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y contain-strict rounded-rows-child [contain-intrinsic-size:37px] [content-visibility:auto]',
-        indent.indentClass(depth),
+        indentClass(depth),
       )}
       onKeyDown={(event) => {
         if (rowState.isEditingName && event.key === 'Enter') {
@@ -69,20 +63,20 @@ export default function FileNameColumn(props: FileNameColumnProps) {
         }
       }}
       onClick={(event) => {
-        if (eventModule.isSingleClick(event) && selected) {
+        if (isSingleClick(event) && selected) {
           if (!isCloud) {
             setIsEditing(true)
           }
         }
       }}
     >
-      <SvgMask src={fileIcon.fileIcon()} className="m-name-column-icon size-4" />
+      <SvgMask src={fileIcon()} className="m-name-column-icon size-4" />
       <EditableSpan
         data-testid="asset-row-name"
         editable={rowState.isEditingName}
         className="grow bg-transparent font-naming"
         checkSubmittable={(newTitle) =>
-          backendModule.isNewTitleValid(
+          isNewTitleValid(
             item,
             newTitle,
             nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),

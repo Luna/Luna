@@ -5,6 +5,21 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import isEmail from 'validator/es/lib/isEmail'
 
+import {
+  compareAssetPermissions,
+  EmailAddress,
+  getAssetPermissionId,
+  getAssetPermissionName,
+  isUserGroupPermission,
+  isUserPermission,
+  type AnyAsset,
+  type AssetPermission,
+  type Backend,
+  type UserGroupInfo,
+  type UserInfo,
+  type UserPermissionIdentifier,
+} from '@common/services/Backend'
+
 import { Heading } from '#/components/aria'
 import { Button } from '#/components/AriaComponents'
 import Autocomplete from '#/components/Autocomplete'
@@ -21,35 +36,13 @@ import { useFullUserSession } from '#/providers/AuthProvider'
 import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import {
-  compareAssetPermissions,
-  EmailAddress,
-  getAssetPermissionId,
-  getAssetPermissionName,
-  isUserGroupPermission,
-  isUserPermission,
-  type AnyAsset,
-  type AssetPermission,
-  type UserGroupInfo,
-  type UserInfo,
-  type UserPermissionIdentifier,
-} from '#/services/Backend'
 import { PermissionAction } from '#/utilities/permissions'
-
-// =================
-// === Constants ===
-// =================
 
 /**
  * The vertical offset of the `PermissionTypeSelector` from its parent element, for the
  * input to invite new users.
  */
 const TYPE_SELECTOR_Y_OFFSET_PX = 32
-
-// ==============================
-// === ManagePermissionsModal ===
-// ==============================
 
 /** Props for a {@link ManagePermissionsModal}. */
 export interface ManagePermissionsModalProps<Asset extends AnyAsset = AnyAsset> {

@@ -1,24 +1,22 @@
 /** @file Check the version. */
+import { startTransition, useState } from 'react'
+
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { IS_DEV_MODE } from '@common/utilities/detect'
+import { download } from '@common/utilities/download'
+import { getDownloadUrl, getLatestRelease } from '@common/utilities/github'
 
 import DownloadIcon from '#/assets/download.svg'
 import NewTabIcon from '#/assets/new_tab.svg'
 import SnoozeIcon from '#/assets/snooze.svg'
-import { IS_DEV_MODE } from 'enso-common/src/detect'
-
-import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-
-import { useEnableVersionChecker, useSetEnableVersionChecker } from '#/components/Devtools'
-import { useLocalBackend } from '#/providers/BackendProvider'
-import { useText } from '#/providers/TextProvider'
-
 import { Button, ButtonGroup, Dialog, Text } from '#/components/AriaComponents'
-
+import { useEnableVersionChecker, useSetEnableVersionChecker } from '#/components/Devtools'
 import { Stepper } from '#/components/Stepper'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { download } from '#/utilities/download'
-import { getDownloadUrl, getLatestRelease } from '#/utilities/github'
-import { startTransition, useState } from 'react'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useLocalBackend } from '#/providers/BackendProvider'
+import { useText } from '#/providers/TextProvider'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const CURRENT_VERSION: string = import.meta.env.ENSO_IDE_VERSION ?? 'unknown-dev'

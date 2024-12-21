@@ -1,5 +1,5 @@
 import { ensoColor, formatCssColor, normalizeHue } from '@/util/colors'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 
 export interface FixedRange {
   start: number

@@ -1,11 +1,12 @@
 /** @file The tab bar for the dashboard page. */
+import type { ProjectId } from '@common/services/Backend'
+import type { TextId } from '@common/text'
+
 import DriveIcon from '#/assets/drive.svg'
 import NetworkIcon from '#/assets/network.svg'
 import SettingsIcon from '#/assets/settings.svg'
-
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import TabBar from '#/layouts/TabBar'
-
 import {
   TabType,
   useLaunchedProjects,
@@ -14,8 +15,6 @@ import {
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
 import { useText } from '#/providers/TextProvider'
-import type { ProjectId } from '#/services/Backend'
-import type { TextId } from 'enso-common/src/text'
 
 /** The props for the {@link DashboardTabBar} component. */
 export interface DashboardTabBarProps {

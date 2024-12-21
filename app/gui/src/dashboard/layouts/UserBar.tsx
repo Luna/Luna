@@ -1,4 +1,6 @@
 /** @file A toolbar containing chat and the user menu. */
+import { Plan } from '@common/services/Backend'
+
 import { SUBSCRIBE_PATH } from '#/appUtils'
 import ChatIcon from '#/assets/chat.svg'
 import DefaultUserIcon from '#/assets/default_user.svg'
@@ -10,7 +12,6 @@ import UserMenu from '#/layouts/UserMenu'
 import InviteUsersModal from '#/modals/InviteUsersModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useText } from '#/providers/TextProvider'
-import { Plan } from '#/services/Backend'
 
 /** Whether the chat button should be visible. Temporarily disabled. */
 const SHOULD_SHOW_CHAT_BUTTON: boolean = false

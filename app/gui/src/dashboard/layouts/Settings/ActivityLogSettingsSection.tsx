@@ -15,15 +15,10 @@ import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { useBackendQuery } from '#/hooks/backendHooks'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import { EVENT_TYPES, EventType, type Event } from '#/services/Backend'
-import { formatDateTime } from '#/utilities/dateTime'
 import { nextSortDirection, SortDirection, type SortInfo } from '#/utilities/sorting'
 import { twMerge } from '#/utilities/tailwindMerge'
-
-// =================
-// === Constants ===
-// =================
+import { EVENT_TYPES, EventType, type Backend, type Event } from '@common/services/Backend'
+import { formatDateTime } from '@common/utilities/data/dateTime'
 
 const EVENT_TYPE_ICON: Record<EventType, string> = {
   [EventType.GetSecret]: KeyIcon,
@@ -49,20 +44,12 @@ function createActivityLogSchema() {
   })
 }
 
-// =================================
-// === ActivityLogSortableColumn ===
-// =================================
-
 /** Sortable columns in an activity log table. */
 enum ActivityLogSortableColumn {
   type = 'type',
   email = 'email',
   timestamp = 'timestamp',
 }
-
-// ==================================
-// === ActivityLogSettingsSection ===
-// ==================================
 
 /** Props for a {@link ActivityLogSettingsSection}. */
 export interface ActivityLogSettingsSectionProps {
@@ -383,10 +370,6 @@ export default function ActivityLogSettingsSection(props: ActivityLogSettingsSec
   )
 }
 
-// =============================
-// === ActivityLogHeaderCell ===
-// =============================
-
 /** Props for a {@link ActivityLogHeaderCell}. */
 export interface ActivityLogHeaderCellProps extends Readonly<React.PropsWithChildren> {
   readonly className?: string
@@ -407,10 +390,6 @@ function ActivityLogHeaderCell(props: ActivityLogHeaderCellProps) {
     </td>
   )
 }
-
-// ============================
-// === ActivityLogTableCell ===
-// ============================
 
 /** Props for a {@link ActivityLogTableCell}. */
 export type ActivityLogTableCellProps = Readonly<React.PropsWithChildren>

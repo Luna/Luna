@@ -1,14 +1,19 @@
 /** @file Utilities for working with permissions. */
-import type { Category } from '#/layouts/CategorySwitcher/Category'
-import * as backend from '#/services/Backend'
 import {
-  type AssetPermission,
   compareAssetPermissions,
+  Plan,
+  type AnyAsset,
+  type AssetPermission,
   type User,
-} from 'enso-common/src/services/Backend'
-import { merge } from 'enso-common/src/utilities/data/object'
-import { Permission, PermissionAction } from 'enso-common/src/utilities/permissions'
-export * from 'enso-common/src/utilities/permissions'
+  type UserGroupInfo,
+  type UserGroupPermission,
+  type UserPermission,
+} from '@common/services/Backend'
+import { merge } from '@common/utilities/data/object'
+import { Permission, PermissionAction } from '@common/utilities/permissions'
+export * from '@common/utilities/permissions'
+
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 
 /** CSS classes for each permission. */
 export const PERMISSION_CLASS_NAME: Readonly<Record<Permission, string>> = {
@@ -36,17 +41,16 @@ export const EXEC_CLASS_NAME = 'text-tag-text bg-permission-exec'
 export function tryCreateOwnerPermission(
   path: string,
   category: Category,
-  user: backend.User,
-  users: readonly backend.User[],
-  userGroups: readonly backend.UserGroupInfo[],
-): readonly backend.AssetPermission[] {
+  user: User,
+  users: readonly User[],
+  userGroups: readonly UserGroupInfo[],
+): readonly AssetPermission[] {
   switch (category.type) {
     case 'team': {
       return [{ userGroup: category.team, permission: PermissionAction.own }]
     }
     default: {
-      const isFreeOrSolo =
-        user.plan == null || user.plan === backend.Plan.free || user.plan === backend.Plan.solo
+      const isFreeOrSolo = user.plan == null || user.plan === Plan.free || user.plan === Plan.solo
       const owner = isFreeOrSolo ? user : newOwnerFromPath(path, users, userGroups) ?? user
       if ('userId' in owner) {
         const { organizationId, userId, name, email } = owner
@@ -105,10 +109,7 @@ export function canPermissionModifyDirectoryContents(permission: PermissionActio
 // ==============================
 
 /** Replace the first owner permission with the permission of a new user or team. */
-export function replaceOwnerPermission(
-  asset: backend.AnyAsset,
-  newOwner: backend.User | backend.UserGroupInfo,
-) {
+export function replaceOwnerPermission(asset: AnyAsset, newOwner: User | UserGroupInfo) {
   let found = false
   const newPermissions =
     asset.permissions?.map((permission) => {
@@ -117,13 +118,13 @@ export function replaceOwnerPermission(
       } else {
         found = true
         if ('userId' in newOwner) {
-          const newPermission: backend.UserPermission = {
+          const newPermission: UserPermission = {
             user: newOwner,
             permission: PermissionAction.own,
           }
           return newPermission
         } else {
-          const newPermission: backend.UserGroupPermission = {
+          const newPermission: UserGroupPermission = {
             userGroup: newOwner,
             permission: PermissionAction.own,
           }
@@ -150,8 +151,8 @@ export function isTeamPath(path: string) {
 /** Find the new owner of an asset based on the path of its new parent directory. */
 export function newOwnerFromPath(
   path: string,
-  users: readonly backend.User[],
-  userGroups: readonly backend.UserGroupInfo[],
+  users: readonly User[],
+  userGroups: readonly UserGroupInfo[],
 ) {
   const [, userName] = path.match(USER_PATH_REGEX) ?? []
   if (userName != null) {

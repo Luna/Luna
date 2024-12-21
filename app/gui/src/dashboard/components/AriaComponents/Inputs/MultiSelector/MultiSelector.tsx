@@ -1,7 +1,7 @@
 /** @file A horizontal selector supporting multiple input. */
 import { useRef, type CSSProperties, type ForwardedRef, type Ref } from 'react'
 
-import { omit, unsafeRemoveUndefined } from 'enso-common/src/utilities/data/object'
+import { omit, unsafeRemoveUndefined } from '@common/utilities/data/object'
 
 import {
   FieldError,

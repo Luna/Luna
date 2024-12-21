@@ -1,8 +1,10 @@
-import type { Category } from '#/layouts/CategorySwitcher/Category'
-import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
 import { describe, expect, it } from 'vitest'
 import { useStore } from 'zustand'
-import { DirectoryId } from '../../services/Backend'
+
+import { DirectoryId } from '@common/services/Backend'
+
+import type { Category } from '#/layouts/CategorySwitcher/Category'
+import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
 import DriveProvider, { useDriveStore } from '../DriveProvider'
 
 function renderDriveProviderHook<Result, Props>(

@@ -1,13 +1,25 @@
 /** @file Mutations related to project management. */
-import * as reactQuery from '@tanstack/react-query'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import { merge } from 'enso-common/src/utilities/data/object'
+import {
+  AssetType,
+  BackendType,
+  ProjectState,
+  type AnyAsset,
+  type Asset,
+  type AssetId,
+  type Backend,
+  type DirectoryId,
+  type ProjectAsset,
+} from '@common/services/Backend'
+import { merge } from '@common/utilities/data/object'
 
-import * as eventCallbacks from '#/hooks/eventCallbackHooks'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
+import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import {
   TabType,
   useAddLaunchedProject,
@@ -18,10 +30,6 @@ import {
   type LaunchedProject,
   type LaunchedProjectId,
 } from '#/providers/ProjectsProvider'
-
-import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
-import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
 
 /** Default interval for refetching project status when the project is opened. */
 const OPENED_INTERVAL_MS = 30_000
@@ -40,30 +48,30 @@ const DEFAULT_INTERVAL_MS = 120_000
 
 /** Options for {@link createGetProjectDetailsQuery}. */
 export interface CreateOpenedProjectQueryOptions {
-  readonly assetId: backendModule.Asset<backendModule.AssetType.project>['id']
-  readonly parentId: backendModule.Asset<backendModule.AssetType.project>['parentId']
+  readonly assetId: Asset<AssetType.project>['id']
+  readonly parentId: Asset<AssetType.project>['parentId']
   readonly backend: Backend
 }
 
 /** Whether the user can open projects. */
 export function useCanOpenProjects() {
-  const localBackend = backendProvider.useLocalBackend()
+  const localBackend = useLocalBackend()
   return localBackend != null
 }
 
 /** Return a function to update a project asset in the TanStack Query cache. */
 function useSetProjectAsset() {
-  const queryClient = reactQuery.useQueryClient()
-  return eventCallbacks.useEventCallback(
+  const queryClient = useQueryClient()
+  return useEventCallback(
     (
-      backendType: backendModule.BackendType,
-      assetId: backendModule.AssetId,
-      parentId: backendModule.DirectoryId,
-      transform: (asset: backendModule.ProjectAsset) => backendModule.ProjectAsset,
+      backendType: BackendType,
+      assetId: AssetId,
+      parentId: DirectoryId,
+      transform: (asset: ProjectAsset) => ProjectAsset,
     ) => {
       const listDirectoryQuery = queryClient
         .getQueryCache()
-        .find<readonly backendModule.AnyAsset<backendModule.AssetType>[] | undefined>({
+        .find<readonly AnyAsset<AssetType>[] | undefined>({
           queryKey: [backendType, 'listDirectory', parentId],
           exact: false,
         })
@@ -71,9 +79,7 @@ function useSetProjectAsset() {
       if (listDirectoryQuery?.state.data) {
         listDirectoryQuery.setData(
           listDirectoryQuery.state.data.map((child) =>
-            child.id === assetId && child.type === backendModule.AssetType.project ?
-              transform(child)
-            : child,
+            child.id === assetId && child.type === AssetType.project ? transform(child) : child,
           ),
         )
       }
@@ -85,27 +91,27 @@ function useSetProjectAsset() {
 export function createGetProjectDetailsQuery(options: CreateOpenedProjectQueryOptions) {
   const { assetId, parentId, backend } = options
 
-  const isLocal = backend.type === backendModule.BackendType.local
+  const isLocal = backend.type === BackendType.local
 
-  return reactQuery.queryOptions({
+  return queryOptions({
     queryKey: createGetProjectDetailsQuery.getQueryKey(assetId),
     queryFn: () => backend.getProjectDetails(assetId, parentId),
     meta: { persist: false },
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    networkMode: backend.type === backendModule.BackendType.remote ? 'online' : 'always',
+    networkMode: backend.type === BackendType.remote ? 'online' : 'always',
     refetchInterval: ({ state }): number | false => {
-      const staticStates = [backendModule.ProjectState.opened, backendModule.ProjectState.closed]
+      const staticStates = [ProjectState.opened, ProjectState.closed]
 
       const openingStates = [
-        backendModule.ProjectState.provisioned,
-        backendModule.ProjectState.scheduled,
-        backendModule.ProjectState.openInProgress,
-        backendModule.ProjectState.closing,
+        ProjectState.provisioned,
+        ProjectState.scheduled,
+        ProjectState.openInProgress,
+        ProjectState.closing,
       ]
 
-      const createdStates = [backendModule.ProjectState.created, backendModule.ProjectState.new]
+      const createdStates = [ProjectState.created, ProjectState.new]
 
       if (state.status === 'error') {
         return false
@@ -151,13 +157,13 @@ createGetProjectDetailsQuery.getQueryKey = (id: LaunchedProjectId) => ['project'
 
 /** A mutation to open a project. */
 export function useOpenProjectMutation() {
-  const client = reactQuery.useQueryClient()
-  const session = authProvider.useFullUserSession()
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
+  const client = useQueryClient()
+  const session = useFullUserSession()
+  const remoteBackend = useRemoteBackend()
+  const localBackend = useLocalBackend()
   const setProjectAsset = useSetProjectAsset()
 
-  return reactQuery.useMutation({
+  return useMutation({
     mutationKey: ['openProject'],
     networkMode: 'always',
     mutationFn: ({
@@ -167,7 +173,7 @@ export function useOpenProjectMutation() {
       parentId,
       inBackground = false,
     }: LaunchedProject & { inBackground?: boolean }) => {
-      const backend = type === backendModule.BackendType.remote ? remoteBackend : localBackend
+      const backend = type === BackendType.remote ? remoteBackend : localBackend
 
       invariant(backend != null, 'Backend is null')
 
@@ -190,10 +196,10 @@ export function useOpenProjectMutation() {
     onMutate: ({ type, id, parentId }) => {
       const queryKey = createGetProjectDetailsQuery.getQueryKey(id)
 
-      client.setQueryData(queryKey, { state: { type: backendModule.ProjectState.openInProgress } })
+      client.setQueryData(queryKey, { state: { type: ProjectState.openInProgress } })
       setProjectAsset(type, id, parentId, (asset) => ({
         ...asset,
-        projectState: { ...asset.projectState, type: backendModule.ProjectState.openInProgress },
+        projectState: { ...asset.projectState, type: ProjectState.openInProgress },
       }))
 
       void client.cancelQueries({ queryKey })
@@ -211,15 +217,15 @@ export function useOpenProjectMutation() {
 
 /** Mutation to close a project. */
 export function useCloseProjectMutation() {
-  const client = reactQuery.useQueryClient()
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
+  const client = useQueryClient()
+  const remoteBackend = useRemoteBackend()
+  const localBackend = useLocalBackend()
   const setProjectAsset = useSetProjectAsset()
 
-  return reactQuery.useMutation({
+  return useMutation({
     mutationKey: ['closeProject'],
     mutationFn: ({ type, id, title }: LaunchedProject) => {
-      const backend = type === backendModule.BackendType.remote ? remoteBackend : localBackend
+      const backend = type === BackendType.remote ? remoteBackend : localBackend
 
       invariant(backend != null, 'Backend is null')
 
@@ -228,10 +234,10 @@ export function useCloseProjectMutation() {
     onMutate: ({ type, id, parentId }) => {
       const queryKey = createGetProjectDetailsQuery.getQueryKey(id)
 
-      client.setQueryData(queryKey, { state: { type: backendModule.ProjectState.closing } })
+      client.setQueryData(queryKey, { state: { type: ProjectState.closing } })
       setProjectAsset(type, id, parentId, (asset) => ({
         ...asset,
-        projectState: { ...asset.projectState, type: backendModule.ProjectState.closing },
+        projectState: { ...asset.projectState, type: ProjectState.closing },
       }))
 
       void client.cancelQueries({ queryKey })
@@ -240,7 +246,7 @@ export function useCloseProjectMutation() {
       await client.resetQueries({ queryKey: createGetProjectDetailsQuery.getQueryKey(id) })
       setProjectAsset(type, id, parentId, (asset) => ({
         ...asset,
-        projectState: { ...asset.projectState, type: backendModule.ProjectState.closed },
+        projectState: { ...asset.projectState, type: ProjectState.closed },
       }))
     },
     onError: async (_, { type, id, parentId }) => {
@@ -252,16 +258,16 @@ export function useCloseProjectMutation() {
 
 /** Mutation to rename a project. */
 export function useRenameProjectMutation() {
-  const client = reactQuery.useQueryClient()
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
+  const client = useQueryClient()
+  const remoteBackend = useRemoteBackend()
+  const localBackend = useLocalBackend()
   const updateLaunchedProjects = useUpdateLaunchedProjects()
 
-  return reactQuery.useMutation({
+  return useMutation({
     mutationKey: ['renameProject'],
     mutationFn: ({ newName, project }: { newName: string; project: LaunchedProject }) => {
       const { type, id, title } = project
-      const backend = type === backendModule.BackendType.remote ? remoteBackend : localBackend
+      const backend = type === BackendType.remote ? remoteBackend : localBackend
 
       invariant(backend != null, 'Backend is null')
 
@@ -282,7 +288,7 @@ export function useRenameProjectMutation() {
 
 /** A callback to open a project. */
 export function useOpenProject() {
-  const client = reactQuery.useQueryClient()
+  const client = useQueryClient()
   const canOpenProjects = useCanOpenProjects()
   const projectsStore = useProjectsStore()
   const addLaunchedProject = useAddLaunchedProject()
@@ -291,7 +297,7 @@ export function useOpenProject() {
 
   const enableMultitabs = useFeatureFlag('enableMultitabs')
 
-  return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+  return useEventCallback((project: LaunchedProject) => {
     if (!canOpenProjects) {
       return
     }
@@ -330,19 +336,19 @@ export function useOpenProject() {
 /** A function to open the editor. */
 export function useOpenEditor() {
   const setPage = useSetPage()
-  return eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
+  return useEventCallback((projectId: LaunchedProjectId) => {
     setPage(projectId)
   })
 }
 
 /** A function to close a project. */
 export function useCloseProject() {
-  const client = reactQuery.useQueryClient()
+  const client = useQueryClient()
   const closeProjectMutation = useCloseProjectMutation()
   const removeLaunchedProject = useRemoveLaunchedProject()
   const setPage = useSetPage()
 
-  return eventCallbacks.useEventCallback((project: LaunchedProject) => {
+  return useEventCallback((project: LaunchedProject) => {
     client
       .getMutationCache()
       .findAll({
@@ -379,7 +385,7 @@ export function useCloseAllProjects() {
   const closeProject = useCloseProject()
   const projectsStore = useProjectsStore()
 
-  return eventCallbacks.useEventCallback(() => {
+  return useEventCallback(() => {
     const launchedProjects = projectsStore.getState().launchedProjects
 
     for (const launchedProject of launchedProjects) {

@@ -1,48 +1,45 @@
 /** @file A modal opened when uploaded assets. */
-import * as React from 'react'
+import { useEffect, useState } from 'react'
 
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as aria from '#/components/aria'
-import * as ariaComponents from '#/components/AriaComponents'
-import AssetSummary from '#/components/dashboard/AssetSummary'
-import Modal from '#/components/Modal'
-
-import * as backendModule from '#/services/Backend'
-
-import * as fileInfo from '#/utilities/fileInfo'
-import * as object from '#/utilities/object'
 import { useMutation } from '@tanstack/react-query'
 
-// =============
-// === Types ===
-// =============
+import {
+  AssetType,
+  extractProjectExtension,
+  stripProjectExtension,
+  type AnyAsset,
+  type DirectoryId,
+  type FileAsset,
+  type ProjectAsset,
+} from '@common/services/Backend'
+import { basenameAndExtension } from '@common/utilities/data/fileInfo'
+import { unsafeMutable } from '@common/utilities/data/object'
+
+import { Heading, Text } from '#/components/aria'
+import { Button, ButtonGroup } from '#/components/AriaComponents'
+import AssetSummary from '#/components/dashboard/AssetSummary'
+import Modal from '#/components/Modal'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 
 /**
  * An object containing the current asset, and the asset that is about to be uploaded,
  * that will conflict with the existing asset.
  */
 export interface ConflictingAsset<
-  Asset extends backendModule.FileAsset | backendModule.ProjectAsset =
-    | backendModule.FileAsset
-    | backendModule.ProjectAsset,
+  Asset extends FileAsset | ProjectAsset = FileAsset | ProjectAsset,
 > {
-  readonly current: backendModule.AnyAsset
+  readonly current: AnyAsset
   readonly new: Asset
   readonly file: File
 }
 
-// =================================
-// === UpdateOrRenameAssetsModal ===
-// =================================
-
 /** Props for a {@link DuplicateAssetsModal}. */
 export interface DuplicateAssetsModalProps {
-  readonly parentKey: backendModule.DirectoryId
-  readonly parentId: backendModule.DirectoryId
-  readonly conflictingFiles: readonly ConflictingAsset<backendModule.FileAsset>[]
-  readonly conflictingProjects: readonly ConflictingAsset<backendModule.ProjectAsset>[]
+  readonly parentKey: DirectoryId
+  readonly parentId: DirectoryId
+  readonly conflictingFiles: readonly ConflictingAsset<FileAsset>[]
+  readonly conflictingProjects: readonly ConflictingAsset<ProjectAsset>[]
   readonly siblingFileNames: Iterable<string>
   readonly siblingProjectNames: Iterable<string>
   readonly nonConflictingFileCount: number
@@ -58,13 +55,13 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
   const { siblingFileNames: siblingFileNamesRaw } = props
   const { siblingProjectNames: siblingProjectNamesRaw } = props
   const { nonConflictingFileCount, nonConflictingProjectCount, doUploadNonConflicting } = props
-  const { unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
-  const [conflictingFiles, setConflictingFiles] = React.useState(conflictingFilesRaw)
-  const [conflictingProjects, setConflictingProjects] = React.useState(conflictingProjectsRaw)
-  const [didUploadNonConflicting, setDidUploadNonConflicting] = React.useState(false)
-  const [siblingFileNames] = React.useState(new Set<string>())
-  const [siblingProjectNames] = React.useState(new Set<string>())
+  const { unsetModal } = useSetModal()
+  const { getText } = useText()
+  const [conflictingFiles, setConflictingFiles] = useState(conflictingFilesRaw)
+  const [conflictingProjects, setConflictingProjects] = useState(conflictingProjectsRaw)
+  const [didUploadNonConflicting, setDidUploadNonConflicting] = useState(false)
+  const [siblingFileNames] = useState(new Set<string>())
+  const [siblingProjectNames] = useState(new Set<string>())
   const count = conflictingFiles.length + conflictingProjects.length
   const firstConflict = conflictingFiles[0] ?? conflictingProjects[0]
   const otherFilesCount = Math.max(0, conflictingFiles.length - 1)
@@ -83,7 +80,7 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
   })
   const isLoading = uploadNonConflictingMutation.isPending || updateConflictingMutation.isPending
 
-  React.useEffect(() => {
+  useEffect(() => {
     for (const name of siblingFileNamesRaw) {
       siblingFileNames.add(name)
     }
@@ -98,8 +95,8 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
   const findNewName = (conflict: ConflictingAsset, commit = true) => {
     let title = conflict.file.name
     switch (conflict.new.type) {
-      case backendModule.AssetType.file: {
-        const { basename, extension } = fileInfo.basenameAndExtension(title)
+      case AssetType.file: {
+        const { basename, extension } = basenameAndExtension(title)
         let i = 1
         while (true) {
           i += 1
@@ -114,8 +111,8 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
         }
         break
       }
-      case backendModule.AssetType.project: {
-        const { basename, extension } = backendModule.extractProjectExtension(title)
+      case AssetType.project: {
+        const { basename, extension } = extractProjectExtension(title)
         title = basename
         let i = 1
         while (true) {
@@ -140,7 +137,7 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
 
     for (const conflict of clonedConflicts) {
       // This is SAFE, as it is a shallow mutation of a freshly cloned object.
-      object.unsafeMutable(conflict.new).title = findNewName(conflict)
+      unsafeMutable(conflict.new).title = findNewName(conflict)
     }
 
     return clonedConflicts
@@ -159,31 +156,31 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
           event.preventDefault()
         }}
       >
-        <aria.Heading level={2} className="relative text-sm font-semibold">
+        <Heading level={2} className="relative text-sm font-semibold">
           {conflictingFiles.length > 0 ?
             conflictingProjects.length > 0 ?
               getText('duplicateFilesAndProjectsFound')
             : getText('duplicateFilesFound')
           : getText('duplicateProjectsFound')}
-        </aria.Heading>
+        </Heading>
         {nonConflictingFileCount > 0 ||
           (nonConflictingProjectCount > 0 && (
             <div className="relative flex flex-col">
               {nonConflictingFileCount > 0 && (
-                <aria.Text className="text">
+                <Text className="text">
                   {nonConflictingFileCount === 1 ?
                     getText('fileWithoutConflicts')
                   : getText('filesWithoutConflicts', nonConflictingFileCount)}
-                </aria.Text>
+                </Text>
               )}
               {nonConflictingProjectCount > 0 && (
-                <aria.Text className="text">
+                <Text className="text">
                   {nonConflictingProjectCount === 1 ?
                     getText('projectWithoutConflicts')
                   : getText('projectsWithoutConflicts', nonConflictingFileCount)}
-                </aria.Text>
+                </Text>
               )}
-              <ariaComponents.Button
+              <Button
                 variant="outline"
                 isDisabled={didUploadNonConflicting}
                 onPress={async () => {
@@ -192,35 +189,35 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
                 }}
               >
                 {didUploadNonConflicting ? getText('uploaded') : getText('upload')}
-              </ariaComponents.Button>
+              </Button>
             </div>
           ))}
         {firstConflict && (
           <>
             <div className="flex flex-col">
-              <aria.Text className="relative">{getText('currentColon')}</aria.Text>
+              <Text className="relative">{getText('currentColon')}</Text>
               <AssetSummary asset={firstConflict.current} className="relative" />
             </div>
             <div className="flex flex-col">
-              <aria.Text className="relative">{getText('newColon')}</aria.Text>
+              <Text className="relative">{getText('newColon')}</Text>
               <AssetSummary
                 new
-                newName={backendModule.stripProjectExtension(findNewName(firstConflict, false))}
+                newName={stripProjectExtension(findNewName(firstConflict, false))}
                 asset={firstConflict.new}
                 className="relative"
               />
             </div>
             {count > 1 && (
-              <ariaComponents.ButtonGroup>
-                <ariaComponents.Button
+              <ButtonGroup>
+                <Button
                   variant="outline"
                   onPress={async () => {
                     switch (firstConflict.new.type) {
-                      case backendModule.AssetType.file: {
+                      case AssetType.file: {
                         setConflictingFiles((oldConflicts) => oldConflicts.slice(1))
                         break
                       }
-                      case backendModule.AssetType.project: {
+                      case AssetType.project: {
                         setConflictingProjects((oldConflicts) => oldConflicts.slice(1))
                         break
                       }
@@ -229,49 +226,49 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
                   }}
                 >
                   {getText('update')}
-                </ariaComponents.Button>
+                </Button>
 
-                <ariaComponents.Button
+                <Button
                   variant="outline"
                   onPress={() => {
                     doRename([firstConflict])
                     switch (firstConflict.new.type) {
-                      case backendModule.AssetType.file: {
+                      case AssetType.file: {
                         setConflictingFiles((oldConflicts) => oldConflicts.slice(1))
                         break
                       }
-                      case backendModule.AssetType.project: {
+                      case AssetType.project: {
                         setConflictingProjects((oldConflicts) => oldConflicts.slice(1))
                         break
                       }
                     }
                   }}
                 >
-                  {firstConflict.new.type === backendModule.AssetType.file ?
+                  {firstConflict.new.type === AssetType.file ?
                     getText('renameNewFile')
                   : getText('renameNewProject')}
-                </ariaComponents.Button>
-              </ariaComponents.ButtonGroup>
+                </Button>
+              </ButtonGroup>
             )}
           </>
         )}
         {otherFilesCount > 0 && (
-          <aria.Text className="relative">
+          <Text className="relative">
             {otherFilesCount === 1 ?
               getText('andOtherFile')
             : getText('andOtherFiles', otherFilesCount)}
-          </aria.Text>
+          </Text>
         )}
         {otherProjectsCount > 0 && (
-          <aria.Text className="relative">
+          <Text className="relative">
             {otherProjectsCount === 1 ?
               getText('andOtherProject')
             : getText('andOtherProjects', otherProjectsCount)}
-          </aria.Text>
+          </Text>
         )}
 
-        <ariaComponents.ButtonGroup className="relative">
-          <ariaComponents.Button
+        <ButtonGroup className="relative">
+          <Button
             variant="submit"
             loading={isLoading}
             onPress={async () => {
@@ -286,9 +283,9 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
             }}
           >
             {count === 1 ? getText('update') : getText('updateAll')}
-          </ariaComponents.Button>
+          </Button>
 
-          <ariaComponents.Button
+          <Button
             variant="accent"
             loading={isLoading}
             onPress={async () => {
@@ -301,17 +298,17 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
             }}
           >
             {count === 1 ?
-              firstConflict?.new.type === backendModule.AssetType.file ?
+              firstConflict?.new.type === AssetType.file ?
                 getText('renameNewFile')
               : getText('renameNewProject')
-            : firstConflict?.new.type === backendModule.AssetType.file ?
+            : firstConflict?.new.type === AssetType.file ?
               getText('renameNewFiles')
             : getText('renameNewProjects')}
-          </ariaComponents.Button>
-          <ariaComponents.Button variant="outline" loading={isLoading} onPress={unsetModal}>
+          </Button>
+          <Button variant="outline" loading={isLoading} onPress={unsetModal}>
             {getText('cancel')}
-          </ariaComponents.Button>
-        </ariaComponents.ButtonGroup>
+          </Button>
+        </ButtonGroup>
       </form>
     </Modal>
   )

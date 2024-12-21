@@ -2,32 +2,33 @@
  * @file Provider for the {@link SessionContextType}, which contains information about the
  * currently authenticated user's session.
  */
-import * as React from 'react'
+import { createContext, useContext, useEffect, type ReactNode } from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQuery,
+  type QueryKey,
+} from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 
-import * as eventCallback from '#/hooks/eventCallbackHooks'
+import { UnreachableCaseError } from '@common/utilities/error'
 
-import * as httpClientProvider from '#/providers/HttpClientProvider'
-
-import * as errorModule from '#/utilities/error'
-
-import type * as cognito from '#/authentication/cognito'
-import * as listen from '#/authentication/listen'
+import type { UserSession } from '#/authentication/cognito'
+import { AuthEvent, type ListenFunction } from '#/authentication/listen'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-
-// ======================
-// === SessionContext ===
-// ======================
+import { useHttpClient } from '#/providers/HttpClientProvider'
 
 /** State contained in a {@link SessionContext}. */
 interface SessionContextType {
-  readonly session: cognito.UserSession | null
-  readonly sessionQueryKey: reactQuery.QueryKey
+  readonly session: UserSession | null
+  readonly sessionQueryKey: QueryKey
 }
 
-const SessionContext = React.createContext<SessionContextType | null>(null)
+const SessionContext = createContext<SessionContextType | null>(null)
 
 // =======================
 // === SessionProvider ===
@@ -49,16 +50,16 @@ export interface SessionProviderProps {
    * is initially served.
    */
   readonly mainPageUrl: URL
-  readonly registerAuthEventListener: listen.ListenFunction | null
-  readonly userSession: (() => Promise<cognito.UserSession | null>) | null
-  readonly saveAccessToken?: ((accessToken: cognito.UserSession) => void) | null
-  readonly refreshUserSession: (() => Promise<cognito.UserSession | null>) | null
-  readonly children: React.ReactNode | ((props: SessionContextType) => React.ReactNode)
+  readonly registerAuthEventListener: ListenFunction | null
+  readonly userSession: (() => Promise<UserSession | null>) | null
+  readonly saveAccessToken?: ((accessToken: UserSession) => void) | null
+  readonly refreshUserSession: (() => Promise<UserSession | null>) | null
+  readonly children: ReactNode | ((props: SessionContextType) => ReactNode)
 }
 
 /** Create a query for the user session. */
-function createSessionQuery(userSession: (() => Promise<cognito.UserSession | null>) | null) {
-  return reactQuery.queryOptions({
+function createSessionQuery(userSession: (() => Promise<UserSession | null>) | null) {
+  return queryOptions({
     queryKey: ['userSession'],
     queryFn: async () => {
       const session = (await userSession?.().catch(() => null)) ?? null
@@ -82,19 +83,19 @@ export default function SessionProvider(props: SessionProviderProps) {
   } = props
 
   // stabilize the callback so that it doesn't change on every render
-  const saveAccessTokenEventCallback = eventCallback.useEventCallback(
-    (accessToken: cognito.UserSession) => saveAccessToken?.(accessToken),
+  const saveAccessTokenEventCallback = useEventCallback((accessToken: UserSession) =>
+    saveAccessToken?.(accessToken),
   )
 
-  const httpClient = httpClientProvider.useHttpClient()
-  const queryClient = reactQuery.useQueryClient()
+  const httpClient = useHttpClient()
+  const queryClient = useQueryClient()
   const toastAndLog = useToastAndLog()
 
   const sessionQuery = createSessionQuery(userSession)
 
-  const session = reactQuery.useSuspenseQuery(sessionQuery)
+  const session = useSuspenseQuery(sessionQuery)
 
-  const refreshUserSessionMutation = reactQuery.useMutation({
+  const refreshUserSessionMutation = useMutation({
     mutationKey: ['refreshUserSession', { expireAt: session.data?.expireAt }],
     mutationFn: async () => refreshUserSession?.() ?? null,
     onSuccess: (data) => {
@@ -119,17 +120,17 @@ export default function SessionProvider(props: SessionProviderProps) {
   // session.
   // For example, if a user clicks the "sign out" button, this will clear the user's session, which
   // means the login screen (which is a child of this provider) should render.
-  React.useEffect(
+  useEffect(
     () =>
       registerAuthEventListener?.((event) => {
         switch (event) {
-          case listen.AuthEvent.signIn:
-          case listen.AuthEvent.signOut: {
+          case AuthEvent.signIn:
+          case AuthEvent.signOut: {
             void queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey })
             break
           }
-          case listen.AuthEvent.customOAuthState:
-          case listen.AuthEvent.cognitoHostedUi: {
+          case AuthEvent.customOAuthState:
+          case AuthEvent.cognitoHostedUi: {
             // AWS Amplify doesn't provide a way to set the redirect URL for the OAuth flow, so
             // we have to hack it by replacing the URL in the browser's history. This is done
             // because otherwise the user will be redirected to a URL like `enso://auth`, which
@@ -140,14 +141,14 @@ export default function SessionProvider(props: SessionProviderProps) {
             break
           }
           default: {
-            throw new errorModule.UnreachableCaseError(event)
+            throw new UnreachableCaseError(event)
           }
         }
       }),
     [registerAuthEventListener, mainPageUrl, queryClient, sessionQuery.queryKey],
   )
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (session.data) {
       // Save access token so can it be reused by backend services
       saveAccessTokenEventCallback(session.data)
@@ -175,8 +176,8 @@ export default function SessionProvider(props: SessionProviderProps) {
 
 /** Props for a {@link SessionRefresher}. */
 interface SessionRefresherProps {
-  readonly session: cognito.UserSession
-  readonly refreshUserSession: () => Promise<cognito.UserSession | null>
+  readonly session: UserSession
+  readonly refreshUserSession: () => Promise<UserSession | null>
 }
 
 const TEN_SECONDS_MS = 10_000
@@ -188,7 +189,7 @@ const SIX_HOURS_MS = 21_600_000
 function SessionRefresher(props: SessionRefresherProps) {
   const { refreshUserSession, session } = props
 
-  reactQuery.useQuery({
+  useQuery({
     queryKey: ['refreshUserSession', { refreshToken: session.refreshToken }] as const,
     queryFn: () => refreshUserSession(),
     meta: { persist: false },
@@ -224,7 +225,7 @@ function SessionRefresher(props: SessionRefresherProps) {
  * @throws {Error} when used outside a {@link SessionProvider}.
  */
 export function useSession() {
-  const context = React.useContext(SessionContext)
+  const context = useContext(SessionContext)
 
   invariant(context != null, '`useSession` can only be used inside an `<SessionProvider />`.')
 

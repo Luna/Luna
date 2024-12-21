@@ -13,8 +13,8 @@ import {
   type StringConfig,
 } from '@/util/config'
 import ProjectView from '@/views/ProjectView.vue'
+import type Backend from '@common/services/Backend'
 import { useEventListener } from '@vueuse/core'
-import type Backend from 'enso-common/src/services/Backend'
 import { computed, markRaw, toRaw, toRef, watch } from 'vue'
 import TooltipDisplayer from './components/TooltipDisplayer.vue'
 import { provideTooltipRegistry } from './providers/tooltipRegistry'

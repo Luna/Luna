@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useObjectId } from 'enso-common/src/utilities/data/object'
+import { useObjectId } from '@common/utilities/data/object'
 import { type Component, reactive } from 'vue'
 
 const teleportations = reactive(new Map<Component, HTMLElement>())

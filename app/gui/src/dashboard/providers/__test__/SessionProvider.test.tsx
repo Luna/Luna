@@ -1,9 +1,12 @@
+import { Suspense } from 'react'
+
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { Rfc3339DateTime } from '@common/utilities/data/dateTime'
+
 import type { UserSession } from '#/authentication/cognito'
 import { render, screen, waitFor } from '#/test'
-import { Rfc3339DateTime } from '#/utilities/dateTime'
 import HttpClient from '#/utilities/HttpClient'
-import { Suspense } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HttpClientProvider } from '../HttpClientProvider'
 import SessionProvider from '../SessionProvider'
 

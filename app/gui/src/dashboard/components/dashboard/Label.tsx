@@ -1,13 +1,17 @@
 /** @file An label that can be applied to an asset. */
 import type { DragEvent, MouseEvent, PropsWithChildren } from 'react'
 
+import {
+  lChColorToCssColor,
+  type Label as BackendLabel,
+  type LChColor,
+} from '@common/services/Backend'
+
 import type { PressEvent } from '#/components/aria'
 import { Text } from '#/components/AriaComponents'
 import FocusRing from '#/components/styled/FocusRing'
 import { useHandleFocusMove } from '#/hooks/focusHooks'
 import { useFocusDirection } from '#/providers/FocusDirectionProvider'
-import type { Label as BackendLabel } from '#/services/Backend'
-import { lChColorToCssColor, type LChColor } from '#/services/Backend'
 import { twMerge } from '#/utilities/tailwindMerge'
 
 // =============

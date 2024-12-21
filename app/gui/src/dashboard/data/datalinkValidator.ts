@@ -2,9 +2,9 @@
 import type * as ajv from 'ajv/dist/2020'
 import Ajv from 'ajv/dist/2020'
 
-import SCHEMA from '#/data/datalinkSchema.json' with { type: 'json' }
+import { assert } from '@common/utilities/error'
 
-import * as error from '#/utilities/error'
+import SCHEMA from '#/data/datalinkSchema.json' with { type: 'json' }
 
 export const AJV = new Ajv({
   formats: {
@@ -16,6 +16,6 @@ export const AJV = new Ajv({
 })
 AJV.addSchema(SCHEMA)
 
-export const validateDatalink = error.assert<ajv.ValidateFunction>(() =>
+export const validateDatalink = assert<ajv.ValidateFunction>(() =>
   AJV.getSchema('#/$defs/DataLink'),
 )

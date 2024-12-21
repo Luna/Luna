@@ -1,4 +1,4 @@
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from 'enso-common/src/iter'
 import * as map from 'lib0/map'
 import * as Y from 'yjs'
 import { assert } from '../util/assert'

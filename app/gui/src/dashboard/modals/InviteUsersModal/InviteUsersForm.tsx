@@ -1,42 +1,35 @@
 /** @file A modal with inputs for user email and permission level. */
-import * as React from 'react'
+import { useRef } from 'react'
 
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import isEmail from 'validator/es/lib/isEmail'
 
+import type { EmailAddress } from '@common/services/Backend'
+import { parseUserEmails } from '@common/utilities/data/email'
+
+import { Form, ResizableContentEditableInput } from '#/components/AriaComponents'
+import { PaywallAlert } from '#/components/Paywall'
 import { backendMutationOptions } from '#/hooks/backendHooks'
-import * as billingHooks from '#/hooks/billing'
-import * as eventCallbackHooks from '#/hooks/eventCallbackHooks'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as paywallComponents from '#/components/Paywall'
-
-import type * as backendModule from '#/services/Backend'
-
-import * as parserUserEmails from '#/utilities/parseUserEmails'
-
-// =======================
-// === InviteUsersForm ===
-// =======================
+import { usePaywall } from '#/hooks/billing'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useRemoteBackend } from '#/providers/BackendProvider'
+import { useText } from '#/providers/TextProvider'
 
 /** Props for an {@link InviteUsersForm}. */
 export interface InviteUsersFormProps {
-  readonly onSubmitted: (emails: backendModule.EmailAddress[]) => void
+  readonly onSubmitted: (emails: EmailAddress[]) => void
 }
 
 /** A modal with inputs for user email and permission level. */
 export function InviteUsersForm(props: InviteUsersFormProps) {
   const { onSubmitted } = props
-  const { getText } = textProvider.useText()
-  const backend = backendProvider.useRemoteBackend()
-  const inputRef = React.useRef<HTMLDivElement>(null)
+  const { getText } = useText()
+  const backend = useRemoteBackend()
+  const inputRef = useRef<HTMLDivElement>(null)
 
-  const { user } = authProvider.useFullUserSession()
-  const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
+  const { user } = useFullUserSession()
+  const { isFeatureUnderPaywall } = usePaywall({ plan: user.plan })
 
   const inviteUserMutation = useMutation(
     backendMutationOptions(backend, 'inviteUser', {
@@ -56,11 +49,9 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
   const isUnderPaywall = isFeatureUnderPaywall('inviteUserFull')
   const seatsLeft = invitations.availableLicenses
 
-  const getEmailsFromInput = eventCallbackHooks.useEventCallback((value: string) =>
-    parserUserEmails.parseUserEmails(value),
-  )
+  const getEmailsFromInput = useEventCallback((value: string) => parseUserEmails(value))
 
-  const highlightEmails = eventCallbackHooks.useEventCallback((value: string): void => {
+  const highlightEmails = useEventCallback((value: string): void => {
     if (inputRef.current?.firstChild != null) {
       const trimValue = value.trim()
       const { entries } = getEmailsFromInput(value)
@@ -93,7 +84,7 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
     }
   })
 
-  const validateEmailField = eventCallbackHooks.useEventCallback((value: string): string | null => {
+  const validateEmailField = useEventCallback((value: string): string | null => {
     const { entries } = getEmailsFromInput(value)
 
     if (entries.length > seatsLeft) {
@@ -110,10 +101,10 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
   })
 
   return (
-    <ariaComponents.Form
+    <Form
       formOptions={{ mode: 'onSubmit' }}
-      schema={ariaComponents.Form.schema.object({
-        emails: ariaComponents.Form.schema
+      schema={Form.schema.object({
+        emails: Form.schema
           .string()
           .min(1, { message: getText('emailIsRequired') })
           .refine(
@@ -134,7 +125,7 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
         // Add the email from the input field to the list of emails.
         const emailsToSubmit = Array.from(new Set(getEmailsFromInput(emails).entries))
           .map(({ email }) => email)
-          .filter((value): value is backendModule.EmailAddress => isEmail(value))
+          .filter((value): value is EmailAddress => isEmail(value))
 
         await Promise.all(
           emailsToSubmit.map((userEmail) => inviteUserMutation.mutateAsync([{ userEmail }])),
@@ -143,7 +134,7 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
         })
       }}
     >
-      <ariaComponents.ResizableContentEditableInput
+      <ResizableContentEditableInput
         ref={inputRef}
         name="emails"
         label={getText('inviteEmailFieldLabel')}
@@ -152,22 +143,14 @@ export function InviteUsersForm(props: InviteUsersFormProps) {
       />
 
       {isUnderPaywall && (
-        <paywallComponents.PaywallAlert
-          feature="inviteUserFull"
-          label={getText('inviteFormSeatsLeft', seatsLeft)}
-        />
+        <PaywallAlert feature="inviteUserFull" label={getText('inviteFormSeatsLeft', seatsLeft)} />
       )}
 
-      <ariaComponents.Form.Submit
-        variant="accent"
-        size="medium"
-        fullWidth
-        isDisabled={seatsLeft <= 0}
-      >
+      <Form.Submit variant="accent" size="medium" fullWidth isDisabled={seatsLeft <= 0}>
         {getText('inviteSubmit')}
-      </ariaComponents.Form.Submit>
+      </Form.Submit>
 
-      <ariaComponents.Form.FormError />
-    </ariaComponents.Form>
+      <Form.FormError />
+    </Form>
   )
 }

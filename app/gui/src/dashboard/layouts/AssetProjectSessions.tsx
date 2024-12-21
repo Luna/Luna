@@ -1,13 +1,11 @@
 /** @file A list of previous versions of an asset. */
-import * as reactQuery from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
-import AssetProjectSession from '#/layouts/AssetProjectSession'
-
-import type Backend from '#/services/Backend'
+import { AssetType, BackendType, type Backend, type ProjectAsset } from '@common/services/Backend'
 
 import { Result } from '#/components/Result'
+import AssetProjectSession from '#/layouts/AssetProjectSession'
 import { useText } from '#/providers/TextProvider'
-import { AssetType, BackendType, type ProjectAsset } from '#/services/Backend'
 import { useStore } from '#/utilities/zustand'
 import { assetPanelStore } from './AssetPanel'
 
@@ -51,7 +49,7 @@ function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) 
   const { backend, item } = props
   const { getText } = useText()
 
-  const projectSessionsQuery = reactQuery.useSuspenseQuery({
+  const projectSessionsQuery = useSuspenseQuery({
     queryKey: ['getProjectSessions', item.id, item.title],
     queryFn: async () => {
       const sessions = await backend.listProjectSessions(item.id, item.title)

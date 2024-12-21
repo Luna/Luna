@@ -1,7 +1,7 @@
 import { assert, assertDefined } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { reactiveModule } from '@/util/ast/reactive'
-import * as iter from 'enso-common/src/utilities/data/iter'
+import * as iter from '@common/utilities/data/iter'
 import { expect, test } from 'vitest'
 import { nextTick, watchEffect } from 'vue'
 import * as Y from 'yjs'

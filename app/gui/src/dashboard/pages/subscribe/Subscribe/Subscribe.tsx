@@ -1,13 +1,14 @@
 /** @file A page in which the currently active payment plan can be changed. */
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+import { isPlan } from '@common/services/Backend'
+
 import { DASHBOARD_PATH, SUBSCRIBE_SUCCESS_PATH } from '#/appUtils'
 import Back from '#/assets/arrow_left.svg'
 import { Button, Text } from '#/components/AriaComponents'
 import { PlanSelector } from '#/modules/payments'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useText } from '#/providers/TextProvider'
-import { isPlan } from '#/services/Backend'
 
 /**
  * A page in which the currently active payment plan can be changed.

@@ -1,57 +1,48 @@
 /** @file The directory header bar and directory item listing. */
-import * as React from 'react'
+import { memo, useDeferredValue, useEffect, useState, type Ref } from 'react'
 
-import * as appUtils from '#/appUtils'
+import { toast } from 'react-toastify'
 
-import * as offlineHooks from '#/hooks/offlineHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
+import { DirectoryDoesNotExistError, Plan } from '@common/services/Backend'
+import { download } from '@common/utilities/download'
+import { getDownloadUrl } from '@common/utilities/github'
 
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as textProvider from '#/providers/TextProvider'
-
-import AssetListEventType from '#/events/AssetListEventType'
-
-import { AssetPanel } from '#/layouts/AssetPanel'
-import type * as assetsTable from '#/layouts/AssetsTable'
-import AssetsTable from '#/layouts/AssetsTable'
-import CategorySwitcher from '#/layouts/CategorySwitcher'
-import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import DriveBar from '#/layouts/DriveBar'
-import Labels from '#/layouts/Labels'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as result from '#/components/Result'
-
+import { SUBSCRIBE_PATH } from '#/appUtils'
+import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
+import { Result } from '#/components/Result'
+import { Suspense } from '#/components/Suspense'
+import AssetListEventType from '#/events/AssetListEventType'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useOffline } from '#/hooks/offlineHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { AssetPanel } from '#/layouts/AssetPanel'
+import type { AssetManagementApi } from '#/layouts/AssetsTable'
+import AssetsTable from '#/layouts/AssetsTable'
+import CategorySwitcher from '#/layouts/CategorySwitcher'
+import { isCloudCategory, type Category } from '#/layouts/CategorySwitcher/Category'
+import { useDispatchAssetListEvent } from '#/layouts/Drive/EventListProvider'
+import DriveBar from '#/layouts/DriveBar'
+import Labels from '#/layouts/Labels'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useBackend, useLocalBackend } from '#/providers/BackendProvider'
 import { useTargetDirectory } from '#/providers/DriveProvider'
-import { DirectoryDoesNotExistError, Plan } from '#/services/Backend'
+import { useText } from '#/providers/TextProvider'
 import AssetQuery from '#/utilities/AssetQuery'
-import * as download from '#/utilities/download'
-import * as github from '#/utilities/github'
 import { tryFindSelfPermission } from '#/utilities/permissions'
-import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { twMerge } from '#/utilities/tailwindMerge'
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { useDeferredValue, useEffect } from 'react'
-import { toast } from 'react-toastify'
-import { Suspense } from '../components/Suspense'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
-
-// =============
-// === Drive ===
-// =============
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
-  readonly category: categoryModule.Category
-  readonly setCategory: (category: categoryModule.Category) => void
+  readonly category: Category
+  readonly setCategory: (category: Category) => void
   readonly resetCategory: () => void
   readonly hidden: boolean
   readonly initialProjectName: string | null
-  readonly assetsManagementApiRef: React.Ref<assetsTable.AssetManagementApi>
+  readonly assetsManagementApiRef: Ref<AssetManagementApi>
 }
 
 const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
@@ -60,12 +51,12 @@ const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 function Drive(props: DriveProps) {
   const { category, resetCategory } = props
 
-  const { isOffline } = offlineHooks.useOffline()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const { getText } = textProvider.useText()
-  const isCloud = categoryModule.isCloudCategory(category)
+  const { isOffline } = useOffline()
+  const toastAndLog = useToastAndLog()
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const { getText } = useText()
+  const isCloud = isCloudCategory(category)
 
   const supportLocalBackend = localBackend != null
 
@@ -77,36 +68,36 @@ function Drive(props: DriveProps) {
   switch (status) {
     case 'not-enabled': {
       return (
-        <result.Result
+        <Result
           status="error"
           title={getText('notEnabledTitle')}
           testId="not-enabled-stub"
           subtitle={`${getText('notEnabledSubtitle')}${localBackend == null ? ' ' + getText('downloadFreeEditionMessage') : ''}`}
         >
-          <ariaComponents.ButtonGroup align="center">
-            <ariaComponents.Button variant="primary" size="medium" href={appUtils.SUBSCRIBE_PATH}>
+          <ButtonGroup align="center">
+            <Button variant="primary" size="medium" href={SUBSCRIBE_PATH}>
               {getText('upgrade')}
-            </ariaComponents.Button>
+            </Button>
 
             {!supportLocalBackend && (
-              <ariaComponents.Button
+              <Button
                 data-testid="download-free-edition"
                 size="medium"
                 variant="accent"
                 onPress={async () => {
-                  const downloadUrl = await github.getDownloadUrl()
+                  const downloadUrl = await getDownloadUrl()
                   if (downloadUrl == null) {
                     toastAndLog('noAppDownloadError')
                   } else {
-                    download.download(downloadUrl)
+                    download(downloadUrl)
                   }
                 }}
               >
                 {getText('downloadFreeEdition')}
-              </ariaComponents.Button>
+              </Button>
             )}
-          </ariaComponents.ButtonGroup>
-        </result.Result>
+          </ButtonGroup>
+        </Result>
       )
     }
     case 'offline':
@@ -148,17 +139,17 @@ function DriveAssetsView(props: DriveProps) {
   const deferredCategory = useDeferredValue(category)
   const { showBoundary } = useErrorBoundary()
 
-  const { isOffline } = offlineHooks.useOffline()
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const backend = backendProvider.useBackend(category)
-  const { getText } = textProvider.useText()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
+  const { isOffline } = useOffline()
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const backend = useBackend(category)
+  const { getText } = useText()
+  const dispatchAssetListEvent = useDispatchAssetListEvent()
 
-  const [query, setQuery] = React.useState(() => AssetQuery.fromString(''))
-  const [shouldForceHideStartModal, setShouldForceHideStartModal] = React.useState(false)
+  const [query, setQuery] = useState(() => AssetQuery.fromString(''))
+  const [shouldForceHideStartModal, setShouldForceHideStartModal] = useState(false)
 
-  const isCloud = categoryModule.isCloudCategory(category)
+  const isCloud = isCloudCategory(category)
   const supportLocalBackend = localBackend != null
 
   const targetDirectory = useTargetDirectory()
@@ -231,7 +222,7 @@ function DriveAssetsView(props: DriveProps) {
     !hasPermissionToCreateAssets
 
   return (
-    <div className={tailwindMerge.twMerge('relative flex grow', hidden && 'hidden')}>
+    <div className={twMerge('relative flex grow', hidden && 'hidden')}>
       <div
         data-testid="drive-view"
         className="mt-4 flex flex-1 flex-col gap-4 overflow-visible px-page-x"
@@ -263,7 +254,7 @@ function DriveAssetsView(props: DriveProps) {
           </div>
 
           {status === 'offline' ?
-            <result.Result
+            <Result
               status="info"
               className="my-12"
               centered="horizontal"
@@ -271,7 +262,7 @@ function DriveAssetsView(props: DriveProps) {
               subtitle={`${getText('cloudUnavailableOfflineDescription')} ${supportLocalBackend ? getText('cloudUnavailableOfflineDescriptionOfferLocal') : ''}`}
             >
               {supportLocalBackend && (
-                <ariaComponents.Button
+                <Button
                   variant="primary"
                   size="small"
                   className="mx-auto"
@@ -280,9 +271,9 @@ function DriveAssetsView(props: DriveProps) {
                   }}
                 >
                   {getText('switchToLocal')}
-                </ariaComponents.Button>
+                </Button>
               )}
-            </result.Result>
+            </Result>
           : <AssetsTable
               assetManagementApiRef={assetsManagementApiRef}
               hidden={hidden}
@@ -300,4 +291,4 @@ function DriveAssetsView(props: DriveProps) {
   )
 }
 
-export default React.memo(Drive)
+export default memo(Drive)

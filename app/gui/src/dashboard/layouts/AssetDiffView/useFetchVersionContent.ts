@@ -1,35 +1,24 @@
 /** @file Fetches the content of a project’s Main.enso file with specified version. */
+import { queryOptions, useQuery } from '@tanstack/react-query'
 
-import * as reactQuery from '@tanstack/react-query'
-
-import type * as backendService from '#/services/Backend'
-import type Backend from '#/services/Backend'
 import { splitFileContents } from 'ydoc-shared/ensoFile'
 
-// =================
-// === Constants ===
-// =================
+import type { Backend, ProjectId, S3ObjectVersionId } from '@common/services/Backend'
 
 const TWO_MINUTES_MS = 120_000
 
-// ==============================
-// === useFetchVersionContent ===
-// ==============================
-
 /** Options for {@link useFetchVersionContent}. */
 export interface FetchVersionContentOptions {
-  readonly projectId: backendService.ProjectId
-  readonly versionId?: backendService.S3ObjectVersionId
+  readonly projectId: ProjectId
+  readonly versionId?: S3ObjectVersionId
   readonly backend: Backend
   /** If `false`, the metadata is stripped out. Defaults to `false`. */
   readonly metadata?: boolean
 }
 
-/**
- * Return the query options for fetching the content of a version.
- */
+/** Return the query options for fetching the content of a version. */
 export function versionContentQueryOptions(params: FetchVersionContentOptions) {
-  return reactQuery.queryOptions({
+  return queryOptions({
     queryKey: [
       params.backend.type,
       {
@@ -49,7 +38,7 @@ export function versionContentQueryOptions(params: FetchVersionContentOptions) {
 
 /** Fetch the content of a version. */
 export function useFetchVersionContent(params: FetchVersionContentOptions) {
-  return reactQuery.useQuery(versionContentQueryOptions(params))
+  return useQuery(versionContentQueryOptions(params))
 }
 
 /** Remove the metadata from the content of a version. */

@@ -4,7 +4,17 @@ import type { HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute, ReactNode 
 import type { QueryClient } from '@tanstack/react-query'
 import * as z from 'zod'
 
-import type { TextId } from 'enso-common/src/text'
+import {
+  EmailAddress,
+  HttpsUrl,
+  isUserOnPlanWithOrganization,
+  type Backend,
+  type OrganizationInfo,
+  type User,
+} from '@common/services/Backend'
+import type { TextId } from '@common/text'
+import { normalizePath } from '@common/utilities/data/fileInfo'
+import { pick, unsafeEntries } from '@common/utilities/data/object'
 
 import ComputerIcon from '#/assets/computer.svg'
 import CreditCardIcon from '#/assets/credit_card.svg'
@@ -20,18 +30,8 @@ import type { PaywallFeatureName } from '#/hooks/billing'
 import type { ToastAndLogCallback } from '#/hooks/toastAndLogHooks'
 import { passwordWithPatternSchema } from '#/pages/authentication/schemas'
 import type { GetText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import {
-  EmailAddress,
-  HttpsUrl,
-  isUserOnPlanWithOrganization,
-  type OrganizationInfo,
-  type User,
-} from '#/services/Backend'
 import type LocalBackend from '#/services/LocalBackend'
 import type RemoteBackend from '#/services/RemoteBackend'
-import { normalizePath } from '#/utilities/fileInfo'
-import { pick, unsafeEntries } from '#/utilities/object'
 import { PASSWORD_REGEX } from '#/utilities/validation'
 import ActivityLogSettingsSection from './ActivityLogSettingsSection'
 import DeleteUserAccountSettingsSection from './DeleteUserAccountSettingsSection'
@@ -43,14 +43,6 @@ import ProfilePictureInput from './ProfilePictureInput'
 import { SetupTwoFaForm } from './SetupTwoFaForm'
 import SettingsTabType from './TabType'
 import UserGroupsSettingsSection from './UserGroupsSettingsSection'
-
-// =========================
-// === SettingsEntryType ===
-// =========================
-
-// =================
-// === Constants ===
-// =================
 
 export const SETTINGS_NO_RESULTS_SECTION_DATA: SettingsSectionData = {
   nameId: 'noResultsSettingsSection',

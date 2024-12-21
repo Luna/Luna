@@ -1,11 +1,14 @@
 /** @file A node in the drive's item tree. */
-import type * as assetEvent from '#/events/assetEvent'
+import type { AssetEvent } from '#/events/assetEvent'
 
-import * as backendModule from '#/services/Backend'
-
-// =====================
-// === AssetTreeNode ===
-// =====================
+import {
+  assetIsType,
+  AssetType,
+  compareAssets,
+  isPlaceholderId,
+  type AnyAsset,
+  type DirectoryId,
+} from '@common/services/Backend'
 
 /** An {@link AssetTreeNode}, but excluding its methods. */
 export type AssetTreeNodeData = Pick<
@@ -23,11 +26,11 @@ export type AssetTreeNodeData = Pick<
 /** All possible variants of {@link AssetTreeNode}s. */
 // The `Item extends Item` is required to trigger distributive conditional types:
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
-export type AnyAssetTreeNode<Item extends backendModule.AnyAsset = backendModule.AnyAsset> =
+export type AnyAssetTreeNode<Item extends AnyAsset = AnyAsset> =
   Item extends Item ? AssetTreeNode<Item> : never
 
 /** A node in the drive's item tree. */
-export default class AssetTreeNode<Item extends backendModule.AnyAsset = backendModule.AnyAsset> {
+export default class AssetTreeNode<Item extends AnyAsset = AnyAsset> {
   readonly type: Item['type']
   /** Create a {@link AssetTreeNode}. */
   constructor(
@@ -40,9 +43,9 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
      * The id of the asset's parent directory (or the placeholder id for new assets).
      * This must never change.
      */
-    public readonly directoryKey: backendModule.DirectoryId,
+    public readonly directoryKey: DirectoryId,
     /** The actual id of the asset's parent directory (or the placeholder id for new assets). */
-    public readonly directoryId: backendModule.DirectoryId,
+    public readonly directoryId: DirectoryId,
     /**
      * This is `null` if the asset is not a directory asset, OR a directory asset whose contents
      * have not yet been fetched.
@@ -50,7 +53,7 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
     public readonly children: AnyAssetTreeNode[] | null,
     public readonly depth: number,
     public readonly path: string,
-    public readonly initialAssetEvents: readonly assetEvent.AssetEvent[] | null,
+    public readonly initialAssetEvents: readonly AssetEvent[] | null,
     /**
      * The internal (to the frontend) id of the asset (or the placeholder id for new assets).
      * This must never change, otherwise the component's state is lost when receiving the real id
@@ -63,21 +66,21 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
 
   /**
    * Return a positive number if `a > b`, a negative number if `a < b`, and zero if `a === b`.
-   * Uses {@link backendModule.compareAssets} internally.
+   * Uses {@link compareAssets} internally.
    */
   static compare(this: void, a: AssetTreeNode, b: AssetTreeNode) {
-    return backendModule.compareAssets(a.item, b.item)
+    return compareAssets(a.item, b.item)
   }
 
-  /** Creates an {@link AssetTreeNode} from a {@link backendModule.AnyAsset}. */
-  static fromAsset<Asset extends backendModule.AnyAsset>(
+  /** Creates an {@link AssetTreeNode} from a {@link AnyAsset}. */
+  static fromAsset<Asset extends AnyAsset>(
     this: void,
     asset: Asset,
-    directoryKey: backendModule.DirectoryId,
-    directoryId: backendModule.DirectoryId,
+    directoryKey: DirectoryId,
+    directoryId: DirectoryId,
     depth: number,
     path: string,
-    initialAssetEvents: readonly assetEvent.AssetEvent[] | null = null,
+    initialAssetEvents: readonly AssetEvent[] | null = null,
     key: Asset['id'] = asset.id,
   ): AnyAssetTreeNode {
     return new AssetTreeNode(
@@ -101,10 +104,8 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
   }
 
   /** Whether this node contains a specific type of asset. */
-  isType<Type extends backendModule.AssetType>(
-    type: Type,
-  ): this is AssetTreeNode<backendModule.AnyAsset<Type>> {
-    return backendModule.assetIsType(type)(this.item)
+  isType<Type extends AssetType>(type: Type): this is AssetTreeNode<AnyAsset<Type>> {
+    return assetIsType(type)(this.item)
   }
 
   /** Create a new {@link AssetTreeNode} with the specified properties updated. */
@@ -205,12 +206,12 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
    * Checks whenever the asset is a placeholder.
    */
   isPlaceholder() {
-    return backendModule.isPlaceholderId(this.item.id)
+    return isPlaceholderId(this.item.id)
   }
 
   /** Check whether the asset doesn't have any children. */
   isEmpty(): boolean {
-    if (this.item.type === backendModule.AssetType.directory) {
+    if (this.item.type === AssetType.directory) {
       if (this.children == null) {
         return true
       }

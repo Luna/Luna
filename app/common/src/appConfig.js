@@ -4,10 +4,6 @@ import * as path from 'node:path'
 import * as process from 'node:process'
 import * as url from 'node:url'
 
-// ===============================
-// === readEnvironmentFromFile ===
-// ===============================
-
 /** Read environment variables from a file based on the `ENSO_CLOUD_ENV_FILE_NAME`
  * environment variable. Reads from `.env` if the variable is `production`, blank or absent.
  * DOES NOT override existing environment variables if the variable is absent. */
@@ -73,10 +69,6 @@ function discardUndefinedEnv(name) {
     delete process.env[name]
   }
 }
-
-// ===============
-// === globals ===
-// ===============
 
 /** The value as JSON if it is not nullish, else `'undefined'`.
  * @param {unknown} value - the value to `JSON.stringify()`. */

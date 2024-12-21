@@ -1,4 +1,4 @@
-import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
+import { LINE_BOUNDARIES } from 'enso-common/src/string'
 import { markdownParser } from './ensoMarkdown'
 import { xxHash128 } from './ffi'
 import type { ConcreteChild, RawConcreteChild } from './print'

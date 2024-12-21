@@ -1,12 +1,11 @@
 /** @file A context menu available everywhere in the directory. */
 import { useStore } from 'zustand'
 
+import { BackendType, type Backend, type DirectoryId } from '@common/services/Backend'
+import { inputFiles } from '@common/utilities/input'
+
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
-
-import UpsertDatalinkModal from '#/modals/UpsertDatalinkModal'
-import UpsertSecretModal from '#/modals/UpsertSecretModal'
-
 import {
   useNewDatalink,
   useNewFolder,
@@ -16,12 +15,11 @@ import {
 } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
+import UpsertDatalinkModal from '#/modals/UpsertDatalinkModal'
+import UpsertSecretModal from '#/modals/UpsertSecretModal'
 import { useDriveStore } from '#/providers/DriveProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import { BackendType, type DirectoryId } from '#/services/Backend'
-import { inputFiles } from '#/utilities/input'
 
 /** Props for a {@link GlobalContextMenu}. */
 export interface GlobalContextMenuProps {

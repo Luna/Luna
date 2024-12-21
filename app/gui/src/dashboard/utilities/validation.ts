@@ -1,9 +1,5 @@
 /** @file Validation patterns for text inputs. */
 
-// ==================
-// === Validation ===
-// ==================
-
 /**
  * Regex pattern for valid AWS Cognito passwords.
  * A fully correct regex is here: https://stackoverflow.com/a/58767981/3323231.

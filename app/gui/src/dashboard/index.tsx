@@ -16,7 +16,7 @@ import {
 } from 'react-router-dom'
 import invariant from 'tiny-invariant'
 
-import * as detect from 'enso-common/src/detect'
+import * as detect from '@common/utilities/detect'
 
 import type * as app from '#/App'
 import App from '#/App'

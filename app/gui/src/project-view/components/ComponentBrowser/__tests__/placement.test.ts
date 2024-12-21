@@ -9,8 +9,8 @@ import {
 } from '@/components/ComponentBrowser/placement'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
+import * as iter from '@common/utilities/data/iter'
 import { fc, test as fcTest } from '@fast-check/vitest'
-import * as iter from 'enso-common/src/utilities/data/iter'
 import { describe, expect, test } from 'vitest'
 
 // Vue playground to visually inspect failing fuzz cases:

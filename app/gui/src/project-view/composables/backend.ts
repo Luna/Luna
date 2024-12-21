@@ -1,10 +1,10 @@
 import { injectBackend } from '@/providers/backend'
 import type { ToValue } from '@/util/reactivity'
+import Backend from '@common/services/Backend'
+import type { BackendMethods } from '@common/services/tanstackQuery/query'
+import { backendBaseOptions, backendQueryKey } from '@common/services/tanstackQuery/query'
 import type { UseQueryOptions, UseQueryReturnType } from '@tanstack/vue-query'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
-import type { BackendMethods } from 'enso-common/src/backendQuery'
-import { backendBaseOptions, backendQueryKey } from 'enso-common/src/backendQuery'
-import Backend from 'enso-common/src/services/Backend'
 import { computed, toValue } from 'vue'
 
 type ExtraOptions = Omit<UseQueryOptions, 'queryKey' | 'queryFn' | 'enabled' | 'networkMode'>

@@ -1,5 +1,7 @@
 /** @file Settings tab for viewing and editing keyboard shortcuts. */
-import * as React from 'react'
+import { useMemo, useRef } from 'react'
+
+import { unsafeEntries } from '@common/utilities/data/object'
 
 import BlankIcon from '#/assets/blank.svg'
 import CrossIcon from '#/assets/cross.svg'
@@ -17,26 +19,21 @@ import CaptureKeyboardShortcutModal from '#/modals/CaptureKeyboardShortcutModal'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useText } from '#/providers/TextProvider'
-import { unsafeEntries } from '#/utilities/object'
-
-// ========================================
-// === KeyboardShortcutsSettingsSection ===
-// ========================================
 
 /** Settings tab for viewing and editing keyboard shortcuts. */
 export default function KeyboardShortcutsSettingsSection() {
   const [refresh, doRefresh] = useRefresh()
   const inputBindings = useInputBindings()
   const { getText } = useText()
-  const rootRef = React.useRef<HTMLDivElement>(null)
-  const bodyRef = React.useRef<HTMLTableSectionElement>(null)
-  const allShortcuts = React.useMemo(() => {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLTableSectionElement>(null)
+  const allShortcuts = useMemo(() => {
     // This is REQUIRED, in order to avoid disabling the `react-hooks/exhaustive-deps` lint.
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     refresh
     return new Set(Object.values(inputBindings.metadata).flatMap((value) => value.bindings))
   }, [inputBindings.metadata, refresh])
-  const visibleBindings = React.useMemo(
+  const visibleBindings = useMemo(
     () => unsafeEntries(inputBindings.metadata).filter((kv) => kv[1].rebindable !== false),
     [inputBindings.metadata],
   )

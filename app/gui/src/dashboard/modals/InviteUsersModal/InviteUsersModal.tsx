@@ -1,21 +1,15 @@
 /** @file A modal with inputs for user email and permission level. */
-import * as React from 'react'
+import { useState } from 'react'
 
-import * as authProvider from '#/providers/AuthProvider'
-import * as textProvider from '#/providers/TextProvider'
+import type { EmailAddress, OrganizationId } from '@common/services/Backend'
 
-import * as ariaComponents from '#/components/AriaComponents'
-
-import * as inviteUsersForm from '#/modals/InviteUsersModal/InviteUsersForm'
-import * as inviteUsersSuccess from '#/modals/InviteUsersModal/InviteUsersSuccess'
-
+import { Dialog, Popover } from '#/components/AriaComponents'
 import { Stepper } from '#/components/Stepper'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type * as backendModule from '#/services/Backend'
-
-// ========================
-// === InviteUsersModal ===
-// ========================
+import { InviteUsersForm } from '#/modals/InviteUsersModal/InviteUsersForm'
+import { InviteUsersSuccess } from '#/modals/InviteUsersModal/InviteUsersSuccess'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useText } from '#/providers/TextProvider'
 
 /** Props for an {@link InviteUsersModal}. */
 export interface InviteUsersModalProps {
@@ -25,34 +19,30 @@ export interface InviteUsersModalProps {
 /** A modal for inviting one or more users. */
 export default function InviteUsersModal(props: InviteUsersModalProps) {
   const { relativeToTrigger = false } = props
-  const { getText } = textProvider.useText()
-  const { user } = authProvider.useFullUserSession()
+  const { getText } = useText()
+  const { user } = useFullUserSession()
 
   if (relativeToTrigger) {
     return (
-      <ariaComponents.Popover>
+      <Popover>
         <InviteUsersModalContent organizationId={user.organizationId} />
-      </ariaComponents.Popover>
+      </Popover>
     )
   } else {
     return (
-      <ariaComponents.Dialog title={getText('invite')}>
+      <Dialog title={getText('invite')}>
         {({ close }) => (
           <InviteUsersModalContent organizationId={user.organizationId} onClose={close} />
         )}
-      </ariaComponents.Dialog>
+      </Dialog>
     )
   }
 }
 
-// ===============================
-// === InviteUsersModalContent ===
-// ===============================
-
 /** Props for the content of an {@link InviteUsersModal}. */
 interface InviteUsersModalContentProps {
   readonly onClose?: () => void
-  readonly organizationId: backendModule.OrganizationId
+  readonly organizationId: OrganizationId
 }
 
 /** The content of an {@link InviteUsersModal}. */
@@ -63,13 +53,11 @@ function InviteUsersModalContent(props: InviteUsersModalContentProps) {
     steps: 2,
   })
 
-  const [submittedEmails, setSubmittedEmails] = React.useState<string[]>([])
-  const onInviteUsersFormInviteUsersFormSubmitted = useEventCallback(
-    (emails: backendModule.EmailAddress[]) => {
-      nextStep()
-      setSubmittedEmails(emails)
-    },
-  )
+  const [submittedEmails, setSubmittedEmails] = useState<string[]>([])
+  const onInviteUsersFormInviteUsersFormSubmitted = useEventCallback((emails: EmailAddress[]) => {
+    nextStep()
+    setSubmittedEmails(emails)
+  })
 
   const invitationParams = new URLSearchParams({
     // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
@@ -80,15 +68,11 @@ function InviteUsersModalContent(props: InviteUsersModalContentProps) {
   return (
     <Stepper state={stepperState} renderStep={() => null}>
       <Stepper.StepContent index={0}>
-        <inviteUsersForm.InviteUsersForm onSubmitted={onInviteUsersFormInviteUsersFormSubmitted} />
+        <InviteUsersForm onSubmitted={onInviteUsersFormInviteUsersFormSubmitted} />
       </Stepper.StepContent>
 
       <Stepper.StepContent index={1}>
-        <inviteUsersSuccess.InviteUsersSuccess
-          {...props}
-          invitationLink={invitationLink}
-          emails={submittedEmails}
-        />
+        <InviteUsersSuccess {...props} invitationLink={invitationLink} emails={submittedEmails} />
       </Stepper.StepContent>
     </Stepper>
   )

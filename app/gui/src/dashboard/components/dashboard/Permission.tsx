@@ -1,81 +1,76 @@
 /** @file Permissions for a specific user or user group on a specific asset. */
-import * as React from 'react'
+import { useEffect, useState } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
-import type * as text from 'enso-common/src/text'
-
-import { backendMutationOptions } from '#/hooks/backendHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import PermissionSelector from '#/components/dashboard/PermissionSelector'
-import FocusArea from '#/components/styled/FocusArea'
-
-import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
+import {
+  AssetType,
+  getAssetPermissionId,
+  getAssetPermissionName,
+  type Asset,
+  type AssetPermission,
+  type Backend,
+  type UserPermissionIdentifier,
+} from '@common/services/Backend'
+import type { TextId } from '@common/text'
+import { merge } from '@common/utilities/data/object'
 
 import { Text } from '#/components/AriaComponents'
-import * as object from '#/utilities/object'
+import PermissionSelector from '#/components/dashboard/PermissionSelector'
+import FocusArea from '#/components/styled/FocusArea'
+import { backendMutationOptions } from '#/hooks/backendHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useText } from '#/providers/TextProvider'
 
-// =================
-// === Constants ===
-// =================
-
-const ASSET_TYPE_TO_TEXT_ID: Readonly<Record<backendModule.AssetType, text.TextId>> = {
-  [backendModule.AssetType.directory]: 'directoryAssetType',
-  [backendModule.AssetType.project]: 'projectAssetType',
-  [backendModule.AssetType.file]: 'fileAssetType',
-  [backendModule.AssetType.secret]: 'secretAssetType',
-  [backendModule.AssetType.specialEmpty]: 'specialEmptyAssetType',
-  [backendModule.AssetType.specialError]: 'specialErrorAssetType',
-  [backendModule.AssetType.specialLoading]: 'specialLoadingAssetType',
-  [backendModule.AssetType.datalink]: 'datalinkAssetType',
-} satisfies { [Type in backendModule.AssetType]: `${Type}AssetType` }
-
-// ==================
-// === Permission ===
-// ==================
+const ASSET_TYPE_TO_TEXT_ID: Readonly<Record<AssetType, TextId>> = {
+  [AssetType.directory]: 'directoryAssetType',
+  [AssetType.project]: 'projectAssetType',
+  [AssetType.file]: 'fileAssetType',
+  [AssetType.secret]: 'secretAssetType',
+  [AssetType.specialEmpty]: 'specialEmptyAssetType',
+  [AssetType.specialError]: 'specialErrorAssetType',
+  [AssetType.specialLoading]: 'specialLoadingAssetType',
+  [AssetType.datalink]: 'datalinkAssetType',
+} satisfies { [Type in AssetType]: `${Type}AssetType` }
 
 /** Props for a {@link Permission}. */
 export interface PermissionProps {
   readonly backend: Backend
-  readonly asset: Pick<backendModule.Asset, 'id' | 'permissions' | 'type'>
+  readonly asset: Pick<Asset, 'id' | 'permissions' | 'type'>
 
-  readonly self: backendModule.AssetPermission
+  readonly self: AssetPermission
   readonly isOnlyOwner: boolean
-  readonly permission: backendModule.AssetPermission
-  readonly setPermission: (userPermissions: backendModule.AssetPermission) => void
-  readonly doDelete: (user: backendModule.UserPermissionIdentifier) => void
+  readonly permission: AssetPermission
+  readonly setPermission: (userPermissions: AssetPermission) => void
+  readonly doDelete: (user: UserPermissionIdentifier) => void
 }
 
 /** A user or group, and their permissions for a specific asset. */
 export default function Permission(props: PermissionProps) {
   const { backend, asset, self, isOnlyOwner, doDelete } = props
   const { permission: initialPermission, setPermission: outerSetPermission } = props
-  const { getText } = textProvider.useText()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const [permission, setPermission] = React.useState(initialPermission)
-  const permissionId = backendModule.getAssetPermissionId(permission)
-  const isDisabled = isOnlyOwner && backendModule.getAssetPermissionId(self) === permissionId
+  const { getText } = useText()
+  const toastAndLog = useToastAndLog()
+  const [permission, setPermission] = useState(initialPermission)
+  const permissionId = getAssetPermissionId(permission)
+  const isDisabled = isOnlyOwner && getAssetPermissionId(self) === permissionId
   const assetTypeName = getText(ASSET_TYPE_TO_TEXT_ID[asset.type])
 
   const createPermission = useMutation(
     backendMutationOptions(backend, 'createPermission'),
   ).mutateAsync
 
-  React.useEffect(() => {
+  useEffect(() => {
     setPermission(initialPermission)
   }, [initialPermission])
 
-  const doSetPermission = async (newPermission: backendModule.AssetPermission) => {
+  const doSetPermission = async (newPermission: AssetPermission) => {
     try {
       setPermission(newPermission)
       outerSetPermission(newPermission)
       await createPermission([
         {
-          actorsIds: [backendModule.getAssetPermissionId(newPermission)],
+          actorsIds: [getAssetPermissionId(newPermission)],
           resourceId: asset.id,
           action: newPermission.permission,
         },
@@ -99,13 +94,13 @@ export default function Permission(props: PermissionProps) {
             action={permission.permission}
             assetType={asset.type}
             onChange={async (permissions) => {
-              await doSetPermission(object.merge(permission, { permission: permissions }))
+              await doSetPermission(merge(permission, { permission: permissions }))
             }}
             doDelete={() => {
-              doDelete(backendModule.getAssetPermissionId(permission))
+              doDelete(getAssetPermissionId(permission))
             }}
           />
-          <Text truncate="1">{backendModule.getAssetPermissionName(permission)}</Text>
+          <Text truncate="1">{getAssetPermissionName(permission)}</Text>
         </div>
       )}
     </FocusArea>

@@ -2,20 +2,16 @@
 import { DiffEditor } from '@monaco-editor/react'
 import { useSuspenseQueries } from '@tanstack/react-query'
 
-import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
-import type * as backendService from '#/services/Backend'
-import type Backend from '#/services/Backend'
-import { StatelessSpinner } from '../../components/StatelessSpinner'
+import type { Backend, ProjectAsset, S3ObjectVersionId } from '@common/services/Backend'
 
-// =====================
-// === AssetDiffView ===
-// =====================
+import { StatelessSpinner } from '#/components/StatelessSpinner'
+import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
 
 /** Props for an {@link AssetDiffView}. */
 export interface AssetDiffViewProps {
-  readonly versionId: backendService.S3ObjectVersionId
-  readonly latestVersionId: backendService.S3ObjectVersionId
-  readonly project: backendService.ProjectAsset
+  readonly versionId: S3ObjectVersionId
+  readonly latestVersionId: S3ObjectVersionId
+  readonly project: ProjectAsset
   readonly backend: Backend
 }
 

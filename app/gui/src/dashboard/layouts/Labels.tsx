@@ -1,11 +1,14 @@
 /** @file A list of selectable labels. */
-import * as React from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
+import type { Backend } from '@common/services/Backend'
+import { shallowEqual } from '@common/utilities/data/array'
+
 import PlusIcon from '#/assets/plus.svg'
 import Trash2Icon from '#/assets/trash2.svg'
-import * as ariaComponents from '#/components/AriaComponents'
+import { Button, DialogTrigger, Text } from '#/components/AriaComponents'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
@@ -13,19 +16,17 @@ import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import DragModal from '#/modals/DragModal'
 import NewLabelModal from '#/modals/NewLabelModal'
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import * as array from '#/utilities/array'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 import type AssetQuery from '#/utilities/AssetQuery'
-import * as drag from '#/utilities/drag'
+import { LABELS, setDragImageToBlank, type LabelsDragPayload } from '#/utilities/drag'
 
 /** Props for a {@link Labels}. */
 export interface LabelsProps {
   readonly backend: Backend
   readonly draggable: boolean
   readonly query: AssetQuery
-  readonly setQuery: React.Dispatch<React.SetStateAction<AssetQuery>>
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
 }
 
 /** A list of selectable labels. */
@@ -33,8 +34,8 @@ export default function Labels(props: LabelsProps) {
   const { backend, query, setQuery, draggable = true } = props
   const currentLabels = query.labels
   const currentNegativeLabels = query.negativeLabels
-  const { setModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
+  const { setModal } = useSetModal()
+  const { getText } = useText()
   const labels = useBackendQuery(backend, 'listTags', []).data ?? []
   const deleteTag = useMutation(backendMutationOptions(backend, 'deleteTag')).mutate
 
@@ -47,9 +48,9 @@ export default function Labels(props: LabelsProps) {
             className="flex flex-col items-start gap-4 overflow-auto"
             {...innerProps}
           >
-            <ariaComponents.Text variant="subtitle" className="px-2 font-bold">
+            <Text variant="subtitle" className="px-2 font-bold">
               {getText('labels')}
-            </ariaComponents.Text>
+            </Text>
             <div
               data-testid="labels-list"
               aria-label={getText('labelsListLabel')}
@@ -57,7 +58,7 @@ export default function Labels(props: LabelsProps) {
             >
               {labels.map((label) => {
                 const negated = currentNegativeLabels.some((term) =>
-                  array.shallowEqual(term, [label.value]),
+                  shallowEqual(term, [label.value]),
                 )
                 return (
                   <div key={label.id} className="group relative flex items-center gap-label-icons">
@@ -65,8 +66,7 @@ export default function Labels(props: LabelsProps) {
                       draggable={draggable}
                       color={label.color}
                       active={
-                        negated ||
-                        currentLabels.some((term) => array.shallowEqual(term, [label.value]))
+                        negated || currentLabels.some((term) => shallowEqual(term, [label.value]))
                       }
                       negated={negated}
                       onPress={(event) => {
@@ -80,14 +80,14 @@ export default function Labels(props: LabelsProps) {
                         )
                       }}
                       onDragStart={(event) => {
-                        drag.setDragImageToBlank(event)
-                        const payload: drag.LabelsDragPayload = new Set([label.value])
-                        drag.LABELS.bind(event, payload)
+                        setDragImageToBlank(event)
+                        const payload: LabelsDragPayload = new Set([label.value])
+                        LABELS.bind(event, payload)
                         setModal(
                           <DragModal
                             event={event}
                             onDragEnd={() => {
-                              drag.LABELS.unbind(payload)
+                              LABELS.unbind(payload)
                             }}
                           >
                             <Label active color={label.color} onPress={() => {}}>
@@ -100,8 +100,8 @@ export default function Labels(props: LabelsProps) {
                       {label.value}
                     </Label>
                     <FocusRing placement="after">
-                      <ariaComponents.DialogTrigger>
-                        <ariaComponents.Button
+                      <DialogTrigger>
+                        <Button
                           variant="icon"
                           icon={Trash2Icon}
                           extraClickZone={false}
@@ -115,24 +115,24 @@ export default function Labels(props: LabelsProps) {
                             deleteTag([label.id, label.value])
                           }}
                         />
-                      </ariaComponents.DialogTrigger>
+                      </DialogTrigger>
                     </FocusRing>
                   </div>
                 )
               })}
             </div>
           </div>
-          <ariaComponents.DialogTrigger>
-            <ariaComponents.Button
+          <DialogTrigger>
+            <Button
               size="xsmall"
               variant="outline"
               className="mt-1 self-start pl-1 pr-2"
               icon={PlusIcon}
             >
               {getText('newLabelButtonLabel')}
-            </ariaComponents.Button>
+            </Button>
             <NewLabelModal backend={backend} />
-          </ariaComponents.DialogTrigger>
+          </DialogTrigger>
         </div>
       )}
     </FocusArea>

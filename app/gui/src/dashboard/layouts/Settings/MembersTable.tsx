@@ -1,6 +1,8 @@
 /** @file A list of members in the organization. */
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { UserId, type Backend, type User } from '@common/services/Backend'
+
 import {
   Column,
   Table,
@@ -16,8 +18,6 @@ import { useStickyTableHeaderOnScroll } from '#/hooks/scrollHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useText } from '#/providers/TextProvider'
-import type Backend from '#/services/Backend'
-import { UserId, type User } from '#/services/Backend'
 import { twMerge } from '#/utilities/tailwindMerge'
 import UserRow from './UserRow'
 

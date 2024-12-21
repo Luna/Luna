@@ -1,5 +1,5 @@
 /** @file Utilities for using JSON schemas. */
-import * as objectModule from '#/utilities/object'
+import { asObject, singletonObjectOrNull } from '@common/utilities/data/object'
 
 // =================
 // === lookupDef ===
@@ -9,7 +9,7 @@ import * as objectModule from '#/utilities/object'
 export function lookupDef(defs: Record<string, object>, schema: object) {
   const ref = '$ref' in schema && typeof schema.$ref === 'string' ? schema.$ref : null
   const [, name] = ref?.match(/^#[/][$]defs[/](.+)$/) ?? ''
-  return name == null ? null : objectModule.asObject(defs[name])
+  return name == null ? null : asObject(defs[name])
 }
 
 // =====================
@@ -31,7 +31,7 @@ function getSchemaNameHelper(defs: Record<string, object>, schema: object): stri
     const members = Array.isArray(schema.anyOf) ? schema.anyOf : []
     return (
       members
-        .flatMap(objectModule.singletonObjectOrNull)
+        .flatMap(singletonObjectOrNull)
         .map((childSchema) => getSchemaName(defs, childSchema))
         .join(' | ') || '(unknown)'
     )
@@ -39,7 +39,7 @@ function getSchemaNameHelper(defs: Record<string, object>, schema: object): stri
     const members = Array.isArray(schema.allOf) ? schema.allOf : []
     return (
       members
-        .flatMap(objectModule.singletonObjectOrNull)
+        .flatMap(singletonObjectOrNull)
         .map((childSchema) => getSchemaName(defs, childSchema))
         .join(' & ') || '(unknown)'
     )
@@ -170,8 +170,7 @@ function constantValueOfSchemaHelper(
           break
         }
         case 'object': {
-          const propertiesObject =
-            'properties' in schema ? objectModule.asObject(schema.properties) ?? {} : {}
+          const propertiesObject = 'properties' in schema ? asObject(schema.properties) ?? {} : {}
           const required = new Set(
             'required' in schema && Array.isArray(schema.required) ?
               schema.required.map(String)
@@ -180,7 +179,7 @@ function constantValueOfSchemaHelper(
           const object: Record<string, unknown> = {}
           results.push(object)
           for (const [key, child] of Object.entries(propertiesObject)) {
-            const childSchema = objectModule.asObject(child)
+            const childSchema = asObject(child)
             if (childSchema == null || (partial && !required.has(key))) {
               continue
             }
@@ -204,7 +203,7 @@ function constantValueOfSchemaHelper(
             const array: unknown[] = []
             results.push(array)
             for (const childSchema of schema.prefixItems) {
-              const childSchemaObject = objectModule.asObject(childSchema)
+              const childSchemaObject = asObject(childSchema)
               const childValue =
                 childSchemaObject == null ?
                   []
@@ -235,7 +234,7 @@ function constantValueOfSchemaHelper(
       if (!Array.isArray(schema.anyOf) || (!partial && schema.anyOf.length !== 1)) {
         return invalid
       } else {
-        const firstMember = objectModule.asObject(schema.anyOf[0])
+        const firstMember = asObject(schema.anyOf[0])
         if (firstMember == null) {
           return invalid
         } else {
@@ -254,7 +253,7 @@ function constantValueOfSchemaHelper(
         return invalid
       } else {
         for (const childSchema of schema.allOf) {
-          const schemaObject = objectModule.asObject(childSchema)
+          const schemaObject = asObject(childSchema)
           const value =
             schemaObject == null ? [] : constantValueOfSchema(defs, schemaObject, partial)
           if (!partial && value.length === 0) {
@@ -292,7 +291,7 @@ function constantValueOfSchemaHelper(
       const result = results[0] ?? null
       let resultArray: readonly [] | readonly [NonNullable<unknown> | null] = [result]
       for (const child of results.slice(1)) {
-        const childSchema = objectModule.asObject(child)
+        const childSchema = asObject(child)
         if (childSchema == null) {
           continue
         }

@@ -12,22 +12,24 @@ import * as textProvider from '#/providers/TextProvider'
 import * as aria from '#/components/aria'
 import * as ariaComponents from '#/components/AriaComponents'
 
-import * as eventModule from '#/utilities/event'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 import { useAutoFocus } from '#/hooks/autoFocusHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 
-// =================
-// === Constants ===
-// =================
+/**
+ * Search for an ancestor `form` element and try to submit it.
+ * @deprecated
+ */
+function submitForm(event: { readonly target: Element }) {
+  const closestForm = event.target.closest('form')
+  if (closestForm != null) {
+    closestForm.requestSubmit()
+  }
+}
 
 const WIDTH_CLASS_NAME = 'max-w-60'
-
-// ====================
-// === EditableSpan ===
-// ====================
 
 /** Props for an {@link EditableSpan}. */
 export interface EditableSpanProps {
@@ -145,7 +147,7 @@ export default function EditableSpan(props: EditableSpanProps) {
                 variant="ghost"
                 icon={TickIcon}
                 aria-label={getText('confirmEdit')}
-                onPress={eventModule.submitForm}
+                onPress={submitForm}
               />
             )}
             <ariaComponents.Button
