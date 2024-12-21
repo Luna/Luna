@@ -123,7 +123,7 @@ object DefinitionArgument {
         || defaultValue != this.defaultValue
         || suspended != this.suspended
         || location != this.location
-        || passData != this.passData
+        || (passData ne this.passData)
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
@@ -139,6 +139,12 @@ object DefinitionArgument {
         res.id          = id
         res
       } else this
+    }
+
+    def copyWithAscribedType(
+      ascribedType: Expression
+    ): Specified = {
+      copy(ascribedType = Some(ascribedType))
     }
 
     override def withName(ir: Name): DefinitionArgument = copy(name = ir)

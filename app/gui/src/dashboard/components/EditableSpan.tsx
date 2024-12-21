@@ -17,6 +17,7 @@ import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 import { useAutoFocus } from '#/hooks/autoFocusHooks'
+import { useSyncRef } from '#/hooks/syncRefHooks'
 
 // =================
 // === Constants ===
@@ -53,8 +54,7 @@ export default function EditableSpan(props: EditableSpanProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null)
 
   const cancelledRef = React.useRef(false)
-  const checkSubmittableRef = React.useRef(checkSubmittable)
-  checkSubmittableRef.current = checkSubmittable
+  const checkSubmittableRef = useSyncRef(checkSubmittable)
 
   // Make sure that the event callback is stable to prevent the effect from re-running.
   const onCancelEventCallback = eventCallback.useEventCallback(onCancel)
@@ -63,7 +63,7 @@ export default function EditableSpan(props: EditableSpanProps) {
     if (editable) {
       setIsSubmittable(checkSubmittableRef.current?.(inputRef.current?.value ?? '') ?? true)
     }
-  }, [editable])
+  }, [checkSubmittableRef, editable])
 
   React.useEffect(() => {
     if (editable) {
@@ -85,6 +85,7 @@ export default function EditableSpan(props: EditableSpanProps) {
 
   aria.useInteractOutside({
     ref: formRef,
+    isDisabled: !editable,
     onInteractOutside: () => {
       onCancel()
     },
@@ -96,7 +97,10 @@ export default function EditableSpan(props: EditableSpanProps) {
     return (
       <form
         ref={formRef}
-        className={tailwindMerge.twMerge('flex grow gap-1.5', WIDTH_CLASS_NAME)}
+        className={ariaComponents.TEXT_STYLE({
+          variant: 'body',
+          className: tailwindMerge.twJoin('flex grow gap-1.5', WIDTH_CLASS_NAME),
+        })}
         onSubmit={(event) => {
           event.preventDefault()
           if (inputRef.current != null) {
@@ -108,66 +112,57 @@ export default function EditableSpan(props: EditableSpanProps) {
           }
         }}
       >
-        <aria.Input
-          data-testid={props['data-testid']}
-          className={tailwindMerge.twMerge('rounded-lg', className)}
-          ref={(element) => {
-            inputRef.current = element
-
-            if (element) {
-              element.style.width = '0'
-              element.style.width = `${element.scrollWidth}px`
-            }
-          }}
-          type="text"
-          size={1}
-          defaultValue={children}
-          onContextMenu={(event) => {
-            event.stopPropagation()
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== 'Escape') {
+        <div className="flex flex-1 basis-full items-center">
+          <aria.Input
+            ref={inputRef}
+            data-testid={props['data-testid']}
+            className={tailwindMerge.twMerge('flex-1 basis-full', className)}
+            type="text"
+            size={1}
+            defaultValue={children}
+            onContextMenu={(event) => {
               event.stopPropagation()
-            }
-            if (event.target instanceof HTMLElement) {
-              event.target.style.width = '0'
-              event.target.style.width = `${event.target.scrollWidth}px`
-            }
-          }}
-          {...(inputPattern == null ? {} : { pattern: inputPattern })}
-          {...(inputTitle == null ? {} : { title: inputTitle })}
-          {...(checkSubmittable == null ?
-            {}
-          : {
-              onInput: (event) => {
-                setIsSubmittable(checkSubmittable(event.currentTarget.value))
-              },
-            })}
-        />
-        <ariaComponents.ButtonGroup gap="xsmall" className="grow-0 items-center">
-          {isSubmittable && (
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Escape') {
+                event.stopPropagation()
+              }
+            }}
+            {...(inputPattern == null ? {} : { pattern: inputPattern })}
+            {...(inputTitle == null ? {} : { title: inputTitle })}
+            {...(checkSubmittable == null ?
+              {}
+            : {
+                onInput: (event) => {
+                  setIsSubmittable(checkSubmittable(event.currentTarget.value))
+                },
+              })}
+          />
+          <ariaComponents.ButtonGroup gap="xsmall" className="ml-1 w-auto flex-none items-center">
+            {isSubmittable && (
+              <ariaComponents.Button
+                size="medium"
+                variant="ghost"
+                icon={TickIcon}
+                aria-label={getText('confirmEdit')}
+                onPress={eventModule.submitForm}
+              />
+            )}
             <ariaComponents.Button
               size="medium"
               variant="ghost"
-              icon={TickIcon}
-              aria-label={getText('confirmEdit')}
-              onPress={eventModule.submitForm}
+              icon={CrossIcon}
+              aria-label={getText('cancelEdit')}
+              onPress={() => {
+                cancelledRef.current = true
+                onCancel()
+                window.setTimeout(() => {
+                  cancelledRef.current = false
+                })
+              }}
             />
-          )}
-          <ariaComponents.Button
-            size="medium"
-            variant="ghost"
-            icon={CrossIcon}
-            aria-label={getText('cancelEdit')}
-            onPress={() => {
-              cancelledRef.current = true
-              onCancel()
-              window.setTimeout(() => {
-                cancelledRef.current = false
-              })
-            }}
-          />
-        </ariaComponents.ButtonGroup>
+          </ariaComponents.ButtonGroup>
+        </div>
       </form>
     )
   } else {

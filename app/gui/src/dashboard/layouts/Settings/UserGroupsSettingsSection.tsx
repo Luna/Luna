@@ -1,12 +1,12 @@
 /** @file Settings tab for viewing and editing roles for all users in the organization. */
-import * as React from 'react'
+import { useMemo, useRef } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
 import { Cell, Column, Row, Table, TableBody, TableHeader, useDragAndDrop } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { PaywallDialogButton } from '#/components/Paywall'
-import StatelessSpinner, { SpinnerState } from '#/components/StatelessSpinner'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { USER_MIME_TYPE } from '#/data/mimeTypes'
 import {
   backendMutationOptions,
@@ -49,15 +49,15 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
   const toastAndLog = useToastAndLog()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
   const userGroups = useListUserGroupsWithUsers(backend)
-  const rootRef = React.useRef<HTMLDivElement>(null)
-  const bodyRef = React.useRef<HTMLTableSectionElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLTableSectionElement>(null)
   const changeUserGroup = useMutation(
     backendMutationOptions(backend, 'changeUserGroup'),
   ).mutateAsync
   const deleteUserGroup = useMutation(
     backendMutationOptions(backend, 'deleteUserGroup'),
   ).mutateAsync
-  const usersMap = React.useMemo(
+  const usersMap = useMemo(
     () => new Map((users ?? []).map((otherUser) => [otherUser.userId, otherUser])),
     [users],
   )
@@ -139,7 +139,7 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
   return (
     <>
       {isAdmin && (
-        <ButtonGroup verticalAlign="center">
+        <ButtonGroup verticalAlign="center" className="flex-initial">
           {shouldDisplayPaywall && (
             <PaywallDialogButton
               feature="userGroupsFull"
@@ -178,7 +178,7 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
       <div
         ref={rootRef}
         className={twMerge(
-          'overflow-auto overflow-x-hidden transition-all lg:mb-2',
+          'min-h-0 flex-initial overflow-y-auto overflow-x-hidden transition-all lg:mb-2',
           shadowClassName,
         )}
         onScroll={onUserGroupsTableScroll}
@@ -188,7 +188,7 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
           className="w-full max-w-3xl table-fixed self-start rounded-rows"
           dragAndDropHooks={dragAndDropHooks}
         >
-          <TableHeader className="sticky top h-row">
+          <TableHeader className="sticky top-0 z-1 h-row bg-dashboard">
             <Column
               isRowHeader
               className="w-full border-x-2 border-transparent bg-clip-padding px-cell-x text-left text-sm font-semibold last:border-r-0"
@@ -214,7 +214,7 @@ export default function UserGroupsSettingsSection(props: UserGroupsSettingsSecti
                   }}
                 >
                   <div className="flex justify-center">
-                    <StatelessSpinner size={32} state={SpinnerState.loadingMedium} />
+                    <StatelessSpinner size={32} state="loading-medium" />
                   </div>
                 </Cell>
               </Row>

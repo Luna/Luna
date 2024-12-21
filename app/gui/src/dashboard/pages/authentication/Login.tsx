@@ -2,6 +2,7 @@
 import * as router from 'react-router-dom'
 
 import { CLOUD_DASHBOARD_DOMAIN } from 'enso-common'
+import { isOnElectron } from 'enso-common/src/detect'
 
 import { DASHBOARD_PATH, FORGOT_PASSWORD_PATH, REGISTRATION_PATH } from '#/appUtils'
 import ArrowRightIcon from '#/assets/arrow_right.svg'
@@ -14,12 +15,17 @@ import type { CognitoUser } from '#/authentication/cognito'
 import { Button, Form, Input, OTPInput, Password, Text } from '#/components/AriaComponents'
 import Link from '#/components/Link'
 import { Stepper } from '#/components/Stepper'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import AuthenticationPage from '#/pages/authentication/AuthenticationPage'
 import { passwordSchema } from '#/pages/authentication/schemas'
 import { useAuth } from '#/providers/AuthProvider'
-import { useLocalBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useState } from 'react'
+
+// eslint-disable-next-line no-restricted-syntax
+const GOOGLE_ICON = <img src={GoogleIcon} alt="" />
+// eslint-disable-next-line no-restricted-syntax
+const GITHUB_ICON = <img src={GithubIcon} alt="" />
 
 // =============
 // === Login ===
@@ -63,15 +69,22 @@ export default function Login() {
     },
   })
 
-  const [emailInput, setEmailInput] = useState(initialEmail)
-
   const [user, setUser] = useState<CognitoUser | null>(null)
-  const localBackend = useLocalBackend()
-  const supportsOffline = localBackend != null
+
+  const isElectron = isOnElectron()
+  const supportsOffline = isElectron
 
   const { nextStep, stepperState, previousStep } = Stepper.useStepperState({
     steps: 2,
     defaultStep: 0,
+  })
+
+  const handleGooglePress = useEventCallback(async () => {
+    await signInWithGoogle()
+  })
+
+  const handleGitHubPress = useEventCallback(async () => {
+    await signInWithGitHub()
   })
 
   return (
@@ -79,46 +92,37 @@ export default function Login() {
       title={getText('loginToYourAccount')}
       supportsOffline={supportsOffline}
       footer={
-        <Link
-          openInBrowser={localBackend != null}
-          to={(() => {
-            const newQuery = new URLSearchParams({ email: emailInput }).toString()
-            return localBackend != null ?
-                `https://${CLOUD_DASHBOARD_DOMAIN}${REGISTRATION_PATH}?${newQuery}`
-              : `${REGISTRATION_PATH}?${newQuery}`
-          })()}
-          icon={CreateAccountIcon}
-          text={getText('dontHaveAnAccount')}
-        />
+        <Form.FieldValue form={form} name="email">
+          {(email) => (
+            <Link
+              openInBrowser={isElectron}
+              to={(() => {
+                const newQuery = new URLSearchParams({ email }).toString()
+                return isElectron ?
+                    `https://${CLOUD_DASHBOARD_DOMAIN}${REGISTRATION_PATH}?${newQuery}`
+                  : `${REGISTRATION_PATH}?${newQuery}`
+              })()}
+              icon={CreateAccountIcon}
+              text={getText('dontHaveAnAccount')}
+            />
+          )}
+        </Form.FieldValue>
       }
     >
       <Stepper state={stepperState} renderStep={() => null}>
         <Stepper.StepContent index={0}>
           {() => (
             <div className="flex flex-col gap-auth">
-              <Button
-                size="large"
-                variant="outline"
-                icon={<img src={GoogleIcon} alt={getText('googleIcon')} />}
-                onPress={async () => {
-                  await signInWithGoogle()
-                }}
-              >
+              <Button size="large" variant="outline" icon={GOOGLE_ICON} onPress={handleGooglePress}>
                 {getText('signUpOrLoginWithGoogle')}
               </Button>
-              <Button
-                size="large"
-                variant="outline"
-                icon={<img src={GithubIcon} alt={getText('gitHubIcon')} />}
-                onPress={async () => {
-                  await signInWithGitHub()
-                }}
-              >
+              <Button size="large" variant="outline" icon={GITHUB_ICON} onPress={handleGitHubPress}>
                 {getText('signUpOrLoginWithGitHub')}
               </Button>
 
               <Form form={form} gap="medium">
                 <Input
+                  form={form}
                   autoFocus
                   required
                   data-testid="email-input"
@@ -128,13 +132,11 @@ export default function Login() {
                   autoComplete="email"
                   icon={AtIcon}
                   placeholder={getText('emailPlaceholder')}
-                  onChange={(event) => {
-                    setEmailInput(event.currentTarget.value)
-                  }}
                 />
 
                 <div className="flex w-full flex-col">
                   <Password
+                    form={form}
                     required
                     data-testid="password-input"
                     name="password"
@@ -144,14 +146,18 @@ export default function Login() {
                     placeholder={getText('passwordPlaceholder')}
                   />
 
-                  <Button
-                    variant="link"
-                    href={`${FORGOT_PASSWORD_PATH}?${new URLSearchParams({ email: emailInput }).toString()}`}
-                    size="small"
-                    className="self-end"
-                  >
-                    {getText('forgotYourPassword')}
-                  </Button>
+                  <Form.FieldValue form={form} name="email">
+                    {(email) => (
+                      <Button
+                        variant="link"
+                        href={`${FORGOT_PASSWORD_PATH}?${new URLSearchParams({ email }).toString()}`}
+                        size="small"
+                        className="self-end"
+                      >
+                        {getText('forgotYourPassword')}
+                      </Button>
+                    )}
+                  </Form.FieldValue>
                 </div>
 
                 <Form.Submit size="large" icon={ArrowRightIcon} iconPosition="end" fullWidth>

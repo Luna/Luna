@@ -28,41 +28,97 @@ import org.enso.base.Stream_Utils;
  * deleting entries to make space for new ones. All cache files are set to be deleted automatically
  * on JVM exit.
  *
+ * <p>Limits should be set with environment variables:
+ *
+ * <p>
+ *
+ * <pre>
+ * - ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB: single file size, in MB
+ * - ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT: total cache size, in MB or
+ *   percentage of free disk space
+ * </pre>
+ *
+ * <p>Examples:
+ *
+ * <pre>
+ *   ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MB=20
+ *   ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200 ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
+ * </pre>
+ *
+ * <p>Regardless of other settings, the total cache size is capped at a percentage of the free disk
+ * space (MAX_PERCENTAGE).
+ *
  * @param <M> Additional metadata to associate with the data.
  */
 public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
-  private final long maxFileSize;
-  private final long maxTotalCacheSize;
+  /**
+   * An upper limit on the total cache size. If the cache size limit specified by the other
+   * parameters goes over this value, then this value is used.
+   */
+  private static final double MAX_PERCENTAGE = 0.9;
 
-  private final CacheTestParameters cacheTestParameters = new CacheTestParameters();
-
+  /** Used to override cache parameters for testing. */
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
+
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
-  public LRUCache(long maxFileSize, long maxTotalCacheSize) {
-    this.maxFileSize = maxFileSize;
-    this.maxTotalCacheSize = maxTotalCacheSize;
+  /** Defines the per-file and total cache size limits. */
+  private final LRUCacheSettings settings;
+
+  /** Used to get the current time; mockable. */
+  private final NowGetter nowGetter;
+
+  /** Used to get the current free disk space; mockable. */
+  private final DiskSpaceGetter diskSpaceGetter;
+
+  /** Used to clear the cache on reload. */
+  private final ReloadDetector reloadDetector = new ReloadDetector();
+
+  public LRUCache() {
+    this(LRUCacheSettings.getDefault(), new NowGetter(), new DiskSpaceGetter());
   }
 
-  public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
-      throws IOException, InterruptedException, ResponseTooLargeException {
-    String cacheKey = itemBuilder.makeCacheKey();
-    if (cache.containsKey(cacheKey)) {
-      return getResultForCacheEntry(cacheKey);
-    } else {
-      return makeRequestAndCache(cacheKey, itemBuilder);
-    }
+  public LRUCache(LRUCacheSettings settings, NowGetter nowGetter, DiskSpaceGetter diskSpaceGetter) {
+    this.settings = settings;
+    this.nowGetter = nowGetter;
+    this.diskSpaceGetter = diskSpaceGetter;
   }
 
   /**
-   * IOExceptions thrown by the HTTP request are propagated; IOExceptions thrown while storing the
-   * data in the cache are caught, and the request is re-issued without caching.
+   * IOExceptions thrown by the HTTP request are propagated; exceptions thrown while creating or
+   * accessing cache files are caught, and the request is re-issued without caching.
    */
-  private CacheResult<M> makeRequestAndCache(String cacheKey, ItemBuilder<M> itemBuilder)
+  public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
       throws IOException, InterruptedException, ResponseTooLargeException {
-    assert !cache.containsKey(cacheKey);
+    clearOnReload();
+
+    String cacheKey = itemBuilder.makeCacheKey();
+
+    try {
+      if (cache.containsKey(cacheKey)) {
+        return getResultForCacheEntry(cacheKey);
+      } else {
+        return makeRequestAndCache(cacheKey, itemBuilder);
+      }
+    } catch (LRUCacheException e) {
+      // Re-issue the request without caching.
+      // We don't re-attempt to store the cache file and entry. In some cases
+      // (such as a cache file deleted from the outside), we could, but this is
+      // a rare case so it seems unnecessary.
+      logger.log(
+          Level.WARNING,
+          "Error in cache file handling; will re-execute without caching: {0}",
+          e.getMessage());
+      Item<M> rerequested = itemBuilder.buildItem();
+      return new CacheResult<>(rerequested.stream(), rerequested.metadata());
+    }
+  }
+
+  private CacheResult<M> makeRequestAndCache(String cacheKey, ItemBuilder<M> itemBuilder)
+      throws IOException, InterruptedException, LRUCacheException, ResponseTooLargeException {
+    assert !cache.containsKey(cacheKey) : "Cache should not contain key " + cacheKey;
 
     Item<M> item = itemBuilder.buildItem();
 
@@ -70,12 +126,18 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
+    long maxAllowedDownloadSize = getMaxAllowedDownloadSize();
+
+    // If we have a content-length, clear up enough space for that. If not,
+    // then clear up enough space for the largest allowed size.
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
-      if (size > getMaxFileSize()) {
-        throw new ResponseTooLargeException(getMaxFileSize());
+      if (size > maxAllowedDownloadSize) {
+        throw new ResponseTooLargeException(size, maxAllowedDownloadSize);
       }
       makeRoomFor(size);
+    } else {
+      makeRoomFor(maxAllowedDownloadSize);
     }
 
     try {
@@ -83,32 +145,38 @@ public class LRUCache<M> {
       File responseData = downloadResponseData(cacheKey, item);
       M metadata = item.metadata();
       long size = responseData.length();
-      ZonedDateTime expiry = getNow().plus(Duration.ofSeconds(item.ttl().get()));
+      ZonedDateTime expiry = nowGetter.get().plus(Duration.ofSeconds(item.ttl().get()));
 
       // Create a cache entry.
       var cacheEntry = new CacheEntry<>(responseData, metadata, size, expiry);
       cache.put(cacheKey, cacheEntry);
       markCacheEntryUsed(cacheKey);
 
-      // Clear out old entries to satisfy the total cache size limit. This might
-      // be necessary here if we didn't receive a correct content size value.
-      removeFilesToSatisfyLimit();
-
       return getResultForCacheEntry(cacheKey);
     } catch (IOException e) {
-      logger.log(
-          Level.WARNING, "Failure storing cache entry; will re-execute without caching: {}", e);
-      // Re-issue the request since we don't know if we've consumed any of the response.
-      Item<M> rerequested = itemBuilder.buildItem();
-      return new CacheResult<>(rerequested.stream(), rerequested.metadata());
+      // Throw this to re-issue the request since we don't know if we've consumed any of the
+      // response.
+      throw new LRUCacheException("Failure storing cache entry", e);
     }
   }
 
-  /** Mark cache entry used and return a stream reading from the cache file. */
-  private CacheResult<M> getResultForCacheEntry(String cacheKey) throws IOException {
+  /**
+   * Mark cache entry used and return a stream reading from the cache file.
+   *
+   * <p>If the file has been deleted, an LRUCacheException is thrown, causing .makeRequest to
+   * re-issue the request without caching.
+   */
+  private CacheResult<M> getResultForCacheEntry(String cacheKey)
+      throws IOException, LRUCacheException {
+    var cacheFile = cache.get(cacheKey).responseData;
+
+    if (!cacheFile.exists()) {
+      removeCacheEntry(cacheKey, cache.get(cacheKey));
+      throw new LRUCacheException("Missing cache file " + cacheFile.getPath());
+    }
+
     markCacheEntryUsed(cacheKey);
-    return new CacheResult<>(
-        new FileInputStream(cache.get(cacheKey).responseData), cache.get(cacheKey).metadata());
+    return new CacheResult<>(new FileInputStream(cacheFile), cache.get(cacheKey).metadata());
   }
 
   /**
@@ -123,14 +191,14 @@ public class LRUCache<M> {
     var outputStream = new FileOutputStream(temp);
     boolean successful = false;
     try {
-      // Limit the download to getMaxFileSize().
-      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, getMaxFileSize());
+      long maxAllowedDownloadSize = getMaxAllowedDownloadSize();
+      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxAllowedDownloadSize);
 
       if (sizeOK) {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(getMaxFileSize());
+        throw new ResponseTooLargeException(null, maxAllowedDownloadSize);
       }
     } finally {
       outputStream.close();
@@ -144,18 +212,24 @@ public class LRUCache<M> {
 
   /** Mark the entry with the current time, to maintain LRU data. */
   private void markCacheEntryUsed(String cacheKey) {
-    lastUsed.put(cacheKey, getNow());
+    lastUsed.put(cacheKey, nowGetter.get());
   }
 
   /** Remove all cache entries (and their files) that have passed their TTL. */
   private void removeStaleEntries() {
-    var now = getNow();
+    var now = nowGetter.get();
     removeCacheEntriesByPredicate(e -> e.expiry().isBefore(now));
   }
 
   /** Remove all cache entries (and their files). */
   public void clear() {
     removeCacheEntriesByPredicate(e -> true);
+  }
+
+  private void clearOnReload() {
+    if (reloadDetector.hasReloadOccurred()) {
+      clear();
+    }
   }
 
   /** Remove all cache entries (and their cache files) that match the predicate. */
@@ -176,8 +250,11 @@ public class LRUCache<M> {
 
   /** Remove a cache entry: from `cache`, `lastUsed`, and the filesystem. */
   private void removeCacheEntry(Map.Entry<String, CacheEntry<M>> toRemove) {
-    var key = toRemove.getKey();
-    var value = toRemove.getValue();
+    removeCacheEntry(toRemove.getKey(), toRemove.getValue());
+  }
+
+  /** Remove a cache entry: from `cache`, `lastUsed`, and the filesystem. */
+  private void removeCacheEntry(String key, CacheEntry<M> value) {
     cache.remove(key);
     lastUsed.remove(key);
     removeCacheFile(key, value);
@@ -195,8 +272,13 @@ public class LRUCache<M> {
   private void makeRoomFor(long newFileSize) {
     removeStaleEntries();
 
-    long totalSize = getTotalCacheSize() + newFileSize;
-    long maxTotalCacheSize = getMaxTotalCacheSize();
+    // Size of files on disk.
+    long currentCacheSize = getTotalCacheSize();
+    // Upper limit to cache size.
+    long maxTotalCacheSize = getMaxTotalCacheSize(currentCacheSize);
+    // Size including new file.
+    long totalSize = currentCacheSize + newFileSize;
+
     if (totalSize <= maxTotalCacheSize) {
       return;
     }
@@ -211,7 +293,8 @@ public class LRUCache<M> {
       toRemove.add(mapEntry);
       totalSize -= mapEntry.getValue().size();
     }
-    assert totalSize <= maxTotalCacheSize;
+    assert totalSize <= maxTotalCacheSize
+        : "totalSize > maxTotalCacheSize (" + totalSize + " > " + maxTotalCacheSize + ")";
     removeCacheEntries(toRemove);
   }
 
@@ -221,39 +304,68 @@ public class LRUCache<M> {
     return sortedEntries;
   }
 
-  /** Remove least-recently used entries until the total cache size is under the limit. */
-  private void removeFilesToSatisfyLimit() {
-    makeRoomFor(0L);
-  }
-
   private long getTotalCacheSize() {
     return cache.values().stream().collect(Collectors.summingLong(e -> e.size()));
   }
 
-  private long getMaxFileSize() {
-    return cacheTestParameters.getMaxFileSizeOverrideTestOnly().orElse(maxFileSize);
+  /**
+   * Calculate the max total cache size, using the current limit but also constraining the result to
+   * the upper bound.
+   */
+  public long getMaxTotalCacheSize(long currentlyUsed) {
+    long freeSpace = diskSpaceGetter.get() + currentlyUsed;
+
+    var totalCacheSize =
+        switch (settings.getTotalCacheLimit()) {
+          case TotalCacheLimit.Bytes bytes -> bytes.bytes();
+          case TotalCacheLimit.Percentage percentage -> {
+            yield (long) (percentage.percentage() * freeSpace);
+          }
+        };
+    long upperBound = (long) (freeSpace * MAX_PERCENTAGE);
+    return Long.min(upperBound, totalCacheSize);
   }
 
-  private long getMaxTotalCacheSize() {
-    return cacheTestParameters.getMaxTotalCacheSizeOverrideTestOnly().orElse(maxTotalCacheSize);
+  /**
+   * Calculate the largest size we can allow, which is the minimum of the max file size and the max
+   * total cache size.
+   */
+  private long getMaxAllowedDownloadSize() {
+    return Long.min(settings.getMaxFileSize(), getMaxTotalCacheSize());
+  }
+
+  /** For testing. */
+  public long getMaxTotalCacheSize() {
+    return getMaxTotalCacheSize(getTotalCacheSize());
   }
 
   public int getNumEntries() {
     return cache.size();
   }
 
-  public List<Long> getFileSizesTestOnly() {
+  /** Public for testing. */
+  public List<Long> getFileSizes() {
     return new ArrayList<>(
         cache.values().stream().map(CacheEntry::size).collect(Collectors.toList()));
   }
 
-  private ZonedDateTime getNow() {
-    return cacheTestParameters.getNowOverrideTestOnly().orElse(ZonedDateTime.now());
+  /** Public for testing. */
+  public List<String> getFiles() {
+    return new ArrayList<>(
+        cache.values().stream()
+            .map(CacheEntry::responseData)
+            .map(f -> f.getPath())
+            .collect(Collectors.toList()));
   }
 
-  /** Return a set of parameters that can be used to modify settings for testing purposes. */
-  public CacheTestParameters getCacheTestParameters() {
-    return cacheTestParameters;
+  /** Public for testing. */
+  public LRUCacheSettings getSettings() {
+    return settings;
+  }
+
+  /** Public for testing. */
+  public void simulateReloadTestOnly() {
+    reloadDetector.simulateReloadTestOnly();
   }
 
   private record CacheEntry<M>(File responseData, M metadata, long size, ZonedDateTime expiry) {}
@@ -291,63 +403,20 @@ public class LRUCache<M> {
   private final Comparator<Map.Entry<String, CacheEntry<M>>> cacheEntryLRUComparator =
       Comparator.comparing(me -> lastUsed.get(me.getKey()));
 
-  /** A set of parameters that can be used to modify cache settings for testing purposes. */
-  public class CacheTestParameters {
-    /** This value is used for the current time when testing TTL expiration logic. */
-    private Optional<ZonedDateTime> nowOverrideTestOnly = Optional.empty();
-
-    /**
-     * Used for testing file and cache size limits. These cannot be set to values larger than the
-     * real limits.
-     */
-    private Optional<Long> maxFileSizeOverrideTestOnly = Optional.empty();
-
-    private Optional<Long> maxTotalCacheSizeOverrideTestOnly = Optional.empty();
-
-    public Optional<ZonedDateTime> getNowOverrideTestOnly() {
-      return nowOverrideTestOnly;
+  /** Represents an internal error in creating or accessing the cache file. */
+  private static class LRUCacheException extends Exception {
+    public LRUCacheException(String errorMessage) {
+      super(errorMessage);
     }
 
-    public void setNowOverrideTestOnly(ZonedDateTime nowOverride) {
-      nowOverrideTestOnly = Optional.of(nowOverride);
+    public LRUCacheException(String errorMessage, Throwable cause) {
+      super(errorMessage, cause);
     }
 
-    public void clearNowOverrideTestOnly() {
-      nowOverrideTestOnly = Optional.empty();
-    }
-
-    public Optional<Long> getMaxFileSizeOverrideTestOnly() {
-      return maxFileSizeOverrideTestOnly;
-    }
-
-    public void setMaxFileSizeOverrideTestOnly(long maxFileSizeOverrideTestOnly_) {
-      if (maxFileSizeOverrideTestOnly_ > maxFileSize) {
-        throw new IllegalArgumentException(
-            "Cannot set the (test-only) maximum file size to more than the allowed limit of "
-                + maxFileSize);
-      }
-      maxFileSizeOverrideTestOnly = Optional.of(maxFileSizeOverrideTestOnly_);
-    }
-
-    public void clearMaxFileSizeOverrideTestOnly() {
-      maxFileSizeOverrideTestOnly = Optional.empty();
-    }
-
-    public Optional<Long> getMaxTotalCacheSizeOverrideTestOnly() {
-      return maxTotalCacheSizeOverrideTestOnly;
-    }
-
-    public void setMaxTotalCacheSizeOverrideTestOnly(long maxTotalCacheSizeOverrideTestOnly_) {
-      if (maxTotalCacheSizeOverrideTestOnly_ > maxTotalCacheSize) {
-        throw new IllegalArgumentException(
-            "Cannot set the (test-only) total cache size to more than the allowed limit of "
-                + maxTotalCacheSize);
-      }
-      maxTotalCacheSizeOverrideTestOnly = Optional.of(maxTotalCacheSizeOverrideTestOnly_);
-    }
-
-    public void clearMaxTotalCacheSizeOverrideTestOnly() {
-      maxTotalCacheSizeOverrideTestOnly = Optional.empty();
+    public String getMessage() {
+      var cause = getCause();
+      var causeMessage = cause == null ? "" : ": " + cause.getMessage();
+      return super.getMessage() + causeMessage;
     }
   }
 }

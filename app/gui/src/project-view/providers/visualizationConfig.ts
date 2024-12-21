@@ -1,8 +1,8 @@
-import { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
-import { ToolbarItem } from '@/components/visualizations/toolbar'
+import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
+import type { ToolbarItem } from '@/components/visualizations/toolbar'
 import { createContextStore } from '@/providers'
-import { Vec2 } from '@/util/data/vec2'
-import { ToValue } from '@/util/reactivity'
+import type { Vec2 } from '@/util/data/vec2'
+import type { ToValue } from '@/util/reactivity'
 import { reactive } from 'vue'
 
 export interface VisualizationConfig {
@@ -27,8 +27,8 @@ export interface VisualizationConfig {
   setToolbarOverlay: (enableOverlay: boolean) => void
 }
 
-export { provideFn as provideVisualizationConfig }
-const { provideFn, injectFn } = createContextStore(
+export { provideVisualizationConfig }
+const [provideVisualizationConfig, injectVisualizationConfig] = createContextStore(
   'Visualization config',
   reactive<VisualizationConfig>,
 )
@@ -38,5 +38,5 @@ const { provideFn, injectFn } = createContextStore(
 
 /** TODO: Add docs */
 export function useVisualizationConfig() {
-  return injectFn()
+  return injectVisualizationConfig()
 }

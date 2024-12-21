@@ -66,6 +66,11 @@ export function unsafeKeys<T extends object>(object: T): readonly (keyof T)[] {
   return Object.keys(object)
 }
 
+/** Return the values of an object. UNSAFE only when it is possible for an object to have extra keys. */
+export function unsafeValues<const T extends object>(object: T): readonly T[keyof T][] {
+  return Object.values(object)
+}
+
 /**
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
  * extra keys.
@@ -75,6 +80,17 @@ export function unsafeEntries<T extends object>(
 ): readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][] {
   // @ts-expect-error This is intentionally a wrapper function with a different type.
   return Object.entries(object)
+}
+
+/**
+ * Return an object from its entries. UNSAFE only when it is possible for an object to have
+ * extra keys.
+ */
+export function unsafeFromEntries<T extends object>(
+  entries: readonly { [K in keyof T]: readonly [K, T[K]] }[keyof T][],
+): T {
+  // @ts-expect-error This is intentionally a wrapper function with a different type.
+  return Object.fromEntries(entries)
 }
 
 // =============================
@@ -134,17 +150,31 @@ export function singletonObjectOrNull(value: unknown): [] | [object] {
 // ============
 
 /** UNSAFE when `Ks` contains strings that are not in the runtime array. */
-export function omit<T, Ks extends readonly (string & keyof T)[] | []>(
+export function omit<T, Ks extends readonly [string & keyof T, ...(string & keyof T)[]]>(
   object: T,
   ...keys: Ks
 ): Omit<T, Ks[number]> {
   const keysSet = new Set<string>(keys)
   return Object.fromEntries(
-    // This is SAFE, as it is a reaonly upcast.
-    Object.entries(object as Readonly<Record<string, unknown>>).flatMap(kv =>
-      !keysSet.has(kv[0]) ? [kv] : [],
-    ),
+    // This is SAFE, as it is a readonly upcast.
+    Object.entries(object as Readonly<Record<string, unknown>>).filter(([k]) => !keysSet.has(k)),
   ) as Omit<T, Ks[number]>
+}
+
+// ============
+// === pick ===
+// ============
+
+/** UNSAFE when `Ks` contains strings that are not in the runtime array. */
+export function pick<T, Ks extends readonly [string & keyof T, ...(string & keyof T)[]]>(
+  object: T,
+  ...keys: Ks
+): Pick<T, Ks[number]> {
+  const keysSet = new Set<string>(keys)
+  return Object.fromEntries(
+    // This is SAFE, as it is a readonly upcast.
+    Object.entries(object as Readonly<Record<string, unknown>>).filter(([k]) => keysSet.has(k)),
+  ) as Pick<T, Ks[number]>
 }
 
 // ===================
@@ -162,3 +192,30 @@ export type ExtractKeys<T, U> = {
 
 /** An instance method of the given type. */
 export type MethodOf<T> = (this: T, ...args: never) => unknown
+
+// ===================
+// === useObjectId ===
+// ===================
+
+/** Composable providing support for managing object identities. */
+export function useObjectId() {
+  let lastId = 0
+  const idNumbers = new WeakMap<object, number>()
+  /** @returns A value that can be used to compare object identity. */
+  function objectId(o: object): number {
+    const id = idNumbers.get(o)
+    if (id == null) {
+      lastId += 1
+      idNumbers.set(o, lastId)
+      return lastId
+    }
+    return id
+  }
+  return { objectId }
+}
+
+/**
+ * Returns the union of `A` and `B`, with a type-level assertion that `A` and `B` don't have any keys in common; this
+ * can be used to splice together objects without the risk of collisions.
+ */
+export type DisjointKeysUnion<A, B> = keyof A & keyof B extends never ? A & B : never

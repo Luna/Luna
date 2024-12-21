@@ -101,6 +101,8 @@ public class Main {
   private static final String WARNINGS_LIMIT = "warnings-limit";
   private static final String SYSTEM_PROPERTY = "vm.D";
 
+  private static final String DEFAULT_MAIN_METHOD_NAME = "main";
+
   private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Main.class);
 
   Main() {}
@@ -854,20 +856,20 @@ public class Main {
       java.util.List<String> additionalArgs) {
     var topScope = context.getTopScope();
     var mainModule = topScope.getModule(mainModuleName);
-    runMain(mainModule, projectPath, additionalArgs, "main");
+    runMain(mainModule, projectPath, additionalArgs, DEFAULT_MAIN_METHOD_NAME);
   }
 
   private void runSingleFile(
       PolyglotContext context, File file, java.util.List<String> additionalArgs) {
     var mainModule = context.evalModule(file);
-    runMain(mainModule, file, additionalArgs, "main");
+    runMain(mainModule, file, additionalArgs, DEFAULT_MAIN_METHOD_NAME);
   }
 
   private void runMain(
       Module mainModule,
       File rootPkgPath,
       java.util.List<String> additionalArgs,
-      String mainMethodName // = "main"
+      String mainMethodName // = DEFAULT_MAIN_METHOD_NAME
       ) {
     try {
       var mainType = mainModule.getAssociatedType();
@@ -881,7 +883,7 @@ public class Main {
         throw exitFail();
       }
       var main = mainFun.get();
-      if (!"main".equals(mainMethodName)) {
+      if (!DEFAULT_MAIN_METHOD_NAME.equals(mainMethodName)) {
         main.execute(join(mainType, nil()));
       } else {
         // Opportunistically parse arguments and convert to ints.
@@ -1337,22 +1339,13 @@ public class Main {
         println(JVM_OPTION + " option has no effect - already running in JVM " + current);
       } else {
         var commandAndArgs = new ArrayList<String>();
-        JVM_FOUND:
         if (jvm == null) {
-          var env = new Environment() {};
-          var dm = new DistributionManager(env);
-          var paths = dm.paths();
-          var files = paths.runtimes().toFile().listFiles();
-          if (files != null) {
-            for (var d : files) {
-              var java = new File(new File(d, "bin"), "java").getAbsoluteFile();
-              if (java.exists()) {
-                commandAndArgs.add(java.getPath());
-                break JVM_FOUND;
-              }
-            }
+          var javaExe = JavaFinder.findJavaExecutable();
+          if (javaExe == null) {
+            println("Cannot find java executable");
+            throw exitFail();
           }
-          commandAndArgs.add("java");
+          commandAndArgs.add(javaExe);
         } else {
           commandAndArgs.add(new File(new File(new File(jvm), "bin"), "java").getAbsolutePath());
         }

@@ -1,28 +1,28 @@
 import * as random from 'lib0/random'
 import * as Y from 'yjs'
-import {
-  AstId,
-  MutableBodyBlock,
-  NodeChild,
-  Owned,
-  RawNodeChild,
-  SyncTokenId,
-  Token,
-  asOwned,
-  isTokenId,
-  newExternalId,
-  parseModule,
-  subtreeRoots,
-} from '.'
+import { subtreeRoots } from '.'
 import { assert, assertDefined } from '../util/assert'
-import type { SourceRangeEdit } from '../util/data/text'
-import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
-import type { AstFields, FixedMap, Mutable } from './tree'
+import { type SourceRangeEdit } from '../util/data/text'
+import { type Origin, defaultLocalOrigin, tryAsOrigin } from '../yjsModel'
+import { newExternalId } from './idMap'
+import { parseModule } from './parse'
+import { type SyncTokenId, Token, isTokenId } from './token'
 import {
+  type AstFields,
+  type AstId,
+  type AstType,
+  type BodyBlock,
+  type FixedMap,
+  type Mutable,
+  type MutableAst,
+  type MutableBodyBlock,
+  type MutableInvalid,
+  type NodeChild,
+  type Owned,
+  type RawNodeChild,
   Ast,
-  MutableAst,
-  MutableInvalid,
   Wildcard,
+  asOwned,
   composeFieldData,
   invalidFields,
   materializeMutable,
@@ -31,7 +31,7 @@ import {
 
 export interface Module {
   edit(): MutableModule
-  root(): Ast | undefined
+  root(): BodyBlock | undefined
   tryGet(id: AstId | undefined): Ast | undefined
 
   /////////////////////////////////
@@ -98,8 +98,8 @@ export class MutableModule implements Module {
   }
 
   /** Return the top-level block of the module. */
-  root(): MutableAst | undefined {
-    return this.rootPointer()?.expression
+  root(): MutableBodyBlock | undefined {
+    return this.rootPointer()?.expression as MutableBodyBlock | undefined
   }
 
   /** Set the given block to be the top-level block of the module. */
@@ -109,7 +109,7 @@ export class MutableModule implements Module {
       if (rootPointer) {
         rootPointer.expression.replace(newRoot)
       } else {
-        invalidFields(this, this.baseObject('Invalid', undefined, ROOT_ID), {
+        invalidFields(this, this.baseObject('Invalid', ROOT_ID), {
           whitespace: '',
           node: newRoot,
         })
@@ -158,7 +158,7 @@ export class MutableModule implements Module {
 
   /** Copy the given node into the module. */
   copy<T extends Ast>(ast: T): Owned<Mutable<T>> {
-    const id = newAstId(ast.typeName())
+    const id = newAstId(ast.typeName)
     const fields = ast.fields.clone()
     this.nodes.set(id, fields as any)
     fields.set('id', id)
@@ -174,6 +174,19 @@ export class MutableModule implements Module {
     ast.visitRecursive(ast => this.nodes.set(ast.id, ast.fields.clone() as any))
     const fields = this.nodes.get(ast.id)
     assertDefined(fields)
+    fields.set('parent', undefined)
+    return materializeMutable(this, fields) as Owned<Mutable<typeof ast>>
+  }
+
+  /**
+   * Copy the node into the module *without copying children*. The returned object, and the module containing it, may be
+   * in an invalid state until the callee has ensured all references are resolvable, e.g. by recursing into children.
+   * @internal
+   */
+  splice<T extends Ast>(ast: T): Owned<Mutable<T>> {
+    assert(ast.module !== this)
+    const fields = ast.fields.clone() as any
+    this.nodes.set(ast.id, fields)
     fields.set('parent', undefined)
     return materializeMutable(this, fields) as Owned<Mutable<typeof ast>>
   }
@@ -271,24 +284,34 @@ export class MutableModule implements Module {
           node.get(key as any),
         ])
         updateBuilder.updateFields(id, changes)
-      } else if (event.target.parent.parent === this.nodes) {
-        // Updates to fields of a metadata object within a node.
+      } else if (event.target.parent?.parent === this.nodes) {
+        // Updates to fields of an object within a node.
         const id = event.target.parent.get('id')
         DEV: assertAstId(id)
         const node = this.nodes.get(id)
         if (!node) continue
-        const metadata = node.get('metadata') as unknown as Map<string, unknown>
-        const changes: (readonly [string, unknown])[] = Array.from(event.changes.keys, ([key]) => [
-          key,
-          metadata.get(key as any),
-        ])
-        updateBuilder.updateMetadata(id, changes)
-      } else if (event.target.parent.parent.parent === this.nodes) {
-        // Updates to some specific widget's metadata
+        const metadata = node.get('metadata')
+        if (event.target === metadata) {
+          const changes: (readonly [string, unknown])[] = Array.from(
+            event.changes.keys,
+            ([key]) => [key, metadata.get(key as any)],
+          )
+          updateBuilder.updateMetadata(id, changes)
+        } else {
+          // `AbstractType` in node fields.
+          updateBuilder.nodesUpdated.add(id)
+        }
+      } else if (event.target.parent?.parent?.parent === this.nodes) {
         const id = event.target.parent.parent.get('id')
         assertAstId(id)
-        if (!this.nodes.get(id)) continue
-        updateBuilder.updateWidgets(id)
+        const node = this.nodes.get(id)
+        if (!node) continue
+        const metadata = node.get('metadata')
+        const widgets = metadata?.get('widget')
+        if (event.target === widgets) {
+          // Updates to some specific widget's metadata
+          updateBuilder.updateWidgets(id)
+        }
       }
     }
     return updateBuilder.finish()
@@ -348,13 +371,13 @@ export class MutableModule implements Module {
   }
 
   /** @internal */
-  baseObject(type: string, externalId?: ExternalId, overrideId?: AstId): FixedMap<AstFields> {
+  baseObject(type: AstType, overrideId?: AstId): FixedMap<AstFields> {
     const map = new Y.Map()
     const map_ = map as unknown as FixedMap<object>
     const id = overrideId ?? newAstId(type)
     const metadata = new Y.Map() as unknown as FixedMap<object>
     const metadataFields = setAll(metadata, {
-      externalId: externalId ?? newExternalId(),
+      externalId: newExternalId(),
       widget: new Y.Map<unknown>(),
     })
     const fields = setAll(map_, {
@@ -475,7 +498,6 @@ class UpdateBuilder {
         assert(value instanceof Y.Map)
         metadataChanges = new Map<string, unknown>(value.entries())
       } else {
-        assert(!(value instanceof Y.AbstractType))
         fieldsChanged = true
       }
     }

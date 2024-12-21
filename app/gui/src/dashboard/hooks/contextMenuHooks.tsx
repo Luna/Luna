@@ -4,29 +4,24 @@ import * as React from 'react'
 import * as modalProvider from '#/providers/ModalProvider'
 
 import ContextMenu from '#/components/ContextMenu'
-import ContextMenus from '#/components/ContextMenus'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
-
-// ======================
-// === contextMenuRef ===
-// ======================
 
 /**
  * Return a ref that attaches a context menu event listener.
  * Should be used ONLY if the element does not expose an `onContextMenu` prop.
  */
 export function useContextMenuRef(
-  key: string,
   label: string,
   createEntries: (position: Pick<React.MouseEvent, 'pageX' | 'pageY'>) => React.JSX.Element | null,
   options: { enabled?: boolean } = {},
 ) {
   const { setModal } = modalProvider.useSetModal()
-  const createEntriesRef = React.useRef(createEntries)
-  createEntriesRef.current = createEntries
+  const stableCreateEntries = useEventCallback(createEntries)
   const optionsRef = useSyncRef(options)
   const cleanupRef = React.useRef(() => {})
-  const contextMenuRef = React.useMemo(
+
+  return React.useMemo(
     () => (element: HTMLElement | null) => {
       cleanupRef.current()
       if (element == null) {
@@ -36,24 +31,24 @@ export function useContextMenuRef(
           const { enabled = true } = optionsRef.current
           if (enabled) {
             const position = { pageX: event.pageX, pageY: event.pageY }
-            const children = createEntriesRef.current(position)
+            const children = stableCreateEntries(position)
             if (children != null) {
               event.preventDefault()
               event.stopPropagation()
               setModal(
-                <ContextMenus
-                  ref={(contextMenusElement) => {
-                    if (contextMenusElement != null) {
-                      const rect = contextMenusElement.getBoundingClientRect()
+                <ContextMenu
+                  ref={(contextMenuElement) => {
+                    if (contextMenuElement != null) {
+                      const rect = contextMenuElement.getBoundingClientRect()
                       position.pageX = rect.left
                       position.pageY = rect.top
                     }
                   }}
-                  key={key}
+                  aria-label={label}
                   event={event}
                 >
-                  <ContextMenu aria-label={label}>{children}</ContextMenu>
-                </ContextMenus>,
+                  {children}
+                </ContextMenu>,
               )
             }
           }
@@ -64,7 +59,6 @@ export function useContextMenuRef(
         }
       }
     },
-    [key, label, optionsRef, setModal],
+    [stableCreateEntries, label, optionsRef, setModal],
   )
-  return contextMenuRef
 }

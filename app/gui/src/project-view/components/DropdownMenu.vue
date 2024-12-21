@@ -49,9 +49,7 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
       class="arrow"
     />
     <SizeTransition height :duration="100">
-      <div v-if="open" ref="floatElement" class="DropdownMenuContent" :style="floatingStyles">
-        <slot name="entries" />
-      </div>
+      <div v-if="open" ref="floatElement" :style="floatingStyles"><slot name="menu" /></div>
     </SizeTransition>
   </div>
 </template>
@@ -63,23 +61,11 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
   margin: -4px;
 }
 
-.DropdownMenuContent {
-  display: flex;
-  flex-direction: column;
-  border-radius: 13px;
-  background: var(--color-frame-bg);
-  backdrop-filter: var(--blur-app-bg);
-  margin: 0 -4px;
-  z-index: 1;
-  gap: 4px;
-  padding: 8px;
-}
-
 .arrow {
   position: absolute;
-  bottom: -5px;
+  bottom: calc(-8px - var(--arrow-offset, 0px));
   left: 50%;
-  opacity: 0.5;
+  opacity: 0.8;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
   --icon-transform: translateX(-50%) rotate(90deg) scale(0.7);

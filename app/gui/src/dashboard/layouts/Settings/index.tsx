@@ -12,7 +12,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import SearchBar from '#/layouts/SearchBar'
-import { useFullUserSession } from '#/providers/AuthProvider'
+import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
@@ -25,7 +25,6 @@ import {
   SETTINGS_DATA,
   SETTINGS_NO_RESULTS_SECTION_DATA,
   SETTINGS_TAB_DATA,
-  SettingsEntryType,
   type SettingsContext,
   type SettingsEntryData,
   type SettingsTabData,
@@ -54,6 +53,7 @@ export default function Settings() {
     includesPredicate(Object.values(SettingsTabType)),
   )
   const { user, accessToken } = useFullUserSession()
+  const { changePassword } = useAuth()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
   const [query, setQuery] = React.useState('')
@@ -67,7 +67,7 @@ export default function Settings() {
     backendMutationOptions(backend, 'updateOrganization'),
   ).mutateAsync
 
-  const [, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [localRootDirectory, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
   const updateLocalRootPath = useEventCallback((value: string) => {
     setLocalRootDirectory(value)
     if (localBackend) {
@@ -79,6 +79,11 @@ export default function Settings() {
     localBackend?.resetRootPath()
   })
 
+  const isMatch = React.useMemo(() => {
+    const regex = new RegExp(regexEscape(query.trim()).replace(/\s+/g, '.+'), 'i')
+    return (name: string) => regex.test(name)
+  }, [query])
+
   const context = React.useMemo<SettingsContext>(
     () => ({
       accessToken,
@@ -88,11 +93,14 @@ export default function Settings() {
       organization,
       updateUser,
       updateOrganization,
+      localRootPath: localRootDirectory,
       updateLocalRootPath,
       resetLocalRootPath,
       toastAndLog,
       getText,
       queryClient,
+      isMatch,
+      changePassword,
     }),
     [
       accessToken,
@@ -107,21 +115,19 @@ export default function Settings() {
       updateUser,
       user,
       queryClient,
+      isMatch,
+      changePassword,
+      localRootDirectory,
     ],
   )
-
-  const isMatch = React.useMemo(() => {
-    const regex = new RegExp(regexEscape(query.trim()).replace(/\s+/g, '.+'), 'i')
-    return (name: string) => regex.test(name)
-  }, [query])
 
   const doesEntryMatchQuery = React.useCallback(
     (entry: SettingsEntryData) => {
       switch (entry.type) {
-        case SettingsEntryType.input: {
-          return isMatch(getText(entry.nameId))
+        case 'form': {
+          return entry.inputs.some((input) => isMatch(getText(input.nameId)))
         }
-        case SettingsEntryType.custom: {
+        case 'custom': {
           const doesAliasesIdMatch =
             entry.aliasesId == null ? false : getText(entry.aliasesId).split('\n').some(isMatch)
           if (doesAliasesIdMatch) {
@@ -183,6 +189,16 @@ export default function Settings() {
     }
   }, [isQueryBlank, doesEntryMatchQuery, getText, isMatch, effectiveTab])
 
+  const hideSidebarPopover = useEventCallback(() => {
+    setIsSidebarPopoverOpen(false)
+  })
+
+  const changeTab = useEventCallback(() => {
+    if (tab !== effectiveTab) {
+      setTab(tab)
+    }
+  })
+
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-hidden pl-page-x pt-4">
       <Heading level={1} className="flex items-center px-heading-x">
@@ -195,9 +211,7 @@ export default function Settings() {
               tabsToShow={tabsToShow}
               tab={effectiveTab}
               setTab={setTab}
-              onClickCapture={() => {
-                setIsSidebarPopoverOpen(false)
-              }}
+              onClickCapture={hideSidebarPopover}
             />
           </Popover>
         </MenuTrigger>
@@ -235,15 +249,7 @@ export default function Settings() {
           />
         </aside>
         <main className="flex flex-1 flex-col overflow-y-auto pb-12 pl-1 scrollbar-gutter-stable">
-          <SettingsTab
-            context={context}
-            data={data}
-            onInteracted={() => {
-              if (effectiveTab !== tab) {
-                setTab(effectiveTab)
-              }
-            }}
-          />
+          <SettingsTab context={context} data={data} onInteracted={changeTab} />
         </main>
       </div>
     </div>

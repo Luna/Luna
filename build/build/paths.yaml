@@ -7,16 +7,17 @@
     workflows/:
       changelog.yml:
       engine-benchmark.yml:
-      gui-tests.yml:
-      gui.yml:
-      engine-nightly.yml:
+      engine-checks-nightly.yml:
+      engine-checks-optional.yml:
+      engine-checks.yml:
       extra-nightly-tests.yml:
+      ide-packaging-optional.yml:
+      ide-packaging.yml:
       nightly.yml:
       promote.yml:
       release.yml:
-      scala-new.yml:
-      shader-tools.yml:
       std-libs-benchmark.yml:
+      wasm-checks.yml:
   app/:
     gui/: # GUI.
       dist/:
@@ -35,6 +36,7 @@
       client/:
       common/:
       icons/:
+    ydoc-server-nodejs/:
   build/:
     prettier/:
   built-distribution/:
@@ -91,6 +93,10 @@
     runtime-benchmarks/:
       bench-report.xml:
   lib/:
+    java/:
+      ydoc-server/:
+        target/:
+          native-image/:
     rust/:
       parser/:
         generate-java/:
@@ -110,8 +116,14 @@
   tools/:
     ci/:
       docker/:
-        docker-entrypoint.sh:
-        Dockerfile:
+        engine/:
+          docker-entrypoint.sh:
+          Dockerfile:
+        ydoc-server-nodejs/:
+          Dockerfile:
+          ydoc-server-entrypoint.sh:
+        ydoc-server-polyglot/:
+          Dockerfile:
     simple-library-server/:
   std-bits/:
     benchmarks/:

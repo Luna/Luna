@@ -11,7 +11,7 @@ build/build/release-body.md
 distribution/launcher/THIRD-PARTY
 distribution/engine/THIRD-PARTY
 distribution/project-manager/THIRD-PARTY
-tools/legal-review
+tools
 distribution/lib/Standard/*/*/manifest.yaml
 distribution/lib/Standard/*/*/polyglot
 distribution/lib/Standard/*/*/THIRD-PARTY
@@ -35,9 +35,10 @@ pnpm-lock.yaml
 # Generated files
 app/ide-desktop/lib/client/electron-builder-config.json
 app/ide-desktop/lib/content-config/src/config.json
-app/ide-desktop/lib/dashboard/playwright-report/
-app/ide-desktop/lib/dashboard/playwright/.cache/
-app/ide-desktop/lib/dashboard/dist/
+app/gui/playwright-report/
+app/gui/playwright/.auth/
+
+app/gui/dist/
 app/gui/view/documentation/assets/stylesheet.css
 app/rust-ffi/pkg
 app/gui/src/project-view/assets/font-*.css

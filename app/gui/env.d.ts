@@ -175,7 +175,15 @@ declare global {
     readonly projectManagementApi?: ProjectManagementApi
     readonly fileBrowserApi?: FileBrowserApi
     readonly versionInfo?: VersionInfo
+    readonly mapBoxApiToken?: () => string
     toggleDevtools: () => void
+    /**
+     * If set to `true`, animations will be disabled.
+     * Used by playwright tests to speed up execution.
+     *
+     * ATM only affects the framer-motion animations.
+     */
+    readonly DISABLE_ANIMATIONS?: boolean
   }
 
   namespace NodeJS {
@@ -211,6 +219,8 @@ declare global {
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_STRIPE_KEY?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
+      readonly ENSO_CLOUD_AUTH_ENDPOINT: string
+      // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_COGNITO_USER_POOL_ID: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: string
@@ -221,13 +231,11 @@ declare global {
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_GOOGLE_ANALYTICS_TAG?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
-      readonly ENSO_CLOUD_DASHBOARD_VERSION?: string
-      // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_DASHBOARD_COMMIT_HASH?: string
       // @ts-expect-error The index signature is intentional to disallow unknown env vars.
       readonly ENSO_CLOUD_ENSO_HOST?: string
 
-      // === E2E test variables ===
+      // === Integration test variables ===
       readonly PWDEBUG?: '1'
       readonly IS_IN_PLAYWRIGHT_TEST?: `${boolean}`
 

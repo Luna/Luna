@@ -19,7 +19,7 @@ export default function TheModal() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
           transition={{ duration: 0.2 }}
         >
           <DialogTrigger key={key} defaultOpen>

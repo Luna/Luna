@@ -9,7 +9,6 @@ import Backend, * as backend from '#/services/Backend'
 import type ProjectManager from '#/services/ProjectManager'
 import * as projectManager from '#/services/ProjectManager'
 import { APP_BASE_URL } from '#/utilities/appBaseUrl'
-import { toRfc3339 } from '#/utilities/dateTime'
 import { download } from '#/utilities/download'
 import { tryGetMessage } from '#/utilities/error'
 import { fileExtension, getFileName, getFolderPath } from '#/utilities/fileInfo'
@@ -221,9 +220,10 @@ export default class LocalBackend extends Backend {
         if (parentIdRaw === this.projectManager.rootDirectory) {
           // Auto create the root directory
           await this.projectManager.createDirectory(this.projectManager.rootDirectory)
+
           result = []
         } else {
-          throw new Error('Directory does not exist.')
+          throw new backend.DirectoryDoesNotExistError()
         }
       }
     }
@@ -310,7 +310,6 @@ export default class LocalBackend extends Backend {
   override async getProjectDetails(
     projectId: backend.ProjectId,
     directory: backend.DirectoryId | null,
-    title: string,
   ): Promise<backend.Project> {
     const { id } = extractTypeAndId(projectId)
     const state = this.projectManager.projects.get(id)
@@ -323,7 +322,7 @@ export default class LocalBackend extends Backend {
         )
         .find((metadata) => metadata.id === id)
       if (project == null) {
-        throw new Error(`Could not get details of project '${title}'.`)
+        throw new Error(`Could not get details of project.`)
       } else {
         const version =
           project.engineVersion == null ?
@@ -518,23 +517,6 @@ export default class LocalBackend extends Backend {
     }
   }
 
-  /** Return a list of engine versions. */
-  override async listVersions(params: backend.ListVersionsRequestParams) {
-    const engineVersions = await this.projectManager.listAvailableEngineVersions()
-    const engineVersionToVersion = (version: projectManager.EngineVersion): backend.Version => ({
-      ami: null,
-      created: toRfc3339(new Date()),
-      number: {
-        value: version.version,
-        lifecycle: backend.detectVersionLifecycle(version.version),
-      },
-      // The names come from a third-party API and cannot be changed.
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
-      version_type: params.versionType,
-    })
-    return engineVersions.versions.map(engineVersionToVersion)
-  }
-
   // === Endpoints that intentionally do not work on the Local Backend ===
 
   /**
@@ -705,7 +687,7 @@ export default class LocalBackend extends Backend {
         id = await response.text()
       }
       const projectId = newProjectId(projectManager.UUID(id))
-      const project = await this.getProjectDetails(projectId, body.parentDirectoryId, body.fileName)
+      const project = await this.getProjectDetails(projectId, body.parentDirectoryId)
       this.uploadedFiles.set(uploadId, { id: projectId, project })
     }
     return { presignedUrls: [], uploadId, sourcePath: backend.S3FilePath('') }
@@ -806,9 +788,22 @@ export default class LocalBackend extends Backend {
     return this.invalidOperation()
   }
 
-  /** Invalid operation. */
-  override getFileContent() {
-    return this.invalidOperation()
+  /**
+   * Get the content of a file.
+   *
+   * Versioning is not supported on the Local Backend, thus the `versionId` parameter is ignored.
+   */
+  override getFileContent(projectId: backend.ProjectId) {
+    return this.projectManager.getFileContent(extractTypeAndId(projectId).id)
+  }
+
+  /**
+   * Resolve the path of a project asset relative to the project `src` directory.
+   */
+  override resolveProjectAssetPath(projectId: backend.ProjectId, relativePath: string) {
+    const projectPath = this.getProjectPath(projectId)
+
+    return Promise.resolve(`enso://${projectPath}/src/${relativePath.replace('./', '')}`)
   }
 
   /** Invalid operation. */

@@ -189,12 +189,35 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
 
   /** Returns all items in the tree, flattened into an array using pre-order traversal. */
   preorderTraversal(
-    preprocess: ((tree: AnyAssetTreeNode[]) => AnyAssetTreeNode[]) | null = null,
+    preprocess: (tree: AnyAssetTreeNode[]) => AnyAssetTreeNode[] = (tree) => tree,
   ): AnyAssetTreeNode[] {
     const children = this.children ?? []
-    return (preprocess?.(children) ?? children).flatMap((node) =>
-      node.children == null ? [node] : [node, ...node.preorderTraversal(preprocess)],
-    )
+
+    return preprocess(children).flatMap((node) => {
+      if (node.children == null) {
+        return [node]
+      }
+      return [node].concat(node.preorderTraversal(preprocess))
+    })
+  }
+
+  /**
+   * Checks whenever the asset is a placeholder.
+   */
+  isPlaceholder() {
+    return backendModule.isPlaceholderId(this.item.id)
+  }
+
+  /** Check whether the asset doesn't have any children. */
+  isEmpty(): boolean {
+    if (this.item.type === backendModule.AssetType.directory) {
+      if (this.children == null) {
+        return true
+      }
+      return this.children.length === 0
+    }
+
+    return true
   }
 
   /** Check whether a pending rename is valid. */

@@ -80,7 +80,7 @@ final case class Module(
       || bindings != this.bindings
       || isPrivate != this.isPrivate
       || location != this.location
-      || passData != this.passData
+      || (passData ne this.passData)
       || diagnostics != this.diagnostics
       || id != this.id
     ) {
@@ -97,6 +97,19 @@ final case class Module(
       res.id          = id
       res
     } else this
+  }
+
+  def copyWithImportsAndExports(
+    imports: List[Import],
+    exports: List[Export]
+  ) = {
+    copy(imports, exports)
+  }
+
+  def copyWithBindings(
+    bindings: List[Definition]
+  ) = {
+    copy(bindings = bindings)
   }
 
   /** @inheritdoc */

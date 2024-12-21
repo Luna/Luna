@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.callable;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -48,7 +49,7 @@ import org.enso.interpreter.runtime.state.State;
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
-public final class UnresolvedConstructor implements EnsoObject {
+public final class UnresolvedConstructor extends EnsoObject {
   private static final CallArgumentInfo[] NONE = new CallArgumentInfo[0];
   private final String name;
   private final Node where;
@@ -75,13 +76,15 @@ public final class UnresolvedConstructor implements EnsoObject {
   }
 
   @Override
-  @CompilerDirectives.TruffleBoundary
+  @TruffleBoundary
   public String toString() {
     return ".." + name;
   }
 
   @ExportMessage
-  String toDisplayString(boolean allowSideEffects) {
+  @Override
+  @TruffleBoundary
+  public String toDisplayString(boolean allowSideEffects) {
     return toString();
   }
 
@@ -188,12 +191,11 @@ public final class UnresolvedConstructor implements EnsoObject {
           id = callable.getId();
         }
       }
-      var fn = ReadArgumentNode.build(0, null, null);
+      var fn = ReadArgumentNode.build(0, null);
       var args = new CallArgument[prototype.descs.length];
       for (var i = 0; i < args.length; i++) {
         args[i] =
-            new CallArgument(
-                prototype.descs[i].getName(), ReadArgumentNode.build(1 + i, null, null));
+            new CallArgument(prototype.descs[i].getName(), ReadArgumentNode.build(1 + i, null));
       }
       var expr = ApplicationNode.build(fn, args, DefaultsExecutionMode.EXECUTE);
       if (id != null) {
