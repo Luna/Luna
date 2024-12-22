@@ -3,6 +3,7 @@
  *
  * Form error component.
  */
+import Offline from '#/assets/offline_filled.svg'
 import { Alert, Text, type AlertProps } from '#/components/AriaComponents'
 import { useFormError, type UseFormErrorProps } from './useFormError'
 
@@ -11,7 +12,7 @@ export interface FormErrorProps extends Omit<AlertProps, 'children'>, UseFormErr
 
 /** Form error component. */
 export function FormError(props: FormErrorProps) {
-  const { size = 'large', variant = 'error', rounded = 'large', ...alertProps } = props
+  const { size = 'large', variant = 'error', rounded = 'xxlarge', ...alertProps } = props
 
   const errors = useFormError(props)
 
@@ -24,9 +25,10 @@ export function FormError(props: FormErrorProps) {
       {errors.map((error) => {
         const testId = `form-submit-${error.type}`
         const finalVariant = error.type === 'offline' ? 'outline' : variant
+        const icon = error.type === 'offline' ? Offline : null
 
         return (
-          <Alert size={size} variant={finalVariant} rounded={rounded} {...alertProps}>
+          <Alert size={size} variant={finalVariant} rounded={rounded} icon={icon} {...alertProps}>
             <Text variant="body" truncate="3" color="primary" testId={testId}>
               {error.message}
             </Text>

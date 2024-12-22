@@ -1,6 +1,10 @@
 {
   "submit": "Submit",
   "retry": "Retry",
+
+  "arbitraryFetchError": "An error occurred while fetching data",
+  "arbitraryFetchImageError": "An error occurred while fetching an image",
+
   "createFolderError": "Could not create new folder",
   "createProjectError": "Could not create new project",
   "createDatalinkError": "Could not create new Datalink",
@@ -16,6 +20,9 @@
   "moveAssetError": "Could not move '$0'",
   "deleteAssetError": "Could not delete '$0'",
   "restoreAssetError": "Could not restore '$0'",
+
+  "refetchQueriesPending": "Getting latest updates...",
+  "refetchQueriesError": "Could not get latest updates. Some information may be outdated",
 
   "localBackendDatalinkError": "Cannot create Datalinks on the local drive",
   "localBackendSecretError": "Cannot create secrets on the local drive",
@@ -177,6 +184,7 @@
   "getCustomerPortalUrlBackendError": "Could not get customer portal URL",
   "duplicateLabelError": "This label already exists.",
   "emptyStringError": "This value must not be empty.",
+  "resolveProjectAssetPathBackendError": "Could not get asset",
 
   "directoryAssetType": "folder",
   "directoryDoesNotExistError": "Unable to find directory. Does it exist?",
@@ -480,9 +488,9 @@
   "hidePassword": "Hide password",
   "showPassword": "Show password",
   "copiedToClipboard": "Copied to clipboard",
-  "noResultsFound": "No results found.",
-  "youAreOffline": "You are offline.",
-  "cannotCreateAssetsHere": "You do not have the permissions to create assets here.",
+  "noResultsFound": "No results found",
+  "youAreOffline": "You are offline",
+  "cannotCreateAssetsHere": "You do not have the permissions to create assets here",
   "enableVersionChecker": "Enable Version Checker",
   "enableVersionCheckerDescription": "Show a dialog if the current version of the desktop app does not match the latest version.",
   "disableAnimations": "Disable animations",

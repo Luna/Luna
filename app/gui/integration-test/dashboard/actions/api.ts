@@ -16,6 +16,7 @@ import type { FeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import invariant from 'tiny-invariant'
 
 // =================
 // === Constants ===
@@ -1190,17 +1191,23 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
       })
     })
 
-    await get(remoteBackendPaths.getProjectAssetPath(GLOB_PROJECT_ID, '*'), (route, request) => {
-      const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
-      if (!maybeId) return
-      const projectId = backend.ProjectId(maybeId)
-      called('getProjectAsset', { projectId })
-      return route.fulfill({
-        // This is a mock SVG image. Just a square with a black background.
-        body: '/mock/svg.svg',
-        contentType: 'text/plain',
-      })
-    })
+    await get(
+      remoteBackendPaths.getProjectAssetPath(GLOB_PROJECT_ID, '*'),
+      async (route, request) => {
+        const maybeId = request.url().match(/[/]projects[/]([^?/]+)/)?.[1]
+
+        invariant(maybeId, 'Unable to parse the ID provided')
+
+        const projectId = backend.ProjectId(maybeId)
+
+        called('getProjectAsset', { projectId })
+
+        return route.fulfill({
+          // This is a mock SVG image. Just a square with a black background.
+          path: join(__dirname, '../mock/example.png'),
+        })
+      },
+    )
 
     await page.route('mock/svg.svg', (route) => {
       return route.fulfill({ body: MOCK_SVG, contentType: 'image/svg+xml' })
