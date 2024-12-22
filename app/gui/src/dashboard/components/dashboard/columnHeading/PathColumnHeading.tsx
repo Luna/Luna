@@ -8,7 +8,7 @@ import { Column } from '../column/columnUtils'
 
 /** A heading for the "Path" column. */
 export default function PathColumnHeading(props: AssetColumnHeadingProps) {
-  const { hideColumn, sortInfo, setSortInfo } = props
+  const { hideColumn } = props
 
   const { getText } = useText()
 

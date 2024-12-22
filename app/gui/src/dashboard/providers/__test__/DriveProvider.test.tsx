@@ -1,4 +1,3 @@
-import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
 import { describe, expect, it } from 'vitest'
 import { useStore } from 'zustand'
@@ -16,21 +15,26 @@ describe('<DriveProvider />', () => {
   it('Should reset expanded directory ids when category changes', () => {
     const driveAPI = renderDriveProviderHook(() => {
       const store = useDriveStore()
-      return useStore(store, ({ setCategory, setExpandedDirectoryIds, expandedDirectoryIds }) => ({
-        expandedDirectoryIds,
-        setCategory,
-        setExpandedDirectoryIds,
-      }))
+      return useStore(
+        store,
+        ({ setCategoryId, setExpandedDirectoryIds, expandedDirectoryIds }) => ({
+          expandedDirectoryIds,
+          setCategoryId,
+          setExpandedDirectoryIds,
+        }),
+      )
     })
 
     act(() => {
-      driveAPI.result.current.setExpandedDirectoryIds([DirectoryId('test-123')])
+      driveAPI.result.current.setExpandedDirectoryIds([DirectoryId('directory-test-123')])
     })
 
-    expect(driveAPI.result.current.expandedDirectoryIds).toEqual([DirectoryId('test-123')])
+    expect(driveAPI.result.current.expandedDirectoryIds).toEqual([
+      DirectoryId('directory-test-123'),
+    ])
 
     act(() => {
-      driveAPI.result.current.setCategory({} as Category)
+      driveAPI.result.current.setCategoryId('recent')
     })
 
     expect(driveAPI.result.current.expandedDirectoryIds).toEqual([])

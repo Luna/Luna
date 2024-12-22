@@ -21,6 +21,7 @@ import { useUser } from '#/providers/AuthProvider'
 
 import { backendQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useOffline } from '#/hooks/offlineHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
@@ -38,7 +39,6 @@ import LocalStorage from '#/utilities/LocalStorage'
 import { createContext, useContext, type PropsWithChildren } from 'react'
 import invariant from 'tiny-invariant'
 import { z } from 'zod'
-import { useOffline } from '../../../hooks/offlineHooks'
 import type {
   AnyCloudCategory,
   AnyLocalCategory,
