@@ -10,6 +10,8 @@ import { DashboardTabBar } from './DashboardTabBar'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as projectHooks from '#/hooks/projectHooks'
+import { CategoriesProvider } from '#/layouts/Drive/Categories/categoriesHooks'
+import DriveProvider from '#/providers/DriveProvider'
 
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
@@ -43,7 +45,6 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
-import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
@@ -68,11 +69,17 @@ export interface DashboardProps {
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
   return (
-    <EventListProvider>
-      <ProjectsProvider>
-        <DashboardInner {...props} />
-      </ProjectsProvider>
-    </EventListProvider>
+    <CategoriesProvider>
+      {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+       * due to modals being in `TheModal`. */}
+      <DriveProvider>
+        <EventListProvider>
+          <ProjectsProvider>
+            <DashboardInner {...props} />
+          </ProjectsProvider>
+        </EventListProvider>
+      </DriveProvider>
+    </CategoriesProvider>
   )
 }
 
@@ -113,10 +120,6 @@ function DashboardInner(props: DashboardProps) {
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
   const categoriesAPI = useCategoriesAPI()
-
-  const setCategory = eventCallbacks.useEventCallback((newCategory: Category) => {
-    categoriesAPI.setCategory(newCategory.id)
-  })
 
   const projectsStore = useProjectsStore()
   const page = usePage()
@@ -281,10 +284,6 @@ function DashboardInner(props: DashboardProps) {
             initialProjectName={initialProjectName}
             ydocUrl={ydocUrl}
             assetManagementApiRef={assetManagementApiRef}
-            category={categoriesAPI.category}
-            setCategory={setCategory}
-            setCategoryId={categoriesAPI.setCategory}
-            resetCategory={categoriesAPI.resetCategory}
           />
         </aria.Tabs>
 

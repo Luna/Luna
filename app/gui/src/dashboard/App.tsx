@@ -50,7 +50,6 @@ import * as inputBindingsModule from '#/configurations/inputBindings'
 
 import AuthProvider, * as authProvider from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
-import DriveProvider from '#/providers/DriveProvider'
 import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
 import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
@@ -98,7 +97,6 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
-import { CategoriesProvider } from './layouts/Drive/Categories/categoriesHooks'
 
 // ============================
 // === Global configuration ===
@@ -536,20 +534,14 @@ function AppRouter(props: AppRouterProps) {
               onAuthenticated={onAuthenticated}
             >
               <InputBindingsProvider inputBindings={inputBindings}>
-                <CategoriesProvider>
-                  {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
-                   * due to modals being in `TheModal`. */}
-                  <DriveProvider>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    <suspense.Suspense>
-                      <errorBoundary.ErrorBoundary>
-                        <devtools.EnsoDevtools />
-                      </errorBoundary.ErrorBoundary>
-                    </suspense.Suspense>
-                  </DriveProvider>
-                </CategoriesProvider>
+                <LocalBackendPathSynchronizer />
+                <VersionChecker />
+                {routes}
+                <suspense.Suspense>
+                  <errorBoundary.ErrorBoundary>
+                    <devtools.EnsoDevtools />
+                  </errorBoundary.ErrorBoundary>
+                </suspense.Suspense>
               </InputBindingsProvider>
             </AuthProvider>
           </BackendProvider>

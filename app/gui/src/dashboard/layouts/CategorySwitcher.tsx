@@ -55,7 +55,7 @@ interface CategoryMetadata {
 /** Props for a {@link CategorySwitcherItem}. */
 interface InternalCategorySwitcherItemProps extends CategoryMetadata {
   readonly currentCategory: Category
-  readonly setCategory: (category: Category) => void
+  readonly setCategoryId: (categoryId: Category['id']) => void
   readonly badgeContent?: React.ReactNode
   readonly isDisabled: boolean
 }
@@ -71,7 +71,7 @@ const CATEGORY_SWITCHER_VARIANTS = tv({
 
 /** An entry in a {@link CategorySwitcher}. */
 function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
-  const { currentCategory, setCategory, badgeContent, isDisabled: isDisabledRaw } = props
+  const { currentCategory, setCategoryId, badgeContent, isDisabled: isDisabledRaw } = props
   const { isNested = false, category, icon, label, buttonLabel, dropZoneLabel } = props
 
   const [isTransitioning, startTransition] = React.useTransition()
@@ -126,7 +126,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
       // and to not invoke the Suspense boundary.
       // This makes the transition feel more responsive and natural.
       startTransition(() => {
-        setCategory(category)
+        setCategoryId(category.id)
       })
     }
   })
@@ -221,12 +221,12 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
 /** Props for a {@link CategorySwitcher}. */
 export interface CategorySwitcherProps {
   readonly category: Category
-  readonly setCategory: (category: Category) => void
+  readonly setCategoryId: (categoryId: Category['id']) => void
 }
 
 /** A switcher to choose the currently visible assets table categoryModule.categoryType. */
 function CategorySwitcher(props: CategorySwitcherProps) {
-  const { category, setCategory } = props
+  const { category, setCategoryId } = props
 
   const { getText } = textProvider.useText()
   const [, setSearchParams] = useSearchParams()
@@ -237,7 +237,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
   const cloudCategories = useCloudCategoryList()
   const localCategories = useLocalCategoryList()
 
-  const itemProps = { currentCategory: category, setCategory, dispatchAssetEvent }
+  const itemProps = { currentCategory: category, setCategoryId, dispatchAssetEvent }
 
   const {
     cloudCategory,

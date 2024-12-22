@@ -39,6 +39,7 @@ import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { useDeferredValue, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { Suspense } from '../components/Suspense'
+import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
 // =============
@@ -47,10 +48,6 @@ import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
-  readonly category: Category
-  readonly setCategory: (category: Category) => void
-  readonly setCategoryId: (categoryId: Category['id']) => void
-  readonly resetCategory: () => void
   readonly hidden: boolean
   readonly initialProjectName: string | null
   readonly assetsManagementApiRef: React.Ref<assetsTable.AssetManagementApi>
@@ -60,13 +57,13 @@ const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 function Drive(props: DriveProps) {
-  const { category, resetCategory } = props
-
   const { isOffline } = offlineHooks.useOffline()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
+  const categoriesAPI = useCategoriesAPI()
+  const { category, resetCategory, setCategory } = categoriesAPI
 
   const isCloud = categoryModule.isCloudCategory(category)
 
@@ -128,7 +125,7 @@ function Drive(props: DriveProps) {
           }}
         >
           <Suspense>
-            <DriveAssetsView {...props} />
+            <DriveAssetsView {...props} category={category} setCategory={setCategory} />
           </Suspense>
         </ErrorBoundary>
       )
@@ -137,13 +134,20 @@ function Drive(props: DriveProps) {
 }
 
 /**
+ * Props for a {@link DriveAssetsView}.
+ */
+interface DriveAssetsViewProps extends DriveProps {
+  readonly category: Category
+  readonly setCategory: (categoryId: Category['id']) => void
+}
+
+/**
  * The assets view of the Drive.
  */
-function DriveAssetsView(props: DriveProps) {
+function DriveAssetsView(props: DriveAssetsViewProps) {
   const {
     category,
     setCategory,
-    setCategoryId,
     hidden = false,
     initialProjectName,
     assetsManagementApiRef,
@@ -254,7 +258,7 @@ function DriveAssetsView(props: DriveProps) {
 
         <div className="flex flex-1 gap-drive overflow-hidden">
           <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
-            <CategorySwitcher category={category} setCategory={setCategory} />
+            <CategorySwitcher category={category} setCategoryId={setCategory} />
 
             {isCloud && (
               <Labels
@@ -280,7 +284,7 @@ function DriveAssetsView(props: DriveProps) {
                   size="small"
                   className="mx-auto"
                   onPress={() => {
-                    setCategoryId('local')
+                    setCategory('local')
                   }}
                 >
                   {getText('switchToLocal')}
