@@ -1,14 +1,22 @@
+import { CategoriesProvider } from '#/layouts/Drive/Categories/categoriesHooks'
+import { DirectoryId } from '#/services/Backend'
 import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
 import { describe, expect, it } from 'vitest'
 import { useStore } from 'zustand'
-import { DirectoryId } from '../../services/Backend'
 import DriveProvider, { useDriveStore } from '../DriveProvider'
 
 function renderDriveProviderHook<Result, Props>(
   hook: (props: Props) => Result,
   options?: Omit<RenderHookOptions<Props>, 'wrapper'>,
 ): RenderHookResult<Result, Props> {
-  return renderHook(hook, { wrapper: DriveProvider, ...options })
+  return renderHook(hook, {
+    wrapper: ({ children }) => (
+      <CategoriesProvider>
+        <DriveProvider>{children}</DriveProvider>
+      </CategoriesProvider>
+    ),
+    ...options,
+  })
 }
 
 describe('<DriveProvider />', () => {
