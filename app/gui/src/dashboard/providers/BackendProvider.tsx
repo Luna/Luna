@@ -8,11 +8,7 @@ import invariant from 'tiny-invariant'
 
 import * as common from 'enso-common'
 
-import {
-  type Category,
-  type CategoryId,
-  isCloudCategory,
-} from '#/layouts/CategorySwitcher/Category'
+import { type Category, isCloudCategory } from '#/layouts/CategorySwitcher/Category'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { BackendType } from '#/services/Backend'
