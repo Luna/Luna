@@ -130,19 +130,21 @@ export default function PathColumn(props: AssetColumnProps) {
     return <></>
   }
 
-  const lastPath = finalPath.at(-1)
+  const firstItemInPath = finalPath.at(0)
+  const lastItemInPath = finalPath.at(-1)
 
   // Should not happen, as we ensure that the final path is not empty.
-  if (lastPath == null) {
+  if (lastItemInPath == null || firstItemInPath == null) {
     return <></>
   }
 
+  // This also means that the first and the last item in the path are the same
   if (finalPath.length === 1) {
     return (
       <PathItem
-        id={lastPath.id}
-        label={lastPath.label}
-        icon={lastPath.icon}
+        id={lastItemInPath.id}
+        label={lastItemInPath.label}
+        icon={lastItemInPath.icon}
         onNavigate={navigateToDirectory}
       />
     )
@@ -150,16 +152,24 @@ export default function PathColumn(props: AssetColumnProps) {
 
   return (
     <Popover.Trigger>
-      <Button variant="ghost-fading" size="xsmall" icon={lastPath.icon}>
-        {lastPath.label}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost-fading" size="xsmall">
+          <div className="flex items-center gap-2">
+            <SvgMask src={firstItemInPath.icon} className="h-3 w-3" />
+            <SvgMask src={FolderArrowIcon} className="h-3 w-3" />
+            <SvgMask src={lastItemInPath.icon} className="h-3 w-3" />
+
+            {lastItemInPath.label}
+          </div>
+        </Button>
+      </div>
 
       <Popover
         size="auto"
         placement="bottom end"
         crossOffset={14}
         variant="primary"
-        className="max-w-sm"
+        className="max-w-lg"
       >
         <div className="flex items-center gap-1">
           {finalPath.map((entry, index) => (
