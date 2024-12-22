@@ -29,7 +29,11 @@ const EACH_CATEGORY_SCHEMA = z.object({ label: z.string(), icon: z.string() })
 
 /** A category corresponding to the root of the user or organization. */
 const CLOUD_CATEGORY_SCHEMA = z
-  .object({ type: z.literal('cloud'), id: z.literal('cloud'), homeDirectoryId: DIRECTORY_ID_SCHEMA })
+  .object({
+    type: z.literal('cloud'),
+    id: z.literal('cloud'),
+    homeDirectoryId: DIRECTORY_ID_SCHEMA,
+  })
   .merge(EACH_CATEGORY_SCHEMA)
   .readonly()
 /** A category corresponding to the root of the user or organization. */
