@@ -2,10 +2,14 @@
  * @file Global setup for dashboard tests.
  */
 
+import { vi } from 'vitest'
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { cleanup } from '@testing-library/react'
 import { MotionGlobalConfig } from 'framer-motion'
+import ResizeObserver from 'resize-observer-polyfill'
 import { afterEach, expect } from 'vitest'
+
+vi.stubGlobal('ResizeObserver', ResizeObserver)
 
 MotionGlobalConfig.skipAnimations = true
 
