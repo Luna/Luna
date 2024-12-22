@@ -335,7 +335,6 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
           parentId,
         )
       } catch (e) {
-        console.log(e)
         if (e instanceof Error) {
           throw Object.assign(e, { parentId })
         } else {
