@@ -5,7 +5,6 @@ import isNetworkError from 'is-network-error'
 // === Constants ===
 // =================
 
-const DEFAULT_TIMEOUT_MS = 10_000
 export const FETCH_SUCCESS_EVENT_NAME = 'fetch-success'
 export const FETCH_ERROR_EVENT_NAME = 'fetch-error'
 
