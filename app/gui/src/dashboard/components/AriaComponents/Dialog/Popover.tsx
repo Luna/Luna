@@ -101,8 +101,9 @@ export function Popover(props: PopoverProps) {
           size,
           rounded,
           variant,
+        }).base({
           className: typeof className === 'function' ? className(values) : className,
-        }).base()
+        })
       }
       UNSTABLE_portalContainer={root}
       placement={placement}
@@ -189,7 +190,12 @@ function PopoverContent(props: PopoverContentProps) {
         role="dialog"
         aria-labelledby={labelledBy}
         tabIndex={-1}
-        className={POPOVER_STYLES({ ...opts, size, rounded, variant }).dialog()}
+        className={POPOVER_STYLES({
+          ...opts,
+          size,
+          rounded,
+          variant,
+        }).dialog()}
       >
         <dialogProvider.DialogProvider dialogId={dialogId} close={close}>
           <errorBoundary.ErrorBoundary>

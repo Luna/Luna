@@ -27,6 +27,7 @@ import * as result from '#/components/Result'
 import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useTargetDirectory } from '#/providers/DriveProvider'
 import { DirectoryDoesNotExistError, Plan } from '#/services/Backend'
 import AssetQuery from '#/utilities/AssetQuery'
@@ -46,8 +47,9 @@ import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
-  readonly category: categoryModule.Category
-  readonly setCategory: (category: categoryModule.Category) => void
+  readonly category: Category
+  readonly setCategory: (category: Category) => void
+  readonly setCategoryId: (categoryId: Category['id']) => void
   readonly resetCategory: () => void
   readonly hidden: boolean
   readonly initialProjectName: string | null
@@ -65,6 +67,7 @@ function Drive(props: DriveProps) {
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
+
   const isCloud = categoryModule.isCloudCategory(category)
 
   const supportLocalBackend = localBackend != null
@@ -140,6 +143,7 @@ function DriveAssetsView(props: DriveProps) {
   const {
     category,
     setCategory,
+    setCategoryId,
     hidden = false,
     initialProjectName,
     assetsManagementApiRef,
@@ -276,7 +280,7 @@ function DriveAssetsView(props: DriveProps) {
                   size="small"
                   className="mx-auto"
                   onPress={() => {
-                    setCategory({ type: 'local' })
+                    setCategoryId('local')
                   }}
                 >
                   {getText('switchToLocal')}

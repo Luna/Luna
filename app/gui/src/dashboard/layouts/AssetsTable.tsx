@@ -278,6 +278,7 @@ export interface AssetsTableState {
   readonly doDelete: (item: AnyAsset, forever: boolean) => Promise<void>
   readonly doRestore: (item: AnyAsset) => Promise<void>
   readonly doMove: (newParentKey: DirectoryId, item: AnyAsset) => Promise<void>
+  readonly getAssetNodeById: (id: AssetId) => AnyAssetTreeNode | null
 }
 
 /** Data associated with a {@link AssetRow}, used for rendering. */
@@ -1308,6 +1309,10 @@ function AssetsTable(props: AssetsTableProps) {
     }
   }
 
+  const getAssetNodeById = useEventCallback(
+    (id: AssetId) => assetTree.preorderTraversal().find((node) => node.key === id) ?? null,
+  )
+
   const state = useMemo<AssetsTableState>(
     // The type MUST be here to trigger excess property errors at typecheck time.
     () => ({
@@ -1327,6 +1332,7 @@ function AssetsTable(props: AssetsTableProps) {
       doDelete,
       doRestore,
       doMove,
+      getAssetNodeById,
     }),
     [
       backend,
@@ -1342,6 +1348,7 @@ function AssetsTable(props: AssetsTableProps) {
       doMove,
       hideColumn,
       setQuery,
+      getAssetNodeById,
     ],
   )
 

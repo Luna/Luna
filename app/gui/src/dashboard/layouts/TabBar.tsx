@@ -22,6 +22,7 @@ import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { ProjectState } from '#/services/Backend'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { twJoin } from '#/utilities/tailwindMerge'
 import { motion } from 'framer-motion'
 
 /** Props for a {@link TabBar}. */
@@ -102,34 +103,32 @@ export function Tab(props: TabProps) {
           className="h-full w-full rounded-t-3xl px-4"
           underlayElement={UNDERLAY_ELEMENT}
         >
-          <ariaComponents.Text
-            truncate="1"
-            className="max-w-40"
-            color={isActive || isHovered ? 'primary' : 'disabled'}
+          <div
+            className={twJoin(
+              'relative z-1 flex h-full w-full items-center justify-center gap-3',
+              isSelected || isHovered ? 'text-primary' : 'text-disabled',
+            )}
           >
-            <div className="relative z-1 flex h-full w-full items-center justify-center gap-3">
-              <motion.div
-                variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
-                initial="inactive"
-                animate={!isSelected && isHovered ? 'active' : 'inactive'}
-                className="absolute -inset-x-2.5 inset-y-2 -z-1 rounded-3xl bg-dashboard transition-colors duration-300"
+            <motion.div
+              variants={{ active: { opacity: 1 }, inactive: { opacity: 0 } }}
+              initial="inactive"
+              animate={!isSelected && isHovered ? 'active' : 'inactive'}
+              className="pointer-events-none absolute -inset-x-2.5 inset-y-2 -z-1 rounded-3xl bg-dashboard transition-colors duration-300"
+            />
+            {typeof icon === 'string' ?
+              <SvgMask
+                src={icon}
+                className={tailwindMerge.twJoin(
+                  onClose && 'group-hover:hidden focus-visible:hidden',
+                )}
               />
-              {typeof icon === 'string' ?
-                <SvgMask
-                  src={icon}
-                  className={tailwindMerge.twJoin(
-                    onClose && 'group-hover:hidden focus-visible:hidden',
-                  )}
-                />
-              : icon}
+            : icon}
+            <ariaComponents.Text truncate="1" className="max-w-40" color="current">
               {children}
-              {onClose && (
-                <div className="relative">
-                  <ariaComponents.CloseButton onPress={onClose} />
-                </div>
-              )}
-            </div>
-          </ariaComponents.Text>
+            </ariaComponents.Text>
+
+            {onClose && <ariaComponents.CloseButton onPress={onClose} />}
+          </div>
         </AnimatedBackground.Item>
       )}
     </aria.Tab>

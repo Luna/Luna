@@ -5,7 +5,7 @@ import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type { Category } from '#/layouts/CategorySwitcher/Category'
+import type { Category, CategoryId } from '#/layouts/CategorySwitcher/Category'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
@@ -16,6 +16,7 @@ import type {
   DirectoryId,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { useCategoriesAPI } from '../layouts/Drive/Categories/categoriesHooks'
 
 // ==================
 // === DriveStore ===
@@ -30,8 +31,7 @@ export interface DrivePastePayload {
 
 /** The state of this zustand store. */
 interface DriveStore {
-  readonly category: Category
-  readonly setCategory: (category: Category) => void
+  readonly setCategoryId: (categoryId: CategoryId) => void
   readonly targetDirectory: AssetTreeNode<DirectoryAsset> | null
   readonly setTargetDirectory: (targetDirectory: AssetTreeNode<DirectoryAsset> | null) => void
   readonly newestFolderId: DirectoryId | null
@@ -73,13 +73,15 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
 export default function DriveProvider(props: ProjectsProviderProps) {
   const { children } = props
 
+  const categoriesAPI = useCategoriesAPI()
+
   const [store] = React.useState(() =>
     zustand.createStore<DriveStore>((set, get) => ({
-      category: { type: 'cloud' },
-      setCategory: (category) => {
-        if (get().category !== category) {
+      setCategoryId: (categoryId) => {
+        if (categoriesAPI.category.id !== categoryId) {
+          categoriesAPI.setCategory(categoryId)
+
           set({
-            category,
             targetDirectory: null,
             selectedKeys: EMPTY_SET,
             visuallySelectedKeys: null,
@@ -150,16 +152,35 @@ export function useDriveStore() {
   return store
 }
 
+/** The ID of the category of the Asset Table. */
+export function useCategoryId() {
+  const categoriesAPI = useCategoriesAPI()
+  return categoriesAPI.category.id
+}
+
 /** The category of the Asset Table. */
 export function useCategory() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.category, { unsafeEnableTransition: true })
+  const categoriesAPI = useCategoriesAPI()
+
+  return categoriesAPI.category
+}
+
+/**
+ * A function to set the category of the Asset Table.
+ * @deprecated Use {@link useSetCategoryId} instead.
+ */
+export function useSetCategory() {
+  const driveStore = useDriveStore()
+  return zustand.useStore(driveStore, (state) => state.setCategoryId, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set the category of the Asset Table. */
-export function useSetCategory() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCategory, { unsafeEnableTransition: true })
+export function useSetCategoryId() {
+  const categoriesAPI = useCategoriesAPI()
+
+  return categoriesAPI.setCategory
 }
 
 /** The target directory of the Asset Table selection. */

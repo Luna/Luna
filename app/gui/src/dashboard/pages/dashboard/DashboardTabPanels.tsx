@@ -25,6 +25,7 @@ export interface DashboardTabPanelsProps {
   readonly category: Category
   readonly setCategory: (category: Category) => void
   readonly resetCategory: () => void
+  readonly setCategoryId: (categoryId: Category['id']) => void
 }
 
 /** The tab panels for the dashboard page. */
@@ -37,6 +38,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
     category,
     setCategory,
     resetCategory,
+    setCategoryId,
   } = props
 
   const page = usePage()
@@ -64,6 +66,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
           assetsManagementApiRef={assetManagementApiRef}
           category={category}
           setCategory={setCategory}
+          setCategoryId={setCategoryId}
           resetCategory={resetCategory}
           hidden={page !== TabType.drive}
           initialProjectName={initialProjectName}

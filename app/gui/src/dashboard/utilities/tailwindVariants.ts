@@ -1,5 +1,5 @@
 /** @file `tailwind-variants` with a custom configuration. */
-import type { VariantProps as TvVariantProps } from 'tailwind-variants'
+import type { OmitUndefined } from 'tailwind-variants'
 import { createTV } from 'tailwind-variants'
 
 import { TAILWIND_MERGE_CONFIG } from '#/utilities/tailwindMerge'
@@ -22,10 +22,10 @@ export type ExtractFunction<T> =
 export type TVWithoutExtends<T> = ExtractFunction<T> & Omit<T, 'extend'>
 
 /** Props for a component that uses `tailwind-variants`. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type VariantProps<T extends (...args: any) => any> = Omit<
-  TvVariantProps<T>,
-  'class' | 'className'
-> & {
-  variants?: ExtractFunction<T> | undefined
+// TODO: add support for styling individual slots
+export type VariantProps<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Component extends (...args: any) => any,
+> = Omit<OmitUndefined<Parameters<Component>[0]>, 'class' | 'className'> & {
+  variants?: ExtractFunction<Component> | undefined
 }

@@ -14,6 +14,7 @@ import type * as textProvider from '#/providers/TextProvider'
 import Backend, * as backend from '#/services/Backend'
 import * as remoteBackendPaths from '#/services/remoteBackendPaths'
 
+import { DirectoryId, UserGroupId } from '#/services/Backend'
 import * as download from '#/utilities/download'
 import type HttpClient from '#/utilities/HttpClient'
 import * as object from '#/utilities/object'
@@ -68,8 +69,6 @@ export function extractIdFromUserGroupId(id: backend.UserGroupId) {
 /**
  * Extract the ID from the given organization ID.
  * Removes the `organization-` prefix.
- * @param id - The organization ID.
- * @returns The ID.
  */
 export function extractIdFromOrganizationId(id: backend.OrganizationId) {
   return id.replace(/^organization-/, '')
@@ -78,11 +77,66 @@ export function extractIdFromOrganizationId(id: backend.OrganizationId) {
 /**
  * Extract the ID from the given directory ID.
  * Removes the `directory-` prefix.
- * @param id - The directory ID.
- * @returns The ID.
  */
 export function extractIdFromDirectoryId(id: backend.DirectoryId) {
   return id.replace(/^directory-/, '')
+}
+
+/**
+ * Convert a user group ID to a directory ID.
+ */
+export function userGroupIdToDirectoryId(id: backend.UserGroupId): backend.DirectoryId {
+  return DirectoryId(`directory-${id.replace(/^usergroup-/, '')}` as const)
+}
+
+/**
+ * Convert a user ID to a directory ID.
+ */
+export function userIdToDirectoryId(id: backend.UserId): backend.DirectoryId {
+  return DirectoryId(`directory-${id.replace(/^user-/, '')}` as const)
+}
+
+/**
+ * Convert organization ID to a directory ID
+ */
+export function organizationIdToDirectoryId(id: backend.OrganizationId): backend.DirectoryId {
+  return DirectoryId(`directory-${extractIdFromOrganizationId(id)}` as const)
+}
+
+/**
+ * Convert a directory ID to a user group ID.
+ * @param id - The directory ID.
+ * @returns The user group ID.
+ */
+export function directoryIdToUserGroupId(id: backend.DirectoryId): backend.UserGroupId {
+  return UserGroupId(`usergroup-${id.replace(/^directory-/, '')}` as const)
+}
+
+/**
+ * Whether the given string is a valid organization ID.
+ * @param id - The string to check.
+ * @returns Whether the string is a valid organization ID.
+ */
+export function isOrganizationId(id: string): id is backend.OrganizationId {
+  return id.startsWith('organization-')
+}
+
+/**
+ * Whether the given string is a valid user ID.
+ * @param id - The string to check.
+ * @returns Whether the string is a valid user ID.
+ */
+export function isUserId(id: string): id is backend.UserId {
+  return id.startsWith('user-')
+}
+
+/**
+ * Whether the given string is a valid user group ID.
+ * @param id - The string to check.
+ * @returns Whether the string is a valid user group ID.
+ */
+export function idIsUserGroupId(id: string): id is backend.UserGroupId {
+  return id.startsWith('usergroup-')
 }
 
 // =============
