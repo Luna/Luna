@@ -26,7 +26,7 @@ export class OfflineError extends Error {
    * Create a new {@link OfflineError} with the specified message.
    * @param message - The message to display when the error is thrown.
    */
-  constructor(message: string, options?: ErrorOptions) {
+  constructor(message: string = 'User is offline', options?: ErrorOptions) {
     super(message, options)
     this.name = 'OfflineError'
   }

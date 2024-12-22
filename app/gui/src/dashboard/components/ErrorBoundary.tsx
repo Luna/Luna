@@ -1,4 +1,5 @@
 /** @file Catches errors in child components. */
+import Offline from '#/assets/offline_filled.svg'
 import * as React from 'react'
 
 import * as sentry from '@sentry/react'
@@ -15,6 +16,7 @@ import * as result from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as errorUtils from '#/utilities/error'
 import { OfflineError } from '#/utilities/HttpClient'
+import SvgMask from './SvgMask'
 
 // =====================
 // === ErrorBoundary ===
@@ -131,7 +133,8 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
   const finalSubtitle =
     subtitle ??
     (isOfflineError ? getText('offlineErrorMessage') : getText('arbitraryErrorSubtitle'))
-  const finalStatus = status ?? (isOfflineError ? 'info' : 'error')
+  const finalStatus =
+    status ?? (isOfflineError ? <SvgMask src={Offline} className="aspect-square w-6" /> : 'error')
 
   const defaultRender = (
     <result.Result

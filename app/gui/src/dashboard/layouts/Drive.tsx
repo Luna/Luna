@@ -2,6 +2,7 @@
 import * as React from 'react'
 
 import * as appUtils from '#/appUtils'
+import Offline from '#/assets/offline_filled.svg'
 
 import * as offlineHooks from '#/hooks/offlineHooks'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
@@ -25,6 +26,7 @@ import * as ariaComponents from '#/components/AriaComponents'
 import * as result from '#/components/Result'
 
 import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
+import SvgMask from '#/components/SvgMask'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTargetDirectory } from '#/providers/DriveProvider'
@@ -312,7 +314,7 @@ function OfflineMessage(props: OfflineMessageProps) {
 
   return (
     <result.Result
-      status="info"
+      status={<SvgMask src={Offline} className="aspect-square h-6" />}
       className="my-12"
       centered="horizontal"
       title={getText('cloudUnavailableOffline')}
@@ -321,7 +323,6 @@ function OfflineMessage(props: OfflineMessageProps) {
       {supportLocalBackend && (
         <ariaComponents.Button
           variant="primary"
-          size="small"
           className="mx-auto"
           onPress={() => {
             setCategory({ type: 'local' })
