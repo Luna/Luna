@@ -105,7 +105,7 @@ public final class EnsoLibraryFeature implements Feature {
         }
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
+      ex.printStackTrace(System.err);
       throw new IllegalStateException(ex);
     }
     System.err.println("Summary for polyglot import java:");
