@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
+import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
@@ -43,6 +44,13 @@ public class TestIRProcessorInline {
     var compiler = Compiler.javac().withProcessors(new IRProcessor());
     var compilation = compiler.compile(srcObject);
     CompilationSubject.assertThat(compilation).failed();
+  }
+
+  private static Compilation compile(String src, String name) {
+    var srcObject = JavaFileObjects.forSourceString(name, src);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(srcObject);
+    return compilation;
   }
 
   @Test
@@ -184,6 +192,24 @@ public class TestIRProcessorInline {
         "Generate class has protected constructor with user fields as parameters",
         genClass,
         containsString("protected JNameGen()"));
+  }
+
+  @Test
+  public void annotatedConstructor_CanHaveMetaParameters() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.compiler.core.ir.MetadataStorage;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName(MetadataStorage passData) {}
+        }
+        """;
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).succeeded();
   }
 
   @Test
