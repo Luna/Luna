@@ -2,6 +2,7 @@
 import { useId, useState } from 'react'
 
 import {
+  matchQuery,
   queryOptions,
   useMutation,
   useMutationState,
@@ -11,6 +12,7 @@ import {
   type DefaultError,
   type Mutation,
   type MutationKey,
+  type Query,
   type UseMutationOptions,
   type UseMutationResult,
   type UseQueryOptions,
@@ -68,7 +70,7 @@ const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES
 type DefineBackendMethods<T extends keyof Backend> = T
 
 /** Names of methods corresponding to mutations. */
-export type MutationMethod = DefineBackendMethods<
+export type BackendMutationMethod = DefineBackendMethods<
   | 'acceptInvitation'
   | 'associateTag'
   | 'changeUserGroup'
@@ -112,6 +114,9 @@ export type MutationMethod = DefineBackendMethods<
   | 'uploadUserPicture'
 >
 
+/** Names of methods corresponding to queries. */
+export type BackendQueryMethod = Exclude<BackendMethods, BackendMutationMethod>
+
 /** An identity function to help in constructing options for a mutation. */
 function mutationOptions<
   TData = unknown,
@@ -124,14 +129,14 @@ function mutationOptions<
   return options
 }
 
-export function backendQueryOptions<Method extends BackendMethods>(
+export function backendQueryOptions<Method extends BackendQueryMethod>(
   backend: Backend,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>
-export function backendQueryOptions<Method extends BackendMethods>(
+export function backendQueryOptions<Method extends BackendQueryMethod>(
   backend: Backend | null,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
@@ -139,7 +144,7 @@ export function backendQueryOptions<Method extends BackendMethods>(
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
-export function backendQueryOptions<Method extends BackendMethods>(
+export function backendQueryOptions<Method extends BackendQueryMethod>(
   backend: Backend | null,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
@@ -155,14 +160,14 @@ export function backendQueryOptions<Method extends BackendMethods>(
   })
 }
 
-export function useBackendQuery<Method extends BackendMethods>(
+export function useBackendQuery<Method extends BackendQueryMethod>(
   backend: Backend,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryResult<Awaited<ReturnType<Backend[Method]>>>
-export function useBackendQuery<Method extends BackendMethods>(
+export function useBackendQuery<Method extends BackendQueryMethod>(
   backend: Backend | null,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
@@ -170,7 +175,7 @@ export function useBackendQuery<Method extends BackendMethods>(
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ): UseQueryResult<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
-export function useBackendQuery<Method extends BackendMethods>(
+export function useBackendQuery<Method extends BackendQueryMethod>(
   backend: Backend | null,
   method: Method,
   args: Readonly<Parameters<Backend[Method]>>,
@@ -182,7 +187,7 @@ export function useBackendQuery<Method extends BackendMethods>(
 
 const INVALIDATE_ALL_QUERIES = Symbol('invalidate all queries')
 const INVALIDATION_MAP: Partial<
-  Record<MutationMethod, readonly (BackendMethods | typeof INVALIDATE_ALL_QUERIES)[]>
+  Record<BackendMutationMethod, readonly (BackendQueryMethod | typeof INVALIDATE_ALL_QUERIES)[]>
 > = {
   createUser: ['usersMe'],
   updateUser: ['usersMe'],
@@ -216,13 +221,13 @@ const INVALIDATION_MAP: Partial<
 }
 
 /** The type of the corresponding mutation for the given backend method. */
-export type BackendMutation<Method extends MutationMethod> = Mutation<
+export type BackendMutation<Method extends BackendMutationMethod> = Mutation<
   Awaited<ReturnType<Backend[Method]>>,
   Error,
   Parameters<Backend[Method]>
 >
 
-export function backendMutationOptions<Method extends MutationMethod>(
+export function backendMutationOptions<Method extends BackendMutationMethod>(
   backend: Backend,
   method: Method,
   options?: Omit<
@@ -230,7 +235,7 @@ export function backendMutationOptions<Method extends MutationMethod>(
     'mutationFn'
   >,
 ): UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>
-export function backendMutationOptions<Method extends MutationMethod>(
+export function backendMutationOptions<Method extends BackendMutationMethod>(
   backend: Backend | null,
   method: Method,
   options?: Omit<
@@ -243,7 +248,7 @@ export function backendMutationOptions<Method extends MutationMethod>(
   Parameters<Backend[Method]>
 >
 /** Wrap a backend method call in a React Query Mutation. */
-export function backendMutationOptions<Method extends MutationMethod>(
+export function backendMutationOptions<Method extends BackendMutationMethod>(
   backend: Backend | null,
   method: Method,
   options?: Omit<
@@ -298,6 +303,22 @@ export function useListUserGroupsWithUsers(
   }
 }
 
+/** Return a type predicate for checking whether a query is of the given type. */
+export function tryExtractBackendQuery<Method extends BackendQueryMethod>(method: Method) {
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query: Query<any, any, any, any>,
+  ) => {
+    if (
+      matchQuery({ queryKey: [BackendType.remote, method] }, query) ||
+      matchQuery({ queryKey: [BackendType.local, method] }, query)
+    ) {
+      // eslint-disable-next-line no-restricted-syntax
+      return query as Query<Awaited<ReturnType<Backend[Method]>>>
+    }
+  }
+}
+
 /** Options for {@link listDirectoryQueryOptions}. */
 export interface ListDirectoryQueryOptions {
   readonly backend: Backend
@@ -320,13 +341,13 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         recentProjects: category.type === 'recent',
       },
     ] as const,
-    // Setting stale time to Infinity to attaching a ton of
+    // Setting stale time to `Infinity` avoids attaching a ton of
     // setTimeouts to the query. Improves performance.
-    // Anyways, refetching is handled by another query.
+    // This is fine as refetching is handled by another query.
     staleTime: Infinity,
     queryFn: async () => {
       try {
-        return await backend.listDirectory(
+        const result = await backend.listDirectory(
           {
             parentId,
             filterBy: CATEGORY_TO_FILTER_BY[category.type],
@@ -335,6 +356,7 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
           },
           parentId,
         )
+        return result
       } catch (e) {
         if (e instanceof Error) {
           throw Object.assign(e, { parentId })
@@ -343,7 +365,6 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         }
       }
     },
-
     meta: { persist: false },
   })
 }
@@ -534,7 +555,7 @@ export function useAssetStrict(options: UseAssetOptions) {
 }
 
 /** Return matching in-flight mutations */
-export function useBackendMutationState<Method extends MutationMethod, Result>(
+export function useBackendMutationState<Method extends BackendMutationMethod, Result>(
   backend: Backend,
   method: Method,
   options: {
@@ -1153,7 +1174,7 @@ export function useUploadFileWithToastMutation(
   return mutation
 }
 
-export function useBackendMutation<Method extends MutationMethod>(
+export function useBackendMutation<Method extends BackendMutationMethod>(
   backend: Backend,
   method: Method,
   options?: Omit<
@@ -1161,7 +1182,7 @@ export function useBackendMutation<Method extends MutationMethod>(
     'mutationFn'
   >,
 ): UseMutationResult<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>
-export function useBackendMutation<Method extends MutationMethod>(
+export function useBackendMutation<Method extends BackendMutationMethod>(
   backend: Backend | null,
   method: Method,
   options?: Omit<
@@ -1174,7 +1195,7 @@ export function useBackendMutation<Method extends MutationMethod>(
   Parameters<Backend[Method]>
 >
 /** A memoized mutation for a given backend method. */
-export function useBackendMutation<Method extends MutationMethod>(
+export function useBackendMutation<Method extends BackendMutationMethod>(
   backend: Backend | null,
   method: Method,
   options?: Omit<

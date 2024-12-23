@@ -88,7 +88,7 @@ import LocalBackend from '#/services/LocalBackend'
 import ProjectManager, * as projectManager from '#/services/ProjectManager'
 import RemoteBackend from '#/services/RemoteBackend'
 
-import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
+import { FeatureFlagsProvider, useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
@@ -97,7 +97,9 @@ import { Path } from '#/utilities/path'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
 import { useInitAuthService } from '#/authentication/service'
+import { tryExtractBackendQuery } from '#/hooks/backendHooks'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
+import { BackendType } from 'enso-common/src/services/Backend'
 
 // ============================
 // === Global configuration ===
@@ -539,6 +541,7 @@ function AppRouter(props: AppRouterProps) {
                  * due to modals being in `TheModal`. */}
                 <DriveProvider>
                   <LocalBackendPathSynchronizer />
+                  <QuerySubscriber />
                   <VersionChecker />
                   {routes}
                   <suspense.Suspense>
@@ -556,10 +559,6 @@ function AppRouter(props: AppRouterProps) {
   )
 }
 
-// ====================================
-// === LocalBackendPathSynchronizer ===
-// ====================================
-
 /** Keep `localBackend.rootPath` in sync with the saved root path state. */
 function LocalBackendPathSynchronizer() {
   const [localRootDirectory] = localStorageProvider.useLocalStorageState('localRootDirectory')
@@ -571,5 +570,102 @@ function LocalBackendPathSynchronizer() {
       localBackend.resetRootPath()
     }
   }
+
   return null
+}
+
+// This is a function, even though it does not contain function syntax.
+// eslint-disable-next-line no-restricted-syntax
+const tryExtractListDirectoryQuery = tryExtractBackendQuery('listDirectory')
+
+/** Subscribe to queries to keep them up to date. */
+function QuerySubscriber() {
+  const queryClient = reactQuery.useQueryClient()
+  useRefetchDirectories(BackendType.local)
+  useRefetchDirectories(BackendType.remote)
+
+  React.useEffect(
+    () =>
+      queryClient.getQueryCache().subscribe((change) => {
+        outer: switch (change.type) {
+          case 'added':
+          case 'updated': {
+            if ('action' in change) {
+              switch (change.action.type) {
+                case 'continue':
+                case 'fetch':
+                case 'invalidate':
+                case 'pause':
+                case 'error': {
+                  break outer
+                }
+                case 'failed':
+                case 'setState':
+                case 'success': {
+                  // falls through
+                }
+              }
+            }
+            const query = change.query
+            const listDirectoryQuery = tryExtractListDirectoryQuery(query)
+            if (listDirectoryQuery?.state.data) {
+              for (const asset of listDirectoryQuery.state.data) {
+                // TODO: GC
+                queryClient.setQueryData(
+                  [listDirectoryQuery.queryKey[0], 'getAsset', asset.id],
+                  asset,
+                )
+              }
+            }
+            break
+          }
+          case 'removed':
+          case 'observerAdded':
+          case 'observerRemoved':
+          case 'observerResultsUpdated':
+          case 'observerOptionsUpdated': {
+            // No action needed.
+            break
+          }
+        }
+      }),
+    [queryClient],
+  )
+
+  return null
+}
+
+/** Periodically refetch directories for the given backend type. */
+function useRefetchDirectories(backendType: BackendType) {
+  const queryClient = reactQuery.useQueryClient()
+  const enableAssetsTableBackgroundRefresh = useFeatureFlag('enableAssetsTableBackgroundRefresh')
+  const assetsTableBackgroundRefreshInterval = useFeatureFlag(
+    'assetsTableBackgroundRefreshInterval',
+  )
+
+  // We use a different query to refetch the directory data in the background.
+  // This reduces the amount of rerenders by batching them together, so they happen less often.
+  reactQuery.useQuery({
+    queryKey: [backendType, 'refetchListDirectory'],
+    queryFn: async () => {
+      const anyMatchingMutation = queryClient
+        .getMutationCache()
+        .find({ mutationKey: [backendType], status: 'pending' })
+      if (anyMatchingMutation) {
+        // A mutation is in flight. Skip this re-fetch.
+        return null
+      }
+      await queryClient.refetchQueries({
+        queryKey: [backendType, 'listDirectory'],
+        type: 'active',
+      })
+      return null
+    },
+    refetchInterval:
+      enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
+    refetchOnMount: 'always',
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    meta: { persist: false },
+  })
 }
