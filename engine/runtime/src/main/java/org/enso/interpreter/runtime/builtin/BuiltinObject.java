@@ -40,8 +40,8 @@ public abstract class BuiltinObject extends EnsoObject {
    */
   protected abstract String builtinName();
 
-  protected final Type getBuiltinType() {
-    return GetType.uncached(this);
+  protected final Type getBuiltinType(Node node) {
+    return GetType.uncached(this, node);
   }
 
   /**
@@ -93,8 +93,8 @@ public abstract class BuiltinObject extends EnsoObject {
     }
 
     @Fallback
-    public static Type uncached(BuiltinObject receiver) {
-      var ctx = getCtx(null);
+    public static Type uncached(BuiltinObject receiver, @Bind("$node") Node node) {
+      var ctx = getCtx(node);
       return getBuiltinType(receiver, ctx).getType();
     }
 
