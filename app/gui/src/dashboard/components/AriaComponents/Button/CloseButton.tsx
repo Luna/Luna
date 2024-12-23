@@ -28,7 +28,6 @@ export const CloseButton = memo(function CloseButton(props: CloseButtonProps) {
   return (
     <Button
       variant="icon"
-      // @ts-expect-error ts fails to infer the type of the className prop
       className={(values) =>
         twMerge(
           'hover:bg-red-500/80 focus-visible:bg-red-500/80 focus-visible:outline-offset-1',
@@ -36,6 +35,7 @@ export const CloseButton = memo(function CloseButton(props: CloseButtonProps) {
             'text-primary/90 hover:text-primary focus-visible:text-primary'
           ),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          // @ts-expect-error ts fails to infer the type of the className prop
           typeof className === 'function' ? className(values) : className,
         )
       }
