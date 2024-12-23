@@ -239,14 +239,8 @@ function CategorySwitcher(props: CategorySwitcherProps) {
 
   const itemProps = { currentCategory: category, setCategoryId, dispatchAssetEvent }
 
-  const {
-    cloudCategory,
-    recentCategory,
-    trashCategory,
-    userCategory,
-    teamCategories,
-    otherUsersCategory,
-  } = cloudCategories
+  const { cloudCategory, recentCategory, trashCategory, userCategory, teamCategories } =
+    cloudCategories
   const { localCategory, directories, addDirectory, removeDirectory } = localCategories
 
   return (
@@ -286,21 +280,6 @@ function CategorySwitcher(props: CategorySwitcherProps) {
               dropZoneLabel={getText('myFilesCategoryDropZoneLabel')}
             />
           )}
-
-          {/* Other users spaces */}
-          {otherUsersCategory?.map((otherUserCategory) => (
-            <CategorySwitcherItem
-              key={otherUserCategory.id}
-              {...itemProps}
-              isNested
-              category={otherUserCategory}
-              icon={otherUserCategory.icon}
-              label={otherUserCategory.label}
-              isDisabled={isOffline}
-              buttonLabel={getText('userCategoryButtonLabel', otherUserCategory.user.name)}
-              dropZoneLabel={getText('userCategoryDropZoneLabel', otherUserCategory.user.name)}
-            />
-          ))}
 
           {teamCategories?.map((teamCategory) => (
             <CategorySwitcherItem
