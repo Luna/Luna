@@ -100,7 +100,7 @@ ecosystem is to download it (including is **transitive dependencies**) from
 libraries. Let's **start from scratch** by creating an _empty Enso project_:
 
 ```bash
-$ bin/ensoup --new polydemo
+$ bin/enso --new polydemo
 $ cd polydemo
 polydemo$ find .
 .
