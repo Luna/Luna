@@ -49,6 +49,7 @@ public final class AtomConstructor extends EnsoObject {
   private final Module definitionModule;
   private final boolean builtin;
   private @CompilerDirectives.CompilationFinal Atom cachedInstance;
+  private @CompilerDirectives.CompilationFinal(dimensions = 1) String[] fieldNames;
   private @CompilerDirectives.CompilationFinal Supplier<Function> constructorFunction;
   private @CompilerDirectives.CompilationFinal Function accessor;
 
@@ -134,14 +135,16 @@ public final class AtomConstructor extends EnsoObject {
   public AtomConstructor initializeFields(
       EnsoLanguage language, ModuleScope.Builder scopeBuilder, ArgumentDefinition... args) {
     ExpressionNode[] reads = new ExpressionNode[args.length];
+    String[] fieldNames = new String[args.length];
     for (int i = 0; i < args.length; i++) {
       reads[i] = ReadArgumentNode.build(i, null);
+      fieldNames[i] = args[i].getName();
     }
 
     var parts =
         new InitializationParts(
             null, LocalScope.empty(), new ExpressionNode[0], reads, new Annotation[0], args);
-    return initializeFields(language, scopeBuilder, CachingSupplier.forValue(parts), args.length);
+    return initializeFields(language, scopeBuilder, CachingSupplier.forValue(parts), fieldNames);
   }
 
   /**
@@ -157,10 +160,11 @@ public final class AtomConstructor extends EnsoObject {
       EnsoLanguage language,
       ModuleScope.Builder scopeBuilder,
       Supplier<InitializationParts> initializationPartsSupplier,
-      int argumentsLength) {
+      String[] fieldNames) {
     CompilerDirectives.transferToInterpreterAndInvalidate();
     assert accessor == null : "Don't initialize twice: " + this.name;
-    if (argumentsLength == 0) {
+    this.fieldNames = fieldNames;
+    if (fieldNames.length == 0) {
       cachedInstance = BoxingAtom.singleton(this);
     } else {
       cachedInstance = null;
@@ -321,6 +325,15 @@ public final class AtomConstructor extends EnsoObject {
   }
 
   /**
+   * Gets the constructor function of this constructor.
+   *
+   * @return the constructor function of this constructor.
+   */
+  public Supplier<Function> getConstructorFunctionSupplier() {
+    return constructorFunction;
+  }
+
+  /**
    * Gets the qualified accessor function of this constructor.
    *
    * @return the accessor function of this constructor.
@@ -361,9 +374,10 @@ public final class AtomConstructor extends EnsoObject {
       // take just the first one.
       var moduleScope = constructors.iterator().next().getDefinitionScope();
       for (var cons : constructors) {
-        for (var field : cons.getFields()) {
-          var items = names.computeIfAbsent(field.getName(), (k) -> new ArrayList<>());
-          items.add(new GetFieldWithMatchNode.GetterPair(cons, field.getPosition()));
+        var fieldNames = cons.getFieldNames();
+        for (var i = 0; i < fieldNames.length; i++) {
+          var items = names.computeIfAbsent(fieldNames[i], (k) -> new ArrayList<>());
+          items.add(new GetFieldWithMatchNode.GetterPair(cons, i));
         }
       }
       for (var entry : names.entrySet()) {
@@ -487,6 +501,15 @@ public final class AtomConstructor extends EnsoObject {
    */
   public ArgumentDefinition[] getFields() {
     return constructorFunction.get().getSchema().getArgumentInfos();
+  }
+
+  /**
+   * Names of this constructor fields.
+   *
+   * @return the field names defined by this constructor.
+   */
+  public String[] getFieldNames() {
+    return fieldNames;
   }
 
   /**

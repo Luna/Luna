@@ -268,7 +268,6 @@ class IrToTruffle(
     atomCons: AtomConstructor,
     atomDefn: Definition.Data
   ): Unit = {
-    val argumentsLength = atomDefn.arguments.size;
     val initializationPartsSupplier: Supplier[InitializationParts] =
       () => {
         val scopeInfo = rootScopeInfo("atom definition", atomDefn)
@@ -295,7 +294,7 @@ class IrToTruffle(
             initialName = "Type " + tpDef.name.name
           )
         val argDefs =
-          new Array[ArgumentDefinition](argumentsLength)
+          new Array[ArgumentDefinition](atomDefn.arguments.size)
         val argumentExpressions =
           new ArrayBuffer[(RuntimeExpression, RuntimeExpression)]
 
@@ -367,11 +366,12 @@ class IrToTruffle(
         )
       }
     if (!atomCons.isInitialized) {
+      val fieldNames = atomDefn.arguments.map(_.name.name).toArray
       atomCons.initializeFields(
         language,
         scopeBuilder,
         initializationPartsSupplier,
-        argumentsLength
+        fieldNames
       )
     }
   }
