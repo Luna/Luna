@@ -97,7 +97,6 @@ import { Path } from '#/utilities/path'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
 import { useInitAuthService } from '#/authentication/service'
-import { tryExtractBackendQuery } from '#/hooks/backendHooks'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
 import { BackendType } from 'enso-common/src/services/Backend'
 
@@ -574,63 +573,10 @@ function LocalBackendPathSynchronizer() {
   return null
 }
 
-// This is a function, even though it does not contain function syntax.
-// eslint-disable-next-line no-restricted-syntax
-const tryExtractListDirectoryQuery = tryExtractBackendQuery('listDirectory')
-
 /** Subscribe to queries to keep them up to date. */
 function QuerySubscriber() {
-  const queryClient = reactQuery.useQueryClient()
   useRefetchDirectories(BackendType.local)
   useRefetchDirectories(BackendType.remote)
-
-  React.useEffect(
-    () =>
-      queryClient.getQueryCache().subscribe((change) => {
-        outer: switch (change.type) {
-          case 'added':
-          case 'updated': {
-            if ('action' in change) {
-              switch (change.action.type) {
-                case 'continue':
-                case 'fetch':
-                case 'invalidate':
-                case 'pause':
-                case 'error': {
-                  break outer
-                }
-                case 'failed':
-                case 'setState':
-                case 'success': {
-                  // falls through
-                }
-              }
-            }
-            const query = change.query
-            const listDirectoryQuery = tryExtractListDirectoryQuery(query)
-            if (listDirectoryQuery?.state.data) {
-              for (const asset of listDirectoryQuery.state.data) {
-                // TODO: GC
-                queryClient.setQueryData(
-                  [listDirectoryQuery.queryKey[0], 'getAsset', asset.id],
-                  asset,
-                )
-              }
-            }
-            break
-          }
-          case 'removed':
-          case 'observerAdded':
-          case 'observerRemoved':
-          case 'observerResultsUpdated':
-          case 'observerOptionsUpdated': {
-            // No action needed.
-            break
-          }
-        }
-      }),
-    [queryClient],
-  )
 
   return null
 }

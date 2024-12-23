@@ -2,7 +2,6 @@
 import { useId, useState } from 'react'
 
 import {
-  matchQuery,
   queryOptions,
   useMutation,
   useMutationState,
@@ -12,7 +11,6 @@ import {
   type DefaultError,
   type Mutation,
   type MutationKey,
-  type Query,
   type UseMutationOptions,
   type UseMutationResult,
   type UseQueryOptions,
@@ -300,22 +298,6 @@ export function useListUserGroupsWithUsers(
       return { ...userGroup, users: usersInGroup }
     })
     return result
-  }
-}
-
-/** Return a type predicate for checking whether a query is of the given type. */
-export function tryExtractBackendQuery<Method extends BackendQueryMethod>(method: Method) {
-  return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    query: Query<any, any, any, any>,
-  ) => {
-    if (
-      matchQuery({ queryKey: [BackendType.remote, method] }, query) ||
-      matchQuery({ queryKey: [BackendType.local, method] }, query)
-    ) {
-      // eslint-disable-next-line no-restricted-syntax
-      return query as Query<Awaited<ReturnType<Backend[Method]>>>
-    }
   }
 }
 
