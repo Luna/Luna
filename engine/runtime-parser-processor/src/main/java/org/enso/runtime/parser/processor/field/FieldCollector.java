@@ -3,6 +3,7 @@ package org.enso.runtime.parser.processor.field;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -19,12 +20,32 @@ import org.enso.runtime.parser.processor.utils.Utils;
 public final class FieldCollector {
   private final ProcessingEnvironment processingEnv;
   private final ProcessedClass processedClass;
+  private final TypeElement metadataStorageType;
+  private final TypeElement diagnosticStorageType;
+  private final TypeElement identifiedLocationType;
+  private final TypeElement uuidType;
+
   // Mapped by field name
   private Map<String, Field> fields;
 
   public FieldCollector(ProcessingEnvironment processingEnv, ProcessedClass processedClass) {
     this.processingEnv = processingEnv;
     this.processedClass = processedClass;
+    this.metadataStorageType =
+        processingEnv.getElementUtils().getTypeElement("org.enso.compiler.core.ir.MetadataStorage");
+    this.diagnosticStorageType =
+        processingEnv
+            .getElementUtils()
+            .getTypeElement("org.enso.compiler.core.ir.DiagnosticStorage");
+    this.identifiedLocationType =
+        processingEnv
+            .getElementUtils()
+            .getTypeElement("org.enso.compiler.core.ir.IdentifiedLocation");
+    this.uuidType = processingEnv.getElementUtils().getTypeElement("java.util.UUID");
+    Objects.requireNonNull(metadataStorageType);
+    Objects.requireNonNull(diagnosticStorageType);
+    Objects.requireNonNull(identifiedLocationType);
+    Objects.requireNonNull(uuidType);
   }
 
   public List<Field> collectFields() {
@@ -46,6 +67,8 @@ public final class FieldCollector {
         field = processIrField(param, irFieldAnnot);
       } else if (irChildAnnot != null) {
         field = processIrChild(param, irChildAnnot);
+      } else if (Utils.hasNoAnnotations(param) && isMeta(param)) {
+        field = null;
       } else {
         var errMsg =
             "Constructor parameter "
@@ -55,9 +78,18 @@ public final class FieldCollector {
         throw new IllegalStateException(errMsg);
       }
 
-      assert field != null;
-      fields.put(paramName, field);
+      if (field != null) {
+        fields.put(paramName, field);
+      }
     }
+  }
+
+  private boolean isMeta(VariableElement param) {
+    var typeUtils = processingEnv.getTypeUtils();
+    return typeUtils.isSameType(param.asType(), metadataStorageType.asType())
+        || typeUtils.isSameType(param.asType(), diagnosticStorageType.asType())
+        || typeUtils.isSameType(param.asType(), identifiedLocationType.asType())
+        || typeUtils.isSameType(param.asType(), uuidType.asType());
   }
 
   private Field processIrField(VariableElement param, IRField irFieldAnnot) {
