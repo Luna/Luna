@@ -36,7 +36,8 @@ import {
 } from '#/services/RemoteBackend'
 import { getFileName } from '#/utilities/fileInfo'
 import LocalStorage from '#/utilities/LocalStorage'
-import { createContext, useContext, type PropsWithChildren } from 'react'
+import type { ReactNode } from 'react'
+import { createContext, useContext } from 'react'
 import invariant from 'tiny-invariant'
 import { z } from 'zod'
 import type {
@@ -115,31 +116,12 @@ export function useCloudCategoryList() {
     trashCategory,
   ]
 
-  const { data: allUserGroups } = useSuspenseQuery({
-    ...backendQueryOptions(remoteBackend, 'listUserGroups', []),
-    select: (groups) => {
-      // Additionally ensure that if user doesn't have access to user groups,
-      // we explicitly return null.
-      if (groups.length === 0 || !hasUserAndTeamSpaces) {
-        return null
-      }
+  const { data: allUserGroupsRaw } = useSuspenseQuery(
+    backendQueryOptions(remoteBackend, 'listUserGroups', []),
+  )
 
-      return groups
-    },
-  })
-
-  // const { data: otherUsers } = useSuspenseQuery({
-  //   ...backendQueryOptions(remoteBackend, 'listUsers', []),
-  //   select: (users) => {
-  //     // Additionally ensure that if user doesn't have access to other users,
-  //     // we explicitly return null.
-  //     if (users.length === 0 || !hasUserAndTeamSpaces) {
-  //       return null
-  //     }
-
-  //     return users.filter((anyUser) => anyUser.userId !== userId)
-  //   },
-  // })
+  const allUserGroups =
+    allUserGroupsRaw.length === 0 || !hasUserAndTeamSpaces ? null : allUserGroupsRaw
 
   const userSpace: UserCategory | null =
     hasUserAndTeamSpaces ?
@@ -153,20 +135,6 @@ export function useCloudCategoryList() {
         icon: PersonIcon,
       }
     : null
-
-  // Temporary disabled as even org admins do not have access to the other user's spaces
-  // This is fine as we don't want to narrow the type
-  // eslint-disable-next-line no-restricted-syntax
-  const otherUserSpaces = null as UserCategory[] | null
-  // otherUsers?.map<UserCategory>((otherUser) => ({
-  //   type: 'user',
-  //   id: otherUser.userId,
-  //   user: otherUser,
-  //   rootPath: Path(`enso://Users/${otherUser.name}`),
-  //   homeDirectoryId: userIdToDirectoryId(otherUser.userId),
-  //   label: getText('userCategory', otherUser.name),
-  //   icon: PersonIcon,
-  // })) ?? null
 
   const doesHaveUserGroups =
     user.userGroups != null && user.userGroups.length > 0 && allUserGroups != null
@@ -196,7 +164,6 @@ export function useCloudCategoryList() {
   const categories = [
     ...predefinedCloudCategories,
     ...(userSpace != null ? [userSpace] : []),
-    ...(otherUserSpaces != null ? [...otherUserSpaces] : []),
     ...(userGroupDynamicCategories != null ? [...userGroupDynamicCategories] : []),
   ] as const
 
@@ -231,7 +198,6 @@ export function useCloudCategoryList() {
     recentCategory,
     trashCategory,
     userCategory: userSpace,
-    otherUsersCategory: otherUserSpaces,
     teamCategories: userGroupDynamicCategories,
     getCategoryById,
     getCategoriesByType,
@@ -361,9 +327,16 @@ interface CategoriesContextValue {
 const CategoriesContext = createContext<CategoriesContextValue | null>(null)
 
 /**
+ * Props for the {@link CategoriesProvider}.
+ */
+export interface CategoriesProviderProps {
+  readonly children: ReactNode | ((contextValue: CategoriesContextValue) => ReactNode)
+}
+
+/**
  * Provider for the categories.
  */
-export function CategoriesProvider(props: PropsWithChildren) {
+export function CategoriesProvider(props: CategoriesProviderProps): React.JSX.Element {
   const { children } = props
 
   const { cloudCategories, localCategories, findCategoryById } = useCategories()
@@ -394,21 +367,21 @@ export function CategoriesProvider(props: PropsWithChildren) {
   // We reset the category to the default one
   if (category == null) {
     resetCategoryId(true)
-    return null
+    return <></>
   }
 
+  const contextValue = {
+    cloudCategories,
+    localCategories,
+    category,
+    setCategory: setCategoryId,
+    resetCategory: resetCategoryId,
+    associatedBackend: backend,
+  } satisfies CategoriesContextValue
+
   return (
-    <CategoriesContext.Provider
-      value={{
-        cloudCategories,
-        localCategories,
-        category,
-        setCategory: setCategoryId,
-        resetCategory: resetCategoryId,
-        associatedBackend: backend,
-      }}
-    >
-      {children}
+    <CategoriesContext.Provider value={contextValue}>
+      {typeof children === 'function' ? children(contextValue) : children}
     </CategoriesContext.Provider>
   )
 }

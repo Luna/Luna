@@ -16,7 +16,6 @@ import type {
   DirectoryId,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
-import { useCategoriesAPI } from '../layouts/Drive/Categories/categoriesHooks'
 
 // ==================
 // === DriveStore ===
@@ -31,7 +30,7 @@ export interface DrivePastePayload {
 
 /** The state of this zustand store. */
 interface DriveStore {
-  readonly setCategoryId: (categoryId: CategoryId) => void
+  readonly resetAssetTableState: () => void
   readonly targetDirectory: AssetTreeNode<DirectoryAsset> | null
   readonly setTargetDirectory: (targetDirectory: AssetTreeNode<DirectoryAsset> | null) => void
   readonly newestFolderId: DirectoryId | null
@@ -60,7 +59,9 @@ export type ProjectsContextType = zustand.StoreApi<DriveStore>
 const DriveContext = React.createContext<ProjectsContextType | null>(null)
 
 /** Props for a {@link DriveProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
+export type ProjectsProviderProps = Readonly<React.PropsWithChildren> & {
+  readonly currentCategoryId: CategoryId
+}
 
 // ========================
 // === ProjectsProvider ===
@@ -71,23 +72,17 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
  * containing the current element is focused.
  */
 export default function DriveProvider(props: ProjectsProviderProps) {
-  const { children } = props
-
-  const categoriesAPI = useCategoriesAPI()
+  const { children, currentCategoryId } = props
 
   const [store] = React.useState(() =>
     zustand.createStore<DriveStore>((set, get) => ({
-      setCategoryId: (categoryId) => {
-        if (categoriesAPI.category.id !== categoryId) {
-          categoriesAPI.setCategory(categoryId)
-
-          set({
-            targetDirectory: null,
-            selectedKeys: EMPTY_SET,
-            visuallySelectedKeys: null,
-            expandedDirectoryIds: EMPTY_ARRAY,
-          })
-        }
+      resetAssetTableState: () => {
+        set({
+          targetDirectory: null,
+          selectedKeys: EMPTY_SET,
+          visuallySelectedKeys: null,
+          expandedDirectoryIds: EMPTY_ARRAY,
+        })
       },
       targetDirectory: null,
       setTargetDirectory: (targetDirectory) => {
@@ -140,6 +135,13 @@ export default function DriveProvider(props: ProjectsProviderProps) {
     })),
   )
 
+  // Reset the asset table state when the category changes
+  // TODO: This is a bit of a hack, but should stay for now. Eventually we should just recreate the store
+  // when the category changes.
+  React.useEffect(() => {
+    store.getState().resetAssetTableState()
+  }, [currentCategoryId, store])
+
   return <DriveContext.Provider value={store}>{children}</DriveContext.Provider>
 }
 
@@ -150,37 +152,6 @@ export function useDriveStore() {
   invariant(store, 'Drive store can only be used inside an `DriveProvider`.')
 
   return store
-}
-
-/** The ID of the category of the Asset Table. */
-export function useCategoryId() {
-  const categoriesAPI = useCategoriesAPI()
-  return categoriesAPI.category.id
-}
-
-/** The category of the Asset Table. */
-export function useCategory() {
-  const categoriesAPI = useCategoriesAPI()
-
-  return categoriesAPI.category
-}
-
-/**
- * A function to set the category of the Asset Table.
- * @deprecated Use {@link useSetCategoryId} instead.
- */
-export function useSetCategory() {
-  const driveStore = useDriveStore()
-  return zustand.useStore(driveStore, (state) => state.setCategoryId, {
-    unsafeEnableTransition: true,
-  })
-}
-
-/** A function to set the category of the Asset Table. */
-export function useSetCategoryId() {
-  const categoriesAPI = useCategoriesAPI()
-
-  return categoriesAPI.setCategory
 }
 
 /** The target directory of the Asset Table selection. */

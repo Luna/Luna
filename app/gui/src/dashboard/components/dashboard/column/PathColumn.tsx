@@ -4,14 +4,10 @@ import FolderArrowIcon from '#/assets/folder_arrow.svg'
 import { Button, Popover } from '#/components/AriaComponents'
 import SvgMask from '#/components/SvgMask'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
+import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import {
-  useSetCategoryId,
-  useSetExpandedDirectoryIds,
-  useSetSelectedKeys,
-} from '#/providers/DriveProvider'
+import { useSetExpandedDirectoryIds, useSetSelectedKeys } from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
 import { useTransition } from 'react'
@@ -26,7 +22,7 @@ export default function PathColumn(props: AssetColumnProps) {
 
   const { getAssetNodeById } = state
 
-  const setCategory = useSetCategoryId()
+  const { setCategory } = useCategoriesAPI()
   const setSelectedKeys = useSetSelectedKeys()
   const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 

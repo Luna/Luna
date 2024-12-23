@@ -72,13 +72,15 @@ export default function Dashboard(props: DashboardProps) {
     <CategoriesProvider>
       {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
        * due to modals being in `TheModal`. */}
-      <DriveProvider>
-        <EventListProvider>
-          <ProjectsProvider>
-            <DashboardInner {...props} />
-          </ProjectsProvider>
-        </EventListProvider>
-      </DriveProvider>
+      {({ category }) => (
+        <DriveProvider currentCategoryId={category.id}>
+          <EventListProvider>
+            <ProjectsProvider>
+              <DashboardInner {...props} />
+            </ProjectsProvider>
+          </EventListProvider>
+        </DriveProvider>
+      )}
     </CategoriesProvider>
   )
 }
