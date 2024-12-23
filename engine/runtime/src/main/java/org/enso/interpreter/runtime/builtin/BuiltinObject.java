@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime.builtin;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -98,6 +99,7 @@ public abstract class BuiltinObject extends EnsoObject {
       return getBuiltinType(receiver, ctx).getType();
     }
 
+    @TruffleBoundary
     public static Builtin getBuiltinType(BuiltinObject receiver, EnsoContext ctx) {
       return ctx.getBuiltins().getBuiltinType(receiver.builtinName());
     }
