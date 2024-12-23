@@ -1,7 +1,7 @@
 /** @file A hook to return the asset tree. */
 import { useMemo } from 'react'
 
-import { useIsFetching, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsFetching, useQueries, useQueryClient } from '@tanstack/react-query'
 
 import type { DirectoryId } from 'enso-common/src/services/Backend'
 import {
@@ -19,7 +19,6 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
-import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import AssetTreeNode, { type AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 
 /** Return type of the query function for the `listDirectory` query. */
@@ -40,11 +39,6 @@ export function useAssetTree(options: UseAssetTreeOptions) {
   const { user } = useFullUserSession()
 
   const backend = useBackend(category)
-
-  const enableAssetsTableBackgroundRefresh = useFeatureFlag('enableAssetsTableBackgroundRefresh')
-  const assetsTableBackgroundRefreshInterval = useFeatureFlag(
-    'assetsTableBackgroundRefreshInterval',
-  )
 
   const directories = useQueries({
     // We query only expanded directories, as we don't want to load the data for directories that are not visible.
@@ -84,37 +78,6 @@ export function useAssetTree(options: UseAssetTreeOptions) {
   })
 
   const queryClient = useQueryClient()
-
-  // We use a different query to refetch the directory data in the background.
-  // This reduces the amount of rerenders by batching them together, so they happen less often.
-  const { refetch } = useQuery({
-    queryKey: [backend.type, 'refetchListDirectory'],
-    queryFn: async () => {
-      const anyMatchingMutation = queryClient
-        .getMutationCache()
-        .find({ mutationKey: [backend.type], status: 'pending' })
-      if (anyMatchingMutation) {
-        // A mutation is in flight. Skip this re-fetch.
-        return null
-      }
-      await queryClient.refetchQueries({
-        queryKey: [backend.type, 'listDirectory'],
-        type: 'active',
-      })
-      return null
-    },
-    refetchInterval:
-      enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
-    refetchOnMount: 'always',
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    enabled: !hidden,
-    meta: { persist: false },
-  })
-
-  const refetchAllDirectories = useEventCallback(() => {
-    return refetch()
-  })
 
   /** Refetch the directory data for a given directory. */
   const refetchDirectory = useEventCallback((directoryId: DirectoryId) => {
@@ -212,6 +175,5 @@ export function useAssetTree(options: UseAssetTreeOptions) {
     assetTree,
     isFetching,
     refetchDirectory,
-    refetchAllDirectories,
   } as const
 }
