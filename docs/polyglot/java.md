@@ -44,8 +44,8 @@ The dynamic polyglot system is a dynamic runtime lookup for Java objects,
 allowing Enso code to work with them through a runtime reflection-style
 mechanism. It is comprised of the following components:
 
-- `Java.lookup_class : Text -> Any`: A function that lets users
-  look up a class by a given name on the runtime classpath.
+- `Java.lookup_class : Text -> Any`: A function that lets users look up a class
+  by a given name on the runtime classpath.
 - A whole host of functions on the polyglot type that let you dynamically work
   with object bindings.
 
@@ -66,19 +66,31 @@ main =
 > - Expand on the detail when there is time.
 
 ## Native libraries
-Java can load native libraries using, e.g., the [System.loadLibrary](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#loadLibrary(java.lang.String))
-or [ClassLoader.findLibrary](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#findLibrary(java.lang.String))
-methods.
-If a Java method loaded from the `polyglot/java` directory in project `Proj` tries to load a
-native library via one of the aforementioned mechanisms, the runtime system will look for the
-native library in the `polyglot/lib` directory within the project `Proj`.
-The algorithm used to search for the native libraries within the `polyglot/lib` directory hierarchy conforms to the [NetBeans JNI specification](https://bits.netbeans.org/23/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html#jni).
-The runtime system implements this by overriding the [ClassLoader.findLibrary](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#findLibrary(java.lang.String))
+
+Java can load native libraries using, e.g., the
+[System.loadLibrary](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/System.html#loadLibrary(java.lang.String)>)
+or
+[ClassLoader.findLibrary](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#findLibrary(java.lang.String)>)
+methods. If a Java method loaded from the `polyglot/java` directory in project
+`Proj` tries to load a native library via one of the aforementioned mechanisms,
+the runtime system will look for the native library in the `polyglot/lib`
+directory within the project `Proj`. The runtime system implements this by
+overriding the
+[ClassLoader.findLibrary](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html#findLibrary(java.lang.String)>)
 method on the `ClassLoader` used to load the Java class.
 
-Only the `polyglot/lib` directory within the project is searched for the native libraries.
-This means that the native library search path is effectively _isolated_ for every project.
+The algorithm used to search for the native libraries within the `polyglot/lib`
+directory hierarchy conforms to the
+[NetBeans JNI specification](https://bits.netbeans.org/23/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html#jni):
+Lookup of library with name `native` works roughly in these steps:
 
+- Add platform-specific prefix and/or suffix to the library name, e.g.,
+  `libnative.so` on Linux.
+- Search for the library in the `polyglot/lib` directory.
+- Search for the library in the `polyglot/lib/<arch>` directory, where `<arch>`
+  is the name of the architecture.
+- Search for the library in the `polyglot/lib/<arch>/<os>` directory, where
+  `<os>` is the name of the operating system.
 
 ## Download a Java Library from Maven Central
 
