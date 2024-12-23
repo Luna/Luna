@@ -53,7 +53,7 @@ public final class AtomConstructor extends EnsoObject {
   private @CompilerDirectives.CompilationFinal Function accessor;
 
   private final Lock layoutsLock = new ReentrantLock();
-  private @CompilerDirectives.CompilationFinal Layout boxedLayout;
+  private @CompilerDirectives.CompilationFinal Supplier<Layout> boxedLayout;
   private Layout[] unboxingLayouts = new Layout[0];
 
   private final Type type;
@@ -92,12 +92,38 @@ public final class AtomConstructor extends EnsoObject {
    * @return {@code true} if {@link #initializeFields} method has already been called
    */
   public boolean isInitialized() {
-    return boxedLayout != null;
+    return accessor != null;
   }
 
   boolean isBuiltin() {
     return builtin;
   }
+
+  /**
+   * Building blocks required for initialization of the atom constructor.
+   *
+   * @param section the source section
+   * @param localScope the description of the local scope
+   * @param assignments the expressions that evaluate and assign constructor arguments to local vars
+   * @param varReads the expressions that read field values from local vars
+   * @param annotations the list of attached annotations
+   * @param args the list of argument definitions
+   */
+  public record InitializationParts(
+      SourceSection section,
+      LocalScope localScope,
+      ExpressionNode[] assignments,
+      ExpressionNode[] varReads,
+      Annotation[] annotations,
+      ArgumentDefinition[] args) {}
+
+  /**
+   * The result of this atom constructor initialization.
+   *
+   * @param constructorFunction the atom constructor function
+   * @param layout the atom layout
+   */
+  private record InitializationResult(Function constructorFunction, Layout layout) {}
 
   /**
    * Generates a constructor function for this {@link AtomConstructor}. Note that such manually
@@ -111,55 +137,56 @@ public final class AtomConstructor extends EnsoObject {
     for (int i = 0; i < args.length; i++) {
       reads[i] = ReadArgumentNode.build(i, null);
     }
-    return initializeFields(
-        language,
-        null,
-        LocalScope.empty(),
-        scopeBuilder,
-        new ExpressionNode[0],
-        reads,
-        new Annotation[0],
-        args);
+
+    var parts =
+        new InitializationParts(
+            null, LocalScope.empty(), new ExpressionNode[0], reads, new Annotation[0], args);
+    return initializeFields(language, scopeBuilder, CachingSupplier.forValue(parts), args.length);
   }
 
   /**
    * Sets the fields of this {@link AtomConstructor} and generates a constructor function.
    *
-   * @param localScope a description of the local scope
-   * @param assignments the expressions that evaluate and assign constructor arguments to local vars
+   * @param language the language implementation
    * @param scopeBuilder the module scope's builder where the accessor should be registered at
-   * @param varReads the expressions that read field values from local vars
+   * @param initializationPartsSupplier the function supplying the parts required for initialization
+   * @param argumentsLength the number of the arguments
    * @return {@code this}, for convenience
    */
   public AtomConstructor initializeFields(
       EnsoLanguage language,
-      SourceSection section,
-      LocalScope localScope,
       ModuleScope.Builder scopeBuilder,
-      ExpressionNode[] assignments,
-      ExpressionNode[] varReads,
-      Annotation[] annotations,
-      ArgumentDefinition... args) {
+      Supplier<InitializationParts> initializationPartsSupplier,
+      int argumentsLength) {
     CompilerDirectives.transferToInterpreterAndInvalidate();
-    assert boxedLayout == null : "Don't initialize twice: " + this.name;
-    if (args.length == 0) {
+    assert accessor == null : "Don't initialize twice: " + this.name;
+    if (argumentsLength == 0) {
       cachedInstance = BoxingAtom.singleton(this);
     } else {
       cachedInstance = null;
     }
-    boxedLayout = Layout.createBoxed(args);
-    Supplier<Function> constructorFunctionSupplier =
-        () ->
-            buildConstructorFunction(
-                language,
-                section,
-                localScope,
-                scopeBuilder,
-                assignments,
-                varReads,
-                annotations,
-                args);
-    this.constructorFunction = CachingSupplier.wrap(constructorFunctionSupplier);
+    CachingSupplier<InitializationResult> initializationResultSupplier =
+        CachingSupplier.wrap(
+            () -> {
+              var parts = initializationPartsSupplier.get();
+              var constructorFunction =
+                  buildConstructorFunction(
+                      language,
+                      parts.section,
+                      parts.localScope,
+                      scopeBuilder,
+                      parts.assignments,
+                      parts.varReads,
+                      parts.annotations,
+                      parts.args);
+              var layout = Layout.createBoxed(parts.args);
+              return new InitializationResult(constructorFunction, layout);
+            });
+    this.boxedLayout =
+        initializationResultSupplier.map(initializationResult -> initializationResult.layout);
+    this.constructorFunction =
+        initializationResultSupplier.map(
+            initializationResult -> initializationResult.constructorFunction);
     this.accessor = generateQualifiedAccessor(language, scopeBuilder);
     return this;
   }
@@ -368,7 +395,7 @@ public final class AtomConstructor extends EnsoObject {
   }
 
   final Layout getBoxedLayout() {
-    return boxedLayout;
+    return boxedLayout.get();
   }
 
   /**
