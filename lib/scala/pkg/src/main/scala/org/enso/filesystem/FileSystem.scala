@@ -150,6 +150,8 @@ trait FileSystem[F] {
 
 object FileSystem {
 
+  val defaultFs = Default
+
   /** Exposes [[FileSystem]] operations through method call syntax.
     * All methods have the same semantics as the corresponding [[FileSystem]]
     * methods.
