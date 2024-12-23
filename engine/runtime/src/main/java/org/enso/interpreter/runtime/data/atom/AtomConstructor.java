@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import org.enso.compiler.context.LocalScope;
 import org.enso.interpreter.EnsoLanguage;
 import org.enso.interpreter.node.ExpressionNode;
@@ -33,6 +34,7 @@ import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.scope.ModuleScope;
+import org.enso.interpreter.runtime.util.CachingSupplier;
 import org.enso.pkg.QualifiedName;
 
 /**
@@ -47,7 +49,7 @@ public final class AtomConstructor extends EnsoObject {
   private final Module definitionModule;
   private final boolean builtin;
   private @CompilerDirectives.CompilationFinal Atom cachedInstance;
-  private @CompilerDirectives.CompilationFinal Function constructorFunction;
+  private @CompilerDirectives.CompilationFinal Supplier<Function> constructorFunction;
   private @CompilerDirectives.CompilationFinal Function accessor;
 
   private final Lock layoutsLock = new ReentrantLock();
@@ -90,7 +92,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return {@code true} if {@link #initializeFields} method has already been called
    */
   public boolean isInitialized() {
-    return constructorFunction != null;
+    return boxedLayout != null;
   }
 
   boolean isBuiltin() {
@@ -146,9 +148,18 @@ public final class AtomConstructor extends EnsoObject {
       cachedInstance = null;
     }
     boxedLayout = Layout.createBoxed(args);
-    this.constructorFunction =
-        buildConstructorFunction(
-            language, section, localScope, scopeBuilder, assignments, varReads, annotations, args);
+    Supplier<Function> constructorFunctionSupplier =
+        () ->
+            buildConstructorFunction(
+                language,
+                section,
+                localScope,
+                scopeBuilder,
+                assignments,
+                varReads,
+                annotations,
+                args);
+    this.constructorFunction = CachingSupplier.wrap(constructorFunctionSupplier);
     this.accessor = generateQualifiedAccessor(language, scopeBuilder);
     return this;
   }
@@ -244,7 +255,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the number of args expected by the constructor.
    */
   public int getArity() {
-    return constructorFunction.getSchema().getArgumentsCount();
+    return constructorFunction.get().getSchema().getArgumentsCount();
   }
 
   /**
@@ -279,7 +290,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the constructor function of this constructor.
    */
   public Function getConstructorFunction() {
-    return constructorFunction;
+    return constructorFunction.get();
   }
 
   /**
@@ -448,7 +459,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the fields defined by this constructor.
    */
   public ArgumentDefinition[] getFields() {
-    return constructorFunction.getSchema().getArgumentInfos();
+    return constructorFunction.get().getSchema().getArgumentInfos();
   }
 
   /**
