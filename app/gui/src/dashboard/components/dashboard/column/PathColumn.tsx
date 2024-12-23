@@ -1,7 +1,7 @@
 /** @file A column displaying the path of the asset. */
 import FolderIcon from '#/assets/folder.svg'
 import FolderArrowIcon from '#/assets/folder_arrow.svg'
-import { Button, Popover } from '#/components/AriaComponents'
+import { Button, Popover, Text } from '#/components/AriaComponents'
 import SvgMask from '#/components/SvgMask'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
@@ -10,7 +10,8 @@ import { useUser } from '#/providers/AuthProvider'
 import { useSetExpandedDirectoryIds, useSetSelectedKeys } from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
-import { useTransition } from 'react'
+import { Fragment, useTransition } from 'react'
+import { flushSync } from 'react-dom'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
 
@@ -31,8 +32,9 @@ export default function PathColumn(props: AssetColumnProps) {
 
   // Parents path is a string of directory ids separated by slashes.
   const splittedPath = parentsPath.split('/').filter(isDirectoryId)
-  const splittedVirtualParentsPath = virtualParentsPath.split('/')
   const rootDirectoryInPath = splittedPath[0]
+
+  const splittedVirtualParentsPath = virtualParentsPath.split('/')
   // Virtual parents path is a string of directory names separated by slashes.
   // To match the ids with the names, we need to remove the first element of the splitted path.
   // As the first element is the root directory, which is not a virtual parent.
@@ -64,9 +66,18 @@ export default function PathColumn(props: AssetColumnProps) {
     const targetDirectoryNode = getAssetNodeById(targetDirectory)
 
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
+      // we reassign the variable only to make ts happy here.
+      const categoryId = rootDirectoryInThePath.categoryId
       // We need to set the category first, because setting a category
       // resets the list of expanded folders and selected keys
-      setCategory(rootDirectoryInThePath.categoryId)
+      // Drive store resets it's state when a category change
+      // calling `setCategory` inside the `flushSync` guaranties that the all side effects will
+      // be executed and state is fresh and clean.
+      // This comes with a cost though - it might be slow as it executes everything synchronously.
+      flushSync(() => {
+        setCategory(categoryId)
+      })
+
       setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
     }
 
@@ -137,55 +148,59 @@ export default function PathColumn(props: AssetColumnProps) {
   // This also means that the first and the last item in the path are the same
   if (finalPath.length === 1) {
     return (
-      <PathItem
-        id={lastItemInPath.id}
-        label={lastItemInPath.label}
-        icon={lastItemInPath.icon}
-        onNavigate={navigateToDirectory}
-      />
+      <div
+        className="contents"
+        data-testid={`path-column-cell-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+      >
+        <PathItem
+          id={lastItemInPath.id}
+          label={lastItemInPath.label}
+          icon={lastItemInPath.icon}
+          onNavigate={navigateToDirectory}
+        />
+      </div>
     )
   }
 
   return (
-    <Popover.Trigger>
-      <div className="flex items-center gap-2">
+    <div data-testid={`path-column-cell-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+      <Popover.Trigger>
         <Button variant="ghost-fading" size="xsmall">
           <div className="flex items-center gap-2">
             <SvgMask src={firstItemInPath.icon} className="h-3 w-3" />
             <SvgMask src={FolderArrowIcon} className="h-3 w-3" />
             <SvgMask src={lastItemInPath.icon} className="h-3 w-3" />
 
-            {lastItemInPath.label}
+            <Text color="custom">{lastItemInPath.label}</Text>
           </div>
         </Button>
-      </div>
 
-      <Popover
-        size="auto"
-        placement="bottom end"
-        crossOffset={14}
-        variant="primary"
-        className="max-w-lg"
-      >
-        <div className="flex items-center gap-1">
-          {finalPath.map((entry, index) => (
-            <>
-              <PathItem
-                key={entry.id}
-                id={entry.id}
-                label={entry.label}
-                icon={entry.icon}
-                onNavigate={navigateToDirectory}
-              />
+        <Popover
+          size="auto"
+          placement="bottom end"
+          crossOffset={14}
+          variant="primary"
+          className="max-w-lg"
+        >
+          <div className="flex items-center gap-1">
+            {finalPath.map((entry, index) => (
+              <Fragment key={entry.id}>
+                <PathItem
+                  id={entry.id}
+                  label={entry.label}
+                  icon={entry.icon}
+                  onNavigate={navigateToDirectory}
+                />
 
-              {index < finalPath.length - 1 && (
-                <SvgMask src={FolderArrowIcon} className="h-4 w-4 text-primary" />
-              )}
-            </>
-          ))}
-        </div>
-      </Popover>
-    </Popover.Trigger>
+                {index < finalPath.length - 1 && (
+                  <SvgMask src={FolderArrowIcon} className="h-4 w-4 text-primary" />
+                )}
+              </Fragment>
+            ))}
+          </div>
+        </Popover>
+      </Popover.Trigger>
+    </div>
   )
 }
 
@@ -216,11 +231,12 @@ function PathItem(props: PathItemProps) {
     <Button
       key={id}
       variant="ghost-fading"
-      size="xsmall"
+      size="small"
       loading={transition}
       icon={icon}
       onPress={onPress}
       loaderPosition="icon"
+      data-testid={`path-column-item-${label.toLowerCase().replace(/\s+/g, '-')}`}
     >
       {label}
     </Button>

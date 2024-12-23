@@ -679,6 +679,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
             <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
+                data-selected={selected}
                 tabIndex={0}
                 ref={(element) => {
                   rootRef.current = element

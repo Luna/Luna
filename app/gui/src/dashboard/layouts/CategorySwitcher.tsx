@@ -179,6 +179,7 @@ function CategorySwitcherItem(props: InternalCategorySwitcherItemProps) {
           aria-label={buttonLabel}
           onPress={onPress}
           loaderPosition="icon"
+          data-selected={isCurrent}
           loading={isTransitioning}
           className={twJoin(isCurrent && 'opacity-100')}
           icon={icon}
