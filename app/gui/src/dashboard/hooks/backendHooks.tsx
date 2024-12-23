@@ -442,7 +442,7 @@ export function useAssetStrict(options: UseAssetOptions) {
   return asset
 }
 
-/** Return matching in-flight mutations */
+/** Return matching in-flight mutations matching the given filters. */
 export function useBackendMutationState<Method extends BackendMutationMethod, Result>(
   backend: Backend,
   method: Method,
@@ -1237,10 +1237,39 @@ export function deleteAssetsMutationOptions(backend: Backend) {
   })
 }
 
+/** The type of a "delete assets" mutation. */
+type DeleteAssetsMutation = Mutation<
+  null,
+  Error,
+  readonly [ids: readonly AssetId[], force: boolean]
+>
+
+/** Return matching in-flight "delete assets" mutations. */
+export function useDeleteAssetsMutationState<Result>(
+  backend: Backend,
+  options: {
+    predicate?: (mutation: DeleteAssetsMutation) => boolean
+    select?: (mutation: DeleteAssetsMutation) => Result
+  } = {},
+) {
+  const { predicate, select } = options
+  return useMutationState({
+    filters: {
+      ...deleteAssetsMutationOptions(backend),
+      predicate: (mutation: DeleteAssetsMutation) =>
+        mutation.state.status === 'pending' && (predicate?.(mutation) ?? true),
+    },
+    // This is UNSAFE when the `Result` parameter is explicitly specified in the
+    // generic parameter list.
+    // eslint-disable-next-line no-restricted-syntax
+    select: select as (mutation: Mutation<unknown, Error, unknown, unknown>) => Result,
+  })
+}
+
 /** Call "restore" mutations for a list of assets. */
 export function restoreAssetsMutationOptions(backend: Backend) {
   return mutationOptions({
-    mutationKey: [backend.type, 'deleteAssets'],
+    mutationKey: [backend.type, 'restoreAssets'],
     mutationFn: async (ids: readonly AssetId[]) => {
       const results = await Promise.allSettled(
         ids.map((id) => backend.undoDeleteAsset(id, '(unknown)')),
@@ -1261,6 +1290,31 @@ export function restoreAssetsMutationOptions(backend: Backend) {
       invalidates: [[backend.type, 'listDirectory']],
       awaitInvalidates: true,
     },
+  })
+}
+
+/** The type of a "restore assets" mutation. */
+type RestoreAssetsMutation = Mutation<null, Error, readonly AssetId[]>
+
+/** Return matching in-flight "restore assets" mutations. */
+export function useRestoreAssetsMutationState<Result>(
+  backend: Backend,
+  options: {
+    predicate?: (mutation: RestoreAssetsMutation) => boolean
+    select?: (mutation: RestoreAssetsMutation) => Result
+  } = {},
+) {
+  const { predicate, select } = options
+  return useMutationState({
+    filters: {
+      ...restoreAssetsMutationOptions(backend),
+      predicate: (mutation: RestoreAssetsMutation) =>
+        mutation.state.status === 'pending' && (predicate?.(mutation) ?? true),
+    },
+    // This is UNSAFE when the `Result` parameter is explicitly specified in the
+    // generic parameter list.
+    // eslint-disable-next-line no-restricted-syntax
+    select: select as (mutation: Mutation<unknown, Error, unknown, unknown>) => Result,
   })
 }
 

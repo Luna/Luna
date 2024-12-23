@@ -37,6 +37,8 @@ import { IndefiniteSpinner } from '#/components/Spinner'
 import {
   backendMutationOptions,
   useBackendMutationState,
+  useDeleteAssetsMutationState,
+  useRestoreAssetsMutationState,
   useUploadFiles,
 } from '#/hooks/backendHooks'
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
@@ -52,6 +54,7 @@ import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
@@ -292,14 +295,29 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     readonly parentKeys: Map<backendModule.AssetId, backendModule.DirectoryId>
   } | null>(null)
 
-  const isDeleting =
+  const isDeletingSingleAsset =
     useBackendMutationState(backend, 'deleteAsset', {
       predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
+      select: () => null,
     }).length !== 0
-  const isRestoring =
+  const isDeletingMultipleAssets =
+    useDeleteAssetsMutationState(backend, {
+      predicate: ({ state: { variables: [assetIds = EMPTY_ARRAY] = EMPTY_ARRAY } }) =>
+        assetIds.includes(asset.id),
+      select: () => null,
+    }).length !== 0
+  const isDeleting = isDeletingSingleAsset || isDeletingMultipleAssets
+  const isRestoringSingleAsset =
     useBackendMutationState(backend, 'undoDeleteAsset', {
-      predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
+      predicate: ({ state: { variables: [assetId] = EMPTY_ARRAY } }) => assetId === asset.id,
+      select: () => null,
     }).length !== 0
+  const isRestoringMultipleAssets =
+    useRestoreAssetsMutationState(backend, {
+      predicate: ({ state: { variables: assetIds = EMPTY_ARRAY } }) => assetIds.includes(asset.id),
+      select: () => null,
+    }).length !== 0
+  const isRestoring = isRestoringSingleAsset || isRestoringMultipleAssets
 
   const { data: projectState } = useQuery({
     ...createGetProjectDetailsQuery({
