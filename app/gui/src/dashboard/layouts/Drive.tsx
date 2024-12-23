@@ -25,6 +25,7 @@ import Labels from '#/layouts/Labels'
 import * as ariaComponents from '#/components/AriaComponents'
 import * as result from '#/components/Result'
 
+import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
 import SvgMask from '#/components/SvgMask'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
@@ -37,10 +38,10 @@ import * as github from '#/utilities/github'
 import { OfflineError } from '#/utilities/HttpClient'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { useDeferredValue, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import { Await } from '../components/Await'
+import { Suspense } from '../components/Suspense'
 import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
@@ -114,12 +115,34 @@ function Drive(props: DriveProps) {
     case 'offline':
     case 'ok': {
       return (
-        <DriveAssetsView
-          {...props}
-          category={category}
-          setCategory={setCategory}
-          resetCategory={resetCategory}
-        />
+        <ErrorBoundary
+          onBeforeFallbackShown={({ resetErrorBoundary, error, resetQueries }) => {
+            if (error instanceof DirectoryDoesNotExistError) {
+              toast.error(getText('directoryDoesNotExistError'), {
+                toastId: 'directory-does-not-exist-error',
+              })
+              resetCategory()
+              resetQueries()
+              resetErrorBoundary()
+            }
+
+            if (error instanceof OfflineError) {
+              return (
+                <OfflineMessage
+                  supportLocalBackend={supportLocalBackend}
+                  setCategory={(nextCategory) => {
+                    setCategory(nextCategory)
+                    resetErrorBoundary()
+                  }}
+                />
+              )
+            }
+          }}
+        >
+          <Suspense>
+            <DriveAssetsView {...props} category={category} setCategory={setCategory} />
+          </Suspense>
+        </ErrorBoundary>
       )
     }
   }
@@ -131,7 +154,6 @@ function Drive(props: DriveProps) {
 interface DriveAssetsViewProps extends DriveProps {
   readonly category: Category
   readonly setCategory: (categoryId: Category['id']) => void
-  readonly resetCategory: () => void
 }
 
 /**
@@ -144,12 +166,11 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
     hidden = false,
     initialProjectName,
     assetsManagementApiRef,
-    resetCategory,
   } = props
 
   const deferredCategory = useDeferredValue(category)
+  const { showBoundary } = useErrorBoundary()
 
-  const { getText } = textProvider.useText()
   const { isOffline } = offlineHooks.useOffline()
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
@@ -186,18 +207,26 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
     data: isEmpty,
     error,
     isFetching,
-    promise,
-  } = useQuery({
+  } = useSuspenseQuery({
     ...rootDirectoryQuery,
     refetchOnMount: 'always',
+    staleTime: ({ state }) => (state.error ? 0 : Infinity),
     select: (data) => data.length === 0,
   })
+
+  // Show the error boundary if the query failed, but has data.
+  if (error != null && !isFetching) {
+    showBoundary(error)
+    // Remove the query from the cache.
+    // This will force the query to be refetched when the user navigates again.
+    queryClient.removeQueries({ queryKey: rootDirectoryQuery.queryKey })
+  }
 
   // When the directory is no longer empty, we need to hide the start modal.
   // This includes the cases when the directory wasn't empty before, but it's now empty
   // (e.g. when the user deletes the last asset).
   useEffect(() => {
-    if (isEmpty === false) {
+    if (!isEmpty) {
       setShouldForceHideStartModal(true)
     }
   }, [isEmpty])
@@ -208,18 +237,20 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
     setShouldForceHideStartModal(false)
   }, [category.type])
 
-  // Show the error boundary if the query failed, but has data.
-  if (error != null && !isFetching) {
-    if (error instanceof DirectoryDoesNotExistError) {
-      toast.error(getText('directoryDoesNotExistError'), {
-        toastId: 'directory-does-not-exist-error',
-      })
-      resetCategory()
-    }
-    // Remove the query from the cache.
-    // This will force the query to be refetched when the user navigates again.
-    queryClient.removeQueries({ queryKey: rootDirectoryQuery.queryKey })
-  }
+  const hasPermissionToCreateAssets = tryFindSelfPermission(
+    user,
+    targetDirectory?.item.permissions ?? [],
+  )
+
+  const shouldDisplayStartModal =
+    isEmpty &&
+    CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type) &&
+    !shouldForceHideStartModal
+
+  const shouldDisableActions =
+    category.type === 'cloud' &&
+    (user.plan === Plan.enterprise || user.plan === Plan.team) &&
+    !hasPermissionToCreateAssets
 
   return (
     <div className={tailwindMerge.twMerge('relative flex grow', hidden && 'hidden')}>
@@ -227,38 +258,17 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
         data-testid="drive-view"
         className="mt-4 flex flex-1 flex-col gap-4 overflow-visible px-page-x"
       >
-        <Await promise={promise}>
-          {(noFilesInDirectory) => {
-            const hasPermissionToCreateAssets = tryFindSelfPermission(
-              user,
-              targetDirectory?.item.permissions ?? [],
-            )
-
-            const shouldDisplayStartModal =
-              noFilesInDirectory &&
-              CATEGORIES_TO_DISPLAY_START_MODAL.includes(category.type) &&
-              !shouldForceHideStartModal
-
-            const shouldDisableActions =
-              category.type === 'cloud' &&
-              (user.plan === Plan.enterprise || user.plan === Plan.team) &&
-              !hasPermissionToCreateAssets
-
-            return (
-              <DriveBar
-                key={rootDirectoryId}
-                backend={backend}
-                query={query}
-                setQuery={setQuery}
-                category={category}
-                doEmptyTrash={doEmptyTrash}
-                isEmpty={noFilesInDirectory}
-                shouldDisplayStartModal={shouldDisplayStartModal}
-                isDisabled={shouldDisableActions}
-              />
-            )
-          }}
-        </Await>
+        <DriveBar
+          key={rootDirectoryId}
+          backend={backend}
+          query={query}
+          setQuery={setQuery}
+          category={category}
+          doEmptyTrash={doEmptyTrash}
+          isEmpty={isEmpty}
+          shouldDisplayStartModal={shouldDisplayStartModal}
+          isDisabled={shouldDisableActions}
+        />
 
         <div className="flex flex-1 gap-drive overflow-hidden">
           <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
@@ -274,31 +284,17 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
             )}
           </div>
 
-          <Await
-            promise={promise}
-            onBeforeFallbackShown={() => {
-              if (error instanceof OfflineError) {
-                return (
-                  <OfflineMessage
-                    supportLocalBackend={supportLocalBackend}
-                    setCategory={setCategory}
-                  />
-                )
-              }
-            }}
-          >
-            {status === 'offline' ?
-              <OfflineMessage supportLocalBackend={supportLocalBackend} setCategory={setCategory} />
-            : <AssetsTable
-                assetManagementApiRef={assetsManagementApiRef}
-                hidden={hidden}
-                query={query}
-                setQuery={setQuery}
-                category={deferredCategory}
-                initialProjectName={initialProjectName}
-              />
-            }
-          </Await>
+          {status === 'offline' ?
+            <OfflineMessage supportLocalBackend={supportLocalBackend} setCategory={setCategory} />
+          : <AssetsTable
+              assetManagementApiRef={assetsManagementApiRef}
+              hidden={hidden}
+              query={query}
+              setQuery={setQuery}
+              category={deferredCategory}
+              initialProjectName={initialProjectName}
+            />
+          }
         </div>
       </div>
 
