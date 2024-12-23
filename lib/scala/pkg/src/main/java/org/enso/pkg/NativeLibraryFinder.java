@@ -62,7 +62,7 @@ public final class NativeLibraryFinder {
 
   private static <T> List<T> searchPath(Package<T> pkg, FileSystem<T> fs) {
     var searchPath = new ArrayList<T>();
-    var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+    var arch = arch();
     var osName = simpleOsName();
     var libDir = pkg.nativeLibraryDir();
     searchPath.add(libDir);
@@ -86,5 +86,10 @@ public final class NativeLibraryFinder {
     } else {
       throw new IllegalStateException("Unsupported OS: " + osName);
     }
+  }
+
+  private static String arch() {
+    var arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+    return arch.replace("x86_64", "amd64");
   }
 }
