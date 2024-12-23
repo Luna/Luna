@@ -10,7 +10,7 @@
   "main": "./dist/main.js",
   "scripts": {
     "compile": "node ./build.mjs build",
-    "start": "node ./dist/main.cjs",
+    "start": "node ./dist/main.js",
     "dev:watch": "node ./build.mjs watch",
     "lint": "eslint . --cache --max-warnings=0"
   },
