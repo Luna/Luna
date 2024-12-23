@@ -51,7 +51,7 @@ import * as inputBindingsModule from '#/configurations/inputBindings'
 import AuthProvider, * as authProvider from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import DriveProvider from '#/providers/DriveProvider'
-import { useHttpClient } from '#/providers/HttpClientProvider'
+import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
 import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
 import { useLogger } from '#/providers/LoggerProvider'
@@ -98,6 +98,8 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
+import { useMutation } from '@tanstack/react-query'
+import { useOffline } from './hooks/offlineHooks'
 
 // ============================
 // === Global configuration ===
@@ -215,6 +217,9 @@ export default function App(props: AppProps) {
     },
   })
 
+  const { isOffline } = useOffline()
+  const { getText } = textProvider.useText()
+
   const queryClient = props.queryClient
 
   // Force all queries to be stale
@@ -236,6 +241,24 @@ export default function App(props: AppProps) {
     refetchInterval: 2 * 60 * 1000,
   })
 
+  const { mutate: executeBackgroundUpdate } = useMutation({
+    mutationKey: ['refetch-queries', { isOffline }],
+    scope: { id: 'refetch-queries' },
+    mutationFn: () => queryClient.refetchQueries({ type: 'all' }),
+    networkMode: 'online',
+    onError: () => {
+      toastify.toast.error(getText('refetchQueriesError'), {
+        position: 'bottom-right',
+      })
+    },
+  })
+
+  React.useEffect(() => {
+    if (!isOffline) {
+      executeBackgroundUpdate()
+    }
+  }, [executeBackgroundUpdate, isOffline])
+
   // Both `BackendProvider` and `InputBindingsProvider` depend on `LocalStorageProvider`.
   // Note that the `Router` must be the parent of the `AuthProvider`, because the `AuthProvider`
   // will redirect the user between the login/register pages and the dashboard.
@@ -247,7 +270,7 @@ export default function App(props: AppProps) {
         closeOnClick={false}
         draggable={false}
         toastClassName="text-sm leading-cozy bg-selected-frame rounded-lg backdrop-blur-default"
-        transition={toastify.Zoom}
+        transition={toastify.Slide}
         limit={3}
       />
       <router.BrowserRouter basename={getMainPageUrl().pathname}>
@@ -285,7 +308,7 @@ export interface AppRouterProps extends AppProps {
 function AppRouter(props: AppRouterProps) {
   const { isAuthenticationDisabled, shouldShowDashboard } = props
   const { onAuthenticated, projectManagerInstance } = props
-  const httpClient = useHttpClient()
+  const httpClient = useHttpClientStrict()
   const logger = useLogger()
   const navigate = router.useNavigate()
 
@@ -538,16 +561,14 @@ function AppRouter(props: AppRouterProps) {
                 {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
                  * due to modals being in `TheModal`. */}
                 <DriveProvider>
-                  <errorBoundary.ErrorBoundary>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    <suspense.Suspense>
-                      <errorBoundary.ErrorBoundary>
-                        <devtools.EnsoDevtools />
-                      </errorBoundary.ErrorBoundary>
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
+                  <LocalBackendPathSynchronizer />
+                  <VersionChecker />
+                  {routes}
+                  <suspense.Suspense>
+                    <errorBoundary.ErrorBoundary>
+                      <devtools.EnsoDevtools />
+                    </errorBoundary.ErrorBoundary>
+                  </suspense.Suspense>
                 </DriveProvider>
               </InputBindingsProvider>
             </AuthProvider>

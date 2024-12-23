@@ -2,6 +2,11 @@
 import { graphBindings, nodeEditBindings } from '@/bindings'
 import ComponentContextMenu from '@/components/ComponentContextMenu.vue'
 import ComponentMenu from '@/components/ComponentMenu.vue'
+import ComponentWidgetTree, {
+  GRAB_HANDLE_X_MARGIN_L,
+  GRAB_HANDLE_X_MARGIN_R,
+  ICON_WIDTH,
+} from '@/components/GraphEditor/ComponentWidgetTree.vue'
 import GraphNodeComment from '@/components/GraphEditor/GraphNodeComment.vue'
 import GraphNodeMessage, {
   colorForMessageType,
@@ -9,16 +14,9 @@ import GraphNodeMessage, {
   type MessageType,
 } from '@/components/GraphEditor/GraphNodeMessage.vue'
 import GraphNodeOutputPorts from '@/components/GraphEditor/GraphNodeOutputPorts.vue'
-import GraphNodeSelection from '@/components/GraphEditor/GraphNodeSelection.vue'
 import GraphVisualization from '@/components/GraphEditor/GraphVisualization.vue'
 import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
-import NodeWidgetTree, {
-  GRAB_HANDLE_X_MARGIN_L,
-  GRAB_HANDLE_X_MARGIN_R,
-  ICON_WIDTH,
-} from '@/components/GraphEditor/NodeWidgetTree.vue'
 import PointFloatingMenu from '@/components/PointFloatingMenu.vue'
-import SmallPlusButton from '@/components/SmallPlusButton.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { usePointer, useResizeObserver } from '@/composables/events'
@@ -137,7 +135,8 @@ const availableMessage = computed<Message | undefined>(() => {
       const text = rawText?.split(' (at')[0]
       if (!text) return undefined
       const alwaysShow = !inputExternalIds().some((id) => getDataflowError(id) === rawText)
-      return { type: 'error', text, alwaysShow } satisfies Message
+      const type = rawText.includes('Missing_Argument') ? 'missing' : 'error'
+      return { type, text, alwaysShow } satisfies Message
     }
     case 'Value': {
       const warning = info.payload.warnings?.value
@@ -184,9 +183,6 @@ const selectionHoverPos = ref<Vec2>()
 function updateNodeHover(event: PointerEvent | undefined) {
   nodeHoverPos.value = event && eventScenePos(event)
 }
-function updateSelectionHover(event: PointerEvent | undefined) {
-  selectionHoverPos.value = event && eventScenePos(event)
-}
 
 const menuCloseTimeout = ref<ReturnType<typeof setTimeout>>()
 const menuEnabledByHover = ref(false)
@@ -219,6 +215,7 @@ watch(menuVisible, (visible) => {
 
 function setSoleSelected() {
   nodeSelection?.setSelection(new Set([nodeId.value]))
+  graph.db.moveNodeToTop(nodeId.value)
 }
 
 function ensureSelected() {
@@ -322,53 +319,13 @@ const nodeEditHandler = nodeEditBindings.handler({
       e.target.blur()
     }
   },
-  edit(e) {
-    const pos = 'clientX' in e ? new Vec2(e.clientX, e.clientY) : undefined
-    startEditingNode(pos)
+  edit() {
+    startEditingNode()
   },
 })
 
-function startEditingNode(position?: Vec2 | undefined) {
-  let sourceOffset = props.node.rootExpr.code().length
-  if (position != null) {
-    let domNode, domOffset
-    if ((document as any).caretPositionFromPoint) {
-      const caret = document.caretPositionFromPoint(position.x, position.y)
-      domNode = caret?.offsetNode
-      domOffset = caret?.offset
-    } else if (document.caretRangeFromPoint) {
-      const caret = document.caretRangeFromPoint(position.x, position.y)
-      domNode = caret?.startContainer
-      domOffset = caret?.startOffset
-    } else {
-      console.error(
-        'Neither `caretPositionFromPoint` nor `caretRangeFromPoint` are supported by this browser',
-      )
-    }
-    if (domNode != null && domOffset != null) {
-      sourceOffset = getRelatedSpanOffset(domNode, domOffset)
-    }
-  }
-  emit('update:edited', sourceOffset)
-}
-
-function getRelatedSpanOffset(domNode: globalThis.Node, domOffset: number): number {
-  if (domNode instanceof HTMLElement && domOffset == 1) {
-    const offsetData = domNode.dataset.spanStart
-    const offset = (offsetData != null && parseInt(offsetData)) || 0
-    const length = domNode.textContent?.length ?? 0
-    return offset + length
-  } else if (domNode instanceof Text) {
-    const siblingEl = domNode.previousElementSibling
-    if (siblingEl instanceof HTMLElement) {
-      const offsetData = siblingEl.dataset.spanStart
-      if (offsetData != null)
-        return parseInt(offsetData) + domOffset + (siblingEl.textContent?.length ?? 0)
-    }
-    const offsetData = domNode.parentElement?.dataset.spanStart
-    if (offsetData != null) return parseInt(offsetData) + domOffset
-  }
-  return domOffset
+function startEditingNode() {
+  emit('update:edited', props.node.rootExpr.code().length)
 }
 
 const handleNodeClick = useDoubleClick(
@@ -407,6 +364,16 @@ const dataSource = computed(
   () => ({ type: 'node', nodeId: props.node.rootExpr.externalId }) as const,
 )
 
+const pending = computed(() => {
+  switch (executionState.value) {
+    case 'Unknown':
+    case 'Pending':
+      return true
+    default:
+      return false
+  }
+})
+
 // === Recompute node expression ===
 
 function useRecomputation() {
@@ -424,6 +391,30 @@ function useRecomputation() {
   }
   return { recomputeOnce, isBeingRecomputed }
 }
+
+const nodeStyle = computed(() => {
+  return {
+    transform: transform.value,
+    minWidth: isVisualizationEnabled.value ? `${visualizationWidth.value ?? 200}px` : undefined,
+    '--node-group-color': color.value,
+    ...(props.node.zIndex ? { 'z-index': props.node.zIndex } : {}),
+    '--viz-below-node': `${graphSelectionSize.value.y - nodeSize.value.y}px`,
+    '--node-size-x': `${nodeSize.value.x}px`,
+    '--node-size-y': `${nodeSize.value.y}px`,
+  }
+})
+
+const nodeClass = computed(() => {
+  return {
+    selected: selected.value,
+    selectionVisible: selectionVisible.value,
+    pending: pending.value,
+    inputNode: props.node.type === 'input',
+    outputNode: props.node.type === 'output',
+    menuVisible: menuVisible.value,
+    menuFull: menuFull.value,
+  }
+})
 
 // === Component actions ===
 
@@ -480,47 +471,14 @@ const showMenuAt = ref<{ x: number; y: number }>()
   <div
     v-show="!edited"
     ref="rootNode"
-    class="GraphNode"
-    :style="{
-      transform,
-      minWidth: isVisualizationEnabled ? `${visualizationWidth ?? 200}px` : undefined,
-      '--node-group-color': color,
-      ...(node.zIndex ? { 'z-index': node.zIndex } : {}),
-      '--viz-below-node': `${graphSelectionSize.y - nodeSize.y}px`,
-      '--node-size-x': `${nodeSize.x}px`,
-      '--node-size-y': `${nodeSize.y}px`,
-    }"
-    :class="{
-      selected,
-      selectionVisible,
-      ['executionState-' + executionState]: true,
-      inputNode: props.node.type === 'input',
-      outputNode: props.node.type === 'output',
-      menuVisible,
-      menuFull,
-    }"
+    class="GraphNode define-node-colors"
+    :style="nodeStyle"
+    :class="nodeClass"
     :data-node-id="nodeId"
     @pointerenter="(nodeHovered = true), updateNodeHover($event)"
     @pointerleave="(nodeHovered = false), updateNodeHover(undefined)"
     @pointermove="updateNodeHover"
-    @contextmenu.stop.prevent="ensureSelected(), (showMenuAt = $event)"
   >
-    <Teleport v-if="navigator && !edited && graphNodeSelections" :to="graphNodeSelections">
-      <GraphNodeSelection
-        :data-node-id="nodeId"
-        :nodePosition="nodePosition"
-        :nodeSize="graphSelectionSize"
-        :class="{ draggable: true, dragged: isDragged }"
-        :color
-        :externalHovered="nodeHovered"
-        @visible="selectionVisible = $event"
-        @pointerenter="updateSelectionHover"
-        @pointermove="updateSelectionHover"
-        @pointerleave="updateSelectionHover(undefined)"
-        v-on="dragPointer.events"
-        @click="handleNodeClick"
-      />
-    </Teleport>
     <div class="binding" v-text="node.pattern?.code()" />
     <button
       v-if="!menuVisible && isRecordingOverridden"
@@ -534,14 +492,14 @@ const showMenuAt = ref<{ x: number; y: number }>()
       v-if="menuVisible"
       @pointerenter="menuHovered = true"
       @pointerleave="menuHovered = false"
-      @click.capture="ensureSelected"
+      @click.capture="setSoleSelected"
     />
     <GraphVisualization
       v-if="isVisualizationVisible"
       :nodeSize="nodeSize"
       :scale="navigator?.scale ?? 1"
       :nodePosition="nodePosition"
-      :isCircularMenuVisible="menuVisible"
+      :isComponentMenuVisible="menuVisible"
       :currentType="props.node.vis?.identifier"
       :dataSource="dataSource"
       :typename="expressionInfo?.typename"
@@ -572,13 +530,13 @@ const showMenuAt = ref<{ x: number; y: number }>()
       :style="contentNodeStyle"
       v-on="dragPointer.events"
       @click="handleNodeClick"
+      @contextmenu.stop.prevent="ensureSelected(), (showMenuAt = $event)"
     >
-      <NodeWidgetTree
+      <ComponentWidgetTree
         :ast="props.node.innerExpr"
         :nodeId="nodeId"
-        :nodeElement="rootNode"
+        :rootElement="rootNode"
         :nodeType="props.node.type"
-        :nodeSize="nodeSize"
         :potentialSelfArgumentId="potentialSelfArgumentId"
         :conditionalPorts="props.node.conditionalPorts"
         :extended="isOnlyOneSelected"
@@ -602,18 +560,16 @@ const showMenuAt = ref<{ x: number; y: number }>()
       <GraphNodeOutputPorts
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
-        :forceVisible="selectionVisible"
+        :forceVisible="nodeHovered"
+        @newNodeClick="
+          setSoleSelected(), emit('createNodes', [{ commit: false, content: undefined }])
+        "
         @portClick="(...args) => emit('outputPortClick', ...args)"
         @portDoubleClick="(...args) => emit('outputPortDoubleClick', ...args)"
         @update:hoverAnim="emit('update:hoverAnim', $event)"
         @update:nodeHovered="outputHovered = $event"
       />
     </svg>
-    <SmallPlusButton
-      v-if="menuVisible"
-      :class="isVisualizationVisible ? 'afterNode' : 'belowMenu'"
-      @createNodes="setSoleSelected(), emit('createNodes', $event)"
-    />
   </div>
   <PointFloatingMenu v-if="showMenuAt" :point="showMenuAt" @close="showMenuAt = undefined">
     <ComponentContextMenu @close="showMenuAt = undefined" />
@@ -629,7 +585,6 @@ const showMenuAt = ref<{ x: number; y: number }>()
   top: 0;
   left: 0;
   display: flex;
-
   --output-port-transform: translateY(var(--viz-below-node));
 }
 
@@ -643,32 +598,10 @@ const showMenuAt = ref<{ x: number; y: number }>()
 }
 
 .GraphNode {
-  --color-node-text: white;
-  --color-node-primary: var(--node-group-color);
-  --color-node-background: var(--node-group-color);
-}
-
-.GraphNode.selected {
-  --color-node-background: color-mix(in oklab, var(--color-node-primary) 30%, white 70%);
-  --color-node-text: color-mix(in oklab, var(--color-node-primary) 70%, black 30%);
-}
-
-.GraphNode {
   position: absolute;
   border-radius: var(--node-border-radius);
   transition: box-shadow 0.2s ease-in-out;
   box-sizing: border-box;
-  /** Space between node and component above and below, such as comments and errors. */
-  --node-vertical-gap: 4px;
-
-  --color-node-primary: var(--node-group-color);
-  --node-color-port: color-mix(in oklab, var(--color-node-primary) 85%, white 15%);
-  --node-color-error: color-mix(in oklab, var(--node-group-color) 30%, rgb(255, 0, 0) 70%);
-
-  &.executionState-Unknown,
-  &.executionState-Pending {
-    --color-node-primary: color-mix(in oklab, var(--node-group-color) 60%, #aaa 40%);
-  }
 }
 
 .content {
@@ -705,7 +638,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
   opacity: 1;
 }
 
-.CircularMenu {
+.ComponentMenu {
   z-index: 25;
   &.partial {
     z-index: 1;

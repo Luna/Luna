@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 /// <reference types="histoire" />
 
 import react from '@vitejs/plugin-react'
@@ -12,6 +13,10 @@ import { defineConfig, type Plugin } from 'vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import wasm from 'vite-plugin-wasm'
 import tailwindConfig from './tailwind.config'
+// @ts-expect-error We don't need to typecheck this file
+import reactCompiler from 'babel-plugin-react-compiler'
+// @ts-expect-error We don't need to typecheck this file
+import syntaxImportAttributes from '@babel/plugin-syntax-import-attributes'
 
 const dynHostnameWsUrl = (port: number) => JSON.stringify(`ws://__HOSTNAME__:${port}`)
 const projectManagerUrl = dynHostnameWsUrl(process.env.INTEGRATION_TEST === 'true' ? 30536 : 30535)
@@ -57,15 +62,24 @@ export default defineConfig({
       include: fileURLToPath(new URL('./src/dashboard/**/*.tsx', import.meta.url)),
       babel: {
         plugins: [
-          '@babel/plugin-syntax-import-attributes',
-          [
-            'babel-plugin-react-compiler',
-            { target: '18', enablePreserveExistingMemoizationGuarantees: true },
-          ],
+          syntaxImportAttributes,
+          [reactCompiler, { target: '18', enablePreserveExistingMemoizationGuarantees: true }],
         ],
       },
     }),
     ...(process.env.NODE_ENV === 'development' ? [await projectManagerShim()] : []),
+    ...((
+      process.env.SENTRY_AUTH_TOKEN != null &&
+      process.env.ENSO_CLOUD_SENTRY_ORGANIZATION != null &&
+      process.env.ENSO_CLOUD_SENTRY_PROJECT != null
+    ) ?
+      [
+        sentryVitePlugin({
+          org: process.env.ENSO_CLOUD_SENTRY_ORGANIZATION,
+          project: process.env.ENSO_CLOUD_SENTRY_PROJECT,
+        }),
+      ]
+    : []),
   ],
   optimizeDeps: {
     entries: fileURLToPath(new URL('./index.html', import.meta.url)),
@@ -108,6 +122,7 @@ export default defineConfig({
   build: {
     // dashboard chunk size is larger than the default warning limit
     chunkSizeWarningLimit: 700,
+    sourcemap: true,
   },
 })
 async function projectManagerShim(): Promise<Plugin> {

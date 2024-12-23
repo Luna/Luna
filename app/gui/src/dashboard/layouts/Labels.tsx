@@ -9,10 +9,7 @@ import * as ariaComponents from '#/components/AriaComponents'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
-import SvgMask from '#/components/SvgMask'
-import AssetEventType from '#/events/AssetEventType'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import DragModal from '#/modals/DragModal'
 import NewLabelModal from '#/modals/NewLabelModal'
@@ -38,15 +35,8 @@ export default function Labels(props: LabelsProps) {
   const currentNegativeLabels = query.negativeLabels
   const { setModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
-  const dispatchAssetEvent = useDispatchAssetEvent()
   const labels = useBackendQuery(backend, 'listTags', []).data ?? []
-  const deleteTag = useMutation(
-    backendMutationOptions(backend, 'deleteTag', {
-      onSuccess: (_data, [, labelName]) => {
-        dispatchAssetEvent({ type: AssetEventType.deleteLabel, labelName })
-      },
-    }),
-  ).mutate
+  const deleteTag = useMutation(backendMutationOptions(backend, 'deleteTag')).mutate
 
   return (
     <FocusArea direction="vertical">
@@ -137,8 +127,7 @@ export default function Labels(props: LabelsProps) {
               size="xsmall"
               variant="outline"
               className="mt-1 self-start pl-1 pr-2"
-              /* eslint-disable-next-line no-restricted-syntax */
-              icon={<SvgMask src={PlusIcon} alt="" className="ml-auto size-[8px]" />}
+              icon={PlusIcon}
             >
               {getText('newLabelButtonLabel')}
             </ariaComponents.Button>

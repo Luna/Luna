@@ -2,11 +2,10 @@
 import MenuButton from '@/components/MenuButton.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { useUnrefHTMLElement } from '@/composables/events'
 import { injectInteractionHandler } from '@/providers/interactionHandler'
 import { endOnClickOutside } from '@/util/autoBlur'
 import { shift, useFloating, type Placement } from '@floating-ui/vue'
-import { ref, shallowRef, useTemplateRef, type VueElement } from 'vue'
+import { ref, shallowRef } from 'vue'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
@@ -16,8 +15,7 @@ const props = defineProps<{
 }>()
 
 const rootElement = shallowRef<HTMLElement>()
-const menuPanel = useTemplateRef<Element | VueElement | undefined | null>('menuPanel')
-const floatElement = useUnrefHTMLElement(menuPanel)
+const floatElement = shallowRef<HTMLElement>()
 const hovered = ref(false)
 
 injectInteractionHandler().setWhen(
@@ -51,7 +49,7 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
       class="arrow"
     />
     <SizeTransition height :duration="100">
-      <slot v-if="open" ref="menuPanel" name="menu" :style="floatingStyles" />
+      <div v-if="open" ref="floatElement" :style="floatingStyles"><slot name="menu" /></div>
     </SizeTransition>
   </div>
 </template>
@@ -65,9 +63,9 @@ const { floatingStyles } = useFloating(rootElement, floatElement, {
 
 .arrow {
   position: absolute;
-  bottom: -5px;
+  bottom: calc(-8px - var(--arrow-offset, 0px));
   left: 50%;
-  opacity: 0.5;
+  opacity: 0.8;
   /* Prevent the parent from receiving a pointerout event if the mouse is over the arrow, which causes flickering. */
   pointer-events: none;
   --icon-transform: translateX(-50%) rotate(90deg) scale(0.7);

@@ -1,3 +1,29 @@
+# Next Next Release
+
+#### Enso IDE
+
+- [ENSO_IDE_MAPBOX_API_TOKEN environment variable should be provided to enable
+  GeoMap visualization][11889].
+- [Round ‘Add component’ button under the component menu replaced by a small
+  button protruding from the output port.][11836].
+
+[11889]: https://github.com/enso-org/enso/pull/11889
+[11836]: https://github.com/enso-org/enso/pull/11836
+
+#### Enso Language & Runtime
+
+- [Promote broken values instead of ignoring them][11777].
+- [Intersection types & type checks][11600]
+- A constructor or type definition with a single inline argument definition was
+  previously allowed to use spaces in the argument definition without
+  parentheses. [This is now a syntax error.][11856]
+- Symetric, transitive and reflexive [equality for intersection types][11897]
+
+[11777]: https://github.com/enso-org/enso/pull/11777
+[11600]: https://github.com/enso-org/enso/pull/11600
+[11856]: https://github.com/enso-org/enso/pull/11856
+[11897]: https://github.com/enso-org/enso/pull/11897
+
 # Next Release
 
 #### Enso IDE
@@ -34,6 +60,8 @@
 - [Table Input Widget is now matched for Table.input method instead of
   Table.new. Values must be string literals, and their content is parsed to the
   suitable type][11612].
+- [Added dedicated function signature viewer and editor in the right-side
+  panel][11655].
 - [Visualizations on components are slightly transparent when not
   focused][11582].
 - [New design for vector-editing widget][11620]
@@ -42,6 +70,20 @@
 - [New design for vector-editing widget][11620].
 - [Default values on widgets are displayed in italic][11666].
 - [Fixed bug causing Table Visualization to show wrong data][11684].
+- [Pasting tabular data now creates Table.input expressions][11695].
+- [No halo is displayed around components when hovering][11715].
+- [The hover area of the component output port extended twice its size][11715].
+- [The documentation editor and comment documentation support opening links with
+  a key pressed, or via a popup when editing][11753].
+- [Fixed a rare bug where the component position wasn't persisted after closing
+  project][11761]
+- [In the table visualization and table widget, the table context menu can now
+  be opened on OS X][11755].
+- [Fix some UI elements drawing on top of visualization toolbar dropdown
+  menus][11768].
+- [Edges are now colored based on their source component.][11810]
+- [Highlight missing required arguments][11803].
+- [Arrows in some drop-down buttons are now clearly visible][11800]
 
 [11151]: https://github.com/enso-org/enso/pull/11151
 [11271]: https://github.com/enso-org/enso/pull/11271
@@ -64,10 +106,20 @@
 [11582]: https://github.com/enso-org/enso/pull/11582
 [11597]: https://github.com/enso-org/enso/pull/11597
 [11612]: https://github.com/enso-org/enso/pull/11612
+[11655]: https://github.com/enso-org/enso/pull/11655
+[11582]: https://github.com/enso-org/enso/pull/11582
 [11620]: https://github.com/enso-org/enso/pull/11620
 [11666]: https://github.com/enso-org/enso/pull/11666
 [11690]: https://github.com/enso-org/enso/pull/11690
 [11684]: https://github.com/enso-org/enso/pull/11684
+[11695]: https://github.com/enso-org/enso/pull/11695
+[11715]: https://github.com/enso-org/enso/pull/11715
+[11753]: https://github.com/enso-org/enso/pull/11753
+[11761]: https://github.com/enso-org/enso/pull/11761
+[11768]: https://github.com/enso-org/enso/pull/11768
+[11810]: https://github.com/enso-org/enso/pull/11810
+[11803]: https://github.com/enso-org/enso/pull/11803
+[11800]: https://github.com/enso-org/enso/pull/11800
 
 #### Enso Standard Library
 
@@ -81,6 +133,10 @@
   operation.][11490]
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
+- [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [Added `add_group_number` to the in-memory database.[11818]
+- [The reload button clears the HTTP cache.][11673]
+- [SQL Server Support for Aggregate][11811]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -88,6 +144,10 @@
 [11373]: https://github.com/enso-org/enso/pull/11373
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
+[11577]: https://github.com/enso-org/enso/pull/11577
+[11818]: https://github.com/enso-org/enso/pull/11818
+[11673]: https://github.com/enso-org/enso/pull/11673
+[11811]: https://github.com/enso-org/enso/pull/11811
 
 #### Enso Language & Runtime
 
