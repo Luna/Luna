@@ -69,7 +69,9 @@ public abstract class BuiltinObject extends EnsoObject {
 
   @ExportMessage(name = "getType", library = TypesLibrary.class)
   @ExportMessage(name = "getMetaObject", library = InteropLibrary.class)
-  public static class GetType {
+  public static final class GetType {
+
+    GetType() {}
 
     /**
      * Caching on class of the receiver - as long as there is the same class, its {@link
