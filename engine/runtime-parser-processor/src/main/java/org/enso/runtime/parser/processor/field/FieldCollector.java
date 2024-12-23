@@ -42,26 +42,21 @@ public final class FieldCollector {
       var irFieldAnnot = param.getAnnotation(IRField.class);
       var irChildAnnot = param.getAnnotation(IRChild.class);
       Field field;
-      if (Utils.hasNoAnnotations(param)) {
-        field = null;
-      } else if (irFieldAnnot != null) {
+      if (irFieldAnnot != null) {
         field = processIrField(param, irFieldAnnot);
       } else if (irChildAnnot != null) {
         field = processIrChild(param, irChildAnnot);
       } else {
         var errMsg =
-            "Unexpected annotation on constructor parameter "
+            "Constructor parameter "
                 + param
-                + ". "
-                + "All annotations: "
-                + param.getAnnotationMirrors();
+                + " must be annotated with either @IRField or @IRChild";
         Utils.printError(errMsg, param, processingEnv.getMessager());
         throw new IllegalStateException(errMsg);
       }
 
-      if (field != null) {
-        fields.put(paramName, field);
-      }
+      assert field != null;
+      fields.put(paramName, field);
     }
   }
 

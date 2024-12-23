@@ -3,6 +3,7 @@ package org.enso.runtime.parser.processor.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
@@ -46,7 +47,7 @@ public class TestIRProcessorInline {
     CompilationSubject.assertThat(compilation).failed();
   }
 
-  private static Compilation compile(String src, String name) {
+  private static Compilation compile(String name, String src) {
     var srcObject = JavaFileObjects.forSourceString(name, src);
     var compiler = Compiler.javac().withProcessors(new IRProcessor());
     var compilation = compiler.compile(srcObject);
@@ -192,6 +193,27 @@ public class TestIRProcessorInline {
         "Generate class has protected constructor with user fields as parameters",
         genClass,
         containsString("protected JNameGen()"));
+  }
+
+  @Test
+  public void annotatedConstructor_MustNotHaveUnannotatedParameters() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName(int param) {}
+        }
+        """;
+    try {
+      compile("JName", src);
+      fail("Exception in compilation expected");
+    } catch (Exception e) {
+      assertThat(e.getMessage(), containsString("must be annotated"));
+    }
   }
 
   @Test

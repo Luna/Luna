@@ -27,14 +27,10 @@ import java.lang.annotation.Target;
  * with {@link GenerateFields}. The parameter of the constructor can be one of the following:
  *
  * <ul>
- *   <li>Any reference, or primitive type without annotation
  *   <li>Any reference, or primitive type annotated with {@link IRField}
  *   <li>A subtype of {@code org.enso.compiler.ir.IR} annotated with {@link IRChild}
  *   <li>One of the <emph>meta</emph> types mentioned above
  * </ul>
- *
- * Constructor parameters without any annotation will not be processed at all. There will be no code
- * generated for them.
  *
  * <p>A user-defined field generated out of constructor parameter annotated with {@link IRChild} is
  * a child element of this IR element. That means that it will be included in generated
@@ -47,6 +43,8 @@ import java.lang.annotation.Target;
  *
  * <p>For a constructor parameter of a meta type, there will be no user-defined field generated, as
  * the meta fields are always generated.
+ *
+ * <p>Other types of constructor parameters are forbidden.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.CONSTRUCTOR)
