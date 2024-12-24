@@ -325,15 +325,6 @@ public final class AtomConstructor extends EnsoObject {
   }
 
   /**
-   * Gets the constructor function of this constructor.
-   *
-   * @return the constructor function of this constructor.
-   */
-  public Supplier<Function> getConstructorFunctionSupplier() {
-    return constructorFunction;
-  }
-
-  /**
    * Gets the qualified accessor function of this constructor.
    *
    * @return the accessor function of this constructor.
