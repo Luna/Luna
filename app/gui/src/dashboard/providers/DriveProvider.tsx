@@ -7,6 +7,7 @@ import invariant from 'tiny-invariant'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
 import type {
@@ -18,6 +19,7 @@ import type {
   LabelName,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { merge } from 'enso-common/src/utilities/data/object'
 
 // ==================
 // === DriveStore ===
@@ -71,6 +73,8 @@ interface DriveStore {
   readonly setIsDraggingOverSelectedRow: (isDraggingOverSelectedRow: boolean) => void
   readonly dragTargetAssetId: AssetId | null
   readonly setDragTargetAssetId: (dragTargetAssetId: AssetId | null) => void
+  readonly nodeMap: { readonly current: ReadonlyMap<AssetId, AnyAssetTreeNode> }
+  readonly setNodeMap: (dragTargetAssetId: ReadonlyMap<AssetId, AnyAssetTreeNode>) => void
 }
 
 // =======================
@@ -178,6 +182,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       setDragTargetAssetId: (dragTargetAssetId) => {
         if (get().dragTargetAssetId !== dragTargetAssetId) {
           set({ dragTargetAssetId })
+        }
+      },
+      nodeMap: { current: new Map() },
+      setNodeMap: (nodeMap) => {
+        if (get().nodeMap.current !== nodeMap) {
+          set({ nodeMap: merge(get().nodeMap, { current: nodeMap }) })
         }
       },
     })),
@@ -322,16 +332,28 @@ export function useSetVisuallySelectedKeys() {
   })
 }
 
-/** The visually selected keys in the Asset Table. */
+/** The drag payload of labels. */
 export function useLabelsDragPayload() {
   const store = useDriveStore()
   return zustand.useStore(store, (state) => state.labelsDragPayload)
 }
 
-/** A function to set the visually selected keys in the Asset Table. */
+/** A function to set the drag payload of labels. */
 export function useSetLabelsDragPayload() {
   const store = useDriveStore()
   return zustand.useStore(store, (state) => state.setLabelsDragPayload)
+}
+
+/** The map of keys to {@link AssetTreeNode}s. */
+export function useNodeMap() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.nodeMap)
+}
+
+/** A function to set the map of keys to {@link AssetTreeNode}s. */
+export function useSetNodeMap() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setNodeMap)
 }
 
 /**

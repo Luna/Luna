@@ -89,10 +89,12 @@ import {
 } from '#/providers/BackendProvider'
 import {
   useDriveStore,
+  useNodeMap,
   useSetCanCreateAssets,
   useSetCanDownload,
   useSetLabelsDragPayload,
   useSetNewestFolderId,
+  useSetNodeMap,
   useSetPasteData,
   useSetSelectedAssets,
   useSetTargetDirectory,
@@ -383,9 +385,8 @@ function AssetsTable(props: AssetsTableProps) {
   const headerRowRef = useRef<HTMLTableRowElement>(null)
   const assetTreeRef = useRef<AnyAssetTreeNode>(assetTree)
   const getPasteData = useEventCallback(() => driveStore.getState().pasteData)
-  const nodeMapRef = useRef<ReadonlyMap<AssetId, AnyAssetTreeNode>>(
-    new Map<AssetId, AnyAssetTreeNode>(),
-  )
+  const nodeMapRef = useNodeMap()
+  const setNodeMap = useSetNodeMap()
   const isAssetContextMenuVisible =
     category.type !== 'cloud' || user.plan == null || user.plan === Plan.solo
 
@@ -477,6 +478,7 @@ function AssetsTable(props: AssetsTableProps) {
     [
       backend,
       driveStore,
+      nodeMapRef,
       setAssetPanelProps,
       setIsAssetPanelTemporarilyVisible,
       setTargetDirectory,
@@ -674,8 +676,8 @@ function AssetsTable(props: AssetsTableProps) {
     assetTreeRef.current = assetTree
     const newNodeMap = new Map(assetTree.preorderTraversal().map((asset) => [asset.item.id, asset]))
     newNodeMap.set(assetTree.item.id, assetTree)
-    nodeMapRef.current = newNodeMap
-  }, [assetTree])
+    setNodeMap(newNodeMap)
+  }, [assetTree, setNodeMap])
 
   useEffect(() => {
     if (!hidden) {
@@ -712,7 +714,7 @@ function AssetsTable(props: AssetsTableProps) {
           setCanDownload(newCanDownload)
         }
       }),
-    [driveStore, isCloud, setCanDownload],
+    [driveStore, isCloud, nodeMapRef, setCanDownload],
   )
 
   const initialProjectNameDeps = useSyncRef({ assetTree, doOpenProject, isLoading, toastAndLog })
@@ -1077,11 +1079,12 @@ function AssetsTable(props: AssetsTableProps) {
       category,
       sortInfo,
       query,
+      setQuery,
+      nodeMapRef,
+      hideColumn,
       doCopy,
       doCut,
       doPaste,
-      hideColumn,
-      setQuery,
     ],
   )
 

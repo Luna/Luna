@@ -11,7 +11,7 @@ import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import DragModal from '#/modals/DragModal'
 import NewLabelModal from '#/modals/NewLabelModal'
-import { useDriveStore, useSetLabelsDragPayload } from '#/providers/DriveProvider'
+import { useDriveStore, useNodeMap, useSetLabelsDragPayload } from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
@@ -35,6 +35,7 @@ export default function Labels(props: LabelsProps) {
   const { setModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const driveStore = useDriveStore()
+  const nodeMapRef = useNodeMap()
   const setLabelsDragPayload = useSetLabelsDragPayload()
   const labels = useBackendQuery(backend, 'listTags', array.EMPTY_ARRAY).data ?? array.EMPTY_ARRAY
   const deleteTagMutation = useBackendMutation(backend, 'deleteTag')
@@ -81,7 +82,11 @@ export default function Labels(props: LabelsProps) {
                         )
                       }}
                       onDragStart={(event) => {
-                        const { selectedAssets } = driveStore.getState()
+                        const { selectedKeys } = driveStore.getState()
+                        const selectedAssets = [...selectedKeys].flatMap((id) => {
+                          const item = nodeMapRef.current.get(id)?.item
+                          return item ? [item] : []
+                        })
                         drag.setDragImageToBlank(event)
                         const payloadLabels = [label.value]
                         const payload: drag.LabelsDragPayload = new Set(payloadLabels)
