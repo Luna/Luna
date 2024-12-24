@@ -91,10 +91,14 @@ public class DuplicateMethodGenerator {
             .replace("$idType", ctx.getIdMetaField().type());
     sb.append(Utils.indent(duplicateMetaFieldsCode, 2));
     sb.append(System.lineSeparator());
-    for (var dupMetaVarName :
+    for (var metaVar :
         List.of(
-            "diagnosticsDuplicated", "passDataDuplicated", "locationDuplicated", "idDuplicated")) {
-      duplicatedVars.add(new DuplicateVar(null, dupMetaVarName, false));
+            new MetaField("DiagnosticStorage", "diagnostics"),
+            new MetaField("MetadataStorage", "passData"),
+            new MetaField("IdentifiedLocation", "location"),
+            new MetaField("UUID", "id"))) {
+      var dupName = metaVar.name + "Duplicated";
+      duplicatedVars.add(new DuplicateVar(metaVar.type, dupName, metaVar.name, false));
     }
 
     for (var field : ctx.getUserFields()) {
@@ -103,32 +107,52 @@ public class DuplicateMethodGenerator {
           sb.append(Utils.indent(nullableChildCode(field), 2));
           sb.append(System.lineSeparator());
           duplicatedVars.add(
-              new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), true));
+              new DuplicateVar(
+                  field.getSimpleTypeName(), dupFieldName(field), field.getName(), true));
         } else {
           if (field.isList()) {
             sb.append(Utils.indent(listChildCode(field), 2));
             sb.append(System.lineSeparator());
-            duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
+            duplicatedVars.add(
+                new DuplicateVar("List", dupFieldName(field), field.getName(), false));
           } else if (field.isOption()) {
             sb.append(Utils.indent(optionChildCode(field), 2));
             sb.append(System.lineSeparator());
-            duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
+            duplicatedVars.add(
+                new DuplicateVar("Option", dupFieldName(field), field.getName(), false));
           } else {
             sb.append(Utils.indent(notNullableChildCode(field), 2));
             sb.append(System.lineSeparator());
             duplicatedVars.add(
-                new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), true));
+                new DuplicateVar(
+                    field.getSimpleTypeName(), dupFieldName(field), field.getName(), true));
           }
         }
       } else {
         sb.append(Utils.indent(nonChildCode(field), 2));
         sb.append(System.lineSeparator());
-        duplicatedVars.add(new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), false));
+        duplicatedVars.add(
+            new DuplicateVar(
+                field.getSimpleTypeName(), dupFieldName(field), field.getName(), false));
       }
     }
 
-    sb.append(Utils.indent(returnStatement(duplicatedVars), 2));
-    sb.append(System.lineSeparator());
+    var ctorParams = matchCtorParams(duplicatedVars);
+    var newSubclass = newSubclass(ctorParams);
+    sb.append(newSubclass);
+
+    // Rest of the fields that need to be set
+    var restOfDuplicatedVars = Utils.minus(duplicatedVars, ctorParams);
+    for (var duplVar : restOfDuplicatedVars) {
+      sb.append("  ").append("duplicated.").append(duplVar.originalName).append(" = ");
+      if (duplVar.needsCast) {
+        sb.append("(").append(duplVar.type).append(") ");
+      }
+      sb.append(duplVar.duplicatedName).append(";").append(System.lineSeparator());
+    }
+
+    sb.append("  ").append("return duplicated;").append(System.lineSeparator());
+
     sb.append("}");
     sb.append(System.lineSeparator());
     return sb.toString();
@@ -221,39 +245,79 @@ public class DuplicateMethodGenerator {
     return parameters.stream().map(Parameter::name).collect(Collectors.toList());
   }
 
-  private String returnStatement(List<DuplicateVar> duplicatedVars) {
-    Utils.hardAssert(
-        duplicatedVars.size() == ctx.getConstructorParameters().size(),
-        "Number of duplicated variables must be equal to the number of constructor parameters");
-    var argList =
-        duplicatedVars.stream()
+  /** Generate code for call of a constructor of the subclass. */
+  private String newSubclass(List<DuplicateVar> ctorParams) {
+    var subClassType = ctx.getProcessedClass().getClazz().getSimpleName().toString();
+    var ctor = ctx.getProcessedClass().getCtor();
+    Utils.hardAssert(ctor.getParameters().size() == ctorParams.size());
+    var sb = new StringBuilder();
+    sb.append("  ")
+        .append(subClassType)
+        .append(" duplicated")
+        .append(" = ")
+        .append("new ")
+        .append(subClassType)
+        .append("(");
+    var ctorParamsStr =
+        ctorParams.stream()
             .map(
-                var -> {
-                  if (var.needsCast) {
-                    return "(" + var.type + ") " + var.name;
+                ctorParam -> {
+                  if (ctorParam.needsCast) {
+                    return "(" + ctorParam.type + ") " + ctorParam.duplicatedName;
                   } else {
-                    return var.name;
+                    return ctorParam.duplicatedName;
                   }
                 })
             .collect(Collectors.joining(", "));
-    return "return new " + ctx.getClassName() + "(" + argList + ");";
+    sb.append(ctorParamsStr).append(");").append(System.lineSeparator());
+    return sb.toString();
+  }
+
+  /**
+   * Returns sublist of the given list that matches the parameters of the constructor of the
+   * subclass.
+   *
+   * @param duplicatedVars All duplicated variables.
+   * @return sublist, potentially reordered.
+   */
+  private List<DuplicateVar> matchCtorParams(List<DuplicateVar> duplicatedVars) {
+    var ctorParams = new ArrayList<DuplicateVar>();
+    for (var subclassCtorParam : ctx.getSubclassConstructorParameters()) {
+      var paramType = subclassCtorParam.simpleTypeName();
+      var paramName = subclassCtorParam.name();
+      duplicatedVars.stream()
+          .filter(var -> var.type.equals(paramType) && var.originalName.equals(paramName))
+          .findFirst()
+          .ifPresentOrElse(
+              ctorParams::add,
+              () -> {
+                var errMsg =
+                    String.format(
+                        "No matching field found for parameter %s of type %s. All duplicated vars:"
+                            + " %s",
+                        paramName, paramType, duplicatedVars);
+                Utils.printErrorAndFail(
+                    errMsg,
+                    ctx.getProcessedClass().getCtor(),
+                    ctx.getProcessingEnvironment().getMessager());
+              });
+    }
+    return ctorParams;
   }
 
   private String dupMethodRetType() {
     return duplicateMethod.getReturnType().toString();
   }
 
-  private static String stripWhitespaces(String s) {
-    return s.replaceAll("\\s+", "");
-  }
-
   /**
-   * @param type Nullable
-   * @param name
+   * @param type Simple type name. Must not be null.
+   * @param duplicatedName Name of the duplicated variable
+   * @param originalName Name of the original variable (field)
    * @param needsCast If the duplicated variable needs to be casted to its type in the return
    *     statement.
    */
-  private record DuplicateVar(String type, String name, boolean needsCast) {}
+  private record DuplicateVar(
+      String type, String duplicatedName, String originalName, boolean needsCast) {}
 
   /**
    * Parameter for the duplicate method
@@ -268,4 +332,6 @@ public class DuplicateMethodGenerator {
       return type + " " + name;
     }
   }
+
+  private record MetaField(String type, String name) {}
 }

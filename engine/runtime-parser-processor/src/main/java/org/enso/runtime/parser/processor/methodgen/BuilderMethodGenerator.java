@@ -59,11 +59,6 @@ public class BuilderMethodGenerator {
                         .replace("$fieldName", field.getName()))
             .collect(Collectors.joining(System.lineSeparator()));
 
-    var fieldList =
-        generatedClassContext.getAllFields().stream()
-            .map(ClassField::name)
-            .collect(Collectors.joining(", "));
-
     var code =
         """
         public static final class Builder {
@@ -75,10 +70,7 @@ public class BuilderMethodGenerator {
 
           $fieldSetters
 
-          public $className build() {
-            validate();
-            return new $className($fieldList);
-          }
+          $buildMethod
 
           private void validate() {
             $validationCode
@@ -88,8 +80,7 @@ public class BuilderMethodGenerator {
             .replace("$fieldDeclarations", fieldDeclarations)
             .replace("$copyConstructor", copyConstructor())
             .replace("$fieldSetters", fieldSetters)
-            .replace("$className", generatedClassContext.getClassName())
-            .replace("$fieldList", fieldList)
+            .replace("$buildMethod", buildMethod())
             .replace("$validationCode", Utils.indent(validationCode, 2));
     return Utils.indent(code, 2);
   }
@@ -110,6 +101,40 @@ public class BuilderMethodGenerator {
           .append(System.lineSeparator());
     }
     sb.append("}").append(System.lineSeparator());
+    return sb.toString();
+  }
+
+  private String buildMethod() {
+    var sb = new StringBuilder();
+    var processedClassName =
+        generatedClassContext.getProcessedClass().getClazz().getSimpleName().toString();
+    var ctorParams = generatedClassContext.getSubclassConstructorParameters();
+    var ctorParamsStr = ctorParams.stream().map(ClassField::name).collect(Collectors.joining(", "));
+    var fieldsNotInCtor = Utils.minus(generatedClassContext.getAllFields(), ctorParams);
+    sb.append("  public ")
+        .append(processedClassName)
+        .append(" build() {")
+        .append(System.lineSeparator());
+    sb.append("    ").append("validate();").append(System.lineSeparator());
+    sb.append("    ")
+        .append(processedClassName)
+        .append(" result = new ")
+        .append(processedClassName)
+        .append("(")
+        .append(ctorParamsStr)
+        .append(");")
+        .append(System.lineSeparator());
+    for (var fieldNotInCtor : fieldsNotInCtor) {
+      sb.append("    ")
+          .append("result.")
+          .append(fieldNotInCtor.name())
+          .append(" = ")
+          .append(fieldNotInCtor.name())
+          .append(";")
+          .append(System.lineSeparator());
+    }
+    sb.append("    ").append("return result;").append(System.lineSeparator());
+    sb.append("  }").append(System.lineSeparator());
     return sb.toString();
   }
 }

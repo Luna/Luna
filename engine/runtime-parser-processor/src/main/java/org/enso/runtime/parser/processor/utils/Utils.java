@@ -2,6 +2,7 @@ package org.enso.runtime.parser.processor.utils;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.processing.Messager;
@@ -202,5 +203,9 @@ public final class Utils {
       }
     }
     return null;
+  }
+
+  public static <T> List<T> minus(List<T> superset, List<T> subset) {
+    return superset.stream().filter(e -> !subset.contains(e)).collect(Collectors.toList());
   }
 }

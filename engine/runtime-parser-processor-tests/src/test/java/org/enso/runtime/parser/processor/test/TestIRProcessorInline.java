@@ -196,6 +196,23 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void generatedClass_IsAbstract() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("abstract class JNameGen"));
+  }
+
+  @Test
   public void annotatedConstructor_MustNotHaveUnannotatedParameters() {
     var src =
         """

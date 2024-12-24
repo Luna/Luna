@@ -157,11 +157,13 @@ final class IRNodeClassGenerator {
     var code =
         """
         $userDefinedFields;
-        // Not final on purpose
-        private DiagnosticStorage diagnostics;
-        private MetadataStorage passData;
-        private IdentifiedLocation location;
-        private UUID id;
+        // The following meta fields cannot be private, as we are explicitly
+        // setting them in the `duplicate` method. Inheritor should not access
+        // these fields directly
+        protected DiagnosticStorage diagnostics;
+        protected MetadataStorage passData;
+        protected IdentifiedLocation location;
+        protected UUID id;
         """
             .replace("$userDefinedFields", userDefinedFields);
     return indent(code, 2);
@@ -180,7 +182,7 @@ final class IRNodeClassGenerator {
          */
         """;
     var ctorCode =
-        constructorForFields(generatedClassContext.getConstructorParameters(), List.of());
+        constructorForFields(generatedClassContext.getSuperclassConstructorParameters(), List.of());
     return Utils.indent(docs + ctorCode, 2);
   }
 

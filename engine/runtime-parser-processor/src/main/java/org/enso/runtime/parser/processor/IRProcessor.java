@@ -226,7 +226,7 @@ public class IRProcessor extends AbstractProcessor {
         $imports
 
         $docs
-        class $className implements $interfaces {
+        abstract class $className implements $interfaces {
           $classBody
         }
         """
