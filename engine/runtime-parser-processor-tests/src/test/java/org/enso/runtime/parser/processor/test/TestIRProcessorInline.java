@@ -64,7 +64,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName() {}
         }
@@ -135,9 +135,11 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRField;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
-          public JName(@IRField String name) {}
+          public JName(@IRField String name) {
+            super(name);
+          }
         }
         """;
     var genClass = generatedClass("JName", src);
@@ -153,7 +155,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName() {}
         }
@@ -173,7 +175,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName() {}
         }
@@ -200,7 +202,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName() {}
         }
@@ -221,7 +223,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName() {}
         }
@@ -238,7 +240,7 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.GenerateFields;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
           public JName(int param) {}
         }
@@ -260,9 +262,11 @@ public class TestIRProcessorInline {
         import org.enso.compiler.core.ir.MetadataStorage;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
-          public JName(MetadataStorage passData) {}
+          public JName(MetadataStorage passData) {
+            super();
+          }
         }
         """;
     var compilation = compile("JName", src);
@@ -281,9 +285,11 @@ public class TestIRProcessorInline {
         import org.enso.compiler.core.ir.Expression;
 
         @GenerateIR
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
-          public MyIR(@IRChild Expression expression) {}
+          public MyIR(@IRChild Expression expression) {
+            super(expression);
+          }
         }
         """);
     assertThat(genSrc, containsString("Expression expression()"));
@@ -301,9 +307,11 @@ public class TestIRProcessorInline {
         import org.enso.runtime.parser.dsl.IRField;
 
         @GenerateIR
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
-          public MyIR(@IRField boolean suspended) {}
+          public MyIR(@IRField boolean suspended) {
+            super(suspended);
+          }
         }
         """);
     assertThat(genSrc, containsString("boolean suspended()"));
@@ -323,7 +331,7 @@ public class TestIRProcessorInline {
         }
 
         @GenerateIR(interfaces = "MySuperIR")
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
           public MyIR() {}
         }
@@ -350,9 +358,11 @@ public class TestIRProcessorInline {
         }
 
         @GenerateIR(interfaces = "MySuperIR")
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
-          public MyIR(@IRField boolean suspended) {}
+          public MyIR(@IRField boolean suspended) {
+            super(suspended);
+          }
         }
         """);
     assertThat(src, containsString("boolean suspended()"));
@@ -374,9 +384,11 @@ public class TestIRProcessorInline {
         }
 
         @GenerateIR
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
-          public MyIR(@IRField boolean suspended) {}
+          public MyIR(@IRField boolean suspended) {
+            super(suspended);
+          }
         }
 
         """);
@@ -402,9 +414,11 @@ public class TestIRProcessorInline {
         }
 
         @GenerateIR(interfaces = "MySuperIR")
-        public final class MyIR {
+        public final class MyIR extends MyIRGen {
           @GenerateFields
-          public MyIR(@IRField boolean suspended) {}
+          public MyIR(@IRField boolean suspended) {
+            super(suspended);
+          }
         }
         """);
     assertThat(src, containsString("boolean suspended()"));
@@ -450,9 +464,11 @@ public class TestIRProcessorInline {
         import scala.collection.immutable.List;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
-          public JName(@IRChild List<IR> expressions) {}
+          public JName(@IRChild List<IR> expressions) {
+            super(expressions);
+          }
         }
         """);
     assertThat(src, containsString("class JNameGen"));
@@ -472,9 +488,11 @@ public class TestIRProcessorInline {
         import scala.Option;
 
         @GenerateIR
-        public final class JName {
+        public final class JName extends JNameGen {
           @GenerateFields
-          public JName(@IRChild Option<IR> expression) {}
+          public JName(@IRChild Option<IR> expression) {
+            super(expression);
+          }
         }
         """);
     assertThat(src, containsString("class JNameGen"));
