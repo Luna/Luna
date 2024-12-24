@@ -92,6 +92,11 @@ Lookup of library with name `native` works roughly in these steps:
 - Search for the library in the `polyglot/lib/<arch>/<os>` directory, where
   `<os>` is the name of the operating system.
 
+Supported names:
+- Names for `<os>` are `linux`, `macos`, `windows`.
+  - Note that for simplicity we omit the versions of the operating systems.
+- Names for architectures `<arch>` are `amd64`, `x86_64`, `x86_32`.
+
 ## Download a Java Library from Maven Central
 
 A typical use-case when bringing in some popular Java library into Enso
