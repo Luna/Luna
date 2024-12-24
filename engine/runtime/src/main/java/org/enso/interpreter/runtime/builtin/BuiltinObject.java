@@ -93,7 +93,7 @@ public abstract class BuiltinObject extends EnsoObject {
       return cachedBuiltinType.getType();
     }
 
-    @Fallback
+    @Specialization(replaces = "doItCached")
     public static Type uncached(BuiltinObject receiver, @Bind("$node") Node node) {
       var ctx = getCtx(node);
       return getBuiltinType(receiver, ctx).getType();
