@@ -35,8 +35,8 @@ public interface JCallArgument extends IR {
   final class JSpecified extends JSpecifiedGen {
     @GenerateFields
     public JSpecified(
-        @IRField boolean isSynthetic, @IRChild Expression value, @IRChild Option<Name> name) {
-      super(isSynthetic, value, name);
+        @IRField boolean isSynthetic, @IRChild Option<Name> name, @IRChild Expression value) {
+      super(isSynthetic, name, value);
     }
   }
 }
