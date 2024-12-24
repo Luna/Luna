@@ -286,7 +286,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the number of args expected by the constructor.
    */
   public int getArity() {
-    return constructorFunction.get().getSchema().getArgumentsCount();
+    return fieldNames.length;
   }
 
   /**
@@ -320,6 +320,7 @@ public final class AtomConstructor extends EnsoObject {
    *
    * @return the constructor function of this constructor.
    */
+  @TruffleBoundary
   public Function getConstructorFunction() {
     return constructorFunction.get();
   }
@@ -398,6 +399,7 @@ public final class AtomConstructor extends EnsoObject {
     return unboxingLayouts;
   }
 
+  @TruffleBoundary
   final Layout getBoxedLayout() {
     return boxedLayout.get();
   }
@@ -490,7 +492,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the fields defined by this constructor.
    */
   public ArgumentDefinition[] getFields() {
-    return constructorFunction.get().getSchema().getArgumentInfos();
+    return getConstructorFunction().getSchema().getArgumentInfos();
   }
 
   /**
