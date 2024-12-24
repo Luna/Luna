@@ -92,7 +92,7 @@ public class TestIRProcessorInline {
   }
 
   @Test
-  public void annotatedClassMustHaveAnnotatedConstructor() {
+  public void annotatedClass_MustHaveAnnotatedConstructor() {
     var src =
         JavaFileObjects.forSourceString(
             "JName",
@@ -106,6 +106,24 @@ public class TestIRProcessorInline {
     CompilationSubject.assertThat(compilation).failed();
     CompilationSubject.assertThat(compilation)
         .hadErrorContaining("must have exactly one constructor annotated with @GenerateFields");
+  }
+
+  @Test
+  public void annotatedClass_MustExtendGeneratedSuperclass() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).failed();
+    CompilationSubject.assertThat(compilation).hadErrorContaining("must extend");
   }
 
   @Test
@@ -407,9 +425,11 @@ public class TestIRProcessorInline {
           String name();
 
           @GenerateIR(interfaces = "JName")
-          public final class JBlank {
+          public final class JBlank extends JBlankGen {
             @GenerateFields
-            public JBlank(@IRField String name) {}
+            public JBlank(@IRField String name) {
+              super(name);
+            }
           }
         }
         """);

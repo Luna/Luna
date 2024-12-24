@@ -13,6 +13,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 import javax.tools.JavaFileObject;
 import org.enso.runtime.parser.dsl.GenerateFields;
 import org.enso.runtime.parser.dsl.GenerateIR;
@@ -59,15 +60,17 @@ public class IRProcessor extends AbstractProcessor {
     if (!ensureHasSingleAnnotatedConstructor(processedClassElem)) {
       return false;
     }
+    if (!ensureExtendsGeneratedSuperclass(processedClassElem)) {
+      return false;
+    }
     var processedClass = constructProcessedClass(processedClassElem);
     if (processedClass == null) {
       printError("Failed to construct ProcessedClass", processedClassElem);
       return false;
     }
 
-    var processedClassName = processedClassElem.getSimpleName().toString();
     var pkgName = packageName(processedClassElem);
-    var newClassName = processedClassName + "Gen";
+    var newClassName = generatedClassName(processedClassElem);
     String newBinaryName;
     if (!pkgName.isEmpty()) {
       newBinaryName = pkgName + "." + newClassName;
@@ -118,6 +121,10 @@ public class IRProcessor extends AbstractProcessor {
       }
     }
     return null;
+  }
+
+  private static String generatedClassName(TypeElement processedClassElem) {
+    return processedClassElem.getSimpleName().toString() + "Gen";
   }
 
   private static boolean isBinaryName(String name) {
@@ -186,6 +193,26 @@ public class IRProcessor extends AbstractProcessor {
       return false;
     }
     return true;
+  }
+
+  private boolean ensureExtendsGeneratedSuperclass(TypeElement clazz) {
+    var superClass = clazz.getSuperclass();
+    if (superClass.getKind() == TypeKind.NONE) {
+      return false;
+    }
+    var superClassName = superClass.toString();
+    var genClassName = generatedClassName(clazz);
+    var extendsGeneratedSuperclass = superClassName.equals(genClassName);
+    if (!extendsGeneratedSuperclass) {
+      printError(
+          "Class annotated with @GenerateIR must extend generated superclass '"
+              + genClassName
+              + "'",
+          clazz);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   private static ExecutableElement getAnnotatedCtor(TypeElement clazz) {
