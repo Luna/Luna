@@ -37,9 +37,10 @@ public final class MapExpressionsMethodGenerator {
 
   public String generateMapExpressionsMethodCode() {
     var sb = new StringBuilder();
+    var subclassType = ctx.getProcessedClass().getClazz().getSimpleName().toString();
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public ")
-        .append(mapExpressionsMethod.getReturnType())
+        .append(subclassType)
         .append(" ")
         .append(METHOD_NAME)
         .append("(")
