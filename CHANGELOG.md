@@ -17,10 +17,12 @@
 - A constructor or type definition with a single inline argument definition was
   previously allowed to use spaces in the argument definition without
   parentheses. [This is now a syntax error.][11856]
+- [Native libraries of projects can be added to `polyglot/lib` directory][11874]
 
 [11777]: https://github.com/enso-org/enso/pull/11777
 [11600]: https://github.com/enso-org/enso/pull/11600
 [11856]: https://github.com/enso-org/enso/pull/11856
+[11874]: https://github.com/enso-org/enso/pull/11874
 
 # Next Release
 
