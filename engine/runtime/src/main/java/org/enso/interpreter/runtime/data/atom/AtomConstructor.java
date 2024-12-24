@@ -374,7 +374,7 @@ public final class AtomConstructor extends EnsoObject {
       // take just the first one.
       var moduleScope = constructors.iterator().next().getDefinitionScope();
       for (var cons : constructors) {
-        var fieldNames = cons.getFieldNames();
+        final var fieldNames = cons.getFieldNames();
         for (var i = 0; i < fieldNames.length; i++) {
           var items = names.computeIfAbsent(fieldNames[i], (k) -> new ArrayList<>());
           items.add(new GetFieldWithMatchNode.GetterPair(cons, i));
@@ -394,11 +394,10 @@ public final class AtomConstructor extends EnsoObject {
       }
     } else if (constructors.size() == 1) {
       var cons = constructors.toArray(AtomConstructor[]::new)[0];
-      for (var field : cons.getFields()) {
-        var node =
-            new GetFieldNode(
-                language, field.getPosition(), type, field.getName(), cons.getDefinitionScope());
-        roots.put(field.getName(), node);
+      final var fieldNames = cons.getFieldNames();
+      for (var i = 0; i < fieldNames.length; i++) {
+        var node = new GetFieldNode(language, i, type, fieldNames[i], cons.getDefinitionScope());
+        roots.put(fieldNames[i], node);
       }
     }
     return roots;
