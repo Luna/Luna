@@ -9,6 +9,7 @@ import org.enso.runtime.parser.dsl.GenerateIR;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRField;
 import scala.Option;
+import scala.Tuple3;
 
 /** Call-site arguments in Enso. */
 public interface JCallArgument extends IR {
@@ -37,6 +38,10 @@ public interface JCallArgument extends IR {
     public JSpecified(
         @IRField boolean isSynthetic, @IRChild Option<Name> name, @IRChild Expression value) {
       super(isSynthetic, name, value);
+    }
+
+    public static Option<Tuple3<Boolean, Option<Name>, Expression>> unapply(JSpecified self) {
+      return Option.apply(new Tuple3<>(self.isSynthetic(), self.name(), self.value()));
     }
   }
 }

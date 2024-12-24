@@ -16,4 +16,13 @@ class GeneratedIRTest extends AnyFlatSpec with Matchers {
     val dupl = callArg.duplicate(false, false, false, false)
     dupl.value() shouldEqual lit
   }
+
+  "JSpecified" should "can implement unapply" in {
+    val lit     = Literal.Text("foo", null, new MetadataStorage())
+    val callArg = new JSpecified(true, None, lit)
+    callArg match {
+      case JSpecified(isSynthetic, _, _) =>
+        isSynthetic shouldEqual true
+    }
+  }
 }
