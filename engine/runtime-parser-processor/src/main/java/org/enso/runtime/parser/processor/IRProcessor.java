@@ -3,6 +3,7 @@ package org.enso.runtime.parser.processor;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -14,6 +15,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import org.enso.runtime.parser.dsl.GenerateFields;
 import org.enso.runtime.parser.dsl.GenerateIR;
@@ -35,11 +37,17 @@ public class IRProcessor extends AbstractProcessor {
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     var generateIRElems = roundEnv.getElementsAnnotatedWith(GenerateIR.class);
     for (var generateIRElem : generateIRElems) {
-      if (!ensureIsClass(generateIRElem)) {
-        return false;
-      }
-      var suc = processGenerateIRElem((TypeElement) generateIRElem);
-      if (!suc) {
+      try {
+        ensureIsClass(generateIRElem);
+        processGenerateIRElem((TypeElement) generateIRElem);
+      } catch (IRProcessingException e) {
+        Element element;
+        if (e.getElement() != null) {
+          element = e.getElement();
+        } else {
+          element = generateIRElem;
+        }
+        processingEnv.getMessager().printMessage(Kind.ERROR, e.getMessage(), element);
         return false;
       }
     }
@@ -48,27 +56,14 @@ public class IRProcessor extends AbstractProcessor {
 
   /**
    * @param processedClassElem Class annotated with {@link GenerateIR}.
-   * @return true if processing was successful, false otherwise.
    */
-  private boolean processGenerateIRElem(TypeElement processedClassElem) {
-    if (!ensureIsPublicFinal(processedClassElem)) {
-      return false;
-    }
-    if (!ensureEnclosedInInterfaceOrPackage(processedClassElem)) {
-      return false;
-    }
-    if (!ensureHasSingleAnnotatedConstructor(processedClassElem)) {
-      return false;
-    }
-    if (!ensureExtendsGeneratedSuperclass(processedClassElem)) {
-      return false;
-    }
-    var processedClass = constructProcessedClass(processedClassElem);
-    if (processedClass == null) {
-      printError("Failed to construct ProcessedClass", processedClassElem);
-      return false;
-    }
+  private void processGenerateIRElem(TypeElement processedClassElem) {
+    ensureIsPublicFinal(processedClassElem);
+    ensureEnclosedInInterfaceOrPackage(processedClassElem);
+    ensureHasSingleAnnotatedConstructor(processedClassElem);
+    ensureExtendsGeneratedSuperclass(processedClassElem);
 
+    var processedClass = constructProcessedClass(processedClassElem);
     var pkgName = packageName(processedClassElem);
     var newClassName = generatedClassName(processedClassElem);
     String newBinaryName;
@@ -78,13 +73,13 @@ public class IRProcessor extends AbstractProcessor {
       newBinaryName = newClassName;
     }
 
-    JavaFileObject srcGen = null;
+    JavaFileObject srcGen;
     try {
       srcGen = processingEnv.getFiler().createSourceFile(newBinaryName, processedClassElem);
     } catch (IOException e) {
-      printError("Failed to create source file for IRNode", processedClassElem);
+      throw new IRProcessingException(
+          "Failed to create source file for IRNode", processedClassElem, e);
     }
-    assert srcGen != null;
 
     String generatedCode;
     var classGenerator = new IRNodeClassGenerator(processingEnv, processedClass, newClassName);
@@ -95,10 +90,9 @@ public class IRProcessor extends AbstractProcessor {
         lineWriter.write(generatedCode);
       }
     } catch (IOException e) {
-      printError("Failed to write to source file for IRNode", processedClassElem);
-      return false;
+      throw new IRProcessingException(
+          "Failed to write to source file for IRNode", processedClassElem, e);
     }
-    return true;
   }
 
   private TypeElement findInterface(TypeElement processedClassElem, String interfaceName) {
@@ -135,83 +129,75 @@ public class IRProcessor extends AbstractProcessor {
     var generateIrAnnot = processedClassElem.getAnnotation(GenerateIR.class);
     var ifaceToImplement = findInterface(processedClassElem, generateIrAnnot.interfaces());
     if (ifaceToImplement == null) {
-      printError(
+      throw new IRProcessingException(
           "Could not find interface '" + generateIrAnnot.interfaces() + "'", processedClassElem);
-      return null;
     }
     if (!Utils.isSubtypeOfIR(ifaceToImplement, processingEnv)) {
-      printError("Interface to implement must be a subtype of IR interface", ifaceToImplement);
-      return null;
+      throw new IRProcessingException(
+          "Interface to implement must be a subtype of IR interface", ifaceToImplement);
     }
     var annotatedCtor = getAnnotatedCtor(processedClassElem);
     var processedClass = new ProcessedClass(processedClassElem, annotatedCtor, ifaceToImplement);
     return processedClass;
   }
 
-  private boolean ensureIsClass(Element elem) {
+  private void ensureIsClass(Element elem) {
     if (elem.getKind() != ElementKind.CLASS) {
-      printError("GenerateIR annotation can only be applied to classes", elem);
-      return false;
+      throw new IRProcessingException("GenerateIR annotation can only be applied to classes", elem);
     }
-    return true;
   }
 
-  private boolean ensureIsPublicFinal(TypeElement clazz) {
+  private void ensureIsPublicFinal(TypeElement clazz) {
     if (!clazz.getModifiers().contains(Modifier.FINAL)
         || !clazz.getModifiers().contains(Modifier.PUBLIC)) {
-      printError("Class annotated with @GenerateIR must be public final", clazz);
-      return false;
+      throw new IRProcessingException(
+          "Class annotated with @GenerateIR must be public final", clazz);
     }
-    return true;
   }
 
-  private boolean ensureEnclosedInInterfaceOrPackage(TypeElement clazz) {
+  private void ensureEnclosedInInterfaceOrPackage(TypeElement clazz) {
     var enclosingElem = clazz.getEnclosingElement();
     if (enclosingElem != null) {
       if (!(enclosingElem.getKind() == ElementKind.PACKAGE
           || enclosingElem.getKind() == ElementKind.INTERFACE)) {
-        printError(
+        throw new IRProcessingException(
             "Class annotated with @GenerateIR must be enclosed in a package or an interface",
             clazz);
-        return false;
       }
     }
-    return true;
   }
 
-  private boolean ensureHasSingleAnnotatedConstructor(TypeElement clazz) {
+  private void ensureHasSingleAnnotatedConstructor(TypeElement clazz) {
     var annotatedCtorsCnt =
         clazz.getEnclosedElements().stream()
             .filter(elem -> elem.getKind() == ElementKind.CONSTRUCTOR)
             .filter(ctor -> ctor.getAnnotation(GenerateFields.class) != null)
             .count();
     if (annotatedCtorsCnt != 1) {
-      printError(
+      throw new IRProcessingException(
           "Class annotated with @GenerateIR must have exactly one constructor annotated with"
               + " @GenerateFields",
           clazz);
-      return false;
     }
-    return true;
   }
 
-  private boolean ensureExtendsGeneratedSuperclass(TypeElement clazz) {
+  private void ensureExtendsGeneratedSuperclass(TypeElement clazz) {
     var superClass = clazz.getSuperclass();
+    var genClassName = generatedClassName(clazz);
+    Supplier<IRProcessingException> errSupplier =
+        () ->
+            new IRProcessingException(
+                "Class annotated with @GenerateIR must extend generated superclass '"
+                    + genClassName
+                    + "'",
+                clazz);
     if (superClass.getKind() == TypeKind.NONE) {
-      return false;
+      throw errSupplier.get();
     }
     var superClassName = superClass.toString();
-    var genClassName = generatedClassName(clazz);
     var extendsGeneratedSuperclass = superClassName.equals(genClassName);
     if (!extendsGeneratedSuperclass) {
-      printError(
-          "Class annotated with @GenerateIR must extend generated superclass '"
-              + genClassName
-              + "'",
-          clazz);
-      return false;
-    } else {
-      return true;
+      throw errSupplier.get();
     }
   }
 
@@ -222,16 +208,13 @@ public class IRProcessor extends AbstractProcessor {
         .filter(elem -> elem.getAnnotation(GenerateFields.class) != null)
         .map(elem -> (ExecutableElement) elem)
         .findFirst()
-        .orElseThrow(() -> new AssertionError("No constructor annotated with GenerateFields"));
+        .orElseThrow(
+            () -> new IRProcessingException("No constructor annotated with GenerateFields", clazz));
   }
 
   private String packageName(Element elem) {
     var pkg = processingEnv.getElementUtils().getPackageOf(elem);
     return pkg.getQualifiedName().toString();
-  }
-
-  private void printError(String msg, Element elem) {
-    Utils.printError(msg, elem, processingEnv.getMessager());
   }
 
   /**

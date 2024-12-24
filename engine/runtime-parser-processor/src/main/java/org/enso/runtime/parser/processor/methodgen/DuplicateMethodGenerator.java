@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
+import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.utils.Utils;
 
@@ -36,14 +37,14 @@ public class DuplicateMethodGenerator {
   private static void ensureDuplicateMethodHasExpectedSignature(ExecutableElement duplicateMethod) {
     var dupMethodParameters = duplicateMethod.getParameters();
     if (dupMethodParameters.size() != parameters.size()) {
-      throw new IllegalArgumentException(
-          "Duplicate method must have " + parameters.size() + " parameters");
+      throw new IRProcessingException(
+          "Duplicate method must have " + parameters.size() + " parameters", duplicateMethod);
     }
     var allParamsAreBooleans =
         dupMethodParameters.stream().allMatch(par -> par.asType().getKind() == TypeKind.BOOLEAN);
     if (!allParamsAreBooleans) {
-      throw new IllegalArgumentException(
-          "All parameters of the duplicate method must be of type boolean");
+      throw new IRProcessingException(
+          "All parameters of the duplicate method must be of type boolean", duplicateMethod);
     }
   }
 
@@ -163,7 +164,7 @@ public class DuplicateMethodGenerator {
   }
 
   private static String nullableChildCode(Field nullableChild) {
-    assert nullableChild.isNullable() && nullableChild.isChild();
+    Utils.hardAssert(nullableChild.isNullable() && nullableChild.isChild());
     return """
           IR $dupName = null;
             if ($childName != null) {
@@ -296,10 +297,7 @@ public class DuplicateMethodGenerator {
                         "No matching field found for parameter %s of type %s. All duplicated vars:"
                             + " %s",
                         paramName, paramType, duplicatedVars);
-                Utils.printErrorAndFail(
-                    errMsg,
-                    ctx.getProcessedClass().getCtor(),
-                    ctx.getProcessingEnvironment().getMessager());
+                throw new IRProcessingException(errMsg, ctx.getProcessedClass().getCtor());
               });
     }
     return ctorParams;

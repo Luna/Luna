@@ -10,6 +10,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRField;
+import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.ProcessedClass;
 import org.enso.runtime.parser.processor.utils.Utils;
 
@@ -74,8 +75,7 @@ public final class FieldCollector {
             "Constructor parameter "
                 + param
                 + " must be annotated with either @IRField or @IRChild";
-        Utils.printError(errMsg, param, processingEnv.getMessager());
-        throw new IllegalStateException(errMsg);
+        throw new IRProcessingException(errMsg, param);
       }
 
       if (field != null) {
@@ -117,10 +117,9 @@ public final class FieldCollector {
       return new OptionField(name, type, typeArgElem);
     } else {
       if (!Utils.isSubtypeOfIR(type, processingEnv)) {
-        Utils.printErrorAndFail(
+        throw new IRProcessingException(
             "Constructor parameter annotated with @IRChild must be a subtype of IR interface",
-            param,
-            processingEnv.getMessager());
+            param);
       }
       return new ReferenceField(processingEnv, type, name, isNullable, true);
     }
@@ -134,9 +133,9 @@ public final class FieldCollector {
    * @return the generic type parameter
    */
   private TypeElement getGenericType(VariableElement param) {
-    assert param.asType() instanceof DeclaredType;
+    Utils.hardAssert(param.asType() instanceof DeclaredType);
     var declaredType = (DeclaredType) param.asType();
-    assert declaredType.getTypeArguments().size() == 1;
+    Utils.hardAssert(declaredType.getTypeArguments().size() == 1);
     var typeArg = declaredType.getTypeArguments().get(0);
     var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
     ensureIsSubtypeOfIR(typeArgElem);
@@ -153,10 +152,8 @@ public final class FieldCollector {
 
   private void ensureIsSubtypeOfIR(TypeElement typeElem) {
     if (!Utils.isSubtypeOfIR(typeElem, processingEnv)) {
-      Utils.printError(
-          "Method annotated with @IRChild must return a subtype of IR interface",
-          typeElem,
-          processingEnv.getMessager());
+      throw new IRProcessingException(
+          "Method annotated with @IRChild must return a subtype of IR interface", typeElem);
     }
   }
 }

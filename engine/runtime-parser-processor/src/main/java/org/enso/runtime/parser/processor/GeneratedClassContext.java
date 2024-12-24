@@ -64,7 +64,7 @@ public final class GeneratedClassContext {
 
   private static void ensureSimpleName(String name) {
     if (name.contains(".")) {
-      throw new IllegalArgumentException("Class name must be simple, not qualified");
+      throw new IRProcessingException("Class name must be simple, not qualified", null);
     }
   }
 
@@ -141,8 +141,7 @@ public final class GeneratedClassContext {
                 String.format(
                     "No matching field found for parameter %s of type %s. All fields: %s",
                     paramName, paramSimpleType, allFields);
-            Utils.printErrorAndFail(errMsg, param, processingEnvironment.getMessager());
-            return null;
+            throw new IRProcessingException(errMsg, param);
           };
       var fieldsWithSameType =
           allFields.stream()

@@ -56,7 +56,7 @@ final class IRNodeClassGenerator {
    */
   IRNodeClassGenerator(
       ProcessingEnvironment processingEnv, ProcessedClass processedClass, String className) {
-    assert !className.contains(".") : "Class name should be simple, not qualified";
+    Utils.hardAssert(!className.contains("."), "Class name should be simple, not qualified");
     this.processingEnv = processingEnv;
     this.processedClass = processedClass;
     this.className = className;

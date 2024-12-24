@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
@@ -245,12 +244,9 @@ public class TestIRProcessorInline {
           public JName(int param) {}
         }
         """;
-    try {
-      compile("JName", src);
-      fail("Exception in compilation expected");
-    } catch (Exception e) {
-      assertThat(e.getMessage(), containsString("must be annotated"));
-    }
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).failed();
+    CompilationSubject.assertThat(compilation).hadErrorContaining("must be annotated");
   }
 
   @Test

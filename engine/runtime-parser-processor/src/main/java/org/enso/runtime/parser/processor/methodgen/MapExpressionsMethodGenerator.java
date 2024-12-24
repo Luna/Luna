@@ -5,6 +5,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
+import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.utils.Utils;
 
@@ -29,10 +30,8 @@ public final class MapExpressionsMethodGenerator {
       ExecutableElement mapExpressionsMethod) {
     var parameters = mapExpressionsMethod.getParameters();
     if (parameters.size() != 1) {
-      Utils.printErrorAndFail(
-          "Map expressions method must have 1 parameter",
-          mapExpressionsMethod,
-          ctx.getProcessingEnvironment().getMessager());
+      throw new IRProcessingException(
+          "Map expressions method must have 1 parameter", mapExpressionsMethod);
     }
   }
 

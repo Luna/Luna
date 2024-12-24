@@ -5,14 +5,13 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-import javax.tools.Diagnostic.Kind;
+import org.enso.runtime.parser.processor.IRProcessingException;
 
 public final class Utils {
 
@@ -56,15 +55,6 @@ public final class Utils {
             .getTypeElement("org.enso.compiler.core.ir.Expression")
             .asType();
     return processingEnv.getTypeUtils().isAssignable(type, expressionType);
-  }
-
-  public static void printError(String msg, Element elem, Messager messager) {
-    messager.printMessage(Kind.ERROR, msg, elem);
-  }
-
-  public static void printErrorAndFail(String msg, Element elem, Messager messager) {
-    printError(msg, elem, messager);
-    throw new IllegalStateException("Unexpected failure during annotation processing: " + msg);
   }
 
   public static String indent(String code, int indentation) {
@@ -158,7 +148,7 @@ public final class Utils {
 
   public static void hardAssert(boolean condition, String msg) {
     if (!condition) {
-      throw new AssertionError(msg);
+      throw new IRProcessingException(msg, null);
     }
   }
 
