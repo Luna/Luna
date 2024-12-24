@@ -153,6 +153,7 @@ export function ErrorDisplay(props: ErrorDisplayProps): React.JSX.Element {
       status={finalStatus}
       title={finalTitle}
       subtitle={finalSubtitle}
+      testId="error-display"
     >
       <ariaComponents.ButtonGroup align="center">
         <ariaComponents.Button
