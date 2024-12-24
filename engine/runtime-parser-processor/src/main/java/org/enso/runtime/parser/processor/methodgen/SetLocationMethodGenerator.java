@@ -1,18 +1,18 @@
 package org.enso.runtime.parser.processor.methodgen;
 
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
+import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.utils.Utils;
 
 public class SetLocationMethodGenerator {
   private final ExecutableElement setLocationMethod;
-  private final ProcessingEnvironment processingEnv;
+  private final GeneratedClassContext ctx;
 
   public SetLocationMethodGenerator(
-      ExecutableElement setLocationMethod, ProcessingEnvironment processingEnv) {
+      ExecutableElement setLocationMethod, GeneratedClassContext ctx) {
     ensureCorrectSignature(setLocationMethod);
-    this.processingEnv = processingEnv;
+    this.ctx = ctx;
     this.setLocationMethod = setLocationMethod;
   }
 
@@ -47,10 +47,6 @@ public class SetLocationMethodGenerator {
   }
 
   private String retType() {
-    return processingEnv
-        .getTypeUtils()
-        .asElement(setLocationMethod.getReturnType())
-        .getSimpleName()
-        .toString();
+    return ctx.getProcessedClass().getClazz().getSimpleName().toString();
   }
 }

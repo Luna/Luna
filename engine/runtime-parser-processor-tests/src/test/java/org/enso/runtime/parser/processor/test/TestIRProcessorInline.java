@@ -232,6 +232,23 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void generatedMethod_setLocation_returnsSubClassType() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("JName setLocation("));
+  }
+
+  @Test
   public void annotatedConstructor_MustNotHaveUnannotatedParameters() {
     var src =
         """

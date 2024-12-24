@@ -78,7 +78,7 @@ final class IRNodeClassGenerator {
             processingEnv,
             method -> method.getSimpleName().toString().equals("setLocation"));
     this.setLocationMethodGenerator =
-        new SetLocationMethodGenerator(setLocationMethod, processingEnv);
+        new SetLocationMethodGenerator(setLocationMethod, generatedClassContext);
     this.equalsMethodGenerator = new EqualsMethodGenerator(generatedClassContext);
     this.hashCodeMethodGenerator = new HashCodeMethodGenerator(generatedClassContext);
   }
