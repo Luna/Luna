@@ -3268,10 +3268,11 @@ lazy val `runtime-parser-processor-tests` =
       ),
       Test / fork := true,
       libraryDependencies ++= Seq(
-        "junit"                      % "junit"           % junitVersion    % Test,
-        "com.github.sbt"             % "junit-interface" % junitIfVersion  % Test,
-        "org.hamcrest"               % "hamcrest-all"    % hamcrestVersion % Test,
-        "com.google.testing.compile" % "compile-testing" % "0.21.0"        % Test
+        "junit"                      % "junit"           % junitVersion     % Test,
+        "com.github.sbt"             % "junit-interface" % junitIfVersion   % Test,
+        "org.hamcrest"               % "hamcrest-all"    % hamcrestVersion  % Test,
+        "com.google.testing.compile" % "compile-testing" % "0.21.0"         % Test,
+        "org.scalatest"             %% "scalatest"       % scalatestVersion % Test
       )
     )
     .dependsOn(`runtime-parser-processor`)
