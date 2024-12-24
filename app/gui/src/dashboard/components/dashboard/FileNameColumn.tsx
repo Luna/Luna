@@ -1,7 +1,5 @@
 /** @file The icon and name of a {@link backendModule.FileAsset}. */
-import { useMutation } from '@tanstack/react-query'
-
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 
 import type * as column from '#/components/dashboard/column'
 import EditableSpan from '#/components/EditableSpan'

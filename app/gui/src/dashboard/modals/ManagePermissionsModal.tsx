@@ -1,7 +1,7 @@
 /** @file A modal with inputs for user email and permission level. */
 import { useMemo, useState } from 'react'
 
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import isEmail from 'validator/es/lib/isEmail'
 
@@ -13,7 +13,7 @@ import PermissionSelector from '#/components/dashboard/PermissionSelector'
 import Modal from '#/components/Modal'
 import { PaywallAlert } from '#/components/Paywall'
 import FocusArea from '#/components/styled/FocusArea'
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 import { usePaywall } from '#/hooks/billing'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'

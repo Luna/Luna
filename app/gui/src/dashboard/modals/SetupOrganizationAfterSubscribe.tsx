@@ -1,10 +1,10 @@
 /** @file Modal for setting the organization name. */
 import * as React from 'react'
 
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import * as router from 'react-router'
 
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'

@@ -1,7 +1,5 @@
 /** @file The icon and name of a {@link backendModule.ProjectAsset}. */
-import { useMutation } from '@tanstack/react-query'
-
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 import * as projectHooks from '#/hooks/projectHooks'
 
 import * as authProvider from '#/providers/AuthProvider'

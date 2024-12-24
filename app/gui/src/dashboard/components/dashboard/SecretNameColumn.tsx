@@ -1,9 +1,7 @@
 /** @file The icon and name of a {@link backendModule.SecretAsset}. */
-import { useMutation } from '@tanstack/react-query'
-
 import KeyIcon from '#/assets/key.svg'
 
-import { backendMutationOptions, useBackendMutation } from '#/hooks/backendHooks'
+import { useBackendMutation } from '#/hooks/backendHooks'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as modalProvider from '#/providers/ModalProvider'
