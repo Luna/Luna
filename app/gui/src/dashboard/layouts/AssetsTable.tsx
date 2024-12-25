@@ -43,7 +43,7 @@ import { COLUMN_HEADING } from '#/components/dashboard/columnHeading'
 import Label from '#/components/dashboard/Label'
 import { ErrorDisplay } from '#/components/ErrorBoundary'
 import { IsolateLayout } from '#/components/IsolateLayout'
-import SelectionBrush from '#/components/SelectionBrush'
+import { SelectionBrushV2, type OnDragParams } from '#/components/SelectionBrush'
 import { IndefiniteSpinner } from '#/components/Spinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
@@ -102,6 +102,7 @@ import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import { useLaunchedProjects } from '#/providers/ProjectsProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
+import type { AssetId } from '#/services/Backend'
 import {
   assetIsProject,
   AssetType,
@@ -111,7 +112,6 @@ import {
   ProjectId,
   ProjectState,
   type AnyAsset,
-  type AssetId,
   type DirectoryAsset,
   type DirectoryId,
   type LabelName,
@@ -127,7 +127,6 @@ import type { AssetRowsDragPayload } from '#/utilities/drag'
 import { ASSET_ROWS, LABELS, setDragImageToBlank } from '#/utilities/drag'
 import { fileExtension } from '#/utilities/fileInfo'
 import { noop } from '#/utilities/functions'
-import type { DetailedRectangle } from '#/utilities/geometry'
 import { DEFAULT_HANDLER } from '#/utilities/inputBindings'
 import LocalStorage from '#/utilities/LocalStorage'
 import {
@@ -162,7 +161,7 @@ const MINIMUM_DROPZONE_INTERSECTION_RATIO = 0.5
  * The height of each row in the table body. MUST be identical to the value as set by the
  * Tailwind styling.
  */
-const ROW_HEIGHT_PX = 38
+const ROW_HEIGHT_PX = 36
 /** The size of the loading spinner. */
 const LOADING_SPINNER_SIZE_PX = 36
 
@@ -1390,8 +1389,8 @@ function AssetsTable(props: AssetsTableProps) {
                 event.target.closest('.enso-portal-root')
               : null
             if (!portalRoot && driveStore.getState().selectedKeys.size !== 0) {
-              setSelectedKeys(EMPTY_SET)
-              setMostRecentlySelectedIndex(null)
+              // setSelectedKeys(EMPTY_SET)
+              // setMostRecentlySelectedIndex(null)
             }
           },
         },
@@ -1437,15 +1436,27 @@ function AssetsTable(props: AssetsTableProps) {
 
   const { startAutoScroll, endAutoScroll, onMouseEvent } = useAutoScroll(rootRef)
 
-  const dragSelectionChangeLoopHandle = useRef(0)
   const dragSelectionRangeRef = useRef<DragSelectionInfo | null>(null)
-  const onSelectionDrag = useEventCallback((rectangle: DetailedRectangle, event: MouseEvent) => {
+
+  const preventSelection = useEventCallback((event: PointerEvent) => {
+    const { target } = event
+
+    if (target instanceof HTMLElement) {
+      const row = target.closest('tr')
+      return Boolean(row?.dataset.selected === 'true')
+    }
+
+    return false
+  })
+
+  const onSelectionDrag = useEventCallback(({ event, rectangle }: OnDragParams) => {
     startAutoScroll()
+
     onMouseEvent(event)
+
     if (mostRecentlySelectedIndexRef.current != null) {
       setKeyboardSelectedIndex(null)
     }
-    cancelAnimationFrame(dragSelectionChangeLoopHandle.current)
     const scrollContainer = rootRef.current
     if (scrollContainer != null) {
       const rect = scrollContainer.getBoundingClientRect()
@@ -1456,11 +1467,13 @@ function AssetsTable(props: AssetsTableProps) {
         Math.min(rect.height, rectangle.bottom - rect.top - ROW_HEIGHT_PX),
       )
       const range = dragSelectionRangeRef.current
+
       if (!overlapsHorizontally) {
         dragSelectionRangeRef.current = null
       } else if (range == null) {
         const topIndex = (selectionTop + scrollContainer.scrollTop) / ROW_HEIGHT_PX
         const bottomIndex = (selectionBottom + scrollContainer.scrollTop) / ROW_HEIGHT_PX
+
         dragSelectionRangeRef.current = {
           initialIndex: rectangle.signedHeight < 0 ? bottomIndex : topIndex,
           start: Math.floor(topIndex),
@@ -1486,6 +1499,7 @@ function AssetsTable(props: AssetsTableProps) {
   })
 
   const onSelectionDragEnd = useEventCallback((event: MouseEvent) => {
+    event.stopImmediatePropagation()
     endAutoScroll()
     onMouseEvent(event)
     const range = dragSelectionRangeRef.current
@@ -1538,8 +1552,11 @@ function AssetsTable(props: AssetsTableProps) {
   const onRowDragStart = useEventCallback(
     (event: DragEvent<HTMLTableRowElement>, item: AnyAsset) => {
       startAutoScroll()
+
       onMouseEvent(event)
+
       let newSelectedKeys = driveStore.getState().selectedKeys
+
       if (!newSelectedKeys.has(item.id)) {
         setMostRecentlySelectedIndex(
           visibleItems.findIndex((visibleItem) => visibleItem.item.id === item.id),
@@ -1548,11 +1565,14 @@ function AssetsTable(props: AssetsTableProps) {
         newSelectedKeys = new Set([item.id])
         setSelectedKeys(newSelectedKeys)
       }
+
       const nodes = assetTree.preorderTraversal().filter((node) => newSelectedKeys.has(node.key))
+
       const payload: AssetRowsDragPayload = nodes.map((node) => ({
         key: node.key,
         asset: node.item,
       }))
+
       event.dataTransfer.setData(ASSETS_MIME_TYPE, JSON.stringify(nodes.map((node) => node.key)))
       setDragImageToBlank(event)
       ASSET_ROWS.bind(event, payload)
@@ -1956,12 +1976,12 @@ function AssetsTable(props: AssetsTableProps) {
               >
                 {!hidden && hiddenContextMenu}
                 {!hidden && (
-                  <SelectionBrush
+                  <SelectionBrushV2
                     targetRef={rootRef}
-                    margin={16}
                     onDrag={onSelectionDrag}
                     onDragEnd={onSelectionDragEnd}
                     onDragCancel={onSelectionDragCancel}
+                    preventDrag={preventSelection}
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">

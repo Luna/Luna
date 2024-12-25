@@ -125,12 +125,14 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       },
       selectedKeys: EMPTY_SET,
       setSelectedKeys: (selectedKeys) => {
+        console.trace('setSelectedKeys', selectedKeys)
         if (get().selectedKeys !== selectedKeys) {
           set({ selectedKeys })
         }
       },
       visuallySelectedKeys: null,
       setVisuallySelectedKeys: (visuallySelectedKeys) => {
+        console.trace('setVisuallySelectedKeys', visuallySelectedKeys)
         if (get().visuallySelectedKeys !== visuallySelectedKeys) {
           set({ visuallySelectedKeys })
         }

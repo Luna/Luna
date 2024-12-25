@@ -17,3 +17,15 @@ export interface DetailedRectangle {
   readonly signedWidth: number
   readonly signedHeight: number
 }
+
+/**
+ * A bounding box, including all common measurements.
+ */
+export interface BoundingBox {
+  readonly left: number
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+  readonly width: number
+  readonly height: number
+}

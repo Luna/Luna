@@ -4,10 +4,13 @@ import * as React from 'react'
 import Portal from '#/components/Portal'
 import * as animationHooks from '#/hooks/animationHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useEventListener } from '#/hooks/eventListenerHooks'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as eventModule from '#/utilities/event'
 import type * as geometry from '#/utilities/geometry'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { motion, useMotionValue } from 'framer-motion'
+import { useRAFThrottle } from '../hooks/useRaf'
 
 // =================
 // === Constants ===
@@ -18,6 +21,14 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
  * mouse is released and the selection brush collapses back to zero size.
  */
 const ANIMATION_TIME_HORIZON = 60
+/**
+ * Defines the minimal distance that the mouse must move before
+ * we consider that user has started a selection.
+ */
+const DEAD_ZONE_SIZE = 12
+
+// eslint-disable-next-line no-restricted-syntax
+const noop = () => {}
 
 // ======================
 // === SelectionBrush ===
@@ -36,7 +47,18 @@ export interface SelectionBrushProps {
 export default function SelectionBrush(props: SelectionBrushProps) {
   const { targetRef, margin = 0 } = props
   const { modalRef } = modalProvider.useModalRef()
+
+  const initialMousePositionRef = React.useRef<geometry.Coordinate2D | null>(null)
+  /**
+   * Whether the mouse is currently down.
+   */
   const isMouseDownRef = React.useRef(false)
+  /**
+   * Whether the user is currently dragging the selection brush.
+   * Unlike the isMouseDown, has a dead zone
+   */
+  const isDraggingRef = React.useRef(false)
+
   const didMoveWhileDraggingRef = React.useRef(false)
   const onDrag = useEventCallback(props.onDrag)
   const onDragEnd = useEventCallback(props.onDragEnd)
@@ -47,6 +69,7 @@ export default function SelectionBrush(props: SelectionBrushProps) {
   const [anchor, setAnchor] = React.useState<geometry.Coordinate2D | null>(null)
   const [position, setPosition] = React.useState<geometry.Coordinate2D | null>(null)
   const [lastSetAnchor, setLastSetAnchor] = React.useState<geometry.Coordinate2D | null>(null)
+
   const anchorAnimFactor = animationHooks.useApproach(
     anchor != null ? 1 : 0,
     ANIMATION_TIME_HORIZON,
@@ -78,6 +101,8 @@ export default function SelectionBrush(props: SelectionBrushProps) {
       }
     }
     const onMouseDown = (event: MouseEvent) => {
+      initialMousePositionRef.current = { left: event.pageX, top: event.pageY }
+
       if (
         modalRef.current == null &&
         !eventModule.isElementTextInput(event.target) &&
@@ -104,12 +129,14 @@ export default function SelectionBrush(props: SelectionBrushProps) {
       window.setTimeout(() => {
         isMouseDownRef.current = false
         didMoveWhileDraggingRef.current = false
+        initialMousePositionRef.current = null
       })
       unsetAnchor()
     }
     const onMouseMove = (event: MouseEvent) => {
       if (!(event.buttons & 1)) {
         isMouseDownRef.current = false
+        initialMousePositionRef.current = null
       }
       if (isMouseDownRef.current) {
         // Left click is being held.
@@ -140,6 +167,7 @@ export default function SelectionBrush(props: SelectionBrushProps) {
     const onDragStart = () => {
       if (isMouseDownRef.current) {
         isMouseDownRef.current = false
+        initialMousePositionRef.current = null
         onDragCancel()
         unsetAnchor()
       }
@@ -168,6 +196,7 @@ export default function SelectionBrush(props: SelectionBrushProps) {
         top:
           position.top * (1 - anchorAnimFactor.value) + lastSetAnchor.top * anchorAnimFactor.value,
       }
+
       return {
         left: Math.min(position.left, start.left),
         top: Math.min(position.top, start.top),
@@ -211,4 +240,221 @@ export default function SelectionBrush(props: SelectionBrushProps) {
       />
     </Portal>
   )
+}
+
+/**
+ * Parameters for the onDrag callback.
+ */
+export interface OnDragParams {
+  readonly diff: geometry.Coordinate2D
+  readonly start: geometry.Coordinate2D
+  readonly current: geometry.Coordinate2D
+  readonly rectangle: geometry.DetailedRectangle
+  readonly event: PointerEvent
+}
+
+/**
+ * Props for a {@link SelectionBrushV2}.
+ */
+export interface SelectionBrushV2Props {
+  readonly onDragStart?: (event: PointerEvent) => void
+  readonly onDrag?: (params: OnDragParams) => void
+  readonly onDragEnd?: (event: PointerEvent) => void
+  readonly onDragCancel?: () => void
+
+  readonly targetRef: React.RefObject<HTMLElement>
+  readonly isDisabled?: boolean
+  readonly preventDrag?: (event: PointerEvent) => boolean
+}
+
+/**
+ * A selection brush to indicate the area being selected by the mouse drag action.
+ */
+export function SelectionBrushV2(props: SelectionBrushV2Props) {
+  const {
+    targetRef,
+    preventDrag = () => false,
+    onDragStart = noop,
+    onDrag = noop,
+    onDragEnd = noop,
+    onDragCancel = noop,
+    isDisabled = false,
+  } = props
+
+  const [isDragging, setIsDragging] = React.useState(false)
+
+  const hasPassedDeadZoneRef = React.useRef<boolean>(false)
+  const startPositionRef = React.useRef<geometry.Coordinate2D | null>(null)
+  const currentPositionRef = React.useRef<geometry.Coordinate2D | null>(null)
+
+  const left = useMotionValue<geometry.DetailedRectangle['left'] | null>(null)
+  const top = useMotionValue<geometry.DetailedRectangle['top'] | null>(null)
+  const width = useMotionValue<geometry.DetailedRectangle['width'] | null>(null)
+  const height = useMotionValue<geometry.DetailedRectangle['height'] | null>(null)
+
+  const preventDragStableCallback = useEventCallback(preventDrag)
+  const onDragStartStableCallback = useEventCallback(onDragStart)
+  const onDragStableCallback = useEventCallback(onDrag)
+  const onDragEndStableCallback = useEventCallback(onDragEnd)
+  const onDragCancelStableCallback = useEventCallback(onDragCancel)
+
+  const { scheduleRAF, cancelRAF } = useRAFThrottle()
+
+  const startDragging = useEventCallback(() => {
+    setIsDragging(true)
+    hasPassedDeadZoneRef.current = true
+  })
+
+  const resetState = useEventCallback(() => {
+    hasPassedDeadZoneRef.current = false
+    startPositionRef.current = null
+    currentPositionRef.current = null
+    setIsDragging(false)
+    cancelRAF()
+  })
+
+  useEventListener(
+    'pointerdown',
+    (event) => {
+      resetState()
+
+      const shouldSkip = preventDragStableCallback(event)
+
+      if (shouldSkip) {
+        return
+      }
+
+      startPositionRef.current = { left: event.pageX, top: event.pageY }
+      currentPositionRef.current = { left: event.pageX, top: event.pageY }
+
+      onDragStartStableCallback(event)
+    },
+    targetRef,
+    { isDisabled, capture: true, passive: true },
+  )
+
+  useEventListener(
+    'pointermove',
+    (event) => {
+      scheduleRAF(() => {
+        if (startPositionRef.current == null) {
+          return
+        }
+
+        currentPositionRef.current = { left: event.pageX, top: event.pageY }
+
+        const rectangle: geometry.DetailedRectangle = {
+          left: Math.min(startPositionRef.current.left, currentPositionRef.current.left),
+          top: Math.min(startPositionRef.current.top, currentPositionRef.current.top),
+          right: Math.max(startPositionRef.current.left, currentPositionRef.current.left),
+          bottom: Math.max(startPositionRef.current.top, currentPositionRef.current.top),
+          width: Math.abs(startPositionRef.current.left - currentPositionRef.current.left),
+          height: Math.abs(startPositionRef.current.top - currentPositionRef.current.top),
+          signedWidth: currentPositionRef.current.left - startPositionRef.current.left,
+          signedHeight: currentPositionRef.current.top - startPositionRef.current.top,
+        }
+
+        const diff: geometry.Coordinate2D = {
+          left: currentPositionRef.current.left - startPositionRef.current.left,
+          top: currentPositionRef.current.top - startPositionRef.current.top,
+        }
+
+        if (hasPassedDeadZoneRef.current === false) {
+          hasPassedDeadZoneRef.current = !isInDeadZone(
+            startPositionRef.current,
+            currentPositionRef.current,
+            DEAD_ZONE_SIZE,
+          )
+        }
+
+        if (hasPassedDeadZoneRef.current) {
+          targetRef.current?.setPointerCapture(event.pointerId)
+
+          startDragging()
+
+          left.set(rectangle.left)
+          top.set(rectangle.top)
+          width.set(rectangle.width)
+          height.set(rectangle.height)
+
+          onDragStableCallback({
+            diff,
+            start: startPositionRef.current,
+            current: currentPositionRef.current,
+            rectangle,
+            event,
+          })
+        }
+      })
+    },
+    document,
+    { isDisabled, capture: true, passive: true },
+  )
+
+  useEventListener(
+    'pointerup',
+    (event) => {
+      resetState()
+
+      targetRef.current?.releasePointerCapture(event.pointerId)
+
+      if (isDragging) {
+        onDragEndStableCallback(event)
+      }
+    },
+    document,
+    { isDisabled, capture: true, passive: true },
+  )
+
+  useEventListener(
+    'pointercancel',
+    (event) => {
+      resetState()
+
+      targetRef.current?.releasePointerCapture(event.pointerId)
+
+      if (isDragging) {
+        onDragEndStableCallback(event)
+        onDragCancelStableCallback()
+      }
+    },
+    document,
+    { isDisabled, capture: true, passive: true },
+  )
+
+  return (
+    <Portal>
+      <motion.div
+        data-testid="selection-brush"
+        data-is-dragging={isDragging}
+        // setting before:: gives the confidence that the pointer won't interact with underlying elements
+        className="pointer-events-none absolute z-10 rounded-2xl border-2 border-primary/5 bg-primary/5"
+        style={{
+          left,
+          top,
+          width,
+          height,
+          opacity: isDragging ? 1 : 0,
+        }}
+      />
+    </Portal>
+  )
+}
+
+/**
+ * Whether the current position is in the dead zone.
+ * @param initialPosition - The initial position.
+ * @param currentPosition - The current position.
+ * @param deadZoneSize - The size of the dead zone.
+ * @returns Whether the current position is in the dead zone.
+ */
+function isInDeadZone(
+  initialPosition: geometry.Coordinate2D,
+  currentPosition: geometry.Coordinate2D,
+  deadZoneSize: number,
+) {
+  const horizontalDistance = Math.abs(initialPosition.left - currentPosition.left)
+  const verticalDistance = Math.abs(initialPosition.top - currentPosition.top)
+
+  return horizontalDistance < deadZoneSize && verticalDistance < deadZoneSize
 }

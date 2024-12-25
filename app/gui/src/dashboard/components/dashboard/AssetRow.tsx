@@ -298,7 +298,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const draggableProps = dragAndDropHooks.useDraggable()
+  const draggableProps = dragAndDropHooks.useDraggable({ isDisabled: !selected })
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
@@ -372,6 +372,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const setSelected = useEventCallback((newSelected: boolean) => {
     const { selectedKeys } = driveStore.getState()
+
     setSelectedKeys(set.withPresence(selectedKeys, id, newSelected))
   })
 
@@ -679,6 +680,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
             <FocusRing placement="outset">
               <tr
                 data-testid="asset-row"
+                data-selected={selected}
+                data-id={asset.id}
                 tabIndex={0}
                 ref={(element) => {
                   rootRef.current = element
@@ -822,7 +825,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 {columns.map((column) => {
                   const Render = columnModule.COLUMN_RENDERER[column]
                   return (
-                    <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
+                    <td
+                      key={column}
+                      className={columnUtils.COLUMN_CSS_CLASS[column]}
+                      data-id={asset.id}
+                    >
                       <Render
                         isPlaceholder={isPlaceholder}
                         isExpanded={isExpanded}
@@ -845,7 +852,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               </tr>
             </FocusRing>
           )}
-          {selected && allowContextMenu && !hidden && (
+          {/* {selected && allowContextMenu && !hidden && (
             // This is a copy of the context menu, since the context menu registers keyboard
             // shortcut handlers. This is a bit of a hack, however it is preferable to duplicating
             // the entire context menu (once for the keyboard actions, once for the JSX).
@@ -861,7 +868,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               doPaste={doPaste}
               doDelete={doDelete}
             />
-          )}
+          )} */}
         </>
       )
     }
