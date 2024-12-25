@@ -12,8 +12,8 @@ import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 
 import * as actions from '.'
 
-import { organizationIdToDirectoryId } from '#/services/RemoteBackend'
 import type { FeatureFlags } from '#/providers/FeatureFlagsProvider'
+import { organizationIdToDirectoryId } from '#/services/RemoteBackend'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
