@@ -865,7 +865,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               doPaste={doPaste}
               doDelete={doDelete}
             />
-          )} */}
+          )}
         </>
       )
     }
