@@ -335,19 +335,20 @@ const CategoriesContext = createContext<CategoriesContextValue | null>(null)
  */
 export interface CategoriesProviderProps {
   readonly children: ReactNode | ((contextValue: CategoriesContextValue) => ReactNode)
+  readonly onCategoryChange?: (previousCategory: Category | null, newCategory: Category) => void
 }
 
 /**
  * Provider for the categories.
  */
 export function CategoriesProvider(props: CategoriesProviderProps): React.JSX.Element {
-  const { children } = props
+  const { children, onCategoryChange = () => {} } = props
 
   const { cloudCategories, localCategories, findCategoryById } = useCategories()
   const localBackend = useLocalBackend()
   const { isOffline } = useOffline()
 
-  const [categoryId, setCategoryId, resetCategoryId] = useSearchParamsState<CategoryId>(
+  const [categoryId, privateSetCategoryId, resetCategoryId] = useSearchParamsState<CategoryId>(
     'driveCategory',
     () => {
       if (isOffline && localBackend != null) {
@@ -360,6 +361,14 @@ export function CategoriesProvider(props: CategoriesProviderProps): React.JSX.El
     // eslint-disable-next-line no-restricted-syntax
     (value): value is CategoryId => findCategoryById(value as CategoryId) != null,
   )
+
+  const setCategoryId = useEventCallback((nextCategoryId: CategoryId) => {
+    const previousCategory = findCategoryById(categoryId)
+    privateSetCategoryId(nextCategoryId)
+    // This is safe, because we know that the result will have the correct type.
+    // eslint-disable-next-line no-restricted-syntax
+    onCategoryChange(previousCategory, findCategoryById(nextCategoryId) as Category)
+  })
 
   const category = findCategoryById(categoryId)
 

@@ -69,19 +69,19 @@ export interface DashboardProps {
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
   return (
-    <CategoriesProvider>
-      {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
-       * due to modals being in `TheModal`. */}
-      {({ category }) => (
-        <DriveProvider currentCategoryId={category.id}>
+    /* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+     * due to modals being in `TheModal`. */
+    <DriveProvider>
+      {({ resetAssetTableState }) => (
+        <CategoriesProvider onCategoryChange={resetAssetTableState}>
           <EventListProvider>
             <ProjectsProvider>
               <DashboardInner {...props} />
             </ProjectsProvider>
           </EventListProvider>
-        </DriveProvider>
+        </CategoriesProvider>
       )}
-    </CategoriesProvider>
+    </DriveProvider>
   )
 }
 

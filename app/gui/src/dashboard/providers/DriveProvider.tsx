@@ -5,7 +5,7 @@ import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type { Category, CategoryId } from '#/layouts/CategorySwitcher/Category'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
@@ -59,8 +59,13 @@ export type ProjectsContextType = zustand.StoreApi<DriveStore>
 const DriveContext = React.createContext<ProjectsContextType | null>(null)
 
 /** Props for a {@link DriveProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren> & {
-  readonly currentCategoryId: CategoryId
+export interface ProjectsProviderProps {
+  readonly children:
+    | React.ReactNode
+    | ((context: {
+        readonly store: ProjectsContextType
+        readonly resetAssetTableState: () => void
+      }) => React.ReactNode)
 }
 
 // ========================
@@ -72,7 +77,7 @@ export type ProjectsProviderProps = Readonly<React.PropsWithChildren> & {
  * containing the current element is focused.
  */
 export default function DriveProvider(props: ProjectsProviderProps) {
-  const { children, currentCategoryId } = props
+  const { children } = props
 
   const [store] = React.useState(() =>
     zustand.createStore<DriveStore>((set, get) => ({
@@ -135,14 +140,13 @@ export default function DriveProvider(props: ProjectsProviderProps) {
     })),
   )
 
-  // Reset the asset table state when the category changes
-  // TODO: This is a bit of a hack, but should stay for now. Eventually we should just recreate the store
-  // when the category changes.
-  React.useEffect(() => {
-    store.getState().resetAssetTableState()
-  }, [currentCategoryId, store])
+  const resetAssetTableState = zustand.useStore(store, (state) => state.resetAssetTableState)
 
-  return <DriveContext.Provider value={store}>{children}</DriveContext.Provider>
+  return (
+    <DriveContext.Provider value={store}>
+      {typeof children === 'function' ? children({ store, resetAssetTableState }) : children}
+    </DriveContext.Provider>
+  )
 }
 
 /** The drive store. */
@@ -223,15 +227,8 @@ export function useExpandedDirectoryIds() {
 /** A function to set the expanded directoyIds in the Asset Table. */
 export function useSetExpandedDirectoryIds() {
   const store = useDriveStore()
-  const privateSetExpandedDirectoryIds = zustand.useStore(
-    store,
-    (state) => state.setExpandedDirectoryIds,
-    { unsafeEnableTransition: true },
-  )
-  return useEventCallback((expandedDirectoryIds: readonly DirectoryId[]) => {
-    React.startTransition(() => {
-      privateSetExpandedDirectoryIds(expandedDirectoryIds)
-    })
+  return zustand.useStore(store, (state) => state.setExpandedDirectoryIds, {
+    unsafeEnableTransition: true,
   })
 }
 

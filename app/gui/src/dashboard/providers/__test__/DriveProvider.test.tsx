@@ -12,6 +12,7 @@ function renderDriveProviderHook<Result, Props>(
 ): RenderHookResult<Result, Props> {
   let currentCategoryId: CategoryId = 'cloud'
   let setCategoryId: (categoryId: CategoryId) => void
+  let doResetAssetTableState: () => void
 
   return renderHook(
     (props) => {
@@ -23,9 +24,19 @@ function renderDriveProviderHook<Result, Props>(
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const [category, setCategory] = useState(() => currentCategoryId)
         currentCategoryId = category
-        setCategoryId = setCategory
+        setCategoryId = (nextCategoryId) => {
+          setCategory(nextCategoryId)
+          doResetAssetTableState()
+        }
 
-        return <DriveProvider currentCategoryId={currentCategoryId}>{children}</DriveProvider>
+        return (
+          <DriveProvider>
+            {({ resetAssetTableState }) => {
+              doResetAssetTableState = resetAssetTableState
+              return children
+            }}
+          </DriveProvider>
+        )
       },
       ...options,
     },
@@ -36,11 +47,21 @@ describe('<DriveProvider />', () => {
   it('Should reset expanded directory ids when category changes', () => {
     const driveAPI = renderDriveProviderHook((setCategoryId: (categoryId: string) => void) => {
       const store = useDriveStore()
-      return useStore(store, ({ setExpandedDirectoryIds, expandedDirectoryIds }) => ({
-        expandedDirectoryIds,
-        setExpandedDirectoryIds,
-        setCategoryId,
-      }))
+      return useStore(
+        store,
+        ({
+          setExpandedDirectoryIds,
+          expandedDirectoryIds,
+          selectedKeys,
+          visuallySelectedKeys,
+        }) => ({
+          expandedDirectoryIds,
+          setExpandedDirectoryIds,
+          setCategoryId,
+          selectedKeys,
+          visuallySelectedKeys,
+        }),
+      )
     })
 
     act(() => {
@@ -56,5 +77,7 @@ describe('<DriveProvider />', () => {
     })
 
     expect(driveAPI.result.current.expandedDirectoryIds).toEqual([])
+    expect(driveAPI.result.current.selectedKeys).toEqual(new Set())
+    expect(driveAPI.result.current.visuallySelectedKeys).toEqual(null)
   })
 })

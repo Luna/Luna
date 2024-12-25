@@ -11,7 +11,6 @@ import { useSetExpandedDirectoryIds, useSetSelectedKeys } from '#/providers/Driv
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
-import { flushSync } from 'react-dom'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
 
@@ -68,16 +67,8 @@ export default function PathColumn(props: AssetColumnProps) {
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
       // we reassign the variable only to make ts happy here.
       const categoryId = rootDirectoryInThePath.categoryId
-      // We need to set the category first, because setting a category
-      // resets the list of expanded folders and selected keys
-      // Drive store resets it's state when a category change
-      // calling `setCategory` inside the `flushSync` guaranties that the all side effects will
-      // be executed and state is fresh and clean.
-      // This comes with a cost though - it might be slow as it executes everything synchronously.
-      flushSync(() => {
-        setCategory(categoryId)
-      })
 
+      setCategory(categoryId)
       setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
     }
 
