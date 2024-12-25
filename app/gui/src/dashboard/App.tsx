@@ -541,28 +541,28 @@ function AppRouter(props: AppRouterProps) {
 
   return (
     <RouterProvider navigate={navigate}>
-        <SessionProvider
-          saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
-          mainPageUrl={mainPageUrl}
-          userSession={userSession}
-          registerAuthEventListener={registerAuthEventListener}
-          refreshUserSession={refreshUserSession}
-        >
-          <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
-            <AuthProvider
-              shouldStartInOfflineMode={isAuthenticationDisabled}
-              authService={authService}
-              onAuthenticated={onAuthenticated}
-            >
-              <InputBindingsProvider inputBindings={inputBindings}>
-                <LocalBackendPathSynchronizer />
-                <VersionChecker />
-                {routes}
-                <suspense.Suspense>
-                  <errorBoundary.ErrorBoundary>
-                    <devtools.EnsoDevtools />
-                  </errorBoundary.ErrorBoundary>
-                </suspense.Suspense>
+      <SessionProvider
+        saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
+        mainPageUrl={mainPageUrl}
+        userSession={userSession}
+        registerAuthEventListener={registerAuthEventListener}
+        refreshUserSession={refreshUserSession}
+      >
+        <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
+          <AuthProvider
+            shouldStartInOfflineMode={isAuthenticationDisabled}
+            authService={authService}
+            onAuthenticated={onAuthenticated}
+          >
+            <InputBindingsProvider inputBindings={inputBindings}>
+              <LocalBackendPathSynchronizer />
+              <VersionChecker />
+              {routes}
+              <suspense.Suspense>
+                <errorBoundary.ErrorBoundary>
+                  <devtools.EnsoDevtools />
+                </errorBoundary.ErrorBoundary>
+              </suspense.Suspense>
             </InputBindingsProvider>
           </AuthProvider>
         </BackendProvider>
