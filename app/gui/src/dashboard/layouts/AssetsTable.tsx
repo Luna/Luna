@@ -108,6 +108,7 @@ import {
   AssetType,
   BackendType,
   getAssetPermissionName,
+  IS_OPENING_OR_OPENED,
   Plan,
   ProjectId,
   ProjectState,
@@ -1721,6 +1722,7 @@ function AssetsTable(props: AssetsTableProps) {
       {columns.map((column) => {
         // This is a React component, even though it does not contain JSX.
         const Heading = COLUMN_HEADING[column]
+
         return (
           <th key={column} className={COLUMN_CSS_CLASS[column]}>
             <Heading
@@ -1745,6 +1747,11 @@ function AssetsTable(props: AssetsTableProps) {
         </td>
       </tr>
     : displayItems.map((item) => {
+        const isOpenedByYou = openedProjects.some(({ id }) => item.item.id === id)
+        const isOpenedOnTheBackend =
+          item.item.projectState?.type != null ?
+            IS_OPENING_OR_OPENED[item.item.projectState.type]
+          : false
         return (
           <AssetRow
             key={item.key + item.path}
@@ -1755,7 +1762,7 @@ function AssetsTable(props: AssetsTableProps) {
               : false
             }
             onCutAndPaste={cutAndPaste}
-            isOpened={openedProjects.some(({ id }) => item.item.id === id)}
+            isOpened={isOpenedByYou || isOpenedOnTheBackend}
             visibility={visibilities.get(item.key)}
             columns={columns}
             id={item.item.id}
@@ -1827,8 +1834,10 @@ function AssetsTable(props: AssetsTableProps) {
       }}
     >
       <table className="isolate table-fixed border-collapse rounded-rows">
-        <thead className="sticky top-0 z-[11] bg-dashboard">{headerRow}</thead>
-        <tbody ref={bodyRef}>
+        <thead className="sticky top-0 isolate z-1 bg-dashboard before:absolute before:-inset-1 before:bottom-0 before:bg-dashboard">
+          {headerRow}
+        </thead>
+        <tbody ref={bodyRef} className="isolate">
           {itemRows}
           <tr className="hidden h-row first:table-row">
             <td colSpan={columns.length} className="bg-transparent">
@@ -1985,7 +1994,7 @@ function AssetsTable(props: AssetsTableProps) {
                   />
                 )}
                 <div className="flex h-max min-h-full w-max min-w-full flex-col">
-                  <div className="flex h-full w-min min-w-full grow flex-col">{table}</div>
+                  <div className="flex h-full w-min min-w-full grow flex-col px-1">{table}</div>
                 </div>
               </div>
             </IsolateLayout>
