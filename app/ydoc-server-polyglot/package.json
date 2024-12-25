@@ -16,7 +16,8 @@
   },
   "dependencies": {
     "ydoc-server": "workspace:*",
-    "ydoc-shared": "workspace:*"
+    "ydoc-shared": "workspace:*",
+    "yjs": "^13.6.7"
   },
   "devDependencies": {
     "@fal-works/esbuild-plugin-global-externals": "^2.1.2",
