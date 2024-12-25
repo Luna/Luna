@@ -11,6 +11,7 @@ import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.logging.Level;
+import org.enso.ydoc.polyfill.ParserPolyfill;
 import org.enso.ydoc.polyfill.web.WebEnvironment;
 import org.graalvm.polyglot.Value;
 
@@ -86,6 +87,7 @@ final class EpbContext {
 
   final void initializePolyfill(Node node, TruffleContext ctx) {
     if (!polyfillInitialized) {
+      var parserPolyfill = new ParserPolyfill();
       polyfillInitialized = true;
       var exec = Executors.newSingleThreadScheduledExecutor();
       Function<URL, Value> eval =
@@ -99,6 +101,7 @@ final class EpbContext {
             }
           };
       WebEnvironment.initialize(eval, exec);
+      parserPolyfill.initialize(eval);
     }
   }
 }

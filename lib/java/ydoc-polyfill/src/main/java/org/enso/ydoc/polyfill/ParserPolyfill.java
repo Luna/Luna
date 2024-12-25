@@ -8,6 +8,9 @@ import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.util.function.Function;
+
 public final class ParserPolyfill implements ProxyExecutable {
 
   private static final Logger log = LoggerFactory.getLogger(ParserPolyfill.class);
@@ -22,10 +25,17 @@ public final class ParserPolyfill implements ProxyExecutable {
   public ParserPolyfill() {}
 
   public void initialize(Context ctx) {
-    Source parserJs =
-        Source.newBuilder("js", ParserPolyfill.class.getResource(PARSER_JS)).buildLiteral();
+    Function<URL, Value> eval =
+        (url) -> {
+          var src = Source.newBuilder("js", url).buildLiteral();
+          return ctx.eval(src);
+        };
+    initialize(eval);
+  }
 
-    ctx.eval(parserJs).execute(this);
+  public void initialize(Function<URL, Value> eval) {
+    final Value fn = eval.apply(getClass().getResource(PARSER_JS));
+    fn.execute(this);
   }
 
   @Override
