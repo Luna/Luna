@@ -271,7 +271,7 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
         />
 
         <div className="flex flex-1 gap-drive overflow-hidden">
-          <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
+          <div className="flex w-40 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
             <CategorySwitcher category={category} setCategoryId={setCategory} />
 
             {isCloud && (

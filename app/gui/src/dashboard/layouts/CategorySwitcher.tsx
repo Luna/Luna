@@ -361,6 +361,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                   buttonLabel={getText('localCategoryButtonLabel')}
                   dropZoneLabel={getText('localCategoryDropZoneLabel')}
                 />
+
                 <ariaComponents.DialogTrigger>
                   <ariaComponents.Button
                     size="medium"
@@ -370,6 +371,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                     aria-label={getText('removeDirectoryFromFavorites')}
                     className="hidden group-hover:block"
                   />
+
                   <ConfirmDeleteModal
                     actionText={getText('removeTheLocalDirectoryXFromFavorites', directory.label)}
                     actionButtonLabel={getText('remove')}
@@ -380,6 +382,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                 </ariaComponents.DialogTrigger>
               </div>
             ))}
+
           {directories != null && window.fileBrowserApi && (
             <div className="flex">
               <div className="ml-[15px] mr-1.5 rounded-full border-r border-primary/20" />

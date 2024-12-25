@@ -249,8 +249,12 @@ export function useLocalCategoryList() {
     setLocalRootDirectories([...localRootDirectories, directory])
   })
 
-  const removeDirectory = useEventCallback((directory: string) => {
-    setLocalRootDirectories(localRootDirectories.filter((d) => d !== directory))
+  const removeDirectory = useEventCallback((directory: DirectoryId) => {
+    const category = getCategoryById(directory)
+
+    if (category != null && category.type === 'local-directory') {
+      setLocalRootDirectories(localRootDirectories.filter((d) => d !== category.rootPath))
+    }
   })
 
   const getCategoryById = useEventCallback((id: CategoryId) => {

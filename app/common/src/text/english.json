@@ -495,7 +495,7 @@
   "enableVersionCheckerDescription": "Show a dialog if the current version of the desktop app does not match the latest version.",
   "disableAnimations": "Disable animations",
   "disableAnimationsDescription": "Disable all animations in the app.",
-  "removeTheLocalDirectoryXFromFavorites": "remove the local folder '$0' from your favorites",
+  "removeTheLocalDirectoryXFromFavorites": "remove the local folder '$0' from your sidebar",
   "changeLocalRootDirectoryInSettings": "Change the root folder",
   "localStorage": "Local Storage",
   "addLocalDirectory": "Add Folder",
