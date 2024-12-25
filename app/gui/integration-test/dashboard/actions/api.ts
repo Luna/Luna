@@ -280,8 +280,6 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
     const alreadyDeleted = deletedAssets.has(assetId)
     deletedAssets.add(assetId)
 
-    console.log(JSON.stringify({ deletedAssets: Array.from(deletedAssets), assetId }, null, 2))
-
     return !alreadyDeleted
   }
 
