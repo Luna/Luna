@@ -87,7 +87,6 @@ import LocalBackend from '#/services/LocalBackend'
 import ProjectManager, * as projectManager from '#/services/ProjectManager'
 import RemoteBackend from '#/services/RemoteBackend'
 
-import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
@@ -541,8 +540,7 @@ function AppRouter(props: AppRouterProps) {
   )
 
   return (
-    <FeatureFlagsProvider>
-      <RouterProvider navigate={navigate}>
+    <RouterProvider navigate={navigate}>
         <SessionProvider
           saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
           mainPageUrl={mainPageUrl}
@@ -565,12 +563,11 @@ function AppRouter(props: AppRouterProps) {
                     <devtools.EnsoDevtools />
                   </errorBoundary.ErrorBoundary>
                 </suspense.Suspense>
-              </InputBindingsProvider>
-            </AuthProvider>
-          </BackendProvider>
-        </SessionProvider>
-      </RouterProvider>
-    </FeatureFlagsProvider>
+            </InputBindingsProvider>
+          </AuthProvider>
+        </BackendProvider>
+      </SessionProvider>
+    </RouterProvider>
   )
 }
 
