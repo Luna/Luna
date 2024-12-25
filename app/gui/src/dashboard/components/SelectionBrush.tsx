@@ -427,8 +427,7 @@ export function SelectionBrushV2(props: SelectionBrushV2Props) {
       <motion.div
         data-testid="selection-brush"
         data-is-dragging={isDragging}
-        // setting before:: gives the confidence that the pointer won't interact with underlying elements
-        className="pointer-events-none absolute z-10 rounded-2xl border-2 border-primary/5 bg-primary/5"
+        className="pointer-events-none absolute z-10 before:absolute before:-inset-1 before:rounded-xl before:border-2 before:border-primary/5 before:bg-primary/5"
         style={{
           left,
           top,
