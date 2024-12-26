@@ -47,18 +47,3 @@ export function useRAF() {
 
   return { scheduleRAF, cancelRAF } as const
 }
-
-/**
- * Synchronizes calbacks with the RAF loop.
- * Cancels all callbacks before scheduling a new one.
- */
-export function useRAFThrottle() {
-  const { cancelRAF, scheduleRAF: scheduleRAFRaw } = useRAF()
-
-  const scheduleRAF = useEventCallback((callback: FrameRequestCallback) => {
-    cancelRAF()
-    scheduleRAFRaw(callback)
-  })
-
-  return { scheduleRAF, cancelRAF }
-}
