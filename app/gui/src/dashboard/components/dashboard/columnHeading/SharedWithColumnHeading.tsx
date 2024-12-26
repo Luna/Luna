@@ -17,7 +17,7 @@ export default function SharedWithColumnHeading(props: AssetColumnHeadingProps) 
   })
 
   return (
-    <div className="flex h-table-row w-full items-center gap-icon-with-text">
+    <div className="isolate flex h-table-row w-full items-center gap-icon-with-text">
       <Button
         variant="icon"
         icon={PeopleIcon}
