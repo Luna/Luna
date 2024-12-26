@@ -1374,38 +1374,6 @@ function AssetsTable(props: AssetsTableProps) {
     }
   }, [hidden])
 
-  useEffect(
-    () =>
-      inputBindings.attach(
-        document.body,
-        'click',
-        {
-          selectAdditional: () => {},
-          selectAdditionalRange: () => {},
-          [DEFAULT_HANDLER]: (event) => {
-            /**
-             * When the document is clicked, deselect the keys, but only if the clicked element
-             * is not inside a `Dialog`. To detect whether an element is a `Dialog`,
-             * we check whether it is inside the `portal-root` where all the `Dialog`s are mounted.
-             * If this check is omitted, when the user clicks inside a Datalink dialog,
-             * the keys are deselected, causing the Datalink to be added to the root directory,
-             * rather than the one that was selected when the dialog was opened.
-             */
-            const portalRoot =
-              event.target instanceof HTMLElement || event.target instanceof SVGElement ?
-                event.target.closest('.enso-portal-root')
-              : null
-            if (!portalRoot && driveStore.getState().selectedKeys.size !== 0) {
-              // setSelectedKeys(EMPTY_SET)
-              // setMostRecentlySelectedIndex(null)
-            }
-          },
-        },
-        false,
-      ),
-    [setSelectedKeys, inputBindings, setMostRecentlySelectedIndex, driveStore],
-  )
-
   const calculateNewKeys = useEventCallback(
     (event: MouseEvent | ReactMouseEvent, keys: AssetId[], getRange: () => AssetId[]) => {
       event.stopPropagation()
