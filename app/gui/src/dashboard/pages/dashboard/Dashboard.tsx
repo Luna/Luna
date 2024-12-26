@@ -45,12 +45,19 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
-import { useSetCategory } from '#/providers/DriveProvider'
+import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
+import { useSyncRef } from '#/hooks/syncRefHooks'
+import {
+  useCategory,
+  useDriveStore,
+  useSetCategory,
+  useSetExpandedDirectoryIds,
+} from '#/providers/DriveProvider'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import { usePrefetchQuery } from '@tanstack/react-query'
+import { usePrefetchQuery, useQueryClient } from '@tanstack/react-query'
 import { DashboardTabPanels } from './DashboardTabPanels'
 
 // =================
@@ -71,6 +78,7 @@ export default function Dashboard(props: DashboardProps) {
   return (
     <EventListProvider>
       <ProjectsProvider>
+        <OpenedProjectsParentsExpander />
         <DashboardInner {...props} />
       </ProjectsProvider>
     </EventListProvider>
@@ -317,4 +325,101 @@ function DashboardInner(props: DashboardProps) {
       </div>
     </Page>
   )
+}
+
+/** Expand the list of parents for opened projects. */
+function OpenedProjectsParentsExpander() {
+  const queryClient = useQueryClient()
+  const remoteBackend = backendProvider.useRemoteBackend()
+  const localBackend = backendProvider.useLocalBackend()
+  const category = useCategory()
+  const driveStore = useDriveStore()
+  const launchedProjects = useLaunchedProjects()
+  const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
+  const launchedProjectsRef = useSyncRef(launchedProjects)
+
+  React.useEffect(() => {
+    switch (category.type) {
+      case 'cloud':
+      case 'team':
+      case 'user': {
+        const relevantProjects = launchedProjectsRef.current.filter(
+          (project) => project.type === backendModule.BackendType.remote,
+        )
+        const promises = relevantProjects.map((project) =>
+          queryClient.ensureQueryData(
+            listDirectoryQueryOptions({
+              backend: remoteBackend,
+              parentId: project.parentId,
+              category,
+            }),
+          ),
+        )
+        void Promise.allSettled(promises)
+          .then((projects) =>
+            projects.flatMap((directoryResult, i) => {
+              const projectInfo = relevantProjects[i]
+              const project =
+                projectInfo && directoryResult.status === 'fulfilled' ?
+                  directoryResult.value
+                    .filter(backendModule.assetIsProject)
+                    .find((asset) => asset.id === projectInfo.id)
+                : null
+              return project ? [project] : []
+            }),
+          )
+          .then((projects) => {
+            const expandedDirectoryIds = new Set(driveStore.getState().expandedDirectoryIds)
+            for (const project of projects) {
+              const parents = project.parentsPath.split('/').map(backendModule.DirectoryId)
+              for (const parent of parents) {
+                expandedDirectoryIds.add(parent)
+              }
+            }
+            setExpandedDirectoryIds([...expandedDirectoryIds])
+          })
+        break
+      }
+      case 'local':
+      case 'local-directory': {
+        if (!localBackend) {
+          break
+        }
+        const rootPath = 'rootPath' in category ? category.rootPath : localBackend.rootPath()
+        const relevantProjects = launchedProjectsRef.current.filter(
+          (project) => project.type === backendModule.BackendType.local,
+        )
+        const expandedDirectoryIds = new Set(driveStore.getState().expandedDirectoryIds)
+        for (const project of relevantProjects) {
+          const path = localBackendModule.extractTypeAndId(project.parentId).id
+          const strippedPath = path.replace(rootPath, '')
+          if (strippedPath !== path) {
+            let parentPath = String(rootPath)
+            const parents = strippedPath.split('/')
+            for (const parent of parents) {
+              parentPath += `/${parent}`
+              expandedDirectoryIds.add(backendModule.DirectoryId(parentPath))
+            }
+          }
+        }
+        setExpandedDirectoryIds([...expandedDirectoryIds])
+        break
+      }
+      case 'recent':
+      case 'trash': {
+        // Ignored - directories should not be expanded here.
+        break
+      }
+    }
+  }, [
+    category,
+    driveStore,
+    launchedProjectsRef,
+    localBackend,
+    queryClient,
+    remoteBackend,
+    setExpandedDirectoryIds,
+  ])
+
+  return null
 }
