@@ -80,7 +80,7 @@ export default function DragModal(props: DragModalProps) {
           {...passthrough}
           style={{ left, top, ...style }}
           className={DIALOG_BACKGROUND({
-            className: ['relative z-10 w-48 translate-x-3 translate-y-3', className],
+            className: ['relative w-48 translate-x-3 translate-y-3', className],
           })}
         >
           <div className="absolute w-full">
@@ -98,7 +98,7 @@ export default function DragModal(props: DragModalProps) {
               ))}
           </div>
 
-          <Underlay className="absolute -right-1 -top-3 z-10 rounded-full">
+          <Underlay className="absolute -right-1 -top-3 rounded-full">
             <Badge color="primary">{React.Children.toArray(children).length}</Badge>
           </Underlay>
         </div>

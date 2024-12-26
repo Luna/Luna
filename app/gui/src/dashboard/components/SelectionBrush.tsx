@@ -338,7 +338,7 @@ export function SelectionBrush(props: SelectionBrushV2Props) {
       <motion.div
         data-testid="selection-brush"
         data-is-dragging={isDragging}
-        className="pointer-events-none absolute z-10 before:absolute before:-inset-1 before:rounded-xl before:border-2 before:border-primary/5 before:bg-primary/5"
+        className="pointer-events-none absolute before:absolute before:-inset-1 before:rounded-xl before:border-2 before:border-primary/5 before:bg-primary/5"
         style={{ left, top, width, height, opacity: isDragging ? 1 : 0 }}
       />
     </Portal>
