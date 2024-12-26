@@ -392,13 +392,15 @@ function OpenedProjectsParentsExpander() {
         const expandedDirectoryIds = new Set(driveStore.getState().expandedDirectoryIds)
         for (const project of relevantProjects) {
           const path = localBackendModule.extractTypeAndId(project.parentId).id
-          const strippedPath = path.replace(rootPath, '')
+          const strippedPath = path.replace(`${rootPath}/`, '')
           if (strippedPath !== path) {
             let parentPath = String(rootPath)
             const parents = strippedPath.split('/')
             for (const parent of parents) {
               parentPath += `/${parent}`
-              expandedDirectoryIds.add(backendModule.DirectoryId(parentPath))
+              expandedDirectoryIds.add(
+                localBackendModule.newDirectoryId(backendModule.Path(parentPath)),
+              )
             }
           }
         }
