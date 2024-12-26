@@ -56,14 +56,41 @@ export interface SelectionBrushV2Props {
  * The direction of the Drag/Scroll.
  */
 const enum DIRECTION {
+  /**
+   * •
+   */
   NONE = 0,
+  /**
+   * ⬅️
+   */
   LEFT = 1,
+  /**
+   * ➡️
+   */
   RIGHT = 2,
+  /**
+   * ⬆️
+   */
   TOP = 3,
+  /**
+   * ⬇️
+   */
   BOTTOM = 4,
+  /**
+   * ↙️
+   */
   BOTTOM_LEFT = 5,
+  /**
+   * ↘️
+   */
   BOTTOM_RIGHT = 6,
+  /**
+   * ↖️
+   */
   TOP_LEFT = 7,
+  /**
+   * ↗️
+   */
   TOP_RIGHT = 8,
 }
 
@@ -188,8 +215,12 @@ export function SelectionBrush(props: SelectionBrushV2Props) {
           return
         }
 
+        // Calculate the direction of the scroll.
+        // This is used to understand, where we should extend the rectangle.
         const direction = getDirectionFromScrollDiff(diffX, diffY)
 
+        // Calculate the next rectangle based on the scroll direction.
+        // New rectangle extends by the scroll distance.
         const nextRectangle = calculateRectangleFromScrollDirection(currentRectangle, direction, {
           left: diffX,
           top: diffY,
@@ -197,6 +228,9 @@ export function SelectionBrush(props: SelectionBrushV2Props) {
 
         const detailedRectangle = getDetailedRectangleFromRectangle(nextRectangle)
 
+        // Since we scroll the container, we need to update the start position
+        // (the position of the cursor when the drag started)
+        // to make it on sync with apropriate corner of the rectangle.
         startPositionRef.current = calculateNewStartPositionFromScrollDirection(
           start,
           current,
@@ -274,6 +308,8 @@ export function SelectionBrush(props: SelectionBrushV2Props) {
 
         currentPositionRef.current = { left: event.pageX, top: event.pageY }
 
+        // Check if the user has passed the dead zone.
+        // Dead zone shall be passed only once.
         if (hasPassedDeadZoneRef.current === false) {
           hasPassedDeadZoneRef.current = !isInDeadZone(start, current, DEAD_ZONE_SIZE)
         }
@@ -286,6 +322,8 @@ export function SelectionBrush(props: SelectionBrushV2Props) {
 
           const detailedRectangle = getDetailedRectangle(start, current)
 
+          // Capture the pointer events to lock the whole selection to the target.
+          // and don't invoke hover events. when the user is dragging.
           targetRef.current?.setPointerCapture(event.pointerId)
           currentRectangleRef.current = detailedRectangle
           previousPositionRef.current = { left: current.left, top: current.top }
