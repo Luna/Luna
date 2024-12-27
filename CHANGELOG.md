@@ -18,11 +18,13 @@
   previously allowed to use spaces in the argument definition without
   parentheses. [This is now a syntax error.][11856]
 - [Native libraries of projects can be added to `polyglot/lib` directory][11874]
+- Symetric, transitive and reflexive [equality for intersection types][11897]
 
 [11777]: https://github.com/enso-org/enso/pull/11777
 [11600]: https://github.com/enso-org/enso/pull/11600
 [11856]: https://github.com/enso-org/enso/pull/11856
 [11874]: https://github.com/enso-org/enso/pull/11874
+[11897]: https://github.com/enso-org/enso/pull/11897
 
 # Next Release
 
@@ -136,6 +138,7 @@
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
 - [Added `add_group_number` to the in-memory database.[11818]
 - [The reload button clears the HTTP cache.][11673]
+- [SQL Server Support for Aggregate][11811]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -146,6 +149,7 @@
 [11577]: https://github.com/enso-org/enso/pull/11577
 [11818]: https://github.com/enso-org/enso/pull/11818
 [11673]: https://github.com/enso-org/enso/pull/11673
+[11811]: https://github.com/enso-org/enso/pull/11811
 
 #### Enso Language & Runtime
 
