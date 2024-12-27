@@ -243,7 +243,7 @@ export default function App(props: AppProps) {
   const { mutate: executeBackgroundUpdate } = useMutation({
     mutationKey: ['refetch-queries', { isOffline }],
     scope: { id: 'refetch-queries' },
-    mutationFn: () => queryClient.refetchQueries({ type: 'all' }),
+    mutationFn: () => queryClient.refetchQueries({ type: 'all', queryKey: [RemoteBackend.type] }),
     networkMode: 'online',
     onError: () => {
       toastify.toast.error(getText('refetchQueriesError'), {
