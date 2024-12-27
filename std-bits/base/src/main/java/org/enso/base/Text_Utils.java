@@ -66,19 +66,18 @@ public class Text_Utils {
      * @return whether the string has leading or trailing whitespace
      */
     public static boolean has_non_trivial_whitespace(String s) {
-        if (s == null || s.isEmpty()) {
-            return false;
+        List<String> trivialWhiteSpaceList = List.of(
+            "\u200A", "\u200B", "\u205F", "\u2004", "\u2005", 
+            "\u2006", "\u2008", "\u2009", "\u2007", "\r", 
+            "\n", "\t", "\u2002", "\u00A0", "\u3000", "\u2003"
+        );
+
+        for(String white_space_to_check : trivialWhiteSpaceList) {
+            if (s.contains(white_space_to_check) ){
+                return true;
+            }
         }
 
-        if (s.contains("\u200A") || s.contains("\u200B") || s.contains("\u205F")) {
-            return true;
-        }
-        if (s.contains("\u2004") || s.contains("\u2005") || s.contains("\u2006") || s.contains("\u2008") || s.contains("\u2009") || s.contains("\u2007")) {
-            return true;
-        }
-        if (s.contains("\r") || s.contains("\n") || s.contains("\t") || s.contains("\u2002") || s.contains("\u00A0") || s.contains("\u3000") || s.contains("\u2002") || s.contains("\u2003")) {
-            return true;
-        }
         return false;
     }
 
