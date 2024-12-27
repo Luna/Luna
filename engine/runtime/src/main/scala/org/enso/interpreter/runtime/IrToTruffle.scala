@@ -29,10 +29,6 @@ import org.enso.compiler.core.ir.{
   Type => Tpe
 }
 import org.enso.compiler.core.ir.module.scope.Definition
-import org.enso.compiler.core.ir.module.scope.definition
-import org.enso.compiler.core.ir.module.scope.Import
-import org.enso.compiler.core.ir.module.scope.imports
-import org.enso.compiler.core.ir.Name.Special
 import org.enso.compiler.core.ir.expression.{
   errors,
   Application,
@@ -210,7 +206,7 @@ class IrToTruffle(
       visibleName: String,
       javaClassName: String
     ): Unit =
-      scopeBuilder.registerPolyglotSymbol(
+      this.scopeBuilder.registerPolyglotSymbol(
         visibleName,
         () => context.lookupJavaClass(javaClassName)
       )
@@ -256,16 +252,16 @@ class IrToTruffle(
                 conversion.methodName.name,
                 fn.arguments,
                 fn.body,
-                ReadArgumentCheckNode.build(context, "conversion", toType),
+                TypeCheckValueNode.single("conversion", toType),
                 None,
                 true
               )
             val rootNode = MethodRootNode.build(
               language,
               expressionProcessor.scope,
-              scopeBuilder.asModuleScope(),
+              this.scopeBuilder.asModuleScope(),
               () => bodyBuilder.bodyNode(),
-              makeSection(scopeBuilder.getModule, conversion.location),
+              makeSection(this.scopeBuilder.getModule, conversion.location),
               toType,
               conversion.methodName.name
             )
@@ -285,7 +281,7 @@ class IrToTruffle(
               "Conversion bodies must be functions at the point of codegen."
             )
         }
-        scopeBuilder.registerConversionMethod(toType, fromType, function)
+        this.scopeBuilder.registerConversionMethod(toType, fromType, function)
       }
     }
 
@@ -332,7 +328,7 @@ class IrToTruffle(
           frameInfo
         )
 
-        scopeBuilder.registerMethod(
+        this.scopeBuilder.registerMethod(
           cons,
           method.methodName.name,
           () => {
@@ -350,7 +346,7 @@ class IrToTruffle(
 
     override protected def processTypeDefinition(typ: Definition.Type): Unit = {
       val atomDefs = typ.members
-      val asType   = scopeBuilder.asModuleScope().getType(typ.name.name, true)
+      val asType   = this.scopeBuilder.asModuleScope().getType(typ.name.name, true)
       val atomConstructors =
         atomDefs.map(cons => asType.getConstructors.get(cons.name.name))
       atomConstructors

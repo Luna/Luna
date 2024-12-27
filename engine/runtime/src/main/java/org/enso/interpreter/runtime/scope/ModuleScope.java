@@ -23,7 +23,7 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /** A representation of Enso's per-file top-level scope. */
 @ExportLibrary(TypesLibrary.class)
-public final class ModuleScope extends EnsoObject implements EnsoObject, CommonModuleScopeShape<Function, Type, ImportExportScope> {
+public final class ModuleScope extends EnsoObject implements CommonModuleScopeShape<Function, Type, ImportExportScope> {
   private final Type associatedType;
   private final Module module;
   private final Map<String, Supplier<TruffleObject>> polyglotSymbols;

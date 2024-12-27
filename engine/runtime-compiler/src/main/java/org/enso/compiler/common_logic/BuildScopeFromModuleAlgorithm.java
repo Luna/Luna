@@ -6,7 +6,7 @@ import org.enso.compiler.core.ir.module.scope.Definition;
 import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.core.ir.module.scope.imports.Polyglot;
 import org.enso.compiler.data.BindingsMap;
-import org.enso.compiler.pass.resolve.MethodDefinitions$;
+import org.enso.compiler.pass.resolve.MethodDefinitions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
@@ -136,7 +136,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
     } else {
       var metadata =
           MetadataInteropHelpers.getMetadataOrNull(
-              typePointerOpt.get(), MethodDefinitions$.MODULE$, BindingsMap.Resolution.class);
+              typePointerOpt.get(), MethodDefinitions.INSTANCE, BindingsMap.Resolution.class);
       if (metadata == null) {
         logger.debug(
             "Failed to resolve type pointer for method: {}", method.methodReference().showCode());
