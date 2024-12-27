@@ -2,7 +2,7 @@ import { reachable } from '../util/data/graph'
 import type { Module } from './mutableModule'
 import type { AstId } from './tree'
 
-export { spanMapToIdMap } from './idMap'
+export { nodeKey, spanMapToIdMap } from './idMap'
 export * from './mutableModule'
 export * from './parse'
 export { printWithSpans } from './print'
