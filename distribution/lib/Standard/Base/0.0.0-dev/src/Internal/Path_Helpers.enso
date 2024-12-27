@@ -34,6 +34,12 @@ normalize_segments (segments : Vector) (get_name : Any -> Text) -> Vector ! Ille
    Keeping the delimiter is needed for some systems to be able to distinguish
    directories from regular files (e.g. S3).
 resolve_many_parts (base_file : Any) (subpath : Text) (windows_delimiter : Boolean = True) =
+    parts = split_path subpath windows_delimiter
+    parts.fold base_file f-> part-> f.resolve_single_part part
+
+## PRIVATE
+   Splits the given path into parts based on the delimiter.
+split_path (path : Text) (windows_delimiter : Boolean = True) -> Vector Text =
     # The `\` is doubled to escape it in the regex.
     delimiters = if windows_delimiter then "/\\" else "/"
     ## This matches either a string of non-slash characters followed by a slash,
@@ -42,5 +48,4 @@ resolve_many_parts (base_file : Any) (subpath : Text) (windows_delimiter : Boole
        With one delimiter this should be equivalent to: [^/]*/|[^/]+
        Enabling `windows_delimiter` also allows it to break on the backslash.
     regex = Regex.compile "[^"+delimiters+"]*["+delimiters+"]|[^"+delimiters+"]+"
-    parts = subpath.tokenize regex
-    parts.fold base_file f-> part-> f.resolve_single_part part
+    path.tokenize regex

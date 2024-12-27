@@ -419,6 +419,9 @@ add_specs suite_builder =
                 Panic.with_finalizer f.delete_if_exists <|
                     Data.read "abc/def.txt" . should_equal txt
 
+        group_builder.specify "will resolve empty path to the current working directory" <|
+            File.new "" . should_equal File.current_directory
+
     suite_builder.group "read_text" group_builder->
         group_builder.specify "should allow reading a UTF-8 file" <|
             contents = sample_file.read_text

@@ -46,7 +46,6 @@ polyglot java import java.io.File as Java_File
 polyglot java import java.io.InputStream as Java_Input_Stream
 polyglot java import java.io.OutputStream as Java_Output_Stream
 polyglot java import java.nio.file.InvalidPathException
-polyglot java import java.nio.file.Path as Java_Path
 polyglot java import java.nio.file.StandardCopyOption
 polyglot java import java.nio.file.StandardOpenOption
 polyglot java import java.time.ZonedDateTime
@@ -890,25 +889,27 @@ list_descendants file =
      relative to the project's location.
    - if running locally, the path is resolved to a local file, relative to the
      current working directory.
+
+   The method also does some extra processing to ensure that if the path
+   contains any data links, they will be correctly resolved. We cannot just
+   directly construct the path from text - we instead find its root
+   (or base directory if relative) and rely on the `/` operator to resolve all
+   the parts, allowing the data link logic to kick in.
 resolve_local_file (path : Text) = handle_invalid_path path <|
-    java_path = Java_Path.of path
-    root_file = case java_path.isAbsolute of
-        ## If the path is absolute we extract its root.
-        True -> get_file java_path.getRoot.toString
+    local_file = get_file path
+    resolved_local_file =
+        parts = Path_Helpers.split_path path
+        # Special case - if there are no parts, it means path was "", so we use that as base.
+        base_part = parts.get 0 if_missing=""
+        base = get_file base_part
+        rest = parts.drop 1
+        rest.fold base acc-> part-> acc.resolve_single_part part
 
-        ## If the path is relative, the root is either the current working
-           directory or the cloud project directory.
-        False -> case Enso_File.cloud_project_parent_directory of
-            Nothing -> get_cwd
-            base_cloud_directory -> base_cloud_directory
-    remaining_path_as_text = case java_path.isAbsolute of
-        # For relative files, the remaining path is the whole thing.
-        False -> path
-
-        ## For absolute files, we construct the absolute file
-           and then relativize it relative to the root.
-        True -> root_file.relativize (get_file path) . path
-    root_file / remaining_path_as_text
+    # Absolute files always resolve to themselves.
+    if local_file.is_absolute then resolved_local_file else
+        case Enso_File.cloud_project_parent_directory of
+            Nothing -> resolved_local_file
+            base_cloud_directory -> base_cloud_directory / path
 
 ## PRIVATE
 get_child_widget : File -> Widget
