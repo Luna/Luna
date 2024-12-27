@@ -30,11 +30,18 @@
             buildInputs = with pkgs; [
               # === Graal dependencies ===
               libxcrypt-legacy
-            ];
+              # === Rust dependencies ===
+              openssl.dev
+              pkg-config
+            ] ++ (if !isOnLinux then [
+              # === macOS-specific dependencies ===
+              darwin.apple_sdk.frameworks.IOKit # Required by `enso-formatter`.
+              darwin.apple_sdk.frameworks.Security # Required by `enso-formatter`.
+            ] else [ ]);
 
             packages = with pkgs; [
               # === TypeScript dependencies ===
-              nodejs_20
+              nodejs_22
               corepack
               # === Electron ===
               electron
@@ -51,7 +58,7 @@
               # `sccache` can be used to speed up compile times for Rust crates.
               # `~/.cargo/bin/sccache` is provided by `cargo install sccache`.
               # `~/.cargo/bin` must be in the `PATH` for the binary to be accessible.
-              export PATH=$SHIMS_PATH:${rust.out}:$HOME/.cargo/bin:$PATH
+              export PATH=$SHIMS_PATH:$HOME/.cargo/bin:$PATH
               export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH"
 
               # `rustup` shim

@@ -36,9 +36,10 @@ const value = computed({
   set(value) {
     const edit = graph.startEdit()
     const theImport = value ? trueImport.value : falseImport.value
-    if (props.input.value instanceof Ast.Ast) {
+    const inputValue: Ast.Expression | string | undefined = props.input.value
+    if (inputValue instanceof Ast.Ast) {
       const { requiresImport } = setBoolNode(
-        edit.getVersion(props.input.value),
+        edit.getVersion(inputValue),
         value ? ('True' as Identifier) : ('False' as Identifier),
       )
       if (requiresImport) graph.addMissingImports(edit, theImport)
@@ -71,7 +72,7 @@ function isBoolNode(ast: Ast.Ast) {
     : undefined
   return candidate && ['True', 'False'].includes(candidate.code())
 }
-function setBoolNode(ast: Ast.Mutable, value: Identifier): { requiresImport: boolean } {
+function setBoolNode(ast: Ast.MutableExpression, value: Identifier): { requiresImport: boolean } {
   if (ast instanceof Ast.MutablePropertyAccess) {
     ast.setRhs(value)
     return { requiresImport: false }
@@ -113,7 +114,7 @@ export const widgetDefinition = defineWidget(
 }
 
 .name {
-  color: rgb(255 255 255 / 0.5);
+  opacity: 0.5;
   margin-right: var(--widget-token-pad-unit);
 }
 </style>

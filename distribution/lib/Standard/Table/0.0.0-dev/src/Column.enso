@@ -1,7 +1,9 @@
 from Standard.Base import all
 import Standard.Base.Data.Array_Proxy.Array_Proxy
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
 import Standard.Base.Data.Vector.No_Wrap
 import Standard.Base.Errors.Common.Arithmetic_Error
+import Standard.Base.Errors.Common.Floating_Point_Equality
 import Standard.Base.Errors.Common.Incomparable_Values
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
 import Standard.Base.Errors.Common.No_Such_Method
@@ -22,6 +24,7 @@ import project.Internal.Column_Ops
 import project.Internal.Date_Time_Helpers
 import project.Internal.Java_Problems
 import project.Internal.Parse_Values_Helper
+import project.Internal.Read_Many_Helpers
 import project.Internal.Storage
 import project.Internal.Value_Type_Helpers
 import project.Internal.Widget_Helpers
@@ -29,7 +32,7 @@ import project.Rows_To_Read.Rows_To_Read
 import project.Table.Table
 import project.Value_Type.Auto
 import project.Value_Type.Value_Type
-from project.Errors import Conversion_Failure, Floating_Point_Equality, Inexact_Type_Coercion, Invalid_Column_Names, Invalid_Value_Type, No_Index_Set_Error
+from project.Errors import Conversion_Failure, Inexact_Type_Coercion, Invalid_Column_Names, Invalid_Value_Type, No_Index_Set_Error
 from project.Internal.Column_Format import all
 from project.Internal.Java_Exports import make_date_builder_adapter, make_string_builder
 from project.Internal.Storage import enso_to_java, java_to_enso
@@ -37,6 +40,7 @@ from project.Internal.Storage import enso_to_java, java_to_enso
 polyglot java import org.enso.base.Time_Utils
 polyglot java import org.enso.table.data.column.operation.cast.CastProblemAggregator
 polyglot java import org.enso.table.data.column.operation.CountNothing
+polyglot java import org.enso.table.data.column.operation.CountUntrimmed
 polyglot java import org.enso.table.data.column.operation.unary.DatePartOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsEmptyOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsFiniteOperation
@@ -1432,7 +1436,8 @@ type Column
             mapped = self_vec.map_with_index i->t-> trim_fn t (trim_get i)
             Column.from_vector new_name mapped
 
-    ## GROUP Standard.Base.Text
+    ## ALIAS regex, substitute
+       GROUP Standard.Base.Text
        ICON column_add
        Replaces the first, or all occurrences of `term` with `new_text` in each
        row. If `term` is empty, the function returns the column unchanged.
@@ -2101,7 +2106,7 @@ type Column
     map : (Any -> Any) -> Boolean -> Value_Type | Auto -> Column ! Invalid_Value_Type
     map self function skip_nothing=True expected_value_type=Auto =
         new_fn = if skip_nothing then (x-> if x.is_nothing then Nothing else function x) else function
-        new_st = self.to_vector.map on_problems=No_Wrap new_fn
+        new_st = self.to_vector.map on_problems=No_Wrap.Value new_fn
         Column.from_vector self.name new_st value_type=expected_value_type
 
     ## ALIAS combine, join by row position, merge
@@ -2149,7 +2154,7 @@ type Column
                             function x y
             False -> function
         new_name = naming_helper.binary_operation_name "x" self that
-        vec = self.to_vector.zip on_problems=No_Wrap that.to_vector new_fn
+        vec = self.to_vector.zip on_problems=No_Wrap.Value that.to_vector new_fn
         Column.from_vector new_name vec value_type=expected_value_type
 
     ## GROUP Standard.Base.Metadata
@@ -2209,6 +2214,19 @@ type Column
              example_count_nothing = Examples.text_column_2.count_nothing
     count_nothing : Integer
     count_nothing self = CountNothing.apply self.java_column
+
+    ## PRIVATE
+       Counts the number of text values with leading or trailing whitespace.
+       Used for data quality indicator in Table Viz.
+    count_untrimmed : Integer -> Integer | Nothing
+    count_untrimmed self sample_size:Integer=Column.default_sample_size =
+        if (self.value_type == Value_Type.Mixed || self.value_type.is_text).not then Nothing else
+            CountUntrimmed.apply self.java_column sample_size
+
+    ## PRIVATE
+       Default size for sampling data quality indicators.
+    default_sample_size -> Integer =
+        CountUntrimmed.DEFAULT_SAMPLE_SIZE
 
     ## GROUP Standard.Base.Metadata
        ICON metadata
@@ -2589,6 +2607,13 @@ type Column
         data = Statistic.running self.to_vector statistic
         Column.from_vector name data
 
+    ## PRIVATE
+    pretty : Text
+    pretty self =
+        name = self.name.pretty
+        data = self.to_vector.pretty
+        "Column.from_vector " + name + " " + data
+
 ## PRIVATE
 
    Folds the vectorized operation over the provided column and values. When more
@@ -2920,3 +2945,8 @@ apply_unary_map column:Column new_name:Text function expected_result_type:Value_
     Java_Problems.with_map_operation_problem_aggregator column.name Problem_Behavior.Report_Warning java_problem_aggregator->
         map_column = UnaryOperation.mapFunction column.java_column function nothing_unchanged storage_type new_name java_problem_aggregator
         Column.Value map_column
+
+## PRIVATE
+Many_Files_List.from (that : Column) =
+    Read_Many_Helpers.ensure_column_type_valid_to_be_files_list that <|
+        Many_Files_List.Value that that.to_vector

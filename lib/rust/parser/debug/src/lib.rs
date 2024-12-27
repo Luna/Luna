@@ -67,7 +67,11 @@ where T: serde::Serialize + Reflect {
     let text_escape_token = rust_to_meta[&TextEscape::reflect().id];
     let token_to_str = move |token: Value| {
         let range = token_code_range(&token, base);
-        code[range].to_owned().into_boxed_str()
+        if range.is_empty() {
+            "".into()
+        } else {
+            code[range].to_owned().into_boxed_str()
+        }
     };
     for token in identish_tokens {
         let token_to_str_ = token_to_str.clone();
@@ -95,15 +99,29 @@ where T: serde::Serialize + Reflect {
         let (car, _) = cons.into_pair();
         Value::cons(car, Value::Null)
     };
+    let simplify_tree = |list: Value| {
+        let list = strip_hidden_fields(list);
+        let vec = list.to_vec().unwrap();
+        if vec[0].as_symbol().unwrap() == "ExpressionStatement" {
+            match &vec[1..] {
+                [Value::Cons(doc_line), Value::Cons(expr)] if doc_line.cdr().is_null() =>
+                    return expr.cdr().to_owned(),
+                _ => {}
+            }
+        };
+        list
+    };
     let line = rust_to_meta[&tree::block::Line::reflect().id];
     let operator_line = rust_to_meta[&tree::block::OperatorLine::reflect().id];
     let type_signature_line = rust_to_meta[&tree::TypeSignatureLine::reflect().id];
     let invalid = rust_to_meta[&tree::Invalid::reflect().id];
+    let tree = rust_to_meta[&tree::Tree::reflect().id];
     to_s_expr.mapper(line, into_car);
     to_s_expr.mapper(operator_line, into_car);
     to_s_expr.mapper(type_signature_line, into_car);
     to_s_expr.mapper(invalid, strip_invalid);
     to_s_expr.mapper(text_escape_token, simplify_escape);
+    to_s_expr.mapper(tree, simplify_tree);
     tuplify(to_s_expr.value(ast_ty, &value))
 }
 
@@ -144,6 +162,9 @@ fn token_code_range(token: &Value, base: usize) -> std::ops::Range<usize> {
         |field| fields(token).find(|(name, _)| *name == field).unwrap().1.as_u64().unwrap() as u32;
     let begin = get_u32(":codeReprBegin");
     let len = get_u32(":codeReprLen");
+    if len == 0 {
+        return 0..0;
+    }
     let begin = (begin as u64) | (base as u64 & !(u32::MAX as u64));
     let begin = if begin < (base as u64) { begin + 1 << 32 } else { begin };
     let begin = begin as usize - base;

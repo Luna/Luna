@@ -10,6 +10,8 @@ use crate::syntax::statement::find_top_level_operator;
 use crate::syntax::statement::parse_pattern;
 use crate::syntax::statement::Line;
 use crate::syntax::statement::StatementPrefix;
+use crate::syntax::statement::StatementPrefixLine;
+use crate::syntax::statement::StatementPrefixes;
 use crate::syntax::statement::VisibilityContext;
 use crate::syntax::token;
 use crate::syntax::tree;
@@ -18,6 +20,7 @@ use crate::syntax::tree::ArgumentDefault;
 use crate::syntax::tree::ArgumentDefinition;
 use crate::syntax::tree::ArgumentDefinitionLine;
 use crate::syntax::tree::ArgumentType;
+use crate::syntax::tree::DocLine;
 use crate::syntax::tree::ReturnSpecification;
 use crate::syntax::tree::SyntaxError;
 use crate::syntax::tree::TypeSignatureLine;
@@ -52,7 +55,7 @@ impl<'s> FunctionBuilder<'s> {
                 arrow = Some(i);
                 break;
             }
-            if i == start + qn_len || matches!(Spacing::of_item(item), Spacing::Spaced) {
+            if i == start + qn_len || Spacing::of_item(item) == Spacing::Spaced {
                 arg_starts.push(i);
             }
         }
@@ -70,7 +73,7 @@ impl<'s> FunctionBuilder<'s> {
 
     pub fn build(
         mut self,
-        prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+        prefixes: &mut StatementPrefixes<'s>,
         operator: token::AssignmentOperator<'s>,
         expression: Option<Tree<'s>>,
         visibility_context: VisibilityContext,
@@ -86,6 +89,7 @@ impl<'s> FunctionBuilder<'s> {
 
         #[derive(Default)]
         struct PrefixesAccumulator<'s> {
+            docs:        Option<DocLine<'s>>,
             annotations: Option<Vec<AnnotationLine<'s>>>,
             signature:   Option<TypeSignatureLine<'s>>,
         }
@@ -93,40 +97,35 @@ impl<'s> FunctionBuilder<'s> {
         let mut acc = PrefixesAccumulator::default();
 
         while let Some(prefix) = prefixes.last() {
-            let Some(content) = prefix.content.as_ref() else { break };
-            match (&acc, &content) {
+            match (&acc, &prefix) {
                 (
-                    PrefixesAccumulator { annotations: None, signature: None },
+                    PrefixesAccumulator { docs: None, annotations: None, signature: None },
                     StatementPrefix::TypeSignature(signature),
                 ) if qn_equivalent(&self.name, &signature.name) => {
-                    let Some(Line {
-                        newline: outer_newline,
-                        content: Some(StatementPrefix::TypeSignature(signature)),
-                    }) = prefixes.pop()
+                    let StatementPrefixLine::TypeSignature(signature_line) =
+                        prefixes.pop(&mut first_newline)
                     else {
                         unreachable!()
                     };
-                    let newline = mem::replace(&mut first_newline, outer_newline);
-                    acc.signature = Some(TypeSignatureLine {
-                        signature,
-                        newlines: NonEmptyVec::singleton(newline),
-                    });
+                    acc.signature = Some(signature_line);
                 }
-                (PrefixesAccumulator { .. }, StatementPrefix::Annotation(_)) => {
-                    let Some(Line {
-                        newline: outer_newline,
-                        content: Some(StatementPrefix::Annotation(annotation)),
-                    }) = prefixes.pop()
+                (PrefixesAccumulator { docs: None, .. }, StatementPrefix::Annotation(_)) => {
+                    let StatementPrefixLine::Annotation(annotation_line) =
+                        prefixes.pop(&mut first_newline)
                     else {
                         unreachable!()
                     };
-                    let newline = mem::replace(&mut first_newline, outer_newline);
                     let mut annotations = acc.annotations.take().unwrap_or_default();
-                    annotations.push(AnnotationLine {
-                        annotation,
-                        newlines: NonEmptyVec::singleton(newline),
-                    });
+                    annotations.push(annotation_line);
                     acc.annotations = Some(annotations);
+                }
+                (PrefixesAccumulator { docs: None, .. }, StatementPrefix::Documentation(_)) => {
+                    let StatementPrefixLine::Documentation(doc_line) =
+                        prefixes.pop(&mut first_newline)
+                    else {
+                        unreachable!()
+                    };
+                    acc.docs = Some(doc_line);
                 }
                 _ => break,
             }
@@ -137,11 +136,13 @@ impl<'s> FunctionBuilder<'s> {
             annotations.reverse();
             annotations
         };
+        let docs = acc.docs;
 
         Line {
             newline: first_newline,
             content: apply_private_keywords(
                 Some(Tree::function(
+                    docs,
                     annotations,
                     signature,
                     private,
@@ -181,24 +182,23 @@ pub fn parse_args<'s>(
     items: &mut Vec<Item<'s>>,
     start: usize,
     precedence: &mut Precedence<'s>,
+    args_buffer: &mut Vec<ArgumentDefinition<'s>>,
 ) -> Vec<ArgumentDefinition<'s>> {
     let mut arg_starts = vec![];
     for (i, item) in items.iter().enumerate().skip(start) {
-        if i == start || matches!(Spacing::of_item(item), Spacing::Spaced) {
+        if i == start || Spacing::of_item(item) == Spacing::Spaced {
             arg_starts.push(i);
         }
     }
-    let mut defs: Vec<_> = arg_starts
-        .drain(..)
-        .rev()
-        .map(|arg_start| parse_arg_def(items, arg_start, precedence))
-        .collect();
-    defs.reverse();
-    defs
+    args_buffer.extend(
+        arg_starts.drain(..).rev().map(|arg_start| parse_arg_def(items, arg_start, precedence)),
+    );
+    debug_assert_eq!(items.len(), start);
+    args_buffer.drain(..).rev().collect()
 }
 
 pub fn parse_constructor_definition<'s>(
-    prefixes: &mut Vec<Line<'s, StatementPrefix<'s>>>,
+    prefixes: &mut StatementPrefixes<'s>,
     mut line: item::Line<'s>,
     private_keywords_start: usize,
     start: usize,
@@ -221,21 +221,28 @@ pub fn parse_constructor_definition<'s>(
 
     let mut first_newline = newline;
     let mut annotations_reversed = vec![];
+    let mut doc_line = None;
     while let Some(prefix) = prefixes.last() {
-        let Some(content) = prefix.content.as_ref() else { break };
-        if let StatementPrefix::Annotation(_) = &content {
-            let Some(Line {
-                newline: outer_newline,
-                content: Some(StatementPrefix::Annotation(annotation)),
-            }) = prefixes.pop()
-            else {
-                unreachable!()
-            };
-            let newline = mem::replace(&mut first_newline, outer_newline);
-            annotations_reversed
-                .push(AnnotationLine { annotation, newlines: NonEmptyVec::singleton(newline) });
-        } else {
-            break;
+        match &prefix {
+            StatementPrefix::Annotation(_) => {
+                let StatementPrefixLine::Annotation(annotation_line) =
+                    prefixes.pop(&mut first_newline)
+                else {
+                    unreachable!()
+                };
+                annotations_reversed.push(annotation_line);
+            }
+            StatementPrefix::Documentation(_) => {
+                let StatementPrefixLine::Documentation(line) = prefixes.pop(&mut first_newline)
+                else {
+                    unreachable!()
+                };
+                doc_line = Some(line);
+                break;
+            }
+            _ => {
+                break;
+            }
         }
     }
     let annotations = {
@@ -243,7 +250,8 @@ pub fn parse_constructor_definition<'s>(
         annotations_reversed
     };
 
-    let def = Tree::constructor_definition(annotations, private, name, inline_args, block_args);
+    let def =
+        Tree::constructor_definition(doc_line, annotations, private, name, inline_args, block_args);
 
     Line {
         newline: first_newline,
@@ -261,41 +269,10 @@ fn parse_constructor_decl<'s>(
     precedence: &mut Precedence<'s>,
     args_buffer: &mut Vec<ArgumentDefinition<'s>>,
 ) -> (token::Ident<'s>, Vec<ArgumentDefinition<'s>>) {
-    let args = parse_type_args(items, start + 1, precedence, args_buffer);
+    let args = parse_args(items, start + 1, precedence, args_buffer);
     let name = items.pop().unwrap().into_token().unwrap().try_into().unwrap();
     debug_assert_eq!(items.len(), start);
     (name, args)
-}
-
-pub fn parse_type_args<'s>(
-    items: &mut Vec<Item<'s>>,
-    start: usize,
-    precedence: &mut Precedence<'s>,
-    args_buffer: &mut Vec<ArgumentDefinition<'s>>,
-) -> Vec<ArgumentDefinition<'s>> {
-    if start == items.len() {
-        return default();
-    }
-    let mut arg_starts = vec![start];
-    let mut expecting_rhs = false;
-    for (i, item) in items.iter().enumerate().skip(start + 1) {
-        if expecting_rhs {
-            expecting_rhs = false;
-            continue;
-        }
-        if let Item::Token(Token { variant: token::Variant::AssignmentOperator(_), .. }) = item {
-            expecting_rhs = true;
-            continue;
-        }
-        if matches!(Spacing::of_item(item), Spacing::Spaced) {
-            arg_starts.push(i);
-        }
-    }
-    args_buffer.extend(
-        arg_starts.drain(..).rev().map(|arg_start| parse_arg_def(items, arg_start, precedence)),
-    );
-    debug_assert_eq!(items.len(), start);
-    args_buffer.drain(..).rev().collect()
 }
 
 pub fn try_parse_foreign_function<'s>(
@@ -354,7 +331,7 @@ pub fn try_parse_foreign_function<'s>(
 
     let mut arg_starts = vec![];
     for (i, item) in items.iter().enumerate().skip(start + 3) {
-        if i == start + 3 || matches!(Spacing::of_item(item), Spacing::Spaced) {
+        if i == start + 3 || Spacing::of_item(item) == Spacing::Spaced {
             arg_starts.push(i);
         }
     }
@@ -484,12 +461,7 @@ fn parse_arg_def<'s>(
                 .or_else(|| open2.as_ref().map(|t| t.code.position_after()))
                 .or_else(|| open1.as_ref().map(|t| t.code.position_after()))
                 .or_else(|| type_.as_ref().map(|t| t.operator.left_offset.code.position_before()))
-                // Why does this one need a type annotation???
-                .or_else(|| {
-                    close2
-                        .as_ref()
-                        .map(|t: &token::CloseSymbol| t.left_offset.code.position_before())
-                })
+                .or_else(|| close2.as_ref().map(|t| t.left_offset.code.position_before()))
                 .or_else(|| default.as_ref().map(|t| t.equals.left_offset.code.position_before()))
                 .or_else(|| close1.as_ref().map(|t| t.left_offset.code.position_before()))
                 .unwrap(),

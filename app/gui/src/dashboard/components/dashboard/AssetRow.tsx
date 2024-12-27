@@ -2,43 +2,50 @@
 import * as React from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
 
 import BlankIcon from '#/assets/blank.svg'
 
 import * as dragAndDropHooks from '#/hooks/dragAndDropHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import * as setAssetHooks from '#/hooks/setAssetHooks'
 
-import { useDriveStore, useSetSelectedKeys } from '#/providers/DriveProvider'
+import type { DrivePastePayload } from '#/providers/DriveProvider'
+import {
+  useDriveStore,
+  useSetSelectedKeys,
+  useToggleDirectoryExpansion,
+} from '#/providers/DriveProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
-import StatelessSpinner, * as statelessSpinner from '#/components/StatelessSpinner'
-import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
 import type * as assetsTable from '#/layouts/AssetsTable'
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
-import { isCloudCategory } from '#/layouts/CategorySwitcher/Category'
+import { isCloudCategory, isLocalCategory } from '#/layouts/CategorySwitcher/Category'
+import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import * as localBackend from '#/services/LocalBackend'
 
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
+import { IndefiniteSpinner } from '#/components/Spinner'
+import type { AssetEvent } from '#/events/assetEvent'
 import { useCutAndPaste } from '#/events/assetListEvent'
 import {
   backendMutationOptions,
   backendQueryOptions,
   useBackendMutationState,
+  useUploadFiles,
 } from '#/hooks/backendHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
+import { useAsset } from '#/layouts/Drive/assetsTableItemsHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import { download } from '#/utilities/download'
@@ -55,8 +62,6 @@ import Visibility from '#/utilities/Visibility'
 // === Constants ===
 // =================
 
-/** The height of the header row. */
-const HEADER_HEIGHT_PX = 40
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
  * to make a directory row expand.
@@ -69,9 +74,8 @@ const DRAG_EXPAND_DELAY_MS = 500
 
 /** Common properties for state and setters passed to event handlers on an {@link AssetRow}. */
 export interface AssetRowInnerProps {
-  readonly key: backendModule.AssetId
-  readonly item: assetTreeNode.AnyAssetTreeNode
-  readonly setItem: React.Dispatch<React.SetStateAction<assetTreeNode.AnyAssetTreeNode>>
+  readonly asset: backendModule.AnyAsset
+  readonly path: string
   readonly state: assetsTable.AssetsTableState
   readonly rowState: assetsTable.AssetRowState
   readonly setRowState: React.Dispatch<React.SetStateAction<assetsTable.AssetRowState>>
@@ -80,64 +84,210 @@ export interface AssetRowInnerProps {
 /** Props for an {@link AssetRow}. */
 export interface AssetRowProps {
   readonly isOpened: boolean
-  readonly item: assetTreeNode.AnyAssetTreeNode
-  readonly state: assetsTable.AssetsTableState
+
+  readonly isPlaceholder: boolean
+  readonly visibility: Visibility | undefined
+  readonly id: backendModule.AssetId
+  readonly parentId: backendModule.DirectoryId
+  readonly type: backendModule.AssetType
   readonly hidden: boolean
+  readonly path: string
+  readonly initialAssetEvents: readonly AssetEvent[] | null
+  readonly depth: number
+  readonly state: assetsTable.AssetsTableState
   readonly columns: columnUtils.Column[]
   readonly isKeyboardSelected: boolean
-  readonly grabKeyboardFocus: (item: assetTreeNode.AnyAssetTreeNode) => void
+  readonly grabKeyboardFocus: (item: backendModule.AnyAsset) => void
   readonly onClick: (props: AssetRowInnerProps, event: React.MouseEvent) => void
-  readonly select: (item: assetTreeNode.AnyAssetTreeNode) => void
+  readonly select: (item: backendModule.AnyAsset) => void
+  readonly isExpanded: boolean
   readonly onDragStart?: (
     event: React.DragEvent<HTMLTableRowElement>,
-    item: assetTreeNode.AnyAssetTreeNode,
+    item: backendModule.AnyAsset,
   ) => void
   readonly onDragOver?: (
     event: React.DragEvent<HTMLTableRowElement>,
-    item: assetTreeNode.AnyAssetTreeNode,
+    item: backendModule.AnyAsset,
   ) => void
   readonly onDragLeave?: (
     event: React.DragEvent<HTMLTableRowElement>,
-    item: assetTreeNode.AnyAssetTreeNode,
+    item: backendModule.AnyAsset,
   ) => void
   readonly onDragEnd?: (
     event: React.DragEvent<HTMLTableRowElement>,
-    item: assetTreeNode.AnyAssetTreeNode,
+    item: backendModule.AnyAsset,
   ) => void
   readonly onDrop?: (
     event: React.DragEvent<HTMLTableRowElement>,
-    item: assetTreeNode.AnyAssetTreeNode,
+    item: backendModule.AnyAsset,
   ) => void
-  readonly updateAssetRef: React.RefObject<
-    Record<backendModule.AssetId, (asset: backendModule.AnyAsset) => void>
-  >
+  readonly onCutAndPaste?: (
+    newParentKey: backendModule.DirectoryId,
+    newParentId: backendModule.DirectoryId,
+    pasteData: DrivePastePayload,
+    nodeMap: ReadonlyMap<backendModule.AssetId, assetTreeNode.AnyAssetTreeNode>,
+  ) => void
 }
 
 /** A row containing an {@link backendModule.AnyAsset}. */
+// eslint-disable-next-line no-restricted-syntax
 export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
-  const { isKeyboardSelected, isOpened, select, state, columns, onClick } = props
-  const { item: rawItem, hidden: hiddenRaw, updateAssetRef, grabKeyboardFocus } = props
-  const {
-    nodeMap,
-    doToggleDirectoryExpansion,
-    doCopy,
-    doCut,
-    doPaste,
-    doDelete: doDeleteRaw,
-    doRestore,
-    doMove,
-    category,
-  } = state
-  const { scrollContainerRef, rootDirectoryId, backend } = state
-  const { visibilities } = state
+  const { type, columns, depth, id } = props
 
-  const [item, setItem] = React.useState(rawItem)
+  switch (type) {
+    case backendModule.AssetType.specialLoading:
+    case backendModule.AssetType.specialEmpty:
+    case backendModule.AssetType.specialError: {
+      return <AssetSpecialRow columnsLength={columns.length} depth={depth} type={type} />
+    }
+    default: {
+      // This is safe because we filter out special asset types in the switch statement above.
+      // eslint-disable-next-line no-restricted-syntax
+      return <RealAssetRow {...props} id={id as backendModule.RealAssetId} />
+    }
+  }
+})
+
+/**
+ * Props for a {@link AssetSpecialRow}.
+ */
+export interface AssetSpecialRowProps {
+  readonly type: backendModule.AssetType
+  readonly columnsLength: number
+  readonly depth: number
+}
+
+/**
+ * Renders a special asset row.
+ */
+// eslint-disable-next-line no-restricted-syntax
+const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialRowProps) {
+  const { type, columnsLength, depth } = props
+
+  const { getText } = textProvider.useText()
+
+  switch (type) {
+    case backendModule.AssetType.specialLoading: {
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row w-container items-center justify-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <IndefiniteSpinner size={24} />
+            </div>
+          </td>
+        </tr>
+      )
+    }
+    case backendModule.AssetType.specialEmpty: {
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row items-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <img src={BlankIcon} />
+              <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
+                {getText('thisFolderIsEmpty')}
+              </Text>
+            </div>
+          </td>
+        </tr>
+      )
+    }
+    case backendModule.AssetType.specialError: {
+      return (
+        <tr>
+          <td colSpan={columnsLength} className="border-r p-0 rounded-rows-skip-level">
+            <div
+              className={tailwindMerge.twJoin(
+                'flex h-table-row items-center rounded-full rounded-rows-child',
+                indent.indentClass(depth),
+              )}
+            >
+              <img src={BlankIcon} />
+              <Text
+                className="px-name-column-x text-danger placeholder"
+                disableLineHeightCompensation
+              >
+                {getText('thisFolderFailedToFetch')}
+              </Text>
+            </div>
+          </td>
+        </tr>
+      )
+    }
+    default: {
+      invariant(false, 'Unsupported special asset type: ' + type)
+    }
+  }
+})
+
+/**
+ * Props for a {@link RealAssetRow}.
+ */
+type RealAssetRowProps = AssetRowProps & { readonly id: backendModule.RealAssetId }
+
+/**
+ * Renders a real asset row.
+ */
+// eslint-disable-next-line no-restricted-syntax
+const RealAssetRow = React.memo(function RealAssetRow(props: RealAssetRowProps) {
+  const { id } = props
+
+  const asset = useAsset(id)
+
+  // should never happen since we only render real assets and they are always defined
+  if (asset == null) {
+    return null
+  }
+
+  return <RealAssetInternalRow {...props} asset={asset} />
+})
+
+/**
+ * Internal props for a {@link RealAssetRow}.
+ */
+export interface RealAssetRowInternalProps extends AssetRowProps {
+  readonly asset: backendModule.AnyAsset
+}
+
+/**
+ * Internal implementation of a {@link RealAssetRow}.
+ */
+export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
+  const {
+    id,
+    parentId,
+    isKeyboardSelected,
+    isOpened,
+    select,
+    state,
+    columns,
+    onClick,
+    isPlaceholder,
+    isExpanded,
+    type,
+    asset,
+  } = props
+  const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
+  const { initialAssetEvents } = props
+  const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
+  const { doRestore, doMove, category, rootDirectoryId, backend } = state
+
   const driveStore = useDriveStore()
   const queryClient = useQueryClient()
   const { user } = useFullUserSession()
   const setSelectedKeys = useSetSelectedKeys()
   const selected = useStore(driveStore, ({ visuallySelectedKeys, selectedKeys }) =>
-    (visuallySelectedKeys ?? selectedKeys).has(item.key),
+    (visuallySelectedKeys ?? selectedKeys).has(id),
   )
   const isSoleSelected = useStore(
     driveStore,
@@ -147,20 +297,19 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const wasSoleSelectedRef = React.useRef(isSoleSelected)
   const draggableProps = dragAndDropHooks.useDraggable()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
-  const cutAndPaste = useCutAndPaste(category)
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const rootRef = React.useRef<HTMLElement | null>(null)
   const dragOverTimeoutHandle = React.useRef<number | null>(null)
   const grabKeyboardFocusRef = useSyncRef(grabKeyboardFocus)
-  const asset = item.item
   const [innerRowState, setRowState] = React.useState<assetsTable.AssetRowState>(
     assetRowUtils.INITIAL_ROW_STATE,
   )
+  const cutAndPaste = useCutAndPaste(category)
+  const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const isNewlyCreated = useStore(driveStore, ({ newestFolderId }) => newestFolderId === asset.id)
   const isEditingName = innerRowState.isEditingName || isNewlyCreated
@@ -182,24 +331,30 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     useBackendMutationState(backend, 'undoDeleteAsset', {
       predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
     }).length !== 0
+
   const isCloud = isCloudCategory(category)
 
   const { data: projectState } = useQuery({
-    // This is SAFE, as `isOpened` is only true for projects.
-    // eslint-disable-next-line no-restricted-syntax
-    ...createGetProjectDetailsQuery.createPassiveListener(item.item.id as backendModule.ProjectId),
-    select: (data) => data?.state.type,
-    enabled: item.type === backendModule.AssetType.project,
+    ...createGetProjectDetailsQuery({
+      // This is safe because we disable the query when the asset is not a project.
+      // see `enabled` property below.
+      // eslint-disable-next-line no-restricted-syntax
+      assetId: asset.id as backendModule.ProjectId,
+      parentId: asset.parentId,
+      backend,
+    }),
+    select: (data) => data.state.type,
+    enabled: asset.type === backendModule.AssetType.project && !isPlaceholder && isOpened,
   })
 
   const toastAndLog = useToastAndLog()
 
+  const uploadFiles = useUploadFiles(backend, category)
   const createPermissionMutation = useMutation(backendMutationOptions(backend, 'createPermission'))
   const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
-  const outerVisibility = visibilities.get(item.key)
   const insertionVisibility = useStore(driveStore, (driveState) =>
-    driveState.pasteData?.type === 'move' && driveState.pasteData.data.ids.has(item.key) ?
+    driveState.pasteData?.type === 'move' && driveState.pasteData.data.ids.has(id) ?
       Visibility.faded
     : Visibility.visible,
   )
@@ -210,26 +365,14 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     createPermissionVariables.actorsIds[0] === user.userId
   const visibility =
     isRemovingSelf ? Visibility.hidden
-    : outerVisibility === Visibility.visible ? insertionVisibility
-    : outerVisibility ?? insertionVisibility
+    : visibilityRaw === Visibility.visible ? insertionVisibility
+    : visibilityRaw ?? insertionVisibility
   const hidden = isDeleting || isRestoring || hiddenRaw || visibility === Visibility.hidden
 
   const setSelected = useEventCallback((newSelected: boolean) => {
     const { selectedKeys } = driveStore.getState()
-    setSelectedKeys(set.withPresence(selectedKeys, item.key, newSelected))
+    setSelectedKeys(set.withPresence(selectedKeys, id, newSelected))
   })
-
-  React.useEffect(() => {
-    setItem(rawItem)
-  }, [rawItem])
-
-  const rawItemRef = useSyncRef(rawItem)
-  React.useEffect(() => {
-    // Mutation is HIGHLY INADVISABLE in React, however it is useful here as we want to update the
-    // parent's state while avoiding re-rendering the parent.
-    rawItemRef.current.item = asset
-  }, [asset, rawItemRef])
-  const setAsset = setAssetHooks.useSetAsset(asset, setItem)
 
   React.useEffect(() => {
     if (selected && insertionVisibility !== Visibility.visible) {
@@ -240,30 +383,15 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   React.useEffect(() => {
     if (isKeyboardSelected) {
       rootRef.current?.focus()
-      grabKeyboardFocusRef.current(item)
+      grabKeyboardFocusRef.current(asset)
     }
-  }, [grabKeyboardFocusRef, isKeyboardSelected, item])
-
-  React.useImperativeHandle(updateAssetRef, () => ({ setAsset, item }))
-
-  if (updateAssetRef.current) {
-    updateAssetRef.current[item.item.id] = setAsset
-  }
-
-  React.useEffect(() => {
-    return () => {
-      if (updateAssetRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-dynamic-delete
-        delete updateAssetRef.current[item.item.id]
-      }
-    }
-  }, [item.item.id, updateAssetRef])
+  }, [grabKeyboardFocusRef, isKeyboardSelected, asset])
 
   const doDelete = React.useCallback(
     (forever = false) => {
-      void doDeleteRaw(item.item, forever)
+      void doDeleteRaw(asset, forever)
     },
-    [doDeleteRaw, item.item],
+    [doDeleteRaw, asset],
   )
 
   const clearDragState = React.useCallback(() => {
@@ -276,8 +404,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   }, [])
 
   const onDragOver = (event: React.DragEvent<Element>) => {
-    const directoryKey =
-      item.item.type === backendModule.AssetType.directory ? item.key : item.directoryKey
+    const directoryKey = asset.type === backendModule.AssetType.directory ? id : parentId
     const payload = drag.ASSET_ROWS.lookup(event)
     const isPayloadMatch =
       payload != null && payload.every((innerItem) => innerItem.key !== directoryKey)
@@ -287,13 +414,18 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
       } else {
         if (nodeMap.current !== nodeParentKeysRef.current?.nodeMap.deref()) {
           const parentKeys = new Map(
-            Array.from(nodeMap.current.entries()).map(([id, otherAsset]) => [
-              id,
+            Array.from(nodeMap.current.entries()).map(([otherId, otherAsset]) => [
+              otherId,
               otherAsset.directoryKey,
             ]),
           )
           nodeParentKeysRef.current = { nodeMap: new WeakRef(nodeMap.current), parentKeys }
         }
+
+        if (isLocalCategory(category)) {
+          return true
+        }
+
         return payload.every((payloadItem) => {
           const parentKey = nodeParentKeysRef.current?.parentKeys.get(payloadItem.key)
           const parent = parentKey == null ? null : nodeMap.current.get(parentKey)
@@ -303,7 +435,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
             return true
           } else {
             // Assume user path; check permissions
-            const permission = permissions.tryFindSelfPermission(user, item.item.permissions)
+            const permission = permissions.tryFindSelfPermission(user, asset.permissions)
             return (
               permission != null &&
               permissions.canPermissionModifyDirectoryContents(permission.permission)
@@ -312,9 +444,10 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         })
       }
     })()
+
     if ((isPayloadMatch && canPaste) || event.dataTransfer.types.includes('Files')) {
       event.preventDefault()
-      if (item.item.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
+      if (asset.type === backendModule.AssetType.directory && state.category.type !== 'trash') {
         setIsDraggedOver(true)
       }
     }
@@ -323,26 +456,26 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   eventListProvider.useAssetEventListener(async (event) => {
     switch (event.type) {
       case AssetEventType.move: {
-        if (event.ids.has(item.key)) {
-          await doMove(event.newParentKey, item.item)
+        if (event.ids.has(id)) {
+          await doMove(event.newParentKey, asset)
         }
         break
       }
       case AssetEventType.delete: {
-        if (event.ids.has(item.key)) {
+        if (event.ids.has(id)) {
           doDelete(false)
         }
         break
       }
       case AssetEventType.deleteForever: {
-        if (event.ids.has(item.key)) {
+        if (event.ids.has(id)) {
           doDelete(true)
         }
         break
       }
       case AssetEventType.restore: {
-        if (event.ids.has(item.key)) {
-          await doRestore(item.item)
+        if (event.ids.has(id)) {
+          await doRestore(asset)
         }
         break
       }
@@ -354,11 +487,12 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [
-                      asset.id,
-                      asset.parentId,
-                      asset.title,
-                    ]),
+                    backendQueryOptions(
+                      backend,
+                      'getProjectDetails',
+                      [asset.id, asset.parentId, true],
+                      { staleTime: 0 },
+                    ),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -374,7 +508,9 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
               case backendModule.AssetType.file: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title]),
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
+                      staleTime: 0,
+                    }),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, asset.title)
@@ -436,7 +572,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                 actorsIds: [user.userId],
               },
             ])
-            dispatchAssetListEvent({ type: AssetListEventType.delete, key: item.key })
+            dispatchAssetListEvent({ type: AssetListEventType.delete, key: id })
           } catch (error) {
             toastAndLog(null, error)
           }
@@ -444,7 +580,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         break
       }
       case AssetEventType.temporarilyAddLabels: {
-        const labels = event.ids.has(item.key) ? event.labelNames : set.EMPTY_SET
+        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
         setRowState((oldRowState) =>
           (
             oldRowState.temporarilyAddedLabels === labels &&
@@ -459,7 +595,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         break
       }
       case AssetEventType.temporarilyRemoveLabels: {
-        const labels = event.ids.has(item.key) ? event.labelNames : set.EMPTY_SET
+        const labels = event.ids.has(id) ? event.labelNames : set.EMPTY_SET
         setRowState((oldRowState) =>
           (
             oldRowState.temporarilyAddedLabels === set.EMPTY_SET &&
@@ -481,18 +617,16 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         )
         const labels = asset.labels
         if (
-          event.ids.has(item.key) &&
+          event.ids.has(id) &&
           (labels == null || [...event.labelNames].some((label) => !labels.includes(label)))
         ) {
           const newLabels = [
             ...(labels ?? []),
             ...[...event.labelNames].filter((label) => labels?.includes(label) !== true),
           ]
-          setAsset(object.merger({ labels: newLabels }))
           try {
             await associateTagMutation.mutateAsync([asset.id, newLabels, asset.title])
           } catch (error) {
-            setAsset(object.merger({ labels }))
             toastAndLog(null, error)
           }
         }
@@ -506,39 +640,16 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         )
         const labels = asset.labels
         if (
-          event.ids.has(item.key) &&
+          event.ids.has(id) &&
           labels != null &&
           [...event.labelNames].some((label) => labels.includes(label))
         ) {
           const newLabels = labels.filter((label) => !event.labelNames.has(label))
-          setAsset(object.merger({ labels: newLabels }))
           try {
             await associateTagMutation.mutateAsync([asset.id, newLabels, asset.title])
           } catch (error) {
-            setAsset(object.merger({ labels }))
             toastAndLog(null, error)
           }
-        }
-        break
-      }
-      case AssetEventType.deleteLabel: {
-        setAsset((oldAsset) => {
-          const oldLabels = oldAsset.labels ?? []
-          const labels: backendModule.LabelName[] = []
-
-          for (const label of oldLabels) {
-            if (label !== event.labelName) {
-              labels.push(label)
-            }
-          }
-
-          return oldLabels.length !== labels.length ? object.merge(oldAsset, { labels }) : oldAsset
-        })
-        break
-      }
-      case AssetEventType.setItem: {
-        if (asset.id === event.id) {
-          setAsset(event.valueOrUpdater)
         }
         break
       }
@@ -546,234 +657,202 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         return
       }
     }
-  }, item.initialAssetEvents)
+  }, initialAssetEvents)
 
-  switch (asset.type) {
+  switch (type) {
     case backendModule.AssetType.directory:
     case backendModule.AssetType.project:
     case backendModule.AssetType.file:
     case backendModule.AssetType.datalink:
     case backendModule.AssetType.secret: {
       const innerProps: AssetRowInnerProps = {
-        key: item.key,
-        item,
-        setItem,
+        asset,
+        path,
         state,
         rowState,
         setRowState,
       }
+
+      if (hidden) {
+        return null
+      }
+
       return (
         <>
-          {!hidden && (
-            <FocusRing>
-              <tr
-                data-testid="asset-row"
-                tabIndex={0}
-                ref={(element) => {
-                  rootRef.current = element
+          <tr
+            data-testid="asset-row"
+            tabIndex={0}
+            ref={(element) => {
+              rootRef.current = element
 
-                  requestAnimationFrame(() => {
-                    if (
-                      isSoleSelected &&
-                      !wasSoleSelectedRef.current &&
-                      element != null &&
-                      scrollContainerRef.current != null
-                    ) {
-                      const rect = element.getBoundingClientRect()
-                      const scrollRect = scrollContainerRef.current.getBoundingClientRect()
-                      const scrollUp = rect.top - (scrollRect.top + HEADER_HEIGHT_PX)
-                      const scrollDown = rect.bottom - scrollRect.bottom
-
-                      if (scrollUp < 0 || scrollDown > 0) {
-                        scrollContainerRef.current.scrollBy({
-                          top: scrollUp < 0 ? scrollUp : scrollDown,
-                          behavior: 'smooth',
-                        })
-                      }
+              if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
+                element.scrollIntoView({ block: 'nearest' })
+                element.focus()
+              }
+            }}
+            className={tailwindMerge.twMerge(
+              'h-table-row rounded-full transition-all ease-in-out rounded-rows-child',
+              visibility,
+              (isDraggedOver || selected) && 'selected',
+            )}
+            {...draggableProps}
+            onClick={(event) => {
+              unsetModal()
+              onClick(innerProps, event)
+              if (
+                asset.type === backendModule.AssetType.directory &&
+                eventModule.isDoubleClick(event) &&
+                !rowState.isEditingName
+              ) {
+                // This must be processed on the next tick, otherwise it will be overridden
+                // by the default click handler.
+                window.setTimeout(() => {
+                  setSelected(false)
+                })
+                toggleDirectoryExpansion(asset.id)
+              }
+            }}
+            onContextMenu={(event) => {
+              if (allowContextMenu) {
+                event.preventDefault()
+                event.stopPropagation()
+                if (!selected) {
+                  select(asset)
+                }
+                setModal(
+                  <AssetContextMenu
+                    innerProps={innerProps}
+                    rootDirectoryId={rootDirectoryId}
+                    triggerRef={rootRef}
+                    event={event}
+                    eventTarget={
+                      event.target instanceof HTMLElement ? event.target : event.currentTarget
                     }
-                    wasSoleSelectedRef.current = isSoleSelected
-                  })
-
-                  if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
-                    element.focus()
-                  }
-                }}
-                className={tailwindMerge.twMerge(
-                  'h-table-row rounded-full transition-all ease-in-out rounded-rows-child',
-                  visibility,
-                  (isDraggedOver || selected) && 'selected',
-                )}
-                {...draggableProps}
-                onClick={(event) => {
+                    doCopy={doCopy}
+                    doCut={doCut}
+                    doPaste={doPaste}
+                    doDelete={doDelete}
+                  />,
+                )
+              }
+            }}
+            onDragStart={(event) => {
+              if (
+                rowState.isEditingName ||
+                (projectState !== backendModule.ProjectState.closed &&
+                  projectState !== backendModule.ProjectState.created &&
+                  projectState != null)
+              ) {
+                event.preventDefault()
+              } else {
+                props.onDragStart?.(event, asset)
+              }
+            }}
+            onDragEnter={(event) => {
+              if (dragOverTimeoutHandle.current != null) {
+                window.clearTimeout(dragOverTimeoutHandle.current)
+              }
+              if (asset.type === backendModule.AssetType.directory) {
+                dragOverTimeoutHandle.current = window.setTimeout(() => {
+                  toggleDirectoryExpansion(asset.id, true)
+                }, DRAG_EXPAND_DELAY_MS)
+              }
+              // Required because `dragover` does not fire on `mouseenter`.
+              props.onDragOver?.(event, asset)
+              onDragOver(event)
+            }}
+            onDragOver={(event) => {
+              if (state.category.type === 'trash') {
+                event.dataTransfer.dropEffect = 'none'
+              }
+              props.onDragOver?.(event, asset)
+              onDragOver(event)
+            }}
+            onDragEnd={(event) => {
+              clearDragState()
+              props.onDragEnd?.(event, asset)
+            }}
+            onDragLeave={(event) => {
+              if (
+                dragOverTimeoutHandle.current != null &&
+                (!(event.relatedTarget instanceof Node) ||
+                  !event.currentTarget.contains(event.relatedTarget))
+              ) {
+                window.clearTimeout(dragOverTimeoutHandle.current)
+              }
+              if (
+                event.relatedTarget instanceof Node &&
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                clearDragState()
+              }
+              props.onDragLeave?.(event, asset)
+            }}
+            onDrop={(event) => {
+              if (state.category.type !== 'trash') {
+                props.onDrop?.(event, asset)
+                clearDragState()
+                const directoryId =
+                  asset.type === backendModule.AssetType.directory ? asset.id : parentId
+                const payload = drag.ASSET_ROWS.lookup(event)
+                if (
+                  payload != null &&
+                  payload.every((innerItem) => innerItem.key !== directoryId)
+                ) {
+                  event.preventDefault()
+                  event.stopPropagation()
                   unsetModal()
-                  onClick(innerProps, event)
-                  if (
-                    item.type === backendModule.AssetType.directory &&
-                    eventModule.isDoubleClick(event) &&
-                    !rowState.isEditingName
-                  ) {
-                    // This must be processed on the next tick, otherwise it will be overridden
-                    // by the default click handler.
-                    window.setTimeout(() => {
-                      setSelected(false)
-                    })
-                    doToggleDirectoryExpansion(item.item.id, item.key)
-                  }
-                }}
-                onContextMenu={(event) => {
-                  if (allowContextMenu) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    if (!selected) {
-                      select(item)
-                    }
-                    setModal(
-                      <AssetContextMenu
-                        innerProps={innerProps}
-                        rootDirectoryId={rootDirectoryId}
-                        triggerRef={rootRef}
-                        event={event}
-                        eventTarget={
-                          event.target instanceof HTMLElement ? event.target : event.currentTarget
-                        }
-                        doCopy={doCopy}
-                        doCut={doCut}
-                        doPaste={doPaste}
-                        doDelete={doDelete}
-                      />,
-                    )
-                  }
-                }}
-                onDragStart={(event) => {
-                  if (
-                    rowState.isEditingName ||
-                    (projectState !== backendModule.ProjectState.closed &&
-                      projectState !== backendModule.ProjectState.created &&
-                      projectState != null)
-                  ) {
-                    event.preventDefault()
-                  } else {
-                    props.onDragStart?.(event, item)
-                  }
-                }}
-                onDragEnter={(event) => {
-                  if (dragOverTimeoutHandle.current != null) {
-                    window.clearTimeout(dragOverTimeoutHandle.current)
-                  }
-                  if (item.type === backendModule.AssetType.directory) {
-                    dragOverTimeoutHandle.current = window.setTimeout(() => {
-                      doToggleDirectoryExpansion(item.item.id, item.key, true)
-                    }, DRAG_EXPAND_DELAY_MS)
-                  }
-                  // Required because `dragover` does not fire on `mouseenter`.
-                  props.onDragOver?.(event, item)
-                  onDragOver(event)
-                }}
-                onDragOver={(event) => {
-                  if (state.category.type === 'trash') {
-                    event.dataTransfer.dropEffect = 'none'
-                  }
-                  props.onDragOver?.(event, item)
-                  onDragOver(event)
-                }}
-                onDragEnd={(event) => {
-                  clearDragState()
-                  props.onDragEnd?.(event, item)
-                }}
-                onDragLeave={(event) => {
-                  if (
-                    dragOverTimeoutHandle.current != null &&
-                    (!(event.relatedTarget instanceof Node) ||
-                      !event.currentTarget.contains(event.relatedTarget))
-                  ) {
-                    window.clearTimeout(dragOverTimeoutHandle.current)
-                  }
-                  if (
-                    event.relatedTarget instanceof Node &&
-                    !event.currentTarget.contains(event.relatedTarget)
-                  ) {
-                    clearDragState()
-                  }
-                  props.onDragLeave?.(event, item)
-                }}
-                onDrop={(event) => {
-                  if (state.category.type !== 'trash') {
-                    props.onDrop?.(event, item)
-                    clearDragState()
-                    const [directoryKey, directoryId] =
-                      item.type === backendModule.AssetType.directory ?
-                        [item.key, item.item.id]
-                      : [item.directoryKey, item.directoryId]
-                    const payload = drag.ASSET_ROWS.lookup(event)
-                    if (
-                      payload != null &&
-                      payload.every((innerItem) => innerItem.key !== directoryKey)
-                    ) {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      unsetModal()
-                      doToggleDirectoryExpansion(directoryId, directoryKey, true)
-                      const ids = payload
-                        .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
-                        .map((dragItem) => dragItem.key)
-                      cutAndPaste(
-                        directoryKey,
-                        directoryId,
-                        { backendType: backend.type, ids: new Set(ids), category },
-                        nodeMap.current,
-                      )
-                    } else if (event.dataTransfer.types.includes('Files')) {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      doToggleDirectoryExpansion(directoryId, directoryKey, true)
-                      dispatchAssetListEvent({
-                        type: AssetListEventType.uploadFiles,
-                        parentKey: directoryKey,
-                        parentId: directoryId,
-                        files: Array.from(event.dataTransfer.files),
-                      })
-                    }
-                  }
-                }}
-              >
-                {columns.map((column) => {
-                  const Render = columnModule.COLUMN_RENDERER[column]
-                  return (
-                    <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
-                      <Render
-                        keyProp={item.key}
-                        isOpened={isOpened}
-                        backendType={backend.type}
-                        item={item}
-                        setItem={setItem}
-                        selected={selected}
-                        setSelected={setSelected}
-                        isSoleSelected={isSoleSelected}
-                        state={state}
-                        rowState={rowState}
-                        setRowState={setRowState}
-                        isEditable={state.category.type !== 'trash'}
-                      />
-                    </td>
+                  toggleDirectoryExpansion(directoryId, true)
+                  const ids = payload
+                    .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
+                    .map((dragItem) => dragItem.key)
+                  cutAndPaste(
+                    directoryId,
+                    directoryId,
+                    { backendType: backend.type, ids: new Set(ids), category },
+                    nodeMap.current,
                   )
-                })}
-              </tr>
-            </FocusRing>
-          )}
-          {selected && allowContextMenu && !hidden && (
+                } else if (event.dataTransfer.types.includes('Files')) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  toggleDirectoryExpansion(directoryId, true)
+                  void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
+                }
+              }
+            }}
+          >
+            {columns.map((column) => {
+              const Render = columnModule.COLUMN_RENDERER[column]
+              return (
+                <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
+                  <Render
+                    isPlaceholder={isPlaceholder}
+                    isExpanded={isExpanded}
+                    keyProp={id}
+                    isOpened={isOpened}
+                    backendType={backend.type}
+                    item={asset}
+                    depth={depth}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isSoleSelected={isSoleSelected}
+                    state={state}
+                    rowState={rowState}
+                    setRowState={setRowState}
+                    isEditable={state.category.type !== 'trash'}
+                  />
+                </td>
+              )
+            })}
+          </tr>
+
+          {selected && allowContextMenu && (
             // This is a copy of the context menu, since the context menu registers keyboard
             // shortcut handlers. This is a bit of a hack, however it is preferable to duplicating
             // the entire context menu (once for the keyboard actions, once for the JSX).
             <AssetContextMenu
               hidden
-              innerProps={{
-                key: item.key,
-                item,
-                setItem,
-                state,
-                rowState,
-                setRowState,
-              }}
+              innerProps={innerProps}
               rootDirectoryId={rootDirectoryId}
               triggerRef={rootRef}
               event={{ pageX: 0, pageY: 0 }}
@@ -787,62 +866,12 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         </>
       )
     }
-    case backendModule.AssetType.specialLoading: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row w-container items-center justify-center rounded-full rounded-rows-child',
-                  indent.indentClass(item.depth),
-                )}
-              >
-                <StatelessSpinner size={24} state={statelessSpinner.SpinnerState.loadingMedium} />
-              </div>
-            </td>
-          </tr>
-        )
-    }
-    case backendModule.AssetType.specialEmpty: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
-                  indent.indentClass(item.depth),
-                )}
-              >
-                <img src={BlankIcon} />
-                <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
-                  {getText('thisFolderIsEmpty')}
-                </Text>
-              </div>
-            </td>
-          </tr>
-        )
-    }
-    case backendModule.AssetType.specialError: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
-                  indent.indentClass(item.depth),
-                )}
-              >
-                <img src={BlankIcon} />
-                <Text
-                  className="px-name-column-x text-danger placeholder"
-                  disableLineHeightCompensation
-                >
-                  {getText('thisFolderFailedToFetch')}
-                </Text>
-              </div>
-            </td>
-          </tr>
-        )
+    default: {
+      invariant(
+        false,
+        'Unsupported asset type, expected one of: directory, project, file, datalink, secret, but got: ' +
+          type,
+      )
     }
   }
-})
+}

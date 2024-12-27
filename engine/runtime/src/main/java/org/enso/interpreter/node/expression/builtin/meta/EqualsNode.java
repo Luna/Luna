@@ -18,6 +18,7 @@ import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedConversion;
 import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.callable.function.Function;
+import org.enso.interpreter.runtime.data.EnsoMultiValue;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.atom.Atom;
 import org.enso.interpreter.runtime.data.atom.StructsLibrary;
@@ -69,8 +70,8 @@ public final class EqualsNode extends Node {
   public EqualsAndInfo execute(VirtualFrame frame, Object self, Object other) {
     var areEqual = node.execute(frame, self, other);
     if (!areEqual.isTrue()) {
-      var selfType = types.execute(self);
-      var otherType = types.execute(other);
+      var selfType = types.findTypeOrNull(self);
+      var otherType = types.findTypeOrNull(other);
       if (selfType != otherType) {
         if (convert == null) {
           CompilerDirectives.transferToInterpreter();
@@ -101,8 +102,7 @@ public final class EqualsNode extends Node {
     abstract EqualsAndInfo executeWithConversion(VirtualFrame frame, Object self, Object that);
 
     static Type findType(TypeOfNode typeOfNode, Object obj) {
-      var rawType = typeOfNode.execute(obj);
-      return rawType instanceof Type type ? type : null;
+      return typeOfNode.findTypeOrNull(obj);
     }
 
     static Type findTypeUncached(Object obj) {
@@ -110,7 +110,7 @@ public final class EqualsNode extends Node {
     }
 
     private static boolean isDefinedIn(ModuleScope scope, Function fn) {
-      if (fn.getCallTarget().getRootNode() instanceof EnsoRootNode ensoRoot) {
+      if (fn != null && fn.getCallTarget().getRootNode() instanceof EnsoRootNode ensoRoot) {
         return ensoRoot.getModuleScope().getModule() == scope.getModule();
       } else {
         return false;
@@ -241,6 +241,13 @@ public final class EqualsNode extends Node {
       var state = State.create(ctx);
       try {
         var thatAsSelf = convertNode.execute(convert, state, new Object[] {selfType, that});
+        if (thatAsSelf instanceof EnsoMultiValue emv) {
+          thatAsSelf =
+              EnsoMultiValue.CastToNode.getUncached().findTypeOrNull(selfType, emv, false, false);
+        }
+        if (thatAsSelf == null) {
+          return EqualsAndInfo.FALSE;
+        }
         var withInfo = equalityNode.execute(frame, self, thatAsSelf);
         var result = withInfo.isTrue();
         assert !result || assertHashCodeIsTheSame(that, thatAsSelf);

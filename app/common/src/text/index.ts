@@ -1,6 +1,7 @@
 /** @file Functions related to displaying text. */
 
-import ENGLISH from './english.json' assert { type: 'json' }
+import { unsafeKeys } from '../utilities/data/object'
+import ENGLISH from './english.json' with { type: 'json' }
 
 // =============
 // === Types ===
@@ -60,6 +61,7 @@ interface PlaceholderOverrides {
   readonly chromeVersionX: [chromeVersion: string]
   readonly userAgentX: [userAgent: string]
   readonly compareVersionXWithLatest: [versionNumber: number]
+  readonly projectSessionX: [count: number]
   readonly onDateX: [dateString: string]
   readonly xUsersAndGroupsSelected: [usersAndGroupsCount: number]
   readonly removeTheLocalDirectoryXFromFavorites: [directoryName: string]
@@ -77,8 +79,6 @@ interface PlaceholderOverrides {
   readonly listFolderBackendError: [string]
   readonly createFolderBackendError: [string]
   readonly updateFolderBackendError: [string]
-  readonly listAssetVersionsBackendError: [string]
-  readonly getFileContentsBackendError: [string]
   readonly updateAssetBackendError: [string]
   readonly deleteAssetBackendError: [string]
   readonly undoDeleteAssetBackendError: [string]
@@ -88,7 +88,6 @@ interface PlaceholderOverrides {
   readonly duplicateProjectBackendError: [string]
   readonly closeProjectBackendError: [string]
   readonly listProjectSessionsBackendError: [string]
-  readonly getProjectDetailsBackendError: [string]
   readonly getProjectLogsBackendError: [string]
   readonly openProjectBackendError: [string]
   readonly openProjectMissingCredentialsBackendError: [string]
@@ -145,6 +144,8 @@ interface PlaceholderOverrides {
   readonly arbitraryFieldTooLarge: [maxSize: string]
   readonly arbitraryFieldTooSmall: [minSize: string]
   readonly uploadLargeFileStatus: [uploadedParts: number, totalParts: number]
+
+  readonly latestVersion: [version: string, date: string]
 }
 
 /** An tuple of `string` for placeholders for each {@link TextId}. */
@@ -158,4 +159,55 @@ export interface Replacements
 
 export const TEXTS: Readonly<Record<Language, Texts>> = {
   [Language.english]: ENGLISH,
+}
+/**
+ * A function that gets localized text for a given key, with optional replacements.
+ * @param key - The key of the text to get.
+ * @param replacements - The replacements to insert into the text.
+ * If the text contains placeholders like `$0`, `$1`, etc.,
+ * they will be replaced with the corresponding replacement.
+ */
+export type GetText = <K extends TextId>(
+  dictionary: Texts,
+  key: K,
+  ...replacements: Replacements[K]
+) => string
+
+/**
+ * Resolves the language texts based on the user's preferred language.
+ */
+export function resolveUserLanguage() {
+  const locale = navigator.language
+  const language =
+    unsafeKeys(LANGUAGE_TO_LOCALE).find(language => locale === LANGUAGE_TO_LOCALE[language]) ??
+    Language.english
+
+  return language
+}
+
+/**
+ * Gets the dictionary for a given language.
+ * @param language - The language to get the dictionary for.
+ * @returns The dictionary for the given language.
+ */
+export function getDictionary(language: Language) {
+  return TEXTS[language]
+}
+
+/**
+ * Gets the text for a given key, with optional replacements.
+ * @param dictionary - The dictionary to get the text from.
+ * @param key - The key of the text to get.
+ * @param replacements - The replacements to insert into the text.
+ * If the text contains placeholders like `$0`, `$1`, etc.,
+ * they will be replaced with the corresponding replacement.
+ */
+export const getText: GetText = (dictionary, key, ...replacements) => {
+  const template = dictionary[key]
+
+  return replacements.length === 0 ?
+      template
+    : template.replace(/[$]([$]|\d+)/g, (_match, placeholder: string) =>
+        placeholder === '$' ? '$' : String(replacements[Number(placeholder)] ?? `$${placeholder}`),
+      )
 }

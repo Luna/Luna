@@ -18,7 +18,7 @@ import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.IgnoredBindings;
 import org.enso.compiler.pass.resolve.IgnoredBindings$;
 import org.enso.compiler.pass.resolve.MethodCalls$;
-import org.enso.compiler.pass.resolve.MethodDefinitions$;
+import org.enso.compiler.pass.resolve.MethodDefinitions;
 import org.enso.compiler.pass.resolve.ModuleAnnotations;
 import org.enso.compiler.pass.resolve.ModuleAnnotations$;
 import org.enso.compiler.pass.resolve.Patterns$;
@@ -28,7 +28,6 @@ import org.enso.compiler.pass.resolve.TypeSignatures$;
 import org.enso.persist.Persistable;
 import org.enso.persist.Persistance;
 import org.openide.util.lookup.ServiceProvider;
-import scala.Option;
 import scala.Tuple2$;
 
 @Persistable(clazz = CachePreferenceAnalysis.WeightInfo.class, id = 1111)
@@ -57,15 +56,13 @@ import scala.Tuple2$;
 @Persistable(clazz = ModuleAnnotations$.class, id = 1212)
 @Persistable(clazz = GatherDiagnostics$.class, id = 1213)
 @Persistable(clazz = MethodCalls$.class, id = 1214)
-@Persistable(clazz = MethodDefinitions$.class, id = 1215)
+@Persistable(clazz = MethodDefinitions.class, id = 1215)
 @Persistable(clazz = GenericAnnotations$.class, id = 1216)
 @Persistable(clazz = ExpressionAnnotations$.class, id = 1217)
 @Persistable(clazz = FullyQualifiedNames$.class, id = 1218)
 @Persistable(clazz = AliasMetadata.Occurrence.class, id = 1261, allowInlining = false)
 @Persistable(clazz = AliasMetadata.RootScope.class, id = 1262, allowInlining = false)
 @Persistable(clazz = AliasMetadata.ChildScope.class, id = 1263, allowInlining = false)
-@Persistable(clazz = GraphOccurrence.Use.class, id = 1264, allowInlining = false)
-@Persistable(clazz = GraphOccurrence.Def.class, id = 1265, allowInlining = false)
 @Persistable(clazz = Graph.Link.class, id = 1266, allowInlining = false)
 @Persistable(clazz = TypeInferencePropagation.class, id = 1280)
 @Persistable(clazz = TypeInferenceSignatures.class, id = 1281)
@@ -111,11 +108,10 @@ public final class PassPersistance {
       var occurrences = occurrencesValues.map(v -> Tuple2$.MODULE$.apply(v.id(), v)).toMap(null);
       var allDefinitions = in.readInline(scala.collection.immutable.List.class);
       var parent = new Graph.Scope(childScopes, occurrences, allDefinitions);
-      var optionParent = Option.apply(parent);
       childScopes.forall(
           (object) -> {
             var ch = (Graph.Scope) object;
-            ch.parent_$eq(optionParent);
+            ch.withParent(parent);
             return null;
           });
       return parent;
@@ -159,13 +155,12 @@ public final class PassPersistance {
     }
 
     private static void assignParents(Graph.Scope scope) {
-      var option = Option.apply(scope);
       scope
           .childScopes()
           .foreach(
               (ch) -> {
                 assignParents(ch);
-                ch.parent_$eq(option);
+                ch.withParent(scope);
                 return null;
               });
     }

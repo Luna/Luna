@@ -191,7 +191,7 @@ class RuntimeAsyncCommandsTest
         |
         |main =
         |    IO.println "started"
-        |    loop 100
+        |    loop 200
         |""".stripMargin.linesIterator.mkString("\n")
     val contents = metadata.appendToCode(code)
     val mainFile = context.writeMain(contents)
@@ -230,7 +230,7 @@ class RuntimeAsyncCommandsTest
     var iteration        = 0
     while (!isProgramStarted && iteration < 100) {
       val out = context.consumeOut
-      Thread.sleep(200)
+      Thread.sleep(100)
       isProgramStarted = out == List("started")
       iteration += 1
     }
@@ -361,7 +361,7 @@ class RuntimeAsyncCommandsTest
     var iteration        = 0
     while (!isProgramStarted && iteration < 100) {
       val out = context.consumeOut
-      Thread.sleep(200)
+      Thread.sleep(100)
       isProgramStarted = out == List("started")
       iteration += 1
     }
@@ -386,7 +386,7 @@ class RuntimeAsyncCommandsTest
         )
       )
     )
-    val responses1 = context.receiveNIgnorePendingExpressionUpdates(3)
+    val responses1 = context.receiveNIgnorePendingExpressionUpdates(2)
     responses1 should contain allOf (
       TestMessages.update(
         contextId,
@@ -407,7 +407,18 @@ class RuntimeAsyncCommandsTest
       ),
       context.executionComplete(contextId)
     )
-    context.consumeOut should contain("True")
+    // It's possible that ExecutionComplete is from RecomputeContext not from EditFileNotification.
+    // If that's the case, then there might be a race in the output produced by the program.
+    var reallyFinished = false
+    iteration = 0
+    while (!reallyFinished && iteration < 50) {
+      val out = context.consumeOut
+      Thread.sleep(100)
+      reallyFinished = out.contains("True")
+      iteration += 1
+    }
+
+    reallyFinished shouldBe true
   }
 
   it should "interrupt running execution context without sending Panic in expression updates" in {
@@ -489,16 +500,15 @@ class RuntimeAsyncCommandsTest
 
     responses should contain theSameElementsAs Seq(
       Api.Response(requestId, Api.RecomputeContextResponse(contextId)),
-      TestMessages.update(
+      TestMessages.pendingInterrupted(
         contextId,
-        vId,
-        ConstantsGen.INTEGER,
         methodCall = Some(
           MethodCall(
             MethodPointer("Enso_Test.Test.Main", "Enso_Test.Test.Main", "loop"),
             Vector(1)
           )
-        )
+        ),
+        vId
       ),
       context.executionComplete(contextId)
     )

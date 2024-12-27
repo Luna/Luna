@@ -21,8 +21,10 @@ import * as authProvider from '#/providers/AuthProvider'
 import { UserSessionType } from '#/providers/AuthProvider'
 import * as textProvider from '#/providers/TextProvider'
 import {
+  useAnimationsDisabled,
   useEnableVersionChecker,
   usePaywallDevtools,
+  useSetAnimationsDisabled,
   useSetEnableVersionChecker,
   useShowDevtools,
 } from './EnsoDevtoolsProvider'
@@ -47,7 +49,7 @@ import {
 import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import * as backend from '#/services/Backend'
 import LocalStorage, { type LocalStorageData } from '#/utilities/LocalStorage'
-import { unsafeEntries } from 'enso-common/src/utilities/data/object'
+import { unsafeKeys } from '#/utilities/object'
 
 /** A component that provides a UI for toggling paywall features. */
 export function EnsoDevtools() {
@@ -61,6 +63,10 @@ export function EnsoDevtools() {
   const { features, setFeature } = usePaywallDevtools()
   const enableVersionChecker = useEnableVersionChecker()
   const setEnableVersionChecker = useSetEnableVersionChecker()
+
+  const animationsDisabled = useAnimationsDisabled()
+  const setAnimationsDisabled = useSetAnimationsDisabled()
+
   const { localStorage } = useLocalStorage()
   const [localStorageState, setLocalStorageState] = React.useState<Partial<LocalStorageData>>({})
 
@@ -137,7 +143,7 @@ export function EnsoDevtools() {
 
               <Separator orientation="horizontal" className="my-3" />
 
-              {/* eslint-disable-next-line no-restricted-syntax */}
+              {}
               <Button variant="link" href={SETUP_PATH + '?__qd-debg__=true'}>
                 Open setup page
               </Button>
@@ -151,19 +157,36 @@ export function EnsoDevtools() {
           </ariaComponents.Text>
 
           <ariaComponents.Form
-            schema={(z) => z.object({ enableVersionChecker: z.boolean() })}
-            defaultValues={{ enableVersionChecker: enableVersionChecker ?? !IS_DEV_MODE }}
+            schema={(z) =>
+              z.object({ enableVersionChecker: z.boolean(), disableAnimations: z.boolean() })
+            }
+            defaultValues={{
+              enableVersionChecker: enableVersionChecker ?? !IS_DEV_MODE,
+              disableAnimations: animationsDisabled,
+            }}
           >
             {({ form }) => (
-              <ariaComponents.Switch
-                form={form}
-                name="enableVersionChecker"
-                label={getText('enableVersionChecker')}
-                description={getText('enableVersionCheckerDescription')}
-                onChange={(value) => {
-                  setEnableVersionChecker(value)
-                }}
-              />
+              <>
+                <ariaComponents.Switch
+                  form={form}
+                  name="disableAnimations"
+                  label={getText('disableAnimations')}
+                  description={getText('disableAnimationsDescription')}
+                  onChange={(value) => {
+                    setAnimationsDisabled(value)
+                  }}
+                />
+
+                <ariaComponents.Switch
+                  form={form}
+                  name="enableVersionChecker"
+                  label={getText('enableVersionChecker')}
+                  description={getText('enableVersionCheckerDescription')}
+                  onChange={(value) => {
+                    setEnableVersionChecker(value)
+                  }}
+                />
+              </>
             )}
           </ariaComponents.Form>
 
@@ -176,20 +199,18 @@ export function EnsoDevtools() {
               gap="small"
               schema={FEATURE_FLAGS_SCHEMA}
               formOptions={{ mode: 'onChange' }}
-              defaultValues={{
-                enableMultitabs: featureFlags.enableMultitabs,
-                enableAssetsTableBackgroundRefresh: featureFlags.enableAssetsTableBackgroundRefresh,
-                assetsTableBackgroundRefreshInterval:
-                  featureFlags.assetsTableBackgroundRefreshInterval,
-              }}
+              defaultValues={Object.fromEntries(
+                // FEATURE_FLAGS_SCHEMA is statically known, so we can safely cast to keyof FeatureFlags.
+                unsafeKeys(FEATURE_FLAGS_SCHEMA.shape).map((key) => [key, featureFlags[key]]),
+              )}
             >
               {(form) => (
                 <>
                   <ariaComponents.Switch
                     form={form}
                     name="enableMultitabs"
-                    label={getText('enableMultitabs')}
-                    description={getText('enableMultitabsDescription')}
+                    label={getText('ensoDevtoolsFeatureFlags.enableMultitabs')}
+                    description={getText('ensoDevtoolsFeatureFlags.enableMultitabsDescription')}
                     onChange={(value) => {
                       setFeatureFlags('enableMultitabs', value)
                     }}
@@ -199,8 +220,10 @@ export function EnsoDevtools() {
                     <ariaComponents.Switch
                       form={form}
                       name="enableAssetsTableBackgroundRefresh"
-                      label={getText('enableAssetsTableBackgroundRefresh')}
-                      description={getText('enableAssetsTableBackgroundRefreshDescription')}
+                      label={getText('ensoDevtoolsFeatureFlags.enableAssetsTableBackgroundRefresh')}
+                      description={getText(
+                        'ensoDevtoolsFeatureFlags.enableAssetsTableBackgroundRefreshDescription',
+                      )}
                       onChange={(value) => {
                         setFeatureFlags('enableAssetsTableBackgroundRefresh', value)
                       }}
@@ -210,8 +233,12 @@ export function EnsoDevtools() {
                       type="number"
                       inputMode="numeric"
                       name="assetsTableBackgroundRefreshInterval"
-                      label={getText('enableAssetsTableBackgroundRefreshInterval')}
-                      description={getText('enableAssetsTableBackgroundRefreshIntervalDescription')}
+                      label={getText(
+                        'ensoDevtoolsFeatureFlags.assetsTableBackgroundRefreshInterval',
+                      )}
+                      description={getText(
+                        'ensoDevtoolsFeatureFlags.assetsTableBackgroundRefreshIntervalDescription',
+                      )}
                       onChange={(event) => {
                         setFeatureFlags(
                           'assetsTableBackgroundRefreshInterval',
@@ -220,6 +247,16 @@ export function EnsoDevtools() {
                       }}
                     />
                   </div>
+
+                  <ariaComponents.Switch
+                    form={form}
+                    name="enableCloudExecution"
+                    label="Enable Cloud Execution"
+                    description="Enable Cloud Execution"
+                    onChange={(value) => {
+                      setFeatureFlags('enableCloudExecution', value)
+                    }}
+                  />
                 </>
               )}
             </ariaComponents.Form>
@@ -274,7 +311,7 @@ export function EnsoDevtools() {
               variant="icon"
               icon={TrashIcon}
               onPress={() => {
-                for (const [key] of unsafeEntries(LocalStorage.keyMetadata)) {
+                for (const key of LocalStorage.getAllKeys()) {
                   localStorage.delete(key)
                 }
               }}
@@ -282,7 +319,7 @@ export function EnsoDevtools() {
           </div>
 
           <div className="flex flex-col gap-0.5">
-            {unsafeEntries(LocalStorage.keyMetadata).map(([key]) => (
+            {LocalStorage.getAllKeys().map((key) => (
               <div key={key} className="flex w-full items-center justify-between gap-1">
                 <Text variant="body">
                   {key

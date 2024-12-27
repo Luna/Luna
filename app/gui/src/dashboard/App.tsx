@@ -51,7 +51,7 @@ import * as inputBindingsModule from '#/configurations/inputBindings'
 import AuthProvider, * as authProvider from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import DriveProvider from '#/providers/DriveProvider'
-import { useHttpClient } from '#/providers/HttpClientProvider'
+import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
 import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
 import { useLogger } from '#/providers/LoggerProvider'
@@ -88,7 +88,6 @@ import LocalBackend from '#/services/LocalBackend'
 import ProjectManager, * as projectManager from '#/services/ProjectManager'
 import RemoteBackend from '#/services/RemoteBackend'
 
-import { FeatureFlagsProvider } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
@@ -98,6 +97,8 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
+import { useMutation } from '@tanstack/react-query'
+import { useOffline } from './hooks/offlineHooks'
 
 // ============================
 // === Global configuration ===
@@ -215,6 +216,48 @@ export default function App(props: AppProps) {
     },
   })
 
+  const { isOffline } = useOffline()
+  const { getText } = textProvider.useText()
+
+  const queryClient = props.queryClient
+
+  // Force all queries to be stale
+  // We don't use the `staleTime` option because it's not performant
+  // and triggers unnecessary setTimeouts.
+  reactQuery.useQuery({
+    queryKey: ['refresh'],
+    queryFn: () => {
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .forEach((query) => {
+          query.isStale = () => true
+        })
+
+      return null
+    },
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    refetchInterval: 2 * 60 * 1000,
+  })
+
+  const { mutate: executeBackgroundUpdate } = useMutation({
+    mutationKey: ['refetch-queries', { isOffline }],
+    scope: { id: 'refetch-queries' },
+    mutationFn: () => queryClient.refetchQueries({ type: 'all' }),
+    networkMode: 'online',
+    onError: () => {
+      toastify.toast.error(getText('refetchQueriesError'), {
+        position: 'bottom-right',
+      })
+    },
+  })
+
+  React.useEffect(() => {
+    if (!isOffline) {
+      executeBackgroundUpdate()
+    }
+  }, [executeBackgroundUpdate, isOffline])
+
   // Both `BackendProvider` and `InputBindingsProvider` depend on `LocalStorageProvider`.
   // Note that the `Router` must be the parent of the `AuthProvider`, because the `AuthProvider`
   // will redirect the user between the login/register pages and the dashboard.
@@ -226,7 +269,7 @@ export default function App(props: AppProps) {
         closeOnClick={false}
         draggable={false}
         toastClassName="text-sm leading-cozy bg-selected-frame rounded-lg backdrop-blur-default"
-        transition={toastify.Zoom}
+        transition={toastify.Slide}
         limit={3}
       />
       <router.BrowserRouter basename={getMainPageUrl().pathname}>
@@ -264,12 +307,14 @@ export interface AppRouterProps extends AppProps {
 function AppRouter(props: AppRouterProps) {
   const { isAuthenticationDisabled, shouldShowDashboard } = props
   const { onAuthenticated, projectManagerInstance } = props
-  const httpClient = useHttpClient()
+  const httpClient = useHttpClientStrict()
   const logger = useLogger()
   const navigate = router.useNavigate()
+
   const { getText } = textProvider.useText()
   const { localStorage } = localStorageProvider.useLocalStorage()
   const { setModal } = modalProvider.useSetModal()
+
   const navigator2D = navigator2DProvider.useNavigator2D()
 
   const localBackend = React.useMemo(
@@ -496,42 +541,38 @@ function AppRouter(props: AppRouterProps) {
   )
 
   return (
-    <FeatureFlagsProvider>
-      <RouterProvider navigate={navigate}>
-        <SessionProvider
-          saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
-          mainPageUrl={mainPageUrl}
-          userSession={userSession}
-          registerAuthEventListener={registerAuthEventListener}
-          refreshUserSession={refreshUserSession}
-        >
-          <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
-            <AuthProvider
-              shouldStartInOfflineMode={isAuthenticationDisabled}
-              authService={authService}
-              onAuthenticated={onAuthenticated}
-            >
-              <InputBindingsProvider inputBindings={inputBindings}>
-                {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
-                 * due to modals being in `TheModal`. */}
-                <DriveProvider>
+    <RouterProvider navigate={navigate}>
+      <SessionProvider
+        saveAccessToken={authService.cognito.saveAccessToken.bind(authService.cognito)}
+        mainPageUrl={mainPageUrl}
+        userSession={userSession}
+        registerAuthEventListener={registerAuthEventListener}
+        refreshUserSession={refreshUserSession}
+      >
+        <BackendProvider remoteBackend={remoteBackend} localBackend={localBackend}>
+          <AuthProvider
+            shouldStartInOfflineMode={isAuthenticationDisabled}
+            authService={authService}
+            onAuthenticated={onAuthenticated}
+          >
+            <InputBindingsProvider inputBindings={inputBindings}>
+              {/* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+               * due to modals being in `TheModal`. */}
+              <DriveProvider>
+                <LocalBackendPathSynchronizer />
+                <VersionChecker />
+                {routes}
+                <suspense.Suspense>
                   <errorBoundary.ErrorBoundary>
-                    <LocalBackendPathSynchronizer />
-                    <VersionChecker />
-                    {routes}
-                    <suspense.Suspense>
-                      <errorBoundary.ErrorBoundary>
-                        <devtools.EnsoDevtools />
-                      </errorBoundary.ErrorBoundary>
-                    </suspense.Suspense>
+                    <devtools.EnsoDevtools />
                   </errorBoundary.ErrorBoundary>
-                </DriveProvider>
-              </InputBindingsProvider>
-            </AuthProvider>
-          </BackendProvider>
-        </SessionProvider>
-      </RouterProvider>
-    </FeatureFlagsProvider>
+                </suspense.Suspense>
+              </DriveProvider>
+            </InputBindingsProvider>
+          </AuthProvider>
+        </BackendProvider>
+      </SessionProvider>
+    </RouterProvider>
   )
 }
 

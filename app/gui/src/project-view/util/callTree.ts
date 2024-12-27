@@ -4,7 +4,11 @@ import type { WidgetConfiguration } from '@/providers/widgetRegistry/configurati
 import * as widgetCfg from '@/providers/widgetRegistry/configuration'
 import { DisplayMode } from '@/providers/widgetRegistry/configuration'
 import type { MethodCallInfo } from '@/stores/graph/graphDatabase'
-import type { SuggestionEntry, SuggestionEntryArgument } from '@/stores/suggestionDatabase/entry'
+import {
+  isRequiredArgument,
+  type SuggestionEntry,
+  type SuggestionEntryArgument,
+} from '@/stores/suggestionDatabase/entry'
 import { Ast } from '@/util/ast'
 import type { AstId } from '@/util/ast/abstract'
 import { findLastIndex, tryGetIndex } from '@/util/data/array'
@@ -34,7 +38,11 @@ class ArgumentFactory {
     )
   }
 
-  argument(ast: Ast.Ast, index: number | undefined, info: SuggestionEntryArgument | undefined) {
+  argument(
+    ast: Ast.Expression,
+    index: number | undefined,
+    info: SuggestionEntryArgument | undefined,
+  ) {
     return new ArgumentAst(
       this.callId,
       this.kind,
@@ -51,7 +59,7 @@ class ArgumentFactory {
 }
 
 type ArgWidgetConfiguration = WidgetConfiguration & { display?: DisplayMode }
-type WidgetInputValue = Ast.Ast | Ast.Token | string | undefined
+type WidgetInputValue = Ast.Expression | Ast.Token | string | undefined
 abstract class Argument {
   protected constructor(
     public callId: string,
@@ -114,7 +122,7 @@ export class ArgumentPlaceholder extends Argument {
 
   /** TODO: Add docs */
   override get hideByDefault(): boolean {
-    return this.argInfo.hasDefault && this.dynamicConfig?.display !== DisplayMode.Always
+    return !isRequiredArgument(this.argInfo) && this.dynamicConfig?.display !== DisplayMode.Always
   }
 }
 
@@ -127,7 +135,7 @@ export class ArgumentAst extends Argument {
     dynamicConfig: ArgWidgetConfiguration | undefined,
     index: number | undefined,
     argInfo: SuggestionEntryArgument | undefined,
-    public ast: Ast.Ast,
+    public ast: Ast.Expression,
   ) {
     super(callId, kind, dynamicConfig, index, argInfo)
   }
@@ -149,24 +157,24 @@ interface InterpretedInfix {
   kind: 'infix'
   appTree: Ast.OprApp
   operator: Ast.Token | undefined
-  lhs: Ast.Ast | undefined
-  rhs: Ast.Ast | undefined
+  lhs: Ast.Expression | undefined
+  rhs: Ast.Expression | undefined
 }
 
 interface InterpretedPrefix {
   kind: 'prefix'
-  func: Ast.Ast
+  func: Ast.Expression
   args: FoundApplication[]
 }
 
 interface FoundApplication {
   appTree: Ast.App
-  argument: Ast.Ast
+  argument: Ast.Expression
   argName: string | undefined
 }
 
 /** TODO: Add docs */
-export function interpretCall(callRoot: Ast.Ast): InterpretedCall {
+export function interpretCall(callRoot: Ast.Expression): InterpretedCall {
   if (callRoot instanceof Ast.OprApp) {
     // Infix chains are handled one level at a time. Each application may have at most 2 arguments.
     return {
@@ -209,8 +217,8 @@ interface CallInfo {
 /** TODO: Add docs */
 export class ArgumentApplication {
   private constructor(
-    public appTree: Ast.Ast,
-    public target: ArgumentApplication | Ast.Ast | ArgumentPlaceholder | ArgumentAst,
+    public appTree: Ast.Expression,
+    public target: ArgumentApplication | Ast.Expression | ArgumentPlaceholder | ArgumentAst,
     public infixOperator: Ast.Token | undefined,
     public argument: ArgumentAst | ArgumentPlaceholder,
     public calledFunction: SuggestionEntry | undefined,
@@ -260,7 +268,7 @@ export class ArgumentApplication {
     )
 
     const resolvedArgs: Array<{
-      appTree: Ast.Ast
+      appTree: Ast.Expression
       argument: ArgumentAst | ArgumentPlaceholder
     }> = []
 
@@ -378,7 +386,7 @@ export class ArgumentApplication {
     }
 
     return resolvedArgs.reduce(
-      (target: ArgumentApplication | Ast.Ast, toDisplay) =>
+      (target: ArgumentApplication | Ast.Expression, toDisplay) =>
         new ArgumentApplication(
           toDisplay.appTree,
           target,
@@ -395,7 +403,7 @@ export class ArgumentApplication {
   static FromInterpretedWithInfo(
     interpreted: InterpretedCall,
     callInfo: CallInfo = {},
-  ): ArgumentApplication | Ast.Ast {
+  ): ArgumentApplication | Ast.Expression {
     if (interpreted.kind === 'infix') {
       return ArgumentApplication.FromInterpretedInfix(interpreted, callInfo)
     } else {
@@ -487,7 +495,7 @@ const unknownArgInfoNamed = (name: string) => ({
 })
 
 /** TODO: Add docs */
-export function getAccessOprSubject(app: Ast.Ast): Ast.Ast | undefined {
+export function getAccessOprSubject(app: Ast.Expression): Ast.Expression | undefined {
   if (app instanceof Ast.PropertyAccess) return app.lhs
 }
 
@@ -500,7 +508,7 @@ export function getAccessOprSubject(app: Ast.Ast): Ast.Ast | undefined {
  * We also don’t consider infix applications here, as using them inside a prefix chain would require additional syntax (like parenthesis).
  */
 export function getMethodCallInfoRecursively(
-  ast: Ast.Ast,
+  ast: Ast.Expression,
   graphDb: { getMethodCallInfo(id: AstId): MethodCallInfo | undefined },
 ): MethodCallInfo | undefined {
   let appliedArgs = 0

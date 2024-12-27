@@ -17,6 +17,8 @@ use sha2::Digest;
 use std::process::Stdio;
 use tempfile::TempDir;
 
+
+
 // ==============
 // === Export ===
 // ==============
@@ -84,14 +86,20 @@ pub mod env {
 
         /// The Google Analytics tag to which Google Analytics events should be sent.
         ENSO_CLOUD_GOOGLE_ANALYTICS_TAG, String;
+
+        /// The Sentry organization to push the source maps to.
+        ENSO_CLOUD_SENTRY_ORGANIZATION, String;
+
+        /// The Sentry project to push the source maps to.
+        ENSO_CLOUD_SENTRY_PROJECT, String;
     }
 
     // GUI-specific environment variables
     define_env_var! {
         /// License key for the AG Grid library.
-        VITE_ENSO_AG_GRID_LICENSE_KEY, String;
+        ENSO_IDE_AG_GRID_LICENSE_KEY, String;
         /// The Mapbox API token for the GeoMap visualization.
-        VITE_ENSO_MAPBOX_API_TOKEN, String;
+        ENSO_IDE_MAPBOX_API_TOKEN, String;
     }
 }
 

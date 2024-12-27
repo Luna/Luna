@@ -3,7 +3,7 @@
  * These are from variables defined at build time, environment variables,
  * monkeypatching on `window` and generated code.
  */
-import * as buildJson from './../../build.json' assert { type: 'json' }
+import * as buildJson from './../../build.json' with { type: 'json' }
 
 // =============
 // === Types ===
@@ -158,6 +158,7 @@ declare global {
     readonly fileBrowserApi?: FileBrowserApi
     readonly projectManagementApi?: ProjectManagementApi
     readonly versionInfo?: VersionInfo
+    readonly mapBoxApiToken: () => string
     toggleDevtools: () => void
   }
 
@@ -195,6 +196,7 @@ declare global {
       // === Integration test variables ===
 
       readonly ENSO_TEST?: string
+      readonly ENSO_TEST_PROJECTS_DIR?: string
       readonly ENSO_TEST_APP_ARGS?: string
       readonly ENSO_TEST_USER?: string
       readonly ENSO_TEST_USER_PASSWORD?: string

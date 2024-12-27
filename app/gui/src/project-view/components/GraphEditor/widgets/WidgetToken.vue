@@ -4,7 +4,7 @@ import { computed } from 'vue'
 
 const props = defineProps(widgetProps(widgetDefinition))
 
-const spanClass = computed(() => props.input.value.typeName())
+const spanClass = computed(() => props.input.value.typeName)
 const repr = computed(() => props.input.value.code())
 </script>
 
@@ -28,12 +28,12 @@ export const widgetDefinition = defineWidget(
   display: inline-block;
   vertical-align: middle;
   white-space: pre;
-  color: rgb(255 255 255 / 0.33);
+  opacity: 0.33;
 
   &.Ident,
   &.TextSection,
   &.Digits {
-    color: white;
+    opacity: 1;
   }
 
   &.TextSection,

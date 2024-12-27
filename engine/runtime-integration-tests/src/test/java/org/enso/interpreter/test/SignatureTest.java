@@ -1026,6 +1026,42 @@ public class SignatureTest extends ContextTest {
     }
   }
 
+  @Test
+  public void returnTypeCheckByLastStatementOfMainTextFirst() throws Exception {
+    var main = assertTypeCheckByLastStatementOfMain("Text & Integer");
+    assertTrue(main.isString());
+    assertEquals("42", main.asString());
+  }
+
+  @Test
+  public void returnTypeCheckByLastStatementOfMainIntFirst() throws Exception {
+    var main = assertTypeCheckByLastStatementOfMain("Integer & Text");
+    assertTrue(main.fitsInInt());
+    assertEquals(42, main.asInt());
+  }
+
+  private Value assertTypeCheckByLastStatementOfMain(String cast) throws Exception {
+    final URI uri = new URI("memory://rts.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                from Standard.Base import all
+
+                fn =
+                    (42 : ${cast})
+
+                Text.from (that:Integer) = that.to_text
+                """
+                    .replace("${cast}", cast),
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = ctx.eval(src);
+    return module.invokeMember(MethodNames.Module.EVAL_EXPRESSION, "fn");
+  }
+
   /**
    * Similar scenario to {@code returnTypeCheckOptInError}, but with the opt out signature the check
    * is not currently performed.

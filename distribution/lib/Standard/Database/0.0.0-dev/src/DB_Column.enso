@@ -1,4 +1,6 @@
 from Standard.Base import all
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
+import Standard.Base.Errors.Common.Floating_Point_Equality
 import Standard.Base.Errors.Common.Index_Out_Of_Bounds
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Errors.Illegal_State.Illegal_State
@@ -14,7 +16,7 @@ import Standard.Table.Internal.Widget_Helpers
 import Standard.Table.Rows_To_Read.Rows_To_Read
 from Standard.Table import Auto, Column, Data_Formatter, Previous_Value, Sort_Column, Table, Value_Type
 from Standard.Table.Column import default_date_period
-from Standard.Table.Errors import Conversion_Failure, Floating_Point_Equality, Inexact_Type_Coercion, Invalid_Value_Type
+from Standard.Table.Errors import Conversion_Failure, Inexact_Type_Coercion, Invalid_Value_Type
 from Standard.Table.Internal.Cast_Helpers import check_cast_compatibility
 
 import project.Connection.Connection.Connection
@@ -1000,7 +1002,7 @@ type DB_Column
     round_integer self decimal_places use_bankers =
         new_name = self.naming_helper.function_name "round" [self]
         scale = 10 ^ -decimal_places
-        halfway = scale.div 2
+        halfway = scale / 2
         remainder = self % scale
         remainder.let "remainer" remainder->
             scaled_down = (self / scale).truncate . cast Value_Type.Integer
@@ -1544,7 +1546,8 @@ type DB_Column
             if self.connection.dialect.is_operation_supported operator then self.make_binary_op operator what new_name else
                 Error.throw (Unsupported_Database_Operation.Error ("`trim "+where.to_text+"`"))
 
-    ## GROUP Standard.Base.Text
+    ## ALIAS regex, substitute
+       GROUP Standard.Base.Text
        ICON column_add
        Replaces the first, or all occurrences of `term` with `new_text` in each
        row. If `term` is empty, the function returns the table unchanged.
@@ -2165,3 +2168,8 @@ Vector.from (that:DB_Column) =
 
 ## PRIVATE
 Cleansable_Text.from (that:DB_Column) = Cleansable_Text.Value (pattern->replace_with-> (that.text_replace (regex pattern) replace_with).rename that.name)
+
+## PRIVATE
+Many_Files_List.from (that : DB_Column) =
+    _ = that
+    Error.throw (Illegal_Argument.Error "`read_many` cannot be used with Database columns. Materialize the column into memory using `.read` first.")

@@ -4,7 +4,7 @@ import AutoSizedInput, { type Range } from '@/components/widgets/AutoSizedInput.
 import type { useNavigator } from '@/composables/navigator'
 import type { Icon } from '@/util/iconName'
 import { computed, ref, watch, type DeepReadonly } from 'vue'
-import { ComponentExposed } from 'vue-component-type-helpers'
+import type { ComponentExposed } from 'vue-component-type-helpers'
 
 const content = defineModel<DeepReadonly<{ text: string; selection: Range | undefined }>>({
   required: true,
@@ -42,14 +42,14 @@ defineExpose({
 
 const rootStyle = computed(() => {
   return {
-    '--node-color-primary': props.nodeColor,
+    '--node-group-color': props.nodeColor,
     '--port-edge-width': `${4 * props.navigator.scale}px`,
   }
 })
 </script>
 
 <template>
-  <div class="ComponentEditor" :style="rootStyle">
+  <div class="ComponentEditor define-node-colors" :style="rootStyle">
     <div v-if="props.icon" class="iconPort">
       <SvgIcon :name="props.icon" class="nodeIcon" />
     </div>
@@ -72,7 +72,6 @@ const rootStyle = computed(() => {
 
 <style scoped>
 .ComponentEditor {
-  --node-color-port: color-mix(in oklab, var(--node-color-primary) 85%, white 15%);
   --port-padding: 6px;
   --icon-height: 16px;
   --icon-text-gap: 6px;
@@ -101,19 +100,8 @@ const rootStyle = computed(() => {
   border-radius: var(--radius-full);
   padding: var(--port-padding);
   margin: 0 var(--icon-text-gap) 0 calc(0px - var(--port-padding));
-  background-color: var(--node-color-port);
+  background-color: var(--color-node-port);
   isolation: isolate;
-}
-
-.iconPort::before {
-  content: '';
-  position: absolute;
-  top: calc(var(--port-padding) - var(--component-editor-padding));
-  width: var(--port-edge-width);
-  height: calc(var(--component-editor-padding) - var(--port-padding) + var(--icon-height) / 2);
-  transform: translate(-50%, 0);
-  background-color: var(--node-color-port);
-  z-index: -1;
 }
 
 .nodeIcon {

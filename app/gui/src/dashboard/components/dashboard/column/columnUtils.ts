@@ -64,18 +64,18 @@ export const COLUMN_SHOW_TEXT_ID: Readonly<Record<Column, text.TextId>> = {
 } satisfies { [C in Column]: `${C}ColumnShow` }
 
 const COLUMN_CSS_CLASSES =
-  'text-left bg-clip-padding border-transparent border-y border-2 last:border-r-0 last:rounded-r-full last:w-full'
+  'max-w-96 text-left bg-clip-padding last:border-r-0 last:rounded-r-full last:w-full'
 const NORMAL_COLUMN_CSS_CLASSES = `px-cell-x py ${COLUMN_CSS_CLASSES}`
 
 /** CSS classes for every column. */
 export const COLUMN_CSS_CLASS: Readonly<Record<Column, string>> = {
-  [Column.name]: `rounded-rows-skip-level min-w-drive-name-column h-full p-0 border-l-0 ${COLUMN_CSS_CLASSES}`,
-  [Column.modified]: `min-w-drive-modified-column ${NORMAL_COLUMN_CSS_CLASSES}`,
-  [Column.sharedWith]: `min-w-drive-shared-with-column ${NORMAL_COLUMN_CSS_CLASSES}`,
-  [Column.labels]: `min-w-drive-labels-column ${NORMAL_COLUMN_CSS_CLASSES}`,
-  [Column.accessedByProjects]: `min-w-drive-accessed-by-projects-column ${NORMAL_COLUMN_CSS_CLASSES}`,
-  [Column.accessedData]: `min-w-drive-accessed-data-column ${NORMAL_COLUMN_CSS_CLASSES}`,
-  [Column.docs]: `min-w-drive-docs-column ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.name]: `z-10 sticky left-0 bg-dashboard rounded-rows-skip-level min-w-drive-name-column h-full p-0 border-l-0 after:absolute after:right-0 after:top-0 after:bottom-0 after:border-r-[1.5px] after:border-primary/5 ${COLUMN_CSS_CLASSES}`,
+  [Column.modified]: `min-w-drive-modified-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.sharedWith]: `min-w-drive-shared-with-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.labels]: `min-w-drive-labels-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.accessedByProjects]: `min-w-drive-accessed-by-projects-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.accessedData]: `min-w-drive-accessed-data-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
+  [Column.docs]: `min-w-drive-docs-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
 }
 
 // =====================
@@ -87,20 +87,32 @@ export function getColumnList(
   user: backend.User,
   backendType: backend.BackendType,
   category: Category,
-) {
+): readonly Column[] {
   const isCloud = backendType === backend.BackendType.remote
   const isEnterprise = user.plan === backend.Plan.enterprise
+
   const isTrash = category.type === 'trash'
+  const isRecent = category.type === 'recent'
+  const isRoot = category.type === 'cloud'
+
+  const sharedWithColumn = () => {
+    if (isTrash) return false
+    if (isRecent) return false
+    if (isRoot) return false
+    return isCloud && isEnterprise && Column.sharedWith
+  }
+
   const columns = [
     Column.name,
     Column.modified,
-    isCloud && (isEnterprise || isTrash) && Column.sharedWith,
+    sharedWithColumn(),
     isCloud && Column.labels,
     // FIXME[sb]: https://github.com/enso-org/cloud-v2/issues/1525
     // Bring back these columns when they are ready for use again.
     // isCloud && Column.accessedByProjects,
     // isCloud && Column.accessedData,
     isCloud && Column.docs,
-  ]
+  ] as const
+
   return columns.flatMap((column) => (column !== false ? [column] : []))
 }

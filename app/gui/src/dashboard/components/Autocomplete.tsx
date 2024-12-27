@@ -1,6 +1,5 @@
 /** @file A select menu with a dropdown. */
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -10,7 +9,7 @@ import {
 } from 'react'
 
 import CloseIcon from '#/assets/cross.svg'
-import { Button, Input, Text } from '#/components/AriaComponents'
+import { Button, Form, Input, Text } from '#/components/AriaComponents'
 import FocusRing from '#/components/styled/FocusRing'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 
@@ -92,22 +91,15 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const valuesSet = useMemo(() => new Set(values), [values])
   const canEditText = setText != null && values.length === 0
-  // We are only interested in the initial value of `canEditText` in effects.
-  const canEditTextRef = useRef(canEditText)
   const isMultipleAndCustomValue = multiple === true && text != null
   const matchingItems = useMemo(
     () => (text == null ? items : items.filter((item) => matches(item, text))),
     [items, matches, text],
   )
 
-  useEffect(() => {
-    if (!canEditTextRef.current) {
-      setIsDropdownVisible(true)
-    }
-  }, [])
-
   const fallbackInputRef = useRef<HTMLFieldSetElement>(null)
   const inputRef = rawInputRef ?? fallbackInputRef
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // This type is a little too wide but it is unavoidable.
   /** Set values, while also changing the input text. */
@@ -184,6 +176,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
   return (
     <div className={twJoin('relative isolate h-6 w-full', isDropdownVisible && 'z-1')}>
       <div
+        ref={containerRef}
         onKeyDown={onKeyDown}
         className={twMerge(
           'absolute w-full grow transition-colors',
@@ -192,60 +185,70 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
           : '',
         )}
       >
-        <FocusRing within>
-          <div className="relative z-1 flex flex-1 items-center gap-2 rounded-full px-2">
-            {canEditText ?
-              <Input
-                name="autocomplete"
-                type={type}
-                ref={inputRef}
-                autoFocus={autoFocus}
-                size="custom"
-                variant="custom"
-                value={text ?? ''}
-                autoComplete="off"
-                {...(placeholder == null ? {} : { placeholder })}
-                onFocus={() => {
+        <Form
+          className="w-full"
+          schema={(z) =>
+            z.object({
+              autocomplete: z.string(),
+            })
+          }
+        >
+          <FocusRing within>
+            <div className="relative z-1 flex w-full flex-1 items-center gap-2 overflow-hidden rounded-full px-2">
+              {canEditText ?
+                <Input
+                  className="w-full"
+                  name="autocomplete"
+                  type={type}
+                  ref={inputRef}
+                  autoFocus={autoFocus}
+                  size="custom"
+                  variant="custom"
+                  value={text ?? ''}
+                  autoComplete="off"
+                  {...(placeholder == null ? {} : { placeholder })}
+                  onFocus={() => {
+                    setIsDropdownVisible(true)
+                  }}
+                  onBlur={() => {
+                    window.setTimeout(() => {
+                      setIsDropdownVisible(false)
+                    })
+                  }}
+                  onChange={(event) => {
+                    setIsDropdownVisible(true)
+                    setText(event.currentTarget.value === '' ? null : event.currentTarget.value)
+                  }}
+                />
+              : <Text
+                  tabIndex={-1}
+                  truncate="1"
+                  tooltipPlacement="left"
+                  onClick={() => {
+                    setIsDropdownVisible(true)
+                  }}
+                  onBlur={() => {
+                    window.setTimeout(() => {
+                      setIsDropdownVisible(false)
+                    })
+                  }}
+                >
+                  {itemsToString?.(values) ?? (values[0] != null ? children(values[0]) : ZWSP)}
+                </Text>
+              }
+              <Button
+                size="medium"
+                variant="icon"
+                icon={CloseIcon}
+                onPress={() => {
+                  setValues([])
                   setIsDropdownVisible(true)
-                }}
-                onBlur={() => {
-                  window.setTimeout(() => {
-                    setIsDropdownVisible(false)
-                  })
-                }}
-                onChange={(event) => {
-                  setIsDropdownVisible(true)
-                  setText(event.currentTarget.value === '' ? null : event.currentTarget.value)
+                  setText?.('')
                 }}
               />
-            : <Text
-                tabIndex={-1}
-                truncate="1"
-                tooltipPlacement="left"
-                onClick={() => {
-                  setIsDropdownVisible(true)
-                }}
-                onBlur={() => {
-                  window.setTimeout(() => {
-                    setIsDropdownVisible(false)
-                  })
-                }}
-              >
-                {itemsToString?.(values) ?? (values[0] != null ? children(values[0]) : ZWSP)}
-              </Text>
-            }
-            <Button
-              size="medium"
-              variant="icon"
-              icon={CloseIcon}
-              onPress={() => {
-                setValues([])
-                // setIsDropdownVisible(true)
-                setText?.('')
-              }}
-            />
-          </div>
-        </FocusRing>
+            </div>
+          </FocusRing>
+        </Form>
         <div
           className={twMerge(
             'relative z-1 grid h-max w-full rounded-b-xl transition-grid-template-rows duration-200',
@@ -259,7 +262,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
               <div
                 key={itemToKey(item)}
                 className={twMerge(
-                  'text relative cursor-pointer whitespace-nowrap px-input-x last:rounded-b-xl hover:bg-hover-bg',
+                  'text relative min-w-max cursor-pointer whitespace-nowrap rounded-full px-input-x last:rounded-b-xl hover:bg-hover-bg',
                   valuesSet.has(item) && 'bg-hover-bg',
                   index === selectedIndex && 'bg-black/5',
                 )}
@@ -271,7 +274,12 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
                   toggleValue(item)
                 }}
               >
-                <Text truncate="1" className="w-full" tooltipPlacement="left">
+                <Text
+                  truncate="1"
+                  className="w-full"
+                  tooltipPlacement="top"
+                  tooltipTriggerRef={containerRef}
+                >
                   {children(item)}
                 </Text>
               </div>

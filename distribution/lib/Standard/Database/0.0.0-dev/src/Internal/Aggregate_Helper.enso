@@ -1,14 +1,14 @@
 from Standard.Base import all
-import Standard.Base.Errors.Common.No_Such_Method
 import Standard.Base.Errors.Deprecated.Deprecated
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+from Standard.Base.Errors.Common import Floating_Point_Equality, No_Such_Method
 
 import Standard.Table.Internal.Aggregate_Column_Helper
 import Standard.Table.Internal.Aggregate_Column_Helper.Internal_Order_By_Column_Reference
 import Standard.Table.Internal.Problem_Builder.Problem_Builder
 from Standard.Table import Aggregate_Column
 from Standard.Table.Aggregate_Column.Aggregate_Column import all
-from Standard.Table.Errors import Floating_Point_Equality, No_Output_Columns
+from Standard.Table.Errors import No_Output_Columns
 
 import project.DB_Table.DB_Table
 import project.Dialect.Dialect
@@ -35,7 +35,7 @@ from project.Errors import Aggregagtion_Requires_Order
 make_aggregate_column : DB_Table -> Aggregate_Column -> Text -> Dialect -> (Text -> Vector -> SQL_Expression -> SQL_Type_Reference) -> Problem_Builder -> Internal_Column
 make_aggregate_column table aggregate as dialect infer_return_type problem_builder -> Internal_Column =
     simple_aggregate op_kind columns =
-        expression = dialect.cast_op_type op_kind columns (SQL_Expression.Operation op_kind (columns.map c->c.expression))
+        expression = dialect.cast_aggregate_columns op_kind columns
         sql_type_ref = infer_return_type op_kind columns expression
         Internal_Column.Value as sql_type_ref expression
 

@@ -1,6 +1,7 @@
 package org.enso.interpreter.runtime.scope;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -22,8 +23,7 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /** A representation of Enso's per-file top-level scope. */
 @ExportLibrary(TypesLibrary.class)
-public final class ModuleScope
-    implements EnsoObject, CommonModuleScopeShape<Function, Type, ImportExportScope> {
+public final class ModuleScope extends EnsoObject implements EnsoObject, CommonModuleScopeShape<Function, Type, ImportExportScope> {
   private final Type associatedType;
   private final Module module;
   private final Map<String, Supplier<TruffleObject>> polyglotSymbols;
@@ -299,6 +299,12 @@ public final class ModuleScope
   @Override
   public String toString() {
     return "Scope" + module;
+  }
+
+  @Override
+  @TruffleBoundary
+  public Object toDisplayString(boolean allowSideEffects) {
+    return toString();
   }
 
   public static class Builder

@@ -6,14 +6,16 @@ import * as z from 'zod'
 import AssetEventType from '#/events/AssetEventType'
 import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useDispatchAssetEvent } from '#/layouts/Drive/EventListProvider'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import {
   FilterBy,
+  Plan,
   type AssetId,
   type DirectoryId,
   type Path,
+  type User,
   type UserGroupInfo,
 } from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
@@ -109,14 +111,48 @@ export const CATEGORY_TO_FILTER_BY: Readonly<Record<Category['type'], FilterBy |
   'local-directory': FilterBy.active,
 }
 
+/**
+ * The type of the cached value for a category.
+ * We use const enums because they compile to numeric values and they are faster than strings.
+ */
+const enum CategoryCacheType {
+  cloud = 0,
+  local = 1,
+}
+
+const CATEGORY_CACHE = new Map<Category['type'], CategoryCacheType>()
+
 /** Whether the category is only accessible from the cloud. */
 export function isCloudCategory(category: Category): category is AnyCloudCategory {
-  return ANY_CLOUD_CATEGORY_SCHEMA.safeParse(category).success
+  const cached = CATEGORY_CACHE.get(category.type)
+
+  if (cached != null) {
+    return cached === CategoryCacheType.cloud
+  }
+
+  const result = ANY_CLOUD_CATEGORY_SCHEMA.safeParse(category)
+  CATEGORY_CACHE.set(
+    category.type,
+    result.success ? CategoryCacheType.cloud : CategoryCacheType.local,
+  )
+
+  return result.success
 }
 
 /** Whether the category is only accessible locally. */
 export function isLocalCategory(category: Category): category is AnyLocalCategory {
-  return ANY_LOCAL_CATEGORY_SCHEMA.safeParse(category).success
+  const cached = CATEGORY_CACHE.get(category.type)
+
+  if (cached != null) {
+    return cached === CategoryCacheType.local
+  }
+
+  const result = ANY_LOCAL_CATEGORY_SCHEMA.safeParse(category)
+  CATEGORY_CACHE.set(
+    category.type,
+    result.success ? CategoryCacheType.local : CategoryCacheType.cloud,
+  )
+  return result.success
 }
 
 /** Whether the given categories are equal. */
@@ -135,16 +171,21 @@ export function areCategoriesEqual(a: Category, b: Category) {
 }
 
 /** Whether an asset can be transferred between categories. */
-export function canTransferBetweenCategories(from: Category, to: Category) {
+export function canTransferBetweenCategories(from: Category, to: Category, user: User) {
   switch (from.type) {
     case 'cloud':
     case 'recent':
     case 'team':
     case 'user': {
+      if (user.plan === Plan.enterprise || user.plan === Plan.team) {
+        return to.type !== 'cloud'
+      }
       return to.type === 'trash' || to.type === 'cloud' || to.type === 'team' || to.type === 'user'
     }
     case 'trash': {
-      return to.type === 'cloud'
+      // In the future we want to be able to drag to certain categories to restore directly
+      // to specific home directories.
+      return false
     }
     case 'local':
     case 'local-directory': {
@@ -161,7 +202,6 @@ export function useTransferBetweenCategories(currentCategory: Category) {
   const { user } = useFullUserSession()
   const { data: organization = null } = useBackendQuery(remoteBackend, 'getOrganization', [])
   const deleteAssetMutation = useMutation(backendMutationOptions(backend, 'deleteAsset'))
-  const undoDeleteAssetMutation = useMutation(backendMutationOptions(backend, 'undoDeleteAsset'))
   const updateAssetMutation = useMutation(backendMutationOptions(backend, 'updateAsset'))
   const dispatchAssetEvent = useDispatchAssetEvent()
   return useEventCallback(
@@ -212,13 +252,6 @@ export function useTransferBetweenCategories(currentCategory: Category) {
           break
         }
         case 'trash': {
-          if (from === currentCategory) {
-            dispatchAssetEvent({ type: AssetEventType.restore, ids: new Set(keys) })
-          } else {
-            for (const id of keys) {
-              undoDeleteAssetMutation.mutate([id, '(unknown)'])
-            }
-          }
           break
         }
         case 'local':

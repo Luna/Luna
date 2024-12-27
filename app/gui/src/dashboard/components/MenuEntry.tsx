@@ -20,15 +20,12 @@ import KeyboardShortcut from '#/components/dashboard/KeyboardShortcut'
 import FocusRing from '#/components/styled/FocusRing'
 import SvgMask from '#/components/SvgMask'
 
+import { useSyncRef } from '#/hooks/syncRefHooks'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindVariants from '#/utilities/tailwindVariants'
 
-// =================
-// === Constants ===
-// =================
-
 const MENU_ENTRY_VARIANTS = tailwindVariants.tv({
-  base: 'flex h-row grow place-content-between items-center rounded-inherit p-menu-entry text-left selectable group-enabled:active hover:bg-hover-bg disabled:bg-transparent',
+  base: 'flex h-row grow place-content-between items-center rounded-inherit p-menu-entry text-left group-disabled:opacity-30 group-enabled:active group-enabled:hover:bg-hover-bg',
   variants: {
     variant: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -84,20 +81,17 @@ export const ACTION_TO_TEXT_ID: Readonly<
   openInFileBrowser: 'openInFileBrowserShortcut',
 } satisfies { [Key in inputBindings.DashboardBindingKey]: `${Key}Shortcut` }
 
-// =================
-// === MenuEntry ===
-// =================
-
 /** Props for a {@link MenuEntry}. */
 export interface MenuEntryProps extends tailwindVariants.VariantProps<typeof MENU_ENTRY_VARIANTS> {
-  readonly icon?: string
-  readonly hidden?: boolean
+  readonly icon?: string | undefined
+  readonly hidden?: boolean | undefined
   readonly action: inputBindings.DashboardBindingKey
   /** Overrides the text for the menu entry. */
-  readonly label?: string
+  readonly label?: string | undefined
+  readonly tooltip?: string | null | undefined
   /** When true, the button is not clickable. */
-  readonly isDisabled?: boolean
-  readonly title?: string
+  readonly isDisabled?: boolean | undefined
+  readonly title?: string | undefined
   readonly doAction: () => void
 }
 
@@ -111,6 +105,7 @@ export default function MenuEntry(props: MenuEntryProps) {
     title,
     doAction,
     icon,
+    tooltip: tooltipValue,
     ...variantProps
   } = props
   const { getText } = textProvider.useText()
@@ -119,6 +114,9 @@ export default function MenuEntry(props: MenuEntryProps) {
   const inputBindings = inputBindingsProvider.useInputBindings()
   const focusChildProps = focusHooks.useFocusChild()
   const info = inputBindings.metadata[action]
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
+  const isDisabledRef = useSyncRef(isDisabled)
+
   const labelTextId: text.TextId = (() => {
     if (action === 'openInFileBrowser') {
       return (
@@ -131,21 +129,34 @@ export default function MenuEntry(props: MenuEntryProps) {
     }
   })()
 
-  React.useEffect(() => {
-    // This is slower (but more convenient) than registering every shortcut in the context menu
-    // at once.
-    if (isDisabled) {
-      return
-    } else {
-      return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
-        [action]: doAction,
-      })
-    }
-  }, [isDisabled, inputBindings, action, doAction])
+  React.useEffect(
+    () =>
+      inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
+        [action]: () => {
+          if (isDisabledRef.current) return
+          doAction()
+        },
+      }),
+    [inputBindings, action, doAction, isDisabledRef],
+  )
 
-  return hidden ? null : (
+  const { tooltip, targetProps } = ariaComponents.useVisualTooltip({
+    isDisabled: tooltipValue == null,
+    targetRef: buttonRef,
+    display: 'always',
+    children: tooltipValue,
+    overlayPositionProps: { placement: 'right' },
+  })
+
+  if (hidden) {
+    return null
+  }
+
+  return (
+    <>
       <FocusRing>
         <aria.Button
+          ref={buttonRef}
           {...aria.mergeProps<aria.ButtonProps>()(focusChildProps, {
             isDisabled,
             className: 'group flex w-full rounded-menu-entry',
@@ -160,7 +171,7 @@ export default function MenuEntry(props: MenuEntryProps) {
             },
           })}
         >
-          <div className={MENU_ENTRY_VARIANTS(variantProps)}>
+          <div className={MENU_ENTRY_VARIANTS(variantProps)} {...targetProps}>
             <div title={title} className="flex items-center gap-menu-entry whitespace-nowrap">
               <SvgMask
                 src={icon ?? info.icon ?? BlankIcon}
@@ -175,5 +186,7 @@ export default function MenuEntry(props: MenuEntryProps) {
           </div>
         </aria.Button>
       </FocusRing>
-    )
+      {tooltip}
+    </>
+  )
 }

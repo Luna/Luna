@@ -1,15 +1,12 @@
 /** @file The icon and name of a {@link backendModule.SecretAsset}. */
 import DatalinkIcon from '#/assets/datalink.svg'
 
-import * as setAssetHooks from '#/hooks/setAssetHooks'
-
 import type * as column from '#/components/dashboard/column'
 import EditableSpan from '#/components/EditableSpan'
 
 import type * as backendModule from '#/services/Backend'
 
-import { useSetIsAssetPanelTemporarilyVisible } from '#/providers/DriveProvider'
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import { useSetIsAssetPanelTemporarilyVisible } from '#/layouts/AssetPanel'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
@@ -21,7 +18,7 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 /** Props for a {@link DatalinkNameColumn}. */
 export interface DatalinkNameColumnProps extends column.AssetColumnProps {
-  readonly item: AssetTreeNode<backendModule.DatalinkAsset>
+  readonly item: backendModule.DatalinkAsset
 }
 
 /**
@@ -30,10 +27,8 @@ export interface DatalinkNameColumnProps extends column.AssetColumnProps {
  * This should never happen.
  */
 export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
-  const { item, setItem, selected, rowState, setRowState, isEditable } = props
+  const { item, selected, rowState, setRowState, isEditable, depth } = props
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
-  const asset = item.item
-  const setAsset = setAssetHooks.useSetAsset(asset, setItem)
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {
@@ -48,9 +43,9 @@ export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
 
   return (
     <div
-      className={tailwindMerge.twMerge(
-        'flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
-        indent.indentClass(item.depth),
+      className={tailwindMerge.twJoin(
+        'flex h-table-row w-auto min-w-48 max-w-full items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y rounded-rows-child',
+        indent.indentClass(depth),
       )}
       onKeyDown={(event) => {
         if (rowState.isEditingName && event.key === 'Enter') {
@@ -69,25 +64,16 @@ export default function DatalinkNameColumn(props: DatalinkNameColumnProps) {
       <img src={DatalinkIcon} className="m-name-column-icon size-4" />
       <EditableSpan
         editable={false}
-        onSubmit={async (newTitle) => {
+        onSubmit={async () => {
+          await doRename()
           setIsEditing(false)
-
-          if (newTitle !== asset.title) {
-            const oldTitle = asset.title
-            setAsset(object.merger({ title: newTitle }))
-            try {
-              await doRename()
-            } catch {
-              setAsset(object.merger({ title: oldTitle }))
-            }
-          }
         }}
         onCancel={() => {
           setIsEditing(false)
         }}
         className="grow bg-transparent font-naming"
       >
-        {asset.title}
+        {item.title}
       </EditableSpan>
     </div>
   )

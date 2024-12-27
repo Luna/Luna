@@ -11,8 +11,8 @@ import * as authProvider from '#/providers/AuthProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
-import Spinner from '#/components/Spinner'
-import StatelessSpinner, * as spinner from '#/components/StatelessSpinner'
+import { Spinner } from '#/components/Spinner'
+import { StatelessSpinner, type SpinnerState } from '#/components/StatelessSpinner'
 
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
@@ -21,6 +21,8 @@ import { useBackendQuery } from '#/hooks/backendHooks'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { useMemo } from 'react'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+
 // =================
 // === Constants ===
 // =================
@@ -28,34 +30,34 @@ import { useMemo } from 'react'
 export const CLOSED_PROJECT_STATE = { type: backendModule.ProjectState.closed } as const
 
 /**
- * The corresponding {@link spinner.SpinnerState} for each {@link backendModule.ProjectState},
+ * The corresponding {@link SpinnerState} for each {@link backendModule.ProjectState},
  * when using the remote backend.
  */
-const REMOTE_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, spinner.SpinnerState>> = {
-  [backendModule.ProjectState.closed]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.closing]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.created]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.new]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.placeholder]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.openInProgress]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.provisioned]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.scheduled]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.opened]: spinner.SpinnerState.done,
+const REMOTE_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, SpinnerState>> = {
+  [backendModule.ProjectState.closed]: 'loading-slow',
+  [backendModule.ProjectState.closing]: 'loading-medium',
+  [backendModule.ProjectState.created]: 'loading-slow',
+  [backendModule.ProjectState.new]: 'loading-slow',
+  [backendModule.ProjectState.placeholder]: 'loading-slow',
+  [backendModule.ProjectState.openInProgress]: 'loading-slow',
+  [backendModule.ProjectState.provisioned]: 'loading-slow',
+  [backendModule.ProjectState.scheduled]: 'loading-slow',
+  [backendModule.ProjectState.opened]: 'done',
 }
 /**
- * The corresponding {@link spinner.SpinnerState} for each {@link backendModule.ProjectState},
+ * The corresponding {@link SpinnerState} for each {@link backendModule.ProjectState},
  * when using the local backend.
  */
-const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, spinner.SpinnerState>> = {
-  [backendModule.ProjectState.closed]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.closing]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.created]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.new]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.placeholder]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.openInProgress]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.provisioned]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.scheduled]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.opened]: spinner.SpinnerState.done,
+const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, SpinnerState>> = {
+  [backendModule.ProjectState.closed]: 'loading-slow',
+  [backendModule.ProjectState.closing]: 'loading-medium',
+  [backendModule.ProjectState.created]: 'loading-slow',
+  [backendModule.ProjectState.new]: 'loading-slow',
+  [backendModule.ProjectState.placeholder]: 'loading-medium',
+  [backendModule.ProjectState.openInProgress]: 'loading-slow',
+  [backendModule.ProjectState.provisioned]: 'loading-medium',
+  [backendModule.ProjectState.scheduled]: 'loading-medium',
+  [backendModule.ProjectState.opened]: 'done',
 }
 
 // ===================
@@ -64,6 +66,7 @@ const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, spinner.S
 
 /** Props for a {@link ProjectIcon}. */
 export interface ProjectIconProps {
+  readonly isPlaceholder: boolean
   readonly backend: Backend
   readonly isDisabled: boolean
   readonly isOpened: boolean
@@ -72,7 +75,11 @@ export interface ProjectIconProps {
 
 /** An interactive icon indicating the status of a project. */
 export default function ProjectIcon(props: ProjectIconProps) {
-  const { backend, item, isOpened, isDisabled } = props
+  const { backend, item, isOpened, isDisabled: isDisabledRaw, isPlaceholder } = props
+
+  const isUnconditionallyDisabled = !projectHooks.useCanOpenProjects()
+
+  const isDisabled = isDisabledRaw || isUnconditionallyDisabled
 
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
@@ -84,10 +91,15 @@ export default function ProjectIcon(props: ProjectIconProps) {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const itemProjectState = item.projectState ?? CLOSED_PROJECT_STATE
   const { data: projectState, isError } = reactQuery.useQuery({
-    ...projectHooks.createGetProjectDetailsQuery.createPassiveListener(item.id),
-    select: (data) => data?.state,
-    enabled: isOpened,
+    ...projectHooks.createGetProjectDetailsQuery({
+      assetId: item.id,
+      parentId: item.parentId,
+      backend,
+    }),
+    select: (data) => data.state,
+    enabled: !isPlaceholder && isOpened && !isUnconditionallyDisabled,
   })
+
   const status = projectState?.type
   const isRunningInBackground = projectState?.executeAsync ?? false
 
@@ -95,9 +107,11 @@ export default function ProjectIcon(props: ProjectIconProps) {
 
   const isOtherUserUsingProject =
     isCloud && itemProjectState.openedBy != null && itemProjectState.openedBy !== user.email
+
   const { data: users } = useBackendQuery(backend, 'listUsers', [], {
     enabled: isOtherUserUsingProject,
   })
+
   const userOpeningProject = useMemo(
     () =>
       !isOtherUserUsingProject ? null : (
@@ -105,31 +119,38 @@ export default function ProjectIcon(props: ProjectIconProps) {
       ),
     [isOtherUserUsingProject, itemProjectState.openedBy, users],
   )
+
   const userOpeningProjectTooltip =
     userOpeningProject == null ? null : getText('xIsUsingTheProject', userOpeningProject.name)
+  const disabledTooltip = isUnconditionallyDisabled ? getText('downloadToOpenWorkflow') : null
 
   const state = (() => {
+    if (!isOpened && !isPlaceholder) {
+      return backendModule.ProjectState.closed
+    }
     // Project is closed, show open button
     if (!isOpened) {
       return (projectState ?? itemProjectState).type
-    } else if (status == null) {
+    }
+
+    if (status == null) {
       // Project is opened, but not yet queried.
       return backendModule.ProjectState.openInProgress
-    } else if (status === backendModule.ProjectState.closed) {
+    }
+    if (status === backendModule.ProjectState.closed) {
       // Project is opened locally, but not on the backend yet.
       return backendModule.ProjectState.openInProgress
-    } else {
-      return status
     }
+    return status
   })()
 
-  const spinnerState = (() => {
+  const spinnerState = ((): SpinnerState => {
     if (!isOpened) {
-      return spinner.SpinnerState.initial
+      return 'loading-slow'
     } else if (isError) {
-      return spinner.SpinnerState.initial
+      return 'initial'
     } else if (status == null) {
-      return spinner.SpinnerState.loadingSlow
+      return 'loading-slow'
     } else {
       return backend.type === backendModule.BackendType.remote ?
           REMOTE_SPINNER_STATE[status]
@@ -137,15 +158,18 @@ export default function ProjectIcon(props: ProjectIconProps) {
     }
   })()
 
-  const doOpenProject = () => {
+  const doOpenProject = useEventCallback(() => {
     openProject({ ...item, type: backend.type })
-  }
-  const doCloseProject = () => {
+  })
+  const doCloseProject = useEventCallback(() => {
     closeProject({ ...item, type: backend.type })
-  }
-  const doOpenProjectTab = () => {
+  })
+  const doOpenProjectTab = useEventCallback(() => {
     openProjectTab(item.id)
-  }
+  })
+
+  const getTooltip = (defaultTooltip: string) =>
+    disabledTooltip ?? userOpeningProjectTooltip ?? defaultTooltip
 
   switch (state) {
     case backendModule.ProjectState.new:
@@ -157,11 +181,12 @@ export default function ProjectIcon(props: ProjectIconProps) {
           size="custom"
           variant="icon"
           icon={PlayIcon}
-          aria-label={getText('openInEditor')}
+          aria-label={getTooltip(getText('openInEditor'))}
           tooltipPlacement="left"
           extraClickZone="xsmall"
           isDisabled={isDisabled || projectState?.type === backendModule.ProjectState.closing}
           onPress={doOpenProject}
+          testId="open-project"
         />
       )
     case backendModule.ProjectState.openInProgress:
@@ -176,15 +201,16 @@ export default function ProjectIcon(props: ProjectIconProps) {
             extraClickZone="xsmall"
             isDisabled={isDisabled || isOtherUserUsingProject}
             icon={StopIcon}
-            aria-label={userOpeningProjectTooltip ?? getText('stopExecution')}
+            aria-label={getTooltip(getText('stopExecution'))}
             tooltipPlacement="left"
             className={tailwindMerge.twJoin(isRunningInBackground && 'text-green')}
             {...(isOtherUserUsingProject ? { title: getText('otherUserIsUsingProjectError') } : {})}
             onPress={doCloseProject}
+            testId="stop-project"
           />
           <StatelessSpinner
             state={spinnerState}
-            className={tailwindMerge.twMerge(
+            className={tailwindMerge.twJoin(
               'pointer-events-none absolute inset-0',
               isRunningInBackground && 'text-green',
             )}
@@ -201,13 +227,14 @@ export default function ProjectIcon(props: ProjectIconProps) {
               extraClickZone="xsmall"
               isDisabled={isDisabled || isOtherUserUsingProject}
               icon={StopIcon}
-              aria-label={userOpeningProjectTooltip ?? getText('stopExecution')}
+              aria-label={getTooltip(getText('stopExecution'))}
               tooltipPlacement="left"
-              className={tailwindMerge.twMerge(isRunningInBackground && 'text-green')}
+              className={tailwindMerge.twJoin(isRunningInBackground && 'text-green')}
               onPress={doCloseProject}
+              testId="stop-project"
             />
             <Spinner
-              state={spinner.SpinnerState.done}
+              state="done"
               className={tailwindMerge.twMerge(
                 'pointer-events-none absolute inset-0',
                 isRunningInBackground && 'text-green',
@@ -221,10 +248,11 @@ export default function ProjectIcon(props: ProjectIconProps) {
               variant="icon"
               extraClickZone="xsmall"
               icon={ArrowUpIcon}
-              aria-label={userOpeningProjectTooltip ?? getText('openInEditor')}
+              aria-label={getTooltip(getText('openInEditor'))}
               isDisabled={isDisabled}
               tooltipPlacement="right"
               onPress={doOpenProjectTab}
+              testId="switch-to-project"
             />
           )}
         </div>

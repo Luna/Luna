@@ -43,7 +43,7 @@ function mapValueOnEvent(value: unknown) {
  * Otherwise you'll be fired
  */
 export function useForm<Schema extends types.TSchema, SubmitResult = void>(
-  optionsOrFormInstance: types.UseFormProps<Schema, SubmitResult> | types.UseFormReturn<Schema>,
+  optionsOrFormInstance: types.UseFormOptions<Schema, SubmitResult> | types.UseFormReturn<Schema>,
 ): types.UseFormReturn<Schema> {
   const { getText } = useText()
   const [initialTypePassed] = React.useState(() => getArgsType(optionsOrFormInstance))
@@ -85,7 +85,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
           errorMap: (issue) => {
             switch (issue.code) {
               case 'too_small':
-                if (issue.minimum === 0) {
+                if (issue.minimum === 1 && issue.type === 'string') {
                   return {
                     message: getText('arbitraryFieldRequired'),
                   }
@@ -158,6 +158,8 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
           if (method === 'dialog') {
             closeRef.current()
           }
+
+          formInstance.reset()
 
           return result
         } catch (error) {
@@ -232,6 +234,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
       setFormError,
       handleSubmit: formInstance.handleSubmit,
       closeRef,
+      formProps: { onSubmit: submit, noValidate: true },
     }
 
     return form
@@ -242,7 +245,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
 /** Get the type of arguments passed to the useForm hook */
 function getArgsType<Schema extends types.TSchema, SubmitResult = void>(
-  args: types.UseFormProps<Schema, SubmitResult>,
+  args: types.UseFormOptions<Schema, SubmitResult>,
 ) {
   return 'formState' in args ? ('formInstance' as const) : ('formOptions' as const)
 }

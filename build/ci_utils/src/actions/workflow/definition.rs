@@ -61,10 +61,15 @@ pub fn env_expression(environment_variable: &impl RawVariable) -> String {
     wrap_expression(format!("env.{}", environment_variable.name()))
 }
 
+/// Get string that gets input from the workflow dispatch.
+pub fn get_input(name: impl Into<String>) -> String {
+    format!("inputs.{}", name.into())
+}
+
 /// Get expression that gets input from the workflow dispatch. See:
 /// <https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#providing-inputs>
 pub fn get_input_expression(name: impl Into<String>) -> String {
-    wrap_expression(format!("inputs.{}", name.into()))
+    wrap_expression(get_input(name))
 }
 
 /// GH Actions expression piece that evaluates to `true` if run on a GitHub-hosted runner.
@@ -193,14 +198,14 @@ pub struct Workflow {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     pub on:          Event,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub concurrency: Option<Concurrency>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub permissions: BTreeMap<Permission, Access>,
     // No additional clause, as the jobs must be non-empty.
     pub jobs:        BTreeMap<String, Job>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub env:         BTreeMap<String, String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub concurrency: Option<Concurrency>,
 }
 
 impl Default for Workflow {
@@ -395,6 +400,18 @@ pub enum WorkflowDispatchInputType {
         #[serde(skip_serializing_if = "Option::is_none")]
         default: Option<String>,
     },
+}
+
+impl WorkflowDispatchInputType {
+    pub fn default(&self) -> Option<String> {
+        let res = match self {
+            WorkflowDispatchInputType::String { default, .. } => default,
+            WorkflowDispatchInputType::Choice { default, .. } => default,
+            WorkflowDispatchInputType::Boolean { default, .. } => &default.map(|v| v.to_string()),
+            WorkflowDispatchInputType::Environment { default, .. } => default,
+        };
+        res.clone()
+    }
 }
 
 impl Default for WorkflowDispatchInputType {
@@ -651,33 +668,35 @@ pub enum JobSecrets {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Job {
-    pub name:            String,
+    pub name:              String,
     #[serde(skip_serializing_if = "BTreeSet::is_empty")]
-    pub needs:           BTreeSet<String>,
+    pub needs:             BTreeSet<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub r#if:            Option<String>,
+    pub r#if:              Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub runs_on:         Vec<RunnerLabel>,
+    pub runs_on:           Vec<RunnerLabel>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub continue_on_error: Option<bool>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub steps:           Vec<Step>,
+    pub steps:             Vec<Step>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub concurrency:     Option<Concurrency>,
+    pub concurrency:       Option<Concurrency>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub outputs:         BTreeMap<String, String>,
+    pub outputs:           BTreeMap<String, String>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub env:             BTreeMap<String, String>,
+    pub env:               BTreeMap<String, String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub strategy:        Option<Strategy>,
+    pub strategy:          Option<Strategy>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub timeout_minutes: Option<u32>,
+    pub timeout_minutes:   Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub uses:            Option<String>,
+    pub uses:              Option<String>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub with:            BTreeMap<String, String>,
+    pub with:              BTreeMap<String, String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub secrets:         Option<JobSecrets>,
+    pub secrets:           Option<JobSecrets>,
     #[serde(skip_serializing_if = "BTreeMap::is_empty")]
-    pub permissions:     BTreeMap<Permission, Access>,
+    pub permissions:       BTreeMap<Permission, Access>,
 }
 
 impl Job {

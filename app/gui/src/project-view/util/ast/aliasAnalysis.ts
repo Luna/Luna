@@ -1,15 +1,14 @@
 import { assert } from '@/util/assert'
 import {
   RawAst,
-  astPrettyPrintType,
   parsedTreeOrTokenRange,
   rawParseModule,
   readAstOrTokenSpan,
   readTokenSpan,
 } from '@/util/ast/raw'
 import { MappedKeyMap, MappedSet, NonEmptyStack } from '@/util/containers'
-import type { LazyObject } from 'ydoc-shared/ast/parserSupport'
-import { rangeIsBefore, sourceRangeKey, type SourceRange } from 'ydoc-shared/yjsModel'
+import { LazyObject } from 'ydoc-shared/ast/parserSupport'
+import { rangeIsBefore, sourceRangeKey, type SourceRange } from 'ydoc-shared/util/data/text'
 
 const ACCESSOR_OPERATOR = '.'
 
@@ -307,13 +306,14 @@ export class AliasAnalyzer {
           const arrow = caseLine.case?.arrow
           const expression = caseLine.case?.expression
           if (pattern) {
-            const armStart = parsedTreeOrTokenRange(pattern)[0]
-            const armEnd =
-              expression ? parsedTreeOrTokenRange(expression)[1]
-              : arrow ? parsedTreeOrTokenRange(arrow)[1]
-              : parsedTreeOrTokenRange(pattern)[1]
-
-            const armRange: SourceRange = [armStart, armEnd]
+            const patternRange = parsedTreeOrTokenRange(pattern)
+            const armRange: SourceRange = {
+              from: patternRange.from,
+              to: (expression ? parsedTreeOrTokenRange(expression)
+              : arrow ? parsedTreeOrTokenRange(arrow)
+              : patternRange
+              ).to,
+            }
             this.withNewScopeOver(armRange, () => {
               this.withContext(Context.Pattern, () => {
                 this.processTree(caseLine.case?.pattern)
@@ -323,7 +323,7 @@ export class AliasAnalyzer {
           }
         }
         break
-      case RawAst.Tree.Type.Documented:
+      case RawAst.Tree.Type.ExpressionStatement:
         // Intentionally omit documentation, as it is not a "real" code.
         this.processTree(node.expression)
         break
@@ -346,5 +346,12 @@ export class AliasAnalyzer {
 function log(...messages: Array<() => any>) {
   if (LOGGING_ENABLED ?? false) {
     console.log(...messages.map((message) => message()))
+  }
+}
+
+function astPrettyPrintType(obj: unknown): string | undefined {
+  if (obj instanceof LazyObject && Object.hasOwnProperty.call(obj, 'type')) {
+    const proto = Object.getPrototypeOf(obj)
+    return proto?.constructor?.name
   }
 }

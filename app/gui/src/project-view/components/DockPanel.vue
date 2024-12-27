@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Tab extends string">
 import { documentationEditorBindings } from '@/bindings'
 import ResizeHandles from '@/components/ResizeHandles.vue'
 import SizeTransition from '@/components/SizeTransition.vue'
@@ -6,6 +6,7 @@ import ToggleIcon from '@/components/ToggleIcon.vue'
 import { useResizeObserver } from '@/composables/events'
 import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
+import { TabButton } from '@/util/tabs'
 import { tabClipPath } from 'enso-common/src/utilities/style/tabBar'
 import { computed, ref } from 'vue'
 
@@ -13,25 +14,27 @@ const TAB_EDGE_MARGIN_PX = 4
 const TAB_SIZE_PX = { width: 48 - TAB_EDGE_MARGIN_PX, height: 48 }
 const TAB_RADIUS_PX = 8
 
-type Tab = 'docs' | 'help'
-
 const show = defineModel<boolean>('show', { required: true })
 const size = defineModel<number | undefined>('size')
-const tab = defineModel<Tab>('tab')
-const _props = defineProps<{
+const currentTab = defineModel<Tab>('tab')
+
+const props = defineProps<{
   contentFullscreen: boolean
+  tabButtons: TabButton<Tab>[]
 }>()
 
 const slideInPanel = ref<HTMLElement>()
-const root = ref<HTMLElement>()
-defineExpose({ root })
 
 const computedSize = useResizeObserver(slideInPanel)
 const computedBounds = computed(() => new Rect(Vec2.Zero, computedSize.value))
 
-const style = computed(() => ({
-  '--dock-panel-width': size.value != null ? `${size.value}px` : 'var(--right-dock-default-width)',
-}))
+const style = computed(() =>
+  size.value != null ?
+    {
+      '--dock-panel-width': `${size.value}px`,
+    }
+  : undefined,
+)
 
 const tabStyle = {
   clipPath: tabClipPath(TAB_SIZE_PX, TAB_RADIUS_PX, 'right'),
@@ -43,45 +46,41 @@ const tabStyle = {
 </script>
 
 <template>
-  <div ref="root" class="DockPanel" data-testid="rightDockRoot">
+  <div class="DockPanel" data-testid="rightDockRoot">
     <ToggleIcon
       v-model="show"
       :title="`Documentation Panel (${documentationEditorBindings.bindings.toggle.humanReadable})`"
       icon="right_panel"
       class="toggleDock"
-      :class="{ aboveFullscreen: contentFullscreen }"
+      :class="{ aboveFullscreen: props.contentFullscreen }"
     />
     <SizeTransition width :duration="100">
-      <div
-        v-if="show"
-        ref="slideInPanel"
-        :style="style"
-        class="DockPanelContent"
-        data-testid="rightDock"
-      >
-        <div class="content">
-          <slot v-if="tab == 'docs'" name="docs" />
-          <slot v-else-if="tab == 'help'" name="help" />
-        </div>
-        <div class="tabBar">
-          <div class="tab" :style="tabStyle">
-            <ToggleIcon
-              :modelValue="tab == 'docs'"
-              title="Documentation Editor"
-              icon="text"
-              @update:modelValue="tab = 'docs'"
-            />
+      <div v-if="show" ref="slideInPanel" :style="style" class="panelOuter" data-testid="rightDock">
+        <div class="panelInner">
+          <div class="content">
+            <slot :name="`tab-${currentTab}`" />
           </div>
-          <div class="tab" :style="tabStyle">
-            <ToggleIcon
-              :modelValue="tab == 'help'"
-              title="Component Help"
-              icon="help"
-              @update:modelValue="tab = 'help'"
-            />
+          <div class="tabBar">
+            <div
+              v-for="{ tab, title, icon } in props.tabButtons"
+              :key="tab"
+              class="tab"
+              :style="tabStyle"
+            >
+              <ToggleIcon
+                :modelValue="currentTab == tab"
+                :title="title"
+                :icon="icon"
+                @update:modelValue="currentTab = tab"
+              />
+            </div>
           </div>
+          <ResizeHandles
+            left
+            :modelValue="computedBounds"
+            @update:modelValue="size = $event.width"
+          />
         </div>
-        <ResizeHandles left :modelValue="computedBounds" @update:modelValue="size = $event.width" />
       </div>
     </SizeTransition>
   </div>
@@ -89,12 +88,25 @@ const tabStyle = {
 
 <style scoped>
 .DockPanel {
-  display: contents;
+  display: block;
+  --dock-panel-min-width: 258px;
+  width: fit-content;
 }
 
-.DockPanelContent {
-  min-width: 258px;
-  width: var(--dock-panel-width);
+/* Outer panel container; this element's visible width will be overwritten by the size transition, but the inner panel's
+ * will not, preventing content reflow. Content reflow is disruptive to the appearance of the transition, and can affect
+ * the framerate drastically.
+ */
+.panelOuter {
+  min-width: var(--dock-panel-min-width);
+  width: var(--dock-panel-width, var(--right-dock-default-width));
+  height: 100%;
+}
+
+.panelInner {
+  min-width: var(--dock-panel-min-width);
+  width: var(--dock-panel-width, var(--right-dock-default-width));
+  height: 100%;
   position: relative;
   --icon-margin: 16px; /* `--icon-margin` in `.toggleDock` must match this value. */
   --icon-size: 16px;
@@ -105,7 +117,6 @@ const tabStyle = {
 
 .content {
   width: 100%;
-  height: 100%;
   background-color: #fff;
   min-width: 0;
 }

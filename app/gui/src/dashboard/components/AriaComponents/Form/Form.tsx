@@ -100,8 +100,6 @@ export const Form = forwardRef(function Form<
     }),
   ) as Record<keyof FieldValues, string>
 
-  const values = components.useWatch({ control: innerForm.control })
-
   return (
     <form
       {...formProps}
@@ -115,9 +113,7 @@ export const Form = forwardRef(function Form<
     >
       <aria.FormValidationContext.Provider value={errors}>
         <components.FormProvider form={innerForm}>
-          {typeof children === 'function' ?
-            children({ ...innerForm, form: innerForm, values })
-          : children}
+          {typeof children === 'function' ? children({ ...innerForm, form: innerForm }) : children}
         </components.FormProvider>
       </aria.FormValidationContext.Provider>
     </form>
@@ -133,6 +129,8 @@ export const Form = forwardRef(function Form<
   Reset: typeof components.Reset
   Field: typeof components.Field
   FormError: typeof components.FormError
+  FieldValue: typeof components.FieldValue
+  Provider: typeof components.FormProvider
   useFormSchema: typeof components.useFormSchema
   Controller: typeof components.Controller
   FIELD_STYLES: typeof components.FIELD_STYLES
@@ -141,6 +139,7 @@ export const Form = forwardRef(function Form<
   useWatch: typeof components.useWatch
   useFieldRegister: typeof components.useFieldRegister
   useFieldState: typeof components.useFieldState
+  useFormError: typeof components.useFormError
   /* eslint-enable @typescript-eslint/naming-convention */
 }
 
@@ -151,11 +150,14 @@ Form.useFormSchema = components.useFormSchema
 Form.Submit = components.Submit
 Form.Reset = components.Reset
 Form.FormError = components.FormError
+Form.FieldValue = components.FieldValue
 Form.useFormContext = components.useFormContext
 Form.useOptionalFormContext = components.useOptionalFormContext
 Form.Field = components.Field
 Form.Controller = components.Controller
+Form.Provider = components.FormProvider
 Form.useWatch = components.useWatch
 Form.FIELD_STYLES = components.FIELD_STYLES
 Form.useFieldRegister = components.useFieldRegister
 Form.useFieldState = components.useFieldState
+Form.useFormError = components.useFormError

@@ -5,16 +5,16 @@ import type { URLString } from '@/util/data/urlString'
 import type { Icon } from '@/util/iconName'
 
 const _props = defineProps<{
-  name: Icon | URLString
+  name?: Icon | URLString | undefined
   label?: string | undefined
-  disabled?: boolean
+  disabled?: boolean | undefined
   title?: string | undefined
 }>()
 </script>
 
 <template>
   <MenuButton :disabled="disabled" class="SvgButton" :title="title">
-    <SvgIcon :name="name" />
+    <SvgIcon v-if="name" :name="name" />
     <div v-if="label">{{ label }}</div>
   </MenuButton>
 </template>
