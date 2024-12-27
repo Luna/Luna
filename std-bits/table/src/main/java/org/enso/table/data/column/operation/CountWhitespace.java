@@ -16,13 +16,13 @@ public class CountWhitespace {
   // Default sample size for counting untrimmed cells.
   public static final long DEFAULT_SAMPLE_SIZE = 100000;
 
-  /** Counts the number of cells in the columns with leading or trailing whitespace. */
+  /** Counts the number of cells in the columns with non trivial whitespace */
   public static Long apply(Column column, long sampleSize) throws InterruptedException {
     ColumnStorage storage = column.getStorage();
     return applyToStorage(storage, sampleSize);
   }
 
-  /** Counts the number of cells in the given storage with leading or trailing whitespace. */
+  /** Counts the number of cells in the given storage with non trivial whitespace */
   public static Long applyToStorage(ColumnStorage storage, long sampleSize)
       throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)

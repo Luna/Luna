@@ -59,7 +59,7 @@ public class Text_Utils {
    * Checks if the string contains any non trivial whitespace.
    *
    * @param s the string to check
-   * @return whether the string has leading or trailing whitespace
+   * @return whether the string contains any of the non trivial whitespace listed
    */
   public static boolean has_non_trivial_whitespace(String s) {
     List<String> trivialWhiteSpaceList =
