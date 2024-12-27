@@ -31,8 +31,8 @@ public class Text_Utils {
      * (UTF-16) indexing mechanism.
      *
      * @param string the string to substring
-     * @param from starting index
-     * @param to index one past the end of the desired substring
+     * @param from   starting index
+     * @param to     index one past the end of the desired substring
      * @return a suitable substring
      */
     public static String substring(String string, int from, int to) {
@@ -67,13 +67,13 @@ public class Text_Utils {
      */
     public static boolean has_non_trivial_whitespace(String s) {
         List<String> trivialWhiteSpaceList = List.of(
-            "\u200A", "\u200B", "\u205F", "\u2004", "\u2005", 
-            "\u2006", "\u2008", "\u2009", "\u2007", "\r", 
-            "\n", "\t", "\u2002", "\u00A0", "\u3000", "\u2003"
+                "\u200A", "\u200B", "\u205F", "\u2004", "\u2005",
+                "\u2006", "\u2008", "\u2009", "\u2007", "\r",
+                "\n", "\t", "\u2002", "\u00A0", "\u3000", "\u2003"
         );
 
-        for(String white_space_to_check : trivialWhiteSpaceList) {
-            if (s.contains(white_space_to_check) ){
+        for (String white_space_to_check : trivialWhiteSpaceList) {
+            if (s.contains(white_space_to_check)) {
                 return true;
             }
         }
@@ -86,7 +86,7 @@ public class Text_Utils {
      * index.
      *
      * @param string the string to trim
-     * @param from number of characters to drop
+     * @param from   number of characters to drop
      * @return a trimmed string
      */
     public static String drop_first(String string, int from) {
@@ -117,7 +117,7 @@ public class Text_Utils {
      * Splits the string on each occurrence of UTF-8 vertical whitespace,
      * returning the resulting substrings in an array.
      *
-     * @param str the string to split
+     * @param str          the string to split
      * @param keep_endings whether to keep line endings in returned lines
      * @return the array of substrings of {@code str}
      */
@@ -178,8 +178,8 @@ public class Text_Utils {
      * Checks whether two strings are equal up to Unicode canonicalization and
      * ignoring case.
      *
-     * @param str1 the first string
-     * @param str2 the second string
+     * @param str1   the first string
+     * @param str2   the second string
      * @param locale the locale to use for case folding
      * @return the result of comparison
      */
@@ -229,8 +229,8 @@ public class Text_Utils {
      * with optional Unicode normalization depending on the {@code isNormalized}
      * parameter.
      *
-     * @param a the left operand
-     * @param b the right operand
+     * @param a            the left operand
+     * @param b            the right operand
      * @param isNormalized {@code true} if both input strings are normalized
      * @return a negative value if {@code a} is before {@code b}, 0 if both
      * values are equal and a positive value if {@code a} is after {@code b}
@@ -238,8 +238,8 @@ public class Text_Utils {
     public static int compare(String a, String b, boolean isNormalized) {
         int options
                 = isNormalized
-                        ? Normalizer.FOLD_CASE_DEFAULT | Normalizer.INPUT_IS_FCD
-                        : Normalizer.FOLD_CASE_DEFAULT;
+                ? Normalizer.FOLD_CASE_DEFAULT | Normalizer.INPUT_IS_FCD
+                : Normalizer.FOLD_CASE_DEFAULT;
         return Normalizer.compare(a, b, options);
     }
 
@@ -247,8 +247,8 @@ public class Text_Utils {
      * Compares {@code a} to {@code b} according to the lexicographical order,
      * handling Unicode normalization.
      *
-     * @param a the left operand
-     * @param b the right operand
+     * @param a      the left operand
+     * @param b      the right operand
      * @param locale the locale to use for case folding
      * @return a negative value if {@code a} is before {@code b}, 0 if both
      * values are equal and a positive value if {@code a} is after {@code b}
@@ -261,7 +261,7 @@ public class Text_Utils {
     /**
      * Checks if {@code substring} is a substring of {@code string}.
      *
-     * @param string the containing string.
+     * @param string    the containing string.
      * @param substring the contained string.
      * @return whether {@code substring} is a substring of {@code string}.
      */
@@ -297,7 +297,7 @@ public class Text_Utils {
     /**
      * Checks if {@code substring} is a substring of {@code string}.
      *
-     * @param string the containing string.
+     * @param string    the containing string.
      * @param substring the contained string.
      * @return whether {@code substring} is a substring of {@code string}.
      */
@@ -322,7 +322,7 @@ public class Text_Utils {
      *
      * @param string the string to transform
      * @param locale the locale to use - needed to distinguish a special case
-     * when handling Turkish 'i' characters
+     *               when handling Turkish 'i' characters
      * @return a transformed string that can be used for case insensitive
      * comparisons
      */
@@ -379,7 +379,7 @@ public class Text_Utils {
      * Find the first occurrence of needle in the haystack
      *
      * @param haystack the string to search
-     * @param needle the substring that is searched for
+     * @param needle   the substring that is searched for
      * @return a UTF-16 code unit span of the first needle or null if not found.
      */
     public static Utf16Span span_of(String haystack, String needle) {
@@ -402,7 +402,7 @@ public class Text_Utils {
      * Find the last occurrence of needle in the haystack
      *
      * @param haystack the string to search
-     * @param needle the substring that is searched for
+     * @param needle   the substring that is searched for
      * @return a UTF-16 code unit span of the last needle or null if not found.
      */
     public static Utf16Span last_span_of(String haystack, String needle) {
@@ -426,7 +426,7 @@ public class Text_Utils {
      * Find spans of all occurrences of the needle within the haystack.
      *
      * @param haystack the string to search
-     * @param needle the substring that is searched for
+     * @param needle   the substring that is searched for
      * @return a list of UTF-16 code unit spans at which the needle occurs in
      * the haystack
      */
@@ -454,7 +454,7 @@ public class Text_Utils {
      * Find spans of all occurrences of a set of needles within the haystack.
      *
      * @param haystack the string to search
-     * @param needles the substrings that are searched for
+     * @param needles  the substrings that are searched for
      * @return a list of UTF-16 code unit spans at which the needle occurs in
      * the haystack
      */
@@ -469,8 +469,8 @@ public class Text_Utils {
 
         StringSearch stringSearches[]
                 = IntStream.range(0, needles.size())
-                        .mapToObj(i -> new StringSearch(needles.get(i), haystack))
-                        .toArray(StringSearch[]::new);
+                .mapToObj(i -> new StringSearch(needles.get(i), haystack))
+                .toArray(StringSearch[]::new);
         List<Utf16Span> occurrences = new ArrayList<>();
 
         Context context = Context.getCurrent();
@@ -507,7 +507,7 @@ public class Text_Utils {
      * Converts a UTF-16 code unit index to index of the grapheme that this code
      * unit belongs to.
      *
-     * @param text the text associated with the index
+     * @param text           the text associated with the index
      * @param codeunit_index the UTF-16 index
      * @return an index of an extended grapheme cluster that contains the code
      * unit from the input
@@ -545,9 +545,9 @@ public class Text_Utils {
      * The behaviour is unspecified if indices provided on the input are outside
      * of the range [0, text.length()].
      *
-     * @param text the text associated with the indices
+     * @param text             the text associated with the indices
      * @param codeunit_indices the array of UTF-16 code unit indices, sorted in
-     * non-decreasing order
+     *                         non-decreasing order
      * @return an array of grapheme indices corresponding to the UTF-16 units
      * from the input
      */
@@ -578,11 +578,11 @@ public class Text_Utils {
     /**
      * Find the first or last occurrence of needle in the haystack.
      *
-     * @param haystack the string to search
-     * @param needle the substring that is searched for
-     * @param locale the locale used for case-insensitive comparisons
+     * @param haystack      the string to search
+     * @param needle        the substring that is searched for
+     * @param locale        the locale used for case-insensitive comparisons
      * @param searchForLast if set to true, will search for the last occurrence;
-     * otherwise searches for the first one
+     *                      otherwise searches for the first one
      * @return an extended-grapheme-cluster span of the first or last needle, or
      * null if none found.
      */
@@ -616,8 +616,8 @@ public class Text_Utils {
      * Find all occurrences of needle in the haystack, case-insensitively.
      *
      * @param haystack the string to search
-     * @param needles the substrings that are searched for
-     * @param locale the locale used for case-insensitive comparisons
+     * @param needles  the substrings that are searched for
+     * @param locale   the locale used for case-insensitive comparisons
      * @return a list of extended-grapheme-cluster spans at which the needle
      * occurs in the haystack
      */
@@ -626,7 +626,7 @@ public class Text_Utils {
         if (needle.isEmpty()) {
             throw new IllegalArgumentException(
                     "The operation `span_of_all_case_insensitive` does not support searching for an empty"
-                    + " term.");
+                            + " term.");
         }
         if (haystack.isEmpty()) {
             return List.of();
@@ -653,8 +653,8 @@ public class Text_Utils {
      * case-insensitively.
      *
      * @param haystack the string to search
-     * @param needle the substring that is searched for
-     * @param locale the locale used for case-insensitive comparisons
+     * @param needle   the substring that is searched for
+     * @param locale   the locale used for case-insensitive comparisons
      * @return a list of extended-grapheme-cluster spans at which the needle
      * occurs in the haystack
      */
@@ -663,18 +663,18 @@ public class Text_Utils {
         CaseFoldedString foldedHaystack = CaseFoldedString.fold(haystack, locale);
         List<String> foldedNeedles
                 = IntStream.range(0, needles.size())
-                        .mapToObj(i -> CaseFoldedString.simpleFold(needles.get(i), locale))
-                        .collect(Collectors.toList());
+                .mapToObj(i -> CaseFoldedString.simpleFold(needles.get(i), locale))
+                .collect(Collectors.toList());
         var foldedSpans = span_of_all_multiple(foldedHaystack.getFoldedString(), foldedNeedles);
         List<GraphemeSpan> occurrences
                 = foldedSpans.stream()
-                        .map(
-                                span
+                .map(
+                        span
                                 -> findExtendedSpan(
-                                        foldedHaystack,
-                                        span.codeunit_start,
-                                        span.codeunit_end - span.codeunit_start))
-                        .collect(Collectors.toList());
+                                foldedHaystack,
+                                span.codeunit_start,
+                                span.codeunit_end - span.codeunit_start))
+                .collect(Collectors.toList());
         return occurrences;
     }
 
@@ -698,10 +698,10 @@ public class Text_Utils {
      * This correctly handles the edge case where only a part of some grapheme
      * was matched.
      *
-     * @param string the folded string with which the positions are associated,
-     * containing a cache of position mappings
+     * @param string   the folded string with which the positions are associated,
+     *                 containing a cache of position mappings
      * @param position the position of the match (in code units)
-     * @param length the length of the match (in code units)
+     * @param length   the length of the match (in code units)
      * @return a minimal {@code GraphemeSpan} which contains all code units from
      * the match
      */
@@ -740,12 +740,10 @@ public class Text_Utils {
      * Normalizes the string to its canonical Unicode form using the specified
      * name and mode.
      *
-     * @see
-     * https://unicode-org.github.io/icu-docs/apidoc/dev/icu4j/com/ibm/icu/text/Normalizer2.html
-     * @see
-     * https://unicode-org.github.io/icu-docs/apidoc/dev/icu4j/com/ibm/icu/text/Normalizer2.Mode.html
      * @param name the normalization name, must be "nfc", "nfkc", or "nfkc_cf"
      * @param mode the normalization mode
+     * @see https://unicode-org.github.io/icu-docs/apidoc/dev/icu4j/com/ibm/icu/text/Normalizer2.html
+     * @see https://unicode-org.github.io/icu-docs/apidoc/dev/icu4j/com/ibm/icu/text/Normalizer2.Mode.html
      */
     public static String normalizeWithMode(String str, String name, Mode mode) {
         return Normalizer2.getInstance(null, name, mode).normalize(str);
@@ -772,10 +770,10 @@ public class Text_Utils {
     /**
      * Replaces all provided spans within the text with {@code newSequence}.
      *
-     * @param str the string to process
-     * @param spans the spans to replace; the spans should be sorted by their
-     * starting point in the non-decreasing order; the behaviour is undefined if
-     * these requirements are not satisfied.
+     * @param str         the string to process
+     * @param spans       the spans to replace; the spans should be sorted by their
+     *                    starting point in the non-decreasing order; the behaviour is undefined if
+     *                    these requirements are not satisfied.
      * @param newSequence the string that will replace the spans
      * @return {@code str} with all provided spans replaced with
      * {@code newSequence}

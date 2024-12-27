@@ -45,11 +45,11 @@ public final class StringStorage extends SpecializedStorage<String> {
 
         untrimmedCount
                 = CompletableFuture.supplyAsync(
-                        () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
+                () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
 
         whitespaceCount
                 = CompletableFuture.supplyAsync(
-                        () -> CountWhitespace.compute(this, CountWhitespace.DEFAULT_SAMPLE_SIZE, null));
+                () -> CountWhitespace.compute(this, CountWhitespace.DEFAULT_SAMPLE_SIZE, null));
     }
 
     @Override
@@ -78,8 +78,8 @@ public final class StringStorage extends SpecializedStorage<String> {
             // Need to recompute the value, as was cancelled.
             untrimmedCount
                     = CompletableFuture.completedFuture(
-                            CountUntrimmed.compute(
-                                    this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+                    CountUntrimmed.compute(
+                            this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
         }
 
         try {
@@ -101,8 +101,8 @@ public final class StringStorage extends SpecializedStorage<String> {
             // Need to recompute the value, as was cancelled.
             whitespaceCount
                     = CompletableFuture.completedFuture(
-                            CountWhitespace.compute(
-                                    this, CountWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+                    CountWhitespace.compute(
+                            this, CountWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
         }
 
         try {
@@ -117,156 +117,156 @@ public final class StringStorage extends SpecializedStorage<String> {
         MapOperationStorage<String, SpecializedStorage<String>> t = ObjectStorage.buildObjectOps();
         t.add(
                 new BinaryMapOperation<>(Maps.EQ) {
-            @Override
-            public BoolStorage runBinaryMap(
-                    SpecializedStorage<String> storage,
-                    Object arg,
-                    MapOperationProblemAggregator problemAggregator) {
-                BitSet r = new BitSet();
-                BitSet isNothing = new BitSet();
-                Context context = Context.getCurrent();
-                for (int i = 0; i < storage.size(); i++) {
-                    if (storage.getItem(i) == null || arg == null) {
-                        isNothing.set(i);
-                    } else if (arg instanceof String s && Text_Utils.equals(storage.getItem(i), s)) {
-                        r.set(i);
+                    @Override
+                    public BoolStorage runBinaryMap(
+                            SpecializedStorage<String> storage,
+                            Object arg,
+                            MapOperationProblemAggregator problemAggregator) {
+                        BitSet r = new BitSet();
+                        BitSet isNothing = new BitSet();
+                        Context context = Context.getCurrent();
+                        for (int i = 0; i < storage.size(); i++) {
+                            if (storage.getItem(i) == null || arg == null) {
+                                isNothing.set(i);
+                            } else if (arg instanceof String s && Text_Utils.equals(storage.getItem(i), s)) {
+                                r.set(i);
+                            }
+
+                            context.safepoint();
+                        }
+                        return new BoolStorage(r, isNothing, storage.size(), false);
                     }
 
-                    context.safepoint();
-                }
-                return new BoolStorage(r, isNothing, storage.size(), false);
-            }
+                    @Override
+                    public BoolStorage runZip(
+                            SpecializedStorage<String> storage,
+                            Storage<?> arg,
+                            MapOperationProblemAggregator problemAggregator) {
+                        BitSet r = new BitSet();
+                        BitSet isNothing = new BitSet();
+                        Context context = Context.getCurrent();
+                        for (int i = 0; i < storage.size(); i++) {
+                            if (storage.getItem(i) == null || i >= arg.size() || arg.isNothing(i)) {
+                                isNothing.set(i);
+                            } else if (arg.getItemBoxed(i) instanceof String s
+                                    && Text_Utils.equals(storage.getItem(i), s)) {
+                                r.set(i);
+                            }
 
-            @Override
-            public BoolStorage runZip(
-                    SpecializedStorage<String> storage,
-                    Storage<?> arg,
-                    MapOperationProblemAggregator problemAggregator) {
-                BitSet r = new BitSet();
-                BitSet isNothing = new BitSet();
-                Context context = Context.getCurrent();
-                for (int i = 0; i < storage.size(); i++) {
-                    if (storage.getItem(i) == null || i >= arg.size() || arg.isNothing(i)) {
-                        isNothing.set(i);
-                    } else if (arg.getItemBoxed(i) instanceof String s
-                            && Text_Utils.equals(storage.getItem(i), s)) {
-                        r.set(i);
+                            context.safepoint();
+                        }
+                        return new BoolStorage(r, isNothing, storage.size(), false);
                     }
-
-                    context.safepoint();
-                }
-                return new BoolStorage(r, isNothing, storage.size(), false);
-            }
-        });
+                });
         t.add(
                 new StringBooleanOp(Maps.STARTS_WITH) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.starts_with(a, b);
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.starts_with(a, b);
+                    }
+                });
         t.add(
                 new StringBooleanOp(Maps.ENDS_WITH) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.ends_with(a, b);
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.ends_with(a, b);
+                    }
+                });
         t.add(
                 new StringLongToStringOp(Maps.TEXT_LEFT) {
-            @Override
-            protected String doOperation(String a, long b) {
-                return Text_Utils.take_prefix(a, b);
-            }
-        });
+                    @Override
+                    protected String doOperation(String a, long b) {
+                        return Text_Utils.take_prefix(a, b);
+                    }
+                });
         t.add(
                 new StringLongToStringOp(Maps.TEXT_RIGHT) {
-            @Override
-            protected String doOperation(String a, long b) {
-                return Text_Utils.take_suffix(a, b);
-            }
-        });
+                    @Override
+                    protected String doOperation(String a, long b) {
+                        return Text_Utils.take_suffix(a, b);
+                    }
+                });
         t.add(
                 new StringBooleanOp(Maps.CONTAINS) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.contains(a, b);
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.contains(a, b);
+                    }
+                });
         t.add(
                 new StringComparisonOp(Maps.LT) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.compare_normalized(a, b) < 0;
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.compare_normalized(a, b) < 0;
+                    }
+                });
         t.add(
                 new StringComparisonOp(Maps.LTE) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.compare_normalized(a, b) <= 0;
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.compare_normalized(a, b) <= 0;
+                    }
+                });
         t.add(
                 new StringComparisonOp(Maps.GT) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.compare_normalized(a, b) > 0;
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.compare_normalized(a, b) > 0;
+                    }
+                });
         t.add(
                 new StringComparisonOp(Maps.GTE) {
-            @Override
-            protected boolean doString(String a, String b) {
-                return Text_Utils.compare_normalized(a, b) >= 0;
-            }
-        });
+                    @Override
+                    protected boolean doString(String a, String b) {
+                        return Text_Utils.compare_normalized(a, b) >= 0;
+                    }
+                });
         t.add(new LikeOp());
         t.add(new StringIsInOp<>());
         t.add(
                 new StringStringOp(Maps.ADD) {
-            @Override
-            protected String doString(String a, String b) {
-                return a + b;
-            }
+                    @Override
+                    protected String doString(String a, String b) {
+                        return a + b;
+                    }
 
-            @Override
-            protected TextType computeResultType(TextType a, TextType b) {
-                return TextType.concatTypes(a, b);
-            }
-        });
+                    @Override
+                    protected TextType computeResultType(TextType a, TextType b) {
+                        return TextType.concatTypes(a, b);
+                    }
+                });
         t.add(
                 new CoalescingStringStringOp(Maps.MIN) {
-            @Override
-            protected String doString(String a, String b) {
-                if (Text_Utils.compare_normalized(a, b) < 0) {
-                    return a;
-                } else {
-                    return b;
-                }
-            }
+                    @Override
+                    protected String doString(String a, String b) {
+                        if (Text_Utils.compare_normalized(a, b) < 0) {
+                            return a;
+                        } else {
+                            return b;
+                        }
+                    }
 
-            @Override
-            protected TextType computeResultType(TextType a, TextType b) {
-                return TextType.maxType(a, b);
-            }
-        });
+                    @Override
+                    protected TextType computeResultType(TextType a, TextType b) {
+                        return TextType.maxType(a, b);
+                    }
+                });
         t.add(
                 new CoalescingStringStringOp(Maps.MAX) {
-            @Override
-            protected String doString(String a, String b) {
-                if (Text_Utils.compare_normalized(a, b) > 0) {
-                    return a;
-                } else {
-                    return b;
-                }
-            }
+                    @Override
+                    protected String doString(String a, String b) {
+                        if (Text_Utils.compare_normalized(a, b) > 0) {
+                            return a;
+                        } else {
+                            return b;
+                        }
+                    }
 
-            @Override
-            protected TextType computeResultType(TextType a, TextType b) {
-                return TextType.maxType(a, b);
-            }
-        });
+                    @Override
+                    protected TextType computeResultType(TextType a, TextType b) {
+                        return TextType.maxType(a, b);
+                    }
+                });
         return t;
     }
 
