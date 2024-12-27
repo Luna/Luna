@@ -1,7 +1,6 @@
 package org.enso.table.data.column.operation;
 
 import java.util.Random;
-
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.storage.ColumnStorage;
 import org.enso.table.data.column.storage.StringStorage;
@@ -17,17 +16,13 @@ public class CountWhitespace {
   // Default sample size for counting untrimmed cells.
   public static final long DEFAULT_SAMPLE_SIZE = 100000;
 
-  /**
-   * Counts the number of cells in the columns with leading or trailing whitespace.
-   */
+  /** Counts the number of cells in the columns with leading or trailing whitespace. */
   public static Long apply(Column column, long sampleSize) throws InterruptedException {
     ColumnStorage storage = column.getStorage();
     return applyToStorage(storage, sampleSize);
   }
 
-  /**
-   * Counts the number of cells in the given storage with leading or trailing whitespace.
-   */
+  /** Counts the number of cells in the given storage with leading or trailing whitespace. */
   public static Long applyToStorage(ColumnStorage storage, long sampleSize)
       throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)
@@ -35,9 +30,7 @@ public class CountWhitespace {
         : (Long) compute(storage, sampleSize, Context.getCurrent());
   }
 
-  /**
-   * Internal method performing the calculation on a storage.
-   */
+  /** Internal method performing the calculation on a storage. */
   public static long compute(ColumnStorage storage, long sampleSize, Context context) {
     long size = storage.getSize();
 

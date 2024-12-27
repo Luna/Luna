@@ -4,7 +4,6 @@ import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
@@ -23,9 +22,7 @@ import org.enso.table.data.column.storage.type.TextType;
 import org.graalvm.polyglot.Context;
 import org.slf4j.Logger;
 
-/**
- * A column storing strings.
- */
+/** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
 
   private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StringStorage.class);
@@ -43,13 +40,13 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    untrimmedCount
-        = CompletableFuture.supplyAsync(
-        () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
+    untrimmedCount =
+        CompletableFuture.supplyAsync(
+            () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
 
-    whitespaceCount
-        = CompletableFuture.supplyAsync(
-        () -> CountWhitespace.compute(this, CountWhitespace.DEFAULT_SAMPLE_SIZE, null));
+    whitespaceCount =
+        CompletableFuture.supplyAsync(
+            () -> CountWhitespace.compute(this, CountWhitespace.DEFAULT_SAMPLE_SIZE, null));
   }
 
   @Override
@@ -76,10 +73,10 @@ public final class StringStorage extends SpecializedStorage<String> {
   public Long cachedUntrimmedCount() throws InterruptedException {
     if (untrimmedCount.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      untrimmedCount
-          = CompletableFuture.completedFuture(
-          CountUntrimmed.compute(
-              this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+      untrimmedCount =
+          CompletableFuture.completedFuture(
+              CountUntrimmed.compute(
+                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
@@ -99,10 +96,10 @@ public final class StringStorage extends SpecializedStorage<String> {
   public Long cachedWhitespaceCount() throws InterruptedException {
     if (untrimmedCount.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      whitespaceCount
-          = CompletableFuture.completedFuture(
-          CountWhitespace.compute(
-              this, CountWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+      whitespaceCount =
+          CompletableFuture.completedFuture(
+              CountWhitespace.compute(
+                  this, CountWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
