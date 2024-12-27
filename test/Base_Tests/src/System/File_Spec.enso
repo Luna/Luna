@@ -331,6 +331,7 @@ add_specs suite_builder =
         group_builder.specify "will not resolve a relative directory to absolute in `parent` if not necessary" <|
             f = File.new "foo/bar"
             f.parent . should_equal (File.new "foo")
+            f.parent.path . should_equal "foo"
 
         group_builder.specify "will return Nothing for a root path that has no parent" <|
             root = File.new "/" . absolute . normalize
