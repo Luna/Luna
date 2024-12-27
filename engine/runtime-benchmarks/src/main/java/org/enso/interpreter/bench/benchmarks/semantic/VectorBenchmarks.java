@@ -101,9 +101,14 @@ public class VectorBenchmarks {
           this.arrayOfFibNumbers = getMethod.apply("slice").execute(self, 0, vec, 1, length);
           break;
         }
-      case "averageOverSliceWrapped":
+      case "averageOverSliceWrapped10":
         {
           this.arrayOfFibNumbers = getMethod.apply("slice").execute(self, 10, vec, 1, length);
+          break;
+        }
+      case "averageOverSliceWrapped100":
+        {
+          this.arrayOfFibNumbers = getMethod.apply("slice").execute(self, 100, vec, 1, length);
           break;
         }
       case "averageOverArray":
@@ -161,13 +166,21 @@ public class VectorBenchmarks {
     performBenchmark(matter);
   }
 
+  /** Measures performance of a single {@code Vector.slice}. */
   @Benchmark
   public void averageOverSlice(Blackhole matter) {
     performBenchmark(matter);
   }
 
+  /** Measures performance of {@code Vector.slice} applied ten times on the same array. */
   @Benchmark
-  public void averageOverSliceWrapped(Blackhole matter) {
+  public void averageOverSliceWrapped10(Blackhole matter) {
+    performBenchmark(matter);
+  }
+
+  /** Measures performance of {@code Vector.slice} applied hundred times on the same array. */
+  @Benchmark
+  public void averageOverSliceWrapped100(Blackhole matter) {
     performBenchmark(matter);
   }
 
