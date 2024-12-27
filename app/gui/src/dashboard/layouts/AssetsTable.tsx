@@ -458,9 +458,13 @@ function AssetsTable(props: AssetsTableProps) {
           } else if (selectedKeys.size === 1) {
             const [soleKey] = selectedKeys
             const item = soleKey == null ? null : nodeMapRef.current.get(soleKey)
+
             if (item != null && item.isType(AssetType.directory)) {
               setTargetDirectory(item)
+            } else {
+              setTargetDirectory(null)
             }
+
             if (
               item != null &&
               item.item.id !== assetPanelStore.getState().assetPanelProps.item?.id
@@ -471,6 +475,7 @@ function AssetsTable(props: AssetsTableProps) {
           } else {
             let commonDirectoryKey: AssetId | null = null
             let otherCandidateDirectoryKey: AssetId | null = null
+
             for (const key of selectedKeys) {
               const node = nodeMapRef.current.get(key)
               if (node != null) {
@@ -499,8 +504,11 @@ function AssetsTable(props: AssetsTableProps) {
             }
             const node =
               commonDirectoryKey == null ? null : nodeMapRef.current.get(commonDirectoryKey)
+
             if (node != null && node.isType(AssetType.directory)) {
               setTargetDirectory(node)
+            } else {
+              setTargetDirectory(null)
             }
           }
         }
