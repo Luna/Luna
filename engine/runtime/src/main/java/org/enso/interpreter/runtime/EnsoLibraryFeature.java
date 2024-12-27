@@ -1,4 +1,4 @@
-package org.enso.runner;
+package org.enso.interpreter.runtime;
 
 import static scala.jdk.javaapi.CollectionConverters.asJava;
 
