@@ -101,7 +101,7 @@ public final class AtomConstructor extends EnsoObject {
   }
 
   /**
-   * Building blocks required for initialization of the atom constructor.
+   * Create new builder required for initialization of the atom constructor.
    *
    * @param section the source section
    * @param localScope the description of the local scope
@@ -110,13 +110,77 @@ public final class AtomConstructor extends EnsoObject {
    * @param annotations the list of attached annotations
    * @param args the list of argument definitions
    */
-  public record InitializationParts(
+  public static InitializationBuilder newInitializationBuilder(
       SourceSection section,
       LocalScope localScope,
       ExpressionNode[] assignments,
       ExpressionNode[] varReads,
       Annotation[] annotations,
-      ArgumentDefinition[] args) {}
+      ArgumentDefinition[] args) {
+    return new InitializationBuilder(section, localScope, assignments, varReads, annotations, args);
+  }
+
+  /**
+   * Builder required for initialization of the atom constructor.
+   */
+  public static final class InitializationBuilder {
+
+    private final SourceSection section;
+    private final LocalScope localScope;
+    private final ExpressionNode[] assignments;
+    private final ExpressionNode[] varReads;
+    private final Annotation[] annotations;
+    private final ArgumentDefinition[] args;
+
+    /**
+     * Create new builder required for initialization of the atom constructor.
+     *
+     * @param section the source section
+     * @param localScope the description of the local scope
+     * @param assignments the expressions that evaluate and assign constructor arguments to local vars
+     * @param varReads the expressions that read field values from local vars
+     * @param annotations the list of attached annotations
+     * @param args the list of argument definitions
+     */
+    InitializationBuilder(
+        SourceSection section,
+        LocalScope localScope,
+        ExpressionNode[] assignments,
+        ExpressionNode[] varReads,
+        Annotation[] annotations,
+        ArgumentDefinition[] args) {
+      this.section = section;
+      this.localScope = localScope;
+      this.assignments = assignments;
+      this.varReads = varReads;
+      this.annotations = annotations;
+      this.args = args;
+    }
+
+    private SourceSection getSection() {
+      return section;
+    }
+
+    private LocalScope getLocalScope() {
+      return localScope;
+    }
+
+    private ExpressionNode[] getAssignments() {
+      return assignments;
+    }
+
+    private ExpressionNode[] getVarReads() {
+      return varReads;
+    }
+
+    private Annotation[] getAnnotations() {
+      return annotations;
+    }
+
+    private ArgumentDefinition[] getArgs() {
+      return args;
+    }
+  }
 
   /**
    * The result of this atom constructor initialization.
@@ -141,10 +205,10 @@ public final class AtomConstructor extends EnsoObject {
       fieldNames[i] = args[i].getName();
     }
 
-    var parts =
-        new InitializationParts(
+    var builder =
+        newInitializationBuilder(
             null, LocalScope.empty(), new ExpressionNode[0], reads, new Annotation[0], args);
-    return initializeFields(language, scopeBuilder, CachingSupplier.forValue(parts), fieldNames);
+    return initializeFields(language, scopeBuilder, CachingSupplier.forValue(builder), fieldNames);
   }
 
   /**
@@ -152,14 +216,14 @@ public final class AtomConstructor extends EnsoObject {
    *
    * @param language the language implementation
    * @param scopeBuilder the module scope's builder where the accessor should be registered at
-   * @param initializationPartsSupplier the function supplying the parts required for initialization
-   * @param argumentsLength the number of the arguments
+   * @param initializationBuilderSupplier the function supplying the parts required for initialization
+   * @param fieldNames the argument names
    * @return {@code this}, for convenience
    */
   public AtomConstructor initializeFields(
       EnsoLanguage language,
       ModuleScope.Builder scopeBuilder,
-      Supplier<InitializationParts> initializationPartsSupplier,
+      Supplier<InitializationBuilder> initializationBuilderSupplier,
       String[] fieldNames) {
     CompilerDirectives.transferToInterpreterAndInvalidate();
     assert accessor == null : "Don't initialize twice: " + this.name;
@@ -172,18 +236,18 @@ public final class AtomConstructor extends EnsoObject {
     CachingSupplier<InitializationResult> initializationResultSupplier =
         CachingSupplier.wrap(
             () -> {
-              var parts = initializationPartsSupplier.get();
+              var builder = initializationBuilderSupplier.get();
               var constructorFunction =
                   buildConstructorFunction(
                       language,
-                      parts.section,
-                      parts.localScope,
+                      builder.getSection(),
+                      builder.getLocalScope(),
                       scopeBuilder,
-                      parts.assignments,
-                      parts.varReads,
-                      parts.annotations,
-                      parts.args);
-              var layout = Layout.createBoxed(parts.args);
+                      builder.getAssignments(),
+                      builder.getVarReads(),
+                      builder.getAnnotations(),
+                      builder.getArgs());
+              var layout = Layout.createBoxed(builder.getArgs());
               return new InitializationResult(constructorFunction, layout);
             });
     this.boxedLayout =

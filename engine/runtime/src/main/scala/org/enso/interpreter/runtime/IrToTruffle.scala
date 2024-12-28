@@ -102,7 +102,6 @@ import org.enso.interpreter.runtime.callable.{
   Annotation => RuntimeAnnotation
 }
 import org.enso.interpreter.runtime.data.Type
-import org.enso.interpreter.runtime.data.atom.AtomConstructor.InitializationParts
 import org.enso.interpreter.runtime.scope.{ImportExportScope, ModuleScope}
 import org.enso.interpreter.{Constants, EnsoLanguage}
 
@@ -268,7 +267,8 @@ class IrToTruffle(
     atomCons: AtomConstructor,
     atomDefn: Definition.Data
   ): Unit = {
-    val initializationPartsSupplier: Supplier[InitializationParts] =
+    val initializationBuilderSupplier
+      : Supplier[AtomConstructor.InitializationBuilder] =
       () => {
         val scopeInfo = rootScopeInfo("atom definition", atomDefn)
 
@@ -356,7 +356,7 @@ class IrToTruffle(
           new RuntimeAnnotation(annotation.name, closureRootNode)
         }
 
-        new InitializationParts(
+        AtomConstructor.newInitializationBuilder(
           makeSection(scopeBuilder.getModule, atomDefn.location),
           localScope,
           assignments.toArray,
@@ -370,7 +370,7 @@ class IrToTruffle(
       atomCons.initializeFields(
         language,
         scopeBuilder,
-        initializationPartsSupplier,
+        initializationBuilderSupplier,
         fieldNames
       )
     }
