@@ -32,6 +32,7 @@ import org.enso.interpreter.node.callable.resolver.MethodResolverNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.function.Function;
+import org.enso.interpreter.runtime.data.EnsoMultiType.AllTypesWith;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.graalvm.collections.Pair;
@@ -158,11 +159,12 @@ public final class EnsoMultiValue extends EnsoObject {
   }
 
   @ExportMessage
-  final Type[] allTypes(boolean includeExtraTypes) {
+  final Type[] allTypes(
+      boolean includeExtraTypes, @Cached EnsoMultiType.AllTypesWith allTypesWith) {
     if (!includeExtraTypes) {
-      return dispatch.allTypesWith(null);
+      return allTypesWith.executeAllTypes(dispatch, null);
     } else {
-      return dispatch.allTypesWith(extra);
+      return allTypesWith.executeAllTypes(dispatch, extra);
     }
   }
 
@@ -494,25 +496,31 @@ public final class EnsoMultiValue extends EnsoObject {
   @TruffleBoundary
   @Override
   public String toString() {
-    var both = dispatch.allTypesWith(extra);
+    var both = EnsoMultiType.AllTypesWith.getUncached().executeAllTypes(dispatch, extra);
     return Stream.of(both).map(t -> t.getName()).collect(Collectors.joining(" & "));
   }
 
   /** Casts {@link EnsoMultiValue} to requested type effectively. */
   public static final class CastToNode extends Node {
     private static final CastToNode UNCACHED =
-        new CastToNode(EnsoMultiType.FindIndexNode.getUncached(), NewNode.getUncached());
+        new CastToNode(
+            EnsoMultiType.FindIndexNode.getUncached(),
+            NewNode.getUncached(),
+            AllTypesWith.getUncached());
     @Child private EnsoMultiType.FindIndexNode findNode;
     @Child private NewNode newNode;
+    @Child private AllTypesWith allTypesWith;
 
-    private CastToNode(EnsoMultiType.FindIndexNode f, NewNode n) {
+    private CastToNode(EnsoMultiType.FindIndexNode f, NewNode n, AllTypesWith a) {
       this.findNode = f;
       this.newNode = n;
+      this.allTypesWith = a;
     }
 
     @NeverDefault
     public static CastToNode create() {
-      return new CastToNode(EnsoMultiType.FindIndexNode.create(), NewNode.create());
+      return new CastToNode(
+          EnsoMultiType.FindIndexNode.create(), NewNode.create(), AllTypesWith.create());
     }
 
     @NeverDefault
@@ -540,7 +548,7 @@ public final class EnsoMultiValue extends EnsoObject {
       }
       if (i != -1) {
         if (reorderOnly) {
-          var copyTypes = mv.dispatch.allTypesWith(mv.extra);
+          var copyTypes = allTypesWith.executeAllTypes(mv.dispatch, mv.extra);
           var copyValues = mv.values.clone();
           copyTypes[0] = copyTypes[i];
           copyValues[0] = copyValues[i];
@@ -567,7 +575,7 @@ public final class EnsoMultiValue extends EnsoObject {
       MethodResolverNode node, UnresolvedSymbol symbol) {
     var ctx = EnsoContext.get(node);
     Pair<Function, Type> foundAnyMethod = null;
-    for (var t : dispatch.allTypesWith(null)) {
+    for (var t : EnsoMultiType.AllTypesWith.getUncached().executeAllTypes(dispatch, null)) {
       var fnAndType = node.execute(t, symbol);
       if (fnAndType != null) {
         if (dispatch.typesLength() == 1 || fnAndType.getRight() != ctx.getBuiltins().any()) {

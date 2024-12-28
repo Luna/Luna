@@ -38,18 +38,6 @@ final class EnsoMultiType {
     return types.length;
   }
 
-  final Type[] allTypesWith(EnsoMultiType nextOrNull) {
-    if (nextOrNull == null || nextOrNull.types.length == 0) {
-      return this.types.clone();
-    } else {
-      var next = nextOrNull;
-      var arr = new Type[this.types.length + next.types.length];
-      System.arraycopy(this.types, 0, arr, 0, types.length);
-      System.arraycopy(next.types, 0, arr, types.length, next.types.length);
-      return arr;
-    }
-  }
-
   final Type firstType() {
     return types[0];
   }
@@ -128,6 +116,51 @@ final class EnsoMultiType {
       var ctx = EnsoContext.get(this);
       var index = mt.find(ctx, type);
       return index;
+    }
+  }
+
+  @GenerateUncached
+  abstract static class AllTypesWith extends Node {
+    private static final String INLINE_CACHE_LIMIT = "5";
+
+    @NeverDefault
+    static AllTypesWith getUncached() {
+      return EnsoMultiTypeFactory.AllTypesWithNodeGen.getUncached();
+    }
+
+    @NeverDefault
+    static AllTypesWith create() {
+      return EnsoMultiTypeFactory.AllTypesWithNodeGen.create();
+    }
+
+    abstract Type[] executeAllTypes(EnsoMultiType first, EnsoMultiType second);
+
+    @Specialization(
+        limit = INLINE_CACHE_LIMIT,
+        guards = {
+          "self == cachedSelf",
+          "nextOrNull == cachedNextOrNull",
+        })
+    Type[] optimizeForTypes(
+        EnsoMultiType self,
+        EnsoMultiType nextOrNull,
+        @Cached("self") EnsoMultiType cachedSelf,
+        @Cached("nextOrNull") EnsoMultiType cachedNextOrNull,
+        @Cached("slowlyComputeTypes(self, nextOrNull)") Type[] result) {
+      return result;
+    }
+
+    @Specialization(replaces = "optimizeForTypes")
+    Type[] slowlyComputeTypes(EnsoMultiType self, EnsoMultiType nextOrNull) {
+      if (nextOrNull == null || nextOrNull.types.length == 0) {
+        return self.types.clone();
+      } else {
+        var next = nextOrNull;
+        var arr = new Type[self.types.length + next.types.length];
+        System.arraycopy(self.types, 0, arr, 0, self.types.length);
+        System.arraycopy(next.types, 0, arr, self.types.length, next.types.length);
+        return arr;
+      }
     }
   }
 }
