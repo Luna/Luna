@@ -120,9 +120,7 @@ public final class AtomConstructor extends EnsoObject {
     return new InitializationBuilder(section, localScope, assignments, varReads, annotations, args);
   }
 
-  /**
-   * Builder required for initialization of the atom constructor.
-   */
+  /** Builder required for initialization of the atom constructor. */
   public static final class InitializationBuilder {
 
     private final SourceSection section;
@@ -137,7 +135,8 @@ public final class AtomConstructor extends EnsoObject {
      *
      * @param section the source section
      * @param localScope the description of the local scope
-     * @param assignments the expressions that evaluate and assign constructor arguments to local vars
+     * @param assignments the expressions that evaluate and assign constructor arguments to local
+     *     vars
      * @param varReads the expressions that read field values from local vars
      * @param annotations the list of attached annotations
      * @param args the list of argument definitions
@@ -216,7 +215,8 @@ public final class AtomConstructor extends EnsoObject {
    *
    * @param language the language implementation
    * @param scopeBuilder the module scope's builder where the accessor should be registered at
-   * @param initializationBuilderSupplier the function supplying the parts required for initialization
+   * @param initializationBuilderSupplier the function supplying the parts required for
+   *     initialization
    * @param fieldNames the argument names
    * @return {@code this}, for convenience
    */
