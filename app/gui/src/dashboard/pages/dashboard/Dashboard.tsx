@@ -53,11 +53,13 @@ import {
   useSetCategory,
   useSetExpandedDirectoryIds,
 } from '#/providers/DriveProvider'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery, useQueryClient } from '@tanstack/react-query'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { DashboardTabPanels } from './DashboardTabPanels'
 
 // =================
@@ -337,6 +339,13 @@ function OpenedProjectsParentsExpander() {
   const launchedProjects = useLaunchedProjects()
   const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
   const launchedProjectsRef = useSyncRef(launchedProjects)
+  const { user } = authProvider.useFullUserSession()
+
+  const userGroupDirectoryIds = new Set(
+    (user.userGroups ?? EMPTY_ARRAY).map((groupId) =>
+      backendModule.DirectoryId(groupId.replace(/^usergroup-/, 'directory-')),
+    ),
+  )
 
   React.useEffect(() => {
     switch (category.type) {
@@ -372,6 +381,12 @@ function OpenedProjectsParentsExpander() {
             const expandedDirectoryIds = new Set(driveStore.getState().expandedDirectoryIds)
             for (const project of projects) {
               const parents = project.parentsPath.split('/').map(backendModule.DirectoryId)
+              const rootDirectoryId = parents[0]
+              if ((rootDirectoryId && userGroupDirectoryIds.has(rootDirectoryId)) ?? false) {
+                expandedDirectoryIds.add(TEAMS_DIRECTORY_ID)
+              } else {
+                expandedDirectoryIds.add(USERS_DIRECTORY_ID)
+              }
               for (const parent of parents) {
                 expandedDirectoryIds.add(parent)
               }
