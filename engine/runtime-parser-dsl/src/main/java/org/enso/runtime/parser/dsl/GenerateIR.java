@@ -7,8 +7,11 @@ import java.lang.annotation.Target;
 
 /**
  * A class annotated with this annotation will be processed by the IR processor. The processor will
- * generate a super class that is meant to be extended by this class. The generated class will have
- * the same package as this class, and its name will have the "Gen" suffix. Majority of the methods
+ * generate a super class from the {@code extends} clause of the annotated class. If the annotated
+ * class does not have {@code extends} clause, an error is generated. Moreover, if the class in the
+ * {@code extends} clause already exists, an error is generated.
+ *
+ * <p>The generated class will have the same package as the annotated class. Majority of the methods
  * in the generated class will be either private or package-private, so that they are not accessible
  * from the outside.
  *

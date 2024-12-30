@@ -95,8 +95,9 @@ public class IRProcessor extends AbstractProcessor {
     }
   }
 
-  private static String generatedClassName(TypeElement processedClassElem) {
-    return processedClassElem.getSimpleName().toString() + "Gen";
+  private String generatedClassName(TypeElement processedClassElem) {
+    var superClass = processedClassElem.getSuperclass();
+    return superClass.toString();
   }
 
   private ProcessedClass constructProcessedClass(TypeElement processedClassElem) {
@@ -174,25 +175,15 @@ public class IRProcessor extends AbstractProcessor {
 
   private void ensureExtendsGeneratedSuperclass(TypeElement clazz) {
     var superClass = clazz.getSuperclass();
-    var genClassName = generatedClassName(clazz);
     if (superClass.getKind() == TypeKind.NONE) {
       throw new IRProcessingException(
-          "Class annotated with @GenerateIR must extend generated superclass'"
-              + genClassName
-              + "' "
-              + "But instead extends no class.",
-          clazz);
+          "Class annotated with @GenerateIR must have 'extends' clause", clazz);
     }
-    var superClassName = superClass.toString();
-    var extendsGeneratedSuperclass = superClassName.contains(genClassName);
-    if (!extendsGeneratedSuperclass) {
+    if (superClass.getKind() != TypeKind.ERROR) {
       throw new IRProcessingException(
-          "Class annotated with @GenerateIR must extend generated superclass'"
-              + genClassName
-              + "'. "
-              + "The actual extended class is "
-              + superClassName,
-          clazz);
+          "Class annotated with @GenerateIR must extend generated superclass. "
+              + "The generated super class can have arbitrary name, but must not exist.",
+          processingEnv.getTypeUtils().asElement(superClass));
     }
   }
 

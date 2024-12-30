@@ -273,6 +273,23 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void generatedClass_CanHaveArbitraryName() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName extends MySuperGeneratedClass {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("abstract class MySuperGeneratedClass"));
+  }
+
+  @Test
   public void generatedMethod_setLocation_returnsSubClassType() {
     var src =
         """
