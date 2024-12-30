@@ -23,7 +23,8 @@ export interface ConfirmDeleteModalProps {
 /** A modal for confirming the deletion of an asset. */
 export default function ConfirmDeleteModal(props: ConfirmDeleteModalProps) {
   const {
-    defaultOpen = false,
+    // MUST NOT be defaulted. Omitting this value should fall back to `Dialog`'s behavior.
+    defaultOpen,
     cannotUndo = false,
     actionText,
     actionButtonLabel = 'Delete',
@@ -34,7 +35,11 @@ export default function ConfirmDeleteModal(props: ConfirmDeleteModalProps) {
   const { getText } = useText()
 
   return (
-    <Dialog title={getText('areYouSure')} role="alertdialog" modalProps={{ defaultOpen }}>
+    <Dialog
+      title={getText('areYouSure')}
+      role="alertdialog"
+      modalProps={defaultOpen == null ? {} : { defaultOpen }}
+    >
       <Form schema={z.object({})} method="dialog" onSubmit={doDelete} onSubmitSuccess={unsetModal}>
         <Text className="relative">{getText('confirmPrompt', actionText)}</Text>
         {cannotUndo && (

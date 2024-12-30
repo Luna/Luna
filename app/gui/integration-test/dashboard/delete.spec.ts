@@ -1,7 +1,15 @@
 /** @file Test copying, moving, cutting and pasting. */
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
+import { modModifier } from 'integration-test/dashboard/actions/BaseActions'
 import { mockAllAndLogin, TEXT } from './actions'
+
+const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
+
+/** Click an asset row. The center must not be clicked as that is the button for adding a label. */
+async function clickAssetRow(assetRow: Locator) {
+  await assetRow.click({ position: ASSET_ROW_SAFE_POSITION })
+}
 
 test('delete and restore', ({ page }) =>
   mockAllAndLogin({ page })
@@ -66,29 +74,24 @@ test('clear trash', ({ page }) =>
     .driveTable.withRows(async (rows) => {
       await expect(rows).toHaveCount(6)
     })
-    .withModPressed((self) =>
-      self.driveTable.withRows(async (rows) => {
-        const rowEls = await rows.all()
-        await Promise.all(rowEls.map((row) => row.click()))
-      }),
-    )
-    .press('OsDelete')
+    .driveTable.withRows(async (rows, _nonRows, _context, page) => {
+      const mod = await modModifier(page)
+      // Parallelizing this using `Promise.all` makes it inconsistent.
+      const rowEls = await rows.all()
+      for (const row of rowEls) {
+        await row.click({ modifiers: [mod] })
+      }
+    })
     .driveTable.rightClickRow(0)
-    .contextMenu.moveFolderToTrash()
+    .contextMenu.moveAllToTrash(true)
     .driveTable.expectPlaceholderRow()
     .goToCategory.trash()
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(1)
+      await expect(rows).toHaveCount(6)
     })
-    .driveTable.rightClickRow(0)
-    .contextMenu.restoreFromTrash()
+    .clearTrash()
     .driveTable.expectTrashPlaceholderRow()
     .goToCategory.cloud()
-    .expectStartModal()
-    .withStartModal(async (startModal) => {
-      await expect(startModal).toBeVisible()
-    })
-    .close()
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(1)
+      await expect(rows).toHaveCount(6)
     }))

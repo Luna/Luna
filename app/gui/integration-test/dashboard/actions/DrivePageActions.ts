@@ -309,6 +309,11 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
     })
   }
 
+  /** Clear trash. */
+  clearTrash() {
+    return this.step('Clear trash', (page) => page.getByText(TEXT.clearTrash).click())
+  }
+
   /** Create a new empty project. */
   newEmptyProject() {
     return this.step(

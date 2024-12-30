@@ -12,7 +12,7 @@ export interface ContextMenuActions<T extends BaseActions<Context>, Context> {
   readonly snapshot: () => T
   readonly moveNonFolderToTrash: () => T
   readonly moveFolderToTrash: () => T
-  readonly moveAllToTrash: () => T
+  readonly moveAllToTrash: (confirm?: boolean) => T
   readonly restoreFromTrash: () => T
   readonly restoreAllFromTrash: () => T
   readonly share: () => T
@@ -75,13 +75,16 @@ export function contextMenuActions<T extends BaseActions<Context>, Context>(
           .click()
         await page.getByRole('button', { name: TEXT.delete }).getByText(TEXT.delete).click()
       }),
-    moveAllToTrash: () =>
-      step('Move all to trash (context menu)', (page) =>
-        page
+    moveAllToTrash: (hasFolder = false) =>
+      step('Move all to trash (context menu)', async (page) => {
+        await page
           .getByRole('button', { name: TEXT.moveAllToTrashShortcut })
           .getByText(TEXT.moveAllToTrashShortcut)
-          .click(),
-      ),
+          .click()
+        if (hasFolder) {
+          await page.getByRole('button', { name: TEXT.delete }).getByText(TEXT.delete).click()
+        }
+      }),
     restoreFromTrash: () =>
       step('Restore from trash (context menu)', (page) =>
         page
