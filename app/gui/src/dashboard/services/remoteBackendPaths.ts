@@ -204,12 +204,8 @@ export function getCheckoutSessionPath(checkoutSessionId: backend.CheckoutSessio
 type DirectoryId = Newtype<string, 'DirectoryId'>
 // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-redeclare
 const DirectoryId = newtypeConstructor<DirectoryId>()
-export const ROOT_PARENT_DIRECTORY_ID = backend.DirectoryId('directory-' as const)
+export const ROOT_PARENT_DIRECTORY_ID = backend.DirectoryId('directory-')
 /** The ID of the directory containing the home directories of all users. */
-export const USERS_DIRECTORY_ID = backend.DirectoryId(
-  'directory-0000000000000000000000users' as const,
-)
+export const USERS_DIRECTORY_ID = backend.DirectoryId('directory-0000000000000000000000users')
 /** The ID of the directory containing home directories of all teams. */
-export const TEAMS_DIRECTORY_ID = backend.DirectoryId(
-  'directory-0000000000000000000000teams' as const,
-)
+export const TEAMS_DIRECTORY_ID = backend.DirectoryId('directory-0000000000000000000000teams')

@@ -83,17 +83,25 @@ export function extractIdFromDirectoryId(id: backend.DirectoryId) {
 }
 
 /**
+ * Extract the ID from the given user ID.
+ * Removes the `user-` prefix.
+ */
+export function extractIdFromUserId(id: backend.UserId) {
+  return id.replace(/^user-/, '')
+}
+
+/**
  * Convert a user group ID to a directory ID.
  */
 export function userGroupIdToDirectoryId(id: backend.UserGroupId): backend.DirectoryId {
-  return DirectoryId(`directory-${id.replace(/^usergroup-/, '')}` as const)
+  return DirectoryId(`directory-${extractIdFromUserGroupId(id)}` as const)
 }
 
 /**
  * Convert a user ID to a directory ID.
  */
 export function userIdToDirectoryId(id: backend.UserId): backend.DirectoryId {
-  return DirectoryId(`directory-${id.replace(/^user-/, '')}` as const)
+  return DirectoryId(`directory-${extractIdFromUserId(id)}` as const)
 }
 
 /**
@@ -109,7 +117,7 @@ export function organizationIdToDirectoryId(id: backend.OrganizationId): backend
  * @returns The user group ID.
  */
 export function directoryIdToUserGroupId(id: backend.DirectoryId): backend.UserGroupId {
-  return UserGroupId(`usergroup-${id.replace(/^directory-/, '')}` as const)
+  return UserGroupId(`usergroup-${extractIdFromDirectoryId(id)}` as const)
 }
 
 /**

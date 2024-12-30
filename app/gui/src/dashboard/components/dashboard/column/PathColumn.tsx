@@ -30,14 +30,14 @@ export default function PathColumn(props: AssetColumnProps) {
   const { getCategoryByDirectoryId } = useCloudCategoryList()
 
   // Parents path is a string of directory ids separated by slashes.
-  const splittedPath = parentsPath.split('/').filter(isDirectoryId)
-  const rootDirectoryInPath = splittedPath[0]
+  const splitPath = parentsPath.split('/').filter(isDirectoryId)
+  const rootDirectoryInPath = splitPath[0]
 
-  const splittedVirtualParentsPath = virtualParentsPath.split('/')
+  const splitVirtualParentsPath = virtualParentsPath.split('/')
   // Virtual parents path is a string of directory names separated by slashes.
-  // To match the ids with the names, we need to remove the first element of the splitted path.
+  // To match the ids with the names, we need to remove the first element of the split path.
   // As the first element is the root directory, which is not a virtual parent.
-  const virtualParentsIds = splittedPath.slice(1)
+  const virtualParentsIds = splitPath.slice(1)
 
   const { rootDirectoryId } = useUser()
 
@@ -59,13 +59,13 @@ export default function PathColumn(props: AssetColumnProps) {
     invariant(rootDirectoryInThePath != null, 'Root directory id is null')
 
     // If the target directory is null, we assume that this directory is outside of the current tree (in another category)
-    // Which is the default, because path displays in the recent and trash folders.
-    // But sometimes user might delete a directory with it's whole content, and in that case we'll find it in the tree
-    // because parent is always fetched before children.
+    // Which is the default, because the path path displays in the recent and trash folders.
+    // But sometimes the user might delete a directory with its whole content, and in that case we'll find it in the tree
+    // because the parent is always fetched before its children.
     const targetDirectoryNode = getAssetNodeById(targetDirectory)
 
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
-      // we reassign the variable only to make ts happy here.
+      // We reassign the variable only to make TypeScript happy here.
       const categoryId = rootDirectoryInThePath.categoryId
 
       setCategory(categoryId)
@@ -90,8 +90,8 @@ export default function PathColumn(props: AssetColumnProps) {
     const rootCategory = getCategoryByDirectoryId(rootDirectoryInPath)
 
     // If the root category is not found it might mean
-    // that user is no longer have access to this root
-    // Usually this could happen if user was removed from the organization
+    // that user is no longer have access to this root directory.
+    // Usually this could happen if the user was removed from the organization
     // or user group.
     // This shouldn't happen though and these files should be filtered out
     // by the backend. But we need to handle this case anyway.
@@ -107,7 +107,7 @@ export default function PathColumn(props: AssetColumnProps) {
     })
 
     for (const [index, id] of virtualParentsIds.entries()) {
-      const name = splittedVirtualParentsPath.at(index)
+      const name = splitVirtualParentsPath.at(index)
 
       if (name == null) {
         continue
@@ -196,7 +196,7 @@ export default function PathColumn(props: AssetColumnProps) {
 }
 
 /**
- * Individual item in the path.
+ * Props for the {@link PathItem} component.
  */
 interface PathItemProps {
   readonly id: DirectoryId
