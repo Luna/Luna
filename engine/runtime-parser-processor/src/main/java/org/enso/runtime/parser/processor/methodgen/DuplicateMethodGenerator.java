@@ -65,29 +65,21 @@ public class DuplicateMethodGenerator {
 
     var duplicateMetaFieldsCode =
         """
-        $diagType diagnosticsDuplicated;
-        if (keepDiagnostics) {
+        $diagType diagnosticsDuplicated = null;
+        if (keepDiagnostics && this.diagnostics != null) {
           diagnosticsDuplicated = this.diagnostics.copy();
-        } else {
-          diagnosticsDuplicated = null;
         }
-        $metaType passDataDuplicated;
-        if (keepMetadata) {
+        $metaType passDataDuplicated = null;
+        if (keepMetadata && this.passData != null) {
           passDataDuplicated = this.passData.duplicate();
-        } else {
-          passDataDuplicated = null;
         }
-        $locType locationDuplicated;
-        if (keepLocations) {
+        $locType locationDuplicated = null;
+        if (keepLocations && this.location != null) {
           locationDuplicated = this.location;
-        } else {
-          locationDuplicated = null;
         }
-        $idType idDuplicated;
-        if (keepIdentifiers) {
+        $idType idDuplicated = null;
+        if (keepIdentifiers && this.id != null) {
           idDuplicated = this.id;
-        } else {
-          idDuplicated = null;
         }
         """
             .replace("$locType", ctx.getLocationMetaField().type())
