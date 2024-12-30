@@ -122,7 +122,7 @@ public class TestIRProcessorInline {
         """;
     var compilation = compile("JName", src);
     CompilationSubject.assertThat(compilation).failed();
-    CompilationSubject.assertThat(compilation).hadErrorContaining("must extend");
+    CompilationSubject.assertThat(compilation).hadErrorContaining("must have 'extends' clause");
   }
 
   @Test
