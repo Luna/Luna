@@ -20,7 +20,9 @@ import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.enso.base.cache.ReloadDetector;
 import org.enso.table.excel.xssfreader.XSSFReaderWorkbook;
+import org.enso.table.util.FunctionWithException;
 
 public class ExcelConnectionPool {
   public static final ExcelConnectionPool INSTANCE = new ExcelConnectionPool();
@@ -28,13 +30,15 @@ public class ExcelConnectionPool {
   private ExcelConnectionPool() {}
 
   public ReadOnlyExcelConnection openReadOnlyConnection(File file, ExcelFileFormat format)
-      throws IOException {
+      throws IOException, InterruptedException {
     synchronized (this) {
       if (isCurrentlyWriting) {
         throw new IllegalStateException(
             "Cannot open a read-only Excel connection while an Excel file is being "
                 + "written to. This is a bug in the Table library.");
       }
+
+      clearOnReload();
 
       if (!file.exists()) {
         throw new FileNotFoundException(file.toString());
@@ -131,7 +135,7 @@ public class ExcelConnectionPool {
    */
   public <R> R lockForWriting(
       File file, ExcelFileFormat format, File[] accompanyingFiles, Function<WriteHelper, R> action)
-      throws IOException {
+      throws IOException, InterruptedException {
     synchronized (this) {
       if (isCurrentlyWriting) {
         throw new IllegalStateException(
@@ -209,6 +213,29 @@ public class ExcelConnectionPool {
   private final HashMap<String, ConnectionRecord> records = new HashMap<>();
   private boolean isCurrentlyWriting = false;
 
+  /** Used to clear the ConnectionRecord on reload. */
+  private final ReloadDetector reloadDetector = new ReloadDetector();
+
+  /** If a reload has just happened, clear the ConnectionRecord cache. */
+  private void clearOnReload() throws IOException {
+    if (reloadDetector.hasReloadOccurred()) {
+      for (var record : records.values()) {
+        record.close();
+      }
+      records.clear();
+    }
+  }
+
+  /** Public for testing. */
+  public int getConnectionRecordCount() {
+    return records.size();
+  }
+
+  /** Public for testing. */
+  public void simulateReloadTestOnly() {
+    reloadDetector.simulateReloadTestOnly();
+  }
+
   static class ConnectionRecord {
     private int refCount;
     private File file;
@@ -216,7 +243,8 @@ public class ExcelConnectionPool {
     private ExcelWorkbook workbook;
     private IOException initializationException = null;
 
-    <T> T withWorkbook(Function<ExcelWorkbook, T> action) throws IOException {
+    <T> T withWorkbook(FunctionWithException<ExcelWorkbook, T, InterruptedException> action)
+        throws IOException, InterruptedException {
       synchronized (this) {
         return action.apply(accessCurrentWorkbook());
       }
@@ -232,7 +260,7 @@ public class ExcelConnectionPool {
       }
     }
 
-    void reopen(boolean throwOnFailure) throws IOException {
+    void reopen(boolean throwOnFailure) throws IOException, InterruptedException {
       synchronized (this) {
         if (workbook != null) {
           throw new IllegalStateException("The workbook is already open.");
