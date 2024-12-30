@@ -4,13 +4,6 @@ import { expect, test, type Locator } from '@playwright/test'
 import { modModifier } from 'integration-test/dashboard/actions/BaseActions'
 import { mockAllAndLogin, TEXT } from './actions'
 
-const ASSET_ROW_SAFE_POSITION = { x: 300, y: 16 }
-
-/** Click an asset row. The center must not be clicked as that is the button for adding a label. */
-async function clickAssetRow(assetRow: Locator) {
-  await assetRow.click({ position: ASSET_ROW_SAFE_POSITION })
-}
-
 test('delete and restore', ({ page }) =>
   mockAllAndLogin({ page })
     .createFolder()
