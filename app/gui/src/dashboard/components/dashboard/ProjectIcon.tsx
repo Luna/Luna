@@ -178,7 +178,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
     case backendModule.ProjectState.created:
       return (
         <ariaComponents.Button
-          size="custom"
+          size="large"
           variant="icon"
           icon={PlayIcon}
           aria-label={getTooltip(getText('openInEditor'))}
