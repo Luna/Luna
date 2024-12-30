@@ -1,13 +1,13 @@
 /** @file Settings screen. */
 import * as React from 'react'
 
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import BurgerMenuIcon from '#/assets/burger_menu.svg'
 import { Heading, MenuTrigger } from '#/components/aria'
 import { Button, Popover, Text } from '#/components/AriaComponents'
 import { useStrictPortalContext } from '#/components/Portal'
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
@@ -62,8 +62,10 @@ export default function Settings() {
   const { data: organization = null } = useBackendQuery(backend, 'getOrganization', EMPTY_ARRAY)
   const isQueryBlank = !/\S/.test(query)
 
-  const updateUser = useBackendMutation(backend, 'updateUser').mutateAsync
-  const updateOrganization = useBackendMutation(backend, 'updateOrganization').mutateAsync
+  const updateUser = useMutation(backendMutationOptions(backend, 'updateUser')).mutateAsync
+  const updateOrganization = useMutation(
+    backendMutationOptions(backend, 'updateOrganization'),
+  ).mutateAsync
 
   const [localRootDirectory, setLocalRootDirectory] = useLocalStorageState('localRootDirectory')
   const updateLocalRootPath = useEventCallback((value: string) => {

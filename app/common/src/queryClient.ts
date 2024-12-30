@@ -160,6 +160,7 @@ export function createQueryClient<TStorageValue = string>(
       },
     },
   })
+
   Object.defineProperty(queryClient, 'nukePersister', {
     value: () => persisterStorage?.clear(),
     enumerable: false,

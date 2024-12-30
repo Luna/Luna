@@ -1,7 +1,9 @@
 /** @file A modal to create a user group. */
 import { useState, type MouseEvent } from 'react'
 
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { useMutation } from '@tanstack/react-query'
+
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as modalProvider from '#/providers/ModalProvider'
@@ -45,7 +47,9 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
     userGroupNames != null && userGroupNames.has(string.normalizeName(name)) ?
       getText('duplicateUserGroupError')
     : null
-  const createUserGroup = useBackendMutation(backend, 'createUserGroup').mutateAsync
+  const createUserGroup = useMutation(
+    backendMutationOptions(backend, 'createUserGroup'),
+  ).mutateAsync
   const canSubmit = nameError == null && name !== '' && userGroupNames != null
 
   const onSubmit = async () => {

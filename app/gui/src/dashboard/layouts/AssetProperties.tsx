@@ -17,7 +17,7 @@ import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
 import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSpotlight } from '#/hooks/spotlightHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -35,6 +35,7 @@ import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
+import { useMutation } from '@tanstack/react-query'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { useStore } from '../utilities/zustand'
 
@@ -180,14 +181,12 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
     pathComputed == null ? null
     : isCloud ? encodeURI(pathComputed)
     : pathComputed
-  const createDatalinkMutation = useBackendMutation(backend, 'createDatalink')
+  const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
   // Provide an extra `mutationKey` so that it has its own loading state.
-  const editDescriptionMutation = useBackendMutation(
-    backend,
-    'updateAsset',
-    React.useMemo(() => ({ mutationKey: ['editDescription'] }), []),
+  const editDescriptionMutation = useMutation(
+    backendMutationOptions(backend, 'updateAsset', { mutationKey: ['editDescription'] }),
   )
-  const updateSecretMutation = useBackendMutation(backend, 'updateSecret')
+  const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
   const displayedDescription =
     editDescriptionMutation.variables?.[0] === item.id ?
       editDescriptionMutation.variables[1].description ?? item.description

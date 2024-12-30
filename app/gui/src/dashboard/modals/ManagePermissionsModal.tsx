@@ -1,7 +1,7 @@
 /** @file A modal with inputs for user email and permission level. */
 import { useMemo, useState } from 'react'
 
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import isEmail from 'validator/es/lib/isEmail'
 
@@ -13,7 +13,7 @@ import PermissionSelector from '#/components/dashboard/PermissionSelector'
 import Modal from '#/components/Modal'
 import { PaywallAlert } from '#/components/Paywall'
 import FocusArea from '#/components/styled/FocusArea'
-import { useBackendMutation } from '#/hooks/backendHooks'
+import { backendMutationOptions } from '#/hooks/backendHooks'
 import { usePaywall } from '#/hooks/billing'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
@@ -136,8 +136,10 @@ export default function ManagePermissionsModal<Asset extends AnyAsset = AnyAsset
   )
   const selfId = getAssetPermissionId(self)
 
-  const inviteUserMutation = useBackendMutation(remoteBackend, 'inviteUser')
-  const createPermissionMutation = useBackendMutation(remoteBackend, 'createPermission')
+  const inviteUserMutation = useMutation(backendMutationOptions(remoteBackend, 'inviteUser'))
+  const createPermissionMutation = useMutation(
+    backendMutationOptions(remoteBackend, 'createPermission'),
+  )
 
   const canAdd = useMemo(
     () => [

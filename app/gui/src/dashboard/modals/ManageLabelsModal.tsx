@@ -1,11 +1,13 @@
 /** @file A modal to select labels for an asset. */
 import { useEffect, useState } from 'react'
 
+import { useMutation } from '@tanstack/react-query'
+
 import { ButtonGroup, Checkbox, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -42,8 +44,8 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const [color, setColor] = useState<LChColor | null>(null)
   const leastUsedColor = findLeastUsedColor(allLabels ?? EMPTY_ARRAY)
 
-  const createTagMutation = useBackendMutation(backend, 'createTag')
-  const associateTagMutation = useBackendMutation(backend, 'associateTag')
+  const createTagMutation = useMutation(backendMutationOptions(backend, 'createTag'))
+  const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))
 
   const form = Form.useForm({
     schema: (z) =>

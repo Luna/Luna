@@ -1,5 +1,7 @@
 /** @file The icon and name of a {@link backendModule.FileAsset}. */
-import { useBackendMutation } from '#/hooks/backendHooks'
+import { useMutation } from '@tanstack/react-query'
+
+import { backendMutationOptions } from '#/hooks/backendHooks'
 
 import type * as column from '#/components/dashboard/column'
 import EditableSpan from '#/components/EditableSpan'
@@ -33,7 +35,7 @@ export default function FileNameColumn(props: FileNameColumnProps) {
   const { backend, nodeMap } = state
   const isCloud = backend.type === backendModule.BackendType.remote
 
-  const updateFileMutation = useBackendMutation(backend, 'updateFile')
+  const updateFileMutation = useMutation(backendMutationOptions(backend, 'updateFile'))
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {

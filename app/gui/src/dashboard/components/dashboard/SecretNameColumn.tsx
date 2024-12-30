@@ -1,7 +1,9 @@
 /** @file The icon and name of a {@link backendModule.SecretAsset}. */
+import { useMutation } from '@tanstack/react-query'
+
 import KeyIcon from '#/assets/key.svg'
 
-import { useBackendMutation } from '#/hooks/backendHooks'
+import { backendMutationOptions } from '#/hooks/backendHooks'
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as modalProvider from '#/providers/ModalProvider'
@@ -39,7 +41,7 @@ export default function SecretNameColumn(props: SecretNameColumnProps) {
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const { setModal } = modalProvider.useSetModal()
 
-  const updateSecretMutation = useBackendMutation(backend, 'updateSecret')
+  const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
 
   const setIsEditing = (isEditingName: boolean) => {
     if (isEditable) {

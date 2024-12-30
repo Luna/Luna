@@ -4,11 +4,12 @@ import * as z from 'zod'
 import { ButtonGroup, DialogDismiss, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import ColorPicker from '#/components/ColorPicker'
 import FocusArea from '#/components/styled/FocusArea'
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { findLeastUsedColor } from '#/services/Backend'
+import { useMutation } from '@tanstack/react-query'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =====================
@@ -29,7 +30,7 @@ export default function NewLabelModal(props: NewLabelModalProps) {
   const labelNamesRef = useSyncRef(labelNames)
   const leastUsedColor = findLeastUsedColor(labels)
 
-  const createTag = useBackendMutation(backend, 'createTag').mutateAsync
+  const createTag = useMutation(backendMutationOptions(backend, 'createTag')).mutateAsync
 
   return (
     <Popover>

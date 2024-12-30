@@ -1,13 +1,15 @@
 /** @file A list of selectable labels. */
 import * as React from 'react'
 
+import { useMutation } from '@tanstack/react-query'
+
 import PlusIcon from '#/assets/plus.svg'
 import Trash2Icon from '#/assets/trash2.svg'
 import * as ariaComponents from '#/components/AriaComponents'
 import Label from '#/components/dashboard/Label'
 import FocusArea from '#/components/styled/FocusArea'
 import FocusRing from '#/components/styled/FocusRing'
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import DragModal from '#/modals/DragModal'
 import NewLabelModal from '#/modals/NewLabelModal'
@@ -38,7 +40,7 @@ export default function Labels(props: LabelsProps) {
   const nodeMapRef = useNodeMap()
   const setLabelsDragPayload = useSetLabelsDragPayload()
   const labels = useBackendQuery(backend, 'listTags', array.EMPTY_ARRAY).data ?? array.EMPTY_ARRAY
-  const deleteTagMutation = useBackendMutation(backend, 'deleteTag')
+  const deleteTagMutation = useMutation(backendMutationOptions(backend, 'deleteTag'))
 
   return (
     <FocusArea direction="vertical">

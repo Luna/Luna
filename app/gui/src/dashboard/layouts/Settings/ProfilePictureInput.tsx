@@ -1,7 +1,9 @@
 /** @file The input for viewing and changing the user's profile picture. */
+import { useMutation } from '@tanstack/react-query'
+
 import DefaultUserIcon from '#/assets/default_user.svg'
 
-import { useBackendMutation, useBackendQuery } from '#/hooks/backendHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
 
 import * as textProvider from '#/providers/TextProvider'
 
@@ -27,7 +29,7 @@ export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   const { data: user } = useBackendQuery(backend, 'usersMe', EMPTY_ARRAY)
   const { getText } = textProvider.useText()
 
-  const uploadUserPicture = useBackendMutation(backend, 'uploadUserPicture')
+  const uploadUserPicture = useMutation(backendMutationOptions(backend, 'uploadUserPicture'))
 
   const form = Form.useForm({
     schema: (z) => z.object({ picture: z.instanceof(File) }),

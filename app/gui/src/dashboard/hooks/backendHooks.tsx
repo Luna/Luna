@@ -12,7 +12,6 @@ import {
   type Mutation,
   type MutationKey,
   type UseMutationOptions,
-  type UseMutationResult,
   type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query'
@@ -544,7 +543,7 @@ export function useNewFolder(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
-  const createDirectoryMutation = useBackendMutation(backend, 'createDirectory')
+  const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
     toggleDirectoryExpansion(parentId, true)
@@ -588,7 +587,7 @@ export function useNewProject(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
-  const createProjectMutation = useBackendMutation(backend, 'createProject')
+  const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
 
   return useEventCallback(
     async (
@@ -667,7 +666,7 @@ export function useNewSecret(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
-  const createSecretMutation = useBackendMutation(backend, 'createSecret')
+  const createSecretMutation = useMutation(backendMutationOptions(backend, 'createSecret'))
 
   return useEventCallback(
     async (
@@ -706,7 +705,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
   const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
-  const createDatalinkMutation = useBackendMutation(backend, 'createDatalink')
+  const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
 
   return useEventCallback(
     async (
@@ -1061,38 +1060,6 @@ export function useUploadFileWithToastMutation(
   return mutation
 }
 
-export function useBackendMutation<Method extends BackendMutationMethod>(
-  backend: Backend,
-  method: Method,
-  options?: Omit<
-    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
-    'mutationFn'
-  >,
-): UseMutationResult<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>
-export function useBackendMutation<Method extends BackendMutationMethod>(
-  backend: Backend | null,
-  method: Method,
-  options?: Omit<
-    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
-    'mutationFn'
-  >,
-): UseMutationResult<
-  Awaited<ReturnType<Backend[Method]>> | undefined,
-  Error,
-  Parameters<Backend[Method]>
->
-/** A memoized mutation for a given backend method. */
-export function useBackendMutation<Method extends BackendMutationMethod>(
-  backend: Backend | null,
-  method: Method,
-  options?: Omit<
-    UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>>,
-    'mutationFn'
-  >,
-) {
-  return useMutation(backendMutationOptions(backend, method, options))
-}
-
 /**
  * Call "upload file" mutations for a file.
  * Always uses multipart upload for Cloud backend.
@@ -1107,11 +1074,15 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
       toastAndLog('uploadLargeFileError', error)
     },
   } = options
-  const uploadFileStartMutation = useBackendMutation(backend, 'uploadFileStart')
-  const uploadFileChunkMutation = useBackendMutation(backend, 'uploadFileChunk', {
-    retry: chunkRetries,
-  })
-  const uploadFileEndMutation = useBackendMutation(backend, 'uploadFileEnd', { retry: endRetries })
+  const uploadFileStartMutation = useMutation(backendMutationOptions(backend, 'uploadFileStart'))
+  const uploadFileChunkMutation = useMutation(
+    backendMutationOptions(backend, 'uploadFileChunk', {
+      retry: chunkRetries,
+    }),
+  )
+  const uploadFileEndMutation = useMutation(
+    backendMutationOptions(backend, 'uploadFileEnd', { retry: endRetries }),
+  )
   const [variables, setVariables] =
     useState<[params: backendModule.UploadFileRequestParams, file: File]>()
   const [sentMb, setSentMb] = useState(0)
