@@ -2,8 +2,13 @@ package org.enso.compiler.test;
 
 import static org.junit.Assert.assertTrue;
 
+import com.oracle.truffle.api.TruffleFile;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.enso.common.LanguageInfo;
 import org.enso.common.MethodNames;
@@ -16,9 +21,14 @@ import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.editions.LibraryName;
 import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.util.TruffleFileSystem;
 import org.enso.interpreter.test.InterpreterContext;
+import org.enso.pkg.Config;
+import org.enso.pkg.Contact;
+import org.enso.pkg.Package;
 import org.enso.pkg.QualifiedName;
 import org.graalvm.polyglot.Source;
+import scala.Option;
 import scala.jdk.javaapi.CollectionConverters;
 
 public abstract class StaticAnalysisTest {
@@ -48,6 +58,8 @@ public abstract class StaticAnalysisTest {
           .invokeMember(MethodNames.TopScope.LEAK_CONTEXT)
           .asHostObject();
 
+  private final Map<LibraryName, Package<TruffleFile>> syntheticTestPackages = new HashMap<>();
+
   protected Module compile(Source src) {
     String suffix = ".enso";
     String name = src.getName();
@@ -57,25 +69,57 @@ public abstract class StaticAnalysisTest {
     QualifiedName qualifiedName =
         QualifiedName.fromString(name.substring(0, name.length() - suffix.length()));
 
+    var packageRepository = langCtx.getPackageRepository();
+    Package<TruffleFile> pkg = null;
+
     // If the module name is supposed to be put in a project, we register a synthetic project entry
     // for it
     if (qualifiedName.path().length() >= 2) {
       LibraryName libraryName =
           new LibraryName(qualifiedName.path().apply(0), qualifiedName.path().apply(1));
-      if (!langCtx.getPackageRepository().isPackageLoaded(libraryName)) {
-        langCtx
-            .getPackageRepository()
-            .registerSyntheticPackage(libraryName.namespace(), libraryName.name());
-        assert langCtx.getPackageRepository().isPackageLoaded(libraryName);
+      if (!packageRepository.isPackageLoaded(libraryName)) {
+        // We are able only to register a synthetic package without associated Package<> object, but
+        // perhaps that's fine.
+        packageRepository.registerSyntheticPackage(libraryName.namespace(), libraryName.name());
+        assert packageRepository.isPackageLoaded(libraryName);
       }
+
+      pkg = makeSyntheticPackageForTestProject(libraryName);
     }
 
     // This creates the module and also registers it in the scope, so that import resolution will
     // see it.
     var module =
-        langCtx.getTopScope().createModule(qualifiedName, null, src.getCharacters().toString());
+        langCtx.getTopScope().createModule(qualifiedName, pkg, src.getCharacters().toString());
     langCtx.getCompiler().run(module.asCompilerModule());
     return module.getIr();
+  }
+
+  private Package<TruffleFile> makeSyntheticPackageForTestProject(LibraryName name) {
+    return syntheticTestPackages.computeIfAbsent(
+        name,
+        (unused) -> {
+          try {
+            var tmpRoot = Files.createTempDirectory("test-project-" + name);
+            TruffleFile root = langCtx.getPublicTruffleFile(tmpRoot.toString());
+            List<Contact> contacts = List.of();
+            Config initialConfig =
+                new Config(
+                    name.name(),
+                    Option.empty(),
+                    name.namespace(),
+                    "0.0.0",
+                    "",
+                    CollectionConverters.asScala(contacts).toList(),
+                    CollectionConverters.asScala(contacts).toList(),
+                    Option.empty(),
+                    true,
+                    Option.empty());
+            return new Package<>(root, initialConfig, new TruffleFileSystem());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   protected final List<Diagnostic> getImmediateDiagnostics(IR ir) {
