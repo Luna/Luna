@@ -50,11 +50,13 @@ public final class AtomConstructor extends EnsoObject {
   private final boolean builtin;
   private @CompilerDirectives.CompilationFinal Atom cachedInstance;
   private @CompilerDirectives.CompilationFinal(dimensions = 1) String[] fieldNames;
-  private @CompilerDirectives.CompilationFinal Supplier<Function> constructorFunction;
+  private @CompilerDirectives.CompilationFinal Supplier<Function> constructorFunctionSupplier;
+  private @CompilerDirectives.CompilationFinal Function constructorFunction;
   private @CompilerDirectives.CompilationFinal Function accessor;
 
   private final Lock layoutsLock = new ReentrantLock();
-  private @CompilerDirectives.CompilationFinal Supplier<Layout> boxedLayout;
+  private @CompilerDirectives.CompilationFinal Supplier<Layout> boxedLayoutSupplier;
+  private @CompilerDirectives.CompilationFinal Layout boxedLayout;
   private Layout[] unboxingLayouts = new Layout[0];
 
   private final Type type;
@@ -250,9 +252,9 @@ public final class AtomConstructor extends EnsoObject {
               var layout = Layout.createBoxed(builder.getArgs());
               return new InitializationResult(constructorFunction, layout);
             });
-    this.boxedLayout =
+    this.boxedLayoutSupplier =
         initializationResultSupplier.map(initializationResult -> initializationResult.layout);
-    this.constructorFunction =
+    this.constructorFunctionSupplier =
         initializationResultSupplier.map(
             initializationResult -> initializationResult.constructorFunction);
     this.accessor = generateQualifiedAccessor(language, scopeBuilder);
@@ -384,9 +386,12 @@ public final class AtomConstructor extends EnsoObject {
    *
    * @return the constructor function of this constructor.
    */
-  @TruffleBoundary
   public Function getConstructorFunction() {
-    return constructorFunction.get();
+    if (constructorFunction == null) {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      constructorFunction = constructorFunctionSupplier.get();
+    }
+    return constructorFunction;
   }
 
   /**
@@ -463,9 +468,12 @@ public final class AtomConstructor extends EnsoObject {
     return unboxingLayouts;
   }
 
-  @TruffleBoundary
   final Layout getBoxedLayout() {
-    return boxedLayout.get();
+    if (boxedLayout == null) {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      boxedLayout = boxedLayoutSupplier.get();
+    }
+    return boxedLayout;
   }
 
   /**
