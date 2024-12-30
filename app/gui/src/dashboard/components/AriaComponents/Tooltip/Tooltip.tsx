@@ -12,7 +12,7 @@ import { TEXT_STYLE } from '../Text'
 // =================
 
 export const TOOLTIP_STYLES = tv({
-  base: 'group flex justify-center items-center text-center [overflow-wrap:anywhere] z-tooltip',
+  base: 'group flex justify-center items-center text-center [overflow-wrap:anywhere]',
   variants: {
     variant: {
       custom: '',

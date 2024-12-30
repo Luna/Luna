@@ -30,7 +30,7 @@ export interface PopoverProps
 }
 
 export const POPOVER_STYLES = twv.tv({
-  base: 'shadow-xl w-full overflow-clip z-tooltip',
+  base: 'shadow-xl w-full overflow-clip',
   variants: {
     variant: {
       custom: { dialog: '' },

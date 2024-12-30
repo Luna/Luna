@@ -104,7 +104,7 @@ export function Tab(props: TabProps) {
         >
           <div
             className={twJoin(
-              'relative z-1 flex h-full w-full items-center justify-center gap-3',
+              'relative flex h-full w-full items-center justify-center gap-3',
               isSelected || isHovered ? 'text-primary' : 'text-disabled',
             )}
           >
