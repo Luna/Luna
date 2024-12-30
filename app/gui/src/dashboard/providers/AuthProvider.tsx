@@ -210,10 +210,7 @@ export default function AuthProvider(props: AuthProviderProps) {
       const orgId = await organizationId()
       const email = session?.email ?? ''
 
-      invariant(
-        orgId == null || isOrganizationId(orgId),
-        'Invalid organization ID',
-      )
+      invariant(orgId == null || isOrganizationId(orgId), 'Invalid organization ID')
 
       await createUserMutation.mutateAsync({
         userName: username,
