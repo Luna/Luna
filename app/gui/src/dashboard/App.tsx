@@ -609,19 +609,13 @@ function useRefetchDirectories(backendType: BackendType) {
   const assetsTableBackgroundRefreshInterval = useFeatureFlag(
     'assetsTableBackgroundRefreshInterval',
   )
+  const isMutating = reactQuery.useIsMutating({ mutationKey: [backendType] }) !== 0
 
   // We use a different query to refetch the directory data in the background.
   // This reduces the amount of rerenders by batching them together, so they happen less often.
   reactQuery.useQuery({
     queryKey: [backendType, 'refetchListDirectory'],
     queryFn: async () => {
-      const anyMatchingMutation = queryClient
-        .getMutationCache()
-        .find({ mutationKey: [backendType], status: 'pending' })
-      if (anyMatchingMutation) {
-        // A mutation is in flight. Skip this re-fetch.
-        return null
-      }
       await queryClient.refetchQueries({
         queryKey: [backendType, 'listDirectory'],
         type: 'active',
@@ -634,5 +628,6 @@ function useRefetchDirectories(backendType: BackendType) {
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     meta: { persist: false },
+    enabled: isMutating,
   })
 }
