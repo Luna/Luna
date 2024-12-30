@@ -26,7 +26,7 @@ import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/Backe
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { Path, userHasUserAndTeamSpaces, type DirectoryId } from '#/services/Backend'
+import { type DirectoryId, Path, userHasUserAndTeamSpaces } from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
 import {
   organizationIdToDirectoryId,
@@ -166,10 +166,9 @@ export function useCloudCategoryList() {
     ...(userGroupDynamicCategories != null ? [...userGroupDynamicCategories] : []),
   ] as const
 
-  const getCategoryById = useEventCallback((id: CategoryId) => {
-    const maybeCategory = categories.find((category) => category.id === id) ?? null
-    return maybeCategory
-  })
+  const getCategoryById = useEventCallback(
+    (id: CategoryId) => categories.find((category) => category.id === id) ?? null,
+  )
 
   const getCategoriesByType = useEventCallback(
     <T extends Category['type']>(type: T) =>
@@ -178,18 +177,16 @@ export function useCloudCategoryList() {
       categories.filter((category) => category.type === type) as CategoryByType<T>[],
   )
 
-  const getCategoryByDirectoryId = useEventCallback((directoryId: DirectoryId) => {
-    const maybeCategory =
+  const getCategoryByDirectoryId = useEventCallback(
+    (directoryId: DirectoryId) =>
       categories.find((category) => {
         if ('homeDirectoryId' in category) {
           return category.homeDirectoryId === directoryId
         }
 
         return false
-      }) ?? null
-
-    return maybeCategory
-  })
+      }) ?? null,
+  )
 
   return {
     categories,
@@ -256,10 +253,9 @@ export function useLocalCategoryList() {
     }
   })
 
-  const getCategoryById = useEventCallback((id: CategoryId) => {
-    const maybeCategory = categories.find((category) => category.id === id) ?? null
-    return maybeCategory
-  })
+  const getCategoryById = useEventCallback(
+    (id: CategoryId) => categories.find((category) => category.id === id) ?? null,
+  )
 
   const getCategoriesByType = useEventCallback(
     <T extends AnyLocalCategory['type']>(type: T) =>
@@ -371,12 +367,12 @@ export function CategoriesProvider(props: CategoriesProviderProps): React.JSX.El
 
   const category = findCategoryById(categoryId)
 
-  // This is safe, because category is always set
+  // This is safe, because a category always specified
   // eslint-disable-next-line no-restricted-syntax
   const backend = useBackend(category as Category)
 
   // This usually doesn't happen but if so,
-  // We reset the category to the default one
+  // We reset the category to the default.
   if (category == null) {
     resetCategoryId(true)
     return <></>
