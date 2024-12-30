@@ -50,13 +50,12 @@ public final class AtomConstructor extends EnsoObject {
   private final boolean builtin;
   private @CompilerDirectives.CompilationFinal Atom cachedInstance;
   private @CompilerDirectives.CompilationFinal(dimensions = 1) String[] fieldNames;
-  private @CompilerDirectives.CompilationFinal Supplier<Function> constructorFunctionSupplier;
-  private @CompilerDirectives.CompilationFinal Function constructorFunction;
+  private @CompilerDirectives.CompilationFinal CachingSupplier<Function>
+      constructorFunctionSupplier;
   private @CompilerDirectives.CompilationFinal Function accessor;
 
   private final Lock layoutsLock = new ReentrantLock();
-  private @CompilerDirectives.CompilationFinal Supplier<Layout> boxedLayoutSupplier;
-  private @CompilerDirectives.CompilationFinal Layout boxedLayout;
+  private @CompilerDirectives.CompilationFinal CachingSupplier<Layout> boxedLayoutSupplier;
   private Layout[] unboxingLayouts = new Layout[0];
 
   private final Type type;
@@ -387,11 +386,7 @@ public final class AtomConstructor extends EnsoObject {
    * @return the constructor function of this constructor.
    */
   public Function getConstructorFunction() {
-    if (constructorFunction == null) {
-      CompilerDirectives.transferToInterpreterAndInvalidate();
-      constructorFunction = constructorFunctionSupplier.get();
-    }
-    return constructorFunction;
+    return constructorFunctionSupplier.get();
   }
 
   /**
@@ -469,11 +464,7 @@ public final class AtomConstructor extends EnsoObject {
   }
 
   final Layout getBoxedLayout() {
-    if (boxedLayout == null) {
-      CompilerDirectives.transferToInterpreterAndInvalidate();
-      boxedLayout = boxedLayoutSupplier.get();
-    }
-    return boxedLayout;
+    return boxedLayoutSupplier.get();
   }
 
   /**
