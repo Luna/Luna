@@ -21,8 +21,11 @@ export type ExtractFunction<T> =
 /** A `tailwind-variants` type, without restrictions on the `extends` key. */
 export type TVWithoutExtends<T> = ExtractFunction<T> & Omit<T, 'extend'>
 
-/** Props for a component that uses `tailwind-variants`. */
-// TODO: add support for styling individual slots
+/**
+ * Props for a component that uses `tailwind-variants`.
+ *
+ * TODO: @MrFlashAccount [add support for styling individual slots](https://github.com/enso-org/cloud-v2/issues/1643)
+ */
 export type VariantProps<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Component extends (...args: any) => any,
