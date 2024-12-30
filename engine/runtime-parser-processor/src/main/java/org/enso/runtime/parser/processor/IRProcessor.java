@@ -192,7 +192,7 @@ public class IRProcessor extends AbstractProcessor {
           clazz);
     }
     var superClassName = superClass.toString();
-    var extendsGeneratedSuperclass = superClassName.equals(genClassName);
+    var extendsGeneratedSuperclass = superClassName.contains(genClassName);
     if (!extendsGeneratedSuperclass) {
       throw new IRProcessingException(
           "Class annotated with @GenerateIR must extend generated superclass'"
