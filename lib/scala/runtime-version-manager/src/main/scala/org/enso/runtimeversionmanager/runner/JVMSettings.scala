@@ -56,7 +56,8 @@ object JVMSettings {
     JVMSettings(
       useSystemJVM = false,
       jvmOptions   = jvmOptions.result(),
-      extraOptions = Seq(nioOpen)
+      extraOptions = Seq(nioOpen),
+      nativeImage  = false
     )
   }
 

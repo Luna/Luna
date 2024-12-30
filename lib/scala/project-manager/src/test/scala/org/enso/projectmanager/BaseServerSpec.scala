@@ -93,6 +93,7 @@ class BaseServerSpec extends JsonRpcServerTestKit with BeforeAndAfterAll {
   val processConfig: MainProcessConfig =
     MainProcessConfig(
       logLevel      = if (debugLogs) Level.TRACE else Level.ERROR,
+      nativeImage   = false,
       profilingPath = profilingPath,
       profilingTime = None
     )

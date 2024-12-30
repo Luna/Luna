@@ -94,11 +94,12 @@ class TestDistributionConfiguration(
   override def defaultJVMSettings: JVMSettings = {
     val currentProcess =
       ProcessHandle.current().info().command().toScala.getOrElse("java")
-    val javaCommand = JavaCommand(currentProcess, None)
+    val javaCommand = new JavaCommand(currentProcess, None)
     new JVMSettings(
       javaCommandOverride = Some(javaCommand),
       jvmOptions          = Seq(),
-      extraOptions        = Seq()
+      extraOptions        = Seq(),
+      nativeImage         = false
     )
   }
 
