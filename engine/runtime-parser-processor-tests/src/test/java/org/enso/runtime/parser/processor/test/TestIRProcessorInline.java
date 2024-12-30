@@ -290,8 +290,8 @@ public class TestIRProcessorInline {
   }
 
   /**
-   * Generated {@code duplicate} method returns the annotated class type, not any of its
-   * super types.
+   * Generated {@code duplicate} method returns the annotated class type, not any of its super
+   * types.
    */
   @Test
   public void generatedClass_DuplicateMethodHasSpecificReturnType() {
@@ -310,7 +310,23 @@ public class TestIRProcessorInline {
     assertThat(genClass, containsString("JName duplicate("));
   }
 
-  /**
+  /** Parameterless {@code duplicate} method just delegates to the other duplicate method. */
+  @Test
+  public void generatedClass_HasParameterlessDuplicateMethod() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("JName duplicate()"));
+  }
 
   @Test
   public void generatedMethod_setLocation_returnsSubClassType() {
@@ -584,8 +600,4 @@ public class TestIRProcessorInline {
     assertThat(src, containsString("class JNameGen"));
     assertThat("has getter method for expression", src, containsString("Option<IR> expression()"));
   }
-
-  // TODO: Can contain multiple GenerateIR annotations in single source
-
-  // TODO: Multiple interfaces in the annotation
 }

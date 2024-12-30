@@ -359,7 +359,7 @@ final class IRNodeClassGenerator {
           return diagnostics;
         }
 
-        $duplicateMethod
+        $duplicateMethods
 
         @Override
         public String showCode(int indent) {
@@ -368,7 +368,7 @@ final class IRNodeClassGenerator {
         """
             .replace("$childrenMethodBody", childrenMethodBody())
             .replace("$setLocationMethod", setLocationMethodGenerator.generateMethodCode())
-            .replace("$duplicateMethod", duplicateMethodGenerator.generateDuplicateMethodCode());
+            .replace("$duplicateMethods", duplicateMethodGenerator.generateDuplicateMethodsCode());
     return indent(code, 2);
   }
 

@@ -48,7 +48,11 @@ public class DuplicateMethodGenerator {
     }
   }
 
-  public String generateDuplicateMethodCode() {
+  /**
+   * Generate code for two duplicate methods - one overridden with all four parameters, and another
+   * parameterless that just delegates to the first one.
+   */
+  public String generateDuplicateMethodsCode() {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public ")
@@ -156,7 +160,19 @@ public class DuplicateMethodGenerator {
 
     sb.append("}");
     sb.append(System.lineSeparator());
-    return sb.toString();
+    var defaultDuplicateMethod = sb.toString();
+    return defaultDuplicateMethod + System.lineSeparator() + parameterlessDuplicateMethod();
+  }
+
+  private String parameterlessDuplicateMethod() {
+    var code =
+        """
+        public $retType duplicate() {
+          return duplicate(true, true, true, false);
+        }
+        """
+            .replace("$retType", dupMethodRetType());
+    return code;
   }
 
   private static String dupFieldName(Field field) {
