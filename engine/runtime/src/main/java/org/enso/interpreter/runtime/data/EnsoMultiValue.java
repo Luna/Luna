@@ -541,20 +541,25 @@ public final class EnsoMultiValue extends EnsoObject {
      */
     public final Object findTypeOrNull(
         Type type, EnsoMultiValue mv, boolean reorderOnly, boolean allTypes) {
-      var i = findNode.executeFindIndex(type, mv.dispatch);
+      var dispatch = mv.dispatch;
+      var i = findNode.executeFindIndex(type, dispatch);
       if (i == -1 && allTypes) {
         var extraIndex = findNode.executeFindIndex(type, mv.extra);
-        i = extraIndex == -1 ? -1 : mv.dispatch.typesLength() + extraIndex;
+        i = extraIndex == -1 ? -1 : dispatch.typesLength() + extraIndex;
       }
       if (i != -1) {
         if (reorderOnly) {
-          var copyTypes = allTypesWith.executeAllTypes(mv.dispatch, mv.extra);
-          var copyValues = mv.values.clone();
-          copyTypes[0] = copyTypes[i];
-          copyValues[0] = copyValues[i];
-          copyTypes[i] = mv.dispatch.firstType();
-          copyValues[i] = mv.values[0];
-          return newNode.newValue(copyTypes, 1, copyValues);
+          var copyTypes = allTypesWith.executeAllTypes(dispatch, mv.extra);
+          if (i == 0 && dispatch.typesLength() == 1) {
+            return newNode.newValue(copyTypes, 1, mv.values);
+          } else {
+            var copyValues = mv.values.clone();
+            copyTypes[0] = copyTypes[i];
+            copyValues[0] = copyValues[i];
+            copyTypes[i] = dispatch.firstType();
+            copyValues[i] = mv.values[0];
+            return newNode.newValue(copyTypes, 1, copyValues);
+          }
         } else {
           return mv.values[i];
         }
