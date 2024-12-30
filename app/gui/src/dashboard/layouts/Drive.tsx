@@ -157,7 +157,6 @@ function DriveAssetsView(props: DriveProps) {
   const { user } = useFullUserSession()
   const localBackend = useLocalBackend()
   const backend = useBackend(category)
-  const { getText } = useText()
   const dispatchAssetListEvent = useDispatchAssetListEvent()
 
   const [query, setQuery] = useState(() => AssetQuery.fromString(''))
