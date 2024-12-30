@@ -278,7 +278,7 @@ export default class DrivePageActions<Context> extends PageActions<Context> {
 
           await expect(expandButton).toHaveAttribute('aria-label', TEXT.expand)
 
-          return expandButton.click()
+          await expandButton.click()
         })
       },
       collapseDirectory(index: number) {
