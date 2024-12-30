@@ -547,6 +547,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
             }}
             onDragEnd={(event) => {
               setIsDraggedOver(false)
+              setLabelsDragPayload(null)
               props.onDragEnd?.(event, asset)
             }}
             onDragLeave={(event) => {
