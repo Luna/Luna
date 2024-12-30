@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor.methodgen;
 import java.util.stream.Collectors;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
-import org.enso.runtime.parser.processor.utils.Utils;
 
 public final class HashCodeMethodGenerator {
   private final GeneratedClassContext ctx;
@@ -23,6 +22,6 @@ public final class HashCodeMethodGenerator {
         }
         """
             .replace("$fieldList", fieldList);
-    return Utils.indent(code, 2);
+    return code;
   }
 }

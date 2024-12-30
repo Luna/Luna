@@ -24,9 +24,7 @@ public class BuilderMethodGenerator {
         generatedClassContext.getAllFields().stream()
             .map(
                 metaField ->
-                    """
-                private $type $name;
-                """
+                    "private $type $name;"
                         .replace("$type", metaField.type())
                         .replace("$name", metaField.name()))
             .collect(Collectors.joining(System.lineSeparator()));
@@ -62,27 +60,27 @@ public class BuilderMethodGenerator {
     var code =
         """
         public static final class Builder {
-          $fieldDeclarations
+        $fieldDeclarations
 
           Builder() {}
 
-          $copyConstructor
+        $copyConstructor
 
-          $fieldSetters
+        $fieldSetters
 
-          $buildMethod
+        $buildMethod
 
           private void validate() {
-            $validationCode
+        $validationCode
           }
         }
         """
-            .replace("$fieldDeclarations", fieldDeclarations)
-            .replace("$copyConstructor", copyConstructor())
-            .replace("$fieldSetters", fieldSetters)
-            .replace("$buildMethod", buildMethod())
-            .replace("$validationCode", Utils.indent(validationCode, 2));
-    return Utils.indent(code, 2);
+            .replace("$fieldDeclarations", Utils.indent(fieldDeclarations, 2))
+            .replace("$copyConstructor", Utils.indent(copyConstructor(), 2))
+            .replace("$fieldSetters", Utils.indent(fieldSetters, 2))
+            .replace("$buildMethod", Utils.indent(buildMethod(), 2))
+            .replace("$validationCode", Utils.indent(validationCode, 4));
+    return code;
   }
 
   private String copyConstructor() {
@@ -111,12 +109,12 @@ public class BuilderMethodGenerator {
     var ctorParams = generatedClassContext.getSubclassConstructorParameters();
     var ctorParamsStr = ctorParams.stream().map(ClassField::name).collect(Collectors.joining(", "));
     var fieldsNotInCtor = Utils.minus(generatedClassContext.getAllFields(), ctorParams);
-    sb.append("  public ")
+    sb.append("public ")
         .append(processedClassName)
         .append(" build() {")
         .append(System.lineSeparator());
-    sb.append("    ").append("validate();").append(System.lineSeparator());
-    sb.append("    ")
+    sb.append("  ").append("validate();").append(System.lineSeparator());
+    sb.append("  ")
         .append(processedClassName)
         .append(" result = new ")
         .append(processedClassName)
@@ -125,7 +123,7 @@ public class BuilderMethodGenerator {
         .append(");")
         .append(System.lineSeparator());
     for (var fieldNotInCtor : fieldsNotInCtor) {
-      sb.append("    ")
+      sb.append("  ")
           .append("result.")
           .append(fieldNotInCtor.name())
           .append(" = ")
@@ -133,8 +131,8 @@ public class BuilderMethodGenerator {
           .append(";")
           .append(System.lineSeparator());
     }
-    sb.append("    ").append("return result;").append(System.lineSeparator());
-    sb.append("  }").append(System.lineSeparator());
+    sb.append("  ").append("return result;").append(System.lineSeparator());
+    sb.append("}").append(System.lineSeparator());
     return sb.toString();
   }
 }

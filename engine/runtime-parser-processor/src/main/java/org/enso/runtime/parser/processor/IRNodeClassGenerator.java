@@ -172,7 +172,7 @@ final class IRNodeClassGenerator {
         protected UUID id;
         """
             .replace("$userDefinedFields", userDefinedFields);
-    return indent(code, 2);
+    return code;
   }
 
   /**
@@ -189,7 +189,7 @@ final class IRNodeClassGenerator {
         """;
     var ctorCode =
         constructorForFields(generatedClassContext.getSuperclassConstructorParameters(), List.of());
-    return Utils.indent(docs + ctorCode, 2);
+    return docs + ctorCode;
   }
 
   /**
@@ -211,7 +211,7 @@ final class IRNodeClassGenerator {
             .toList();
     var ctorCode =
         constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
-    return Utils.indent(docs + ctorCode, 2);
+    return docs + ctorCode;
   }
 
   /**
@@ -244,7 +244,7 @@ final class IRNodeClassGenerator {
           parameters.stream()
               .map(field -> "  this.$fieldName = $fieldName;".replace("$fieldName", field.name()))
               .collect(Collectors.joining(System.lineSeparator()));
-      sb.append(indent(ctorBody, 2));
+      sb.append(ctorBody);
     }
     sb.append(System.lineSeparator());
 
@@ -254,7 +254,7 @@ final class IRNodeClassGenerator {
           initializeToNull.stream()
               .map(field -> "  this.$fieldName = null;".replace("$fieldName", field.name()))
               .collect(Collectors.joining(System.lineSeparator()));
-      sb.append(indent(initToNullBody, 2));
+      sb.append(initToNullBody);
     }
 
     sb.append(System.lineSeparator());
@@ -383,7 +383,7 @@ final class IRNodeClassGenerator {
             .replace("$childrenMethodBody", childrenMethodBody())
             .replace("$setLocationMethod", setLocationMethodGenerator.generateMethodCode())
             .replace("$duplicateMethods", duplicateMethodGenerator.generateDuplicateMethodsCode());
-    return indent(code, 2);
+    return code;
   }
 
   /** Returns string representation of all getters for the user-defined fields. */
@@ -400,11 +400,11 @@ final class IRNodeClassGenerator {
                         .replace("$returnType", field.getSimpleTypeName())
                         .replace("$fieldName", field.getName()))
             .collect(Collectors.joining(System.lineSeparator()));
-    return indent(code, 2);
+    return code;
   }
 
   private String mapExpressions() {
-    return Utils.indent(mapExpressionsMethodGenerator.generateMapExpressionsMethodCode(), 2);
+    return mapExpressionsMethodGenerator.generateMapExpressionsMethodCode();
   }
 
   private static String indent(String code, int indentation) {

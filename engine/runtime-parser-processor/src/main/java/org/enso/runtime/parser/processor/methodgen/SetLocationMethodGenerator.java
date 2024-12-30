@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor.methodgen;
 import javax.lang.model.element.ExecutableElement;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.IRProcessingException;
-import org.enso.runtime.parser.processor.utils.Utils;
 
 public class SetLocationMethodGenerator {
   private final ExecutableElement setLocationMethod;
@@ -43,7 +42,7 @@ public class SetLocationMethodGenerator {
         }
         """
             .replace("$retType", retType());
-    return Utils.indent(code, 2);
+    return code;
   }
 
   private String retType() {

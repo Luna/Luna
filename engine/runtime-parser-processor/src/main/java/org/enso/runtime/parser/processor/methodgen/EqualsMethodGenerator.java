@@ -1,7 +1,6 @@
 package org.enso.runtime.parser.processor.methodgen;
 
 import org.enso.runtime.parser.processor.GeneratedClassContext;
-import org.enso.runtime.parser.processor.utils.Utils;
 
 public final class EqualsMethodGenerator {
   private final GeneratedClassContext ctx;
@@ -33,6 +32,6 @@ public final class EqualsMethodGenerator {
     sb.append("  }").append(System.lineSeparator());
     sb.append("  return false;").append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
-    return Utils.indent(sb.toString(), 2);
+    return sb.toString();
   }
 }
