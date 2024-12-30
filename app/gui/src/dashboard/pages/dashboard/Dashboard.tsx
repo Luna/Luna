@@ -341,13 +341,13 @@ function OpenedProjectsParentsExpander() {
   const launchedProjectsRef = useSyncRef(launchedProjects)
   const { user } = authProvider.useFullUserSession()
 
-  const userGroupDirectoryIds = new Set(
-    (user.userGroups ?? EMPTY_ARRAY).map((groupId) =>
-      backendModule.DirectoryId(groupId.replace(/^usergroup-/, 'directory-')),
-    ),
-  )
-
   React.useEffect(() => {
+    const userGroupDirectoryIds = new Set(
+      (user.userGroups ?? EMPTY_ARRAY).map((groupId) =>
+        backendModule.DirectoryId(groupId.replace(/^usergroup-/, 'directory-')),
+      ),
+    )
+
     switch (category.type) {
       case 'cloud':
       case 'team':
@@ -436,6 +436,7 @@ function OpenedProjectsParentsExpander() {
     queryClient,
     remoteBackend,
     setExpandedDirectoryIds,
+    user.userGroups,
   ])
 
   return null
