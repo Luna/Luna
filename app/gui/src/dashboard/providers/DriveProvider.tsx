@@ -136,7 +136,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
     })),
   )
 
-  const resetAssetTableState = zustand.useStore(store, (state) => state.resetAssetTableState)
+  const resetAssetTableState = useStore(store, (state) => state.resetAssetTableState)
 
   return (
     <DriveContext.Provider value={store}>
