@@ -350,10 +350,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     createPermissionVariables?.actorsIds[0] === user.userId &&
     createPermissionVariables.action == null
   const visibility =
-    isRemovingSelf ? Visibility.hidden
+    isDeleting || isRestoring ? Visibility.faded
+    : isRemovingSelf ? Visibility.hidden
     : visibilityRaw === Visibility.visible ? insertionVisibility
     : visibilityRaw ?? insertionVisibility
-  const hidden = isDeleting || isRestoring || hiddenRaw || visibility === Visibility.hidden
+  const hidden = hiddenRaw || visibility === Visibility.hidden
 
   const setSelected = useEventCallback((newSelected: boolean) => {
     const { selectedAssets } = driveStore.getState()
