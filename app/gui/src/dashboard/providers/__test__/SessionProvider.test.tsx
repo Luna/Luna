@@ -71,7 +71,7 @@ describe('SessionProvider', () => {
   })
 
   it('Should retrieve the user session', async () => {
-    const { getByText, debug } = render(
+    const { getByText } = render(
       <Suspense fallback={<div>Loading...</div>}>
         <SessionProvider
           authService={authService}
