@@ -35,9 +35,9 @@ export const CloseButton = memo(function CloseButton(props: CloseButtonProps) {
           isOnMacOS() ? 'bg-primary/30' : (
             'text-primary/90 hover:text-primary focus-visible:text-primary'
           ),
-          // @ts-expect-error ts fails to infer the type of the className prop
+          // @ts-expect-error TypeScript fails to infer the type of the `className` prop
           // But it's safe because we are passing all values transparently
-          // and they typed outside
+          // and they are typed outside.
           typeof className === 'function' ? className(values) : className,
         )
       }
