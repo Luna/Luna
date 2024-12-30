@@ -51,7 +51,7 @@ public interface CallArgument extends IR {
         IdentifiedLocation identifiedLocation,
         MetadataStorage passData) {
       super(
-          DiagnosticStorage.createEmpty(),
+          null,
           passData,
           identifiedLocation,
           null,
