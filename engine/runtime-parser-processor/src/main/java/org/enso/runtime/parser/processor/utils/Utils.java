@@ -52,15 +52,23 @@ public final class Utils {
     return ret;
   }
 
-  /** Returns true if the given type extends {@link org.enso.compiler.core.ir.Expression} */
+  public static boolean isExpression(Element elem, ProcessingEnvironment processingEnvironment) {
+    if (elem instanceof TypeElement typeElem) {
+      var exprType = expressionType(processingEnvironment);
+      return processingEnvironment.getTypeUtils().isSameType(typeElem.asType(), exprType.asType());
+    }
+    return false;
+  }
+
+  /** Returns true if the given type extends {@code org.enso.compiler.core.ir.Expression} */
   public static boolean isSubtypeOfExpression(
       TypeMirror type, ProcessingEnvironment processingEnv) {
-    var expressionType =
-        processingEnv
-            .getElementUtils()
-            .getTypeElement("org.enso.compiler.core.ir.Expression")
-            .asType();
-    return processingEnv.getTypeUtils().isAssignable(type, expressionType);
+    var exprType = expressionType(processingEnv).asType();
+    return processingEnv.getTypeUtils().isAssignable(type, exprType);
+  }
+
+  public static TypeElement expressionType(ProcessingEnvironment procEnv) {
+    return procEnv.getElementUtils().getTypeElement("org.enso.compiler.core.ir.Expression");
   }
 
   public static String indent(String code, int indentation) {

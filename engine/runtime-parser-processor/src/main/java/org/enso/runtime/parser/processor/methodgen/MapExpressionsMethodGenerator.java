@@ -51,6 +51,9 @@ public final class MapExpressionsMethodGenerator {
         .append(System.lineSeparator());
 
     var children = ctx.getUserFields().stream().filter(Field::isChild);
+    // A list of new children that are created by calling mapExpressions on the existing children
+    // Or the function directly if the child is of Expression type (this prevents
+    // recursion).
     var newChildren =
         children
             .map(
@@ -82,6 +85,9 @@ public final class MapExpressionsMethodGenerator {
                   } else if (child.isOption()) {
                     newChildType = "Option<" + newChildType + ">";
                   }
+                  var childIsExpression =
+                      Utils.isExpression(
+                          childsMapExprMethodRetType, ctx.getProcessingEnvironment());
 
                   var newChildName = child.getName() + "Mapped";
                   sb.append("  ").append(newChildType).append(" ").append(newChildName);
@@ -91,32 +97,54 @@ public final class MapExpressionsMethodGenerator {
                         .append(child.getName())
                         .append(" != null) {")
                         .append(System.lineSeparator());
-                    // childMapped = child.mapExpressions(fn);
-                    sb.append("    ")
-                        .append(newChildName)
-                        .append(".")
-                        .append(METHOD_NAME)
-                        .append("(fn);")
-                        .append(System.lineSeparator());
-                    sb.append("  }").append(System.lineSeparator());
-                  } else {
-                    if (!child.isList() && !child.isOption()) {
-                      // ChildType childMapped = child.mapExpressions(fn);
-                      sb.append(" = ")
+                    if (childIsExpression) {
+                      // childMapped = fn.apply(child);
+                      sb.append("    ")
+                          .append(newChildName)
+                          .append(" = fn.apply(")
                           .append(child.getName())
+                          .append(");")
+                          .append(System.lineSeparator());
+                    } else {
+                      // childMapped = child.mapExpressions(fn);
+                      sb.append("    ")
+                          .append(newChildName)
                           .append(".")
                           .append(METHOD_NAME)
                           .append("(fn);")
                           .append(System.lineSeparator());
+                    }
+                    sb.append("  }").append(System.lineSeparator());
+                  } else {
+                    if (!child.isList() && !child.isOption()) {
+                      if (childIsExpression) {
+                        // ChildType childMapped = fn.apply(child);
+                        sb.append(" = ")
+                            .append("fn.apply(")
+                            .append(child.getName())
+                            .append(");")
+                            .append(System.lineSeparator());
+                      } else {
+                        // ChildType childMapped = child.mapExpressions(fn);
+                        sb.append(" = ")
+                            .append(child.getName())
+                            .append(".")
+                            .append(METHOD_NAME)
+                            .append("(fn);")
+                            .append(System.lineSeparator());
+                      }
                     } else {
                       Utils.hardAssert(child.isList() || child.isOption());
                       // List<ChildType> childMapped = child.map(e -> e.mapExpressions(fn));
-                      sb.append(" = ")
-                          .append(child.getName())
-                          .append(".map(e -> e.")
-                          .append(METHOD_NAME)
-                          .append("(fn));")
-                          .append(System.lineSeparator());
+                      sb.append(" = ").append(child.getName()).append(".map(e -> ");
+                      if (childIsExpression) {
+                        // List<ChildType> childMapped = child.map(e -> fn.apply(e));
+                        sb.append("fn.apply(e)");
+                      } else {
+                        // List<ChildType> childMapped = child.map(e -> e.mapExpressions(fn));
+                        sb.append("e.").append(METHOD_NAME).append("(fn)");
+                      }
+                      sb.append(");").append(System.lineSeparator());
                     }
                   }
                   return new MappedChild(newChildName, child, shouldCast);
