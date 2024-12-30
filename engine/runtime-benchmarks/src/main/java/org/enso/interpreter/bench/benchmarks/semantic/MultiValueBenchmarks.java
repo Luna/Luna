@@ -59,10 +59,10 @@ public class MultiValueBenchmarks {
                 @Tail_Call go sum i+1
             go 0 0
 
-        make_vector type n =
+        make_vector typ n =
             Vector.new n i->
                 r = 3 + 5*i
-                case type of
+                case typ of
                     0 -> r:Complex
                     1 -> r:Integer
                     2 -> r:Float
