@@ -15,7 +15,12 @@ const graph = useGraphStore()
 const input = ref<ComponentInstance<typeof AutoSizedInput>>()
 const widgetRoot = ref<HTMLElement>()
 
+const previousValue = ref<string>()
+
 const editing = WidgetEditHandler.New('WidgetText', props.input, {
+  start() {
+    previousValue.value = textContents.value
+  },
   cancel() {
     editedContents.value = textContents.value
     input.value?.blur()
@@ -34,6 +39,7 @@ const editing = WidgetEditHandler.New('WidgetText', props.input, {
 function accepted() {
   editing.end()
   if (props.input.value instanceof Ast.TextLiteral) {
+    if (previousValue.value === editedContents.value) return
     const edit = graph.startEdit()
     const value = edit.getVersion(props.input.value)
     if (value.rawTextContent === editedContents.value) return
