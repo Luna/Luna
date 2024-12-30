@@ -75,7 +75,7 @@ interface UserAttributes {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 /** The type of multi-factor authentication (MFA) including non-specified MFA */
-export type MfaType = MfaProtectionTypes | 'NOMFA'
+export type MfaType = MfaProtectionTypes | 'NOMFA' | 'TOTP'
 /**
  * MFA protection types that the user can set up.
  */
@@ -191,7 +191,19 @@ interface CognitoError {
 /**
  * Return type for Confirm sign up endpoint
  */
-export type ConfirmSignInReturn = Promise<results.Err<AmplifyError> | results.Ok<unknown>>
+export type ConfirmSignInReturn = Promise<
+  results.Err<AmplifyError> | results.Ok<cognito.CognitoUser>
+>
+
+/**
+ * Return type for Setup TOTP endpoint
+ */
+export interface SetupTOTPReturn {
+  /** The URL to scan the QR code */
+  readonly url: string
+  /** The secret to use for the TOTP */
+  readonly secret: string
+}
 
 /**
  * Interface that represents Auth Provider API
@@ -233,23 +245,23 @@ export interface ISessionProvider {
     oldPassword: string,
     newPassword: string,
   ) => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
-  readonly setupTOTP: () => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
+  readonly setupTOTP: () => Promise<results.Err<AmplifyError> | results.Ok<SetupTOTPReturn>>
   readonly verifyTotpSetup: (
     totpToken: string,
   ) => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
   readonly updateMFAPreference: (
     mfaMethod: MfaType,
-  ) => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
-  readonly getMFAPreference: () => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
+  ) => Promise<results.Err<AmplifyError> | results.Ok<void>>
+  readonly getMFAPreference: () => Promise<results.Err<AmplifyError> | results.Ok<MfaType>>
   readonly verifyTotpToken: (
     totpToken: string,
-  ) => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
+  ) => Promise<results.Err<AmplifyError> | results.Ok<boolean>>
   readonly saveAccessToken: (accessTokenPayload: saveAccessToken.AccessToken | null) => void
   readonly confirmSignIn: (
     user: cognito.CognitoUser,
     otp: string,
     mfaType: MfaProtectionTypes,
-  ) => Promise<results.Err<AmplifyError> | results.Ok<unknown>>
+  ) => ConfirmSignInReturn
 }
 
 // ===============
@@ -536,9 +548,9 @@ export class Cognito implements ISessionProvider {
     const cognitoUserResult = await currentAuthenticatedUser()
     if (cognitoUserResult.ok) {
       const cognitoUser = cognitoUserResult.unwrap()
-      const result = await results.Result.wrapAsync(
-        async () => await amplify.Auth.setPreferredMFA(cognitoUser, mfaMethod),
-      )
+      const result = await results.Result.wrapAsync(async () => {
+        await amplify.Auth.setPreferredMFA(cognitoUser, mfaMethod)
+      })
       return result.mapErr(intoAmplifyErrorOrThrow)
     } else {
       return results.Err(cognitoUserResult.val)
@@ -571,7 +583,9 @@ export class Cognito implements ISessionProvider {
       const cognitoUser = cognitoUserResult.unwrap()
 
       return (
-        await results.Result.wrapAsync(() => amplify.Auth.verifyTotpToken(cognitoUser, totpToken))
+        await results.Result.wrapAsync(() =>
+          amplify.Auth.verifyTotpToken(cognitoUser, totpToken).then(() => true),
+        )
       ).mapErr(intoAmplifyErrorOrThrow)
     } else {
       return results.Err(cognitoUserResult.val)

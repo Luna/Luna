@@ -56,6 +56,10 @@ interface SessionContextType {
   readonly resetPassword: (email: string, code: string, password: string) => Promise<null>
   readonly signOut: () => Promise<void>
   readonly organizationId: () => Promise<string | null>
+  readonly getMFAPreference: () => Promise<cognito.MfaType>
+  readonly updateMFAPreference: (mfaType: cognito.MfaType) => Promise<void>
+  readonly verifyTotpToken: (otp: string) => Promise<boolean>
+  readonly setupTOTP: () => Promise<cognito.SetupTOTPReturn>
 }
 
 const SessionContext = React.createContext<SessionContextType | null>(null)
@@ -305,6 +309,39 @@ export default function SessionProvider(props: SessionProviderProps) {
 
   const organizationId = useEventCallback(() => authService.organizationId())
 
+  const getMFAPreference = useEventCallback(async () => {
+    const result = await authService.getMFAPreference()
+    if (result.err) {
+      throw result.val
+    } else {
+      return result.unwrap()
+    }
+  })
+
+  const updateMFAPreference = useEventCallback(async (mfaType: cognito.MfaType) => {
+    const result = await authService.updateMFAPreference(mfaType)
+
+    if (result.err) {
+      throw result.val
+    }
+  })
+  const verifyTotpToken = useEventCallback(async (otp: string) => {
+    const result = await authService.verifyTotpToken(otp)
+    if (result.err) {
+      throw result.val
+    } else {
+      return result.unwrap()
+    }
+  })
+  const setupTOTP = useEventCallback(async () => {
+    const result = await authService.setupTOTP()
+    if (result.err) {
+      throw result.val
+    } else {
+      return result.unwrap()
+    }
+  })
+
   React.useEffect(() => {
     if (session.data) {
       // Save access token so can it be reused by backend services
@@ -325,6 +362,10 @@ export default function SessionProvider(props: SessionProviderProps) {
     changePassword,
     signOut: logoutMutation.mutateAsync,
     organizationId,
+    getMFAPreference,
+    updateMFAPreference,
+    verifyTotpToken,
+    setupTOTP,
   } satisfies SessionContextType
 
   return (
