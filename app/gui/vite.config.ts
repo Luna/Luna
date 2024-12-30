@@ -66,6 +66,10 @@ export default defineConfig({
         sentryVitePlugin({
           org: process.env.ENSO_IDE_SENTRY_ORGANIZATION,
           project: process.env.ENSO_IDE_SENTRY_PROJECT,
+          reactComponentAnnotation: { enabled: true },
+          ...(process.env.ENSO_IDE_VERSION != null ?
+            { release: { name: process.env.ENSO_IDE_VERSION } }
+          : {}),
         }),
       ]
     : []),

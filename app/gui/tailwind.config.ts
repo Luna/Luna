@@ -21,6 +21,7 @@ export default {
         /** The default color of all text. */
         // This should be named "regular".
         primary: 'rgb(var(--color-primary-rgb) / var(--color-primary-opacity))',
+        disabled: 'rgb(var(--color-primary-rgb) / 30%)',
         invert: 'rgb(var(--color-invert-rgb) / var(--color-invert-opacity))',
         background: 'rgb(var(--color-background-rgb) / var(--color-background-opacity))',
         'background-hex': 'var(--color-background-hex)',
