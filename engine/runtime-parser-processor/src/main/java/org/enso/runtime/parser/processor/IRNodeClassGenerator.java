@@ -354,7 +354,7 @@ final class IRNodeClassGenerator {
         @Override
         public DiagnosticStorage getDiagnostics() {
           if (diagnostics == null) {
-            diagnostics = DiagnosticStorage$.MODULE$.empty();
+            diagnostics = DiagnosticStorage$.MODULE$.createEmpty();
           }
           return diagnostics;
         }
