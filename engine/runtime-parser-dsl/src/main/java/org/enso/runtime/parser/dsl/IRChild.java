@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * Constructor parameter annotated with this annotation will be represented as a child field in the
- * generated super class. Children of IR elements for a tree. A child will be part of the methods
+ * generated super class. Children of IR elements form a tree. A child will be part of the methods
  * traversing the tree, like {@code mapExpression} and {@code children}. The parameter type must be
  * a subtype of {@code org.enso.compiler.ir.IR}.
  */
