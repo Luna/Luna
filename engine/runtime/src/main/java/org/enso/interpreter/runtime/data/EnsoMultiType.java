@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.NeverDefault;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import org.enso.interpreter.runtime.EnsoContext;
 
@@ -83,6 +84,14 @@ final class EnsoMultiType {
     return "MultiType{" + "types=" + Arrays.toString(types) + '}';
   }
 
+  @CompilerDirectives.TruffleBoundary
+  final boolean hasIntersectionWith(EnsoMultiType other) {
+    var my = new HashSet<>(Arrays.asList(types));
+    var their = Arrays.asList(other.types);
+    my.removeAll(their);
+    return my.size() < types.length;
+  }
+
   @GenerateUncached
   abstract static class FindIndexNode extends Node {
     private static final String INLINE_CACHE_LIMIT = "5";
@@ -133,6 +142,13 @@ final class EnsoMultiType {
       return EnsoMultiTypeFactory.AllTypesWithNodeGen.create();
     }
 
+    /**
+     * Don't modify the return value. It maybe cached!
+     *
+     * @param first first set of types
+     * @param second second set of types
+     * @return union of both types
+     */
     abstract Type[] executeAllTypes(EnsoMultiType first, EnsoMultiType second);
 
     @Specialization(

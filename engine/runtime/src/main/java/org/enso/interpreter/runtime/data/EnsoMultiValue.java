@@ -47,6 +47,8 @@ public final class EnsoMultiValue extends EnsoObject {
   private final Object[] values;
 
   private EnsoMultiValue(EnsoMultiType dispatch, EnsoMultiType extra, Object[] values) {
+    assert !dispatch.hasIntersectionWith(extra)
+        : "Dispatch (" + dispatch + " and extra " + extra + " should be disjoin!";
     this.dispatch = dispatch;
     this.extra = extra;
     this.values = values;
@@ -553,6 +555,7 @@ public final class EnsoMultiValue extends EnsoObject {
           if (i == 0 && dispatch.typesLength() == 1) {
             return newNode.newValue(copyTypes, 1, mv.values);
           } else {
+            copyTypes = copyTypes.clone();
             var copyValues = mv.values.clone();
             copyTypes[0] = copyTypes[i];
             copyValues[0] = copyValues[i];

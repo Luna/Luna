@@ -64,6 +64,9 @@ public class EnsoMultiValueInteropTest {
         if (r2 instanceof EnsoMultiValue) {
           return;
         }
+        if (typ1 == typ2) {
+          return;
+        }
         var both =
             EnsoMultiValue.NewNode.getUncached()
                 .newValue(new Type[] {typ1, typ2}, 2, new Object[] {r1, r2});
