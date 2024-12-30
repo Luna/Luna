@@ -35,6 +35,7 @@ export default function UpsertSecretModal(props: UpsertSecretModalProps) {
     defaultValues: { title: nameRaw ?? '', value: '' },
     onSubmit: async ({ title, value }) => {
       await doCreate(title, value)
+      form.reset({ title, value })
     },
   })
 
