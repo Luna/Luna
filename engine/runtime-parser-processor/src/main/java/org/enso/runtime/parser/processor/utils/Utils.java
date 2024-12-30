@@ -46,6 +46,12 @@ public final class Utils {
     return elem.getKind() == ElementKind.INTERFACE && elem.getSimpleName().toString().equals("IR");
   }
 
+  public static TypeElement irTypeElement(ProcessingEnvironment procEnv) {
+    var ret = procEnv.getElementUtils().getTypeElement("org.enso.compiler.core.IR");
+    hardAssert(ret != null);
+    return ret;
+  }
+
   /** Returns true if the given type extends {@link org.enso.compiler.core.ir.Expression} */
   public static boolean isSubtypeOfExpression(
       TypeMirror type, ProcessingEnvironment processingEnv) {

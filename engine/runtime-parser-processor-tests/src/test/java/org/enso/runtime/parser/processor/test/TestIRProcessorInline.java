@@ -126,6 +126,47 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void annotatedClass_InterfacesToImplement_CanHaveMore() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.compiler.core.IR;
+
+        interface MySuperIR { }
+
+        @GenerateIR(interfaces = {MySuperIR.class, IR.class})
+        public final class MyIR extends MyIRGen {
+          @GenerateFields
+          public MyIR() {}
+        }
+  """;
+    var generatedClass = generatedClass("MyIR", src);
+    assertThat(generatedClass, containsString("class MyIRGen implements IR, MySuperIR"));
+  }
+
+  @Test
+  public void annotatedClass_InterfacesToImplement_DoNotHaveToExtendIR() {
+    var src =
+        """
+    import org.enso.runtime.parser.dsl.GenerateIR;
+    import org.enso.runtime.parser.dsl.GenerateFields;
+
+    interface MySuperIR_1 { }
+    interface MySuperIR_2 { }
+
+    @GenerateIR(interfaces = {MySuperIR_1.class, MySuperIR_2.class})
+    public final class MyIR extends MyIRGen {
+      @GenerateFields
+      public MyIR() {}
+    }
+""";
+    var generatedClass = generatedClass("MyIR", src);
+    assertThat(
+        generatedClass, containsString("class MyIRGen implements IR, MySuperIR_1, MySuperIR_2"));
+  }
+
+  @Test
   public void simpleIRNodeWithUserDefinedFiled_CompilationSucceeds() {
     var src =
         """
@@ -348,31 +389,6 @@ public class TestIRProcessorInline {
   }
 
   @Test
-  public void interfacesMustBeSubtypeOfIR() {
-    var src =
-        JavaFileObjects.forSourceString(
-            "MyIR",
-            """
-        import org.enso.runtime.parser.dsl.GenerateIR;
-        import org.enso.runtime.parser.dsl.GenerateFields;
-
-        interface MySuperIR {
-          boolean suspended();
-        }
-
-        @GenerateIR(interfaces = {MySuperIR.class})
-        public final class MyIR extends MyIRGen {
-          @GenerateFields
-          public MyIR() {}
-        }
-  """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).failed();
-    CompilationSubject.assertThat(compilation).hadErrorContaining("subtype");
-  }
-
-  @Test
   public void irNodeWithInheritedField() {
     var src =
         generatedClass(
@@ -477,7 +493,7 @@ public class TestIRProcessorInline {
           }
         }
         """);
-    assertThat(src, containsString("class JBlankGen implements JName"));
+    assertThat(src, containsString("class JBlankGen implements IR, JName"));
     assertThat(src, containsString("String name()"));
   }
 

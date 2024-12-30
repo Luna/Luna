@@ -21,9 +21,9 @@ import java.lang.annotation.Target;
 public @interface GenerateIR {
 
   /**
-   * Interfaces that the generated superclass must implement. All the interfaces must be subtypes of
-   * the {@code org.enso.compiler.ir.IR} interface. All the abstract parameterless methods from all
-   * the interfaces will be implemented by the generated class.
+   * Interfaces that the generated superclass will implement. The list of the interfaces will simply
+   * be put inside the {@code implements} clause of the generated class. All the generated classes
+   * implements {@code org.enso.compiler.core.IR} by default.
    */
   Class[] interfaces() default {};
 }

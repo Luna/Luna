@@ -9,15 +9,12 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleAnnotationValueVisitor14;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import org.enso.runtime.parser.dsl.GenerateFields;
@@ -105,48 +102,33 @@ public class IRProcessor extends AbstractProcessor {
   private ProcessedClass constructProcessedClass(TypeElement processedClassElem) {
     // GenerateIR.interfaces cannot be accessed directly, we have to access the
     // classes via type mirrors.
-    TypeElement ifaceToImplement =
-        processingEnv.getElementUtils().getTypeElement("org.enso.compiler.core.IR");
-    var annotValueVisitor =
-        new SimpleAnnotationValueVisitor14<List<TypeElement>, Void>() {
-          @Override
-          public List<TypeElement> visitArray(List<? extends AnnotationValue> vals, Void unused) {
-            return vals.stream()
-                .map(val -> val.accept(this, null))
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-          }
-
-          @Override
-          public List<TypeElement> visitType(TypeMirror t, Void unused) {
-            var element = processingEnv.getTypeUtils().asElement(t);
-            Utils.hardAssert(element instanceof TypeElement);
-            return List.of((TypeElement) element);
-          }
-        };
+    TypeElement irIfaceToImplement = Utils.irTypeElement(processingEnv);
+    List<TypeElement> allInterfacesToImplement = List.of();
     for (var annotMirror : processedClassElem.getAnnotationMirrors()) {
       if (annotMirror.getAnnotationType().toString().equals(GenerateIR.class.getName())) {
-        for (var entry : annotMirror.getElementValues().entrySet()) {
+        var annotMirrorElemValues =
+            processingEnv.getElementUtils().getElementValuesWithDefaults(annotMirror);
+        for (var entry : annotMirrorElemValues.entrySet()) {
           if (entry.getKey().getSimpleName().toString().equals("interfaces")) {
-            var typeMirrors = entry.getValue().accept(annotValueVisitor, null);
-            if (typeMirrors.size() == 1) {
-              ifaceToImplement = typeMirrors.get(0);
-            } else {
-              throw new IRProcessingException(
-                  "Only one interface is currently supported in `GenerateIR.interfaces`",
-                  processedClassElem);
+            var annotValueVisitor = new GenerateIRAnnotationVisitor(processingEnv, entry.getKey());
+            entry.getValue().accept(annotValueVisitor, null);
+            if (annotValueVisitor.getIrInterface() != null) {
+              irIfaceToImplement = annotValueVisitor.getIrInterface();
             }
+            allInterfacesToImplement = annotValueVisitor.getAllInterfaces();
           }
         }
       }
     }
-    Utils.hardAssert(ifaceToImplement != null);
-    if (!Utils.isSubtypeOfIR(ifaceToImplement, processingEnv)) {
+    Utils.hardAssert(irIfaceToImplement != null);
+    if (!Utils.isSubtypeOfIR(irIfaceToImplement, processingEnv)) {
       throw new IRProcessingException(
-          "Interface to implement must be a subtype of IR interface", ifaceToImplement);
+          "Interface to implement must be a subtype of IR interface", irIfaceToImplement);
     }
     var annotatedCtor = getAnnotatedCtor(processedClassElem);
-    var processedClass = new ProcessedClass(processedClassElem, annotatedCtor, ifaceToImplement);
+    var processedClass =
+        new ProcessedClass(
+            processedClassElem, annotatedCtor, irIfaceToImplement, allInterfacesToImplement);
     return processedClass;
   }
 
@@ -241,7 +223,10 @@ public class IRProcessor extends AbstractProcessor {
     var imports =
         irNodeClassGen.imports().stream().collect(Collectors.joining(System.lineSeparator()));
     var pkg = pkgName.isEmpty() ? "" : "package " + pkgName + ";";
-    var interfaces = processedClass.getInterfaceElem().getQualifiedName().toString();
+    var interfaces =
+        processedClass.getInterfaces().stream()
+            .map(TypeElement::getSimpleName)
+            .collect(Collectors.joining(", "));
     var code =
         """
         $pkg

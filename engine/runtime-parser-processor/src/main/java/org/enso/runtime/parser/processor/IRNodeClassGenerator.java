@@ -62,19 +62,19 @@ final class IRNodeClassGenerator {
     this.className = className;
     var userFields = getAllUserFields(processedClass);
     var duplicateMethod =
-        Utils.findDuplicateMethod(processedClass.getInterfaceElem(), processingEnv);
+        Utils.findDuplicateMethod(processedClass.getIrInterfaceElem(), processingEnv);
     this.generatedClassContext =
         new GeneratedClassContext(className, userFields, processingEnv, processedClass);
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
     var mapExpressionsMethod =
-        Utils.findMapExpressionsMethod(processedClass.getInterfaceElem(), processingEnv);
+        Utils.findMapExpressionsMethod(processedClass.getIrInterfaceElem(), processingEnv);
     this.mapExpressionsMethodGenerator =
         new MapExpressionsMethodGenerator(mapExpressionsMethod, generatedClassContext);
     var setLocationMethod =
         Utils.findMethod(
-            processedClass.getInterfaceElem(),
+            processedClass.getIrInterfaceElem(),
             processingEnv,
             method -> method.getSimpleName().toString().equals("setLocation"));
     this.setLocationMethodGenerator =
