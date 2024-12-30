@@ -22,4 +22,16 @@ class GeneratedIRTest extends AnyFlatSpec with Matchers {
     val callArg = new JSpecified(isSynthetic = true, value = lit, name = None)
     callArg should not be null
   }
+
+  "JSpecifiedGen" should "have overridden toString method" in {
+    val lit     = Literal.Text("foo", null, new MetadataStorage())
+    val callArg = new JSpecified(true, None, lit)
+    val str     = callArg.toString
+    withClue(s"String representation: " + str) {
+      str.contains("JCallArgument.JSpecified") shouldBe true
+      str.contains("name = None") shouldBe true
+      str.contains("value = Literal.Text") shouldBe true
+      str.contains("passData = null") shouldBe true
+    }
+  }
 }

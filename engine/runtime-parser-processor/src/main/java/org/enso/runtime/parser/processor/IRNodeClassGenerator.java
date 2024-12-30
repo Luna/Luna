@@ -15,6 +15,7 @@ import org.enso.runtime.parser.processor.methodgen.EqualsMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.HashCodeMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.MapExpressionsMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.SetLocationMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.ToStringMethodGenerator;
 import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
@@ -35,6 +36,7 @@ final class IRNodeClassGenerator {
   private final MapExpressionsMethodGenerator mapExpressionsMethodGenerator;
   private final EqualsMethodGenerator equalsMethodGenerator;
   private final HashCodeMethodGenerator hashCodeMethodGenerator;
+  private final ToStringMethodGenerator toStringMethodGenerator;
 
   private static final Set<String> defaultImportedTypes =
       Set.of(
@@ -81,6 +83,7 @@ final class IRNodeClassGenerator {
         new SetLocationMethodGenerator(setLocationMethod, generatedClassContext);
     this.equalsMethodGenerator = new EqualsMethodGenerator(generatedClassContext);
     this.hashCodeMethodGenerator = new HashCodeMethodGenerator(generatedClassContext);
+    this.toStringMethodGenerator = new ToStringMethodGenerator(generatedClassContext);
   }
 
   /** Returns simple name of the generated class. */
@@ -126,6 +129,8 @@ final class IRNodeClassGenerator {
 
         $hashCodeMethod
 
+        $toStringMethod
+
         $builder
         """
             .replace("$fields", fieldsCode())
@@ -136,6 +141,7 @@ final class IRNodeClassGenerator {
             .replace("$mapExpressionsMethod", mapExpressions())
             .replace("$equalsMethod", equalsMethodGenerator.generateMethodCode())
             .replace("$hashCodeMethod", hashCodeMethodGenerator.generateMethodCode())
+            .replace("$toStringMethod", toStringMethodGenerator.generateMethodCode())
             .replace("$builder", builderMethodGenerator.generateBuilder());
     return Utils.indent(code, 2);
   }
@@ -302,7 +308,7 @@ final class IRNodeClassGenerator {
   }
 
   /**
-   * Returns a String representing all the overriden methods from {@link org.enso.compiler.core.IR}.
+   * Returns a String representing all the overriden methods from {@code org.enso.compiler.core.IR}.
    * Meant to be inside the generated record definition.
    */
   private String overrideIRMethods() {
@@ -358,7 +364,7 @@ final class IRNodeClassGenerator {
           }
           return diagnostics;
         }
-        
+
         public DiagnosticStorage diagnosticsCopy() {
           if (diagnostics == null) {
             return null;
