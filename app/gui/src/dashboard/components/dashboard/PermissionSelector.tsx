@@ -12,6 +12,10 @@ import type * as backend from '#/services/Backend'
 import * as permissions from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
+// =================
+// === Constants ===
+// =================
+
 /** The horizontal offset of the {@link PermissionTypeSelector} from its parent element. */
 const TYPE_SELECTOR_X_OFFSET_PX = -8
 /** The vertical offset of the {@link PermissionTypeSelector} from its parent element. */
@@ -25,6 +29,10 @@ const LABEL_CLIP_Y_OFFSET_PX = 0.5
 const LABEL_BORDER_RADIUS_PX = 12
 /** The width of the straight section of the permission label. */
 const LABEL_STRAIGHT_WIDTH_PX = 97
+
+// ==========================
+// === PermissionSelector ===
+// ==========================
 
 /** Props for a {@link PermissionSelector}. */
 export interface PermissionSelectorProps {
