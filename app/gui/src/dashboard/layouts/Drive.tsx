@@ -5,11 +5,13 @@ import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 import { SUBSCRIBE_PATH } from '#/appUtils'
+import OfflineIcon from '#/assets/offline_filled.svg'
 import * as ariaComponents from '#/components/AriaComponents'
 import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
 import * as result from '#/components/Result'
 import { Result } from '#/components/Result'
+import SvgMask from '#/components/SvgMask'
 import AssetListEventType from '#/events/AssetListEventType'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
@@ -30,6 +32,7 @@ import { DirectoryDoesNotExistError, Plan } from '#/services/Backend'
 import AssetQuery from '#/utilities/AssetQuery'
 import { download } from '#/utilities/download'
 import { getDownloadUrl } from '#/utilities/github'
+import { OfflineError } from '#/utilities/HttpClient'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { Suspense } from '../components/Suspense'
@@ -50,7 +53,7 @@ const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 function Drive(props: DriveProps) {
-  const { category, resetCategory } = props
+  const { category, resetCategory, setCategory } = props
 
   const { isOffline } = useOffline()
   const toastAndLog = useToastAndLog()
@@ -113,6 +116,18 @@ function Drive(props: DriveProps) {
               resetCategory()
               resetQueries()
               resetErrorBoundary()
+            }
+
+            if (error instanceof OfflineError) {
+              return (
+                <OfflineMessage
+                  supportLocalBackend={supportLocalBackend}
+                  setCategory={(nextCategory) => {
+                    setCategory(nextCategory)
+                    resetErrorBoundary()
+                  }}
+                />
+              )
             }
           }}
         >
@@ -253,26 +268,7 @@ function DriveAssetsView(props: DriveProps) {
           </div>
 
           {status === 'offline' ?
-            <result.Result
-              status="info"
-              className="my-12"
-              centered="horizontal"
-              title={getText('cloudUnavailableOffline')}
-              subtitle={`${getText('cloudUnavailableOfflineDescription')} ${supportLocalBackend ? getText('cloudUnavailableOfflineDescriptionOfferLocal') : ''}`}
-            >
-              {supportLocalBackend && (
-                <ariaComponents.Button
-                  variant="primary"
-                  size="small"
-                  className="mx-auto"
-                  onPress={() => {
-                    setCategory({ type: 'local' })
-                  }}
-                >
-                  {getText('switchToLocal')}
-                </ariaComponents.Button>
-              )}
-            </result.Result>
+            <OfflineMessage supportLocalBackend={supportLocalBackend} setCategory={setCategory} />
           : <AssetsTable
               assetManagementApiRef={assetsManagementApiRef}
               hidden={hidden}
@@ -287,6 +283,40 @@ function DriveAssetsView(props: DriveProps) {
 
       <AssetPanel backendType={backend.type} category={deferredCategory} />
     </div>
+  )
+}
+
+/** Props for {@link OfflineMessage}. */
+interface OfflineMessageProps {
+  readonly supportLocalBackend: boolean
+  readonly setCategory: (category: categoryModule.Category) => void
+}
+
+/** Display info that the category selected is unavailable in offline mode. */
+function OfflineMessage(props: OfflineMessageProps) {
+  const { supportLocalBackend, setCategory } = props
+  const { getText } = useText()
+
+  return (
+    <result.Result
+      status={<SvgMask src={OfflineIcon} className="aspect-square h-6" />}
+      className="my-12"
+      centered="horizontal"
+      title={getText('cloudUnavailableOffline')}
+      subtitle={`${getText('cloudUnavailableOfflineDescription')} ${supportLocalBackend ? getText('cloudUnavailableOfflineDescriptionOfferLocal') : ''}`}
+    >
+      {supportLocalBackend && (
+        <ariaComponents.Button
+          variant="primary"
+          className="mx-auto"
+          onPress={() => {
+            setCategory({ type: 'local' })
+          }}
+        >
+          {getText('switchToLocal')}
+        </ariaComponents.Button>
+      )}
+    </result.Result>
   )
 }
 

@@ -140,7 +140,6 @@ export function backendQueryOptions<Method extends BackendMethods>(
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
 ) {
-  // @ts-expect-error This call is generic over the presence or absence of `inputData`.
   return queryOptions<Awaited<ReturnType<Backend[Method]>>>({
     ...options,
     ...backendQueryOptionsBase(backend, method, args, options?.queryKey),
@@ -203,6 +202,7 @@ const INVALIDATION_MAP: Partial<
   createSecret: ['listDirectory'],
   updateSecret: ['listDirectory'],
   updateProject: ['listDirectory'],
+  updateFile: ['listDirectory'],
   updateDirectory: ['listDirectory'],
   createDatalink: ['listDirectory', 'getDatalink'],
   uploadFileEnd: ['listDirectory'],
@@ -210,6 +210,7 @@ const INVALIDATION_MAP: Partial<
   deleteAsset: ['listDirectory', 'listAssetVersions'],
   undoDeleteAsset: ['listDirectory'],
   updateAsset: ['listDirectory', 'listAssetVersions'],
+  openProject: ['listDirectory'],
   closeProject: ['listDirectory', 'listAssetVersions'],
 }
 
@@ -342,8 +343,6 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         }
       }
     },
-
-    meta: { persist: false },
   })
 }
 
