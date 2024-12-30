@@ -289,6 +289,29 @@ public class TestIRProcessorInline {
     assertThat(genClass, containsString("abstract class MySuperGeneratedClass"));
   }
 
+  /**
+   * Generated {@code duplicate} method returns the annotated class type, not any of its
+   * super types.
+   */
+  @Test
+  public void generatedClass_DuplicateMethodHasSpecificReturnType() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName() {}
+        }
+        """;
+    var genClass = generatedClass("JName", src);
+    assertThat(genClass, containsString("JName duplicate("));
+  }
+
+  /**
+
   @Test
   public void generatedMethod_setLocation_returnsSubClassType() {
     var src =

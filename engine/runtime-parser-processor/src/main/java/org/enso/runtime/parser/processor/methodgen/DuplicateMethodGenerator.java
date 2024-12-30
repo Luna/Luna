@@ -304,7 +304,7 @@ public class DuplicateMethodGenerator {
   }
 
   private String dupMethodRetType() {
-    return duplicateMethod.getReturnType().toString();
+    return ctx.getProcessedClass().getClazz().getSimpleName().toString();
   }
 
   /**
