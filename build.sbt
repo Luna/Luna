@@ -2577,6 +2577,13 @@ lazy val mixedJavaScalaProjectSetting: SettingsDefinition = Seq(
   excludeFilter := excludeFilter.value || "module-info.java"
 )
 
+/** Ensure that javac compiler generates parameter names for methods, so that these
+  * Java methods can be called with named parameters from Scala.
+  */
+lazy val javaMethodParametersSetting: SettingsDefinition = Seq(
+  javacOptions += "-parameters"
+)
+
 def customFrgaalJavaCompilerSettings(targetJdk: String) = {
   // There might be slightly different Frgaal compiler configuration for
   // both Compile and Test configurations
@@ -3204,6 +3211,7 @@ lazy val `runtime-parser` =
     .settings(
       scalaModuleDependencySetting,
       mixedJavaScalaProjectSetting,
+      javaMethodParametersSetting,
       version := mavenUploadVersion,
       javadocSettings,
       publish / skip := false,
@@ -3252,7 +3260,8 @@ lazy val `runtime-parser-dsl` =
   (project in file("engine/runtime-parser-dsl"))
     .enablePlugins(JPMSPlugin)
     .settings(
-      frgaalJavaCompilerSetting
+      frgaalJavaCompilerSetting,
+      javaMethodParametersSetting
     )
 
 lazy val `runtime-parser-processor-tests` =
@@ -3260,6 +3269,7 @@ lazy val `runtime-parser-processor-tests` =
     .settings(
       inConfig(Compile)(truffleRunOptionsSettings),
       frgaalJavaCompilerSetting,
+      javaMethodParametersSetting,
       commands += WithDebugCommand.withDebug,
       annotationProcSetting,
       Compile / javacOptions ++= Seq(
@@ -3283,6 +3293,7 @@ lazy val `runtime-parser-processor` =
     .enablePlugins(JPMSPlugin)
     .settings(
       frgaalJavaCompilerSetting,
+      javaMethodParametersSetting,
       Compile / internalModuleDependencies := Seq(
         (`runtime-parser-dsl` / Compile / exportedModule).value
       )

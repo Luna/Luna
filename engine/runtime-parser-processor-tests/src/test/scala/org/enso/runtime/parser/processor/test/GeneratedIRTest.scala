@@ -16,4 +16,10 @@ class GeneratedIRTest extends AnyFlatSpec with Matchers {
     val dupl = callArg.duplicate(false, false, false, false)
     dupl.value() shouldEqual lit
   }
+
+  "JSpecifiedGen" should "have generated parameter names with javac compiler" in {
+    val lit     = Literal.Text("foo", null, new MetadataStorage())
+    val callArg = new JSpecified(isSynthetic = true, value = lit, name = None)
+    callArg should not be null
+  }
 }
