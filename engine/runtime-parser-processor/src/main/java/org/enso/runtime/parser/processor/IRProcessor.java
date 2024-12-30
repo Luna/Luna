@@ -216,7 +216,9 @@ public class IRProcessor extends AbstractProcessor {
   private static String generateSingleNodeClass(
       IRNodeClassGenerator irNodeClassGen, ProcessedClass processedClass, String pkgName) {
     var imports =
-        irNodeClassGen.imports().stream().collect(Collectors.joining(System.lineSeparator()));
+        irNodeClassGen.imports().stream()
+            .sorted()
+            .collect(Collectors.joining(System.lineSeparator()));
     var pkg = pkgName.isEmpty() ? "" : "package " + pkgName + ";";
     var interfaces =
         processedClass.getInterfaces().stream()
