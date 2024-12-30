@@ -1,5 +1,5 @@
 /** @file Test copying, moving, cutting and pasting. */
-import { expect, test, type Locator } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import { modModifier } from 'integration-test/dashboard/actions/BaseActions'
 import { mockAllAndLogin, TEXT } from './actions'
@@ -85,6 +85,11 @@ test('clear trash', ({ page }) =>
     .clearTrash()
     .driveTable.expectTrashPlaceholderRow()
     .goToCategory.cloud()
+    .expectStartModal()
+    .withStartModal(async (startModal) => {
+      await expect(startModal).toBeVisible()
+    })
+    .close()
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(6)
+      await expect(rows).toHaveCount(1)
     }))
