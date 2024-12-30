@@ -4,7 +4,6 @@
  * Hooks for working with categories.
  * Categories are shortcuts to specific directories in the Cloud, e.g. team spaces, recent and trash
  * It's not the same as the categories like LocalBackend
- * TODO: Improve performance and add ability to subscribe to individual category values
  */
 
 import { useSuspenseQuery } from '@tanstack/react-query'
