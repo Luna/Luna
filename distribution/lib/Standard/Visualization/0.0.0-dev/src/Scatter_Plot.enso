@@ -52,9 +52,6 @@ type Point_Data
     Row_Number
 
     ## PRIVATE
-    Colour
-
-    ## PRIVATE
 
        Returns all recognized point data fields.
     all_fields : Vector
@@ -98,7 +95,7 @@ type Point_Data
         Point_Data.Row_Number ->
             Point_Data.iota table.row_count
         Point_Data.Color ->
-            colour_col = Point_Data.Colour.lookup_in table
+            colour_col = table.lookup_ignore_case "Colour"
             is_good c = (self.is_recognized c).not
             if is_good colour_col then colour_col else Error.throw Nothing
             
