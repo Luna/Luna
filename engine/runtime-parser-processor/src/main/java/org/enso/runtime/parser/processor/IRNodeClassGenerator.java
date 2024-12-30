@@ -358,6 +358,14 @@ final class IRNodeClassGenerator {
           }
           return diagnostics;
         }
+        
+        public DiagnosticStorage diagnosticsCopy() {
+          if (diagnostics == null) {
+            return null;
+          } else {
+            return diagnostics.copy();
+          }
+        }
 
         $duplicateMethods
 
