@@ -185,7 +185,7 @@ public class IRProcessor extends AbstractProcessor {
 
   private void ensureExtendsGeneratedSuperclass(TypeElement clazz) {
     var superClass = clazz.getSuperclass();
-    if (superClass.getKind() == TypeKind.NONE) {
+    if (superClass.getKind() == TypeKind.NONE || superClass.toString().equals("java.lang.Object")) {
       throw new IRProcessingException(
           "Class annotated with @GenerateIR must have 'extends' clause", clazz);
     }
