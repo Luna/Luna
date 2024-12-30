@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -184,20 +183,24 @@ public class IRProcessor extends AbstractProcessor {
   private void ensureExtendsGeneratedSuperclass(TypeElement clazz) {
     var superClass = clazz.getSuperclass();
     var genClassName = generatedClassName(clazz);
-    Supplier<IRProcessingException> errSupplier =
-        () ->
-            new IRProcessingException(
-                "Class annotated with @GenerateIR must extend generated superclass '"
-                    + genClassName
-                    + "'",
-                clazz);
     if (superClass.getKind() == TypeKind.NONE) {
-      throw errSupplier.get();
+      throw new IRProcessingException(
+          "Class annotated with @GenerateIR must extend generated superclass'"
+              + genClassName
+              + "' "
+              + "But instead extends no class.",
+          clazz);
     }
     var superClassName = superClass.toString();
     var extendsGeneratedSuperclass = superClassName.equals(genClassName);
     if (!extendsGeneratedSuperclass) {
-      throw errSupplier.get();
+      throw new IRProcessingException(
+          "Class annotated with @GenerateIR must extend generated superclass'"
+              + genClassName
+              + "'. "
+              + "The actual extended class is "
+              + superClassName,
+          clazz);
     }
   }
 
