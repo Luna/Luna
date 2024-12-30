@@ -69,7 +69,15 @@ public interface CallArgument extends IR {
     }
 
     public Specified copy(Expression value) {
-      return new Builder(this).value(value).build();
+      if (value != this.value()) {
+        var duplicated =
+            new Specified(name(), value, isSynthetic(), identifiedLocation(), passData());
+        duplicated.id = id;
+        duplicated.diagnostics = diagnostics;
+        return duplicated;
+      } else {
+        return this;
+      }
     }
   }
 }
