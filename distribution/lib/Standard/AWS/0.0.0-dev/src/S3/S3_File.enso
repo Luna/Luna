@@ -300,8 +300,8 @@ type S3_File
          as a local move often is.
     move_to : File_Like -> Boolean -> Any ! File_Error
     move_to self (destination : File_Like) (replace_existing : Boolean = False) =
-        if self.is_directory then Error.throw (S3_Error.Error "Moving S3 folders is currently not implemented." self.uri) else
-            Data_Link_Helpers.disallow_links_in_move self destination <|
+        Data_Link_Helpers.disallow_links_in_move self destination <|
+            if self.is_directory then Error.throw (S3_Error.Error "Moving S3 folders is currently not implemented." self.uri) else
                 Context.Output.if_enabled disabled_message="As writing is disabled, cannot move the file. Press the Write button ▶ to perform the operation." panic=False <|
                     r = self.copy_to destination replace_existing=replace_existing
                     r.if_not_error <|
