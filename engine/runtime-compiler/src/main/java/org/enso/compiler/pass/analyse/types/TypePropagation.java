@@ -41,22 +41,18 @@ abstract class TypePropagation {
   private static final Logger logger = LoggerFactory.getLogger(TypePropagation.class);
   private final TypeResolver typeResolver;
   private final TypeCompatibility compatibilityChecker;
-  private final BuiltinTypes builtinTypes;
   private final MethodTypeResolver methodTypeResolver;
 
   TypePropagation(
       TypeResolver typeResolver,
       TypeCompatibility compatibilityChecker,
-      BuiltinTypes builtinTypes,
       Module currentModule,
       ModuleResolver moduleResolver) {
     this.typeResolver = typeResolver;
     this.compatibilityChecker = compatibilityChecker;
-    this.builtinTypes = builtinTypes;
 
     var currentModuleScope = StaticModuleScope.forIR(currentModule);
-    this.methodTypeResolver =
-        new MethodTypeResolver(moduleResolver, currentModuleScope, builtinTypes);
+    this.methodTypeResolver = new MethodTypeResolver(moduleResolver, currentModuleScope);
   }
 
   /**
@@ -140,7 +136,7 @@ abstract class TypePropagation {
           }
           case Function.Lambda f -> processLambda(f, localBindingsTyping);
           case Literal l -> processLiteral(l);
-          case Application.Sequence sequence -> builtinTypes.VECTOR;
+          case Application.Sequence sequence -> BuiltinTypes.VECTOR;
           case Case.Expr caseExpr -> processCaseExpression(caseExpr, localBindingsTyping);
           default -> {
             logger.trace(
@@ -190,9 +186,9 @@ abstract class TypePropagation {
   private TypeRepresentation processLiteral(Literal literal) {
     return switch (literal) {
       case Literal.Number number -> number.isFractional()
-          ? builtinTypes.FLOAT
-          : builtinTypes.INTEGER;
-      case Literal.Text text -> builtinTypes.TEXT;
+          ? BuiltinTypes.FLOAT
+          : BuiltinTypes.INTEGER;
+      case Literal.Text text -> BuiltinTypes.TEXT;
         // This branch is needed only because Java is unable to infer that the match is exhaustive
       default -> throw new IllegalStateException(
           "Impossible - unknown literal type: " + literal.getClass().getCanonicalName());

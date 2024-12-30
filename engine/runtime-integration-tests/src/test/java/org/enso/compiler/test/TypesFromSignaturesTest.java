@@ -1,5 +1,7 @@
 package org.enso.compiler.test;
 
+import static org.enso.test.utils.ModuleUtils.findMemberMethod;
+import static org.enso.test.utils.ModuleUtils.findStaticMethod;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +38,7 @@ public class TypesFromSignaturesTest extends StaticAnalysisTest {
 
     var module = compile(src);
     var f1 = findStaticMethod(module, "f");
-    assertInferredType(f1, "A -> (B -> C)");
+    assertTypeRepresentation(f1, "A -> (B -> C)");
   }
 
   @Test
@@ -66,12 +68,12 @@ public class TypesFromSignaturesTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    assertInferredType(findStaticMethod(module, "f1"), "A -> B");
-    assertInferredType(findStaticMethod(module, "f2"), "A -> B");
-    assertInferredType(findStaticMethod(module, "f3"), "A -> B");
-    assertInferredType(findStaticMethod(module, "f4"), "A -> B");
-    assertInferredType(findStaticMethod(module, "f5"), "A -> B");
-    assertInferredType(findStaticMethod(module, "f6"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f1"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f2"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f3"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f4"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f5"), "A -> B");
+    assertTypeRepresentation(findStaticMethod(module, "f6"), "A -> B");
   }
 
   @Test
@@ -110,11 +112,11 @@ public class TypesFromSignaturesTest extends StaticAnalysisTest {
     // For a function without ascriptions, we can at least infer the _arity_
     // Currently that is denoted by replacing unknowns with Any. Later this may be free type
     // variables.
-    assertInferredType(f4, "Any -> (Any -> (Any -> (Any -> Any)))");
+    assertTypeRepresentation(f4, "Any -> (Any -> (Any -> (Any -> Any)))");
 
     // For the 'opted-out' ascription, the types are ignored, because they are not checked types.
     // But we still infer arity.
-    assertInferredType(f2, "Any -> (Any -> Any)");
+    assertTypeRepresentation(f2, "Any -> (Any -> Any)");
   }
 
   @Test
@@ -137,8 +139,8 @@ public class TypesFromSignaturesTest extends StaticAnalysisTest {
     var staticMethod = findMemberMethod(module, "A", "static_method");
     var memberMethod = findMemberMethod(module, "A", "member_method");
 
-    assertInferredType(staticMethod, "A -> A");
-    assertInferredType(memberMethod, "A -> A");
+    assertTypeRepresentation(staticMethod, "A -> A");
+    assertTypeRepresentation(memberMethod, "A -> A");
   }
 
   @Test
@@ -161,11 +163,11 @@ public class TypesFromSignaturesTest extends StaticAnalysisTest {
     var staticMethod = findMemberMethod(module, "A", "extension_static_method");
     var memberMethod = findMemberMethod(module, "A", "extension_member_method");
 
-    assertInferredType(staticMethod, "A -> A");
-    assertInferredType(memberMethod, "A -> A");
+    assertTypeRepresentation(staticMethod, "A -> A");
+    assertTypeRepresentation(memberMethod, "A -> A");
   }
 
-  private void assertInferredType(IR ir, String expected) {
+  private void assertTypeRepresentation(IR ir, String expected) {
     TypeRepresentation inferred = getInferredType(ir);
     assertEquals(expected, inferred.toString());
   }

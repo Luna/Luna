@@ -19,6 +19,7 @@ import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.pass.analyse.types.InferredType;
 import org.enso.compiler.pass.analyse.types.TypeInferencePropagation;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
+import org.enso.test.utils.ModuleUtils;
 import org.graalvm.polyglot.Source;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -46,8 +47,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     Module module = compile(src);
-    Method foo = findStaticMethod(module, "foo");
-    assertAtomType("zeroAryModuleMethodCheck.My_Type", findAssignment(foo.body(), "x"));
+    Method foo = ModuleUtils.findStaticMethod(module, "foo");
+    assertAtomType("zeroAryModuleMethodCheck.My_Type", ModuleUtils.findAssignment(foo.body(), "x"));
   }
 
   @Test
@@ -72,11 +73,11 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
     String myType = "functionReturnCheck.My_Type";
 
     // The result of `add a z` should be `My_Type` as guaranteed by the return type check of `add`.
-    assertAtomType(myType, findAssignment(foo.body(), "b"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo.body(), "b"));
   }
 
   @Test
@@ -107,12 +108,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     var module = compile(src);
     var myType = "argChecks.My_Type";
 
-    var f1 = findStaticMethod(module, "f1");
-    var f2 = findStaticMethod(module, "f2");
-    var f3 = findStaticMethod(module, "f3");
+    var f1 = ModuleUtils.findStaticMethod(module, "f1");
+    var f2 = ModuleUtils.findStaticMethod(module, "f2");
+    var f3 = ModuleUtils.findStaticMethod(module, "f3");
 
-    assertAtomType(myType, findAssignment(f1, "y1"));
-    assertNoInferredType(findAssignment(f2, "y2"));
+    assertAtomType(myType, ModuleUtils.findAssignment(f1, "y1"));
+    assertNoInferredType(ModuleUtils.findAssignment(f2, "y2"));
 
     assertEquals("My_Type -> My_Type", getInferredType(f1).toString());
     // f2 gets argument as Any, because the doc-signature is not checked
@@ -139,10 +140,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     Module module = compile(src);
-    Method f = findStaticMethod(module, "f");
+    Method f = ModuleUtils.findStaticMethod(module, "f");
 
     String myType = "ascribedExpressions.My_Type";
-    assertAtomType(myType, findAssignment(f.body(), "y"));
+    assertAtomType(myType, ModuleUtils.findAssignment(f.body(), "y"));
   }
 
   @Test
@@ -166,9 +167,9 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     Module module = compile(src);
-    Method f = findStaticMethod(module, "f");
+    Method f = ModuleUtils.findStaticMethod(module, "f");
 
-    var y1Type = getInferredType(findAssignment(f.body(), "y1"));
+    var y1Type = getInferredType(ModuleUtils.findAssignment(f.body(), "y1"));
     if (y1Type instanceof TypeRepresentation.SumType sumType) {
       var gotSet =
           new HashSet<>(sumType.types().stream().map(TypeRepresentation::toString).toList());
@@ -177,7 +178,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
       fail("y1 should be a sum type, but got " + y1Type);
     }
 
-    var y2Type = getInferredType(findAssignment(f.body(), "y2"));
+    var y2Type = getInferredType(ModuleUtils.findAssignment(f.body(), "y2"));
     if (y2Type instanceof TypeRepresentation.IntersectionType intersectionType) {
       var gotSet =
           new HashSet<>(
@@ -209,7 +210,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     Module module = compile(src);
-    Method f = findStaticMethod(module, "f");
+    Method f = ModuleUtils.findStaticMethod(module, "f");
 
     // Here we will only know that both f1 and f2 are Any -> Any - because the ascribed check only
     // really performs a
@@ -218,8 +219,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     // unfortunately.
     TypeRepresentation primitiveFunctionType =
         new TypeRepresentation.ArrowType(TypeRepresentation.ANY, TypeRepresentation.ANY);
-    assertEquals(primitiveFunctionType, getInferredType(findAssignment(f.body(), "f1")));
-    assertEquals(primitiveFunctionType, getInferredType(findAssignment(f.body(), "f2")));
+    assertEquals(
+        primitiveFunctionType, getInferredType(ModuleUtils.findAssignment(f.body(), "f1")));
+    assertEquals(
+        primitiveFunctionType, getInferredType(ModuleUtils.findAssignment(f.body(), "f2")));
   }
 
   @Test
@@ -241,12 +244,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     Module module = compile(src);
-    Method f = findStaticMethod(module, "f");
+    Method f = ModuleUtils.findStaticMethod(module, "f");
 
-    assertAtomType("Standard.Base.Data.Numbers.Integer", findAssignment(f, "x"));
-    assertAtomType("Standard.Base.Data.Text.Text", findAssignment(f, "y"));
-    assertAtomType("Standard.Base.Data.Numbers.Float", findAssignment(f, "z"));
-    assertAtomType("Standard.Base.Data.Vector.Vector", findAssignment(f, "w"));
+    assertAtomType("Standard.Base.Data.Numbers.Integer", ModuleUtils.findAssignment(f, "x"));
+    assertAtomType("Standard.Base.Data.Text.Text", ModuleUtils.findAssignment(f, "y"));
+    assertAtomType("Standard.Base.Data.Numbers.Float", ModuleUtils.findAssignment(f, "z"));
+    assertAtomType("Standard.Base.Data.Vector.Vector", ModuleUtils.findAssignment(f, "w"));
   }
 
   @Test
@@ -269,11 +272,11 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "bindingsFlow.My_Type";
 
-    assertAtomType(myType, findAssignment(foo, "w"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "w"));
   }
 
   @Test
@@ -295,15 +298,15 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "checkedArgumentTypes.My_Type";
 
     // Type from argument
-    assertAtomType(myType, findAssignment(foo, "y1"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "y1"));
 
     // No type
-    assertNoInferredType(findAssignment(foo, "y2"));
+    assertNoInferredType(ModuleUtils.findAssignment(foo, "y2"));
   }
 
   @Test
@@ -327,13 +330,13 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var f1Type = getInferredType(findAssignment(foo, "f1"));
+    var f1Type = getInferredType(ModuleUtils.findAssignment(foo, "f1"));
     assertEquals("My_Type -> (My_Type -> My_Type)", f1Type.toString());
 
     // and result of application is typed as the return type:
-    assertAtomType("innerFunctionType.My_Type", findAssignment(foo, "y"));
+    assertAtomType("innerFunctionType.My_Type", ModuleUtils.findAssignment(foo, "y"));
   }
 
   @Test
@@ -355,10 +358,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "zeroArgConstructor.My_Type";
-    assertAtomType(myType, findAssignment(foo, "x"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x"));
   }
 
   @Test
@@ -379,10 +382,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "multiArgConstructor.My_Type";
-    assertAtomType(myType, findAssignment(foo, "x"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x"));
   }
 
   @Test
@@ -410,7 +413,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "constructorWithDefaults.My_Type";
 
@@ -419,21 +422,24 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     // Before that is working, we just ensure we did not infer any 'unexpected' type for the
     // results.
     // assertAtomType(myType, findAssignment(foo, "x1"));
-    assertNoInferredType(findAssignment(foo, "x1"));
+    assertNoInferredType(ModuleUtils.findAssignment(foo, "x1"));
 
     // assertAtomType(myType, findAssignment(foo, "x2"));
-    assertNoInferredType(findAssignment(foo, "x2"));
+    assertNoInferredType(ModuleUtils.findAssignment(foo, "x2"));
 
     // assertAtomType(myType, findAssignment(foo, "x3"));
-    assertNoInferredType(findAssignment(foo, "x3"));
+    assertNoInferredType(ModuleUtils.findAssignment(foo, "x3"));
 
-    assertNotEquals(Optional.of(myType), getInferredTypeOption(findAssignment(foo, "x4")));
-    assertNotEquals(Optional.of(myType), getInferredTypeOption(findAssignment(foo, "x5")));
+    assertNotEquals(
+        Optional.of(myType), getInferredTypeOption(ModuleUtils.findAssignment(foo, "x4")));
+    assertNotEquals(
+        Optional.of(myType), getInferredTypeOption(ModuleUtils.findAssignment(foo, "x5")));
 
     // assertAtomType(myType, findAssignment(foo, "x6"));
-    assertNoInferredType(findAssignment(foo, "x6"));
+    assertNoInferredType(ModuleUtils.findAssignment(foo, "x6"));
 
-    assertNotEquals(Optional.of(myType), getInferredTypeOption(findAssignment(foo, "x7")));
+    assertNotEquals(
+        Optional.of(myType), getInferredTypeOption(ModuleUtils.findAssignment(foo, "x7")));
   }
 
   @Ignore("TODO: ifte")
@@ -453,8 +459,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findStaticMethod(module, "f");
-    assertAtomType("Standard.Base.Data.Numbers.Integer", findAssignment(f, "y"));
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertAtomType("Standard.Base.Data.Numbers.Integer", ModuleUtils.findAssignment(f, "y"));
   }
 
   @Test
@@ -479,8 +485,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     var module = compile(src);
     var myType = "commonCase.My_Type";
-    var f = findStaticMethod(module, "f");
-    assertAtomType(myType, findAssignment(f, "y"));
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertAtomType(myType, ModuleUtils.findAssignment(f, "y"));
   }
 
   @Test
@@ -504,8 +510,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     var module = compile(src);
     var myType = "inferBoundsFromCaseAlias.My_Type";
-    var f = findStaticMethod(module, "f");
-    assertAtomType(myType, findAssignment(f, "y"));
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertAtomType(myType, ModuleUtils.findAssignment(f, "y"));
   }
 
   /**
@@ -535,8 +541,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     var module = compile(src);
     var myType = "inferEqualityBoundsFromCase.My_Type";
-    var f = findStaticMethod(module, "f");
-    assertAtomType(myType, findAssignment(f, "y"));
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertAtomType(myType, ModuleUtils.findAssignment(f, "y"));
   }
 
   @Ignore("TODO for much much later: equality bounds in case")
@@ -558,8 +564,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findStaticMethod(module, "f");
-    assertSumType(findAssignment(f, "y"), "Integer", "Text");
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertSumType(ModuleUtils.findAssignment(f, "y"), "Integer", "Text");
   }
 
   @Ignore("TODO for much much later: equality bounds in case")
@@ -588,8 +594,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     var module = compile(src);
     var myType = "inferEqualityBoundsFromCaseEdgeCase.My_Type";
-    var f = findStaticMethod(module, "f");
-    assertAtomType(myType, findAssignment(f, "y"));
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertAtomType(myType, ModuleUtils.findAssignment(f, "y"));
   }
 
   @Test
@@ -614,8 +620,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findStaticMethod(module, "f");
-    assertSumType(findAssignment(f, "y"), "My_Type", "Other_Type");
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertSumType(ModuleUtils.findAssignment(f, "y"), "My_Type", "Other_Type");
   }
 
   @Ignore("TODO: ifte")
@@ -635,8 +641,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findStaticMethod(module, "f");
-    assertSumType(findAssignment(f, "y"), "Text", "Integer");
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertSumType(ModuleUtils.findAssignment(f, "y"), "Text", "Integer");
   }
 
   @Ignore("TODO: ifte")
@@ -656,8 +662,8 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findStaticMethod(module, "f");
-    assertSumType(findAssignment(f, "y"), "Text", "Nothing");
+    var f = ModuleUtils.findStaticMethod(module, "f");
+    assertSumType(ModuleUtils.findAssignment(f, "y"), "Text", "Nothing");
   }
 
   @Test
@@ -689,15 +695,17 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     var module = compile(src);
     var myType = "typeInferenceWorksInsideMemberMethods.My_Type";
 
-    var staticMethod = findMemberMethod(module, "My_Type", "static_method");
-    assertAtomType(myType, findAssignment(staticMethod, "y"));
-    assertAtomType(myType, findAssignment(staticMethod, "z"));
-    assertAtomType("Standard.Base.Data.Numbers.Integer", findAssignment(staticMethod, "w"));
+    var staticMethod = ModuleUtils.findMemberMethod(module, "My_Type", "static_method");
+    assertAtomType(myType, ModuleUtils.findAssignment(staticMethod, "y"));
+    assertAtomType(myType, ModuleUtils.findAssignment(staticMethod, "z"));
+    assertAtomType(
+        "Standard.Base.Data.Numbers.Integer", ModuleUtils.findAssignment(staticMethod, "w"));
 
-    var memberMethod = findMemberMethod(module, "My_Type", "member_method");
-    assertAtomType(myType, findAssignment(memberMethod, "y"));
-    assertAtomType(myType, findAssignment(memberMethod, "z"));
-    assertAtomType("Standard.Base.Data.Numbers.Integer", findAssignment(memberMethod, "w"));
+    var memberMethod = ModuleUtils.findMemberMethod(module, "My_Type", "member_method");
+    assertAtomType(myType, ModuleUtils.findAssignment(memberMethod, "y"));
+    assertAtomType(myType, ModuleUtils.findAssignment(memberMethod, "z"));
+    assertAtomType(
+        "Standard.Base.Data.Numbers.Integer", ModuleUtils.findAssignment(memberMethod, "w"));
   }
 
   @Ignore("TODO: self resolution")
@@ -720,9 +728,9 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var f = findMemberMethod(module, "My_Type", "member_method");
+    var f = ModuleUtils.findMemberMethod(module, "My_Type", "member_method");
     var myType = "typeInferenceOfSelf.My_Type";
-    assertAtomType(myType, findAssignment(f, "y"));
+    assertAtomType(myType, ModuleUtils.findAssignment(f, "y"));
   }
 
   @Test
@@ -744,23 +752,23 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var x1 = findAssignment(foo, "x1");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
     assertEquals(
         List.of(new Warning.NotInvokable(x1.expression().identifiedLocation(), "Integer")),
-        getImmediateDiagnostics(x1.expression()));
+        ModuleUtils.getImmediateDiagnostics(x1.expression()));
 
-    var x2 = findAssignment(foo, "x2");
+    var x2 = ModuleUtils.findAssignment(foo, "x2");
     assertEquals(
         List.of(new Warning.NotInvokable(x2.expression().identifiedLocation(), "Text")),
-        getImmediateDiagnostics(x2.expression()));
+        ModuleUtils.getImmediateDiagnostics(x2.expression()));
 
-    var x3 = findAssignment(foo, "x3");
+    var x3 = ModuleUtils.findAssignment(foo, "x3");
     assertEquals(
         "x3 should not contain any warnings",
         List.of(),
-        getDescendantsDiagnostics(x3.expression()));
+        ModuleUtils.getDescendantsDiagnostics(x3.expression()));
   }
 
   /**
@@ -789,7 +797,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    assertEquals(List.of(), getDescendantsDiagnostics(module));
+    assertEquals(List.of(), ModuleUtils.getDescendantsDiagnostics(module));
   }
 
   @Ignore("We cannot report type errors until we check there are no Conversions")
@@ -814,12 +822,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var y = findAssignment(foo, "y");
+    var y = ModuleUtils.findAssignment(foo, "y");
     var typeError =
         new Warning.TypeMismatch(y.expression().identifiedLocation(), "Other_Type", "My_Type");
-    assertEquals(List.of(typeError), getDescendantsDiagnostics(y.expression()));
+    assertEquals(List.of(typeError), ModuleUtils.getDescendantsDiagnostics(y.expression()));
   }
 
   @Test
@@ -844,13 +852,13 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var y = findAssignment(foo, "y");
+    var y = ModuleUtils.findAssignment(foo, "y");
     assertEquals(
         "valid conversion should ensure there is no type error",
         List.of(),
-        getDescendantsDiagnostics(y.expression()));
+        ModuleUtils.getDescendantsDiagnostics(y.expression()));
   }
 
   @Ignore("We cannot report type errors until we check there are no Conversions")
@@ -876,18 +884,18 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var y = findAssignment(foo, "y");
+    var y = ModuleUtils.findAssignment(foo, "y");
     var typeError1 =
         new Warning.TypeMismatch(y.expression().identifiedLocation(), "My_Type", "(Any -> Any)");
-    assertEquals(List.of(typeError1), getDescendantsDiagnostics(y.expression()));
+    assertEquals(List.of(typeError1), ModuleUtils.getDescendantsDiagnostics(y.expression()));
 
-    var z = findAssignment(foo, "z");
+    var z = ModuleUtils.findAssignment(foo, "z");
     var typeError2 =
         new Warning.TypeMismatch(
             z.expression().identifiedLocation(), "My_Type", "My_Type -> My_Type");
-    assertEquals(List.of(typeError2), getDescendantsDiagnostics(z.expression()));
+    assertEquals(List.of(typeError2), ModuleUtils.getDescendantsDiagnostics(z.expression()));
   }
 
   @Ignore("We cannot report type errors until we check there are no Conversions")
@@ -913,9 +921,9 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var z = findAssignment(foo, "z");
+    var z = ModuleUtils.findAssignment(foo, "z");
     var arg =
         switch (z.expression()) {
           case Application.Prefix app -> app.arguments().head();
@@ -923,7 +931,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
               "Expected " + z.showCode() + " to be an application expression.");
         };
     var typeError = new Warning.TypeMismatch(arg.identifiedLocation(), "Other_Type", "My_Type");
-    assertEquals(List.of(typeError), getImmediateDiagnostics(arg));
+    assertEquals(List.of(typeError), ModuleUtils.getImmediateDiagnostics(arg));
   }
 
   @Ignore("We cannot report type errors until we check there are no Conversions")
@@ -945,12 +953,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var x = findAssignment(foo, "x");
+    var x = ModuleUtils.findAssignment(foo, "x");
     var typeError =
         new Warning.TypeMismatch(x.expression().identifiedLocation(), "My_Type", "Integer");
-    assertEquals(List.of(typeError), getDescendantsDiagnostics(x.expression()));
+    assertEquals(List.of(typeError), ModuleUtils.getDescendantsDiagnostics(x.expression()));
   }
 
   @Test
@@ -974,21 +982,25 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var y = findAssignment(foo, "y");
+    var y = ModuleUtils.findAssignment(foo, "y");
     assertEquals(
-        "y should not contain any warnings", List.of(), getDescendantsDiagnostics(y.expression()));
+        "y should not contain any warnings",
+        List.of(),
+        ModuleUtils.getDescendantsDiagnostics(y.expression()));
 
-    var z = findAssignment(foo, "z");
+    var z = ModuleUtils.findAssignment(foo, "z");
     assertEquals(
-        "z should not contain any warnings", List.of(), getDescendantsDiagnostics(z.expression()));
+        "z should not contain any warnings",
+        List.of(),
+        ModuleUtils.getDescendantsDiagnostics(z.expression()));
 
-    var baz = findAssignment(foo, "baz");
+    var baz = ModuleUtils.findAssignment(foo, "baz");
     assertEquals(
         "baz should not contain any warnings",
         List.of(),
-        getDescendantsDiagnostics(baz.expression()));
+        ModuleUtils.getDescendantsDiagnostics(baz.expression()));
   }
 
   @Test
@@ -1015,13 +1027,14 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "globalMethodTypes.My_Type";
 
-    assertAtomType(myType, findAssignment(foo, "x1"));
-    assertEquals("My_Type -> My_Type", getInferredType(findAssignment(foo, "x2")).toString());
-    assertAtomType(myType, findAssignment(foo, "x3"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x1"));
+    assertEquals(
+        "My_Type -> My_Type", getInferredType(ModuleUtils.findAssignment(foo, "x2")).toString());
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x3"));
   }
 
   @Test
@@ -1063,22 +1076,23 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
     var myType = "memberMethodCalls.My_Type";
 
-    assertAtomType(myType, findAssignment(foo, "inst"));
-    assertAtomType(myType, findAssignment(foo, "x1"));
-    assertAtomType(myType, findAssignment(foo, "x2"));
-    assertAtomType(myType, findAssignment(foo, "x3"));
-    assertAtomType(myType, findAssignment(foo, "x4"));
-    assertAtomType(myType, findAssignment(foo, "x5"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "inst"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x1"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x2"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x3"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x4"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x5"));
 
     // The function in x6 was not fully applied - still expecting 1 arg:
-    assertEquals("My_Type -> My_Type", getInferredType(findAssignment(foo, "x6")).toString());
+    assertEquals(
+        "My_Type -> My_Type", getInferredType(ModuleUtils.findAssignment(foo, "x6")).toString());
 
-    assertAtomType(myType, findAssignment(foo, "x7"));
-    assertAtomType(myType, findAssignment(foo, "x8"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x7"));
+    assertAtomType(myType, ModuleUtils.findAssignment(foo, "x8"));
   }
 
   @Ignore(
@@ -1111,12 +1125,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    var x1 = findAssignment(foo, "x1");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
     var typeError =
         new Warning.TypeMismatch(x1.expression().identifiedLocation(), "My_Type", "Other_Type");
-    assertEquals(List.of(typeError), getDescendantsDiagnostics(x1.expression()));
+    assertEquals(List.of(typeError), ModuleUtils.getDescendantsDiagnostics(x1.expression()));
   }
 
   @Test
@@ -1149,21 +1163,23 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    assertAtomType("callingFieldGetters.Typ_X", findAssignment(foo, "x_a"));
+    assertAtomType("callingFieldGetters.Typ_X", ModuleUtils.findAssignment(foo, "x_a"));
     // We don't know which constructor was used, so if the field appears in many constructors, it
     // resolves to a sum type
-    assertSumType(findAssignment(foo, "x_b"), "Typ_Y", "Typ_Z");
+    assertSumType(ModuleUtils.findAssignment(foo, "x_b"), "Typ_Y", "Typ_Z");
 
     // We have two constructors with field `field_c`, but they have the same type so the sum type
     // should have been simplified
-    assertAtomType("callingFieldGetters.Typ_Z", findAssignment(foo, "x_c"));
+    assertAtomType("callingFieldGetters.Typ_Z", ModuleUtils.findAssignment(foo, "x_c"));
 
     // We shouldn't get a No_Such_Method error on a field with no type ascription:
-    var x_d = findAssignment(foo, "x_d");
+    var x_d = ModuleUtils.findAssignment(foo, "x_d");
     assertEquals(
-        "Field access should not yield any warnings", List.of(), getDescendantsDiagnostics(x_d));
+        "Field access should not yield any warnings",
+        List.of(),
+        ModuleUtils.getDescendantsDiagnostics(x_d));
   }
 
   @Test
@@ -1195,15 +1211,15 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
-    var x1 = findAssignment(foo, "x1");
-    var x2 = findAssignment(foo, "x2");
-    var x3 = findAssignment(foo, "x3");
-    var x4 = findAssignment(foo, "x4");
-    var x5 = findAssignment(foo, "x5");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
+    var x2 = ModuleUtils.findAssignment(foo, "x2");
+    var x3 = ModuleUtils.findAssignment(foo, "x3");
+    var x4 = ModuleUtils.findAssignment(foo, "x4");
+    var x5 = ModuleUtils.findAssignment(foo, "x5");
 
     // member method is defined
-    assertEquals(List.of(), getDescendantsDiagnostics(x1.expression()));
+    assertEquals(List.of(), ModuleUtils.getDescendantsDiagnostics(x1.expression()));
 
     // this method is not found
     assertEquals(
@@ -1211,11 +1227,11 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             new Warning.NoSuchMethod(
                 x2.expression().identifiedLocation(),
                 "member method `method_two` on type My_Type")),
-        getImmediateDiagnostics(x2.expression()));
+        ModuleUtils.getImmediateDiagnostics(x2.expression()));
 
     // delegating to Any
-    assertEquals(List.of(), getDescendantsDiagnostics(x3.expression()));
-    assertEquals(List.of(), getDescendantsDiagnostics(x4.expression()));
+    assertEquals(List.of(), ModuleUtils.getDescendantsDiagnostics(x3.expression()));
+    assertEquals(List.of(), ModuleUtils.getDescendantsDiagnostics(x4.expression()));
 
     // calling a static method on an instance _does not work_, so we get a warning telling there's
     // no such _member_ method
@@ -1224,7 +1240,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             new Warning.NoSuchMethod(
                 x5.expression().identifiedLocation(),
                 "member method `static_method` on type My_Type")),
-        getImmediateDiagnostics(x5.expression()));
+        ModuleUtils.getImmediateDiagnostics(x5.expression()));
   }
 
   @Test
@@ -1250,13 +1266,13 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var foo = findStaticMethod(module, "foo");
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
 
-    assertAtomType("Standard.Base.Data.Text.Text", findAssignment(foo, "txt1"));
-    assertAtomType("Standard.Base.Data.Text.Text", findAssignment(foo, "txt2"));
-    assertAtomType("Standard.Base.Data.Text.Text", findAssignment(foo, "txt3"));
+    assertAtomType("Standard.Base.Data.Text.Text", ModuleUtils.findAssignment(foo, "txt1"));
+    assertAtomType("Standard.Base.Data.Text.Text", ModuleUtils.findAssignment(foo, "txt2"));
+    assertAtomType("Standard.Base.Data.Text.Text", ModuleUtils.findAssignment(foo, "txt3"));
 
-    assertAtomType("Standard.Base.Data.Boolean.Boolean", findAssignment(foo, "bool"));
+    assertAtomType("Standard.Base.Data.Boolean.Boolean", ModuleUtils.findAssignment(foo, "bool"));
   }
 
   @Ignore("TODO: self resolution")
@@ -1281,12 +1297,12 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .buildLiteral();
 
     var module = compile(src);
-    var method_two = findMemberMethod(module, "My_Type", "method_two");
-    var x1 = findAssignment(method_two, "x1");
-    var x2 = findAssignment(method_two, "x2");
+    var method_two = ModuleUtils.findMemberMethod(module, "My_Type", "method_two");
+    var x1 = ModuleUtils.findAssignment(method_two, "x1");
+    var x2 = ModuleUtils.findAssignment(method_two, "x2");
 
     // member method is defined
-    assertEquals(List.of(), getDescendantsDiagnostics(x1.expression()));
+    assertEquals(List.of(), ModuleUtils.getDescendantsDiagnostics(x1.expression()));
 
     // this method is not found
     assertEquals(
@@ -1294,7 +1310,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             new Warning.NoSuchMethod(
                 x2.expression().identifiedLocation(),
                 "member method `non_existent_method` on type My_Type")),
-        getImmediateDiagnostics(x2.expression()));
+        ModuleUtils.getImmediateDiagnostics(x2.expression()));
   }
 
   @Test
@@ -1350,10 +1366,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .uri(uriC)
             .buildLiteral();
     var modC = compile(srcC);
-    var foo = findStaticMethod(modC, "foo");
+    var foo = ModuleUtils.findStaticMethod(modC, "foo");
 
-    assertAtomType("local.Project1.modB.Typ_X", findAssignment(foo, "x1"));
-    assertAtomType("local.Project1.modB.Typ_Y", findAssignment(foo, "x2"));
+    assertAtomType("local.Project1.modB.Typ_X", ModuleUtils.findAssignment(foo, "x1"));
+    assertAtomType("local.Project1.modB.Typ_Y", ModuleUtils.findAssignment(foo, "x2"));
   }
 
   @Test
@@ -1424,10 +1440,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
             .uri(uriD)
             .buildLiteral();
     var modD = compile(srcD);
-    var foo = findStaticMethod(modD, "foo");
+    var foo = ModuleUtils.findStaticMethod(modD, "foo");
 
-    assertAtomType("local.Project1.modB.Typ_X", findAssignment(foo, "x1"));
-    assertAtomType("local.Project1.modB.Typ_Y", findAssignment(foo, "x2"));
+    assertAtomType("local.Project1.modB.Typ_X", ModuleUtils.findAssignment(foo, "x1"));
+    assertAtomType("local.Project1.modB.Typ_Y", ModuleUtils.findAssignment(foo, "x2"));
   }
 
   private TypeRepresentation getInferredType(IR ir) {

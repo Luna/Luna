@@ -10,15 +10,11 @@ import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
 /** A helper that deals with resolving types of method calls. */
 class MethodTypeResolver {
   private final TypeHierarchy typeHierarchy = new TypeHierarchy();
-  private final BuiltinsFallbackScope builtinsFallbackScope;
   private final StaticModuleScope currentModuleScope;
   private final StaticMethodResolution methodResolutionAlgorithm;
 
-  MethodTypeResolver(
-      ModuleResolver moduleResolver,
-      StaticModuleScope currentModuleScope,
-      BuiltinTypes builtinTypes) {
-    this.builtinsFallbackScope = new BuiltinsFallbackScope(builtinTypes);
+  MethodTypeResolver(ModuleResolver moduleResolver, StaticModuleScope currentModuleScope) {
+    BuiltinsFallbackScope builtinsFallbackScope = new BuiltinsFallbackScope();
     this.currentModuleScope = currentModuleScope;
     this.methodResolutionAlgorithm =
         new StaticMethodResolution(moduleResolver, builtinsFallbackScope);

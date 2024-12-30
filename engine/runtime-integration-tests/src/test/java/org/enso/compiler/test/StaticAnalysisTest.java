@@ -1,7 +1,5 @@
 package org.enso.compiler.test;
 
-import static org.junit.Assert.assertTrue;
-
 import com.oracle.truffle.api.TruffleFile;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,12 +11,7 @@ import java.util.logging.Level;
 import org.enso.common.LanguageInfo;
 import org.enso.common.MethodNames;
 import org.enso.common.RuntimeOptions;
-import org.enso.compiler.core.IR;
-import org.enso.compiler.core.ir.Diagnostic;
-import org.enso.compiler.core.ir.DiagnosticStorage;
-import org.enso.compiler.core.ir.Expression;
 import org.enso.compiler.core.ir.Module;
-import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.editions.LibraryName;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.util.TruffleFileSystem;
@@ -120,63 +113,5 @@ public abstract class StaticAnalysisTest {
             throw new RuntimeException(e);
           }
         });
-  }
-
-  protected final List<Diagnostic> getImmediateDiagnostics(IR ir) {
-    return CollectionConverters.asJava(ir.getDiagnostics().toList());
-  }
-
-  protected final List<Diagnostic> getDescendantsDiagnostics(IR ir) {
-    return CollectionConverters.asJava(
-        ir.preorder()
-            .flatMap(
-                (node) -> {
-                  DiagnosticStorage diagnostics = node.getDiagnostics();
-                  if (diagnostics != null) {
-                    return diagnostics.toList();
-                  } else {
-                    return scala.collection.immutable.List$.MODULE$.empty();
-                  }
-                }));
-  }
-
-  protected final Method findStaticMethod(Module module, String name) {
-    var option =
-        module
-            .bindings()
-            .find(
-                (def) ->
-                    (def instanceof Method binding)
-                        && binding.methodReference().typePointer().isEmpty()
-                        && binding.methodReference().methodName().name().equals(name));
-
-    assertTrue("The method " + name + " should exist within the IR.", option.isDefined());
-    return (Method) option.get();
-  }
-
-  protected final Method findMemberMethod(Module module, String typeName, String name) {
-    var option =
-        module
-            .bindings()
-            .find(
-                (def) ->
-                    (def instanceof Method binding)
-                        && binding.methodReference().typePointer().isDefined()
-                        && binding.methodReference().typePointer().get().name().equals(typeName)
-                        && binding.methodReference().methodName().name().equals(name));
-
-    assertTrue("The method " + name + " should exist within the IR.", option.isDefined());
-    return (Method) option.get();
-  }
-
-  protected final Expression.Binding findAssignment(IR ir, String name) {
-    var option =
-        ir.preorder()
-            .find(
-                (node) ->
-                    (node instanceof Expression.Binding binding)
-                        && binding.name().name().equals(name));
-    assertTrue("The binding `" + name + " = ...` should exist within the IR.", option.isDefined());
-    return (Expression.Binding) option.get();
   }
 }

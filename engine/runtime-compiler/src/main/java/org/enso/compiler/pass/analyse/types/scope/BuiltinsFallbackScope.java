@@ -10,12 +10,7 @@ import org.enso.pkg.QualifiedName;
  * <p>They are available even without any imports.
  */
 public class BuiltinsFallbackScope {
-  private final BuiltinTypes builtinTypes;
   private StaticModuleScope cachedAnyScope = null;
-
-  public BuiltinsFallbackScope(BuiltinTypes builtinTypes) {
-    this.builtinTypes = builtinTypes;
-  }
 
   public StaticModuleScope fallbackAnyScope() {
     if (cachedAnyScope != null) {
@@ -24,13 +19,13 @@ public class BuiltinsFallbackScope {
 
     var scopeBuilder =
         new StaticModuleScope.Builder(QualifiedName.fromString("Standard.Builtins.Main"));
-    scopeBuilder.registerMethod(TypeScopeReference.ANY, "to_text", builtinTypes.TEXT);
-    scopeBuilder.registerMethod(TypeScopeReference.ANY, "to_display_text", builtinTypes.TEXT);
-    scopeBuilder.registerMethod(TypeScopeReference.ANY, "pretty", builtinTypes.TEXT);
+    scopeBuilder.registerMethod(TypeScopeReference.ANY, "to_text", BuiltinTypes.TEXT);
+    scopeBuilder.registerMethod(TypeScopeReference.ANY, "to_display_text", BuiltinTypes.TEXT);
+    scopeBuilder.registerMethod(TypeScopeReference.ANY, "pretty", BuiltinTypes.TEXT);
 
     var any = new TypeRepresentation.TopType();
     scopeBuilder.registerMethod(
-        TypeScopeReference.ANY, "==", new TypeRepresentation.ArrowType(any, builtinTypes.BOOLEAN));
+        TypeScopeReference.ANY, "==", new TypeRepresentation.ArrowType(any, BuiltinTypes.BOOLEAN));
 
     var catchType =
         new TypeRepresentation.ArrowType(new TypeRepresentation.ArrowType(any, any), any);

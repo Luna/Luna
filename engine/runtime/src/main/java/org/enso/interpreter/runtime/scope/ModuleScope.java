@@ -33,7 +33,6 @@ public final class ModuleScope extends EnsoObject
 
   /**
    * First key is target type, second key is source type. The value is the conversion function from
-   * First key is target type, second key is source type. The value is the conversion function from
    * source to target.
    */
   private final Map<Type, Map<Type, Function>> conversions;

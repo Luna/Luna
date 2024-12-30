@@ -73,15 +73,14 @@ import scala.jdk.javaapi.CollectionConverters;
 public final class TypeInferencePropagation implements IRPass {
   public static final TypeInferencePropagation INSTANCE = new TypeInferencePropagation();
   private static final Logger logger = LoggerFactory.getLogger(TypeInferencePropagation.class);
-  private final BuiltinTypes builtinTypes = new BuiltinTypes();
   private final TypeResolver typeResolver = new TypeResolver();
-  private final TypeCompatibility checker = new TypeCompatibility(builtinTypes);
+  private final TypeCompatibility checker = new TypeCompatibility();
 
   private TypePropagation propagationResolverInModule(
       Module module, Option<PackageRepository> packageRepository) {
     var packageRepo = packageRepository.isDefined() ? packageRepository.get() : null;
     ModuleResolver moduleResolver = new ModuleResolver(packageRepo);
-    return new TypePropagation(typeResolver, checker, builtinTypes, module, moduleResolver) {
+    return new TypePropagation(typeResolver, checker, module, moduleResolver) {
       @Override
       protected void encounteredIncompatibleTypes(
           IR relatedIr, TypeRepresentation expected, TypeRepresentation provided) {
