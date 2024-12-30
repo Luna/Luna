@@ -31,7 +31,7 @@ public interface JCallArgument extends IR {
       boolean keepDiagnostics,
       boolean keepIdentifiers);
 
-  @GenerateIR(interfaces = "JCallArgument")
+  @GenerateIR(interfaces = {JCallArgument.class})
   final class JSpecified extends JSpecifiedGen {
     @GenerateFields
     public JSpecified(

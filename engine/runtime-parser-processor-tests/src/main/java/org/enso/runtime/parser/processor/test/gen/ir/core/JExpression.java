@@ -21,7 +21,7 @@ public interface JExpression extends IR {
       boolean keepDiagnostics,
       boolean keepIdentifiers);
 
-  @GenerateIR(interfaces = "JExpression")
+  @GenerateIR(interfaces = {JExpression.class})
   final class JBlock extends JBlockGen {
     @GenerateFields
     public JBlock(
@@ -32,7 +32,7 @@ public interface JExpression extends IR {
     }
   }
 
-  @GenerateIR(interfaces = "JExpression")
+  @GenerateIR(interfaces = {JExpression.class})
   final class JBinding extends JBindingGen {
     @GenerateFields
     public JBinding(@IRChild Name name, @IRChild JExpression expression) {

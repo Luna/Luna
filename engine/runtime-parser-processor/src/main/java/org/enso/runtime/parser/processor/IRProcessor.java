@@ -2,18 +2,22 @@ package org.enso.runtime.parser.processor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.SimpleAnnotationValueVisitor14;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import org.enso.runtime.parser.dsl.GenerateFields;
@@ -94,43 +98,49 @@ public class IRProcessor extends AbstractProcessor {
     }
   }
 
-  private TypeElement findInterface(TypeElement processedClassElem, String interfaceName) {
-    if (isBinaryName(interfaceName)) {
-      var iface = processingEnv.getElementUtils().getTypeElement(interfaceName);
-      return iface;
-    } else {
-      var enclosingElem = processedClassElem.getEnclosingElement();
-      if (enclosingElem.getKind() == ElementKind.INTERFACE) {
-        if (enclosingElem.getSimpleName().toString().equals(interfaceName)) {
-          return (TypeElement) enclosingElem;
-        }
-      } else if (enclosingElem.getKind() == ElementKind.PACKAGE) {
-        return (TypeElement)
-            enclosingElem.getEnclosedElements().stream()
-                .filter(pkgElem -> pkgElem.getKind() == ElementKind.INTERFACE)
-                .filter(ifaceElem -> ifaceElem.getSimpleName().toString().equals(interfaceName))
-                .findFirst()
-                .orElse(null);
-      }
-    }
-    return null;
-  }
-
   private static String generatedClassName(TypeElement processedClassElem) {
     return processedClassElem.getSimpleName().toString() + "Gen";
   }
 
-  private static boolean isBinaryName(String name) {
-    return name.contains(".");
-  }
-
   private ProcessedClass constructProcessedClass(TypeElement processedClassElem) {
-    var generateIrAnnot = processedClassElem.getAnnotation(GenerateIR.class);
-    var ifaceToImplement = findInterface(processedClassElem, generateIrAnnot.interfaces());
-    if (ifaceToImplement == null) {
-      throw new IRProcessingException(
-          "Could not find interface '" + generateIrAnnot.interfaces() + "'", processedClassElem);
+    // GenerateIR.interfaces cannot be accessed directly, we have to access the
+    // classes via type mirrors.
+    TypeElement ifaceToImplement =
+        processingEnv.getElementUtils().getTypeElement("org.enso.compiler.core.IR");
+    var annotValueVisitor =
+        new SimpleAnnotationValueVisitor14<List<TypeElement>, Void>() {
+          @Override
+          public List<TypeElement> visitArray(List<? extends AnnotationValue> vals, Void unused) {
+            return vals.stream()
+                .map(val -> val.accept(this, null))
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+          }
+
+          @Override
+          public List<TypeElement> visitType(TypeMirror t, Void unused) {
+            var element = processingEnv.getTypeUtils().asElement(t);
+            Utils.hardAssert(element instanceof TypeElement);
+            return List.of((TypeElement) element);
+          }
+        };
+    for (var annotMirror : processedClassElem.getAnnotationMirrors()) {
+      if (annotMirror.getAnnotationType().toString().equals(GenerateIR.class.getName())) {
+        for (var entry : annotMirror.getElementValues().entrySet()) {
+          if (entry.getKey().getSimpleName().toString().equals("interfaces")) {
+            var typeMirrors = entry.getValue().accept(annotValueVisitor, null);
+            if (typeMirrors.size() == 1) {
+              ifaceToImplement = typeMirrors.get(0);
+            } else {
+              throw new IRProcessingException(
+                  "Only one interface is currently supported in `GenerateIR.interfaces`",
+                  processedClassElem);
+            }
+          }
+        }
+      }
     }
+    Utils.hardAssert(ifaceToImplement != null);
     if (!Utils.isSubtypeOfIR(ifaceToImplement, processingEnv)) {
       throw new IRProcessingException(
           "Interface to implement must be a subtype of IR interface", ifaceToImplement);

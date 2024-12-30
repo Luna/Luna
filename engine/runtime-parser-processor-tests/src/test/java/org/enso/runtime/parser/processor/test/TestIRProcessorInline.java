@@ -360,7 +360,7 @@ public class TestIRProcessorInline {
           boolean suspended();
         }
 
-        @GenerateIR(interfaces = "MySuperIR")
+        @GenerateIR(interfaces = {MySuperIR.class})
         public final class MyIR extends MyIRGen {
           @GenerateFields
           public MyIR() {}
@@ -387,7 +387,7 @@ public class TestIRProcessorInline {
           boolean suspended();
         }
 
-        @GenerateIR(interfaces = "MySuperIR")
+        @GenerateIR(interfaces = {MySuperIR.class})
         public final class MyIR extends MyIRGen {
           @GenerateFields
           public MyIR(@IRField boolean suspended) {
@@ -443,7 +443,7 @@ public class TestIRProcessorInline {
         interface MySuperIR extends MySuperSuperIR {
         }
 
-        @GenerateIR(interfaces = "MySuperIR")
+        @GenerateIR(interfaces = {MySuperIR.class})
         public final class MyIR extends MyIRGen {
           @GenerateFields
           public MyIR(@IRField boolean suspended) {
@@ -468,7 +468,7 @@ public class TestIRProcessorInline {
         public interface JName extends IR {
           String name();
 
-          @GenerateIR(interfaces = "JName")
+          @GenerateIR(interfaces = {JName.class})
           public final class JBlank extends JBlankGen {
             @GenerateFields
             public JBlank(@IRField String name) {
