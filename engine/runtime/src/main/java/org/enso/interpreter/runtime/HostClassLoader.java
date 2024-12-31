@@ -1,5 +1,6 @@
 package org.enso.interpreter.runtime;
 
+import com.oracle.truffle.api.TruffleOptions;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
@@ -35,6 +36,13 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
     super(new URL[0]);
   }
 
+  /**
+   * @param parent Parent class loader.
+   */
+  HostClassLoader(ClassLoader parent) {
+    super(new URL[0], parent);
+  }
+
   static {
     var bootModules = ModuleLayer.boot().modules();
     var hasRuntimeMod =
@@ -52,12 +60,19 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
     return loadClass(name, false);
   }
 
+  private void printAllLoadedClasses(String msg) {
+    System.out.println("[HostClassLoader] {" + msg + "} All loaded classes: " + loadedClasses.keySet());
+  }
+
   @Override
   protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    System.out.println("[HostClassLoader] loadClass: " + name);
+    var bp = name.equals("org.enso.image.data.Matrix");
     logger.trace("Loading class {}", name);
     var l = loadedClasses.get(name);
     if (l != null) {
       logger.trace("Class {} found in cache", name);
+      if (bp) printAllLoadedClasses("1");
       return l;
     }
     if (!isRuntimeModInBootLayer && name.startsWith("org.graalvm")) {
@@ -76,10 +91,21 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
       }
       logger.trace("Class {} found, putting in cache", name);
       loadedClasses.put(name, l);
+      if (bp) printAllLoadedClasses("2");
       return l;
     } catch (ClassNotFoundException ex) {
       logger.trace("Class {} not found, delegating to super", name);
-      return super.loadClass(name, resolve);
+      var ret = super.loadClass(name, resolve);
+      if (bp) {
+        printAllLoadedClasses("3");
+        var classLoaderName = ret.getClassLoader() != null ? ret.getClassLoader().getName() : "null";
+        System.out.printf("[HostClassLoader] Class '%s' loaded by class loader %s\n",
+            name, classLoaderName);
+        System.out.println(
+            "[HostClassLoader] ret.getProtectionDomain().getCodeSource().getLocation() = " + ret.getProtectionDomain()
+                .getCodeSource().getLocation());
+      }
+      return ret;
     }
   }
 
@@ -97,14 +123,21 @@ final class HostClassLoader extends URLClassLoader implements AutoCloseable {
    */
   @Override
   protected String findLibrary(String libname) {
-    var pkgRepo = EnsoContext.get(null).getPackageRepository();
-    for (var pkg : pkgRepo.getLoadedPackagesJava()) {
-      var libPath = NativeLibraryFinder.findNativeLibrary(libname, pkg, TruffleFileSystem.INSTANCE);
-      if (libPath != null) {
-        return libPath;
+    if (TruffleOptions.AOT) {
+      System.out.println("[HostClassLoader:AOT] findLibrary: " + libname);
+      if (libname.contains("opencv")) {
+        return "/home/pavel/dev/enso/built-distribution/enso-engine-0.0.0-dev-linux-amd64/enso-0.0.0-dev/lib/Standard/Image/0.0.0-dev/polyglot/lib/amd64/linux/libopencv_java470.so";
       }
+    } else {
+      var pkgRepo = EnsoContext.get(null).getPackageRepository();
+      for (var pkg : pkgRepo.getLoadedPackagesJava()) {
+        var libPath = NativeLibraryFinder.findNativeLibrary(libname, pkg, TruffleFileSystem.INSTANCE);
+        if (libPath != null) {
+          return libPath;
+        }
+      }
+      logger.trace("Native library {} not found in any package", libname);
     }
-    logger.trace("Native library {} not found in any package", libname);
     return null;
   }
 

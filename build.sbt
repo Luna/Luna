@@ -3625,7 +3625,6 @@ lazy val `engine-runner` = project
       ).distinct
       val stdLibsJars =
         `base-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
-        `image-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath()) ++
         `table-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
       core ++ stdLibsJars
     },
@@ -3712,7 +3711,15 @@ lazy val `engine-runner` = project
               // "-H:-DeleteLocalSymbols",
               // you may need to set smallJdk := None to use following flags:
               // "--trace-class-initialization=org.enso.syntax2.Parser",
-              "-Dnic=nic"
+              "-Dnic=nic",
+              // See [[org.enso.interpreter.runtime.EnsoLibraryFeature]]
+              "-Denso.libs.path=" + {
+                val stdImageJars =
+                    `image-polyglot-root`.listFiles("*.jar").map(_.getAbsolutePath())
+                stdImageJars.mkString(File.pathSeparator)
+              },
+              "-H:ClassInitialization=nu.pattern:rerun,org.opencv:rerun",
+              "--initialize-at-build-time=org.enso.image"
             ),
             mainClass = Some("org.enso.runner.Main"),
             initializeAtRuntime = Seq(
@@ -3731,8 +3738,9 @@ lazy val `engine-runner` = project
               "com.microsoft",
               "akka.http",
               "org.enso.base",
-              "org.enso.image",
-              "org.enso.table"
+              "org.enso.table",
+              "nu.pattern.OpenCV$LocalLoader",
+              "nu.pattern.OpenCV$LocalLoader$Holder",
             )
           )
       }
