@@ -8,7 +8,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.enso.compiler.common.CommonModuleScopeShape;
 import org.enso.compiler.common.MethodResolutionAlgorithm;
 import org.enso.compiler.context.CompilerContext;
 import org.enso.interpreter.runtime.EnsoContext;
@@ -23,8 +22,7 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /** A representation of Enso's per-file top-level scope. */
 @ExportLibrary(TypesLibrary.class)
-public final class ModuleScope extends EnsoObject
-    implements CommonModuleScopeShape<Function, Type, ImportExportScope> {
+public final class ModuleScope extends EnsoObject {
   private final Type associatedType;
   private final Module module;
   private final Map<String, Supplier<TruffleObject>> polyglotSymbols;
@@ -101,6 +99,28 @@ public final class ModuleScope extends EnsoObject
       extends MethodResolutionAlgorithm<Function, Type, ImportExportScope, ModuleScope> {
 
     @Override
+    protected Collection<ImportExportScope> getImportsFromModuleScope(ModuleScope moduleScope) {
+      return moduleScope.getImports();
+    }
+
+    @Override
+    protected Collection<ImportExportScope> getExportsFromModuleScope(ModuleScope moduleScope) {
+      return moduleScope.getExports();
+    }
+
+    @Override
+    protected Function getConversionFromModuleScope(
+        ModuleScope moduleScope, Type target, Type source) {
+      return moduleScope.getConversionFor(target, source);
+    }
+
+    @Override
+    protected Function getMethodFromModuleScope(
+        ModuleScope moduleScope, Type type, String methodName) {
+      return moduleScope.getMethodForType(type, methodName);
+    }
+
+    @Override
     protected ModuleScope findDefinitionScope(Type type) {
       return type.getDefinitionScope();
     }
@@ -136,12 +156,10 @@ public final class ModuleScope extends EnsoObject
     }
   }
 
-  @Override
   public Collection<ImportExportScope> getImports() {
     return imports;
   }
 
-  @Override
   public Collection<ImportExportScope> getExports() {
     return exports;
   }
@@ -240,7 +258,6 @@ public final class ModuleScope extends EnsoObject
     }
   }
 
-  @Override
   public Function getConversionFor(Type target, Type source) {
     var conversionsOnType = conversions.get(target);
     if (conversionsOnType == null) {
@@ -307,8 +324,7 @@ public final class ModuleScope extends EnsoObject
     return toString();
   }
 
-  public static class Builder
-      implements CommonModuleScopeShape.Builder<Function, Type, ImportExportScope, ModuleScope> {
+  public static class Builder {
 
     @CompilerDirectives.CompilationFinal private ModuleScope moduleScope = null;
     private final Module module;
@@ -517,7 +533,6 @@ public final class ModuleScope extends EnsoObject
       return moduleScope;
     }
 
-    @Override
     public Type getAssociatedType() {
       return associatedType;
     }

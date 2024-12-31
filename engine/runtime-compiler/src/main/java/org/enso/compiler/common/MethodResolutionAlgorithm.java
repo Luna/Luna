@@ -1,5 +1,6 @@
 package org.enso.compiler.common;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -22,11 +23,7 @@ import java.util.stream.Stream;
  * @see CommonModuleScopeShape for the explanation of other type parameters
  */
 public abstract class MethodResolutionAlgorithm<
-    FunctionType,
-    TypeScopeReferenceType,
-    ImportExportScopeType,
-    ModuleScopeType extends
-        CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
+    FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType> {
 
   /**
    * Looks up a method definition as seen in the current module.
@@ -47,13 +44,13 @@ public abstract class MethodResolutionAlgorithm<
       ModuleScopeType currentModuleScope, TypeScopeReferenceType type, String methodName) {
     var definitionScope = findDefinitionScope(type);
     if (definitionScope != null) {
-      var definedWithAtom = definitionScope.getMethodForType(type, methodName);
+      var definedWithAtom = getMethodFromModuleScope(definitionScope, type, methodName);
       if (definedWithAtom != null) {
         return definedWithAtom;
       }
     }
 
-    var definedHere = currentModuleScope.getMethodForType(type, methodName);
+    var definedHere = getMethodFromModuleScope(currentModuleScope, type, methodName);
     if (definedHere != null) {
       return definedHere;
     }
@@ -69,12 +66,12 @@ public abstract class MethodResolutionAlgorithm<
    */
   public FunctionType getExportedMethod(
       ModuleScopeType moduleScope, TypeScopeReferenceType type, String methodName) {
-    var definedLocally = moduleScope.getMethodForType(type, methodName);
+    var definedLocally = getMethodFromModuleScope(moduleScope, type, methodName);
     if (definedLocally != null) {
       return definedLocally;
     }
 
-    return moduleScope.getExports().stream()
+    return getExportsFromModuleScope(moduleScope).stream()
         .map(scope -> getMethodForTypeFromScope(scope, type, methodName))
         .filter(Objects::nonNull)
         .findFirst()
@@ -97,22 +94,24 @@ public abstract class MethodResolutionAlgorithm<
       ModuleScopeType currentModuleScope,
       TypeScopeReferenceType source,
       TypeScopeReferenceType target) {
-    var definedWithSource = findDefinitionScope(source).getConversionFor(target, source);
+    var sourceDefinitionScope = findDefinitionScope(source);
+    var definedWithSource = getConversionFromModuleScope(sourceDefinitionScope, target, source);
     if (definedWithSource != null) {
       return definedWithSource;
     }
 
-    var definedWithTarget = findDefinitionScope(target).getConversionFor(target, source);
+    var targetDefinitionScope = findDefinitionScope(target);
+    var definedWithTarget = getConversionFromModuleScope(targetDefinitionScope, target, source);
     if (definedWithTarget != null) {
       return definedWithTarget;
     }
 
-    var definedHere = currentModuleScope.getConversionFor(target, source);
+    var definedHere = getConversionFromModuleScope(currentModuleScope, target, source);
     if (definedHere != null) {
       return definedHere;
     }
 
-    return currentModuleScope.getImports().stream()
+    return getImportsFromModuleScope(currentModuleScope).stream()
         .map(scope -> getExportedConversionFromScope(scope, target, source))
         .filter(Objects::nonNull)
         .findFirst()
@@ -127,12 +126,12 @@ public abstract class MethodResolutionAlgorithm<
    */
   public FunctionType getExportedConversion(
       ModuleScopeType moduleScope, TypeScopeReferenceType target, TypeScopeReferenceType source) {
-    var definedLocally = moduleScope.getConversionFor(target, source);
+    var definedLocally = getConversionFromModuleScope(moduleScope, target, source);
     if (definedLocally != null) {
       return definedLocally;
     }
 
-    return moduleScope.getExports().stream()
+    return getExportsFromModuleScope(moduleScope).stream()
         .map(scope -> getConversionFromScope(scope, target, source))
         .filter(Objects::nonNull)
         .findFirst()
@@ -142,7 +141,7 @@ public abstract class MethodResolutionAlgorithm<
   private FunctionType findInImports(
       ModuleScopeType currentModuleScope, TypeScopeReferenceType type, String methodName) {
     var found =
-        currentModuleScope.getImports().stream()
+        getImportsFromModuleScope(currentModuleScope).stream()
             .flatMap(
                 (importExportScope) -> {
                   var exportedMethod =
@@ -163,6 +162,18 @@ public abstract class MethodResolutionAlgorithm<
       return null;
     }
   }
+
+  protected abstract Collection<ImportExportScopeType> getImportsFromModuleScope(
+      ModuleScopeType moduleScope);
+
+  protected abstract Collection<ImportExportScopeType> getExportsFromModuleScope(
+      ModuleScopeType moduleScope);
+
+  protected abstract FunctionType getConversionFromModuleScope(
+      ModuleScopeType moduleScope, TypeScopeReferenceType target, TypeScopeReferenceType source);
+
+  protected abstract FunctionType getMethodFromModuleScope(
+      ModuleScopeType moduleScope, TypeScopeReferenceType type, String methodName);
 
   /** Locates the module scope in which the provided type was defined. */
   protected abstract ModuleScopeType findDefinitionScope(TypeScopeReferenceType type);

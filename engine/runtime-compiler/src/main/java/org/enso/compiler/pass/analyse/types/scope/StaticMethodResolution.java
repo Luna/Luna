@@ -1,5 +1,6 @@
 package org.enso.compiler.pass.analyse.types.scope;
 
+import java.util.Collection;
 import java.util.List;
 import org.enso.compiler.common.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
@@ -18,6 +19,30 @@ public final class StaticMethodResolution
       ModuleResolver moduleResolver, BuiltinsFallbackScope builtinsFallbackScope) {
     this.moduleResolver = moduleResolver;
     this.builtinsFallbackScope = builtinsFallbackScope;
+  }
+
+  @Override
+  protected Collection<StaticImportExportScope> getImportsFromModuleScope(
+      StaticModuleScope moduleScope) {
+    return moduleScope.getImports();
+  }
+
+  @Override
+  protected Collection<StaticImportExportScope> getExportsFromModuleScope(
+      StaticModuleScope moduleScope) {
+    return moduleScope.getExports();
+  }
+
+  @Override
+  protected TypeRepresentation getConversionFromModuleScope(
+      StaticModuleScope moduleScope, TypeScopeReference target, TypeScopeReference source) {
+    return moduleScope.getConversionFor(target, source);
+  }
+
+  @Override
+  protected TypeRepresentation getMethodFromModuleScope(
+      StaticModuleScope moduleScope, TypeScopeReference typeScopeReference, String methodName) {
+    return moduleScope.getMethodForType(typeScopeReference, methodName);
   }
 
   @Override

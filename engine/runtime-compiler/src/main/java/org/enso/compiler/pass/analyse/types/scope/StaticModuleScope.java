@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.enso.compiler.MetadataInteropHelpers;
-import org.enso.compiler.common.CommonModuleScopeShape;
 import org.enso.compiler.core.CompilerStub;
 import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.ProcessingPass;
@@ -28,9 +27,7 @@ import scala.Option;
  * separate for now as it is easier to create a prototype that way. If later we find out they have
  * enough of similarity, we should merge them.
  */
-public final class StaticModuleScope
-    implements ProcessingPass.Metadata,
-        CommonModuleScopeShape<TypeRepresentation, TypeScopeReference, StaticImportExportScope> {
+public final class StaticModuleScope implements ProcessingPass.Metadata {
   private final QualifiedName moduleName;
   private final TypeScopeReference associatedType;
   private final List<StaticImportExportScope> imports;
@@ -50,9 +47,7 @@ public final class StaticModuleScope
     this.methods = methods;
   }
 
-  static final class Builder
-      implements CommonModuleScopeShape.Builder<
-          TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
+  static final class Builder {
     private final QualifiedName moduleName;
     private final TypeScopeReference associatedType;
     private final List<StaticImportExportScope> imports = new ArrayList<>();
@@ -88,7 +83,6 @@ public final class StaticModuleScope
       return moduleName;
     }
 
-    @Override
     public TypeScopeReference getAssociatedType() {
       return associatedType;
     }
@@ -99,13 +93,11 @@ public final class StaticModuleScope
       typeMethods.put(name, type);
     }
 
-    @Override
     public void addImport(StaticImportExportScope importScope) {
       checkSealed();
       imports.add(importScope);
     }
 
-    @Override
     public void addExport(StaticImportExportScope exportScope) {
       checkSealed();
       exports.add(exportScope);
@@ -158,7 +150,6 @@ public final class StaticModuleScope
     return exports;
   }
 
-  @Override
   public TypeRepresentation getConversionFor(TypeScopeReference target, TypeScopeReference source) {
     // TODO conversions in static analysis
     return null;
