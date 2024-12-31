@@ -473,6 +473,7 @@ abstract class TypePropagation {
       return switch (resolvedName) {
           // TODO investigate when do these appear?? I did not yet see them in the wild
         case BindingsMap.ResolvedConstructor ctor -> {
+          // TODO can we replace this with querying StaticModuleScope?
           var constructorInterface =
               new AtomTypeInterfaceFromBindingsMap.ConstructorFromBindingsMap(ctor.cons());
           yield typeResolver.buildAtomConstructorType(

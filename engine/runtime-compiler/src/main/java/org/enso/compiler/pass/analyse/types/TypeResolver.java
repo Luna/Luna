@@ -121,8 +121,7 @@ public class TypeResolver {
   }
 
   TypeRepresentation.TypeObject resolvedTypeAsTypeObject(BindingsMap.ResolvedType resolvedType) {
-    var iface = new AtomTypeInterfaceFromBindingsMap(resolvedType.tp());
-    return new TypeRepresentation.TypeObject(resolvedType.qualifiedName(), iface);
+    return new TypeRepresentation.TypeObject(resolvedType.qualifiedName());
   }
 
   TypeRepresentation resolvedTypeAsAtomType(BindingsMap.ResolvedType resolvedType) {

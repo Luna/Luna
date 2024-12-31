@@ -26,8 +26,10 @@ import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import org.enso.scala.wrapper.ScalaConversions;
+import org.enso.pkg.QualifiedName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
 
@@ -136,24 +138,26 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
     @Override
     protected void processTypeDefinition(Definition.Type typ) {
+      QualifiedName qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
+      TypeRepresentation.TypeObject typeObject = new TypeRepresentation.TypeObject(qualifiedName);
       List<AtomType.Constructor> constructors =
           CollectionConverters$.MODULE$.asJava(typ.members()).stream()
               .map(
                   constructorDef -> {
-                    TypeRepresentation type = buildAtomConstructorType(constructorDef);
+                    TypeRepresentation type = buildAtomConstructorType(typeObject, constructorDef);
                     return new AtomType.Constructor(
                         constructorDef.name().name(), constructorDef.isPrivate(), type);
                   })
               .toList();
 
       AtomType atomType = new AtomType(typ.name().name(), constructors);
-      var qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
       var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
       scopeBuilder.registerType(atomType);
       registerFieldGetters(scopeBuilder, atomTypeScope, typ);
     }
 
-    private TypeRepresentation buildAtomConstructorType(Definition.Data constructorDef) {
+    private TypeRepresentation buildAtomConstructorType(
+        TypeRepresentation.TypeObject associatedType, Definition.Data constructorDef) {
       boolean hasDefaults = constructorDef.arguments().exists(a -> a.defaultValue().isDefined());
       if (hasDefaults) {
         // TODO implement handling of default arguments - not only ctors will need this!
@@ -165,13 +169,18 @@ public class StaticModuleScopeAnalysis implements IRPass {
               .arguments()
               .map(
                   (arg) -> {
-                    var typ = arg.ascribedType();
-                    // TODO
-                    return typ != null ? typ : TypeRepresentation.UNKNOWN;
+                    Option<Expression> typ = arg.ascribedType();
+                    if (typ.isEmpty()) {
+                      return TypeRepresentation.UNKNOWN;
+                    }
+
+                    var resolvedType = typeResolver.resolveTypeExpression(typ.get());
+                    assert resolvedType != null;
+                    return resolvedType;
                   })
               .toList();
-      var resultType = parentType.instanceType();
-      return TypeRepresentation.buildFunction(arguments, resultType);
+      var resultType = associatedType.instanceType();
+      return TypeRepresentation.buildFunction(CollectionConverters.asJava(arguments), resultType);
     }
 
     @Override

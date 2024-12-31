@@ -8,6 +8,7 @@ import java.util.List;
  * <p>This interface declares what methods can be called on instances of that type (or statically)
  * and what constructors may be called on it to create new instances.
  */
+@Deprecated
 interface AtomTypeInterface {
   List<? extends Constructor> constructors();
 

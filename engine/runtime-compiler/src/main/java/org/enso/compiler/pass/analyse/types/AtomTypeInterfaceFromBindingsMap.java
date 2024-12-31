@@ -7,6 +7,7 @@ import org.enso.compiler.pass.analyse.types.util.ProxyList;
 import scala.jdk.javaapi.CollectionConverters$;
 
 /** Implementation of {@link AtomTypeInterface} that is built from a {@link BindingsMap.Type}. */
+@Deprecated
 public final class AtomTypeInterfaceFromBindingsMap implements AtomTypeInterface {
   // TODO this probably is no longer needed since we have StaticModuleScope
   private final BindingsMap.Type type;
@@ -38,8 +39,6 @@ public final class AtomTypeInterfaceFromBindingsMap implements AtomTypeInterface
       return constructor.name();
     }
 
-    private transient List<? extends Argument> arguments = null;
-
     @Override
     public List<? extends Argument> arguments() {
       return new ProxyList<>(
@@ -65,14 +64,10 @@ public final class AtomTypeInterfaceFromBindingsMap implements AtomTypeInterface
       return arg.hasDefaultValue();
     }
 
+    @Deprecated
     @Override
     public TypeRepresentation getType(TypeResolver resolver) {
-      if (arg.typ().isEmpty()) {
-        return null;
-      } else {
-        Expression expression = arg.typ().get();
-        return resolver.resolveTypeExpression(expression);
-      }
+      throw new IllegalStateException("No longer supported - this class will be removed soon.");
     }
   }
 }
