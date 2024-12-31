@@ -25,8 +25,7 @@ import scala.jdk.javaapi.CollectionConverters;
  * general shape of the process to try to ensure that they stay in sync. In future iterations, we
  * may try to move more of the logic to this common place.
  */
-public abstract class BuildScopeFromModuleAlgorithm<
-    FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType> {
+public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, ImportExportScopeType> {
   private final Logger logger = LoggerFactory.getLogger(BuildScopeFromModuleAlgorithm.class);
 
   protected abstract void registerExport(ImportExportScopeType exportScope);

@@ -195,12 +195,7 @@ class IrToTruffle(
   }
 
   final private class BuildModuleScopeFromModule
-      extends BuildScopeFromModuleAlgorithm[
-        RuntimeFunction,
-        Type,
-        ImportExportScope,
-        ModuleScope
-      ] {
+      extends BuildScopeFromModuleAlgorithm[Type, ImportExportScope] {
 
     override protected def registerExport(
       exportScope: ImportExportScope

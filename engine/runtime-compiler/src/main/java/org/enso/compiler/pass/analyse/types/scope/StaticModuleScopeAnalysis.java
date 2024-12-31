@@ -83,8 +83,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
   }
 
   private final class BuildStaticModuleScope
-      extends BuildScopeFromModuleAlgorithm<
-          TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
+      extends BuildScopeFromModuleAlgorithm<TypeScopeReference, StaticImportExportScope> {
     private StaticModuleScope.Builder scopeBuilder;
 
     private BuildStaticModuleScope(StaticModuleScope.Builder scopeBuilder) {
