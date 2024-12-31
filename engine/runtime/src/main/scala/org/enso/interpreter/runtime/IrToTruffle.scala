@@ -346,7 +346,8 @@ class IrToTruffle(
 
     override protected def processTypeDefinition(typ: Definition.Type): Unit = {
       val atomDefs = typ.members
-      val asType   = this.scopeBuilder.asModuleScope().getType(typ.name.name, true)
+      val asType =
+        this.scopeBuilder.asModuleScope().getType(typ.name.name, true)
       val atomConstructors =
         atomDefs.map(cons => asType.getConstructors.get(cons.name.name))
       atomConstructors
