@@ -214,7 +214,7 @@ class IrToTruffle(
     override protected def processConversion(
       conversion: Method.Conversion
     ): Unit = {
-      lazy val where =
+      def where() =
         s"conversion `${conversion.typeName.map(_.name + ".").getOrElse("")}${conversion.methodName.name}`."
       val scopeInfo = rootScopeInfo(where, conversion)
 
@@ -278,7 +278,7 @@ class IrToTruffle(
             )
           case _ =>
             throw new CompilerError(
-              "Conversion bodies must be functions at the point of codegen."
+              s"Conversion bodies must be functions at the point of codegen (conversion $fromType to $toType)."
             )
         }
         this.scopeBuilder.registerConversionMethod(toType, fromType, function)
@@ -288,7 +288,7 @@ class IrToTruffle(
     override protected def processMethodDefinition(
       method: Method.Explicit
     ): Unit = {
-      lazy val where =
+      def where() =
         s"`method ${method.typeName.map(_.name + ".").getOrElse("")}${method.methodName.name}`."
       val scopeInfo = rootScopeInfo(where, method)
       def dataflowInfo() = method.unsafeGetMetadata(
@@ -397,7 +397,7 @@ class IrToTruffle(
     atomCons: AtomConstructor,
     atomDefn: Definition.Data
   ): Unit = {
-    val scopeInfo = rootScopeInfo("atom definition", atomDefn)
+    val scopeInfo = rootScopeInfo(() => "atom definition", atomDefn)
 
     def dataflowInfo() = atomDefn.unsafeGetMetadata(
       DataflowAnalysis,
@@ -608,7 +608,7 @@ class IrToTruffle(
             val scopeName =
               scopeElements.mkString(Constants.SCOPE_SEPARATOR)
 
-            lazy val where =
+            def where() =
               s"annotation ${annotation.name} of method ${scopeElements.init
                 .mkString(Constants.SCOPE_SEPARATOR)}"
             val scopeInfo = rootScopeInfo(where, annotation)
@@ -2596,7 +2596,7 @@ class IrToTruffle(
     scopeBuilder.getAssociatedType
 
   private def rootScopeInfo(
-    where: => String,
+    where: () => String,
     ir: IR
   ): () => AliasMetadata.RootScope = {
     def readScopeInfo() = {
