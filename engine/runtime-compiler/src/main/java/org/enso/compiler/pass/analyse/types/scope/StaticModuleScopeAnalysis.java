@@ -84,13 +84,26 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
   private final class BuildStaticModuleScope
       extends BuildScopeFromModuleAlgorithm<
-          TypeRepresentation,
-          TypeScopeReference,
-          StaticImportExportScope,
-          StaticModuleScope,
-          StaticModuleScope.Builder> {
-    private BuildStaticModuleScope(StaticModuleScope.Builder scope) {
-      super(scope);
+          TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
+    private StaticModuleScope.Builder scopeBuilder;
+
+    private BuildStaticModuleScope(StaticModuleScope.Builder scopeBuilder) {
+      this.scopeBuilder = scopeBuilder;
+    }
+
+    @Override
+    protected void registerExport(StaticImportExportScope exportScope) {
+      scopeBuilder.addExport(exportScope);
+    }
+
+    @Override
+    protected void registerImport(StaticImportExportScope importScope) {
+      scopeBuilder.addImport(importScope);
+    }
+
+    @Override
+    protected TypeScopeReference getTypeAssociatedWithCurrentScope() {
+      return scopeBuilder.getAssociatedType();
     }
 
     @Override

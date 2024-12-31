@@ -199,14 +199,29 @@ class IrToTruffle(
         RuntimeFunction,
         Type,
         ImportExportScope,
-        ModuleScope,
-        ModuleScope.Builder
-      ](scopeBuilder) {
+        ModuleScope
+      ] {
+
+    override protected def registerExport(
+      exportScope: ImportExportScope
+    ): Unit = {
+      scopeBuilder.addExport(exportScope)
+    }
+
+    override protected def registerImport(
+      importScope: ImportExportScope
+    ): Unit = {
+      scopeBuilder.addImport(importScope)
+    }
+
+    override protected def getTypeAssociatedWithCurrentScope(): Type =
+      scopeAssociatedType
+
     override protected def processPolyglotJavaImport(
       visibleName: String,
       javaClassName: String
     ): Unit =
-      this.scopeBuilder.registerPolyglotSymbol(
+      scopeBuilder.registerPolyglotSymbol(
         visibleName,
         () => context.lookupJavaClass(javaClassName)
       )
@@ -259,9 +274,9 @@ class IrToTruffle(
             val rootNode = MethodRootNode.build(
               language,
               expressionProcessor.scope,
-              this.scopeBuilder.asModuleScope(),
+              scopeBuilder.asModuleScope(),
               () => bodyBuilder.bodyNode(),
-              makeSection(this.scopeBuilder.getModule, conversion.location),
+              makeSection(scopeBuilder.getModule, conversion.location),
               toType,
               conversion.methodName.name
             )
@@ -281,7 +296,7 @@ class IrToTruffle(
               s"Conversion bodies must be functions at the point of codegen (conversion $fromType to $toType)."
             )
         }
-        this.scopeBuilder.registerConversionMethod(toType, fromType, function)
+        scopeBuilder.registerConversionMethod(toType, fromType, function)
       }
     }
 
@@ -328,7 +343,7 @@ class IrToTruffle(
           frameInfo
         )
 
-        this.scopeBuilder.registerMethod(
+        scopeBuilder.registerMethod(
           cons,
           method.methodName.name,
           () => {
@@ -347,7 +362,7 @@ class IrToTruffle(
     override protected def processTypeDefinition(typ: Definition.Type): Unit = {
       val atomDefs = typ.members
       val asType =
-        this.scopeBuilder.asModuleScope().getType(typ.name.name, true)
+        scopeBuilder.asModuleScope().getType(typ.name.name, true)
       val atomConstructors =
         atomDefs.map(cons => asType.getConstructors.get(cons.name.name))
       atomConstructors

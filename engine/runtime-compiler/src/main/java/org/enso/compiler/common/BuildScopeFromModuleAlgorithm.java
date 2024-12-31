@@ -26,22 +26,14 @@ import scala.jdk.javaapi.CollectionConverters;
  * may try to move more of the logic to this common place.
  */
 public abstract class BuildScopeFromModuleAlgorithm<
-    FunctionType,
-    TypeScopeReferenceType,
-    ImportExportScopeType,
-    ModuleScopeType extends
-        CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>,
-    ModuleScopeBuilderType extends
-        CommonModuleScopeShape.Builder<
-                FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType>> {
+    FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType> {
   private final Logger logger = LoggerFactory.getLogger(BuildScopeFromModuleAlgorithm.class);
 
-  /** The scope builder to which the algorithm will register the entities. */
-  protected final ModuleScopeBuilderType scopeBuilder;
+  protected abstract void registerExport(ImportExportScopeType exportScope);
 
-  protected BuildScopeFromModuleAlgorithm(ModuleScopeBuilderType scopeBuilder) {
-    this.scopeBuilder = scopeBuilder;
-  }
+  protected abstract void registerImport(ImportExportScopeType importScope);
+
+  protected abstract TypeScopeReferenceType getTypeAssociatedWithCurrentScope();
 
   /** Runs the main processing on a module, that will build the module scope for it. */
   public void processModule(Module moduleIr, BindingsMap bindingsMap) {
@@ -56,7 +48,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
     for (var exportedMod :
         CollectionConverters.asJavaCollection(bindingsMap.getDirectlyExportedModules())) {
       ImportExportScopeType exportScope = buildExportScope(exportedMod);
-      scopeBuilder.addExport(exportScope);
+      registerExport(exportScope);
     }
   }
 
@@ -65,7 +57,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
       for (var target : CollectionConverters.asJavaCollection(imp.targets())) {
         if (target instanceof BindingsMap.ResolvedModule resolvedModule) {
           var importScope = buildImportScope(imp, resolvedModule);
-          scopeBuilder.addImport(importScope);
+          registerImport(importScope);
         }
       }
     }
@@ -132,7 +124,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
   protected final TypeScopeReferenceType getTypeAssociatedWithMethod(Method.Explicit method) {
     var typePointerOpt = method.methodReference().typePointer();
     if (typePointerOpt.isEmpty()) {
-      return scopeBuilder.getAssociatedType();
+      return getTypeAssociatedWithCurrentScope();
     } else {
       var metadata =
           MetadataInteropHelpers.getMetadataOrNull(
