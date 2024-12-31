@@ -2169,14 +2169,12 @@ lazy val `engine-common` = project
     Test / envVars ++= distributionEnvironmentOverrides,
     libraryDependencies ++= Seq(
       "org.graalvm.polyglot" % "polyglot"    % graalMavenPackagesVersion % "provided",
-      "org.graalvm.truffle"  % "truffle-api" % graalMavenPackagesVersion % "provided"
     ),
     libraryDependencies ++= GraalVM.modules.map(
       _.withConfigurations(Some(Runtime.name))
     ),
     Compile / moduleDependencies ++= {
       Seq(
-        "org.graalvm.truffle"  % "truffle-api" % graalMavenPackagesVersion,
         "org.graalvm.polyglot" % "polyglot"    % graalMavenPackagesVersion,
         "org.slf4j"            % "slf4j-api"   % slf4jVersion
       ) ++ GraalVM.modules.map(_.withConfigurations(Some(Runtime.name)))

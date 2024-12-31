@@ -1,6 +1,5 @@
 package org.enso.common;
 
-import com.oracle.truffle.api.TruffleOptions;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,7 +53,7 @@ public final class ContextFactory {
   private String checkForWarnings;
   private int warningsLimit = 100;
   private java.util.Map<String, String> options = new HashMap<>();
-  private java.util.Map<String, String> engineOptions = new HashMap<>();
+  private java.util.Map<String, String> engineOptions = null;
   private boolean enableDebugServer;
 
   private ContextFactory() {}
@@ -197,9 +196,6 @@ public final class ContextFactory {
     if (enableDebugServer) {
       builder.option(DebugServerInfo.ENABLE_OPTION, "true");
     }
-    if (!TruffleOptions.AOT && messageTransport != null) {
-      builder.serverTransport(messageTransport);
-    }
     builder.option(RuntimeOptions.LOG_LEVEL, logLevelName);
     var logHandler = JulHandler.get();
     var logLevels = LoggerSetup.get().getConfig().getLoggers();
@@ -236,19 +232,17 @@ public final class ContextFactory {
           .allowCreateThread(true);
     }
 
-    if (messageTransport != null) {
-      if (TruffleOptions.AOT) {
-        // In AOT mode one must not use a shared engine; the latter causes issues when initializing
-        // message transport - it is set to `null`.
-        var eng =
-            Engine.newBuilder()
-                .allowExperimentalOptions(true)
-                .serverTransport(messageTransport)
-                .options(engineOptions);
-        builder.engine(eng.build());
-      } else {
-        builder.serverTransport(messageTransport);
+    if (engineOptions != null) {
+      // In AOT mode one must not use a shared engine; the latter causes issues when initializing
+      // message transport - it is set to `null`.
+      var eng = Engine.newBuilder().allowExperimentalOptions(true).options(engineOptions);
+
+      if (messageTransport != null) {
+        eng.serverTransport(messageTransport);
       }
+      builder.engine(eng.build());
+    } else if (messageTransport != null) {
+      builder.serverTransport(messageTransport);
     }
 
     var ctx = builder.build();

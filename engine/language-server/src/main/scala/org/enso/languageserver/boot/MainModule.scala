@@ -318,8 +318,9 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     Runtime.getRuntime.availableProcessors().toString
   )
 
-  val extraEngineOptions = new util.HashMap[String, String]()
+  var extraEngineOptions: util.HashMap[String, String] = null
   if (TruffleOptions.AOT) {
+    extraEngineOptions = new util.HashMap[String, String]()
     log.trace("Running Language Server in AOT mode")
     extraEngineOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   } else {
