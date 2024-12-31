@@ -3,7 +3,7 @@ package org.enso.interpreter.runtime
 import java.util.logging.Level
 import com.oracle.truffle.api.source.{Source, SourceSection}
 import com.oracle.truffle.api.interop.InteropLibrary
-import org.enso.compiler.common_logic.{
+import org.enso.compiler.common.{
   BuildScopeFromModuleAlgorithm,
   NameResolutionAlgorithm
 }

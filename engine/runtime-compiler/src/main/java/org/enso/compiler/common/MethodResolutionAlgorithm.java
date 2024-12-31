@@ -1,4 +1,4 @@
-package org.enso.compiler.common_logic;
+package org.enso.compiler.common;
 
 import java.util.List;
 import java.util.Objects;

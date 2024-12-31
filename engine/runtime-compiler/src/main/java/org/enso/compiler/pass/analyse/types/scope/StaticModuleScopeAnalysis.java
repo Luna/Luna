@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.enso.compiler.MetadataInteropHelpers;
-import org.enso.compiler.common_logic.BuildScopeFromModuleAlgorithm;
+import org.enso.compiler.common.BuildScopeFromModuleAlgorithm;
 import org.enso.compiler.context.InlineContext;
 import org.enso.compiler.context.ModuleContext;
 import org.enso.compiler.core.IR;

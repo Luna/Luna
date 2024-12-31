@@ -30,5 +30,5 @@ module org.enso.runtime.compiler {
   exports org.enso.compiler.phase;
   exports org.enso.compiler.phase.exports;
   exports org.enso.compiler.refactoring;
-  exports org.enso.compiler.common_logic;
+  exports org.enso.compiler.common;
 }

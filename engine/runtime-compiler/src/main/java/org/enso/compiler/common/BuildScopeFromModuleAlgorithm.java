@@ -1,4 +1,4 @@
-package org.enso.compiler.common_logic;
+package org.enso.compiler.common;
 
 import org.enso.compiler.MetadataInteropHelpers;
 import org.enso.compiler.core.ir.Module;

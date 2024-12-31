@@ -1,7 +1,7 @@
 package org.enso.compiler.pass.analyse.types.scope;
 
 import java.util.List;
-import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
+import org.enso.compiler.common.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

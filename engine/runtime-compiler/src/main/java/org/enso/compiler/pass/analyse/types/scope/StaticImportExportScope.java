@@ -1,6 +1,6 @@
 package org.enso.compiler.pass.analyse.types.scope;
 
-import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
+import org.enso.compiler.common.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.pkg.QualifiedName;
 

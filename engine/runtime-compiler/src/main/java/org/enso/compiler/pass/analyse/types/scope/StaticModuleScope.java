@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.enso.compiler.MetadataInteropHelpers;
-import org.enso.compiler.common_logic.CommonModuleScopeShape;
+import org.enso.compiler.common.CommonModuleScopeShape;
 import org.enso.compiler.core.CompilerStub;
 import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.ProcessingPass;

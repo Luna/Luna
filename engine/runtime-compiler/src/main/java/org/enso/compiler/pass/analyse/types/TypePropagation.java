@@ -4,7 +4,7 @@ import static org.enso.compiler.MetadataInteropHelpers.getMetadata;
 
 import java.util.List;
 import org.enso.compiler.MetadataInteropHelpers;
-import org.enso.compiler.common_logic.NameResolutionAlgorithm;
+import org.enso.compiler.common.NameResolutionAlgorithm;
 import org.enso.compiler.core.CompilerError;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.CallArgument;
