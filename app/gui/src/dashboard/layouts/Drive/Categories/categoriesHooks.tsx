@@ -84,21 +84,23 @@ export function useCloudCategoryList() {
 
   const hasUserAndTeamSpaces = userHasUserAndTeamSpaces(user)
 
+  const homeDirectoryId =
+    hasUserAndTeamSpaces ? organizationIdToDirectoryId(organizationId) : userIdToDirectoryId(userId)
+
   const cloudCategory: CloudCategory = {
     type: 'cloud',
     id: 'cloud',
     label: getText('cloudCategory'),
     icon: CloudIcon,
-    homeDirectoryId:
-      hasUserAndTeamSpaces ?
-        organizationIdToDirectoryId(organizationId)
-      : userIdToDirectoryId(userId),
+    rootPath: Path(`enso://${hasUserAndTeamSpaces ? `Users/${user.name}` : ''}`),
+    homeDirectoryId,
   }
 
   const recentCategory: RecentCategory = {
     type: 'recent',
     id: 'recent',
     label: getText('recentCategory'),
+    rootPath: Path(`(Recent)`),
     icon: RecentIcon,
   }
 
@@ -106,6 +108,7 @@ export function useCloudCategoryList() {
     type: 'trash',
     id: 'trash',
     label: getText('trashCategory'),
+    rootPath: Path(`(Trash)`),
     icon: Trash2Icon,
   }
 
@@ -219,6 +222,10 @@ export function useLocalCategoryList() {
     type: 'local',
     id: 'local',
     label: getText('localCategory'),
+    /** The root path of this category. */
+    get rootPath() {
+      return localBackend?.rootPath() ?? Path('')
+    },
     icon: ComputerIcon,
   }
 

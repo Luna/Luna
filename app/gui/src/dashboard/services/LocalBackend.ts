@@ -150,6 +150,7 @@ export default class LocalBackend extends Backend {
   ): Promise<readonly backend.AnyAsset[]> {
     const parentIdRaw = query.parentId == null ? null : extractTypeAndId(query.parentId).id
     const parentId = query.parentId ?? newDirectoryId(this.projectManager.rootDirectory)
+    const parentsPath = extractTypeAndId(parentId).id
 
     // Catch the case where the directory does not exist.
     let result: backend.AnyAsset[] = []
@@ -170,8 +171,8 @@ export default class LocalBackend extends Backend {
                 extension: null,
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.DirectoryAsset
             }
             case projectManager.FileSystemEntryType.ProjectEntry: {
@@ -191,8 +192,8 @@ export default class LocalBackend extends Backend {
                 extension: null,
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.ProjectAsset
             }
             case projectManager.FileSystemEntryType.FileEntry: {
@@ -207,8 +208,8 @@ export default class LocalBackend extends Backend {
                 extension: fileExtension(entry.path),
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.FileAsset
             }
           }

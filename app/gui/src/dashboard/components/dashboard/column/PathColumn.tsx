@@ -7,7 +7,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import { useSetExpandedDirectoryIds, useSetSelectedKeys } from '#/providers/DriveProvider'
+import { useSetExpandedDirectories, useSetSelectedKeys } from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
@@ -24,7 +24,7 @@ export default function PathColumn(props: AssetColumnProps) {
 
   const { setCategory } = useCategoriesAPI()
   const setSelectedKeys = useSetSelectedKeys()
-  const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
+  const setExpandedDirectoryIds = useSetExpandedDirectories()
 
   // Path navigation exist only for cloud categories.
   const { getCategoryByDirectoryId } = useCloudCategoryList()

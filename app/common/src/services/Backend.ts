@@ -134,6 +134,11 @@ export type UserPermissionIdentifier = UserGroupId | UserId
 export type Path = newtype.Newtype<string, 'Path'>
 export const Path = newtype.newtypeConstructor<Path>()
 
+/** Whether the given path is a descendant of another path. */
+export function isDescendantPath(path: Path, possibleAncestor: Path) {
+  return path.startsWith(`${possibleAncestor}/`)
+}
+
 const PLACEHOLDER_USER_GROUP_PREFIX = 'usergroup-placeholder-'
 
 /**
