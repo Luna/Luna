@@ -1,10 +1,7 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@wb_crates//:defs.bzl", "aliases", "all_crate_deps")
 
-exports_files([
-    "Cargo.toml",
-    "Cargo.lock",
-])
+exports_files(["Cargo.toml", "Cargo.lock"])
 
 rust_binary(
     name = "wasm-bindgen-cli",

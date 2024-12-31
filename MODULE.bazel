@@ -4,19 +4,17 @@
 ### JavaScript ecosystem ###
 ############################
 
-bazel_dep(name = "aspect_rules_js", version = "2.1.0")
-bazel_dep(name = "aspect_rules_ts", version = "3.2.1")
-bazel_dep(name = "rules_nodejs", version = "6.3.1")
-bazel_dep(name = "aspect_bazel_lib", version = "2.9.3")
+bazel_dep(name = "aspect_rules_js", version = "2.1.1")
+bazel_dep(name = "aspect_rules_ts", version = "3.3.2")
+bazel_dep(name = "rules_nodejs", version = "6.3.2")
+bazel_dep(name = "aspect_bazel_lib", version = "2.10.0")
 
 ## Node.js
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
 node.toolchain(node_version = "20.11.1")
 
-# bazel_dep(name = "//toolchains/tar")
 tar_toolchain = use_extension("//toolchains:tar/extensions.bzl", "tar_toolchain")
 use_repo(tar_toolchain, "tar_toolchain")
-
 register_toolchains("//toolchains:windows_builtin_tar_toolchain")
 
 ## Npm
@@ -37,10 +35,12 @@ use_repo(rules_ts_ext, "npm_typescript")
 ############
 ### RUST ###
 ############
-bazel_dep(name = "rules_rust", version = "0.48.0")
-single_version_override(
-    module_name = "rules_rust",
-    patches = ["patches/rules_rust_msvc_maxpath.patch"],
+bazel_dep(name = "rules_rust", version = "0.56.0")
+# TODO: use next released version
+git_override(
+    module_name="rules_rust",
+    remote="https://github.com/bazelbuild/rules_rust.git",
+    commit="c06feef5f3df992af32de004e6716574af4735e7"
 )
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
@@ -50,10 +50,8 @@ rust.toolchain(
     versions = ["nightly/2024-08-08"],
 )
 use_repo(rust, "rust_toolchains")
-
 register_toolchains("@rust_toolchains//:all")
 
-# print( manifests.MANIFESTS )
 crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
 crate.from_cargo(
     name = "crates",
@@ -89,39 +87,43 @@ crate.from_cargo(
 )
 use_repo(crate, "crates")
 
+####################
+### WASM BINDGEN ###
+####################
+bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.56.0")
+git_override(
+    module_name="rules_rust_wasm_bindgen",
+    remote="https://github.com/bazelbuild/rules_rust.git",
+    commit="c06feef5f3df992af32de004e6716574af4735e7",
+    strip_prefix="extensions/wasm_bindgen"
+)
+
+WASM_BINDGEN_VERSION = "0.2.93"
+
 wb_crates = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
 wb_crates.from_cargo(
     name = "wb_crates",
     cargo_config = "//:.cargo/config.toml",
     cargo_lockfile = "@wasm_bindgen_cli_crate//:Cargo.lock",
-    manifests = [
-        "@wasm_bindgen_cli_crate//:Cargo.toml",
-    ],
+    manifests = ["@wasm_bindgen_cli_crate//:Cargo.toml"],
 )
 use_repo(wb_crates, "wb_crates")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-WASM_BINDGEN_VERSION = "0.2.93"
-
 http_archive(
     name = "wasm_bindgen_cli_crate",
     build_file = "//toolchains/wasm_bindgen:BUILD.wasm-bindgen-cli.bazel",
     integrity = "sha256-uwX54YM2X1zzrATWC1Sw4z9JTpNzAme1r4JjNEPugDU=",
     strip_prefix = "wasm-bindgen-cli-{}".format(WASM_BINDGEN_VERSION),
     type = "tar.gz",
-    # sha256 = "08f61e21873f51e3059a8c7c3eef81ede7513d161cfc60751c7b2ffa6ed28270",
     urls = ["https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-{}.crate".format(WASM_BINDGEN_VERSION)],
 )
-
 register_toolchains("//toolchains/wasm_bindgen:cli")
-
-register_toolchains("//toolchains/dummy_cc:dummy_cc_wasm32_toolchain")
 
 ###########
 ### JVM ###
 ###########
-bazel_dep(name = "rules_java", version = "7.6.1")
+bazel_dep(name = "rules_java", version = "7.6.5")
 bazel_dep(name = "rules_graalvm", version = "0.11.1")  ## upgrade to 0.11.2 once available in bazel central
 
 gvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
