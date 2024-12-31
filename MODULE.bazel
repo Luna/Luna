@@ -98,7 +98,7 @@ git_override(
     strip_prefix="extensions/wasm_bindgen"
 )
 
-WASM_BINDGEN_VERSION = "0.2.93"
+WASM_BINDGEN_VERSION = "0.2.99"
 
 wb_crates = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
 wb_crates.from_cargo(
@@ -113,11 +113,12 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 http_archive(
     name = "wasm_bindgen_cli_crate",
     build_file = "//toolchains/wasm_bindgen:BUILD.wasm-bindgen-cli.bazel",
-    integrity = "sha256-uwX54YM2X1zzrATWC1Sw4z9JTpNzAme1r4JjNEPugDU=",
+    integrity = "sha256-+X6aHOxWGsoyOWdwK4xQaAoNF6GXuT/aQzunp2z1egw=",
     strip_prefix = "wasm-bindgen-cli-{}".format(WASM_BINDGEN_VERSION),
     type = "tar.gz",
     urls = ["https://static.crates.io/crates/wasm-bindgen-cli/wasm-bindgen-cli-{}.crate".format(WASM_BINDGEN_VERSION)],
 )
+
 register_toolchains("//toolchains/wasm_bindgen:cli")
 
 ###########

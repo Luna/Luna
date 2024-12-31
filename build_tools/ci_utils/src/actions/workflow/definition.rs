@@ -101,6 +101,7 @@ pub fn setup_bazel() -> Step {
             ("disk-cache".to_string(), Value::Bool(true)),
             ("repository-cache".to_string(), Value::Bool(true)),
         ]))),
+        env: BTreeMap::from([("BAZEL_VC".to_string(), r"C:\BuildTools\VC".to_string())]),
         ..default()
     }
 }

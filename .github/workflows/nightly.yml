@@ -4,7 +4,7 @@
 name: Nightly Release
 on:
   schedule:
-    - cron: 0 2 * * *
+  - cron: 0 2 * * *
   workflow_dispatch:
     inputs:
       ydoc:
@@ -13,8 +13,8 @@ on:
         type: choice
         default: nodejs
         options:
-          - nodejs
-          - polyglot
+        - nodejs
+        - polyglot
 jobs:
   promote-nightly:
     name: Promote nightly
@@ -24,4 +24,4 @@ jobs:
       ydoc: ${{ inputs.ydoc || 'nodejs' }}
     secrets: inherit
 env:
-  ENSO_BUILD_SKIP_VERSION_CHECK: "true"
+  ENSO_BUILD_SKIP_VERSION_CHECK: 'true'
