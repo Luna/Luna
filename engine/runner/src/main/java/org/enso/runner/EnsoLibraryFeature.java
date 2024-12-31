@@ -15,9 +15,25 @@ import org.enso.pkg.PackageManager$;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeProxyCreation;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
-import org.graalvm.nativeimage.hosted.RuntimeSystemProperties;
 
 public final class EnsoLibraryFeature implements Feature {
+  private static final String LIB_OUTPUT = "org.enso.feature.native.lib.output";
+  private final File nativeLibDir;
+
+  public EnsoLibraryFeature() {
+    var nativeLibOut = System.getProperty(LIB_OUTPUT);
+    if (nativeLibOut == null) {
+      throw new IllegalStateException("Missing system property: " + LIB_OUTPUT);
+    }
+    nativeLibDir = new File(nativeLibOut);
+    if (!nativeLibDir.exists() || !nativeLibDir.isDirectory()) {
+      var created = nativeLibDir.mkdirs();
+      if (!created) {
+        throw new IllegalStateException("Cannot create directory: " + nativeLibDir);
+      }
+    }
+  }
+
   @Override
   public void beforeAnalysis(BeforeAnalysisAccess access) {
 
@@ -93,13 +109,9 @@ public final class EnsoLibraryFeature implements Feature {
             var nativeLibs =
                 NativeLibraryFinder.listAllNativeLibraries(pkg, FileSystem$.MODULE$.defaultFs());
             for (var nativeLib : nativeLibs) {
-              assert nativeLib.exists() && nativeLib.isFile();
-              var dir = nativeLib.toPath().getParent().toFile();
-              assert dir.exists() && dir.isDirectory();
-              nativeLibPaths.add(dir.getAbsolutePath());
-              var current = System.getProperty("java.library.path");
-              RuntimeSystemProperties.register(
-                  "java.library.path", current + File.pathSeparator + dir.getAbsolutePath());
+              var out = new File(nativeLibDir, nativeLib.getName());
+              Files.copy(nativeLib.toPath(), out.toPath());
+              nativeLibPaths.add(out.getAbsolutePath());
             }
           }
         }
@@ -113,7 +125,6 @@ public final class EnsoLibraryFeature implements Feature {
       System.err.println("  " + className);
     }
     System.err.println("Registered " + classes.size() + " classes for reflection");
-    System.err.println(
-        "Registered native libraries into runtime's java.library.path: " + nativeLibPaths);
+    System.err.println("Copied native libraries: " + nativeLibPaths + " into " + nativeLibDir);
   }
 }

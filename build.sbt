@@ -3712,7 +3712,8 @@ lazy val `engine-runner` = project
               // "-H:-DeleteLocalSymbols",
               // you may need to set smallJdk := None to use following flags:
               // "--trace-class-initialization=org.enso.syntax2.Parser",
-              "-Dnic=nic"
+              "-Dnic=nic",
+              "-Dorg.enso.feature.native.lib.output=" + (engineDistributionRoot.value / "bin")
             ),
             mainClass = Some("org.enso.runner.Main"),
             initializeAtRuntime = Seq(
