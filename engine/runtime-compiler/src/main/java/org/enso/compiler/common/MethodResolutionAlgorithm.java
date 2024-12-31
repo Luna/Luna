@@ -20,7 +20,6 @@ import java.util.stream.Stream;
  * this class, customizing it to the specific needs of the context in which it is used.
  *
  * @param <ModuleScopeType> the type of the module scope that the algorithm will be working with
- * @see CommonModuleScopeShape for the explanation of other type parameters
  */
 public abstract class MethodResolutionAlgorithm<
     FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType> {
@@ -40,7 +39,7 @@ public abstract class MethodResolutionAlgorithm<
    *   <li>Finally, methods imported from other modules.
    * </ol>
    */
-  public FunctionType lookupMethodDefinition(
+  public final FunctionType lookupMethodDefinition(
       ModuleScopeType currentModuleScope, TypeScopeReferenceType type, String methodName) {
     var definitionScope = findDefinitionScope(type);
     if (definitionScope != null) {
@@ -64,7 +63,7 @@ public abstract class MethodResolutionAlgorithm<
    * <p>It first checks methods defined in the module and later checks any methods re-exported from
    * other modules.
    */
-  public FunctionType getExportedMethod(
+  public final FunctionType getExportedMethod(
       ModuleScopeType moduleScope, TypeScopeReferenceType type, String methodName) {
     var definedLocally = getMethodFromModuleScope(moduleScope, type, methodName);
     if (definedLocally != null) {
@@ -90,7 +89,7 @@ public abstract class MethodResolutionAlgorithm<
    *   <li>Finally, conversions imported from other modules are considered.
    * </ol>
    */
-  public FunctionType lookupConversionDefinition(
+  public final FunctionType lookupConversionDefinition(
       ModuleScopeType currentModuleScope,
       TypeScopeReferenceType source,
       TypeScopeReferenceType target) {
@@ -124,7 +123,7 @@ public abstract class MethodResolutionAlgorithm<
    * <p>It first checks conversions defined in the module and later checks any conversions
    * re-exported from other modules.
    */
-  public FunctionType getExportedConversion(
+  public final FunctionType getExportedConversion(
       ModuleScopeType moduleScope, TypeScopeReferenceType target, TypeScopeReferenceType source) {
     var definedLocally = getConversionFromModuleScope(moduleScope, target, source);
     if (definedLocally != null) {

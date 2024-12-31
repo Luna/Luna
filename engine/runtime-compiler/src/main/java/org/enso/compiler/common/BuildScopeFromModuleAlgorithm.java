@@ -35,7 +35,7 @@ public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, Impo
   protected abstract TypeScopeReferenceType getTypeAssociatedWithCurrentScope();
 
   /** Runs the main processing on a module, that will build the module scope for it. */
-  public void processModule(Module moduleIr, BindingsMap bindingsMap) {
+  public final void processModule(Module moduleIr, BindingsMap bindingsMap) {
     processModuleExports(bindingsMap);
     processModuleImports(bindingsMap);
     processPolyglotImports(moduleIr);
@@ -164,8 +164,7 @@ public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, Impo
    * Allows the implementation to specify how to build the export scope from an exported module
    * instance.
    *
-   * <p>Such scope is then registered with the scope builder using {@link
-   * ModuleScopeBuilderType#addExport}.
+   * <p>Such scope is then registered with the scope builder using {@code addExport}.
    */
   protected abstract ImportExportScopeType buildExportScope(
       BindingsMap.ExportedModule exportedModule);
@@ -174,8 +173,7 @@ public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, Impo
    * Allows the implementation to specify how to build the import scope from a resolved import and
    * module.
    *
-   * <p>Such scope is then registered with the scope builder using {@link
-   * ModuleScopeBuilderType#addImport}.
+   * <p>Such scope is then registered with the scope builder using {@code addImport}.
    */
   protected abstract ImportExportScopeType buildImportScope(
       BindingsMap.ResolvedImport resolvedImport, BindingsMap.ResolvedModule resolvedModule);
