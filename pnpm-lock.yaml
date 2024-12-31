@@ -547,7 +547,7 @@ importers:
         version: 4.0.0(prettier@3.3.2)(typescript@5.5.3)(vue-tsc@2.0.24(typescript@5.5.3))
       prettier-plugin-tailwindcss:
         specifier: ^0.5.11
-        version: 0.5.14(@ianvs/prettier-plugin-sort-imports@4.3.0(prettier@3.3.2))(prettier-plugin-organize-imports@4.0.0(prettier@3.3.2)(typescript@5.5.3)(vue-tsc@2.0.24(typescript@5.5.3)))(prettier@3.3.2)
+        version: 0.5.14(@ianvs/prettier-plugin-sort-imports@4.3.0(@vue/compiler-sfc@3.5.2)(prettier@3.3.2))(prettier-plugin-organize-imports@4.0.0(prettier@3.3.2)(typescript@5.5.3)(vue-tsc@2.0.24(typescript@5.5.3)))(prettier@3.3.2)
       resize-observer-polyfill:
         specifier: 1.5.1
         version: 1.5.1
@@ -796,6 +796,9 @@ importers:
 
   app/ydoc-server-polyglot:
     dependencies:
+      y-websocket:
+        specifier: ^1.5.0
+        version: 1.5.4(yjs@13.6.18)
       ydoc-server:
         specifier: workspace:*
         version: link:../ydoc-server
