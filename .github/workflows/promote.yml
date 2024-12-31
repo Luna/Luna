@@ -41,8 +41,8 @@ jobs:
     - Linux
     steps:
     - if: runner.os == 'Windows'
-      name: Add Git\bash.exe to PATH
-      run: echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%
+      name: Setup requiredbazel environment
+      run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\n        "
       shell: cmd
     - name: Setup bazel environment
       uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -51,8 +51,6 @@ jobs:
         disk-cache: true
         output-base: ${{ runner.os == 'Windows' && 'c:/_bazel' || '' }}
         repository-cache: true
-      env:
-        BAZEL_VC: C:\BuildTools\VC
     - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
       name: Installing wasm-pack
       uses: jetli/wasm-pack-action@v0.4.0

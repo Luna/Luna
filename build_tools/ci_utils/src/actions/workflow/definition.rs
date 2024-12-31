@@ -78,12 +78,18 @@ pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
 }
 
-pub fn setup_bin_bash() -> Step {
+pub fn setup_bazel_env() -> Step {
     Step {
-        name: Some("Add Git\\bash.exe to PATH".into()),
+        name: Some("Setup requiredbazel environment".into()),
         r#if: Some(is_windows_runner()),
         shell: Some(Shell::Cmd),
-        run: Some(r#"echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%"#.into()),
+        run: Some(
+            r#"
+echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%
+echo BAZEL_VC=C:\BuildTools\VC >> %GITHUB_ENV%
+        "#
+            .to_string(),
+        ),
         ..default()
     }
 }
@@ -101,7 +107,6 @@ pub fn setup_bazel() -> Step {
             ("disk-cache".to_string(), Value::Bool(true)),
             ("repository-cache".to_string(), Value::Bool(true)),
         ]))),
-        env: BTreeMap::from([("BAZEL_VC".to_string(), r"C:\BuildTools\VC".to_string())]),
         ..default()
     }
 }
@@ -132,7 +137,7 @@ pub fn github_script_step(name: impl Into<String>, script: impl Into<String>) ->
 
 /// Export environment needed by our [Artifact API wrappers](crate::actions::artifacts).
 pub fn setup_artifact_api() -> Step {
-    let script = r#"
+    let script: &str = r#"
     core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env["ACTIONS_RUNTIME_TOKEN"])
     core.exportVariable("ACTIONS_RUNTIME_URL", process.env["ACTIONS_RUNTIME_URL"])
     core.exportVariable("GITHUB_RETENTION_DAYS", process.env["GITHUB_RETENTION_DAYS"])
