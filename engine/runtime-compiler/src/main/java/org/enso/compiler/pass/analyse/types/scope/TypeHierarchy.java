@@ -15,7 +15,9 @@ import org.enso.pkg.QualifiedName;
  * This should be aligned with Type.allTypes in the interpreter.
  */
 public class TypeHierarchy {
-  public TypeScopeReference getParent(TypeScopeReference type) {
+  private TypeHierarchy() {}
+
+  public static TypeScopeReference getParent(TypeScopeReference type) {
     switch (type.getKind()) {
       case MODULE_ASSOCIATED_TYPE:
         return null;

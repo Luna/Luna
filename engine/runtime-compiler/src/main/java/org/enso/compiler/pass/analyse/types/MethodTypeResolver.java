@@ -9,7 +9,6 @@ import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
 
 /** A helper that deals with resolving types of method calls. */
 class MethodTypeResolver {
-  private final TypeHierarchy typeHierarchy = new TypeHierarchy();
   private final StaticModuleScope currentModuleScope;
   private final StaticMethodResolution methodResolutionAlgorithm;
 
@@ -28,7 +27,7 @@ class MethodTypeResolver {
     }
 
     // If not found in current scope, try parents
-    var parent = typeHierarchy.getParent(type);
+    var parent = TypeHierarchy.getParent(type);
     if (parent == null) {
       return null;
     }
