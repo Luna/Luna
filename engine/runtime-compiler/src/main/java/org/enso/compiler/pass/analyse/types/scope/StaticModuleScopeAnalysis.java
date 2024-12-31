@@ -161,7 +161,9 @@ public class StaticModuleScopeAnalysis implements IRPass {
       }
 
       var arguments =
-          constructorDef.arguments().map(
+          constructorDef
+              .arguments()
+              .map(
                   (arg) -> {
                     var typ = arg.ascribedType();
                     // TODO

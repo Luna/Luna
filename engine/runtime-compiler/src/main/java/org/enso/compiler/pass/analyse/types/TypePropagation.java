@@ -85,9 +85,11 @@ abstract class TypePropagation {
       IR relatedIr, TypeRepresentation type, String methodName, MethodCallKind kind);
 
   /**
-   * The callback that is called when a constructor is being invoked on a type that does not have such a constructor.
+   * The callback that is called when a constructor is being invoked on a type that does not have
+   * such a constructor.
    */
-  protected abstract void encounteredNoSuchConstructor(IR relatedIr, TypeRepresentation type, String constructorName);
+  protected abstract void encounteredNoSuchConstructor(
+      IR relatedIr, TypeRepresentation type, String constructorName);
 
   enum MethodCallKind {
     MEMBER,
@@ -362,7 +364,8 @@ abstract class TypePropagation {
           if (constructor != null) {
             if (constructor.type() == null) {
               // type is unknown due to default arguments
-              // TODO later on this should be assert != null because all constructors should have a type (once we can deal with default arguments)
+              // TODO later on this should be assert != null because all constructors should have a
+              // type (once we can deal with default arguments)
               return null;
             }
 

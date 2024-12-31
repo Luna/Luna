@@ -1,8 +1,7 @@
 package org.enso.compiler.pass.analyse.types.scope;
 
-import org.enso.compiler.pass.analyse.types.TypeRepresentation;
-
 import java.util.List;
+import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 
 public final class AtomType {
   private final String name;
@@ -26,8 +25,8 @@ public final class AtomType {
    *
    * @param name the name of the constructor
    * @param isProjectPrivate whether the constructor is project private
-   * @param type the type ascribed to the constructor, it may be null if it is unknown
-   *              TODO the type will soon be always non-null - once we can handle default arguments
+   * @param type the type ascribed to the constructor, it may be null if it is unknown TODO the type
+   *     will soon be always non-null - once we can handle default arguments
    */
   public record Constructor(String name, boolean isProjectPrivate, TypeRepresentation type) {}
 }

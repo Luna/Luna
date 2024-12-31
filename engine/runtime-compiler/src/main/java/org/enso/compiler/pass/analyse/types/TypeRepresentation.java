@@ -51,8 +51,7 @@ public sealed interface TypeRepresentation
    * <p>Instances that are assigned this type are built with one of the available constructors, but
    * statically we do not necessarily know which one.
    */
-  record AtomType(QualifiedName fqn)
-      implements TypeRepresentation {
+  record AtomType(QualifiedName fqn) implements TypeRepresentation {
     @Override
     public String toString() {
       return fqn.item();
