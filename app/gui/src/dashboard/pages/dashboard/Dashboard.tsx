@@ -329,7 +329,7 @@ function OpenedProjectsParentsExpander() {
   const launchedProjectsRef = useSyncRef(launchedProjects)
   const { user } = authProvider.useFullUserSession()
 
-  React.useEffect(() => {
+  const updateOpenedProjects = eventCallbacks.useEventCallback(() => {
     const userGroupDirectoryIds = new Set(
       (user.userGroups ?? EMPTY_ARRAY).map(userGroupIdToDirectoryId),
     )
@@ -414,16 +414,11 @@ function OpenedProjectsParentsExpander() {
         break
       }
     }
-  }, [
-    category,
-    driveStore,
-    launchedProjectsRef,
-    localBackend,
-    queryClient,
-    remoteBackend,
-    setExpandedDirectoryIds,
-    user.userGroups,
-  ])
+  })
+
+  React.useEffect(() => {
+    updateOpenedProjects()
+  }, [updateOpenedProjects])
 
   return null
 }
