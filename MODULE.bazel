@@ -40,7 +40,7 @@ bazel_dep(name = "rules_rust", version = "0.56.0")
 git_override(
     module_name="rules_rust",
     remote="https://github.com/bazelbuild/rules_rust.git",
-    commit="c06feef5f3df992af32de004e6716574af4735e7"
+    commit="37acfa101245e45952eb7b0fcfa8b6f229055f2c"
 )
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
@@ -94,7 +94,7 @@ bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.56.0")
 git_override(
     module_name="rules_rust_wasm_bindgen",
     remote="https://github.com/bazelbuild/rules_rust.git",
-    commit="c06feef5f3df992af32de004e6716574af4735e7",
+    commit="37acfa101245e45952eb7b0fcfa8b6f229055f2c",
     strip_prefix="extensions/wasm_bindgen"
 )
 
