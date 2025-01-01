@@ -38,7 +38,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -83,7 +83,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -147,7 +147,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -211,7 +211,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -267,7 +267,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -327,7 +327,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -385,7 +385,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -444,7 +444,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -508,7 +508,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -571,7 +571,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -645,7 +645,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -724,7 +724,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
@@ -804,7 +804,7 @@ jobs:
     steps:
       - if: runner.os == 'Windows'
         name: Setup requiredbazel environment
-        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\MSBuild\\Microsoft\\VC >> %GITHUB_ENV%\n        "
+        run: "\necho PATH=C:\\Program Files\\Git\\bin;%PATH% >> %GITHUB_ENV%\necho BAZEL_VC=C:\\BuildTools\\VC >> %GITHUB_ENV%\necho BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%\n        "
         shell: cmd
       - name: Setup bazel environment
         uses: bazel-contrib/setup-bazel@09f3a72d13a081857b0ee94e986ffa84caef7c85
