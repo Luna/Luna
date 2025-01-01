@@ -96,7 +96,7 @@ Supported names:
 
 - Names for `<os>` are `linux`, `macos`, `windows`.
   - Note that for simplicity we omit the versions of the operating systems.
-- Names for architectures `<arch>` are `amd64`, `x86_64`, `x86_32`.
+- Names for architectures `<arch>` are `amd64`, `x86_64`, `x86_32`, `aarch64`.
 
 ## Download a Java Library from Maven Central
 

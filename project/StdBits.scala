@@ -138,11 +138,11 @@ object StdBits {
       } else {
         Some(
           strippedEntryName
-            .replace("linux/x86_64", "amd64/linux")
-            .replace("windows/x86_64", "amd64/windows")
-            .replace("windows/x86_32", "x86_32/windows")
-            .replace("osx/ARMv8", "ARMv8/macos")
-            .replace("osx/x86_64", "amd64/macos")
+            .replace("linux/x86_64", "amd64")
+            .replace("windows/x86_64", "amd64")
+            .replace("windows/x86_32", "x86_32")
+            .replace("osx/ARMv8", "aarch64")
+            .replace("osx/x86_64", "amd64")
         )
       }
     }
