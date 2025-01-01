@@ -28,15 +28,20 @@ static ONCE_INSTALL: tokio::sync::OnceCell<Result> = tokio::sync::OnceCell::cons
 /// installation will be retried up a few times.
 pub fn install(repo_root: impl AsRef<Path>) -> BoxFuture<'static, Result> {
     let repo_root = repo_root.as_ref().to_owned();
-    ONCE_INSTALL
-        .get_or_init(move || retry(move || install_internal_run(&repo_root)))
-        .map(|fut_res_ref| {
-            fut_res_ref
-                .as_ref()
-                .map_err(|e| anyhow!("Failed to install NPM dependencies: {e:?}"))
-                .copied()
-        })
-        .boxed()
+    async {
+        _ = dbg!(ide_ci::programs::vswhere::VsWhere::msvc().await);
+
+        ONCE_INSTALL
+            .get_or_init(move || retry(move || install_internal_run(&repo_root)))
+            .map(|fut_res_ref| {
+                fut_res_ref
+                    .as_ref()
+                    .map_err(|e| anyhow!("Failed to install NPM dependencies: {e:?}"))
+                    .copied()
+            })
+            .await
+    }
+    .boxed()
 }
 
 /// Run `pnpm install` in the given directory.
