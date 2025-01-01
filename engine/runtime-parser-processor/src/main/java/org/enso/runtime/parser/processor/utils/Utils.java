@@ -209,7 +209,7 @@ public final class Utils {
     return null;
   }
 
-  public static <T> List<T> minus(List<T> superset, List<T> subset) {
+  public static <T> List<T> diff(List<T> superset, List<T> subset) {
     return superset.stream().filter(e -> !subset.contains(e)).collect(Collectors.toList());
   }
 }

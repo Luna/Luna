@@ -86,7 +86,7 @@ public class BuilderMethodGenerator {
         generatedClassContext.getProcessedClass().getClazz().getSimpleName().toString();
     var ctorParams = generatedClassContext.getSubclassConstructorParameters();
     var ctorParamsStr = ctorParams.stream().map(ClassField::name).collect(Collectors.joining(", "));
-    var fieldsNotInCtor = Utils.minus(generatedClassContext.getAllFields(), ctorParams);
+    var fieldsNotInCtor = Utils.diff(generatedClassContext.getAllFields(), ctorParams);
     sb.append("public ")
         .append(processedClassName)
         .append(" build() {")

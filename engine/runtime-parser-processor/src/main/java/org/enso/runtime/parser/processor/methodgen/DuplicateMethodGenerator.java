@@ -139,7 +139,7 @@ public class DuplicateMethodGenerator {
     sb.append(newSubclass);
 
     // Rest of the fields that need to be set
-    var restOfDuplicatedVars = Utils.minus(duplicatedVars, ctorParams);
+    var restOfDuplicatedVars = Utils.diff(duplicatedVars, ctorParams);
     for (var duplVar : restOfDuplicatedVars) {
       sb.append("  ").append("duplicated.").append(duplVar.originalName).append(" = ");
       if (duplVar.needsCast) {
