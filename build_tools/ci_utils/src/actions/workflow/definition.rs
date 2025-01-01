@@ -86,7 +86,8 @@ pub fn setup_bazel_env() -> Step {
         run: Some(
             r#"
 echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%
-echo BAZEL_VC=C:\BuildTools\MSBuild\Microsoft\VC >> %GITHUB_ENV%
+echo BAZEL_VC=C:\BuildTools\VC >> %GITHUB_ENV%
+echo BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%
         "#
             .to_string(),
         ),
