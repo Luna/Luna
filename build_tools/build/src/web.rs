@@ -29,7 +29,9 @@ static ONCE_INSTALL: tokio::sync::OnceCell<Result> = tokio::sync::OnceCell::cons
 pub fn install(repo_root: impl AsRef<Path>) -> BoxFuture<'static, Result> {
     let repo_root = repo_root.as_ref().to_owned();
     async {
-        _ = dbg!(ide_ci::programs::vswhere::VsWhere::with_msbuild().await);
+        if TARGET_OS == OS::Windows && ide_ci::programs::vs::Cl.lookup().is_err() {
+            ide_ci::programs::vs::apply_dev_environment().await?;
+        }
 
         ONCE_INSTALL
             .get_or_init(move || retry(move || install_internal_run(&repo_root)))

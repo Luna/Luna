@@ -80,17 +80,10 @@ pub fn is_github_hosted() -> String {
 
 pub fn setup_bazel_env() -> Step {
     Step {
-        name: Some("Setup requiredbazel environment".into()),
+        name: Some("Setup required bazel environment".into()),
         r#if: Some(is_windows_runner()),
         shell: Some(Shell::Cmd),
-        run: Some(
-            r#"
-echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%
-echo BAZEL_VC=C:\BuildTools\VC >> %GITHUB_ENV%
-echo BAZEL_VC_FULL_VERSION=14.39.33519 >> %GITHUB_ENV%
-        "#
-            .to_string(),
-        ),
+        run: Some(r"echo PATH=C:\Program Files\Git\bin;%PATH% >> %GITHUB_ENV%".to_string()),
         ..default()
     }
 }
