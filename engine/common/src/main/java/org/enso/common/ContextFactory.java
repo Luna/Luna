@@ -10,6 +10,7 @@ import org.enso.logger.JulHandler;
 import org.enso.logging.config.LoggerSetup;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.io.IOAccess;
 import org.graalvm.polyglot.io.MessageTransport;
 import org.slf4j.event.Level;
 
@@ -165,6 +166,7 @@ public final class ContextFactory {
         Context.newBuilder()
             .allowExperimentalOptions(true)
             .allowAllAccess(true)
+            .allowIO(IOAccess.ALL)
             .allowHostAccess(allWithTypeMapping())
             .option(RuntimeOptions.STRICT_ERRORS, Boolean.toString(strictErrors))
             .option(RuntimeOptions.DISABLE_LINTING, Boolean.toString(disableLinting))
@@ -252,7 +254,7 @@ public final class ContextFactory {
   }
 
   private static HostAccess allWithTypeMapping() {
-    return HostAccess.newBuilder()
+    return HostAccess.newBuilder(HostAccess.EXPLICIT)
         .allowPublicAccess(true)
         .allowAllImplementations(true)
         .allowAllClassImplementations(true)
