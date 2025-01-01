@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -135,20 +134,12 @@ public final class GeneratedClassContext {
     for (var param : ctor.getParameters()) {
       var paramSimpleType = simpleTypeName(param);
       var paramName = param.getSimpleName().toString();
-      Supplier<Void> printErrAndFail =
-          () -> {
-            var errMsg =
-                String.format(
-                    "No matching field found for parameter %s of type %s. All fields: %s",
-                    paramName, paramSimpleType, allFields);
-            throw new IRProcessingException(errMsg, param);
-          };
       var fieldsWithSameType =
           allFields.stream()
               .filter(field -> paramSimpleType.equals(field.simpleTypeName()))
               .toList();
       if (fieldsWithSameType.isEmpty()) {
-        printErrAndFail.get();
+        throw noMatchingFieldError(param);
       } else if (fieldsWithSameType.size() == 1) {
         ctorParams.add(fieldsWithSameType.get(0));
       } else {
@@ -159,7 +150,7 @@ public final class GeneratedClassContext {
             fieldsWithSameName.size() < 2,
             "Cannot have more than one field with the same name and type");
         if (fieldsWithSameName.isEmpty()) {
-          printErrAndFail.get();
+          throw noMatchingFieldError(param);
         }
         Utils.hardAssert(fieldsWithSameName.size() == 1);
         ctorParams.add(fieldsWithSameName.get(0));
@@ -183,8 +174,17 @@ public final class GeneratedClassContext {
           }
         };
     var typeName = paramType.accept(typeVisitor, null);
-    ;
     return typeName;
+  }
+
+  private IRProcessingException noMatchingFieldError(VariableElement param) {
+    var paramSimpleType = simpleTypeName(param);
+    var paramName = param.getSimpleName().toString();
+    var errMsg =
+        String.format(
+            "No matching field found for parameter %s of type %s. All fields: %s",
+            paramName, paramSimpleType, allFields);
+    return new IRProcessingException(errMsg, param);
   }
 
   /**
