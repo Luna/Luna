@@ -60,7 +60,10 @@ final class GenerateIRAnnotationVisitor extends SimpleAnnotationValueVisitor14<V
    * Returns a type from {@link GenerateIR#interfaces()} that is a subtype of {@code
    * org.enso.compiler.core.IR}. There must be only one such subtype specified.
    *
-   * @return May be null.
+   * @return If there is no interface that is a subtype of {@code org.enso.compiler.core.IR} in the
+   *     {@link GenerateIR#interfaces()}, returns {@code null}. Otherwise, returns the interface.
+   *     Note that if null is returned, {@code org.enso.compiler.core.IR} should be used. See {@link
+   *     GenerateIR#interfaces()}.
    */
   public TypeElement getIrInterface() {
     return irInterface;
