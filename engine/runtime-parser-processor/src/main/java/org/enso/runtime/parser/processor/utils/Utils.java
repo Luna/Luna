@@ -17,6 +17,11 @@ public final class Utils {
 
   private static final String MAP_EXPRESSIONS = "mapExpressions";
   private static final String DUPLICATE = "duplicate";
+  private static final String IR_INTERFACE_SIMPLE_NAME = "IR";
+  private static final String IR_INTERFACE_FQN = "org.enso.compiler.core.IR";
+  private static final String EXPRESSION_FQN = "org.enso.compiler.core.ir.Expression";
+  private static final String SCALA_LIST = "scala.collection.immutable.List";
+  private static final String SCALA_OPTION = "scala.Option";
 
   private Utils() {}
 
@@ -32,7 +37,7 @@ public final class Utils {
               // This is because runtime-parser-processor project does not depend on runtime-parser
               // and
               // so the org.enso.compiler.core.IR interface is not available in the classpath.
-              if (iface.getSimpleName().toString().equals("IR")) {
+              if (iface.getSimpleName().toString().equals(IR_INTERFACE_SIMPLE_NAME)) {
                 return true;
               }
               return null;
@@ -43,11 +48,12 @@ public final class Utils {
   /** Returns true if the given {@code type} is an {@code org.enso.compiler.core.IR} interface. */
   public static boolean isIRInterface(TypeMirror type, ProcessingEnvironment processingEnv) {
     var elem = processingEnv.getTypeUtils().asElement(type);
-    return elem.getKind() == ElementKind.INTERFACE && elem.getSimpleName().toString().equals("IR");
+    return elem.getKind() == ElementKind.INTERFACE
+        && elem.getSimpleName().toString().equals(IR_INTERFACE_SIMPLE_NAME);
   }
 
   public static TypeElement irTypeElement(ProcessingEnvironment procEnv) {
-    var ret = procEnv.getElementUtils().getTypeElement("org.enso.compiler.core.IR");
+    var ret = procEnv.getElementUtils().getTypeElement(IR_INTERFACE_FQN);
     hardAssert(ret != null);
     return ret;
   }
@@ -68,7 +74,7 @@ public final class Utils {
   }
 
   public static TypeElement expressionType(ProcessingEnvironment procEnv) {
-    return procEnv.getElementUtils().getTypeElement("org.enso.compiler.core.ir.Expression");
+    return procEnv.getElementUtils().getTypeElement(EXPRESSION_FQN);
   }
 
   public static String indent(String code, int indentation) {
@@ -78,17 +84,17 @@ public final class Utils {
   }
 
   public static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
+    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_LIST);
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
   }
 
   public static boolean isScalaOption(TypeElement type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.Option");
+    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_OPTION);
     return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
   }
 
   public static boolean isScalaList(TypeMirror type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
+    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_LIST);
     return procEnv.getTypeUtils().isSameType(type, scalaListType.asType());
   }
 
