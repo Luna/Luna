@@ -26,7 +26,7 @@ public final class GeneratedClassContext {
   private static final ClassField diagnosticsMetaField =
       new ClassField("protected", "DiagnosticStorage", "diagnostics");
   private static final ClassField passDataMetaField =
-      new ClassField("protected", "MetadataStorage", "passData");
+      new ClassField("protected", "MetadataStorage", "passData", "new MetadataStorage()");
   private static final ClassField locationMetaField =
       new ClassField("protected", "IdentifiedLocation", "location");
   private static final ClassField idMetaField = new ClassField("protected", "UUID", "id");
@@ -200,13 +200,53 @@ public final class GeneratedClassContext {
     }
   }
 
-  /**
-   * Declared field in the class
-   *
-   * @param modifiers e.g. "private final"
-   * @param type Type name. Includes generics. Can be, e.g., {@code Option<String>}.
-   */
-  public record ClassField(String modifiers, String type, String name) {
+  /** Declared field in the class */
+  public static final class ClassField {
+    private final String modifiers;
+    private final String type;
+    private final String name;
+    private final String initializer;
+
+    /**
+     * @param modifiers e.g. "private final"
+     * @param type Type name. Includes generics. Can be, e.g., {@code Option<String>}.
+     */
+    public ClassField(String modifiers, String type, String name) {
+      this(modifiers, type, name, null);
+    }
+
+    /**
+     * @param modifiers e.g. "private final"
+     * @param type Type name. Includes generics. Can be, e.g., {@code Option<String>}.
+     * @param initializer Initial value of the field. Can be, e.g., {@code "null"}.
+     */
+    public ClassField(String modifiers, String type, String name, String initializer) {
+      this.modifiers = modifiers;
+      this.type = type;
+      this.name = name;
+      this.initializer = initializer;
+    }
+
+    public String name() {
+      return name;
+    }
+
+    public String modifiers() {
+      return modifiers;
+    }
+
+    public String type() {
+      return type;
+    }
+
+    /**
+     * @return May be null. In that case, initializer is unknown. Note that the class field can be
+     *     primitive.
+     */
+    public String initializer() {
+      return initializer;
+    }
+
     @Override
     public String toString() {
       return modifiers + " " + type + " " + name;

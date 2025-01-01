@@ -252,7 +252,13 @@ final class IRNodeClassGenerator {
     if (!initializeToNull.isEmpty()) {
       var initToNullBody =
           initializeToNull.stream()
-              .map(field -> "  this.$fieldName = null;".replace("$fieldName", field.name()))
+              .map(
+                  field -> {
+                    var initializer = field.initializer() != null ? field.initializer() : "null";
+                    return "  this.$fieldName = $init;"
+                        .replace("$fieldName", field.name())
+                        .replace("$init", initializer);
+                  })
               .collect(Collectors.joining(System.lineSeparator()));
       sb.append(initToNullBody);
     }
@@ -317,9 +323,7 @@ final class IRNodeClassGenerator {
 
         @Override
         public MetadataStorage passData() {
-          if (passData == null) {
-            passData = new MetadataStorage();
-          }
+          assert passData != null : "passData must always be initialized";
           return passData;
         }
 

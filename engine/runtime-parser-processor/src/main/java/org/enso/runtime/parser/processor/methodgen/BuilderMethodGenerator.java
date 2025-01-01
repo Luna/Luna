@@ -23,10 +23,13 @@ public class BuilderMethodGenerator {
     var fieldDeclarations =
         generatedClassContext.getAllFields().stream()
             .map(
-                metaField ->
-                    "private $type $name;"
-                        .replace("$type", metaField.type())
-                        .replace("$name", metaField.name()))
+                field -> {
+                  var initializer = field.initializer() != null ? " = " + field.initializer() : "";
+                  return "private $type $name $initializer;"
+                      .replace("$type", field.type())
+                      .replace("$name", field.name())
+                      .replace("$initializer", initializer);
+                })
             .collect(Collectors.joining(System.lineSeparator()));
 
     var fieldSetters =

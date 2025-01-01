@@ -58,7 +58,7 @@ public interface CallArgument extends IR {
         Expression value,
         boolean isSynthetic,
         IdentifiedLocation identifiedLocation) {
-      this(name, value, isSynthetic, identifiedLocation, null);
+      this(name, value, isSynthetic, identifiedLocation, new MetadataStorage());
     }
 
     public Specified copy(Expression value) {
