@@ -13,8 +13,8 @@ public class CountWhitespace {
 
   private static final long RANDOM_SEED = 672716252;
 
-  // Default sample size for counting untrimmed cells.
-  public static final long DEFAULT_SAMPLE_SIZE = 100000;
+  // Default sample size for counting cells that contain non trivial whitespace.
+  public static final long DEFAULT_SAMPLE_SIZE = 10000;
 
   /** Counts the number of cells in the columns with non trivial whitespace */
   public static Long apply(Column column, long sampleSize) throws InterruptedException {
