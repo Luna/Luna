@@ -134,14 +134,29 @@ export function ProjectExecution(props: ProjectExecutionProps) {
                 .join(', ')
           switch (repeat.type) {
             case 'monthly-date': {
-              return `${startDateDailyRepeat} ${monthNames} ${getOrdinal(repeat.date)}`
+              return getText(
+                'repeatsTimeXMonthsXDateX',
+                startDateDailyRepeat,
+                monthNames,
+                getOrdinal(repeat.date),
+              )
             }
             case 'monthly-weekday': {
-              return `${startDateDailyRepeat} ${monthNames} ${getText(DAY_TEXT_IDS[repeat.dayOfWeek] ?? 'monday')} ${getText('xthWeek', getOrdinal(repeat.weekNumber))}`
+              return getText(
+                'repeatsTimeXMonthsXDayXWeekX',
+                startDateDailyRepeat,
+                monthNames,
+                getText(DAY_TEXT_IDS[repeat.dayOfWeek] ?? 'monday'),
+                getText('xthWeek', getOrdinal(repeat.weekNumber)),
+              )
             }
             case 'monthly-last-weekday': {
-              // FIXME: Move `last` to JSON
-              return `${startDateDailyRepeat} ${monthNames} last ${getText(DAY_TEXT_IDS[repeat.dayOfWeek] ?? 'monday')}`
+              return getText(
+                'repeatsTimeXMonthsXDayXLastWeek',
+                startDateDailyRepeat,
+                monthNames,
+                getText(DAY_TEXT_IDS[repeat.dayOfWeek] ?? 'monday'),
+              )
             }
           }
         }

@@ -157,6 +157,9 @@ interface PlaceholderOverrides {
   readonly xthDayOfMonth: [dateOrdinal: string]
   readonly xthXDayOfMonth: [weekOrdinal: string, dayOfWeek: string]
   readonly lastXDayOfMonth: [dayOfWeek: string]
+  readonly repeatsTimeXMonthsXDateX: [time: string, months: string, date: string]
+  readonly repeatsTimeXMonthsXDayXWeekX: [time: string, months: string, day: string, week: string]
+  readonly repeatsTimeXMonthsXDayXLastWeek: [time: string, months: string, day: string]
   readonly xthWeek: [weekOrdinal: string]
 
   readonly arbitraryFieldTooLarge: [maxSize: string]
