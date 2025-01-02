@@ -78,6 +78,15 @@ export default class BaseActions<Context> implements Promise<void> {
     })
   }
 
+  static async press(page: Page, keyOrShortcut: string) {
+    await BaseActions.withNormalizedKey(
+      page,
+      keyOrShortcut,
+      (shortcut) => page.keyboard.press(shortcut),
+      'Press and release',
+    )
+  }
+
   /** Proxies the `then` method of the internal {@link Promise}. */
   async then<T, E>(
     onfulfilled?: (() => PromiseLike<T> | T) | null | undefined,
