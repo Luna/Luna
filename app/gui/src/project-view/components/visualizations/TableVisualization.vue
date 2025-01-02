@@ -292,7 +292,7 @@ function cellRenderer(params: ICellRendererParams) {
     else if ('_display_text_' in params.value && params.value['_display_text_'])
       return String(params.value['_display_text_'])
     else return `{ ${valueType} Object }`
-  } else return params.value
+  } else return escapeHTML(params.value.toString())
 }
 
 function addRowIndex(data: object[]): object[] {
