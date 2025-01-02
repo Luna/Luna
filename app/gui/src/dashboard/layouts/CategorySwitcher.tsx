@@ -18,7 +18,6 @@ import {
   useTransferBetweenCategories,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
-import { useLocalRootDirectoriesState } from '#/layouts/CategorySwitcher/categorySwitcherLocalStorage'
 import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import * as authProvider from '#/providers/AuthProvider'
