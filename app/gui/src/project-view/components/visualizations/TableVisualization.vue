@@ -334,7 +334,7 @@ function toField(
 
   const displayValue = valueType ? valueType.display_text : null
   const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
-
+  
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_metrics' in props.data ?
       props.data.data_quality_metrics.map((metric: DataQualityMetric) => {
@@ -438,10 +438,7 @@ function toLinkField(fieldName: string, options: LinkFieldOptions = {}): ColDef 
       params.node?.rowPinned === 'top' ?
         null
       : `Double click to view this ${tooltipValue ?? 'value'} in a separate component`,
-    cellRenderer: (params: ICellRendererParams) =>
-      params.node.rowPinned === 'top' ?
-        `<div> ${params.value}</div>`
-      : `<div class='link'> ${params.value} </div>`,
+    cellRenderer: (params: ICellRendererParams) =>`<div class='link'> ${params.value} </div>`,
   }
 }
 
