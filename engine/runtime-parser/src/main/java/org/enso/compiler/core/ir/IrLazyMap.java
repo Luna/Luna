@@ -40,7 +40,6 @@ final class IrLazyMap<K, V> extends AbstractMap<K, V> {
   private static final class En<K, V> implements Entry<K, V> {
     private final K key;
     private final Reference<V> ref;
-    private transient V cachedValue = null;
 
     En(K key, Reference<V> ref) {
       this.key = key;
@@ -55,10 +54,7 @@ final class IrLazyMap<K, V> extends AbstractMap<K, V> {
     @Override
     @SuppressWarnings("unchecked")
     public V getValue() {
-      if (cachedValue == null) {
-        cachedValue = (V) ref.get(Object.class);
-      }
-      return cachedValue;
+      return (V) ref.get(Object.class);
     }
 
     @Override
