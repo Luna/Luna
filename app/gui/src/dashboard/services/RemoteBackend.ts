@@ -23,6 +23,10 @@ import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 // === Constants ===
 // =================
 
+// FIXME[sb]: Temporary
+// eslint-disable-next-line no-restricted-syntax
+const MOCK_PROJECT_EXECUTIONS = true as boolean
+
 /** HTTP status indicating that the request was successful. */
 const STATUS_SUCCESS_FIRST = 200
 /** HTTP status indicating that the request was successful. */
@@ -749,26 +753,28 @@ export default class RemoteBackend extends Backend {
    */
   override async createProjectExecution(
     body: backend.CreateProjectExecutionRequestBody,
-    // title: string,
+    title: string,
   ): Promise<backend.ProjectExecution> {
     const { projectId, ...rest } = body
     const path = remoteBackendPaths.createProjectExecutionPath(projectId)
-    console.log('createProjectExecution', path, rest)
-    const projectExecution: backend.ProjectExecution = {
-      versionId: backend.S3ObjectVersionId(''),
-      projectExecutionId: backend.ProjectExecutionId(uniqueString()),
-      enabled: true,
-      ...body,
-    }
-    this.projectExecutions.push(projectExecution)
-    return Promise.resolve(projectExecution)
-    // FIXME: Enable actual API call when ready.
-    /*const response = await this.post<backend.ProjectExecution>(path, rest)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createProjectExecutionBackendError', title)
+    if (MOCK_PROJECT_EXECUTIONS) {
+      console.log('createProjectExecution', path, rest)
+      const projectExecution: backend.ProjectExecution = {
+        versionId: backend.S3ObjectVersionId(''),
+        projectExecutionId: backend.ProjectExecutionId(uniqueString()),
+        enabled: true,
+        ...body,
+      }
+      this.projectExecutions.push(projectExecution)
+      return Promise.resolve(projectExecution)
     } else {
-      return await response.json()
-    }*/
+      const response = await this.post<backend.ProjectExecution>(path, rest)
+      if (!responseIsSuccessful(response)) {
+        return await this.throw(response, 'createProjectExecutionBackendError', title)
+      } else {
+        return await response.json()
+      }
+    }
   }
 
   /**
@@ -781,23 +787,25 @@ export default class RemoteBackend extends Backend {
     projectTitle: string,
   ): Promise<backend.ProjectExecution> {
     const path = remoteBackendPaths.updateProjectExecutionPath(executionId)
-    console.log('updateProjectExecution', path, body)
-    const execution = this.projectExecutions.find(
-      (otherExecution) => otherExecution.projectExecutionId === executionId,
-    )
-    if (execution) {
-      object.unsafeMutable(execution).enabled = body.enabled ?? execution.enabled
-      return execution
+    if (MOCK_PROJECT_EXECUTIONS) {
+      console.log('updateProjectExecution', path, body)
+      const execution = this.projectExecutions.find(
+        (otherExecution) => otherExecution.projectExecutionId === executionId,
+      )
+      if (execution) {
+        object.unsafeMutable(execution).enabled = body.enabled ?? execution.enabled
+        return execution
+      } else {
+        return await this.throw(null, 'updateProjectExecutionBackendError', projectTitle)
+      }
     } else {
-      return await this.throw(null, 'updateProjectExecutionBackendError', projectTitle)
+      const response = await this.post<backend.ProjectExecution>(path, body)
+      if (!responseIsSuccessful(response)) {
+        return await this.throw(response, 'updateProjectExecutionBackendError', projectTitle)
+      } else {
+        return await response.json()
+      }
     }
-    // FIXME: Enable actual API call when ready.
-    /*const response = await this.post<backend.ProjectExecution>(path, body)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'updateProjectExecutionBackendError', title)
-    } else {
-      return await response.json()
-    }*/
   }
 
   /**
@@ -806,24 +814,26 @@ export default class RemoteBackend extends Backend {
    */
   override async deleteProjectExecution(
     executionId: backend.ProjectExecutionId,
-    // projectTitle: string,
+    projectTitle: string,
   ): Promise<void> {
     const path = remoteBackendPaths.deleteProjectExecutionPath(executionId)
-    console.log('deleteProjectExecution', path)
-    const index = this.projectExecutions.findIndex(
-      (execution) => execution.projectExecutionId === executionId,
-    )
-    if (index !== -1) {
-      this.projectExecutions.splice(index, 1)
-    }
-    return Promise.resolve()
-    // FIXME: Enable actual API call when ready.
-    /*const response = await this.delete<backend.ProjectExecution>(path)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'createProjectExecutionBackendError', projectTitle)
+    if (MOCK_PROJECT_EXECUTIONS) {
+      console.log('deleteProjectExecution', path)
+      const index = this.projectExecutions.findIndex(
+        (execution) => execution.projectExecutionId === executionId,
+      )
+      if (index !== -1) {
+        this.projectExecutions.splice(index, 1)
+      }
+      return Promise.resolve()
     } else {
-      return
-    }*/
+      const response = await this.delete<backend.ProjectExecution>(path)
+      if (!responseIsSuccessful(response)) {
+        return await this.throw(response, 'createProjectExecutionBackendError', projectTitle)
+      } else {
+        return
+      }
+    }
   }
 
   /**
@@ -832,20 +842,22 @@ export default class RemoteBackend extends Backend {
    */
   override async listProjectExecutions(
     projectId: backend.ProjectId,
-    // title: string,
+    title: string,
   ): Promise<readonly backend.ProjectExecution[]> {
     const path = remoteBackendPaths.listProjectExecutionsPath(projectId)
-    console.log('listProjectExecutions', path)
-    return Promise.resolve(
-      this.projectExecutions.filter((execution) => execution.projectId === projectId),
-    )
-    // FIXME: Enable actual API call when ready.
-    /*const response = await this.get<readonly backend.ProjectExecution[]>(path)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'listProjectExecutionsBackendError', title)
+    if (MOCK_PROJECT_EXECUTIONS) {
+      console.log('listProjectExecutions', path)
+      return Promise.resolve(
+        this.projectExecutions.filter((execution) => execution.projectId === projectId),
+      )
     } else {
-      return await response.json()
-    }*/
+      const response = await this.get<readonly backend.ProjectExecution[]>(path)
+      if (!responseIsSuccessful(response)) {
+        return await this.throw(response, 'listProjectExecutionsBackendError', title)
+      } else {
+        return await response.json()
+      }
+    }
   }
 
   /**
@@ -857,23 +869,25 @@ export default class RemoteBackend extends Backend {
     projectTitle: string,
   ): Promise<backend.ProjectExecution> {
     const path = remoteBackendPaths.syncProjectExecutionPath(executionId)
-    console.log('syncProjectExecution', path)
-    const execution = this.projectExecutions.find(
-      (otherExecution) => otherExecution.projectExecutionId === executionId,
-    )
-    if (execution) {
-      object.unsafeMutable(execution).versionId = backend.S3ObjectVersionId(uniqueString())
-      return execution
+    if (MOCK_PROJECT_EXECUTIONS) {
+      console.log('syncProjectExecution', path)
+      const execution = this.projectExecutions.find(
+        (otherExecution) => otherExecution.projectExecutionId === executionId,
+      )
+      if (execution) {
+        object.unsafeMutable(execution).versionId = backend.S3ObjectVersionId(uniqueString())
+        return execution
+      } else {
+        return await this.throw(null, 'syncProjectExecutionBackendError', projectTitle)
+      }
     } else {
-      return await this.throw(null, 'syncProjectExecutionBackendError', projectTitle)
+      const response = await this.post<backend.ProjectExecution>(path, {})
+      if (!responseIsSuccessful(response)) {
+        return await this.throw(response, 'syncProjectExecutionBackendError', projectTitle)
+      } else {
+        return await response.json()
+      }
     }
-    // FIXME: Enable actual API call when ready.
-    /*const response = await this.post<backend.ProjectExecution>(path)
-    if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'syncProjectExecutionBackendError', title)
-    } else {
-      return
-    }*/
   }
 
   /**
