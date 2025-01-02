@@ -1507,7 +1507,6 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     assertAtomType("local.Project1.modA.My_Type", x1);
   }
 
-
   @Test
   public void staticTypeCheckerReportsWarningsOnProject() throws IOException {
     var mainSrc =

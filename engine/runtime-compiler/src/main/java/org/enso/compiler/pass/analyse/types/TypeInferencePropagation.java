@@ -115,7 +115,8 @@ public final class TypeInferencePropagation implements IRPass {
       }
 
       @Override
-      protected void encounteredNoSuchConstructor(IR relatedIr, TypeRepresentation type, String constructorName) {
+      protected void encounteredNoSuchConstructor(
+          IR relatedIr, TypeRepresentation type, String constructorName) {
         // TODO make sure if NoSuchMethod is right or we need a separate type here
         String methodDescription = "constructor `" + constructorName + "` on type " + type;
         relatedIr
