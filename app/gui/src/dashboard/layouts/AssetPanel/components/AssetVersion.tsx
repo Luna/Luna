@@ -35,7 +35,7 @@ export interface AssetVersionProps {
 }
 
 /** Displays information describing a specific version of an asset. */
-export default function AssetVersion(props: AssetVersionProps) {
+export function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
