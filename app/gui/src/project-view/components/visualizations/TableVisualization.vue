@@ -197,7 +197,11 @@ function formatText(params: ICellRendererParams) {
     .replaceAll('>', '&gt;')
 
   if (textFormatterSelected.value === 'off') {
-    return htmlEscaped.replace(/^\s+|\s+$/g, '&nbsp;')
+    const replaceLinks = htmlEscaped.replace(
+      /https?:\/\/([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(:[0-9]+)?(\/[-()_.!~*';/?:%@&=+$,A-Za-z0-9]*)?/,
+      (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
+    )
+    return replaceLinks.replace(/^\s+|\s+$/g, '&nbsp;')
   }
 
   const partialMappings = {
@@ -219,7 +223,7 @@ function formatText(params: ICellRendererParams) {
       })
 
   const replaceLinks = replaceSpaces.replace(
-    /https?:\/\/([-()_.!~*';/?:@&=+$,A-Za-z0-9])+/g,
+    /https?:\/\/([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(:[0-9]+)?(\/[-()_.!~*';/?:%@&=+$,A-Za-z0-9]*)?/,
     (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
   )
 
@@ -288,7 +292,7 @@ function cellRenderer(params: ICellRendererParams) {
     else if ('_display_text_' in params.value && params.value['_display_text_'])
       return String(params.value['_display_text_'])
     else return `{ ${valueType} Object }`
-  } else return escapeHTML(params.value.toString())
+  } else return params.value
 }
 
 function addRowIndex(data: object[]): object[] {
@@ -334,7 +338,7 @@ function toField(
 
   const displayValue = valueType ? valueType.display_text : null
   const icon = valueType ? getValueTypeIcon(valueType.constructor) : null
-  
+
   const dataQualityMetrics =
     typeof props.data === 'object' && 'data_quality_metrics' in props.data ?
       props.data.data_quality_metrics.map((metric: DataQualityMetric) => {
@@ -438,7 +442,7 @@ function toLinkField(fieldName: string, options: LinkFieldOptions = {}): ColDef 
       params.node?.rowPinned === 'top' ?
         null
       : `Double click to view this ${tooltipValue ?? 'value'} in a separate component`,
-    cellRenderer: (params: ICellRendererParams) =>`<div class='link'> ${params.value} </div>`,
+    cellRenderer: (params: ICellRendererParams) => `<div class='link'> ${params.value} </div>`,
   }
 }
 
