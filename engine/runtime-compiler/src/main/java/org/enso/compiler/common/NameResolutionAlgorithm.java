@@ -51,10 +51,6 @@ public abstract class NameResolutionAlgorithm<ResultType, LocalNameLinkType, Met
             name, GlobalNames$.MODULE$, BindingsMap.Resolution.class);
     if (global != null) {
       BindingsMap.ResolvedName resolution = global.target();
-      if (resolution instanceof BindingsMap.ResolvedConstructor) {
-        System.out.println(
-            "resolveName -> global: " + resolution.qualifiedName() + " at " + name.location());
-      }
       return resolveGlobalName(resolution, name);
     }
 
