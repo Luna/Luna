@@ -118,13 +118,12 @@ export function defineLocalStorageKey<Schema extends z.ZodSchema>(
     useEffect(
       () =>
         localStorage.subscribe(key, (newValue) => {
-          console.log('WHATTT', newValue)
           // This is SAFE, assuming the functions in this file are the only functions
           // allowed to set the value.
           // eslint-disable-next-line no-restricted-syntax
           privateSetValue((newValue as Value | undefined) ?? defaultValue)
         }),
-      [localStorage],
+      [defaultValue, localStorage],
     )
 
     const setValue = useEventCallback((newValue: SetStateAction<Value | undefined>) => {

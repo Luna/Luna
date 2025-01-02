@@ -34,12 +34,10 @@ import {
   userIdToDirectoryId,
 } from '#/services/RemoteBackend'
 import { getFileName } from '#/utilities/fileInfo'
-import { LocalStorage } from '#/utilities/LocalStorage'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import type { ReactNode } from 'react'
 import { createContext, useContext } from 'react'
 import invariant from 'tiny-invariant'
-import { z } from 'zod'
 import type {
   AnyCloudCategory,
   AnyLocalCategory,

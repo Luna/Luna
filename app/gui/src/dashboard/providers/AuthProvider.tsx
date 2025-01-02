@@ -46,7 +46,6 @@ import { useText } from '#/providers/TextProvider'
 import {
   EmailAddress,
   NotAuthorizedError,
-  OrganizationId,
   isOrganizationId,
   type CreateUserRequestBody,
   type UpdateUserRequestBody,

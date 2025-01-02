@@ -23,8 +23,8 @@ import AssetsTable, {
   type AssetManagementApi,
 } from '#/layouts/AssetsTable'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
-import { isCloudCategory, type Category } from '#/layouts/CategorySwitcher/Category'
 import DriveBar from '#/layouts/DriveBar'
 import Labels from '#/layouts/Labels'
 import { useFullUserSession } from '#/providers/AuthProvider'
