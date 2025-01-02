@@ -38,12 +38,13 @@ export interface DirectoryNameColumnProps extends column.AssetColumnProps {
  */
 export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
   const { item, depth, selected, state, rowState, setRowState, isEditable } = props
-  const { backend, nodeMap } = state
+  const { backend, nodeMap, category } = state
   const { getText } = textProvider.useText()
   const driveStore = useDriveStore()
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
-  const isExpanded = useStore(driveStore, (storeState) =>
-    storeState.expandedDirectoryIds.includes(item.id),
+  const isExpanded = useStore(
+    driveStore,
+    (storeState) => storeState.expandedDirectories[category.rootPath]?.includes(item.id) ?? false,
   )
 
   const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))
