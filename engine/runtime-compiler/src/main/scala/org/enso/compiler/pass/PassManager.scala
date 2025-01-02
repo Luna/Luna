@@ -282,7 +282,7 @@ class PassManager(
       val bmFromMeta = ir.passData.get(BindingAnalysis)
       if (bmFromMeta.isDefined || bmFromCtx != null) {
         Asserts.assertInJvm(
-          bmFromCtx eq bmFromMeta.get,
+          bmFromCtx eq bmFromMeta.orNull,
           s"BindingsMap mismatch between ModuleContext and IR in module '" +
           moduleContext.getName() + "'. " +
           s"BindingsMap from moduleContext: ${hex(bmFromCtx)}, BindingsMap from IR: ${hex(bmFromMeta.get)}"
