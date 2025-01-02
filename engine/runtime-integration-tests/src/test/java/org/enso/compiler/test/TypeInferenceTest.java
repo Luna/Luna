@@ -1482,6 +1482,32 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     assertAtomType("local.Project1.modA.My_Type", x1);
   }
 
+  @Ignore("TODO: for later")
+  @Test
+  public void resolveFQNConstructor() throws Exception {
+    final URI uri = new URI("memory://local.Project1.modA.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                    type My_Type
+                        My_Constructor v
+
+                    foo =
+                        x1 = local.Project1.modA.My_Type.My_Constructor 1
+                        x1
+                    """,
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = compile(src);
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
+    assertAtomType("local.Project1.modA.My_Type", x1);
+  }
+
+
   @Test
   public void staticTypeCheckerReportsWarningsOnProject() throws IOException {
     var mainSrc =
