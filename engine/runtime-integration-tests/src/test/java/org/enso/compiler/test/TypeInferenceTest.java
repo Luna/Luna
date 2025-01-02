@@ -1,15 +1,23 @@
 package org.enso.compiler.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.enso.common.RuntimeOptions;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.ProcessingPass;
@@ -19,7 +27,9 @@ import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.pass.analyse.types.InferredType;
 import org.enso.compiler.pass.analyse.types.TypeInferencePropagation;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
+import org.enso.test.utils.ContextUtils;
 import org.enso.test.utils.ModuleUtils;
+import org.enso.test.utils.ProjectUtils;
 import org.graalvm.polyglot.Source;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1444,6 +1454,42 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     assertAtomType("local.Project1.modB.Typ_X", ModuleUtils.findAssignment(foo, "x1"));
     assertAtomType("local.Project1.modB.Typ_Y", ModuleUtils.findAssignment(foo, "x2"));
+  }
+
+  @Test
+  public void staticTypeCheckerReportsWarningsOnProject() throws IOException {
+    var mainSrc =
+        """
+        bar =
+            1.non_existent_method
+
+        main =
+            42
+        """;
+    Path projDir = Files.createTempDirectory("enso-tests");
+    ProjectUtils.createProject("Proj", mainSrc, projDir);
+    var out = new ByteArrayOutputStream();
+    var ctxBuilder =
+        ContextUtils.defaultContextBuilder()
+            .option(RuntimeOptions.DISABLE_IR_CACHES, "true")
+            .option(RuntimeOptions.ENABLE_STATIC_ANALYSIS, "true")
+            .option(RuntimeOptions.STRICT_ERRORS, "true")
+            .currentWorkingDirectory(projDir.getParent())
+            .out(out)
+            .err(out)
+            .logHandler(out);
+    ProjectUtils.testProjectRun(
+        ctxBuilder,
+        projDir,
+        res -> {
+          assertThat(res.isNumber(), is(true));
+          assertThat(res.asInt(), is(42));
+          assertThat(
+              out.toString(),
+              containsString(
+                  "Calling member method `non_existent_method` on type Integer will result in a"
+                      + " No_Such_Method error"));
+        });
   }
 
   private TypeRepresentation getInferredType(IR ir) {
