@@ -57,13 +57,17 @@ test('delete and restore (keyboard)', ({ page }) =>
     }))
 
 test('clear trash', ({ page }) =>
-  mockAllAndLogin({ page })
-    .createFolder()
-    .createFolder()
-    .createFolder()
-    .newEmptyProject()
-    .newEmptyProject()
-    .newEmptyProject()
+  mockAllAndLogin({
+    page,
+    setupAPI: (api) => {
+      api.addDirectory()
+      api.addDirectory()
+      api.addProject()
+      api.addProject()
+      api.addFile()
+      api.addSecret()
+    },
+  })
     .driveTable.withRows(async (rows) => {
       await expect(rows).toHaveCount(6)
     })
