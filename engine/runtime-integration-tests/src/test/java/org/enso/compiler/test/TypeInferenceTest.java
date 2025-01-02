@@ -399,6 +399,36 @@ public class TypeInferenceTest extends StaticAnalysisTest {
   }
 
   @Test
+  public void nonexistentConstructor() throws Exception {
+    final URI uri = new URI("memory://nonexistentConstructor.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                    type My_Type
+                        Value x y z
+                    foo =
+                        x = My_Type.Non_Existent 1
+                        x
+                    """,
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = compile(src);
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x = ModuleUtils.findAssignment(foo, "x");
+
+    assertNoInferredType(x);
+    assertEquals(
+        List.of(
+            new Warning.NoSuchMethod(
+                x.expression().identifiedLocation(),
+                "constructor `Non_Existent` on type (type My_Type)")),
+        ModuleUtils.getImmediateDiagnostics(x.expression()));
+  }
+
+  @Test
   public void constructorWithDefaults() throws Exception {
     final URI uri = new URI("memory://constructorWithDefaults.enso");
     final Source src =
