@@ -474,10 +474,8 @@ abstract class TypePropagation {
           // TODO investigate when do these appear?? I did not yet see them in the wild
         case BindingsMap.ResolvedConstructor ctor -> {
           // TODO can we replace this with querying StaticModuleScope?
-          var constructorInterface =
-              new AtomTypeInterfaceFromBindingsMap.ConstructorFromBindingsMap(ctor.cons());
-          yield typeResolver.buildAtomConstructorType(
-              typeResolver.resolvedTypeAsTypeObject(ctor.tpe()), constructorInterface);
+          System.out.println("resolveGlobalName: ResolvedConstructor(" + ctor.tpe().qualifiedName() + ", " + ctor.cons().name() + ")");
+          yield typeResolver.buildAtomConstructorType(typeResolver.resolvedTypeAsTypeObject(ctor.tpe()));
         }
 
         case BindingsMap.ResolvedType tpe -> typeResolver.resolvedTypeAsTypeObject(tpe);

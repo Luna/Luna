@@ -129,24 +129,9 @@ public class TypeResolver {
   }
 
   public TypeRepresentation buildAtomConstructorType(
-      TypeRepresentation.TypeObject parentType, AtomTypeInterface.Constructor constructor) {
-    boolean hasAnyDefaults =
-        constructor.arguments().stream().anyMatch(AtomTypeInterface.Argument::hasDefaultValue);
-    if (hasAnyDefaults) {
-      // TODO implement handling of default arguments - not only ctors will need this!
-      return null;
-    }
-
-    var arguments =
-        constructor.arguments().stream()
-            .map(
-                (arg) -> {
-                  var typ = arg.getType(this);
-                  return typ != null ? typ : TypeRepresentation.UNKNOWN;
-                })
-            .toList();
-    var resultType = parentType.instanceType();
-    return TypeRepresentation.buildFunction(arguments, resultType);
+      TypeRepresentation.TypeObject parentType) {
+    // TODO?
+    return null;
   }
 
   private TypeRepresentation resolveTypeExpression(Persistance.Reference<Expression> ref) {
