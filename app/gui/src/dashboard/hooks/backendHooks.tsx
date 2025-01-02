@@ -10,6 +10,8 @@ import {
   useSuspenseQuery,
   type Mutation,
   type MutationKey,
+  type QueryKey,
+  type UnusedSkipTokenOptions,
   type UseMutationOptions,
   type UseQueryOptions,
   type UseQueryResult,
@@ -124,14 +126,24 @@ export function backendQueryOptions<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>
+): UnusedSkipTokenOptions<
+  Awaited<ReturnType<Backend[Method]>>,
+  Error,
+  Awaited<ReturnType<Backend[Method]>>,
+  QueryKey
+>
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
+): UnusedSkipTokenOptions<
+  Awaited<ReturnType<Backend[Method]> | undefined>,
+  Error,
+  Awaited<ReturnType<Backend[Method]> | undefined>,
+  QueryKey
+>
 /** Wrap a backend method call in a React Query. */
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
@@ -202,6 +214,7 @@ const INVALIDATION_MAP: Partial<
   createSecret: ['listDirectory'],
   updateSecret: ['listDirectory'],
   updateProject: ['listDirectory'],
+  updateFile: ['listDirectory'],
   updateDirectory: ['listDirectory'],
   createDatalink: ['listDirectory', 'getDatalink'],
   uploadFileEnd: ['listDirectory'],
@@ -209,6 +222,7 @@ const INVALIDATION_MAP: Partial<
   deleteAsset: ['listDirectory', 'listAssetVersions'],
   undoDeleteAsset: ['listDirectory'],
   updateAsset: ['listDirectory', 'listAssetVersions'],
+  openProject: ['listDirectory'],
   closeProject: ['listDirectory', 'listAssetVersions'],
 }
 
@@ -341,8 +355,6 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         }
       }
     },
-
-    meta: { persist: false },
   })
 }
 
