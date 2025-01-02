@@ -471,11 +471,10 @@ abstract class TypePropagation {
     @Override
     protected TypeRepresentation resolveGlobalName(BindingsMap.ResolvedName resolvedName) {
       return switch (resolvedName) {
-          // TODO investigate when do these appear?? I did not yet see them in the wild
         case BindingsMap.ResolvedConstructor ctor -> {
           // TODO can we replace this with querying StaticModuleScope?
           System.out.println("resolveGlobalName: ResolvedConstructor(" + ctor.tpe().qualifiedName() + ", " + ctor.cons().name() + ")");
-          yield typeResolver.buildAtomConstructorType(typeResolver.resolvedTypeAsTypeObject(ctor.tpe()));
+          yield null;
         }
 
         case BindingsMap.ResolvedType tpe -> typeResolver.resolvedTypeAsTypeObject(tpe);

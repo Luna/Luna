@@ -14,7 +14,6 @@ import org.enso.compiler.pass.resolve.Patterns$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import org.enso.compiler.pass.resolve.TypeSignatures;
 import org.enso.compiler.pass.resolve.TypeSignatures$;
-import org.enso.persist.Persistance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
@@ -126,16 +125,6 @@ public class TypeResolver {
 
   TypeRepresentation resolvedTypeAsAtomType(BindingsMap.ResolvedType resolvedType) {
     return resolvedTypeAsTypeObject(resolvedType).instanceType();
-  }
-
-  public TypeRepresentation buildAtomConstructorType(
-      TypeRepresentation.TypeObject parentType) {
-    // TODO?
-    return null;
-  }
-
-  private TypeRepresentation resolveTypeExpression(Persistance.Reference<Expression> ref) {
-    return resolveTypeExpression(ref.get(Expression.class));
   }
 
   /** Returns the type ascribed to the given expression, if any. */
