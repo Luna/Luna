@@ -13,7 +13,6 @@ import { download } from '#/utilities/download'
 import { tryGetMessage } from '#/utilities/error'
 import { fileExtension, getFileName, getFolderPath } from '#/utilities/fileInfo'
 import { getDirectoryAndName, joinPath } from '#/utilities/path'
-import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 import { uniqueString } from 'enso-common/src/utilities/uniqueString'
 import invariant from 'tiny-invariant'
 

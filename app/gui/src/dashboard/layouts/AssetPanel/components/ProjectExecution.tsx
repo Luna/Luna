@@ -100,6 +100,9 @@ export function ProjectExecution(props: ProjectExecutionProps) {
       return getText(hour > 11 ? 'xPm' : 'xAm', `${hour % 12 || 12}:${minuteString}`)
     } else {
       switch (repeat.type) {
+        case 'none': {
+          return getText('doesNotRepeat')
+        }
         case 'hourly': {
           const startHour = (repeat.startHour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
           const endHour = (repeat.endHour + timeZoneOffsetHours + HOURS_PER_DAY) % HOURS_PER_DAY
