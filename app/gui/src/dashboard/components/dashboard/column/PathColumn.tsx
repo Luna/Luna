@@ -7,7 +7,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import { useSetExpandedDirectoryIds, useSetSelectedKeys } from '#/providers/DriveProvider'
+import { useSetExpandedDirectoryIds, useSetSelectedAssets } from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
@@ -23,7 +23,7 @@ export default function PathColumn(props: AssetColumnProps) {
   const { getAssetNodeById } = state
 
   const { setCategory } = useCategoriesAPI()
-  const setSelectedKeys = useSetSelectedKeys()
+  const setSelectedAssets = useSetSelectedAssets()
   const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
   // Path navigation exist only for cloud categories.
@@ -65,14 +65,13 @@ export default function PathColumn(props: AssetColumnProps) {
     const targetDirectoryNode = getAssetNodeById(targetDirectory)
 
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
-      // We reassign the variable only to make TypeScript happy here.
-      const categoryId = rootDirectoryInThePath.categoryId
-
-      setCategory(categoryId)
+      setCategory(rootDirectoryInThePath.categoryId)
       setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
     }
 
-    setSelectedKeys(new Set([targetDirectory]))
+    if (targetDirectoryNode) {
+      setSelectedAssets([targetDirectoryNode.item])
+    }
   })
 
   const finalPath = (() => {

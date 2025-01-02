@@ -4,7 +4,6 @@ import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
 import {
-  backendMutationOptions,
   deleteAssetsMutationOptions,
   moveAssetsMutationOptions,
   useBackendQuery,

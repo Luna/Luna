@@ -1057,7 +1057,7 @@ function AssetsTable(props: AssetsTableProps) {
         doPaste={doPaste}
       />
     ),
-    [backend, category, rootDirectoryId, doCopy, doCut, doPaste],
+    [backend, category, nodeMapRef, rootDirectoryId, doCopy, doCut, doPaste],
   )
 
   const onDropzoneDragOver = (event: DragEvent<Element>) => {
