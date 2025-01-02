@@ -78,6 +78,7 @@ export default class BaseActions<Context> implements Promise<void> {
     })
   }
 
+  /** Press a key or shortcut. */
   static async press(page: Page, keyOrShortcut: string) {
     await BaseActions.withNormalizedKey(
       page,
