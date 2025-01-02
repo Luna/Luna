@@ -82,7 +82,7 @@ provideVisibility(computed(() => !props.hidden))
   position: absolute;
 }
 
-.endo-dashboard .GraphEditor {
+.enso-dashboard .ProjectView {
   /* Compensate for top bar, render the app below it. */
   top: calc(var(--row-height) + 16px);
   flex: 1;

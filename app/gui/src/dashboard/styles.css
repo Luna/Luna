@@ -20,6 +20,6 @@
   }
 }
 
-:where(.enso-app) {
+:where(.enso-app, .App) {
   @apply absolute inset-0 isolate flex flex-col overflow-hidden;
 }

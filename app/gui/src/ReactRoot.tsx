@@ -140,7 +140,10 @@ export default function ReactRoot(props: ReactRootProps) {
     // TODO [ao]: This wrapping element should be in App.vue, but veaury's wrapper for react sets
     //  `style="all: unset"` breaking our layout.
     //  See https://github.com/gloriasoft/veaury/issues/158
-    <div id="enso-dashboard" className={`App ${[...props.classSet.keys()].join(' ')}`}>
+    <div
+      id="enso-dashboard"
+      className={`${['App', 'enso-dashboard', ...props.classSet.keys()].join(' ')}`}
+    >
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <ErrorBoundary>

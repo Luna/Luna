@@ -57,5 +57,3 @@ onMounted(() => {
     :classSet="classSet"
   />
 </template>
-
-<style></style>
