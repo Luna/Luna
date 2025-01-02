@@ -10,7 +10,8 @@ import { DashboardTabBar } from './DashboardTabBar'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as projectHooks from '#/hooks/projectHooks'
-import * as searchParamsState from '#/hooks/searchParamsStateHooks'
+import { CategoriesProvider } from '#/layouts/Drive/Categories/categoriesHooks'
+import DriveProvider from '#/providers/DriveProvider'
 
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
@@ -27,7 +28,6 @@ import ProjectsProvider, {
 } from '#/providers/ProjectsProvider'
 
 import type * as assetTable from '#/layouts/AssetsTable'
-import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
 import type * as editor from '#/layouts/Editor'
@@ -43,7 +43,7 @@ import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
 import { useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
-import { useSetCategory } from '#/providers/DriveProvider'
+import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
@@ -63,9 +63,17 @@ export interface DashboardProps {
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
   return (
-    <ProjectsProvider>
-      <DashboardInner {...props} />
-    </ProjectsProvider>
+    /* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+     * due to modals being in `TheModal`. */
+    <DriveProvider>
+      {({ resetAssetTableState }) => (
+        <CategoriesProvider onCategoryChange={resetAssetTableState}>
+          <ProjectsProvider>
+            <DashboardInner {...props} />
+          </ProjectsProvider>
+        </CategoriesProvider>
+      )}
+    </DriveProvider>
   )
 }
 
@@ -104,25 +112,8 @@ function DashboardInner(props: DashboardProps) {
     initialProjectNameRaw != null ? fileURLToPath(initialProjectNameRaw) : null
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
-  const [category, setCategoryRaw, resetCategory] =
-    searchParamsState.useSearchParamsState<categoryModule.Category>(
-      'driveCategory',
-      () => (localBackend != null ? { type: 'local' } : { type: 'cloud' }),
-      (value): value is categoryModule.Category =>
-        categoryModule.CATEGORY_SCHEMA.safeParse(value).success,
-    )
-
-  const initialCategory = React.useRef(category)
-  const setStoreCategory = useSetCategory()
-  React.useEffect(() => {
-    setStoreCategory(initialCategory.current)
-  }, [setStoreCategory])
-
-  const setCategory = eventCallbacks.useEventCallback((newCategory: categoryModule.Category) => {
-    setCategoryRaw(newCategory)
-    setStoreCategory(newCategory)
-  })
-  const backend = backendProvider.useBackend(category)
+  const categoriesAPI = useCategoriesAPI()
+  const backend = backendProvider.useBackend(categoriesAPI.category)
 
   const projectsStore = useProjectsStore()
   const page = usePage()
@@ -164,27 +155,26 @@ function DashboardInner(props: DashboardProps) {
   })
 
   React.useEffect(() => {
-    if (localBackend) {
-      window.projectManagementApi?.setOpenProjectHandler((project) => {
-        setCategory({ type: 'local' })
-        const projectId = localBackendModule.newProjectId(
-          projectManager.UUID(project.id),
-          localBackend.rootPath(),
-        )
-        openProject({
-          type: backendModule.BackendType.local,
-          id: projectId,
-          title: project.name,
-          parentId: localBackendModule.newDirectoryId(backendModule.Path(project.parentDirectory)),
-        })
+    window.projectManagementApi?.setOpenProjectHandler((project) => {
+      categoriesAPI.setCategory('local')
+
+      const projectId = localBackendModule.newProjectId(
+        projectManager.UUID(project.id),
+        projectManager.Path(project.parentDirectory),
+      )
+
+      openProject({
+        type: backendModule.BackendType.local,
+        id: projectId,
+        title: project.name,
+        parentId: localBackendModule.newDirectoryId(backendModule.Path(project.parentDirectory)),
       })
-      return () => {
-        window.projectManagementApi?.setOpenProjectHandler(() => {})
-      }
-    } else {
-      return () => {}
+    })
+
+    return () => {
+      window.projectManagementApi?.setOpenProjectHandler(() => {})
     }
-  }, [localBackend, openEditor, openProject, setCategory])
+  }, [openEditor, openProject, categoriesAPI])
 
   React.useEffect(
     () =>
@@ -240,8 +230,8 @@ function DashboardInner(props: DashboardProps) {
       if (asset != null && self != null) {
         setModal(
           <ManagePermissionsModal
-            backend={backend}
-            category={category}
+            backend={categoriesAPI.associatedBackend}
+            category={categoriesAPI.category}
             item={asset}
             self={self}
             doRemoveSelf={() => {
@@ -292,9 +282,6 @@ function DashboardInner(props: DashboardProps) {
             initialProjectName={initialProjectName}
             ydocUrl={ydocUrl}
             assetManagementApiRef={assetManagementApiRef}
-            category={category}
-            setCategory={setCategory}
-            resetCategory={resetCategory}
           />
         </aria.Tabs>
 

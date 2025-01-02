@@ -1,5 +1,5 @@
 /** @file A hook to return the items in the assets table. */
-import { startTransition, useMemo } from 'react'
+import { useMemo } from 'react'
 
 import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
@@ -212,10 +212,6 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
         children.filter((child) => expandedDirectoryIds.includes(child.item.parentId)),
       )
 
-      startTransition(() => {
-        setAssetItems(flatTree.map((item) => item.item))
-      })
-
       return flatTree
     } else {
       const multiplier = sortInfo.direction === SortDirection.ascending ? 1 : -1
@@ -240,13 +236,11 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
           .sort(compare),
       )
 
-      startTransition(() => {
-        setAssetItems(flatTree.map((item) => item.item))
-      })
-
       return flatTree
     }
-  }, [sortInfo, assetTree, expandedDirectoryIds, setAssetItems])
+  }, [sortInfo, assetTree, expandedDirectoryIds])
+
+  setAssetItems(displayItems.map((item) => item.item))
 
   const visibleItems = useMemo(
     () => displayItems.filter((item) => visibilities.get(item.item.id) !== Visibility.hidden),

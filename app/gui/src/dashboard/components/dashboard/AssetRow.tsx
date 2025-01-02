@@ -267,7 +267,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const draggableProps = dragAndDropHooks.useDraggable()
+  const draggableProps = dragAndDropHooks.useDraggable({ isDisabled: !selected })
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const [isDraggedOver, setIsDraggedOver] = React.useState(false)
   const setIsDraggingOverSelectedRow = useSetIsDraggingOverSelectedRow()
@@ -462,6 +462,8 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
           <tr
             data-testid="asset-row"
             tabIndex={0}
+            data-selected={selected}
+            data-id={asset.id}
             ref={(element) => {
               rootRef.current = element
 
