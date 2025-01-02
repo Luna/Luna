@@ -474,7 +474,7 @@ abstract class TypePropagation {
         case BindingsMap.ResolvedConstructor ctor -> {
           // TODO can we replace this with querying StaticModuleScope?
           System.out.println("resolveGlobalName: ResolvedConstructor(" + ctor.tpe().qualifiedName() + ", " + ctor.cons().name() + ")");
-          yield null;
+          yield new TypeRepresentation.ArrowType(TypeRepresentation.ANY, BuiltinTypes.FLOAT);
         }
 
         case BindingsMap.ResolvedType tpe -> typeResolver.resolvedTypeAsTypeObject(tpe);
