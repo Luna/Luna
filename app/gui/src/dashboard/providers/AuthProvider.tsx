@@ -47,6 +47,7 @@ import {
   EmailAddress,
   NotAuthorizedError,
   OrganizationId,
+  isOrganizationId,
   type CreateUserRequestBody,
   type UpdateUserRequestBody,
   type User,
@@ -338,10 +339,15 @@ export default function AuthProvider(props: AuthProviderProps) {
       const organizationId = await cognito.organizationId()
       const email = session?.email ?? ''
 
+      invariant(
+        organizationId == null || isOrganizationId(organizationId),
+        'Invalid organization ID',
+      )
+
       await createUserMutation.mutateAsync({
         userName: username,
         userEmail: EmailAddress(email),
-        organizationId: organizationId != null ? OrganizationId(organizationId) : null,
+        organizationId: organizationId != null ? organizationId : null,
       })
     }
     // Wait until the backend returns a value from `users/me`,
@@ -671,4 +677,11 @@ export function useFullUserSession(): FullUserSession {
   const { session } = useAuth()
   invariant(session?.type === UserSessionType.full, 'Expected a full user session.')
   return session
+}
+
+/** A React context hook returning the user session for a user that is fully logged in. */
+export function useUser() {
+  const { user } = useFullUserSession()
+
+  return user
 }

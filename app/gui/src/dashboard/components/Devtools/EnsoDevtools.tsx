@@ -20,6 +20,7 @@ import {
   Separator,
   Switch,
   Text,
+  Underlay,
 } from '#/components/AriaComponents'
 import Portal from '#/components/Portal'
 import { usePaywallFeatures, type PaywallFeatureName } from '#/hooks/billing'
@@ -75,15 +76,16 @@ export function EnsoDevtools() {
   return (
     <Portal>
       <DialogTrigger>
-        <Button
-          icon={DevtoolsLogo}
-          aria-label={getText('ensoDevtoolsButtonLabel')}
-          variant="icon"
-          rounded="full"
-          size="hero"
-          className="fixed bottom-16 right-3 z-50"
-          data-ignore-click-outside
-        />
+        <Underlay className="fixed bottom-16 right-3 z-50 rounded-full">
+          <Button
+            icon={DevtoolsLogo}
+            aria-label={getText('ensoDevtoolsButtonLabel')}
+            variant="icon"
+            rounded="full"
+            size="hero"
+            data-ignore-click-outside
+          />
+        </Underlay>
 
         <Popover>
           <Text.Heading disableLineHeightCompensation>

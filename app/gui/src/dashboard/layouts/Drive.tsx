@@ -18,7 +18,10 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline } from '#/hooks/offlineHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { AssetPanel } from '#/layouts/AssetPanel'
-import AssetsTable, { type AssetManagementApi } from '#/layouts/AssetsTable'
+import AssetsTable, {
+  AssetsTableAssetsUnselector,
+  type AssetManagementApi,
+} from '#/layouts/AssetsTable'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import { isCloudCategory, type Category } from '#/layouts/CategorySwitcher/Category'
@@ -36,14 +39,12 @@ import { OfflineError } from '#/utilities/HttpClient'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { Suspense } from '../components/Suspense'
+import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
 import { useDispatchAssetListEvent } from './Drive/EventListProvider'
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
-  readonly category: Category
-  readonly setCategory: (category: Category) => void
-  readonly resetCategory: () => void
   readonly hidden: boolean
   readonly initialProjectName: string | null
   readonly assetsManagementApiRef: Ref<AssetManagementApi>
@@ -53,14 +54,15 @@ const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 function Drive(props: DriveProps) {
-  const { category, resetCategory, setCategory } = props
-
   const { isOffline } = useOffline()
   const toastAndLog = useToastAndLog()
   const { user } = useFullUserSession()
   const localBackend = useLocalBackend()
   const { getText } = useText()
-  const isCloud = isCloudCategory(category)
+  const categoriesAPI = useCategoriesAPI()
+  const { category, resetCategory, setCategory } = categoriesAPI
+
+  const isCloud = categoryModule.isCloudCategory(category)
 
   const supportLocalBackend = localBackend != null
 
@@ -132,7 +134,7 @@ function Drive(props: DriveProps) {
           }}
         >
           <Suspense>
-            <DriveAssetsView {...props} />
+            <DriveAssetsView {...props} category={category} setCategory={setCategory} />
           </Suspense>
         </ErrorBoundary>
       )
@@ -140,8 +142,14 @@ function Drive(props: DriveProps) {
   }
 }
 
+/** Props for a {@link DriveAssetsView}. */
+interface DriveAssetsViewProps extends DriveProps {
+  readonly category: Category
+  readonly setCategory: (categoryId: Category['id']) => void
+}
+
 /** The assets view of the Drive. */
-function DriveAssetsView(props: DriveProps) {
+function DriveAssetsView(props: DriveAssetsViewProps) {
   const {
     category,
     setCategory,
@@ -253,8 +261,8 @@ function DriveAssetsView(props: DriveProps) {
         />
 
         <div className="flex flex-1 gap-drive overflow-hidden">
-          <div className="flex w-36 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
-            <CategorySwitcher category={category} setCategory={setCategory} />
+          <div className="flex w-40 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
+            <CategorySwitcher category={category} setCategoryId={setCategory} />
 
             {isCloud && (
               <Labels
@@ -264,6 +272,8 @@ function DriveAssetsView(props: DriveProps) {
                 setQuery={setQuery}
               />
             )}
+
+            <AssetsTableAssetsUnselector />
           </div>
 
           {status === 'offline' ?
@@ -288,7 +298,7 @@ function DriveAssetsView(props: DriveProps) {
 /** Props for {@link OfflineMessage}. */
 interface OfflineMessageProps {
   readonly supportLocalBackend: boolean
-  readonly setCategory: (category: categoryModule.Category) => void
+  readonly setCategory: (category: categoryModule.Category['id']) => void
 }
 
 /** Display info that the category selected is unavailable in offline mode. */
@@ -309,7 +319,7 @@ function OfflineMessage(props: OfflineMessageProps) {
           variant="primary"
           className="mx-auto"
           onPress={() => {
-            setCategory({ type: 'local' })
+            setCategory('local')
           }}
         >
           {getText('switchToLocal')}
