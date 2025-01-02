@@ -1464,10 +1464,10 @@ public class TypeInferenceTest extends StaticAnalysisTest {
                 "enso",
                 """
                     from project.modA.My_Type import My_Constructor
-                    
+
                     type My_Type
                         My_Constructor v
-                    
+
                     foo =
                         x1 = My_Constructor 1
                         x1
@@ -1479,7 +1479,7 @@ public class TypeInferenceTest extends StaticAnalysisTest {
     var module = compile(src);
     var foo = ModuleUtils.findStaticMethod(module, "foo");
     var x1 = ModuleUtils.findAssignment(foo, "x1");
-    assertAtomType("project.modA.My_Type", x1);
+    assertAtomType("local.Project1.modA.My_Type", x1);
   }
 
   @Test

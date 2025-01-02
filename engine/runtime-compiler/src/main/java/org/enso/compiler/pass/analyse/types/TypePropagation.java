@@ -351,29 +351,7 @@ abstract class TypePropagation {
     switch (argumentType) {
       case TypeRepresentation.TypeObject typeObject -> {
         if (isConstructorOrType(function.name())) {
-          var typeDefinition = findTypeDefinition(typeObject.name());
-          if (typeDefinition == null) {
-            logger.warn(
-                "processUnresolvedSymbolApplication: {} - no type definition found for {}",
-                relatedWholeApplicationIR.showCode(),
-                typeObject.name());
-            return null;
-          }
-
-          var constructor = typeDefinition.getConstructor(function.name());
-          if (constructor != null) {
-            if (constructor.type() == null) {
-              // type is unknown due to default arguments
-              // TODO later on this should be assert != null because all constructors should have a
-              // type (once we can deal with default arguments)
-              return null;
-            }
-
-            return constructor.type();
-          } else {
-            encounteredNoSuchConstructor(relatedWholeApplicationIR, argumentType, function.name());
-            return null;
-          }
+          return resolveConstructorOnType(typeObject, function.name(), relatedWholeApplicationIR);
         } else {
           // We resolve static calls on the eigen type. It should also contain registrations of the
           // static variants of member methods, so we don't need to inspect member scope.
@@ -393,7 +371,7 @@ abstract class TypePropagation {
         if (isConstructorOrType(function.name())) {
           // This is a special case when we are accessing a type inside a module, e.g. Mod.Type
           // 'call' should resolve to the type
-          // TODO
+          // TODO for later
           return null;
         } else {
           var resolvedModuleMethod = methodTypeResolver.resolveMethod(typeScope, function.name());
@@ -446,6 +424,36 @@ abstract class TypePropagation {
     return Character.isUpperCase(firstCharacter);
   }
 
+  private TypeRepresentation resolveConstructorOnType(
+      TypeRepresentation.TypeObject typeObject,
+      String constructorName,
+      IR relatedWholeApplicationIR) {
+    assert isConstructorOrType(constructorName);
+    var typeDefinition = findTypeDefinition(typeObject.name());
+    if (typeDefinition == null) {
+      logger.warn(
+          "resolveConstructorOnType: {} - no type definition found for {}",
+          relatedWholeApplicationIR.showCode(),
+          typeObject.name());
+      return null;
+    }
+
+    var constructor = typeDefinition.getConstructor(constructorName);
+    if (constructor != null) {
+      if (constructor.type() == null) {
+        // type is unknown due to default arguments
+        // TODO later on this should be assert != null because all constructors should have a
+        // type (once we can deal with default arguments)
+        return null;
+      }
+
+      return constructor.type();
+    } else {
+      encounteredNoSuchConstructor(relatedWholeApplicationIR, typeObject, constructorName);
+      return null;
+    }
+  }
+
   private final class CompilerNameResolution
       extends NameResolutionAlgorithm<
           TypeRepresentation, CompilerNameResolution.LinkInfo, AliasMetadata.Occurrence> {
@@ -469,12 +477,12 @@ abstract class TypePropagation {
     }
 
     @Override
-    protected TypeRepresentation resolveGlobalName(BindingsMap.ResolvedName resolvedName) {
+    protected TypeRepresentation resolveGlobalName(
+        BindingsMap.ResolvedName resolvedName, IR relatedIr) {
       return switch (resolvedName) {
         case BindingsMap.ResolvedConstructor ctor -> {
-          // TODO can we replace this with querying StaticModuleScope?
-          System.out.println("resolveGlobalName: ResolvedConstructor(" + ctor.tpe().qualifiedName() + ", " + ctor.cons().name() + ")");
-          yield new TypeRepresentation.ArrowType(TypeRepresentation.ANY, BuiltinTypes.FLOAT);
+          var parentType = new TypeRepresentation.TypeObject(ctor.tpe().qualifiedName());
+          yield resolveConstructorOnType(parentType, ctor.cons().name(), relatedIr);
         }
 
         case BindingsMap.ResolvedType tpe -> typeResolver.resolvedTypeAsTypeObject(tpe);

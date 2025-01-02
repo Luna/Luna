@@ -1972,7 +1972,8 @@ class IrToTruffle(
         ReadLocalVariableNode.build(localLink)
 
       override protected def resolveGlobalName(
-        resolvedName: BindingsMap.ResolvedName
+        resolvedName: BindingsMap.ResolvedName,
+        relatedIr: IR
       ): RuntimeExpression =
         nodeForResolution(resolvedName)
 
