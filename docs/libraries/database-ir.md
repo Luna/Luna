@@ -10,7 +10,7 @@ order: 4
 
 The database internal representation (IR) is used to describe full SQL queries and statements in a backend-neutral way. The IR is compiled to SQL in `Base_Generator`, with backend-specific variations supplied by the `Dialect` modules.
 
-End-users do not use IR types directly; they interact wih the `DB_Table` and `DB_Column` types, which are analagous to the in-memory `Table` and `Column` types. User-facing operations on these types only create larger pieces of IR. As a final step, the IR is compiled into SQL and sent to the backend.
+End-users do not use IR types directly; they interact wih the `DB_Table` and `DB_Column` types, which are analagous to the in-memory `Table` and `Column` types. User-facing operations on these types do not immediately execute SQL in the database backends; they only create IR. As a final step, the IR is compiled into SQL and sent to the backend.
 
 Informally, a "query" consists of a table expression and a set of column expressions, roughly corresponding to:
 
@@ -19,21 +19,21 @@ select [column expression], [column expression]
 from [table expression]
 ```
 
-This terminology applies to both the user-facing and IR types, which represent table and column values in multiple ways.
+This terminology applies to both the user-facing and IR types, which represent table and column expression in multiple ways.
 
 # Main IR Types
 
-Top-level queries and DDL/DML commands are represented by the `Query` type.
+Column expressions are represented by `SQL_Expression`. `SQL_Expression` values only have meaning within the context of a table expression; they do not contain their own table expressions.
 
 Table expressions are represented by the mutually-recursive types `From_Spec` and `Context`.
 
-Column expressions are represented by `SQL_Expression`. `SQL_Expression` values only have meaning within the context of a table expression; they do not contain their own table expressions.
+Top-level queries and DDL/DML commands are represented by the `Query` type.
 
 ## SQL_Expression
 
 Represents a column expression. Can be a single column (`Column`), a derived expression built from other expressions (`Operation`), or a constant value (`Constant`, `Literal`, `Text_Literal`).
 
-`SQL_Expression`s only have meaning in the context of a particular table value; for example, a `Column` expression consists of the name/alias of a table value and the name of a column within that value.
+`SQL_Expression`s only have meaning in the context of a particular table expression; for example, a `Column` expression consists of the name/alias of a table expression and the name of a column within it.
 
 This also includes `Let` and `Let_Ref` variants which are used to express let-style bindings using SQL `WITH` syntax.
 
@@ -57,15 +57,15 @@ A query (`Select`), or other DML or DDL command (`Insert`, `Create_Table`, `Drop
 
 This section covers the main ways in which both the IR and user-facing types are combined and nested to describe typical queries; it is not comprehensive.
 
-A `DB_Table` serves as a user-facing table value, and contains column expressions as `Internal_Column`s and a table expression as a `Context`.
+A `DB_Table` serves as a user-facing table expression, and contains column expressions as `Internal_Column`s and a table expression as a `Context`.
 
-A `DB_Column` serves as a user-facing column value, and contains a column expression as an `SQL_Expression` and a table expression as a `Context`.
+A `DB_Column` serves as a user-facing column expression, and contains a column expression as an `SQL_Expression` and a table expression as a `Context`.
 
-An `Internal_Column` serves as a column value, and contains a `SQL_Expression`, but no table expression. An `Internal_Column` is always used inside a `DB_Table`, and inherits its table expression from the `DB_Table`'s `Context`.
+An `Internal_Column` serves as a column expression, and contains a `SQL_Expression`, but no table expression. An `Internal_Column` is always used inside a `DB_Table`, and inherits its table expression from the `DB_Table`'s `Context`.
 
-A `Context` serves as a table value, but really inherits this from the `From_Spec` that it contains. It also contains `WHERE`, `ORDER BY`, `GROUP BY` and `LIMIT` clauses.
+A `Context` serves as a table expression, but really inherits this from the `From_Spec` that it contains. It also contains `WHERE`, `ORDER BY`, `GROUP BY` and `LIMIT` clauses.
 
-A `From_Spec` serves as a table value, and can be a base value (table name, constant, etc). It can also be a `Sub_Query`, in which case it contains column values as `SQL_Expression`s, and a table value as a `Context`.
+A `From_Spec` serves as a table expression, and can be a base value (table name, constant, etc). It can also be a `Sub_Query`, in which case it contains column expressions as `SQL_Expression`s, and a table expression as a `Context`.
 
 # Subqueries
 
@@ -73,7 +73,7 @@ Subqueries are created using `Context.as_subquery`. They correspond to (and are 
 
 By itself, turning a query into a sub-query does not change its value. But it prepares it to be used in larger queries, such as ones formed with `JOIN` and `UNION`, as well as other more specific operations within the database library (such as `DB_Table.add_row_number`). 
 
-In the IR, `Context.as_subquery` prepares a table-value expression for nesting, but does not do the actual nesting within another query. To do the actual nesting, you use the prepared subquery as a table expression within a larger query.
+In the IR, `Context.as_subquery` prepares a table expression for nesting, but does not do the actual nesting within another query. To do the actual nesting, you use the prepared subquery as a table expression within a larger query.
 
 This preparation consists of replacing complex column expressions with aliases that refer to the original complex expressions within the nested query. For example, a query such as
 
@@ -114,7 +114,7 @@ Thanks to this nesting, there can be no unwanted interference between the `WHERE
 
 The added table alias allows join conditions to refer to the columns of the individual tables being joined.
 
-The `Context.as_subquery` method returns a `Sub_Query_Setup`, which contains a table value as a `From_Spec`, a set of simple column expressions as `Internal_Column`s, and a helper function that can convert an original complex `Internal_Column` into its simplified alias form.
+The `Context.as_subquery` method returns a `Sub_Query_Setup`, which contains a table expression as a `From_Spec`, a set of simple column expressions as `Internal_Column`s, and a helper function that can convert an original complex `Internal_Column` into its simplified alias form.
 
 # Context Extensions
 
