@@ -16,7 +16,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { QueryClient } from '@tanstack/vue-query'
 import * as detect from 'enso-common/src/detect'
 import { IS_DEV_MODE, isOnElectron, isOnLinux } from 'enso-common/src/detect'
-import { startTransition, StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect } from 'react'
 import {
   createRoutesFromChildren,
   matchRoutes,

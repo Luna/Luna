@@ -178,7 +178,7 @@ function EditorInternal(props: EditorInternalProps) {
     renameProject(newName, openedProject.projectId)
   })
 
-  const appProps = React.useMemo<ProjectViewProps>(() => {
+  const appProps: ProjectViewProps = React.useMemo<ProjectViewProps>(() => {
     const jsonAddress = openedProject.jsonAddress
     const binaryAddress = openedProject.binaryAddress
     const ydocAddress = openedProject.ydocAddress ?? ydocUrl ?? ''
