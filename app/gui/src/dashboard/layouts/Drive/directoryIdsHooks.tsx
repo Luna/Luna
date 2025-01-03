@@ -53,8 +53,8 @@ export function useDirectoryIds(options: UseDirectoryIdsOptions) {
   const rootDirectory = useMemo(() => createRootDirectoryAsset(rootDirectoryId), [rootDirectoryId])
 
   const expandedDirectoryIds = useMemo(
-    () => [rootDirectoryId].concat(privateExpandedDirectoryIds),
-    [privateExpandedDirectoryIds, rootDirectoryId],
+    () => [rootDirectoryId].concat(privateExpandedDirectoryIds[category.rootPath] ?? []),
+    [category.rootPath, privateExpandedDirectoryIds, rootDirectoryId],
   )
 
   return { setExpandedDirectoryIds, rootDirectoryId, rootDirectory, expandedDirectoryIds } as const

@@ -7,9 +7,14 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import { useSetExpandedDirectories, useSetSelectedKeys } from '#/providers/DriveProvider'
+import {
+  useDriveStore,
+  useSetExpandedDirectories,
+  useSetSelectedKeys,
+} from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
 import { Fragment, useTransition } from 'react'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
@@ -20,11 +25,12 @@ export default function PathColumn(props: AssetColumnProps) {
 
   const { virtualParentsPath, parentsPath } = item
 
-  const { getAssetNodeById } = state
+  const { getAssetNodeById, category } = state
 
+  const driveStore = useDriveStore()
   const { setCategory } = useCategoriesAPI()
   const setSelectedKeys = useSetSelectedKeys()
-  const setExpandedDirectoryIds = useSetExpandedDirectories()
+  const setExpandedDirectories = useSetExpandedDirectories()
 
   // Path navigation exist only for cloud categories.
   const { getCategoryByDirectoryId } = useCloudCategoryList()
@@ -65,11 +71,16 @@ export default function PathColumn(props: AssetColumnProps) {
     const targetDirectoryNode = getAssetNodeById(targetDirectory)
 
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
-      // We reassign the variable only to make TypeScript happy here.
-      const categoryId = rootDirectoryInThePath.categoryId
-
-      setCategory(categoryId)
-      setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
+      setCategory(rootDirectoryInThePath.categoryId)
+      const expandedDirectories = structuredClone(driveStore.getState().expandedDirectories)
+      // This is SAFE, as it is a fresh copy that has been deep cloned above.
+      const directoryList = expandedDirectories[category.rootPath]
+      if (directoryList) {
+        unsafeMutable(directoryList).push(
+          ...pathToDirectory.map(({ id }) => id).concat(targetDirectory),
+        )
+      }
+      setExpandedDirectories(expandedDirectories)
     }
 
     setSelectedKeys(new Set([targetDirectory]))
