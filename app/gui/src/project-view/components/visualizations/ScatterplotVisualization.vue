@@ -884,23 +884,23 @@ function useScatterplotVizToolbar() {
   const textSelectionButton = createTextSelectionButton()
   return computed(() => [
     {
-      icon: 'select',
+      icon: 'select' as Icon,
       title: 'Enable Selection',
       toggle: selectionEnabled,
     },
     {
-      icon: 'show_all',
+      icon: 'show_all' as Icon,
       title: 'Fit All',
       onClick: () => zoomToSelected(false),
     },
     {
-      icon: 'zoom',
+      icon: 'zoom' as Icon,
       title: 'Zoom to Selected',
       disabled: () => brushExtent.value == null,
       onClick: zoomToSelected,
     },
     {
-      icon: 'add_to_graph_editor',
+      icon: 'add_to_graph_editor' as Icon,
       title: 'Create component of selected points',
       disabled: () => !createNewFilterNodeEnabled.value,
       onClick: createNewFilterNode,
