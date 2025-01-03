@@ -3,6 +3,7 @@ package org.enso.runtime.parser.processor;
 import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
+import org.enso.runtime.parser.processor.utils.Utils;
 
 /** Declared field in the generated class. */
 public final class ClassField {
@@ -51,6 +52,10 @@ public final class ClassField {
 
   public String getTypeName() {
     return type.toString();
+  }
+
+  public String getSimpleTypeName() {
+    return Utils.simpleTypeName(type);
   }
 
   public boolean isPrimitive() {

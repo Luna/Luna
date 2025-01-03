@@ -26,7 +26,7 @@ public class BuilderMethodGenerator {
                 field -> {
                   var initializer = field.initializer() != null ? " = " + field.initializer() : "";
                   return "private $type $name $initializer;"
-                      .replace("$type", field.getTypeName())
+                      .replace("$type", field.getSimpleTypeName())
                       .replace("$name", field.name())
                       .replace("$initializer", initializer);
                 })
@@ -43,7 +43,7 @@ public class BuilderMethodGenerator {
         }
         """
                         .replace("$fieldName", field.name())
-                        .replace("$fieldType", field.getTypeName()))
+                        .replace("$fieldType", field.getSimpleTypeName()))
             .collect(Collectors.joining(System.lineSeparator()));
 
     // Validation code for all non-nullable user fields

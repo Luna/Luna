@@ -84,10 +84,10 @@ public class DuplicateMethodGenerator {
           idDuplicated = this.id;
         }
         """
-            .replace("$locType", ctx.getLocationMetaField().getTypeName())
-            .replace("$metaType", ctx.getPassDataMetaField().getTypeName())
-            .replace("$diagType", ctx.getDiagnosticsMetaField().getTypeName())
-            .replace("$idType", ctx.getIdMetaField().getTypeName());
+            .replace("$locType", ctx.getLocationMetaField().getSimpleTypeName())
+            .replace("$metaType", ctx.getPassDataMetaField().getSimpleTypeName())
+            .replace("$diagType", ctx.getDiagnosticsMetaField().getSimpleTypeName())
+            .replace("$idType", ctx.getIdMetaField().getSimpleTypeName());
     sb.append(Utils.indent(duplicateMetaFieldsCode, 2));
     sb.append(System.lineSeparator());
     for (var metaVar : metaFields()) {
