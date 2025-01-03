@@ -39,7 +39,7 @@ export default function Labels(props: LabelsProps) {
   const driveStore = useDriveStore()
   const nodeMapRef = useNodeMap()
   const setLabelsDragPayload = useSetLabelsDragPayload()
-  const labels = useBackendQuery(backend, 'listTags', array.EMPTY_ARRAY).data ?? array.EMPTY_ARRAY
+  const labels = useBackendQuery(backend, 'listTags', []).data ?? []
   const deleteTagMutation = useMutation(backendMutationOptions(backend, 'deleteTag'))
 
   return (

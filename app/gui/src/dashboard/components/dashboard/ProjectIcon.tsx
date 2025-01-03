@@ -22,7 +22,6 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { useMemo } from 'react'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =================
 // === Constants ===
@@ -108,7 +107,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
   const isOtherUserUsingProject =
     isCloud && itemProjectState.openedBy != null && itemProjectState.openedBy !== user.email
 
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY, {
+  const { data: users } = useBackendQuery(backend, 'listUsers', [], {
     enabled: isOtherUserUsingProject,
   })
 

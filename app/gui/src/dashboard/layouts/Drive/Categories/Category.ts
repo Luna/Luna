@@ -23,7 +23,6 @@ import {
   type UserGroupInfo,
 } from '#/services/Backend'
 import { newDirectoryId } from '#/services/LocalBackend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 const PATH_SCHEMA = z.string().refine((s): s is Path => true)
 const DIRECTORY_ID_SCHEMA = z.string().refine((s): s is DirectoryId => true)
@@ -227,11 +226,7 @@ export function useTransferBetweenCategories(currentCategory: Category) {
   const localBackend = useLocalBackend()
   const backend = useBackend(currentCategory)
   const { user } = useFullUserSession()
-  const { data: organization = null } = useBackendQuery(
-    remoteBackend,
-    'getOrganization',
-    EMPTY_ARRAY,
-  )
+  const { data: organization = null } = useBackendQuery(remoteBackend, 'getOrganization', [])
   const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
   const moveAssetsMutation = useMutation(moveAssetsMutationOptions(backend))
 

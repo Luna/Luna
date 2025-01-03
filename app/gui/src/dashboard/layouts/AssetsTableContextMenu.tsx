@@ -31,7 +31,6 @@ import { useText } from '#/providers/TextProvider'
 import type * as assetTreeNode from '#/utilities/AssetTreeNode'
 import * as permissions from '#/utilities/permissions'
 import { useMutation } from '@tanstack/react-query'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =================
 // === Constants ===
@@ -101,7 +100,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     const selectedKeys = selectedAssets.map((asset) => asset.id)
     const deleteAll = () => {
       unsetModal()
-      setSelectedAssets(EMPTY_ARRAY)
+      setSelectedAssets([])
 
       deleteAssetsMutation.mutate([selectedKeys, false])
     }
@@ -180,7 +179,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                       : getText('deleteSelectedAssetsForeverActionText', selectedAssets.length)
                     }
                     doDelete={() => {
-                      setSelectedAssets(EMPTY_ARRAY)
+                      setSelectedAssets([])
                       deleteAssetsMutation.mutate([
                         selectedAssets.map((otherAsset) => otherAsset.id),
                         true,

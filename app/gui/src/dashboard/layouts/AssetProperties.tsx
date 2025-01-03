@@ -36,7 +36,6 @@ import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
 import { useMutation } from '@tanstack/react-query'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { useStore } from '../utilities/zustand'
 
 const ASSET_PROPERTIES_VARIANTS = tv({
@@ -161,7 +160,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
     close: closeSpotlight,
   })
 
-  const labels = useBackendQuery(backend, 'listTags', EMPTY_ARRAY).data ?? EMPTY_ARRAY
+  const labels = useBackendQuery(backend, 'listTags', []).data ?? []
   const self = permissions.tryFindSelfPermission(user, item.permissions)
   const ownsThisAsset = self?.permission === permissions.PermissionAction.own
   const canEditThisAsset =

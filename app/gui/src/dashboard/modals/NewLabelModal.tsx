@@ -10,7 +10,6 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { findLeastUsedColor } from '#/services/Backend'
 import { useMutation } from '@tanstack/react-query'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =====================
 // === NewLabelModal ===
@@ -25,7 +24,7 @@ export interface NewLabelModalProps {
 export default function NewLabelModal(props: NewLabelModalProps) {
   const { backend } = props
   const { getText } = useText()
-  const labels = useBackendQuery(backend, 'listTags', EMPTY_ARRAY).data ?? EMPTY_ARRAY
+  const labels = useBackendQuery(backend, 'listTags', []).data ?? []
   const labelNames = new Set<string>(labels.map((label) => label.value))
   const labelNamesRef = useSyncRef(labelNames)
   const leastUsedColor = findLeastUsedColor(labels)

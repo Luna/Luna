@@ -35,7 +35,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
   const { user } = authProvider.useFullUserSession()
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
-  const { data: labels } = backendHooks.useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
+  const { data: labels } = backendHooks.useBackendQuery(backend, 'listTags', [])
   const driveStore = useDriveStore()
   const showDraggedLabelsFallback = useStore(
     driveStore,

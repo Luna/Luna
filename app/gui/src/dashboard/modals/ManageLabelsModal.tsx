@@ -15,7 +15,6 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { findLeastUsedColor, LabelName, type AnyAsset, type LChColor } from '#/services/Backend'
 import { regexEscape } from '#/utilities/string'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =========================
 // === ManageLabelsModal ===
@@ -40,9 +39,9 @@ export default function ManageLabelsModal<Asset extends AnyAsset = AnyAsset>(
   const { unsetModal } = useSetModal()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
-  const { data: allLabels } = useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
+  const { data: allLabels } = useBackendQuery(backend, 'listTags', [])
   const [color, setColor] = useState<LChColor | null>(null)
-  const leastUsedColor = findLeastUsedColor(allLabels ?? EMPTY_ARRAY)
+  const leastUsedColor = findLeastUsedColor(allLabels ?? [])
 
   const createTagMutation = useMutation(backendMutationOptions(backend, 'createTag'))
   const associateTagMutation = useMutation(backendMutationOptions(backend, 'associateTag'))

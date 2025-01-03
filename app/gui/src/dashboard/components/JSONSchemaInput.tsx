@@ -11,7 +11,6 @@ import { useText } from '#/providers/TextProvider'
 import { constantValueOfSchema, getSchemaName, lookupDef } from '#/utilities/jsonSchema'
 import { asObject, singletonObjectOrNull } from '#/utilities/object'
 import { twMerge } from '#/utilities/tailwindMerge'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { twJoin } from 'tailwind-merge'
 
 // =======================
@@ -50,7 +49,7 @@ export default function JSONSchemaInput(props: JSONSchemaInputProps) {
     schema.type === 'string' &&
     'format' in schema &&
     schema.format === 'enso-secret'
-  const { data: secrets } = useBackendQuery(remoteBackend, 'listSecrets', EMPTY_ARRAY, {
+  const { data: secrets } = useBackendQuery(remoteBackend, 'listSecrets', [], {
     enabled: isSecret,
   })
   const autocompleteItems = isSecret ? secrets?.map((secret) => secret.path) ?? null : null

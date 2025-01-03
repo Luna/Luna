@@ -18,7 +18,7 @@ import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { Path } from '#/services/ProjectManager'
-import { EMPTY_ARRAY, includesPredicate } from '#/utilities/array'
+import { includesPredicate } from '#/utilities/array'
 import { regexEscape } from '#/utilities/string'
 import {
   ALL_SETTINGS_TABS,
@@ -59,7 +59,7 @@ export default function Settings() {
   const [query, setQuery] = React.useState('')
   const root = useStrictPortalContext()
   const [isSidebarPopoverOpen, setIsSidebarPopoverOpen] = React.useState(false)
-  const { data: organization = null } = useBackendQuery(backend, 'getOrganization', EMPTY_ARRAY)
+  const { data: organization = null } = useBackendQuery(backend, 'getOrganization', [])
   const isQueryBlank = !/\S/.test(query)
 
   const updateUser = useMutation(backendMutationOptions(backend, 'updateUser')).mutateAsync

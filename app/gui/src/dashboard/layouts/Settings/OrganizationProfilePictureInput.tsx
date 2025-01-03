@@ -12,7 +12,6 @@ import FocusRing from '#/components/styled/FocusRing'
 
 import { Form, HiddenFile } from '#/components/AriaComponents'
 import type Backend from '#/services/Backend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =======================================
 // === OrganizationProfilePictureInput ===
@@ -29,7 +28,7 @@ export default function OrganizationProfilePictureInput(
 ) {
   const { backend } = props
   const { getText } = textProvider.useText()
-  const { data: organization } = useBackendQuery(backend, 'getOrganization', EMPTY_ARRAY)
+  const { data: organization } = useBackendQuery(backend, 'getOrganization', [])
 
   const uploadOrganizationPicture = useMutation(
     backendMutationOptions(backend, 'uploadOrganizationPicture'),

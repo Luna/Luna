@@ -145,7 +145,6 @@ import { withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import invariant from 'tiny-invariant'
 import { useStore } from '../utilities/zustand'
 
@@ -319,7 +318,7 @@ function AssetsTable(props: AssetsTableProps) {
   const queryClient = useQueryClient()
   const { user } = useFullUserSession()
   const backend = useBackend(category)
-  const { data: labels } = useBackendQuery(backend, 'listTags', EMPTY_ARRAY)
+  const { data: labels } = useBackendQuery(backend, 'listTags', [])
   const { setModal, unsetModal } = useSetModal()
   const { localStorage } = useLocalStorage()
   const { getText } = useText()
@@ -921,7 +920,7 @@ function AssetsTable(props: AssetsTableProps) {
         break
       }
       case 'Escape': {
-        setSelectedAssets(EMPTY_ARRAY)
+        setSelectedAssets([])
         setMostRecentlySelectedIndex(null)
         selectionStartIndexRef.current = null
         break
@@ -977,7 +976,7 @@ function AssetsTable(props: AssetsTableProps) {
         } else {
           // The arrow key will escape this container. In that case, do not stop propagation
           // and let `navigator2D` navigate to a different container.
-          setSelectedAssets(EMPTY_ARRAY)
+          setSelectedAssets([])
           selectionStartIndexRef.current = null
         }
         break
@@ -1013,7 +1012,7 @@ function AssetsTable(props: AssetsTableProps) {
       type: 'move',
       data: { backendType: backend.type, category, ids: selectedKeys },
     })
-    setSelectedAssets(EMPTY_ARRAY)
+    setSelectedAssets([])
   })
 
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
@@ -1599,7 +1598,7 @@ function AssetsTable(props: AssetsTableProps) {
             handleFileDrop(event)
           }}
           onClick={() => {
-            setSelectedAssets(EMPTY_ARRAY)
+            setSelectedAssets([])
           }}
         >
           <FileTrigger
@@ -1795,7 +1794,7 @@ export function AssetsTableAssetsUnselector(props: AssetsTableAssetsUnselectorPr
   const { pressProps } = usePress({
     isDisabled: !hasSelectedKeys,
     onPress: () => {
-      setSelectedAssets(EMPTY_ARRAY)
+      setSelectedAssets([])
     },
   })
 

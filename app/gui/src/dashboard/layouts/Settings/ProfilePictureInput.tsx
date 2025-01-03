@@ -12,7 +12,6 @@ import FocusRing from '#/components/styled/FocusRing'
 
 import { Form, HiddenFile } from '#/components/AriaComponents'
 import type Backend from '#/services/Backend'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // ===========================
 // === ProfilePictureInput ===
@@ -26,7 +25,7 @@ export interface ProfilePictureInputProps {
 /** The input for viewing and changing the user's profile picture. */
 export default function ProfilePictureInput(props: ProfilePictureInputProps) {
   const { backend } = props
-  const { data: user } = useBackendQuery(backend, 'usersMe', EMPTY_ARRAY)
+  const { data: user } = useBackendQuery(backend, 'usersMe', [])
   const { getText } = textProvider.useText()
 
   const uploadUserPicture = useMutation(backendMutationOptions(backend, 'uploadUserPicture'))

@@ -18,7 +18,6 @@ import type Backend from '#/services/Backend'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 
 // =========================
 // === NewUserGroupModal ===
@@ -37,7 +36,7 @@ export default function NewUserGroupModal(props: NewUserGroupModalProps) {
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const [name, setName] = useState('')
-  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
   const userGroups = listUserGroupsQuery.data ?? null
   const userGroupNames =
     userGroups == null ? null : (

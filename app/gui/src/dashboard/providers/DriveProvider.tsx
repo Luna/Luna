@@ -152,6 +152,9 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       selectedKeys: EMPTY_SET,
       selectedAssets: EMPTY_ARRAY,
       setSelectedAssets: (selectedAssets) => {
+        if (selectedAssets.length === 0) {
+          selectedAssets = EMPTY_ARRAY
+        }
         if (get().selectedAssets !== selectedAssets) {
           set({
             selectedAssets,

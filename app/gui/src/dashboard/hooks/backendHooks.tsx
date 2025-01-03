@@ -58,7 +58,6 @@ import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
 // The number of bytes in 1 megabyte.
@@ -298,8 +297,8 @@ export interface UserGroupInfoWithUsers extends UserGroupInfo {
 export function useListUserGroupsWithUsers(
   backend: Backend,
 ): readonly UserGroupInfoWithUsers[] | null {
-  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
-  const listUsersQuery = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
+  const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
+  const listUsersQuery = useBackendQuery(backend, 'listUsers', [])
   if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
     return null
   } else {
@@ -554,8 +553,8 @@ export function useNewFolder(backend: Backend, category: Category) {
   const setNewestFolderId = useSetNewestFolderId()
   const setSelectedAssets = useSetSelectedAssets()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
@@ -598,8 +597,8 @@ export function useNewProject(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
 
   return useEventCallback(
@@ -677,8 +676,8 @@ export function useNewProject(backend: Backend, category: Category) {
 export function useNewSecret(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createSecretMutation = useMutation(backendMutationOptions(backend, 'createSecret'))
 
   return useEventCallback(
@@ -716,8 +715,8 @@ export function useNewSecret(backend: Backend, category: Category) {
 export function useNewDatalink(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
 
   return useEventCallback(
@@ -759,8 +758,8 @@ export function useUploadFiles(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { setModal } = useSetModal()
   const { user } = useFullUserSession()
-  const { data: users } = useBackendQuery(backend, 'listUsers', EMPTY_ARRAY)
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', EMPTY_ARRAY)
+  const { data: users } = useBackendQuery(backend, 'listUsers', [])
+  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const uploadFileMutation = useUploadFileWithToastMutation(backend)
   const setSelectedAssets = useSetSelectedAssets()
 
