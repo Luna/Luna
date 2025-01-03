@@ -1,4 +1,4 @@
-# Next Next Release
+# Next Release
 
 #### Enso IDE
 
@@ -6,9 +6,13 @@
   GeoMap visualization][11889].
 - [Round ‘Add component’ button under the component menu replaced by a small
   button protruding from the output port.][11836].
+- [Fixed nodes being selected after deleting other nodes or connections.][11902]
+- [Redo stack is no longer lost when interacting with text literals][11908].
 
 [11889]: https://github.com/enso-org/enso/pull/11889
 [11836]: https://github.com/enso-org/enso/pull/11836
+[11902]: https://github.com/enso-org/enso/pull/11902
+[11908]: https://github.com/enso-org/enso/pull/11908
 
 #### Enso Language & Runtime
 
@@ -28,7 +32,7 @@
 [11908]: https://github.com/enso-org/enso/pull/11908
 [11897]: https://github.com/enso-org/enso/pull/11897
 
-# Next Release
+# Enso 2024.5
 
 #### Enso IDE
 
