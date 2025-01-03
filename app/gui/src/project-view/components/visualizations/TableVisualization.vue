@@ -7,6 +7,7 @@ import {
 } from '@/components/visualizations/TableVisualization/tableVizToolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
+import { LINKABLE_URL_REGEX } from '@/util/link'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
 import type {
   CellClassParams,
@@ -197,10 +198,7 @@ function formatText(params: ICellRendererParams) {
     .replaceAll('>', '&gt;')
 
   if (textFormatterSelected.value === 'off') {
-    const replaceLinks = htmlEscaped.replace(
-      /https?:\/\/([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(:[0-9]+)?(\/[-()_.!~*';/?:%@&=+$,A-Za-z0-9]*)?/,
-      (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
-    )
+    const replaceLinks = replaceLinksWithTag(htmlEscaped)
     return replaceLinks.replace(/^\s+|\s+$/g, '&nbsp;')
   }
 
@@ -222,10 +220,7 @@ function formatText(params: ICellRendererParams) {
         return `<span style="color: #df8800">${match.replaceAll(' ', '&#183;')}</span>`
       })
 
-  const replaceLinks = replaceSpaces.replace(
-    /https?:\/\/([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+)(:[0-9]+)?(\/[-()_.!~*';/?:%@&=+$,A-Za-z0-9]*)?/,
-    (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
-  )
+  const replaceLinks = replaceLinksWithTag(replaceSpaces)
 
   const replaceReturns = replaceLinks.replace(
     /\r\n/g,
@@ -253,6 +248,13 @@ function setRowLimit(newRowLimit: number) {
       newRowLimit.toString(),
     )
   }
+}
+
+function replaceLinksWithTag(str: string) {
+  return str.replace(
+    LINKABLE_URL_REGEX,
+    (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
+  )
 }
 
 function escapeHTML(str: string) {
