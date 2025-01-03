@@ -49,9 +49,7 @@ export default function JSONSchemaInput(props: JSONSchemaInputProps) {
     schema.type === 'string' &&
     'format' in schema &&
     schema.format === 'enso-secret'
-  const { data: secrets } = useBackendQuery(remoteBackend, 'listSecrets', [], {
-    enabled: isSecret,
-  })
+  const { data: secrets } = useBackendQuery(remoteBackend, 'listSecrets', [], { enabled: isSecret })
   const autocompleteItems = isSecret ? secrets?.map((secret) => secret.path) ?? null : null
   const isInvalid = !isAbsent && !getValidator(path)(value)
   const validationErrorClassName =

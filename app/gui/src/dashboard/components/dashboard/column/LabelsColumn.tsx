@@ -50,23 +50,37 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
     category.type !== 'trash' &&
     (self?.permission === permissions.PermissionAction.own ||
       self?.permission === permissions.PermissionAction.admin)
-  const temporarilyAddedLabels = useStore(driveStore, ({ labelsDragPayload, dragTargetAssetId }) =>
-    (
-      showDraggedLabelsFallback ? labelsDragPayload?.typeWhenAppliedToSelection === 'add'
-      : item.id === dragTargetAssetId
-    ) ?
-      labelsDragPayload?.labels ?? EMPTY_ARRAY
-    : EMPTY_ARRAY,
+  const temporarilyAddedLabels = useStore(
+    driveStore,
+    ({ labelsDragPayload, dragTargetAssetId }) => {
+      const areTemporaryLabelsRelevant = (() => {
+        if (showDraggedLabelsFallback) {
+          return labelsDragPayload?.typeWhenAppliedToSelection === 'add'
+        } else {
+          return item.id === dragTargetAssetId
+        }
+      })()
+      if (areTemporaryLabelsRelevant) {
+        return labelsDragPayload?.labels ?? EMPTY_ARRAY
+      }
+      return EMPTY_ARRAY
+    },
   )
   const temporarilyRemovedLabels = useStore(
     driveStore,
-    ({ labelsDragPayload, dragTargetAssetId }) =>
-      (
-        showDraggedLabelsFallback ? labelsDragPayload?.typeWhenAppliedToSelection === 'remove'
-        : item.id === dragTargetAssetId
-      ) ?
-        labelsDragPayload?.labels ?? EMPTY_ARRAY
-      : EMPTY_ARRAY,
+    ({ labelsDragPayload, dragTargetAssetId }) => {
+      const areTemporaryLabelsRelevant = (() => {
+        if (showDraggedLabelsFallback) {
+          return labelsDragPayload?.typeWhenAppliedToSelection === 'remove'
+        } else {
+          return item.id === dragTargetAssetId
+        }
+      })()
+      if (areTemporaryLabelsRelevant) {
+        return labelsDragPayload?.labels ?? EMPTY_ARRAY
+      }
+      return EMPTY_ARRAY
+    },
   )
 
   return (
@@ -109,7 +123,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
             {label}
           </Label>
         ))}
-      {...temporarilyAddedLabels
+      {temporarilyAddedLabels
         .filter((label) => item.labels?.includes(label) !== true)
         .map((label) => (
           <Label
