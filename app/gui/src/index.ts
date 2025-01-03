@@ -1,13 +1,29 @@
 import '#/styles.css'
 import '#/tailwind.css'
+import * as sentry from '@sentry/react'
 import { VueQueryPlugin } from '@tanstack/vue-query'
+import * as detect from 'enso-common/src/detect'
 import { createQueryClient } from 'enso-common/src/queryClient'
 import { MotionGlobalConfig } from 'framer-motion'
 import * as idbKeyval from 'idb-keyval'
+import { useEffect } from 'react'
+import {
+  createRoutesFromChildren,
+  matchRoutes,
+  useLocation,
+  useNavigationType,
+} from 'react-router-dom'
 import { createApp } from 'vue'
 import App from './App.vue'
 
+const HTTP_STATUS_BAD_REQUEST = 400
+const API_HOST =
+  process.env.ENSO_CLOUD_API_URL != null ? new URL(process.env.ENSO_CLOUD_API_URL).host : null
+/** The fraction of non-erroring interactions that should be sampled by Sentry. */
+const SENTRY_SAMPLE_RATE = 0.005
 const SCAM_WARNING_TIMEOUT = 1000
+const INITIAL_URL_KEY = `Enso-initial-url`
+
 function printScamWarning() {
   if (process.env.NODE_ENV === 'development') return
   const headerCss = `
@@ -44,6 +60,73 @@ window.addEventListener('resize', () => {
 })
 
 function main() {
+  if (
+    !detect.IS_DEV_MODE &&
+    process.env.ENSO_CLOUD_SENTRY_DSN != null &&
+    process.env.ENSO_CLOUD_API_URL != null
+  ) {
+    const version: unknown = import.meta.env.ENSO_IDE_VERSION
+    sentry.init({
+      dsn: process.env.ENSO_CLOUD_SENTRY_DSN,
+      environment: process.env.ENSO_CLOUD_ENVIRONMENT,
+      release: version?.toString() ?? 'dev',
+      integrations: [
+        sentry.reactRouterV6BrowserTracingIntegration({
+          useEffect,
+          useLocation,
+          useNavigationType,
+          createRoutesFromChildren,
+          matchRoutes,
+        }),
+        sentry.extraErrorDataIntegration({ captureErrorCause: true }),
+        sentry.replayIntegration(),
+        new sentry.BrowserProfilingIntegration(),
+      ],
+      profilesSampleRate: SENTRY_SAMPLE_RATE,
+      tracesSampleRate: SENTRY_SAMPLE_RATE,
+      tracePropagationTargets: [process.env.ENSO_CLOUD_API_URL.split('//')[1] ?? ''],
+      replaysSessionSampleRate: SENTRY_SAMPLE_RATE,
+      replaysOnErrorSampleRate: 1.0,
+      beforeSend: (event) => {
+        if (
+          (event.breadcrumbs ?? []).some(
+            (breadcrumb) =>
+              breadcrumb.type === 'http' &&
+              breadcrumb.category === 'fetch' &&
+              breadcrumb.data &&
+              breadcrumb.data.status_code === HTTP_STATUS_BAD_REQUEST &&
+              typeof breadcrumb.data.url === 'string' &&
+              new URL(breadcrumb.data.url).host === API_HOST,
+          )
+        ) {
+          return null
+        }
+        return event
+      },
+    })
+  }
+
+  /**
+   * Note: Signing out always redirects to `/`. It is impossible to make this work,
+   * as it is not possible to distinguish between having just logged out, and explicitly
+   * opening a page with no URL parameters set.
+   *
+   * Client-side routing endpoints are explicitly not supported for live-reload, as they are
+   * transitional pages that should not need live-reload when running `gui watch`.
+   */
+  const url = new URL(location.href)
+  const isInAuthenticationFlow = url.searchParams.has('code') && url.searchParams.has('state')
+  const authenticationUrl = location.href
+
+  if (isInAuthenticationFlow) {
+    history.replaceState(null, '', localStorage.getItem(INITIAL_URL_KEY))
+  }
+  if (isInAuthenticationFlow) {
+    history.replaceState(null, '', authenticationUrl)
+  } else {
+    localStorage.setItem(INITIAL_URL_KEY, location.href)
+  }
+
   const store = idbKeyval.createStore('enso', 'query-persist-cache')
   const queryClient = createQueryClient({
     persisterStorage: {
@@ -67,7 +150,18 @@ function main() {
     document.documentElement.classList.remove('disable-animations')
   }
 
-  const app = createApp(App)
+  const app = createApp(App, {
+    onAuthenticated() {
+      if (isInAuthenticationFlow) {
+        const initialUrl = localStorage.getItem(INITIAL_URL_KEY)
+        if (initialUrl != null) {
+          // This is not used past this point, however it is set to the initial URL
+          // to make refreshing work as expected.
+          history.replaceState(null, '', initialUrl)
+        }
+      }
+    },
+  })
   app.use(VueQueryPlugin, { queryClient })
   app.mount('#enso-app')
 }

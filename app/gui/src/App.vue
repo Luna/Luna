@@ -14,7 +14,10 @@ import { applyPureReactInVue } from 'veaury'
 import { computed, onMounted } from 'vue'
 import ReactRoot from './ReactRoot'
 
-const _props = defineProps<{ projectViewOnly?: { options: ProjectViewProps } | null }>()
+const _props = defineProps<{
+  projectViewOnly?: { options: ProjectViewProps } | null
+  onAuthenticated?: (accessToken: string | null) => void
+}>()
 
 const classSet = provideAppClassSet()
 const appTooltips = provideTooltipRegistry()
@@ -55,5 +58,6 @@ onMounted(() => {
     :config="appConfigValue"
     :queryClient="queryClient"
     :classSet="classSet"
+    @authenticated="onAuthenticated ?? (() => {})"
   />
 </template>
