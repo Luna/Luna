@@ -15,6 +15,8 @@ import { computed, onMounted } from 'vue'
 import ReactRoot from './ReactRoot'
 
 const _props = defineProps<{
+  // Used in Project View integration tests. Once both test projects will be merged, this should be
+  // removed
   projectViewOnly?: { options: ProjectViewProps } | null
   onAuthenticated?: (accessToken: string | null) => void
 }>()
