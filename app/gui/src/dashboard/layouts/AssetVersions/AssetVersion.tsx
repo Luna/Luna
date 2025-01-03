@@ -35,9 +35,14 @@ export default function AssetVersion(props: AssetVersionProps) {
   const duplicateProjectMutation = useDuplicateProjectMutation(backend)
   const isProject = item.type === backendService.AssetType.project
 
-  const doDuplicate = useEventCallback(() => {
+  const doDuplicate = useEventCallback(async () => {
     if (isProject) {
-      duplicateProjectMutation.mutate([item.id, item.title, item.parentId, version.versionId])
+      await duplicateProjectMutation.mutateAsync([
+        item.id,
+        item.title,
+        item.parentId,
+        version.versionId,
+      ])
     }
   })
 

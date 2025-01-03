@@ -302,13 +302,12 @@ export function useListUserGroupsWithUsers(
   if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
     return null
   } else {
-    const result = listUserGroupsQuery.data.map((userGroup) => {
+    return listUserGroupsQuery.data.map((userGroup) => {
       const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
         user.userGroups?.includes(userGroup.id),
       )
       return { ...userGroup, users: usersInGroup }
     })
-    return result
   }
 }
 
@@ -340,7 +339,7 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
     staleTime: Infinity,
     queryFn: async () => {
       try {
-        const result = await backend.listDirectory(
+        return await backend.listDirectory(
           {
             parentId,
             filterBy: CATEGORY_TO_FILTER_BY[category.type],
@@ -349,12 +348,11 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
           },
           parentId,
         )
-        return result
-      } catch (e) {
-        if (e instanceof Error) {
-          throw Object.assign(e, { parentId })
+      } catch (error) {
+        if (error instanceof Error) {
+          throw Object.assign(error, { parentId })
         } else {
-          throw e
+          throw error
         }
       }
     },
@@ -591,7 +589,6 @@ export function useNewFolder(backend: Backend, category: Category) {
 /** A function to create a new project. */
 export function useNewProject(backend: Backend, category: Category) {
   const ensureListDirectory = useEnsureListDirectory(backend, category)
-  const toastAndLog = useToastAndLog()
   const doOpenProject = useOpenProject()
   const deleteAsset = useDeleteAsset(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
@@ -655,7 +652,6 @@ export function useNewProject(backend: Backend, category: Category) {
         ])
         .catch((error) => {
           void deleteAsset(placeholderItem.id, parentId)
-          toastAndLog('createProjectError', error)
           throw error
         })
         .then((createdProject) => {
@@ -1419,7 +1415,6 @@ export function useClearTrashMutation(backend: Backend) {
 /** Duplicate a specific version of a project. */
 export function useDuplicateProjectMutation(backend: Backend) {
   const queryClient = useQueryClient()
-  const toastAndLog = useToastAndLog()
   const doOpenProject = useOpenProject()
 
   return useMutation({
@@ -1448,20 +1443,14 @@ export function useDuplicateProjectMutation(backend: Backend) {
         title = `${originalTitle} (${index})`
       }
 
-      await backend
-        .duplicateProject(id, versionId, title)
-        .catch((error) => {
-          toastAndLog('createProjectError', error)
-          throw error
+      await backend.duplicateProject(id, versionId, title).then((project) => {
+        doOpenProject({
+          type: backend.type,
+          parentId,
+          title,
+          id: project.projectId,
         })
-        .then((project) => {
-          doOpenProject({
-            type: backend.type,
-            parentId,
-            title,
-            id: project.projectId,
-          })
-        })
+      })
     },
   })
 }
@@ -1480,58 +1469,46 @@ export function useDownloadAssetsMutation(backend: Backend) {
           if (backend.type === BackendType.remote) {
             switch (asset.type) {
               case backendModule.AssetType.project: {
-                try {
-                  const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, true], {
-                      staleTime: 0,
-                    }),
-                  )
-                  if (details.url != null) {
-                    await backend.download(details.url, `${title}.enso-project`)
-                  } else {
-                    const error: unknown = getText('projectHasNoSourceFilesPhrase')
-                    toastAndLog('downloadProjectError', error, title)
-                  }
-                } catch (error) {
+                const details = await queryClient.fetchQuery(
+                  backendQueryOptions(backend, 'getProjectDetails', [asset.id, true], {
+                    staleTime: 0,
+                  }),
+                )
+                if (details.url != null) {
+                  await backend.download(details.url, `${title}.enso-project`)
+                } else {
+                  const error: unknown = getText('projectHasNoSourceFilesPhrase')
                   toastAndLog('downloadProjectError', error, title)
                 }
                 break
               }
               case backendModule.AssetType.file: {
-                try {
-                  const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, '(unknown)', true], {
-                      staleTime: 0,
-                    }),
-                  )
-                  if (details.url != null) {
-                    await backend.download(details.url, details.file.fileName ?? '')
-                  } else {
-                    const error: unknown = getText('fileNotFoundPhrase')
-                    toastAndLog('downloadFileError', error, title)
-                  }
-                } catch (error) {
-                  toastAndLog('downloadFileError', error, '(unknown)')
+                const details = await queryClient.fetchQuery(
+                  backendQueryOptions(backend, 'getFileDetails', [asset.id, '(unknown)', true], {
+                    staleTime: 0,
+                  }),
+                )
+                if (details.url != null) {
+                  await backend.download(details.url, details.file.fileName ?? '')
+                } else {
+                  const error: unknown = getText('fileNotFoundPhrase')
+                  toastAndLog('downloadFileError', error, title)
                 }
                 break
               }
               case backendModule.AssetType.datalink: {
-                try {
-                  const value = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getDatalink', [asset.id, '(unknown)']),
-                  )
-                  const fileName = `${title}.datalink`
-                  download(
-                    URL.createObjectURL(
-                      new File([JSON.stringify(value)], fileName, {
-                        type: 'application/json+x-enso-data-link',
-                      }),
-                    ),
-                    fileName,
-                  )
-                } catch (error) {
-                  toastAndLog('downloadDatalinkError', error, '(unknown)')
-                }
+                const value = await queryClient.fetchQuery(
+                  backendQueryOptions(backend, 'getDatalink', [asset.id, '(unknown)']),
+                )
+                const fileName = `${title}.datalink`
+                download(
+                  URL.createObjectURL(
+                    new File([JSON.stringify(value)], fileName, {
+                      type: 'application/json+x-enso-data-link',
+                    }),
+                  ),
+                  fileName,
+                )
                 break
               }
               default: {
