@@ -20,22 +20,11 @@ import * as twMerge from '#/utilities/tailwindMerge'
 import { useTimeoutCallback } from '../hooks/timeoutHooks'
 
 // eslint-disable-next-line no-restricted-syntax
-import ProjectViewVue from '@/views/ProjectView.vue'
+import ProjectViewVue, { type ProjectViewProps } from '@/views/ProjectView.vue'
 import { applyPureVueInReact } from 'veaury'
-import type { AllowedComponentProps, VNodeProps } from 'vue'
 
 // eslint-disable-next-line no-restricted-syntax
 const ProjectView = applyPureVueInReact(ProjectViewVue) as (props: ProjectViewProps) => JSX.Element
-
-// ========================
-// === GraphEditorProps ===
-// ========================
-
-/** Props for the GUI editor root component. */
-export type ProjectViewProps = Omit<
-  InstanceType<typeof ProjectViewVue>['$props'],
-  keyof AllowedComponentProps | keyof VNodeProps
->
 
 // ==============
 // === Editor ===
@@ -178,7 +167,7 @@ function EditorInternal(props: EditorInternalProps) {
     renameProject(newName, openedProject.projectId)
   })
 
-  const appProps: ProjectViewProps = React.useMemo<ProjectViewProps>(() => {
+  const appProps = React.useMemo<ProjectViewProps>(() => {
     const jsonAddress = openedProject.jsonAddress
     const binaryAddress = openedProject.binaryAddress
     const ydocAddress = openedProject.ydocAddress ?? ydocUrl ?? ''
@@ -211,10 +200,11 @@ function EditorInternal(props: EditorInternalProps) {
     localBackend,
     remoteBackend,
   ])
+  const key: string = appProps.projectId
 
   // Currently the GUI component needs to be fully rerendered whenever the project is changed. Once
   // this is no longer necessary, the `key` could be removed.
-  return <ProjectView key={appProps.projectId} {...appProps} />
+  return <ProjectView key={key} {...appProps} />
 }
 
 export default React.memo(Editor)

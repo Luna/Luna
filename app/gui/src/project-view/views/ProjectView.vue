@@ -1,33 +1,34 @@
 <script setup lang="ts">
+import Backend from '#/services/Backend'
 import GraphEditor from '@/components/GraphEditor.vue'
 import { provideBackend } from '@/providers/backend'
 import { provideEventLogger } from '@/providers/eventLogging'
 import { provideVisibility } from '@/providers/visibility'
-import type { LsUrls } from '@/stores/project'
-import { provideProjectStore } from '@/stores/project'
+import { LsUrls, provideProjectStore } from '@/stores/project'
 import { provideSettings } from '@/stores/settings'
 import { Opt } from '@/util/data/opt'
 import { useEventListener } from '@vueuse/core'
-import type Backend from 'enso-common/src/services/Backend'
 import { computed, markRaw, ref, toRaw, toRef, watch } from 'vue'
 
-const props = defineProps<{
-  projectId: string
-  projectName: string
-  projectDisplayedName: string
-  projectNamespace?: string
-  engine: LsUrls
-  renameProject: (newName: string) => void
-  hidden: boolean
+export interface ProjectViewProps {
+  readonly projectId: string
+  readonly projectName: string
+  readonly projectDisplayedName: string
+  readonly projectNamespace?: string
+  readonly engine: LsUrls
+  readonly renameProject: (newName: string) => void
+  readonly hidden: boolean
   /** The current project's backend, which may be remote or local. */
-  projectBackend?: Opt<Backend>
+  readonly projectBackend?: Opt<Backend>
   /**
    * The remote backend.
    *
    * This is used regardless of whether the project is local for e.g. the cloud file browser.
    */
-  remoteBackend?: Opt<Backend>
-}>()
+  readonly remoteBackend?: Opt<Backend>
+}
+
+const props = defineProps<ProjectViewProps>()
 
 provideBackend({
   project: () => (props.projectBackend && markRaw(toRaw(props.projectBackend))) ?? null,
