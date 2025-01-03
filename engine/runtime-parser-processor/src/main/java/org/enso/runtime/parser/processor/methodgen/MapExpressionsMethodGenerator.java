@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
+import org.enso.runtime.parser.processor.ClassField;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
-import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.utils.Utils;
@@ -64,17 +64,18 @@ public final class MapExpressionsMethodGenerator {
                         Utils.findMapExpressionsMethod(
                             child.getTypeParameter(), ctx.getProcessingEnvironment());
                   } else {
+                    var childTypeElem =
+                        Utils.typeMirrorToElement(child.getType());
                     childsMapExprMethod =
                         Utils.findMapExpressionsMethod(
-                            child.getType(), ctx.getProcessingEnvironment());
+                            childTypeElem, ctx.getProcessingEnvironment());
                   }
 
                   var typeUtils = ctx.getProcessingEnvironment().getTypeUtils();
                   var childsMapExprMethodRetType =
                       typeUtils.asElement(childsMapExprMethod.getReturnType());
                   var shouldCast =
-                      !typeUtils.isSameType(
-                          child.getType().asType(), childsMapExprMethodRetType.asType());
+                      !typeUtils.isSameType(child.getType(), childsMapExprMethodRetType.asType());
                   if (child.isList() || child.isOption()) {
                     shouldCast = false;
                   }
@@ -173,7 +174,7 @@ public final class MapExpressionsMethodGenerator {
             .append("if (!(")
             .append(newChild.newChildName)
             .append(" instanceof ")
-            .append(newChild.child.getType().getSimpleName())
+            .append(newChild.child.getSimpleTypeName())
             .append(")) {")
             .append(System.lineSeparator());
         sb.append("      ")
@@ -187,7 +188,7 @@ public final class MapExpressionsMethodGenerator {
       }
       sb.append("    ").append("bldr.").append(newChild.child.getName()).append("(");
       if (newChild.shouldCast) {
-        sb.append("(").append(newChild.child.getType().getSimpleName()).append(") ");
+        sb.append("(").append(newChild.child.getSimpleTypeName()).append(") ");
       }
       sb.append(newChild.newChildName).append(");").append(System.lineSeparator());
     }

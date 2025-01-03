@@ -3,6 +3,7 @@ package org.enso.runtime.parser.processor.field;
 import java.util.List;
 import java.util.function.Function;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.dsl.IRChild;
 
 /** Represents a field in the generated super class. */
@@ -11,8 +12,8 @@ public interface Field {
   /** Name (identifier) of the field. */
   String getName();
 
-  /** Returns type of this field. Null if this is a primitive field. */
-  TypeElement getType();
+  /** Returns type of this field. Must not be null. */
+  TypeMirror getType();
 
   /**
    * Does not return null. If the type is generic, the type parameter is included in the name.

@@ -2,18 +2,19 @@ package org.enso.runtime.parser.processor.field;
 
 import java.util.List;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 /** Represents a {@code scala.collection.immutable.List} field in the IR node. */
 final class ListField implements Field {
   private final String name;
   private final TypeElement typeArgElement;
-  private final TypeElement type;
+  private final TypeMirror type;
 
   /**
    * @param name Name of the field
    * @param typeArgElement TypeElement of the type argument. Must be subtype of IR.
    */
-  ListField(String name, TypeElement type, TypeElement typeArgElement) {
+  ListField(String name, TypeMirror type, TypeElement typeArgElement) {
     this.name = name;
     this.type = type;
     this.typeArgElement = typeArgElement;
@@ -25,7 +26,7 @@ final class ListField implements Field {
   }
 
   @Override
-  public TypeElement getType() {
+  public TypeMirror getType() {
     return type;
   }
 

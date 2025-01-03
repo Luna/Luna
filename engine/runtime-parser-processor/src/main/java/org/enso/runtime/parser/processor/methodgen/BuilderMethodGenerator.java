@@ -1,8 +1,8 @@
 package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.stream.Collectors;
+import org.enso.runtime.parser.processor.ClassField;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
-import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 import org.enso.runtime.parser.processor.utils.Utils;
 
 /**
@@ -26,7 +26,7 @@ public class BuilderMethodGenerator {
                 field -> {
                   var initializer = field.initializer() != null ? " = " + field.initializer() : "";
                   return "private $type $name $initializer;"
-                      .replace("$type", field.type())
+                      .replace("$type", field.getTypeName())
                       .replace("$name", field.name())
                       .replace("$initializer", initializer);
                 })
@@ -43,7 +43,7 @@ public class BuilderMethodGenerator {
         }
         """
                         .replace("$fieldName", field.name())
-                        .replace("$fieldType", field.type()))
+                        .replace("$fieldType", field.getTypeName()))
             .collect(Collectors.joining(System.lineSeparator()));
 
     // Validation code for all non-nullable user fields

@@ -1,6 +1,5 @@
 package org.enso.runtime.parser.processor.field;
 
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 final class PrimitiveField implements Field {
@@ -19,8 +18,8 @@ final class PrimitiveField implements Field {
   }
 
   @Override
-  public TypeElement getType() {
-    return null;
+  public TypeMirror getType() {
+    return type;
   }
 
   @Override

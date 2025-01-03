@@ -2,14 +2,15 @@ package org.enso.runtime.parser.processor.field;
 
 import java.util.List;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 
 /** Field representing {@code scala.Option} */
 public class OptionField implements Field {
   private final String name;
   private final TypeElement typeArgElement;
-  private final TypeElement type;
+  private final TypeMirror type;
 
-  public OptionField(String name, TypeElement type, TypeElement typeArgElement) {
+  public OptionField(String name, TypeMirror type, TypeElement typeArgElement) {
     this.name = name;
     this.type = type;
     this.typeArgElement = typeArgElement;
@@ -21,7 +22,7 @@ public class OptionField implements Field {
   }
 
   @Override
-  public TypeElement getType() {
+  public TypeMirror getType() {
     return type;
   }
 

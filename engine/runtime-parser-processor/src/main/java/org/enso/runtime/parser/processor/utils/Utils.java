@@ -10,6 +10,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.processor.IRProcessingException;
 
@@ -22,6 +24,12 @@ public final class Utils {
   private static final String EXPRESSION_FQN = "org.enso.compiler.core.ir.Expression";
   private static final String SCALA_LIST = "scala.collection.immutable.List";
   private static final String SCALA_OPTION = "scala.Option";
+  private static final String DIAGNOSTIC_STORAGE_FQN =
+      "org.enso.compiler.core.ir.DiagnosticStorage";
+  private static final String IDENTIFIED_LOCATION_FQN =
+      "org.enso.compiler.core.ir.IdentifiedLocation";
+  private static final String METADATA_STORAGE_FQN = "org.enso.compiler.core.ir.MetadataStorage";
+  private static final String UUID_FQN = "java.util.UUID";
 
   private Utils() {}
 
@@ -58,6 +66,30 @@ public final class Utils {
     return ret;
   }
 
+  public static TypeElement diagnosticStorageTypeElement(ProcessingEnvironment procEnv) {
+    var ret = procEnv.getElementUtils().getTypeElement(DIAGNOSTIC_STORAGE_FQN);
+    hardAssert(ret != null);
+    return ret;
+  }
+
+  public static TypeElement identifiedLocationTypeElement(ProcessingEnvironment procEnv) {
+    var ret = procEnv.getElementUtils().getTypeElement(IDENTIFIED_LOCATION_FQN);
+    hardAssert(ret != null);
+    return ret;
+  }
+
+  public static TypeElement metadataStorageTypeElement(ProcessingEnvironment procEnv) {
+    var ret = procEnv.getElementUtils().getTypeElement(METADATA_STORAGE_FQN);
+    hardAssert(ret != null);
+    return ret;
+  }
+
+  public static TypeElement uuidTypeElement(ProcessingEnvironment procEnv) {
+    var ret = procEnv.getElementUtils().getTypeElement(UUID_FQN);
+    hardAssert(ret != null);
+    return ret;
+  }
+
   public static boolean isExpression(Element elem, ProcessingEnvironment processingEnvironment) {
     if (elem instanceof TypeElement typeElem) {
       var exprType = expressionType(processingEnvironment);
@@ -81,6 +113,20 @@ public final class Utils {
     return code.lines()
         .map(line -> " ".repeat(indentation) + line)
         .collect(Collectors.joining(System.lineSeparator()));
+  }
+
+  /**
+   * Returns null if the given {@code typeMirror} is not a declared type and thus has no associated
+   * {@link TypeElement}.
+   */
+  public static TypeElement typeMirrorToElement(TypeMirror typeMirror) {
+    if (typeMirror.getKind() == TypeKind.DECLARED) {
+      var elem = ((DeclaredType) typeMirror).asElement();
+      if (elem instanceof TypeElement typeElem) {
+        return typeElem;
+      }
+    }
+    return null;
   }
 
   public static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {

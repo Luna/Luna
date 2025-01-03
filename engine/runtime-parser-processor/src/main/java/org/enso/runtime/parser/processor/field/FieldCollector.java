@@ -95,13 +95,11 @@ public final class FieldCollector {
   private Field processIrField(VariableElement param, IRField irFieldAnnot) {
     var isNullable = !irFieldAnnot.required();
     var name = param.getSimpleName().toString();
-    var type = getParamType(param);
     if (isPrimitiveType(param)) {
       return new PrimitiveField(param.asType(), name);
     } else {
       // TODO: Assert that type is simple reference type - does not extend IR, is not generic
-      Utils.hardAssert(type != null);
-      return new ReferenceField(processingEnv, type, name, isNullable, false);
+      return new ReferenceField(processingEnv, param.asType(), name, isNullable, false);
     }
   }
 
@@ -111,17 +109,17 @@ public final class FieldCollector {
     var isNullable = !irChildAnnot.required();
     if (Utils.isScalaList(type, processingEnv)) {
       var typeArgElem = getGenericType(param);
-      return new ListField(name, type, typeArgElem);
+      return new ListField(name, param.asType(), typeArgElem);
     } else if (Utils.isScalaOption(type, processingEnv)) {
       var typeArgElem = getGenericType(param);
-      return new OptionField(name, type, typeArgElem);
+      return new OptionField(name, param.asType(), typeArgElem);
     } else {
       if (!Utils.isSubtypeOfIR(type, processingEnv)) {
         throw new IRProcessingException(
             "Constructor parameter annotated with @IRChild must be a subtype of IR interface",
             param);
       }
-      return new ReferenceField(processingEnv, type, name, isNullable, true);
+      return new ReferenceField(processingEnv, param.asType(), name, isNullable, true);
     }
   }
 
