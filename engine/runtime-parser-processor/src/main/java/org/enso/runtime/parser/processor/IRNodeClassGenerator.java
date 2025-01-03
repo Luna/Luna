@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
-import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 import org.enso.runtime.parser.processor.GeneratedClassContext.Parameter;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.field.FieldCollector;

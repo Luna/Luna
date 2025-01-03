@@ -23,17 +23,13 @@ public final class GeneratedClassContext {
   private final ProcessingEnvironment processingEnvironment;
   private final ProcessedClass processedClass;
 
-  private static final ClassField diagnosticsMetaField =
-      new ClassField("protected", "DiagnosticStorage", "diagnostics");
-  private static final ClassField passDataMetaField =
-      new ClassField("protected", "MetadataStorage", "passData", "new MetadataStorage()");
-  private static final ClassField locationMetaField =
-      new ClassField("protected", "IdentifiedLocation", "location");
-  private static final ClassField idMetaField = new ClassField("protected", "UUID", "id");
+  private final ClassField diagnosticsMetaField;
+  private final ClassField passDataMetaField;
+  private final ClassField locationMetaField;
+  private final ClassField idMetaField;
 
   /** Meta fields are always present in the generated class. */
-  private static final List<ClassField> metaFields =
-      List.of(diagnosticsMetaField, passDataMetaField, locationMetaField, idMetaField);
+  private final List<ClassField> metaFields;
 
   /**
    * @param className Simple name of the generated class
@@ -50,14 +46,54 @@ public final class GeneratedClassContext {
     this.processingEnvironment = Objects.requireNonNull(processingEnvironment);
     this.processedClass = processedClass;
     ensureSimpleName(className);
+
+    this.diagnosticsMetaField =
+        ClassField.builder()
+            .modifiers("protected")
+            .type(Utils.diagnosticStorageTypeElement(processingEnvironment).asType())
+            .name("diagnostics")
+            .procEnv(processingEnvironment)
+            .build();
+    this.passDataMetaField =
+        ClassField.builder()
+            .modifiers("protected")
+            .type(Utils.metadataStorageTypeElement(processingEnvironment).asType())
+            .name("passData")
+            .initializer("new MetadataStorage()")
+            .procEnv(processingEnvironment)
+            .canBeNull(false)
+            .build();
+    this.locationMetaField =
+        ClassField.builder()
+            .modifiers("protected")
+            .type(Utils.identifiedLocationTypeElement(processingEnvironment).asType())
+            .name("location")
+            .procEnv(processingEnvironment)
+            .build();
+    this.idMetaField =
+        ClassField.builder()
+            .modifiers("protected")
+            .type(Utils.uuidTypeElement(processingEnvironment).asType())
+            .name("id")
+            .procEnv(processingEnvironment)
+            .build();
+    this.metaFields =
+        List.of(diagnosticsMetaField, passDataMetaField, locationMetaField, idMetaField);
+
     this.allFields = new ArrayList<>(metaFields);
     for (var userField : userFields) {
       allFields.add(
-          new ClassField("private final", userField.getSimpleTypeName(), userField.getName()));
+          ClassField.builder()
+              .modifiers("private final")
+              .type(userField.getType())
+              .name(userField.getName())
+              .canBeNull(userField.isNullable() && !userField.isPrimitive())
+              .procEnv(processingEnvironment)
+              .build());
     }
     this.constructorParameters =
         allFields.stream()
-            .map(classField -> new Parameter(classField.type(), classField.name()))
+            .map(classField -> new Parameter(classField.getTypeName(), classField.name()))
             .toList();
   }
 
@@ -145,7 +181,7 @@ public final class GeneratedClassContext {
       } else {
         // There are multiple fields with the same type - try to match on the name
         var fieldsWithSameName =
-            fieldsWithSameType.stream().filter(field -> paramName.equals(field.name)).toList();
+            fieldsWithSameType.stream().filter(field -> paramName.equals(field.name())).toList();
         Utils.hardAssert(
             fieldsWithSameName.size() < 2,
             "Cannot have more than one field with the same name and type");
@@ -197,65 +233,6 @@ public final class GeneratedClassContext {
     @Override
     public String toString() {
       return type + " " + name;
-    }
-  }
-
-  /** Declared field in the class */
-  public static final class ClassField {
-    private final String modifiers;
-    private final String type;
-    private final String name;
-    private final String initializer;
-
-    /**
-     * @param modifiers e.g. "private final"
-     * @param type Type name. Includes generics. Can be, e.g., {@code Option<String>}.
-     */
-    public ClassField(String modifiers, String type, String name) {
-      this(modifiers, type, name, null);
-    }
-
-    /**
-     * @param modifiers e.g. "private final"
-     * @param type Type name. Includes generics. Can be, e.g., {@code Option<String>}.
-     * @param initializer Initial value of the field. Can be, e.g., {@code "null"}.
-     */
-    public ClassField(String modifiers, String type, String name, String initializer) {
-      this.modifiers = modifiers;
-      this.type = type;
-      this.name = name;
-      this.initializer = initializer;
-    }
-
-    public String name() {
-      return name;
-    }
-
-    public String modifiers() {
-      return modifiers;
-    }
-
-    public String type() {
-      return type;
-    }
-
-    /**
-     * @return May be null. In that case, initializer is unknown. Note that the class field can be
-     *     primitive.
-     */
-    public String initializer() {
-      return initializer;
-    }
-
-    @Override
-    public String toString() {
-      return modifiers + " " + type + " " + name;
-    }
-
-    /** Returns simple non-qualified type name. Generic types are returned as raw types. */
-    public String simpleTypeName() {
-      var typeParts = type.split("<");
-      return typeParts[0];
     }
   }
 }

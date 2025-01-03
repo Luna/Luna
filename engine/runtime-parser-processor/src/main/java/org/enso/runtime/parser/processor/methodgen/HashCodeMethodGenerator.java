@@ -1,8 +1,8 @@
 package org.enso.runtime.parser.processor.methodgen;
 
 import java.util.stream.Collectors;
+import org.enso.runtime.parser.processor.ClassField;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
-import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 
 public final class HashCodeMethodGenerator {
   private final GeneratedClassContext ctx;
