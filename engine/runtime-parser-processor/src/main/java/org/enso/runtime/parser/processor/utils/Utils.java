@@ -109,13 +109,21 @@ public final class Utils {
     return procEnv.getElementUtils().getTypeElement(EXPRESSION_FQN);
   }
 
+  /** Converts all the FQN parts of the type name to simple names. Includes type arguments. */
   public static String simpleTypeName(TypeMirror typeMirror) {
-    var typeElem = typeMirrorToElement(typeMirror);
-    if (typeElem != null) {
-      return typeElem.getSimpleName().toString();
-    } else {
-      return typeMirror.toString();
+    if (typeMirror.getKind() == TypeKind.DECLARED) {
+      var declared = (DeclaredType) typeMirror;
+      var typeArgs = declared.getTypeArguments();
+      var typeElem = (TypeElement) declared.asElement();
+      if (!typeArgs.isEmpty()) {
+        var typeArgsStr =
+            typeArgs.stream().map(Utils::simpleTypeName).collect(Collectors.joining(", "));
+        return typeElem.getSimpleName().toString() + "<" + typeArgsStr + ">";
+      } else {
+        return typeElem.getSimpleName().toString();
+      }
     }
+    return typeMirror.toString();
   }
 
   public static String indent(String code, int indentation) {
