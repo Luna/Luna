@@ -63,6 +63,7 @@ import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
+import { useStore } from '#/hooks/storeHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import {
@@ -145,7 +146,6 @@ import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 import invariant from 'tiny-invariant'
-import { useStore } from '#/hooks/storeHooks'
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -1767,18 +1767,14 @@ const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
   )
 })
 
-/**
- * Props for the {@link AssetsTableAssetsUnselector} component.
- */
+/** Props for the {@link AssetsTableAssetsUnselector} component. */
 export interface AssetsTableAssetsUnselectorProps {
   readonly className?: string
   readonly children?: ReactNode
   readonly asChild?: boolean
 }
 
-/**
- * A component that unselects all assets when clicked.
- */
+/** A component that unselects all assets when clicked. */
 export function AssetsTableAssetsUnselector(props: AssetsTableAssetsUnselectorProps) {
   const { className, asChild = false, children } = props
 
