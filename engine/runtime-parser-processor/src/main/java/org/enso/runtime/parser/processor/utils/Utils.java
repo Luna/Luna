@@ -2,6 +2,7 @@ package org.enso.runtime.parser.processor.utils;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -126,6 +127,26 @@ public final class Utils {
     return typeMirror.toString();
   }
 
+  /**
+   * Returns (a possibly empty) list of FQN that should be imported in order to use the given {@code
+   * typeMirror}.
+   *
+   * @return List of FQN, intended to be used in import statements.
+   */
+  public static List<String> getImportedTypes(TypeMirror typeMirror) {
+    var importedTypes = new ArrayList<String>();
+    if (typeMirror.getKind() == TypeKind.DECLARED) {
+      var declared = (DeclaredType) typeMirror;
+      var typeElem = (TypeElement) declared.asElement();
+      var typeArgs = declared.getTypeArguments();
+      importedTypes.add(typeElem.getQualifiedName().toString());
+      for (var typeArg : typeArgs) {
+        importedTypes.addAll(getImportedTypes(typeArg));
+      }
+    }
+    return importedTypes;
+  }
+
   public static String indent(String code, int indentation) {
     return code.lines()
         .map(line -> " ".repeat(indentation) + line)
@@ -146,19 +167,22 @@ public final class Utils {
     return null;
   }
 
-  public static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_LIST);
-    return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
-  }
-
-  public static boolean isScalaOption(TypeElement type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_OPTION);
-    return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
+  public static boolean isScalaOption(TypeMirror type, ProcessingEnvironment procEnv) {
+    var elem = procEnv.getTypeUtils().asElement(type);
+    if (elem instanceof TypeElement typeElem) {
+      var optionType = procEnv.getElementUtils().getTypeElement(SCALA_OPTION);
+      return procEnv.getTypeUtils().isSameType(optionType.asType(), typeElem.asType());
+    }
+    return false;
   }
 
   public static boolean isScalaList(TypeMirror type, ProcessingEnvironment procEnv) {
-    var scalaListType = procEnv.getElementUtils().getTypeElement(SCALA_LIST);
-    return procEnv.getTypeUtils().isSameType(type, scalaListType.asType());
+    var elem = procEnv.getTypeUtils().asElement(type);
+    if (elem instanceof TypeElement typeElem) {
+      var listType = procEnv.getElementUtils().getTypeElement(SCALA_LIST);
+      return procEnv.getTypeUtils().isSameType(listType.asType(), typeElem.asType());
+    }
+    return false;
   }
 
   /**

@@ -7,6 +7,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRField;
 import org.enso.runtime.parser.processor.IRProcessingException;
@@ -84,7 +85,7 @@ public final class FieldCollector {
     var isNullable = !irFieldAnnot.required();
     var name = param.getSimpleName().toString();
     if (isPrimitiveType(param)) {
-      return new PrimitiveField(param.asType(), name);
+      return new PrimitiveField(param.asType(), name, processingEnv);
     } else {
       // TODO: Assert that type is simple reference type - does not extend IR, is not generic
       return new ReferenceField(processingEnv, param.asType(), name, isNullable, false);
@@ -95,37 +96,30 @@ public final class FieldCollector {
     var name = param.getSimpleName().toString();
     var type = getParamType(param);
     var isNullable = !irChildAnnot.required();
-    if (Utils.isScalaList(type, processingEnv)) {
-      var typeArgElem = getGenericType(param);
-      return new ListField(name, param.asType(), typeArgElem);
-    } else if (Utils.isScalaOption(type, processingEnv)) {
-      var typeArgElem = getGenericType(param);
-      return new OptionField(name, param.asType(), typeArgElem);
+    if (Utils.isScalaList(param.asType(), processingEnv)) {
+      ensureTypeArgIsSubtypeOfIR(param.asType());
+      return new ListField(name, param.asType(), processingEnv);
+    } else if (Utils.isScalaOption(param.asType(), processingEnv)) {
+      ensureTypeArgIsSubtypeOfIR(param.asType());
+      return new OptionField(name, param.asType(), processingEnv);
     } else {
       if (!Utils.isSubtypeOfIR(type, processingEnv)) {
         throw new IRProcessingException(
-            "Constructor parameter annotated with @IRChild must be a subtype of IR interface",
+            "Constructor parameter annotated with @IRChild must be a subtype of IR interface. "
+                + "Actual type is: "
+                + type,
             param);
       }
       return new ReferenceField(processingEnv, param.asType(), name, isNullable, true);
     }
   }
 
-  /**
-   * Returns the generic type parameter. Assumes that the given {@code param} is declared with some
-   * generic type, and has exactly one type parameter.
-   *
-   * @param param the parameter to get the generic type from
-   * @return the generic type parameter
-   */
-  private TypeElement getGenericType(VariableElement param) {
-    Utils.hardAssert(param.asType() instanceof DeclaredType);
-    var declaredType = (DeclaredType) param.asType();
+  private void ensureTypeArgIsSubtypeOfIR(TypeMirror typeMirror) {
+    var declaredType = (DeclaredType) typeMirror;
     Utils.hardAssert(declaredType.getTypeArguments().size() == 1);
     var typeArg = declaredType.getTypeArguments().get(0);
     var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
     ensureIsSubtypeOfIR(typeArgElem);
-    return typeArgElem;
   }
 
   private static boolean isPrimitiveType(VariableElement ctorParam) {

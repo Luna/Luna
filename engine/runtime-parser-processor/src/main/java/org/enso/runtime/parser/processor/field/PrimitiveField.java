@@ -1,30 +1,12 @@
 package org.enso.runtime.parser.processor.field;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 
-final class PrimitiveField implements Field {
+final class PrimitiveField extends Field {
 
-  private final TypeMirror type;
-  private final String name;
-
-  PrimitiveField(TypeMirror type, String name) {
-    this.type = type;
-    this.name = name;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public TypeMirror getType() {
-    return type;
-  }
-
-  @Override
-  public String getSimpleTypeName() {
-    return type.toString();
+  PrimitiveField(TypeMirror type, String name, ProcessingEnvironment procEnv) {
+    super(type, name, procEnv);
   }
 
   @Override
@@ -40,10 +22,5 @@ final class PrimitiveField implements Field {
   @Override
   public boolean isPrimitive() {
     return true;
-  }
-
-  @Override
-  public boolean isExpression() {
-    return false;
   }
 }

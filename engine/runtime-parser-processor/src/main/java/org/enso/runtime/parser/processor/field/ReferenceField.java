@@ -1,14 +1,9 @@
 package org.enso.runtime.parser.processor.field;
 
-import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
-import org.enso.runtime.parser.processor.utils.Utils;
 
-final class ReferenceField implements Field {
-  private final ProcessingEnvironment procEnv;
-  private final TypeMirror type;
-  private final String name;
+final class ReferenceField extends Field {
   private final boolean nullable;
   private final boolean isChild;
 
@@ -18,36 +13,9 @@ final class ReferenceField implements Field {
       String name,
       boolean nullable,
       boolean isChild) {
-    this.procEnv = procEnv;
-    this.type = type;
-    this.name = name;
+    super(type, name, procEnv);
     this.nullable = nullable;
     this.isChild = isChild;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public TypeMirror getType() {
-    return type;
-  }
-
-  @Override
-  public String getSimpleTypeName() {
-    return type.toString();
-  }
-
-  @Override
-  public List<String> getImportedTypes() {
-    var typeElem = Utils.typeMirrorToElement(type);
-    if (typeElem != null) {
-      return List.of(typeElem.getQualifiedName().toString());
-    } else {
-      return List.of();
-    }
   }
 
   @Override
@@ -56,17 +24,7 @@ final class ReferenceField implements Field {
   }
 
   @Override
-  public boolean isPrimitive() {
-    return false;
-  }
-
-  @Override
   public boolean isNullable() {
     return nullable;
-  }
-
-  @Override
-  public boolean isExpression() {
-    return Utils.isSubtypeOfExpression(type, procEnv);
   }
 }
