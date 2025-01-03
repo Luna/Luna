@@ -4,6 +4,7 @@ import { useVisualizationConfig } from '@/providers/visualizationConfig'
 import { Ast } from '@/util/ast'
 import { tryNumberToEnso } from '@/util/ast/abstract'
 import { Pattern } from '@/util/ast/match'
+import { Icon } from '@/util/iconName'
 import { getTextWidthBySizeAndFamily } from '@/util/measurement'
 import { defineKeybinds } from '@/util/visualizationBuiltins'
 import { computed, ref, watch, watchEffect, watchPostEffect } from 'vue'
@@ -867,26 +868,26 @@ const makeSeriesLabelOptions = () => {
 }
 
 const createEnableSelectionButton = (): ToolbarItem => ({
-  icon: 'select',
+  icon: 'select' as Icon,
   title: 'Enable Selection',
   toggle: selectionEnabled,
 })
 
 const createFitAllButton = (): ToolbarItem => ({
-  icon: 'show_all',
+  icon: 'show_all' as Icon,
   title: 'Fit All',
   onClick: () => zoomToSelected(false),
 })
 
 const createZoomButton = (): ToolbarItem => ({
-  icon: 'zoom',
+  icon: 'zoom' as Icon,
   title: 'Zoom to Selected',
   disabled: () => brushExtent.value == null,
   onClick: zoomToSelected,
 })
 
 const createNewNodes = (): ToolbarItem => ({
-  icon: 'add_to_graph_editor',
+  icon: 'add_to_graph_editor' as Icon,
   title: 'Create component of selected points',
   disabled: () => !createNewFilterNodeEnabled.value,
   onClick: createNewFilterNode,
