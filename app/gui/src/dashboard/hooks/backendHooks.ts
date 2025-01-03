@@ -1,5 +1,7 @@
 /** @file Hooks for interacting with the backend. */
 import {
+  QueryObserverResult,
+  RefetchOptions,
   queryOptions,
   useMutation,
   useMutationState,
@@ -47,6 +49,8 @@ import LocalBackend from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
+import { MergeValuesOfObjectUnion } from 'enso-common/src/utilities/data/object'
+import { useMemo } from 'react'
 
 /** Ensure that the given type contains only names of backend methods. */
 type DefineBackendMethods<T extends keyof Backend> = T
@@ -265,25 +269,111 @@ export interface UserGroupInfoWithUsers extends UserGroupInfo {
   readonly users: readonly User[]
 }
 
+function createUserGroupsWithUsers(
+  userGroups: readonly backendModule.UserGroupInfo[],
+  users: readonly backendModule.User[],
+): readonly UserGroupInfoWithUsers[] {
+  return userGroups.map((userGroup) => {
+    const usersInGroup: readonly User[] = users.filter((user) =>
+      user.userGroups?.includes(userGroup.id),
+    )
+    return { ...userGroup, users: usersInGroup }
+  })
+}
+
+/** The return value of {@link useListUserGroupsWithUsers}. */
+export type ListUserGroupsWithUsersQueryResult = Omit<
+  UseQueryResult<readonly UserGroupInfoWithUsers[]>,
+  'refetch'
+>
+
 /** A list of user groups, taking into account optimistic state. */
-export function useListUserGroupsWithUsers(
-  backend: Backend,
-): readonly UserGroupInfoWithUsers[] | null {
+export function useListUserGroupsWithUsers(backend: Backend): ListUserGroupsWithUsersQueryResult {
   const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
   const listUsersQuery = useBackendQuery(backend, 'listUsers', [])
-  const data = (() => {
-    if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
-      return null
-    } else {
-      return listUserGroupsQuery.data.map((userGroup) => {
-        const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
-          user.userGroups?.includes(userGroup.id),
-        )
-        return { ...userGroup, users: usersInGroup }
-      })
+
+  const promise: Promise<readonly UserGroupInfoWithUsers[]> = useMemo(
+    () =>
+      Promise.all([listUsersQuery.promise, listUserGroupsQuery.promise]).then(
+        ([users, userGroups]) => createUserGroupsWithUsers(userGroups, users),
+      ),
+    [],
+  )
+
+  const error = listUserGroupsQuery.error ?? listUsersQuery.error
+  const isStale = listUsersQuery.isStale || listUserGroupsQuery.isStale
+  const failureCount = listUsersQuery.failureCount + listUserGroupsQuery.failureCount
+  const failureReason = listUserGroupsQuery.failureReason ?? listUsersQuery.failureReason
+  const dataUpdatedAt = Math.max(listUsersQuery.dataUpdatedAt, listUserGroupsQuery.dataUpdatedAt)
+  const errorUpdatedAt = Math.max(listUsersQuery.errorUpdatedAt, listUserGroupsQuery.errorUpdatedAt)
+  const errorUpdateCount = listUsersQuery.errorUpdateCount + listUserGroupsQuery.errorUpdateCount
+  const isFetched = listUsersQuery.isFetched && listUserGroupsQuery.isFetched
+  const isFetching = listUsersQuery.isFetching || listUserGroupsQuery.isFetching
+  const isPaused = listUsersQuery.isPaused || listUserGroupsQuery.isPaused
+  const isInitialLoading = listUsersQuery.isInitialLoading || listUserGroupsQuery.isInitialLoading
+  const isFetchedAfterMount =
+    listUsersQuery.isFetchedAfterMount || listUserGroupsQuery.isFetchedAfterMount
+  const isPlaceholderData =
+    listUsersQuery.isPlaceholderData || listUserGroupsQuery.isPlaceholderData
+  const isRefetching = listUsersQuery.isRefetching || listUserGroupsQuery.isRefetching
+  const fetchStatus = (() => {
+    if (listUsersQuery.isPaused || listUserGroupsQuery.isPaused) {
+      return 'paused'
     }
+    if (listUsersQuery.isFetching || listUserGroupsQuery.isFetching) {
+      return 'fetching'
+    }
+    return 'idle'
   })()
-  return data
+  const status = (() => {
+    if (listUsersQuery.isSuccess && listUserGroupsQuery.isSuccess) {
+      return 'success'
+    }
+    if (listUsersQuery.isError || listUserGroupsQuery.isError) {
+      return 'error'
+    }
+    return 'pending'
+  })()
+  const shared = {
+    promise,
+    error,
+    isStale,
+    failureCount,
+    failureReason,
+    dataUpdatedAt,
+    errorUpdatedAt,
+    errorUpdateCount,
+    isFetched,
+    isFetching,
+    isPaused,
+    isInitialLoading,
+    isFetchedAfterMount,
+    isPlaceholderData,
+    isRefetching,
+    fetchStatus,
+    status,
+  } satisfies Partial<MergeValuesOfObjectUnion<ListUserGroupsWithUsersQueryResult>>
+
+  if (listUsersQuery.isSuccess && listUserGroupsQuery.isSuccess) {
+    const data = createUserGroupsWithUsers(listUserGroupsQuery.data, listUsersQuery.data)
+    const rest = {
+      data,
+      isSuccess: true,
+      isError: false,
+      isPending: false,
+      isLoading: false,
+      isLoadingError: false,
+      isRefetchError: false,
+      status: 'success',
+      error: null,
+    } satisfies Partial<ListUserGroupsWithUsersQueryResult>
+    return {
+      ...(shared as Omit<ListUserGroupsWithUsersQueryResult, keyof typeof rest>),
+      ...rest,
+    }
+  } else {
+    return shared as ListUserGroupsWithUsersQueryResult
+  }
 }
 
 /** Options for {@link listDirectoryQueryOptions}. */
