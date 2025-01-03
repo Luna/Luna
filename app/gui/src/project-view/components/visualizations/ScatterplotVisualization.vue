@@ -4,7 +4,6 @@ import { useVisualizationConfig } from '@/providers/visualizationConfig'
 import { Ast } from '@/util/ast'
 import { tryNumberToEnso } from '@/util/ast/abstract'
 import { Pattern } from '@/util/ast/match'
-import { Icon } from '@/util/iconName'
 import { getTextWidthBySizeAndFamily } from '@/util/measurement'
 import { defineKeybinds } from '@/util/visualizationBuiltins'
 import { computed, ref, watch, watchEffect, watchPostEffect } from 'vue'
@@ -882,25 +881,25 @@ const createTextSelectionButton = (): ToolbarItem => ({
 
 function useScatterplotVizToolbar() {
   const textSelectionButton = createTextSelectionButton()
-  return computed(() => [
+  return computed<ToolbarItem[]>(() => [
     {
-      icon: 'select' as Icon,
+      icon: 'select',
       title: 'Enable Selection',
       toggle: selectionEnabled,
     },
     {
-      icon: 'show_all' as Icon,
+      icon: 'show_all',
       title: 'Fit All',
       onClick: () => zoomToSelected(false),
     },
     {
-      icon: 'zoom' as Icon,
+      icon: 'zoom',
       title: 'Zoom to Selected',
       disabled: () => brushExtent.value == null,
       onClick: zoomToSelected,
     },
     {
-      icon: 'add_to_graph_editor' as Icon,
+      icon: 'add_to_graph_editor',
       title: 'Create component of selected points',
       disabled: () => !createNewFilterNodeEnabled.value,
       onClick: createNewFilterNode,
