@@ -214,8 +214,11 @@ class Runner(
             "org.enso.runner/org.enso.runner.Main"
           )
       val jvmArguments =
-        manifestOptions ++
-        environmentOptions ++ commandLineOptions ++ modulePathOptions
+        if (nativeImage) Seq("-Dcom.oracle.graalvm.isaot=true")
+        else
+          Seq() ++
+          manifestOptions ++
+          environmentOptions ++ commandLineOptions ++ modulePathOptions
 
       val loggingConnectionArguments =
         if (runSettings.connectLoggerIfAvailable)

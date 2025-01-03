@@ -2170,14 +2170,11 @@ lazy val `engine-common` = project
     libraryDependencies ++= Seq(
       "org.graalvm.polyglot" % "polyglot" % graalMavenPackagesVersion % "provided"
     ),
-    libraryDependencies ++= GraalVM.modules.map(
-      _.withConfigurations(Some(Runtime.name))
-    ),
     Compile / moduleDependencies ++= {
       Seq(
         "org.graalvm.polyglot" % "polyglot"  % graalMavenPackagesVersion,
         "org.slf4j"            % "slf4j-api" % slf4jVersion
-      ) ++ GraalVM.modules.map(_.withConfigurations(Some(Runtime.name)))
+      )
     },
     Compile / internalModuleDependencies := Seq(
       (`logging-utils` / Compile / exportedModule).value,
@@ -2283,21 +2280,17 @@ lazy val `language-server` = (project in file("engine/language-server"))
       "org.eclipse.jgit"    % "org.eclipse.jgit"        % jgitVersion,
       "org.apache.tika"     % "tika-core"               % tikaVersion               % Test
     ),
-    libraryDependencies ++= GraalVM.modules.map(
-      _.withConfigurations(Some(Runtime.name))
-    ),
     javaModuleName := "org.enso.language.server",
     Compile / moduleDependencies ++=
       Seq(
         "org.graalvm.polyglot"   % "polyglot"                % graalMavenPackagesVersion,
-        "org.graalvm.truffle"    % "truffle-api"             % graalMavenPackagesVersion,
         "org.slf4j"              % "slf4j-api"               % slf4jVersion,
         "commons-cli"            % "commons-cli"             % commonsCliVersion,
         "commons-io"             % "commons-io"              % commonsIoVersion,
         "com.google.flatbuffers" % "flatbuffers-java"        % flatbuffersVersion,
         "org.eclipse.jgit"       % "org.eclipse.jgit"        % jgitVersion,
         "org.netbeans.api"       % "org-openide-util-lookup" % netbeansApiVersion
-      ) ++ GraalVM.modules.map(_.withConfigurations(Some(Runtime.name))),
+      ),
     Compile / internalModuleDependencies := Seq(
       (`akka-wrapper` / Compile / exportedModule).value,
       (`zio-wrapper` / Compile / exportedModule).value,

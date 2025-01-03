@@ -55,7 +55,6 @@ import org.enso.profiling.events.NoopEventsMonitor
 import org.enso.searcher.memory.InMemorySuggestionsRepo
 import org.enso.text.{ContentBasedVersioning, Sha3_224VersionCalculator}
 import org.enso.version.BuildVersion
-import com.oracle.truffle.api.TruffleOptions
 import org.graalvm.polyglot.io.MessageEndpoint
 import org.slf4j.event.Level
 import org.slf4j.LoggerFactory
@@ -319,7 +318,7 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
   )
 
   var extraEngineOptions: util.HashMap[String, String] = null
-  if (TruffleOptions.AOT) {
+  if (java.lang.Boolean.getBoolean("com.oracle.graalvm.isaot")) {
     extraEngineOptions = new util.HashMap[String, String]()
     log.trace("Running Language Server in AOT mode")
     extraEngineOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")

@@ -63,12 +63,16 @@ final class RunnerLogging {
     } else {
       var future =
           executorService.submit(
-              () ->
-                  loggerSetup.setup(
-                      logLevel,
-                      distributionManager.paths().logs(),
-                      "enso-cli",
-                      loggerSetup.getConfig()));
+              () -> {
+                var status =
+                    loggerSetup.setup(
+                        logLevel,
+                        distributionManager.paths().logs(),
+                        "enso-cli",
+                        loggerSetup.getConfig());
+                distributionManager.logPaths();
+                return status;
+              });
       try {
         var success = future.get();
         if (!success) {
