@@ -49,7 +49,8 @@ public final class NativeLibraryFinder {
         fs.list(dir)
             .forEach(
                 file -> {
-                  if (fs.isRegularFile(file)) {
+                  var fname = fs.getName(file);
+                  if (fs.isRegularFile(file) && fname.endsWith(nativeLibSuffix())) {
                     nativeLibs.add(file);
                   }
                 });
@@ -58,6 +59,11 @@ public final class NativeLibraryFinder {
       }
     }
     return nativeLibs;
+  }
+
+  private static String nativeLibSuffix() {
+    var libName = System.mapLibraryName("");
+    return libName.substring(libName.lastIndexOf('.'));
   }
 
   private static <T> List<T> searchPath(Package<T> pkg, FileSystem<T> fs) {
