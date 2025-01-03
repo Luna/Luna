@@ -41,7 +41,7 @@ This also includes `Let` and `Let_Ref` variants which are used to express let-st
 
 Represents a table expression. Can be a database table (`Table`), a derived table built from other tables (`Join`, `Union`), or a constant value (`Query`, `Literal_Values`).
 
-`Sub_Query` is used to nest a query as a subquery, replacing column expressions with aliases to those same column expressions within the subquery. This is used to keep query elements such as `WHERE`, `ORDER BY`, and `GROUP BY` separate to prevent unwanted interactions between them. This allows `join` and `union` operations on complex queries, as well as more specific operations such as `add_row_number`.
+`Sub_Query` is used to nest a query as a subquery, replacing column expressions with aliases to those same column expressions within the subquery. This is used to keep query elements such as `WHERE`, `ORDER BY`, and `GROUP BY` separate to prevent unwanted interactions between them. This allows `join` and `union` operations on complex queries, as well as more specific operations such as `DB_Table.add_row_number`.
 
 ## Context
 
@@ -65,23 +65,24 @@ An `Internal_Column` serves as a column expression, and contains a `SQL_Expressi
 
 A `Context` serves as a table expression, but really inherits this from the `From_Spec` that it contains. It also contains `WHERE`, `ORDER BY`, `GROUP BY` and `LIMIT` clauses.
 
-A `From_Spec` serves as a table expression, and can be a base value (table name, constant, etc), join, union, or subquery.
+A `From_Spec` serves as a table expression, and can be a base value (table name, constant, etc), join, union, or subquery:
 - `From_Spec.Join`: contains `From_Spec` values from the individual tables, as well as `SQL_Expressions` for join conditions
 - `From_Spec.Union`: contains a vector of `Query` values for the individual tables.
 - `From_Spec.Sub_Query`: contains column expressions as `SQL_Expression`s, and a table expression as a `Context`.
 
 # Subqueries
 
-Subqueries are created using `Context.as_subquery`. They correspond to (and are compiled into) nested `SELECT` expressions. This allows them to be referred to by an alias, and also nests certian clauses (`WHERE`, `ORDER BY`, `GROUP BY` and `LIMIT`) in a kind of 'scope' within the sub-select so that they will not interfere with other such clauses.
+Subqueries are created using `Context.as_subquery`. They correspond to (and are compiled into) subselects. This allows them to be referred to by an alias, and also nests certian clauses (`WHERE`, `ORDER BY`, `GROUP BY` and `LIMIT`) in a kind of 'scope' within the subselect so that they will not interfere with other such clauses.
 
 By itself, turning a query into a subquery does not change its value. But it prepares it to be used in larger queries, such as ones formed with `JOIN` and `UNION`, as well as other more specific operations within the database library (such as `DB_Table.add_row_number`). 
 
 In the IR, `Context.as_subquery` prepares a table expression for nesting, but does not do the actual nesting within another query. To do the actual nesting, you use the prepared subquery as a table expression within a larger query.
 
-This preparation consists of replacing complex column expressions with aliases that refer to the original complex expressions within the nested query. For example, a query such as
+Creating a subquery consists of replacing complex column expressions with aliases that refer to the original complex expressions within the nested query. For example, a query such as
 
 ```sql
-select [complex column expression 1], [complex column expression 2]
+select [complex column expression 1],
+       [complex column expression 2]
 from [complex table expression]
 where [where clauses]
 group by [group-by clauses]
@@ -92,7 +93,8 @@ would be transformed into
 
 ```sql
 select alias1, alias2
-from (select [complex column expression 1] as alias1, [complex column expression 2] as alias2
+from (select [complex column expression 1] as alias1,
+             [complex column expression 2] as alias2
       from [complex table expression]
       where [where clauses]
       group by [group-by clauses]
@@ -103,7 +105,8 @@ After this transformation, the top-level query has no `WHERE`, `GROUP BY`, or `O
 
 ```sql
 select alias1, alias2
-from (select [complex column expression 1] as alias1, [complex column expression 2] as alias2
+from (select [complex column expression 1] as alias1,
+             [complex column expression 2] as alias2
       from [complex table expression]
       where [where clauses]
       group by [group-by clauses]
