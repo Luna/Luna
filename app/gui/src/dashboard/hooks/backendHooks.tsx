@@ -56,9 +56,11 @@ import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
-// The number of bytes in 1 megabyte.
+/** The number of bytes in 1 megabyte. */
 const MB_BYTES = 1_000_000
 const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES)
+/** The maximum number of file chunks to upload at the same time. */
+const FILE_UPLOAD_CONCURRENCY = 5
 
 // ============================
 // === DefineBackendMethods ===
@@ -1222,7 +1224,7 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
           })
           return fullPromise
         }
-        await Promise.all(Array.from({ length: 5 }).map(uploadNextChunk))
+        await Promise.all(Array.from({ length: FILE_UPLOAD_CONCURRENCY }).map(uploadNextChunk))
         const result = await uploadFileEndMutation.mutateAsync([
           {
             parentDirectoryId: body.parentDirectoryId,
