@@ -271,16 +271,19 @@ export function useListUserGroupsWithUsers(
 ): readonly UserGroupInfoWithUsers[] | null {
   const listUserGroupsQuery = useBackendQuery(backend, 'listUserGroups', [])
   const listUsersQuery = useBackendQuery(backend, 'listUsers', [])
-  if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
-    return null
-  } else {
-    return listUserGroupsQuery.data.map((userGroup) => {
-      const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
-        user.userGroups?.includes(userGroup.id),
-      )
-      return { ...userGroup, users: usersInGroup }
-    })
-  }
+  const data = (() => {
+    if (listUserGroupsQuery.data == null || listUsersQuery.data == null) {
+      return null
+    } else {
+      return listUserGroupsQuery.data.map((userGroup) => {
+        const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
+          user.userGroups?.includes(userGroup.id),
+        )
+        return { ...userGroup, users: usersInGroup }
+      })
+    }
+  })()
+  return data
 }
 
 /** Options for {@link listDirectoryQueryOptions}. */

@@ -308,20 +308,15 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                 const projectResponse = await fetch(
                   `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
                 )
-                // This DOES NOT update the cloud assets list when it
-                // completes, as the current backend is not the remote
-                // (cloud) backend. The user may change to the cloud backend
-                // while this request is in progress, however this is
-                // uncommon enough that it is not worth the added complexity.
                 const fileName = `${asset.title}.enso-project`
-                await uploadFileToCloudMutation.mutateAsync(
+                await uploadFileToCloudMutation.mutateAsync([
                   {
                     fileName,
                     fileId: null,
                     parentDirectoryId: null,
                   },
                   new File([await projectResponse.blob()], fileName),
-                )
+                ])
                 toast.toast.success(getText('uploadProjectToCloudSuccess'))
               } catch (error) {
                 toastAndLog('uploadProjectToCloudError', error)
