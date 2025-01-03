@@ -53,13 +53,12 @@ import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
 import { useAutoScroll } from '#/hooks/autoScrollHooks'
 import {
   addAssetsLabelsMutationOptions,
-  backendMutationOptions,
   copyAssetsMutationOptions,
   moveAssetsMutationOptions,
   removeAssetsLabelsMutationOptions,
-  useBackendQuery,
-  useUploadFiles,
-} from '#/hooks/backendHooks'
+} from '#/hooks/backendBatchedHooks'
+import { backendMutationOptions, useBackendQuery } from '#/hooks/backendHooks'
+import { useUploadFiles } from '#/hooks/backendUploadFilesHooks'
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
@@ -146,7 +145,7 @@ import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 import invariant from 'tiny-invariant'
-import { useStore } from '../utilities/zustand'
+import { useStore } from '#/hooks/storeHooks'
 
 declare module '#/utilities/LocalStorage' {
   /** */
@@ -359,9 +358,7 @@ function AssetsTable(props: AssetsTableProps) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const uploadFiles = useUploadFiles(backend, category)
-  const updateSecretMutation = useMutation(
-    useMemo(() => backendMutationOptions(backend, 'updateSecret'), [backend]),
-  )
+  const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
   const cutAndPaste = useCutAndPaste(backend, category)
   const copyAssetsMutation = useMutation(copyAssetsMutationOptions(backend))
   const moveAssetsMutation = useMutation(moveAssetsMutationOptions(backend))

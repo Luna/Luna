@@ -1,5 +1,5 @@
 /** @file Events related to changes in the asset list. */
-import { copyAssetsMutationOptions } from '#/hooks/backendHooks'
+import { copyAssetsMutationOptions } from '#/hooks/backendBatchedHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useTransferBetweenCategories, type Category } from '#/layouts/CategorySwitcher/Category'
 import type { DrivePastePayload } from '#/providers/DriveProvider'

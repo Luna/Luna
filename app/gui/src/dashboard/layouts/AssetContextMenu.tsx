@@ -35,10 +35,9 @@ import {
   deleteAssetsMutationOptions,
   restoreAssetsMutationOptions,
   useDownloadAssetsMutation,
-  useNewProject,
-  useRemoveSelfPermissionMutation,
-  useUploadFileWithToastMutation,
-} from '#/hooks/backendHooks'
+} from '#/hooks/backendBatchedHooks'
+import { useNewProject, useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
+import { useUploadFileWithToastMutation } from '#/hooks/backendUploadFilesHooks'
 import { usePasteData } from '#/providers/DriveProvider'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { normalizePath } from '#/utilities/fileInfo'

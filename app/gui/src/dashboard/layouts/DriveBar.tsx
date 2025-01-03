@@ -19,16 +19,15 @@ import {
   Text,
   useVisualTooltip,
 } from '#/components/AriaComponents'
+import { useClearTrashMutation, useDownloadAssetsMutation } from '#/hooks/backendBatchedHooks'
 import {
-  useClearTrashMutation,
-  useDownloadAssetsMutation,
   useNewDatalink,
   useNewFolder,
   useNewProject,
   useNewSecret,
   useRootDirectoryId,
-  useUploadFiles,
 } from '#/hooks/backendHooks'
+import { useUploadFiles } from '#/hooks/backendUploadFilesHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline } from '#/hooks/offlineHooks'
 import AssetSearchBar from '#/layouts/AssetSearchBar'

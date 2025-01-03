@@ -3,11 +3,8 @@ import { useMutation } from '@tanstack/react-query'
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
-import {
-  deleteAssetsMutationOptions,
-  moveAssetsMutationOptions,
-  useBackendQuery,
-} from '#/hooks/backendHooks'
+import { deleteAssetsMutationOptions, moveAssetsMutationOptions } from '#/hooks/backendBatchedHooks'
+import { useBackendQuery } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'

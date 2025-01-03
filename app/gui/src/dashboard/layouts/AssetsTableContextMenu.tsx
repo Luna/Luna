@@ -24,7 +24,10 @@ import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 
 import Separator from '#/components/styled/Separator'
-import { deleteAssetsMutationOptions, restoreAssetsMutationOptions } from '#/hooks/backendHooks'
+import {
+  deleteAssetsMutationOptions,
+  restoreAssetsMutationOptions,
+} from '#/hooks/backendBatchedHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'

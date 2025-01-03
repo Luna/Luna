@@ -34,12 +34,10 @@ import * as backendModule from '#/services/Backend'
 import { Text } from '#/components/AriaComponents'
 import { IndefiniteSpinner } from '#/components/Spinner'
 import {
-  backendMutationOptions,
-  useBackendMutationState,
   useDeleteAssetsMutationState,
   useRestoreAssetsMutationState,
-  useUploadFiles,
-} from '#/hooks/backendHooks'
+} from '#/hooks/backendBatchedHooks'
+import { backendMutationOptions, useBackendMutationState } from '#/hooks/backendHooks'
 import { useCutAndPaste } from '#/hooks/cutAndPasteHooks'
 import { createGetProjectDetailsQuery } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
@@ -54,6 +52,7 @@ import * as permissions from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { useUploadFiles } from '#/hooks/backendUploadFilesHooks'
 
 /**
  * The amount of time (in milliseconds) the drag item must be held over this component
