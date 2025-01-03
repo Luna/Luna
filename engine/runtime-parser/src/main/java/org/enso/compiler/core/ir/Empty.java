@@ -11,6 +11,6 @@ public final class Empty extends EmptyGen {
   }
 
   public Empty(IdentifiedLocation identifiedLocation) {
-    this(identifiedLocation, null);
+    this(identifiedLocation, new MetadataStorage());
   }
 }
