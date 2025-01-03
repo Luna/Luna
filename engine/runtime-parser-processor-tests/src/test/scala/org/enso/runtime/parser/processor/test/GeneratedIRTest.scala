@@ -31,7 +31,7 @@ class GeneratedIRTest extends AnyFlatSpec with Matchers {
       str.contains("JCallArgument.JSpecified") shouldBe true
       str.contains("name = None") shouldBe true
       str.contains("value = Literal.Text") shouldBe true
-      str.contains("passData = null") shouldBe true
+      str.contains("location = null") shouldBe true
     }
   }
 }
