@@ -5,6 +5,7 @@ import { useIsFetching, useQueries, useQueryClient } from '@tanstack/react-query
 
 import type { DirectoryId } from 'enso-common/src/services/Backend'
 import {
+  BackendType,
   assetIsDirectory,
   createRootDirectoryAsset,
   createSpecialEmptyAsset,
@@ -17,6 +18,7 @@ import {
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
+import { useRefetchDirectories } from '#/layouts/Drive/fetchDirectoriesHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
 import AssetTreeNode, { type AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
@@ -39,6 +41,9 @@ export function useAssetTree(options: UseAssetTreeOptions) {
   const { user } = useFullUserSession()
 
   const backend = useBackend(category)
+
+  useRefetchDirectories(BackendType.local)
+  useRefetchDirectories(BackendType.remote)
 
   const directories = useQueries({
     // We query only expanded directories, as we don't want to load the data for directories that are not visible.

@@ -558,7 +558,6 @@ function AppRouter(props: AppRouterProps) {
           >
             <InputBindingsProvider inputBindings={inputBindings}>
               <LocalBackendPathSynchronizer />
-              <QuerySubscriber />
               <VersionChecker />
               {routes}
               <suspense.Suspense>
@@ -587,42 +586,4 @@ function LocalBackendPathSynchronizer() {
   }
 
   return null
-}
-
-/** Subscribe to queries to keep them up to date. */
-function QuerySubscriber() {
-  useRefetchDirectories(BackendType.local)
-  useRefetchDirectories(BackendType.remote)
-
-  return null
-}
-
-/** Periodically refetch directories for the given backend type. */
-function useRefetchDirectories(backendType: BackendType) {
-  const queryClient = reactQuery.useQueryClient()
-  const enableAssetsTableBackgroundRefresh = useFeatureFlag('enableAssetsTableBackgroundRefresh')
-  const assetsTableBackgroundRefreshInterval = useFeatureFlag(
-    'assetsTableBackgroundRefreshInterval',
-  )
-  const isMutating = reactQuery.useIsMutating({ mutationKey: [backendType] }) !== 0
-
-  // We use a different query to refetch the directory data in the background.
-  // This reduces the amount of rerenders by batching them together, so they happen less often.
-  reactQuery.useQuery({
-    queryKey: [backendType, 'refetchListDirectory'],
-    queryFn: async () => {
-      await queryClient.refetchQueries({
-        queryKey: [backendType, 'listDirectory'],
-        type: 'active',
-      })
-      return null
-    },
-    refetchInterval:
-      enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
-    refetchOnMount: 'always',
-    refetchIntervalInBackground: false,
-    refetchOnWindowFocus: true,
-    meta: { persist: false },
-    enabled: isMutating,
-  })
 }
