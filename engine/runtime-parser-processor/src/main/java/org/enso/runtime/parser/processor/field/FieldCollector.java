@@ -3,7 +3,6 @@ package org.enso.runtime.parser.processor.field;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -32,21 +31,10 @@ public final class FieldCollector {
   public FieldCollector(ProcessingEnvironment processingEnv, ProcessedClass processedClass) {
     this.processingEnv = processingEnv;
     this.processedClass = processedClass;
-    this.metadataStorageType =
-        processingEnv.getElementUtils().getTypeElement("org.enso.compiler.core.ir.MetadataStorage");
-    this.diagnosticStorageType =
-        processingEnv
-            .getElementUtils()
-            .getTypeElement("org.enso.compiler.core.ir.DiagnosticStorage");
-    this.identifiedLocationType =
-        processingEnv
-            .getElementUtils()
-            .getTypeElement("org.enso.compiler.core.ir.IdentifiedLocation");
-    this.uuidType = processingEnv.getElementUtils().getTypeElement("java.util.UUID");
-    Objects.requireNonNull(metadataStorageType);
-    Objects.requireNonNull(diagnosticStorageType);
-    Objects.requireNonNull(identifiedLocationType);
-    Objects.requireNonNull(uuidType);
+    this.metadataStorageType = Utils.metadataStorageTypeElement(processingEnv);
+    this.diagnosticStorageType = Utils.diagnosticStorageTypeElement(processingEnv);
+    this.identifiedLocationType = Utils.identifiedLocationTypeElement(processingEnv);
+    this.uuidType = Utils.uuidTypeElement(processingEnv);
   }
 
   public List<Field> collectFields() {
