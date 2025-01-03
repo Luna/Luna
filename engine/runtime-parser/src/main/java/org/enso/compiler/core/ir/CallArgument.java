@@ -71,5 +71,14 @@ public interface CallArgument extends IR {
           value,
           this.isSynthetic());
     }
+
+    @Override
+    public String showCode(int indent) {
+      if (name().isDefined()) {
+        return "(" + name().get().showCode(indent) + " = " + value().showCode(indent) + ")";
+      } else {
+        return value().showCode(indent);
+      }
+    }
   }
 }
