@@ -50,13 +50,11 @@ final class ArraySlice extends EnsoObject {
   }
 
   private static Object findStorage(Object storage) {
-    for (; ; ) {
-      return switch (storage) {
-        case Vector.Generic gen -> gen.toArray();
-        case ArraySlice slice -> slice;
-        default -> storage;
-      };
-    }
+    return switch (storage) {
+      case Vector.Generic gen -> gen.toArray();
+      case ArraySlice slice -> slice;
+      default -> storage;
+    };
   }
 
   static Vector createOrNull(Object storage, long start, long this_length, long end) {
