@@ -10,7 +10,7 @@ import { Opt } from '@/util/data/opt'
 import { useEventListener } from '@vueuse/core'
 import { computed, markRaw, ref, toRaw, toRef, watch } from 'vue'
 
-export interface ProjectViewProps {
+const props = defineProps<{
   readonly projectId: string
   readonly projectName: string
   readonly projectDisplayedName: string
@@ -26,9 +26,7 @@ export interface ProjectViewProps {
    * This is used regardless of whether the project is local for e.g. the cloud file browser.
    */
   readonly remoteBackend?: Opt<Backend>
-}
-
-const props = defineProps<ProjectViewProps>()
+}>()
 
 provideBackend({
   project: () => (props.projectBackend && markRaw(toRaw(props.projectBackend))) ?? null,

@@ -1,27 +1,28 @@
 /** @file The container that launches the IDE. */
-import * as React from 'react'
-
-import * as reactQuery from '@tanstack/react-query'
-
+import * as errorBoundary from '#/components/ErrorBoundary'
+import * as suspense from '#/components/Suspense'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as gtagHooks from '#/hooks/gtagHooks'
 import * as projectHooks from '#/hooks/projectHooks'
-
 import * as backendProvider from '#/providers/BackendProvider'
 import type { LaunchedProject } from '#/providers/ProjectsProvider'
 import * as textProvider from '#/providers/TextProvider'
-
-import * as errorBoundary from '#/components/ErrorBoundary'
-import * as suspense from '#/components/Suspense'
-
 import * as backendModule from '#/services/Backend'
-
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as twMerge from '#/utilities/tailwindMerge'
+import * as reactQuery from '@tanstack/react-query'
+import * as React from 'react'
 import { useTimeoutCallback } from '../hooks/timeoutHooks'
-
 // eslint-disable-next-line no-restricted-syntax
-import ProjectViewVue, { type ProjectViewProps } from '@/views/ProjectView.vue'
+import ProjectViewVue from '@/views/ProjectView.vue'
 import { applyPureVueInReact } from 'veaury'
+import type { AllowedComponentProps, VNodeProps } from 'vue'
+import type { ComponentProps } from 'vue-component-type-helpers'
+
+/** Props for the GUI editor root component. */
+export type ProjectViewProps = Omit<
+  ComponentProps<typeof ProjectViewVue>,
+  keyof AllowedComponentProps | keyof VNodeProps
+>
 
 // eslint-disable-next-line no-restricted-syntax
 const ProjectView = applyPureVueInReact(ProjectViewVue) as (props: ProjectViewProps) => JSX.Element
@@ -200,6 +201,8 @@ function EditorInternal(props: EditorInternalProps) {
     localBackend,
     remoteBackend,
   ])
+  // EsLint does not handle types imported from vue files and their dependences.
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const key: string = appProps.projectId
 
   // Currently the GUI component needs to be fully rerendered whenever the project is changed. Once
