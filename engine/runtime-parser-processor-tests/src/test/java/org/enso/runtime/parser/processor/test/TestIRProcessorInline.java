@@ -206,36 +206,12 @@ public class TestIRProcessorInline {
         "Generate class has protected constructor", genClass, containsString("protected JNameGen"));
   }
 
-  /** The default generated protected constructor has meta parameters */
-  @Test
-  public void generatedClassHasConstructor_WithMetaFields() {
-    var src =
-        """
-        import org.enso.runtime.parser.dsl.GenerateIR;
-        import org.enso.runtime.parser.dsl.GenerateFields;
-
-        @GenerateIR
-        public final class JName extends JNameGen {
-          @GenerateFields
-          public JName() {}
-        }
-        """;
-    var genClass = generatedClass("JName", src);
-    assertThat(genClass, containsString("class JNameGen"));
-    assertThat(
-        "Generate class has protected constructor with meta parameters",
-        genClass,
-        containsString(
-            "protected JNameGen(DiagnosticStorage diagnostics, MetadataStorage passData,"
-                + " IdentifiedLocation location, UUID id)"));
-  }
-
   /**
-   * The second generated protected constructor has user fields as parameters. In this case, it will
-   * be an empty constructor.
+   * The default generated protected constructor has the same signature as the constructor in
+   * subtype annotated with {@link org.enso.runtime.parser.dsl.GenerateFields}
    */
   @Test
-  public void generatedClassHasConstructor_WithUserFields() {
+  public void generatedClassHasConstructorMatchingSubtype_Empty() {
     var src =
         """
         import org.enso.runtime.parser.dsl.GenerateIR;
@@ -244,15 +220,76 @@ public class TestIRProcessorInline {
         @GenerateIR
         public final class JName extends JNameGen {
           @GenerateFields
-          public JName() {}
+          public JName() {
+            super();
+          }
         }
         """;
-    var genClass = generatedClass("JName", src);
-    assertThat(genClass, containsString("class JNameGen"));
-    assertThat(
-        "Generate class has protected constructor with user fields as parameters",
-        genClass,
-        containsString("protected JNameGen()"));
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).succeeded();
+  }
+
+  @Test
+  public void generatedClassHasConstructorMatchingSubtype_UserFields() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName(@IRField boolean suspended, @IRField String name) {
+            super(suspended, name);
+          }
+        }
+        """;
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).succeeded();
+  }
+
+  @Test
+  public void generatedClassHasConstructorMatchingSubtype_MetaFields() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.compiler.core.ir.DiagnosticStorage;
+        import org.enso.compiler.core.ir.IdentifiedLocation;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName(DiagnosticStorage diag, IdentifiedLocation loc) {
+            super(diag, loc);
+          }
+        }
+        """;
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).succeeded();
+  }
+
+  @Test
+  public void generatedClassHasConstructorMatchingSubtype_UserFieldsAndMetaFields() {
+    var src =
+        """
+        import org.enso.runtime.parser.dsl.GenerateIR;
+        import org.enso.runtime.parser.dsl.GenerateFields;
+        import org.enso.runtime.parser.dsl.IRField;
+        import org.enso.compiler.core.ir.DiagnosticStorage;
+        import org.enso.compiler.core.ir.IdentifiedLocation;
+
+        @GenerateIR
+        public final class JName extends JNameGen {
+          @GenerateFields
+          public JName(DiagnosticStorage diag, IdentifiedLocation loc, @IRField boolean suspended) {
+            super(diag, loc, suspended);
+          }
+        }
+        """;
+    var compilation = compile("JName", src);
+    CompilationSubject.assertThat(compilation).succeeded();
   }
 
   @Test
@@ -392,7 +429,7 @@ public class TestIRProcessorInline {
         public final class JName extends JNameGen {
           @GenerateFields
           public JName(MetadataStorage passData) {
-            super();
+            super(passData);
           }
         }
         """;

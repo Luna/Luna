@@ -123,16 +123,6 @@ public final class GeneratedClassContext {
     return idMetaField;
   }
 
-  /**
-   * Returns all constructor parameters for the default constructor of the generated class.
-   * Including meta parameters.
-   *
-   * @return
-   */
-  public List<Parameter> getSuperclassConstructorParameters() {
-    return constructorParameters;
-  }
-
   public List<Field> getUserFields() {
     return userFields;
   }

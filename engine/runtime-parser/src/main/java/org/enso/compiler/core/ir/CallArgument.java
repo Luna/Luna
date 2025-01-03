@@ -50,7 +50,7 @@ public interface CallArgument extends IR {
         @IRField boolean isSynthetic,
         IdentifiedLocation identifiedLocation,
         MetadataStorage passData) {
-      super(null, passData, identifiedLocation, null, name, value, isSynthetic);
+      super(name, value, isSynthetic, identifiedLocation, passData);
     }
 
     public Specified(

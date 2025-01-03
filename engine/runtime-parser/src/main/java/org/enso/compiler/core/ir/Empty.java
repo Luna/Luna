@@ -7,7 +7,7 @@ import org.enso.runtime.parser.dsl.GenerateIR;
 public final class Empty extends EmptyGen {
   @GenerateFields
   public Empty(IdentifiedLocation identifiedLocation, MetadataStorage passData) {
-    super(null, passData, identifiedLocation, null);
+    super(identifiedLocation, passData);
   }
 
   public Empty(IdentifiedLocation identifiedLocation) {

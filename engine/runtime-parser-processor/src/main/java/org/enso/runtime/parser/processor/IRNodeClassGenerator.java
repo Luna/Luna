@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
-import org.enso.runtime.parser.processor.GeneratedClassContext.Parameter;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.field.FieldCollector;
 import org.enso.runtime.parser.processor.methodgen.BuilderMethodGenerator;
@@ -115,8 +114,6 @@ final class IRNodeClassGenerator {
 
         $defaultCtor
 
-        $ctorWithUserFields
-
         $validateConstructor
 
         public static Builder builder() {
@@ -141,7 +138,6 @@ final class IRNodeClassGenerator {
         """
             .replace("$fields", fieldsCode())
             .replace("$defaultCtor", defaultConstructor())
-            .replace("$ctorWithUserFields", constructorForUserFields())
             .replace("$validateConstructor", validateConstructor())
             .replace("$copyMethod", copyMethodGenerator.generateMethodCode())
             .replace("$userDefinedGetters", userDefinedGetters())
@@ -191,34 +187,15 @@ final class IRNodeClassGenerator {
     var docs =
         """
         /**
-         * Default constructor for all the fields inside the generated class - both meta and
-         * user defined.
+         * Default constructor matching the signature of subtype's constructor.
+         * The rest of the fields not specified as parameters to this constructor are initialized to
+         * their default value.
          */
         """;
-    var ctorCode =
-        constructorForFields(generatedClassContext.getSuperclassConstructorParameters(), List.of());
-    return docs + ctorCode;
-  }
-
-  /**
-   * Returns string representation of the second protected constructor of the generated class. This
-   * constructor accepts only user defined fields as parameters. Meta fields are initialized to
-   * null.
-   */
-  private String constructorForUserFields() {
-    var docs =
-        """
-        /**
-         * Second generated constructor only for user-defined fields. All the meta fields will
-         * be initialized to the default value ({@code null}).
-         */
-        """;
-    var userFieldsAsParameters =
-        generatedClassContext.getUserFields().stream()
-            .map(field -> new Parameter(field.getType(), field.getName()))
-            .toList();
-    var ctorCode =
-        constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
+    var subclassCtorParams = generatedClassContext.getSubclassConstructorParameters();
+    var allFields = generatedClassContext.getAllFields();
+    var diff = Utils.diff(allFields, subclassCtorParams);
+    var ctorCode = constructorForFields(subclassCtorParams, diff);
     return docs + ctorCode;
   }
 
@@ -231,7 +208,7 @@ final class IRNodeClassGenerator {
    *     Can be empty list.
    */
   private String constructorForFields(
-      List<Parameter> parameters, List<ClassField> initializeToNull) {
+      List<ClassField> parameters, List<ClassField> initializeToNull) {
     Utils.hardAssert(
         !(parameters.isEmpty() && initializeToNull.isEmpty()),
         "At least one of the list must be non empty");
@@ -242,7 +219,7 @@ final class IRNodeClassGenerator {
             .map(
                 consParam ->
                     "$consType $consName"
-                        .replace("$consType", consParam.simpleTypeName())
+                        .replace("$consType", consParam.getSimpleTypeName())
                         .replace("$consName", consParam.name()))
             .collect(Collectors.joining(", "));
     sb.append(inParens).append(") {").append(System.lineSeparator());
