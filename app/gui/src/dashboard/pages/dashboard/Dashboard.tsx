@@ -46,7 +46,6 @@ import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
 import { listDirectoryQueryOptions, useBackendQuery } from '#/hooks/backendHooks'
-import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { useDriveStore, useSetExpandedDirectories } from '#/providers/DriveProvider'
 import { userGroupIdToDirectoryId, userIdToDirectoryId } from '#/services/RemoteBackend'
@@ -324,11 +323,10 @@ function OpenedProjectsParentsExpander() {
   const remoteBackend = backendProvider.useRemoteBackend()
   const localBackend = backendProvider.useLocalBackend()
   const categoriesAPI = useCategoriesAPI()
-  const category = categoriesAPI.category
+  const { category, cloudCategories, localCategories } = categoriesAPI
   const driveStore = useDriveStore()
   const launchedProjects = useLaunchedProjects()
   const setExpandedDirectories = useSetExpandedDirectories()
-  const launchedProjectsRef = useSyncRef(launchedProjects)
   const { user } = authProvider.useFullUserSession()
   const { data: userGroups } = useBackendQuery(remoteBackend, 'listUserGroups', [])
   const { data: users } = useBackendQuery(remoteBackend, 'listUsers', [])
@@ -339,26 +337,26 @@ function OpenedProjectsParentsExpander() {
     )
 
     const expandedDirectories = structuredClone(driveStore.getState().expandedDirectories)
+    for (const otherCategory of [...cloudCategories.categories, ...localCategories.categories]) {
+      expandedDirectories[otherCategory.rootPath] ??= []
+    }
 
     if (localBackend) {
-      const rootPath = 'rootPath' in category ? category.rootPath : localBackend.rootPath()
-      const localProjects = launchedProjectsRef.current.filter(
+      const localProjects = launchedProjects.filter(
         (project) => project.type === backendModule.BackendType.local,
       )
       for (const project of localProjects) {
         const path = localBackendModule.extractTypeAndId(project.parentId).id
-        const strippedPath = path.replace(`${rootPath}/`, '')
-        if (strippedPath !== path) {
-          let parentPath = String(rootPath)
-          const parents = strippedPath.split('/')
-          for (const parent of parents) {
-            parentPath += `/${parent}`
-            const currentParentPath = backendModule.Path(parentPath)
-            const currentParentId = localBackendModule.newDirectoryId(currentParentPath)
-            for (const [categoryRootPath, directoriesInCategory] of unsafeEntries(
-              expandedDirectories,
-            )) {
-              if (!backendModule.isDescendantPath(currentParentPath, categoryRootPath)) {
+        for (const [rootPath, directoriesInCategory] of unsafeEntries(expandedDirectories)) {
+          const strippedPath = path.replace(`${rootPath}/`, '')
+          if (strippedPath !== path) {
+            let parentPath = String(rootPath)
+            const parents = strippedPath.split('/')
+            for (const parent of parents) {
+              parentPath += `/${parent}`
+              const currentParentPath = backendModule.Path(parentPath)
+              const currentParentId = localBackendModule.newDirectoryId(currentParentPath)
+              if (!backendModule.isDescendantPath(currentParentPath, rootPath)) {
                 continue
               }
               if (directoriesInCategory.includes(currentParentId)) {
@@ -373,7 +371,7 @@ function OpenedProjectsParentsExpander() {
       }
     }
 
-    const cloudProjects = launchedProjectsRef.current.filter(
+    const cloudProjects = launchedProjects.filter(
       (project) => project.type === backendModule.BackendType.remote,
     )
     const promises = cloudProjects.map((project) =>
@@ -385,8 +383,8 @@ function OpenedProjectsParentsExpander() {
         }),
       ),
     )
-    const projects = await Promise.allSettled(promises)
-    const projects2 = projects.flatMap((directoryResult, i) => {
+    const projectsSiblings = await Promise.allSettled(promises)
+    const projects = projectsSiblings.flatMap((directoryResult, i) => {
       const projectInfo = cloudProjects[i]
       const project =
         projectInfo && directoryResult.status === 'fulfilled' ?
@@ -396,7 +394,7 @@ function OpenedProjectsParentsExpander() {
         : null
       return project ? [project] : []
     })
-    for (const project of projects2) {
+    for (const project of projects) {
       const parents = project.parentsPath.split('/').filter(backendModule.isDirectoryId)
       const rootDirectoryId = parents[0]
       const baseVirtualPath = (() => {
