@@ -232,8 +232,8 @@ export function useClearTrashMutation(backend: Backend) {
 }
 
 /** Call "download" mutations for a list of assets. */
-export function useDownloadAssetsMutation(backend: Backend) {
-  return useMutation({
+export function downloadAssetsMutationOptions(backend: Backend) {
+  return mutationOptions({
     mutationFn: async (infos: readonly { id: AssetId; title: string }[]) => {
       const results = await Promise.allSettled(
         infos.map(({ id, title }) => backend.download(id, title)),

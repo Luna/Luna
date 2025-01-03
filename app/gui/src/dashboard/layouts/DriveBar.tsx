@@ -19,7 +19,7 @@ import {
   Text,
   useVisualTooltip,
 } from '#/components/AriaComponents'
-import { useClearTrashMutation, useDownloadAssetsMutation } from '#/hooks/backendBatchedHooks'
+import { downloadAssetsMutationOptions, useClearTrashMutation } from '#/hooks/backendBatchedHooks'
 import {
   useNewDatalink,
   useNewFolder,
@@ -109,7 +109,7 @@ export default function DriveBar(props: DriveBarProps) {
   const getTargetDirectory = useEventCallback(() => driveStore.getState().targetDirectory)
   const rootDirectoryId = useRootDirectoryId(backend, category)
 
-  const downloadAssetsMutation = useDownloadAssetsMutation(backend)
+  const downloadAssetsMutation = useMutation(downloadAssetsMutationOptions(backend))
   const clearTrashMutation = useClearTrashMutation(backend)
   const newFolderRaw = useNewFolder(backend, category)
   const newFolder = useEventCallback(async () => {

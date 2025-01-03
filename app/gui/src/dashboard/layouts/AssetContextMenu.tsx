@@ -33,8 +33,8 @@ import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywal
 import {
   copyAssetsMutationOptions,
   deleteAssetsMutationOptions,
+  downloadAssetsMutationOptions,
   restoreAssetsMutationOptions,
-  useDownloadAssetsMutation,
 } from '#/hooks/backendBatchedHooks'
 import { useNewProject, useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
 import { useUploadFileWithToastMutation } from '#/hooks/backendUploadFilesHooks'
@@ -83,7 +83,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const deleteAssetsMutation = reactQuery.useMutation(deleteAssetsMutationOptions(backend))
   const restoreAssetsMutation = reactQuery.useMutation(restoreAssetsMutationOptions(backend))
   const copyAssetsMutation = reactQuery.useMutation(copyAssetsMutationOptions(backend))
-  const downloadAssetsMutation = useDownloadAssetsMutation(backend)
+  const downloadAssetsMutation = reactQuery.useMutation(downloadAssetsMutationOptions(backend))
   const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
