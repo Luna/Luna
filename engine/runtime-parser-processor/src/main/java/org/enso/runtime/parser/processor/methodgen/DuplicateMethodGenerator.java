@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import org.enso.runtime.parser.processor.GeneratedClassContext;
 import org.enso.runtime.parser.processor.IRProcessingException;
 import org.enso.runtime.parser.processor.field.Field;
@@ -16,25 +17,26 @@ import org.enso.runtime.parser.processor.utils.Utils;
  * Note that in the interface hierarchy, there can be an override with a different return type.
  */
 public class DuplicateMethodGenerator {
-  private final ExecutableElement duplicateMethod;
+
   private final GeneratedClassContext ctx;
-  private static final List<Parameter> parameters =
-      List.of(
-          new Parameter("boolean", "keepLocations"),
-          new Parameter("boolean", "keepMetadata"),
-          new Parameter("boolean", "keepDiagnostics"),
-          new Parameter("boolean", "keepIdentifiers"));
+  private final List<Parameter> parameters;
 
   /**
    * @param duplicateMethod ExecutableElement representing the duplicate method (or its override).
    */
   public DuplicateMethodGenerator(ExecutableElement duplicateMethod, GeneratedClassContext ctx) {
-    ensureDuplicateMethodHasExpectedSignature(duplicateMethod);
     this.ctx = Objects.requireNonNull(ctx);
-    this.duplicateMethod = Objects.requireNonNull(duplicateMethod);
+    var boolType = ctx.getProcessingEnvironment().getTypeUtils().getPrimitiveType(TypeKind.BOOLEAN);
+    this.parameters =
+        List.of(
+            new Parameter(boolType, "keepLocations"),
+            new Parameter(boolType, "keepMetadata"),
+            new Parameter(boolType, "keepDiagnostics"),
+            new Parameter(boolType, "keepIdentifiers"));
+    ensureDuplicateMethodHasExpectedSignature(duplicateMethod);
   }
 
-  private static void ensureDuplicateMethodHasExpectedSignature(ExecutableElement duplicateMethod) {
+  private void ensureDuplicateMethodHasExpectedSignature(ExecutableElement duplicateMethod) {
     var dupMethodParameters = duplicateMethod.getParameters();
     if (dupMethodParameters.size() != parameters.size()) {
       throw new IRProcessingException(
@@ -88,12 +90,7 @@ public class DuplicateMethodGenerator {
             .replace("$idType", ctx.getIdMetaField().getTypeName());
     sb.append(Utils.indent(duplicateMetaFieldsCode, 2));
     sb.append(System.lineSeparator());
-    for (var metaVar :
-        List.of(
-            new MetaField("DiagnosticStorage", "diagnostics"),
-            new MetaField("MetadataStorage", "passData"),
-            new MetaField("IdentifiedLocation", "location"),
-            new MetaField("UUID", "id"))) {
+    for (var metaVar : metaFields()) {
       var dupName = metaVar.name + "Duplicated";
       duplicatedVars.add(new DuplicateVar(metaVar.type, dupName, metaVar.name, false));
     }
@@ -104,33 +101,30 @@ public class DuplicateMethodGenerator {
           sb.append(Utils.indent(nullableChildCode(field), 2));
           sb.append(System.lineSeparator());
           duplicatedVars.add(
-              new DuplicateVar(
-                  field.getSimpleTypeName(), dupFieldName(field), field.getName(), true));
+              new DuplicateVar(field.getType(), dupFieldName(field), field.getName(), true));
         } else {
           if (field.isList()) {
             sb.append(Utils.indent(listChildCode(field), 2));
             sb.append(System.lineSeparator());
             duplicatedVars.add(
-                new DuplicateVar("List", dupFieldName(field), field.getName(), false));
+                new DuplicateVar(field.getType(), dupFieldName(field), field.getName(), false));
           } else if (field.isOption()) {
             sb.append(Utils.indent(optionChildCode(field), 2));
             sb.append(System.lineSeparator());
             duplicatedVars.add(
-                new DuplicateVar("Option", dupFieldName(field), field.getName(), false));
+                new DuplicateVar(field.getType(), dupFieldName(field), field.getName(), false));
           } else {
             sb.append(Utils.indent(notNullableChildCode(field), 2));
             sb.append(System.lineSeparator());
             duplicatedVars.add(
-                new DuplicateVar(
-                    field.getSimpleTypeName(), dupFieldName(field), field.getName(), true));
+                new DuplicateVar(field.getType(), dupFieldName(field), field.getName(), true));
           }
         }
       } else {
         sb.append(Utils.indent(nonChildCode(field), 2));
         sb.append(System.lineSeparator());
         duplicatedVars.add(
-            new DuplicateVar(
-                field.getSimpleTypeName(), dupFieldName(field), field.getName(), false));
+            new DuplicateVar(field.getType(), dupFieldName(field), field.getName(), false));
       }
     }
 
@@ -156,6 +150,19 @@ public class DuplicateMethodGenerator {
     return defaultDuplicateMethod + System.lineSeparator() + parameterlessDuplicateMethod();
   }
 
+  private List<MetaField> metaFields() {
+    var procEnv = ctx.getProcessingEnvironment();
+    var diagTypeElem = Utils.diagnosticStorageTypeElement(procEnv);
+    var metaTypeElem = Utils.metadataStorageTypeElement(procEnv);
+    var locationTypeElem = Utils.identifiedLocationTypeElement(procEnv);
+    var uuidTypeElem = Utils.uuidTypeElement(procEnv);
+    return List.of(
+        new MetaField(diagTypeElem.asType(), "diagnostics"),
+        new MetaField(metaTypeElem.asType(), "passData"),
+        new MetaField(locationTypeElem.asType(), "location"),
+        new MetaField(uuidTypeElem.asType(), "id"));
+  }
+
   private String parameterlessDuplicateMethod() {
     var code =
         """
@@ -171,7 +178,7 @@ public class DuplicateMethodGenerator {
     return field.getName() + "Duplicated";
   }
 
-  private static String nullableChildCode(Field nullableChild) {
+  private String nullableChildCode(Field nullableChild) {
     Utils.hardAssert(nullableChild.isNullable() && nullableChild.isChild());
     return """
           IR $dupName = null;
@@ -188,7 +195,7 @@ public class DuplicateMethodGenerator {
         .replace("$parameterNames", String.join(", ", parameterNames()));
   }
 
-  private static String notNullableChildCode(Field child) {
+  private String notNullableChildCode(Field child) {
     assert child.isChild() && !child.isNullable() && !child.isList() && !child.isOption();
     return """
           IR $dupName = $childName.duplicate($parameterNames);
@@ -202,7 +209,7 @@ public class DuplicateMethodGenerator {
         .replace("$parameterNames", String.join(", ", parameterNames()));
   }
 
-  private static String listChildCode(Field listChild) {
+  private String listChildCode(Field listChild) {
     Utils.hardAssert(listChild.isChild() && listChild.isList());
     return """
           $childListType $dupName =
@@ -221,7 +228,7 @@ public class DuplicateMethodGenerator {
         .replace("$parameterNames", String.join(", ", parameterNames()));
   }
 
-  private static String optionChildCode(Field optionChild) {
+  private String optionChildCode(Field optionChild) {
     Utils.hardAssert(optionChild.isOption() && optionChild.isChild());
     return """
         $childOptType $dupName = $childName;
@@ -250,7 +257,7 @@ public class DuplicateMethodGenerator {
         .replace("$dupName", dupFieldName(field));
   }
 
-  private static List<String> parameterNames() {
+  private List<String> parameterNames() {
     return parameters.stream().map(Parameter::name).collect(Collectors.toList());
   }
 
@@ -292,10 +299,13 @@ public class DuplicateMethodGenerator {
   private List<DuplicateVar> matchCtorParams(List<DuplicateVar> duplicatedVars) {
     var ctorParams = new ArrayList<DuplicateVar>();
     for (var subclassCtorParam : ctx.getSubclassConstructorParameters()) {
-      var paramType = subclassCtorParam.simpleTypeName();
+      var paramType = subclassCtorParam.getTypeName();
       var paramName = subclassCtorParam.name();
       duplicatedVars.stream()
-          .filter(var -> var.type.equals(paramType) && var.originalName.equals(paramName))
+          .filter(
+              var ->
+                  var.type.equals(subclassCtorParam.getType())
+                      && var.originalName.equals(paramName))
           .findFirst()
           .ifPresentOrElse(
               ctorParams::add,
@@ -316,14 +326,13 @@ public class DuplicateMethodGenerator {
   }
 
   /**
-   * @param type Simple type name. Must not be null.
    * @param duplicatedName Name of the duplicated variable
    * @param originalName Name of the original variable (field)
-   * @param needsCast If the duplicated variable needs to be casted to its type in the return
+   * @param needsCast If the duplicated variable needs to be cast to its type in the return
    *     statement.
    */
   private record DuplicateVar(
-      String type, String duplicatedName, String originalName, boolean needsCast) {}
+      TypeMirror type, String duplicatedName, String originalName, boolean needsCast) {}
 
   /**
    * Parameter for the duplicate method
@@ -331,7 +340,7 @@ public class DuplicateMethodGenerator {
    * @param type
    * @param name
    */
-  private record Parameter(String type, String name) {
+  private record Parameter(TypeMirror type, String name) {
 
     @Override
     public String toString() {
@@ -339,5 +348,5 @@ public class DuplicateMethodGenerator {
     }
   }
 
-  private record MetaField(String type, String name) {}
+  private record MetaField(TypeMirror type, String name) {}
 }

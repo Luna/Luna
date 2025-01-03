@@ -64,8 +64,7 @@ public final class MapExpressionsMethodGenerator {
                         Utils.findMapExpressionsMethod(
                             child.getTypeParameter(), ctx.getProcessingEnvironment());
                   } else {
-                    var childTypeElem =
-                        Utils.typeMirrorToElement(child.getType());
+                    var childTypeElem = Utils.typeMirrorToElement(child.getType());
                     childsMapExprMethod =
                         Utils.findMapExpressionsMethod(
                             childTypeElem, ctx.getProcessingEnvironment());

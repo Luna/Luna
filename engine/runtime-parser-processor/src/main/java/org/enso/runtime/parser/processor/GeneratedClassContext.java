@@ -168,12 +168,10 @@ public final class GeneratedClassContext {
     var ctor = processedClass.getCtor();
     var ctorParams = new ArrayList<ClassField>();
     for (var param : ctor.getParameters()) {
-      var paramSimpleType = simpleTypeName(param);
+      var paramType = param.asType().toString();
       var paramName = param.getSimpleName().toString();
       var fieldsWithSameType =
-          allFields.stream()
-              .filter(field -> paramSimpleType.equals(field.simpleTypeName()))
-              .toList();
+          allFields.stream().filter(field -> paramType.equals(field.getTypeName())).toList();
       if (fieldsWithSameType.isEmpty()) {
         throw noMatchingFieldError(param);
       } else if (fieldsWithSameType.size() == 1) {

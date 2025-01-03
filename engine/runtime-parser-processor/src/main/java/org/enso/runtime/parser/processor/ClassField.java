@@ -2,7 +2,6 @@ package org.enso.runtime.parser.processor;
 
 import java.util.Objects;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** Declared field in the generated class. */
@@ -46,14 +45,12 @@ public final class ClassField {
     return modifiers;
   }
 
+  public TypeMirror getType() {
+    return type;
+  }
+
   public String getTypeName() {
-    var elem = procEnv.getTypeUtils().asElement(type);
-    if (elem instanceof TypeElement typeElem) {
-      return typeElem.getQualifiedName().toString();
-    } else {
-      // Is primitive
-      return type.toString();
-    }
+    return type.toString();
   }
 
   /**
