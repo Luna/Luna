@@ -1198,20 +1198,31 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
           body,
           file,
         ])
+        let i = 0
+        let completedChunkCount = 0
         const parts: backendModule.S3MultipartPart[] = []
-        for (const [url, i] of Array.from(
-          presignedUrls,
-          (presignedUrl, index) => [presignedUrl, index] as const,
-        )) {
-          parts.push(await uploadFileChunkMutation.mutateAsync([url, file, i]))
-          const newSentMb = Math.min((i + 1) * S3_CHUNK_SIZE_MB, fileSizeMb)
+        const uploadNextChunk = async (): Promise<void> => {
+          const currentI = i
+          const url = presignedUrls[i]
+          if (url == null) {
+            return
+          }
+          i += 1
+          const promise = uploadFileChunkMutation.mutateAsync([url, file, currentI])
+          // Queue the next chunk to be uploaded after this one.
+          const fullPromise = promise.then(uploadNextChunk)
+          parts[currentI] = await promise
+          completedChunkCount += 1
+          const newSentMb = Math.min(completedChunkCount * S3_CHUNK_SIZE_MB, fileSizeMb)
           setSentMb(newSentMb)
           options.onChunkSuccess?.({
             event: 'chunk',
             sentMb: newSentMb,
             totalMb: fileSizeMb,
           })
+          return fullPromise
         }
+        await Promise.all(Array.from({ length: 5 }).map(uploadNextChunk))
         const result = await uploadFileEndMutation.mutateAsync([
           {
             parentDirectoryId: body.parentDirectoryId,
