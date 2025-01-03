@@ -209,7 +209,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               setModal(
                 <ConfirmDeleteModal
                   defaultOpen
-                  actionText={`delete the ${asset.type} '${asset.title}' forever`}
+                  cannotUndo
+                  actionText={getText('deleteTheAssetTypeTitleForever', asset.type, asset.title)}
                   doDelete={() => {
                     deleteAssetsMutation.mutate([[asset.id], true])
                   }}

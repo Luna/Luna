@@ -150,7 +150,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
 
   if (category.type === 'trash') {
     return (
-      selectedAssets.length !== 0 && (
+      selectedAssets.length > 1 && (
         <ContextMenu
           aria-label={getText('assetsTableContextMenuLabel')}
           hidden={hidden}
