@@ -66,10 +66,11 @@ test('clear trash', ({ page }) =>
       api.addProject()
       api.addFile()
       api.addSecret()
+      api.addDatalink()
     },
   })
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(6)
+      await expect(rows).toHaveCount(7)
     })
     .driveTable.withRows(async (rows, _nonRows, _context, page) => {
       const mod = await modModifier(page)
@@ -84,7 +85,7 @@ test('clear trash', ({ page }) =>
     .driveTable.expectPlaceholderRow()
     .goToCategory.trash()
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(6)
+      await expect(rows).toHaveCount(7)
     })
     .clearTrash()
     .driveTable.expectTrashPlaceholderRow()
@@ -95,5 +96,5 @@ test('clear trash', ({ page }) =>
     })
     .close()
     .driveTable.withRows(async (rows) => {
-      await expect(rows).toHaveCount(1)
+      await expect(rows).toHaveCount(0)
     }))
