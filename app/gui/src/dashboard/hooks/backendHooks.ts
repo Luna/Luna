@@ -732,23 +732,28 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
     }),
   )
 
-  return useMutation({
-    mutationKey: [backend.type, 'removeSelfPermission'],
-    mutationFn: async (id: AssetId) => {
+  const mutate = useEventCallback((id: AssetId) => {
+    createPermissionMutation.mutate([
+      {
+        action: null,
+        resourceId: id,
+        actorsIds: [user.userId],
+      },
+    ])
+  })
+
+  const mutateAsync = useEventCallback(
+    async (id: AssetId) =>
       await createPermissionMutation.mutateAsync([
         {
           action: null,
           resourceId: id,
           actorsIds: [user.userId],
         },
-      ])
-      return null
-    },
-    meta: {
-      invalidates: [[backend.type, 'listDirectory']],
-      awaitInvalidates: true,
-    },
-  })
+      ]),
+  )
+
+  return { ...createPermissionMutation, mutate, mutateAsync }
 }
 
 /** Duplicate a specific version of a project. */
