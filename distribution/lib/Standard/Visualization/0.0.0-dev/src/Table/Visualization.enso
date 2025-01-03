@@ -208,7 +208,10 @@ make_json_for_table dataframe max_rows all_rows_count include_index_col is_db_ta
         number_untrimmed = case all_rows_count > Column.default_sample_size of
             False -> JS_Object.from_pairs [["name", "Count untrimmed whitespace"], ["percentage_value", columns.map .count_untrimmed]]
             True -> JS_Object.from_pairs [["name", "Count untrimmed whitespace (sampled)"], ["percentage_value", columns.map .count_untrimmed]]
-        number_non_triv = JS_Object.from_pairs [["name", "Count non trivial whitespace"], ["percentage_value", columns.map .count_non_trivial_whitespace]]
+        number_non_triv = case all_rows_count > Column.default_sample_size of
+            False -> JS_Object.from_pairs [["name", "Count non trivial whitespace"], ["percentage_value", columns.map .count_non_trivial_whitespace]]
+            True -> JS_Object.from_pairs [["name", "Count non trivial whitespace (sampled)"], ["percentage_value", columns.map .count_non_trivial_whitespace]]
+        JS_Object.from_pairs 
         [number_nothing, number_untrimmed, number_non_triv]
     pairs                = [header, value_type, data, all_rows, has_index_col, links, ["data_quality_metrics", data_quality_metrics] ,["type", "Table"], child_label]
     JS_Object.from_pairs pairs
