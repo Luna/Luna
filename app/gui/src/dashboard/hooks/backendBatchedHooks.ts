@@ -6,21 +6,22 @@ import { extractTypeAndId } from '#/services/LocalBackend'
 import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import {
-  DefaultError,
-  Mutation,
-  UseMutationOptions,
   useMutation,
   useMutationState,
   useQueryClient,
+  type DefaultError,
+  type Mutation,
+  type UseMutationOptions,
 } from '@tanstack/react-query'
-import Backend, {
-  AssetId,
+import {
   AssetType,
   BackendType,
-  DirectoryId,
   FilterBy,
-  LabelName,
   extractTypeFromId,
+  type AssetId,
+  type default as Backend,
+  type DirectoryId,
+  type LabelName,
 } from 'enso-common/src/services/Backend'
 
 /** An identity function to help in constructing options for a mutation. */

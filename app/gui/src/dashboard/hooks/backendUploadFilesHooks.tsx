@@ -7,13 +7,13 @@ import {
 } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useToastAndLog, useToastAndLogWithId } from '#/hooks/toastAndLogHooks'
-import { Category } from '#/layouts/CategorySwitcher/Category'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import DuplicateAssetsModal from '#/modals/DuplicateAssetsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import {
-  SelectedAssetInfo,
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
+  type SelectedAssetInfo,
 } from '#/providers/DriveProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
@@ -21,16 +21,9 @@ import LocalBackend from '#/services/LocalBackend'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { useMutation } from '@tanstack/react-query'
-import Backend, {
-  AnyAsset,
-  AssetId,
+import {
   AssetType,
-  DirectoryId,
-  FileId,
-  ProjectId,
-  S3MultipartPart,
   S3_CHUNK_SIZE_BYTES,
-  UploadFileRequestParams,
   assetIsFile,
   assetIsProject,
   createPlaceholderFileAsset,
@@ -40,6 +33,14 @@ import Backend, {
   fileIsNotProject,
   fileIsProject,
   stripProjectExtension,
+  type AnyAsset,
+  type AssetId,
+  type default as Backend,
+  type DirectoryId,
+  type FileId,
+  type ProjectId,
+  type S3MultipartPart,
+  type UploadFileRequestParams,
 } from 'enso-common/src/services/Backend'
 import { useId, useState } from 'react'
 import { toast } from 'react-toastify'

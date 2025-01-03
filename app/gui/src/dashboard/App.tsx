@@ -87,7 +87,6 @@ import LocalBackend from '#/services/LocalBackend'
 import ProjectManager, * as projectManager from '#/services/ProjectManager'
 import RemoteBackend from '#/services/RemoteBackend'
 
-import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
 import LocalStorage from '#/utilities/LocalStorage'
@@ -98,7 +97,6 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
 import { useMutation } from '@tanstack/react-query'
-import { BackendType } from 'enso-common/src/services/Backend'
 import { useOffline } from './hooks/offlineHooks'
 
 // ============================

@@ -1,6 +1,4 @@
 /** @file Hooks for interacting with the backend. */
-import { useId, useState } from 'react'
-
 import {
   queryOptions,
   useMutation,
@@ -16,7 +14,6 @@ import {
   type UseQueryOptions,
   type UseQueryResult,
 } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 
 import {
@@ -26,19 +23,14 @@ import {
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
-import { useToastAndLog, useToastAndLogWithId } from '#/hooks/toastAndLogHooks'
 import { CATEGORY_TO_FILTER_BY, type Category } from '#/layouts/CategorySwitcher/Category'
-import DuplicateAssetsModal from '#/modals/DuplicateAssetsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import {
   useSetNewestFolderId,
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
-  type SelectedAssetInfo,
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
-import { useSetModal } from '#/providers/ModalProvider'
-import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 import {

@@ -100,8 +100,8 @@ export default function AssetVersion(props: AssetVersionProps) {
                       loaderPosition="icon"
                       icon={DuplicateIcon}
                       isDisabled={placeholder}
-                      onPress={() => {
-                        doDuplicate()
+                      onPress={async () => {
+                        await doDuplicate()
                         opts.close()
                       }}
                     >

@@ -1,8 +1,7 @@
 /** @file Hooks related to fetching directories. */
-
 import { useFeatureFlag } from '#/providers/FeatureFlagsProvider'
 import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BackendType } from 'enso-common/src/services/Backend'
+import type { BackendType } from 'enso-common/src/services/Backend'
 
 /** Periodically refetch directories for the given backend type. */
 export function useRefetchDirectories(backendType: BackendType) {
