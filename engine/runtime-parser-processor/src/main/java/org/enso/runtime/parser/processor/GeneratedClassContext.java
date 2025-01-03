@@ -7,6 +7,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleTypeVisitor14;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.utils.Utils;
@@ -96,7 +97,7 @@ public final class GeneratedClassContext {
     }
     this.constructorParameters =
         allFields.stream()
-            .map(classField -> new Parameter(classField.getTypeName(), classField.name()))
+            .map(classField -> new Parameter(classField.getType(), classField.name()))
             .toList();
   }
 
@@ -224,16 +225,15 @@ public final class GeneratedClassContext {
     return new IRProcessingException(errMsg, param);
   }
 
-  /**
-   * Method parameter
-   *
-   * @param type
-   * @param name
-   */
-  record Parameter(String type, String name) {
+  /** Method parameter */
+  record Parameter(TypeMirror type, String name) {
     @Override
     public String toString() {
-      return type + " " + name;
+      return simpleTypeName() + " " + name;
+    }
+
+    String simpleTypeName() {
+      return Utils.simpleTypeName(type);
     }
   }
 }

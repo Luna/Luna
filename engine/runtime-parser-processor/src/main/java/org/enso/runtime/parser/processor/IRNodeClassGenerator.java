@@ -209,7 +209,7 @@ final class IRNodeClassGenerator {
         """;
     var userFieldsAsParameters =
         generatedClassContext.getUserFields().stream()
-            .map(field -> new Parameter(field.getSimpleTypeName(), field.getName()))
+            .map(field -> new Parameter(field.getType(), field.getName()))
             .toList();
     var ctorCode =
         constructorForFields(userFieldsAsParameters, generatedClassContext.getMetaFields());
@@ -236,7 +236,7 @@ final class IRNodeClassGenerator {
             .map(
                 consParam ->
                     "$consType $consName"
-                        .replace("$consType", consParam.type())
+                        .replace("$consType", consParam.simpleTypeName())
                         .replace("$consName", consParam.name()))
             .collect(Collectors.joining(", "));
     sb.append(inParens).append(") {").append(System.lineSeparator());

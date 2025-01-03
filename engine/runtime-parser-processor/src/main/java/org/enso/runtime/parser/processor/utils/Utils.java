@@ -109,6 +109,15 @@ public final class Utils {
     return procEnv.getElementUtils().getTypeElement(EXPRESSION_FQN);
   }
 
+  public static String simpleTypeName(TypeMirror typeMirror) {
+    var typeElem = typeMirrorToElement(typeMirror);
+    if (typeElem != null) {
+      return typeElem.getSimpleName().toString();
+    } else {
+      return typeMirror.toString();
+    }
+  }
+
   public static String indent(String code, int indentation) {
     return code.lines()
         .map(line -> " ".repeat(indentation) + line)
