@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 /// <reference types="histoire" />
 
 import react from '@vitejs/plugin-react'
@@ -67,6 +68,21 @@ export default defineConfig({
       },
     }),
     ...(process.env.NODE_ENV === 'development' ? [await projectManagerShim()] : []),
+    ...((
+      process.env.SENTRY_AUTH_TOKEN != null &&
+      process.env.ENSO_CLOUD_SENTRY_ORGANIZATION != null &&
+      process.env.ENSO_CLOUD_SENTRY_PROJECT != null
+    ) ?
+      [
+        sentryVitePlugin({
+          org: process.env.ENSO_CLOUD_SENTRY_ORGANIZATION,
+          project: process.env.ENSO_CLOUD_SENTRY_PROJECT,
+          ...(process.env.ENSO_VERSION != null ?
+            { release: { name: process.env.ENSO_VERSION } }
+          : {}),
+        }),
+      ]
+    : []),
   ],
   optimizeDeps: {
     entries: fileURLToPath(new URL('./index.html', import.meta.url)),
@@ -109,6 +125,7 @@ export default defineConfig({
   build: {
     // dashboard chunk size is larger than the default warning limit
     chunkSizeWarningLimit: 700,
+    sourcemap: true,
   },
 })
 async function projectManagerShim(): Promise<Plugin> {

@@ -9,7 +9,6 @@ import Backend, * as backend from '#/services/Backend'
 import type ProjectManager from '#/services/ProjectManager'
 import * as projectManager from '#/services/ProjectManager'
 import { APP_BASE_URL } from '#/utilities/appBaseUrl'
-import { toRfc3339 } from '#/utilities/dateTime'
 import { download } from '#/utilities/download'
 import { tryGetMessage } from '#/utilities/error'
 import { fileExtension, getFileName, getFolderPath } from '#/utilities/fileInfo'
@@ -32,7 +31,7 @@ function ipWithSocketToAddress(ipWithSocket: projectManager.IpWithSocket) {
 
 /** Create a {@link backend.DirectoryId} from a path. */
 export function newDirectoryId(path: projectManager.Path) {
-  return backend.DirectoryId(`${backend.AssetType.directory}-${path}`)
+  return backend.DirectoryId(`${backend.AssetType.directory}-${path}` as const)
 }
 
 /** Create a {@link backend.ProjectId} from a UUID. */
@@ -240,7 +239,7 @@ export default class LocalBackend extends Backend {
     const result = await this.projectManager.listProjects({})
     return result.projects.map((project) => ({
       name: project.name,
-      organizationId: backend.OrganizationId(''),
+      organizationId: backend.OrganizationId('organization-'),
       projectId: newProjectId(project.id),
       packageName: project.name,
       state: {
@@ -270,7 +269,7 @@ export default class LocalBackend extends Backend {
     })
     return {
       name: project.projectName,
-      organizationId: backend.OrganizationId(''),
+      organizationId: backend.OrganizationId('organization-'),
       projectId: newProjectId(project.projectId),
       packageName: project.projectName,
       state: { type: backend.ProjectState.closed, volumeId: '' },
@@ -339,7 +338,7 @@ export default class LocalBackend extends Backend {
           jsonAddress: null,
           binaryAddress: null,
           ydocAddress: null,
-          organizationId: backend.OrganizationId(''),
+          organizationId: backend.OrganizationId('organization-'),
           packageName: project.name,
           projectId,
           state: { type: backend.ProjectState.closed, volumeId: '' },
@@ -360,7 +359,7 @@ export default class LocalBackend extends Backend {
         jsonAddress: ipWithSocketToAddress(cachedProject.languageServerJsonAddress),
         binaryAddress: ipWithSocketToAddress(cachedProject.languageServerBinaryAddress),
         ydocAddress: null,
-        organizationId: backend.OrganizationId(''),
+        organizationId: backend.OrganizationId('organization-'),
         packageName: cachedProject.projectNormalizedName,
         projectId,
         state: {
@@ -442,7 +441,7 @@ export default class LocalBackend extends Backend {
           engineVersion: version,
           ideVersion: version,
           name: project.name,
-          organizationId: backend.OrganizationId(''),
+          organizationId: backend.OrganizationId('organization-'),
           projectId,
         }
       }
@@ -457,7 +456,7 @@ export default class LocalBackend extends Backend {
       projectId: newProjectId(project.projectId),
       name: project.projectName,
       packageName: project.projectNormalizedName,
-      organizationId: backend.OrganizationId(''),
+      organizationId: backend.OrganizationId('organization-'),
       state: { type: backend.ProjectState.closed, volumeId: '' },
     }
   }
@@ -516,23 +515,6 @@ export default class LocalBackend extends Backend {
         return { asset }
       }
     }
-  }
-
-  /** Return a list of engine versions. */
-  override async listVersions(params: backend.ListVersionsRequestParams) {
-    const engineVersions = await this.projectManager.listAvailableEngineVersions()
-    const engineVersionToVersion = (version: projectManager.EngineVersion): backend.Version => ({
-      ami: null,
-      created: toRfc3339(new Date()),
-      number: {
-        value: version.version,
-        lifecycle: backend.detectVersionLifecycle(version.version),
-      },
-      // The names come from a third-party API and cannot be changed.
-      // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
-      version_type: params.versionType,
-    })
-    return engineVersions.versions.map(engineVersionToVersion)
   }
 
   // === Endpoints that intentionally do not work on the Local Backend ===

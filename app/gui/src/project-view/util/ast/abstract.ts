@@ -182,8 +182,8 @@ export function parseIdents(ast: Ast): IdentifierOrOperatorIdentifier[] | null {
   return unrollOprChain(ast, ',')
 }
 
-/** TODO: Add docs */
-export function parseQualifiedName(ast: Ast): QualifiedName | null {
+/** If the syntax tree represents a valid qualified name, return an equivalent {@link QualifiedName}. */
+export function astToQualifiedName(ast: Ast): QualifiedName | null {
   const idents = unrollPropertyAccess(ast)
   return idents && normalizeQualifiedName(qnFromSegments(idents))
 }
@@ -223,7 +223,7 @@ export function substituteQualifiedName(
   to: QualifiedName,
 ) {
   if (expr instanceof MutablePropertyAccess || expr instanceof MutableIdent) {
-    const qn = parseQualifiedName(expr)
+    const qn = astToQualifiedName(expr)
     if (qn === pattern) {
       expr.updateValue(() => parseExpression(to, expr.module)!)
     } else if (qn && qn.startsWith(pattern)) {
@@ -348,7 +348,7 @@ export function parseUpdatingIdMap(
     if (idMap) setExternalIds(root.module, spans, idMap)
     return { root, spans }
   })
-  const getSpan = spanMapToSpanGetter(spans)
+  const getSpan = spanMapToSpanGetter(spans.nodes)
   const idMapOut = spanMapToIdMap(spans)
   return { root, idMap: idMapOut, getSpan }
 }

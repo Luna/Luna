@@ -96,6 +96,7 @@ final class JobExecutionEngine(
             assertInJvm(timeSinceRequestedToCancel > 0)
             val timeToCancel =
               forceInterruptTimeout - timeSinceRequestedToCancel
+            assertInJvm(timeToCancel > 0)
             logger.log(
               Level.FINEST,
               "About to wait {}ms  to cancel job {}",
@@ -107,7 +108,8 @@ final class JobExecutionEngine(
             runningJob.future.get(timeToCancel, TimeUnit.MILLISECONDS)
             logger.log(
               Level.FINEST,
-              "Job {} finished within the allocated soft-cancel time"
+              "Job {} finished within the allocated soft-cancel time",
+              runningJob.id
             )
           } catch {
             case _: TimeoutException =>
@@ -237,7 +239,7 @@ final class JobExecutionEngine(
     logger.log(
       Level.FINE,
       s"Submitting job: {0} with {1} id...",
-      Array(job, jobId)
+      Array[AnyRef](job, jobId)
     )
     val future = executorService.submit(() => {
       logger.log(Level.FINE, s"Executing job: {0}...", job)
@@ -245,7 +247,11 @@ final class JobExecutionEngine(
       try {
         val result = job.run(runtimeContext)
         val took   = System.currentTimeMillis() - before
-        logger.log(Level.FINE, s"Job {0} finished in {1} ms.", Array(job, took))
+        logger.log(
+          Level.FINE,
+          s"Job {0} finished in {1} ms.",
+          Array[Any](job, took)
+        )
         promise.success(result)
       } catch {
         case NonFatal(ex) =>

@@ -2,6 +2,36 @@
 
 #### Enso IDE
 
+- [ENSO_IDE_MAPBOX_API_TOKEN environment variable should be provided to enable
+  GeoMap visualization][11889].
+- [Round ‘Add component’ button under the component menu replaced by a small
+  button protruding from the output port.][11836].
+- [Fixed nodes being selected after deleting other nodes or connections.][11902]
+- [Redo stack is no longer lost when interacting with text literals][11908].
+
+[11889]: https://github.com/enso-org/enso/pull/11889
+[11836]: https://github.com/enso-org/enso/pull/11836
+[11902]: https://github.com/enso-org/enso/pull/11902
+[11908]: https://github.com/enso-org/enso/pull/11908
+
+#### Enso Language & Runtime
+
+- [Promote broken values instead of ignoring them][11777].
+- [Intersection types & type checks][11600]
+- A constructor or type definition with a single inline argument definition was
+  previously allowed to use spaces in the argument definition without
+  parentheses. [This is now a syntax error.][11856]
+- Symetric, transitive and reflexive [equality for intersection types][11897]
+
+[11777]: https://github.com/enso-org/enso/pull/11777
+[11600]: https://github.com/enso-org/enso/pull/11600
+[11856]: https://github.com/enso-org/enso/pull/11856
+[11897]: https://github.com/enso-org/enso/pull/11897
+
+# Enso 2024.5
+
+#### Enso IDE
+
 - [Rows and Columns may be now removed in Table Input Widget][11151]. The option
   is available in right-click context menu.
 - [Rows and Columns may be now reordered by dragging in Table Input
@@ -108,7 +138,9 @@
 - [Added `Table.input` allowing creation of typed tables from vectors of data,
   including auto parsing text columns.][11562]
 - [Enhance Managed_Resource to allow implementation of in-memory caches][11577]
+- [Added `add_group_number` to the in-memory database.[11818]
 - [The reload button clears the HTTP cache.][11673]
+- [SQL Server Support for Aggregate][11811]
 
 [11235]: https://github.com/enso-org/enso/pull/11235
 [11255]: https://github.com/enso-org/enso/pull/11255
@@ -117,7 +149,9 @@
 [11490]: https://github.com/enso-org/enso/pull/11490
 [11562]: https://github.com/enso-org/enso/pull/11562
 [11577]: https://github.com/enso-org/enso/pull/11577
+[11818]: https://github.com/enso-org/enso/pull/11818
 [11673]: https://github.com/enso-org/enso/pull/11673
+[11811]: https://github.com/enso-org/enso/pull/11811
 
 #### Enso Language & Runtime
 
