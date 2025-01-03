@@ -9,6 +9,7 @@ import org.enso.runtime.parser.processor.GeneratedClassContext.Parameter;
 import org.enso.runtime.parser.processor.field.Field;
 import org.enso.runtime.parser.processor.field.FieldCollector;
 import org.enso.runtime.parser.processor.methodgen.BuilderMethodGenerator;
+import org.enso.runtime.parser.processor.methodgen.CopyMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.DuplicateMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.EqualsMethodGenerator;
 import org.enso.runtime.parser.processor.methodgen.HashCodeMethodGenerator;
@@ -30,6 +31,7 @@ final class IRNodeClassGenerator {
 
   private final GeneratedClassContext generatedClassContext;
   private final DuplicateMethodGenerator duplicateMethodGenerator;
+  private final CopyMethodGenerator copyMethodGenerator;
   private final SetLocationMethodGenerator setLocationMethodGenerator;
   private final BuilderMethodGenerator builderMethodGenerator;
   private final MapExpressionsMethodGenerator mapExpressionsMethodGenerator;
@@ -68,6 +70,7 @@ final class IRNodeClassGenerator {
         new GeneratedClassContext(className, userFields, processingEnv, processedClass);
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
+    this.copyMethodGenerator = new CopyMethodGenerator(generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
     var mapExpressionsMethod =
         Utils.findMapExpressionsMethod(processedClass.getIrInterfaceElem(), processingEnv);
@@ -120,6 +123,8 @@ final class IRNodeClassGenerator {
           return new Builder();
         }
 
+        $copyMethod
+
         $userDefinedGetters
 
         $overrideIRMethods
@@ -138,6 +143,7 @@ final class IRNodeClassGenerator {
             .replace("$defaultCtor", defaultConstructor())
             .replace("$ctorWithUserFields", constructorForUserFields())
             .replace("$validateConstructor", validateConstructor())
+            .replace("$copyMethod", copyMethodGenerator.generateMethodCode())
             .replace("$userDefinedGetters", userDefinedGetters())
             .replace("$overrideIRMethods", overrideIRMethods())
             .replace("$mapExpressionsMethod", mapExpressions())
