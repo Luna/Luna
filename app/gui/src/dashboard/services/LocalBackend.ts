@@ -751,10 +751,19 @@ export default class LocalBackend extends Backend {
     }
   }
 
-  /** Download from an arbitrary URL that is assumed to originate from this backend. */
-  override async download(url: string, name?: string) {
-    download(url, name)
-    return Promise.resolve()
+  /** Download an asset. */
+  override async download(id: backend.AssetId, title: string) {
+    const asset = backend.extractTypeFromId(id)
+    if (asset.type === backend.AssetType.project) {
+      const typeAndId = extractTypeAndId(asset.id)
+      const queryString = new URLSearchParams({
+        projectsDirectory: typeAndId.directory,
+      }).toString()
+      download(
+        `./api/project-manager/projects/${typeAndId.id}/enso-project?${queryString}`,
+        `${title}.enso-project`,
+      )
+    }
   }
 
   /** Invalid operation. */

@@ -1775,8 +1775,8 @@ export default abstract class Backend {
     projectId?: string | null,
     metadata?: object | null,
   ): Promise<void>
-  /** Download from an arbitrary URL that is assumed to originate from this backend. */
-  abstract download(url: string, name?: string): Promise<void>
+  /** Download an asset. */
+  abstract download(assetId: AssetId, title: string): Promise<void>
 
   /**
    * Get the URL for the customer portal.

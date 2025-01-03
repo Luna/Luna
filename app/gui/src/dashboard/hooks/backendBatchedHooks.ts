@@ -233,78 +233,10 @@ export function useClearTrashMutation(backend: Backend) {
 
 /** Call "download" mutations for a list of assets. */
 export function useDownloadAssetsMutation(backend: Backend) {
-  const queryClient = useQueryClient()
-  const toastAndLog = useToastAndLog()
-  const { getText } = useText()
-
   return useMutation({
     mutationFn: async (infos: readonly { id: AssetId; title: string }[]) => {
       const results = await Promise.allSettled(
-        infos.map(async ({ id, title }) => {
-          const asset = extractTypeFromId(id)
-          if (backend.type === BackendType.remote) {
-            switch (asset.type) {
-              case AssetType.project: {
-                const details = await queryClient.fetchQuery(
-                  backendQueryOptions(backend, 'getProjectDetails', [asset.id, true], {
-                    staleTime: 0,
-                  }),
-                )
-                if (details.url != null) {
-                  await backend.download(details.url, `${title}.enso-project`)
-                } else {
-                  const error: unknown = getText('projectHasNoSourceFilesPhrase')
-                  toastAndLog('downloadProjectError', error, title)
-                }
-                break
-              }
-              case AssetType.file: {
-                const details = await queryClient.fetchQuery(
-                  backendQueryOptions(backend, 'getFileDetails', [asset.id, '(unknown)', true], {
-                    staleTime: 0,
-                  }),
-                )
-                if (details.url != null) {
-                  await backend.download(details.url, details.file.fileName ?? '')
-                } else {
-                  const error: unknown = getText('fileNotFoundPhrase')
-                  toastAndLog('downloadFileError', error, title)
-                }
-                break
-              }
-              case AssetType.datalink: {
-                const value = await queryClient.fetchQuery(
-                  backendQueryOptions(backend, 'getDatalink', [asset.id, '(unknown)']),
-                )
-                const fileName = `${title}.datalink`
-                download(
-                  URL.createObjectURL(
-                    new File([JSON.stringify(value)], fileName, {
-                      type: 'application/json+x-enso-data-link',
-                    }),
-                  ),
-                  fileName,
-                )
-                break
-              }
-              default: {
-                toastAndLog('downloadInvalidTypeError')
-                break
-              }
-            }
-          } else {
-            if (asset.type === AssetType.project) {
-              const typeAndId = extractTypeAndId(asset.id)
-              const queryString = new URLSearchParams({
-                projectsDirectory: typeAndId.directory,
-              }).toString()
-              await backend.download(
-                `./api/project-manager/projects/${typeAndId.id}/enso-project?${queryString}`,
-                `${title}.enso-project`,
-              )
-            }
-          }
-        }),
+        infos.map(({ id, title }) => backend.download(id, title)),
       )
       const errors = results.flatMap((result): unknown =>
         result.status === 'rejected' ? [result.reason] : [],
