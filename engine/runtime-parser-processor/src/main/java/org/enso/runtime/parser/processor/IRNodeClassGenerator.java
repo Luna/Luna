@@ -114,6 +114,8 @@ final class IRNodeClassGenerator {
 
         $ctorWithUserFields
 
+        $validateConstructor
+
         public static Builder builder() {
           return new Builder();
         }
@@ -135,6 +137,7 @@ final class IRNodeClassGenerator {
             .replace("$fields", fieldsCode())
             .replace("$defaultCtor", defaultConstructor())
             .replace("$ctorWithUserFields", constructorForUserFields())
+            .replace("$validateConstructor", validateConstructor())
             .replace("$userDefinedGetters", userDefinedGetters())
             .replace("$overrideIRMethods", overrideIRMethods())
             .replace("$mapExpressionsMethod", mapExpressions())
@@ -260,8 +263,41 @@ final class IRNodeClassGenerator {
                   })
               .collect(Collectors.joining(System.lineSeparator()));
       sb.append(initToNullBody);
+      sb.append(System.lineSeparator());
     }
+    sb.append("  validateConstructor();").append(System.lineSeparator());
+    sb.append(System.lineSeparator());
+    sb.append("}").append(System.lineSeparator());
+    return sb.toString();
+  }
 
+  /**
+   * Generates code for validation at the end of the constructor. Validates if all the required
+   * fields were set in the constructor (passed as params).
+   */
+  private String validateConstructor() {
+    var sb = new StringBuilder();
+    sb.append(
+        """
+        /**
+         * Validates if all the required fields were set in the constructor.
+         */
+        """);
+    sb.append("private void validateConstructor() {").append(System.lineSeparator());
+    var checkCode =
+        generatedClassContext.getAllFields().stream()
+            .filter(field -> !field.canBeNull())
+            .filter(field -> !field.isPrimitive())
+            .map(
+                notNullField ->
+                    """
+            if ($fieldName == null) {
+              throw new IllegalArgumentException("$fieldName is required");
+            }
+            """
+                        .replace("$fieldName", notNullField.name()))
+            .collect(Collectors.joining(System.lineSeparator()));
+    sb.append(Utils.indent(checkCode, 2));
     sb.append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
     return sb.toString();
