@@ -53,6 +53,7 @@ public final class GeneratedClassContext {
             .type(Utils.diagnosticStorageTypeElement(processingEnvironment).asType())
             .name("diagnostics")
             .procEnv(processingEnvironment)
+            .canBeNull(true)
             .build();
     this.passDataMetaField =
         ClassField.builder()
@@ -69,12 +70,14 @@ public final class GeneratedClassContext {
             .type(Utils.identifiedLocationTypeElement(processingEnvironment).asType())
             .name("location")
             .procEnv(processingEnvironment)
+            .canBeNull(true)
             .build();
     this.idMetaField =
         ClassField.builder()
             .modifiers("protected")
             .type(Utils.uuidTypeElement(processingEnvironment).asType())
             .name("id")
+            .canBeNull(true)
             .procEnv(processingEnvironment)
             .build();
     this.metaFields =

@@ -53,6 +53,10 @@ public final class ClassField {
     return type.toString();
   }
 
+  public boolean isPrimitive() {
+    return type.getKind().isPrimitive();
+  }
+
   /**
    * @return May be null. In that case, initializer is unknown. Note that the class field can be
    *     primitive.
@@ -70,18 +74,12 @@ public final class ClassField {
     return modifiers + " " + type + " " + name;
   }
 
-  /** Returns simple non-qualified type name. Generic types are returned as raw types. */
-  public String simpleTypeName() {
-    var typeParts = getTypeName().split("<");
-    return typeParts[0];
-  }
-
   public static final class Builder {
     private TypeMirror type;
     private String name;
     private String modifiers = null;
     private String initializer = null;
-    private boolean canBeNull = true;
+    private Boolean canBeNull = null;
     private ProcessingEnvironment procEnv;
 
     public Builder modifiers(String modifiers) {
@@ -118,6 +116,7 @@ public final class ClassField {
       Objects.requireNonNull(type);
       Objects.requireNonNull(name);
       Objects.requireNonNull(procEnv);
+      Objects.requireNonNull(canBeNull);
       var modifiers = this.modifiers != null ? this.modifiers : "";
       return new ClassField(modifiers, type, name, initializer, canBeNull, procEnv);
     }
