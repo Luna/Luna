@@ -77,6 +77,9 @@ export default defineConfig({
         sentryVitePlugin({
           org: process.env.ENSO_CLOUD_SENTRY_ORGANIZATION,
           project: process.env.ENSO_CLOUD_SENTRY_PROJECT,
+          ...(process.env.ENSO_VERSION != null ?
+            { release: { name: process.env.ENSO_VERSION } }
+          : {}),
         }),
       ]
     : []),
