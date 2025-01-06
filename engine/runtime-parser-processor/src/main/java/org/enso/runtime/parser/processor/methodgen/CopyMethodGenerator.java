@@ -19,7 +19,7 @@ public final class CopyMethodGenerator {
          * Creates a shallow copy of this IR element. If all of the given parameters are the
          * same objects as fields, no copy is created and {@code this} is returned.
          *
-         * <p>As opposed to the {@link #duplicate(boolean, boolean, boolean, boolean)} method,
+         * <p>As opposed to the {@code duplicate} method,
          * does not copy this IR element recursively.
          */
         """;
