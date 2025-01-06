@@ -617,6 +617,7 @@ translate_file_errors related_file result =
         s3_file = S3_File.Value s3_path related_file.credentials
         Error.throw (File_Error.Not_Found s3_file)
 
+## PRIVATE
 type S3_File_Comparator
     compare x y = Ordering.compare x.s3_path y.s3_path
 

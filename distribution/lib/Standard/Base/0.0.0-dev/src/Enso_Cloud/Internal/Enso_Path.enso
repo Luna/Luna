@@ -77,6 +77,7 @@ normalize segments =
            that points to the user home and it should be correctly normalized, but requires numerous passes to do so.
         @Tail_Call normalize new_segments
 
+## PRIVATE
 type Enso_Path_Comparator
     compare x y = Vector_Lexicographic_Order.compare x.path_segments y.path_segments
 
