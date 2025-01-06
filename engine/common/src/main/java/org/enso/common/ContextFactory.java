@@ -53,7 +53,7 @@ public final class ContextFactory {
   private String checkForWarnings;
   private int warningsLimit = 100;
   private java.util.Map<String, String> options = new HashMap<>();
-  private java.util.Map<String, String> engineOptions = null;
+  private String runtimerServerKey;
   private boolean enableDebugServer;
 
   private ContextFactory() {}
@@ -147,8 +147,8 @@ public final class ContextFactory {
     return this;
   }
 
-  public ContextFactory engineOptions(Map<String, String> options) {
-    this.engineOptions = options;
+  public ContextFactory enableRuntimeServerInfoKey(String keyName) {
+    this.runtimerServerKey = keyName;
     return this;
   }
 
@@ -168,6 +168,16 @@ public final class ContextFactory {
     }
     var julLogLevel = Converter.toJavaLevel(logLevel);
     var logLevelName = julLogLevel.getName();
+    var inAOTMode = java.lang.Boolean.getBoolean("com.oracle.graalvm.isaot");
+    java.util.Map<String, String> engineOptions = null;
+    if (runtimerServerKey != null) {
+      if (!inAOTMode) {
+        options.put(runtimerServerKey, "true");
+      } else {
+        engineOptions = new java.util.HashMap<>();
+        engineOptions.put(runtimerServerKey, "true");
+      }
+    }
     var builder =
         Context.newBuilder()
             .allowExperimentalOptions(true)
@@ -232,11 +242,10 @@ public final class ContextFactory {
           .allowCreateThread(true);
     }
 
-    if (engineOptions != null) {
+    if (inAOTMode) {
       // In AOT mode one must not use a shared engine; the latter causes issues when initializing
       // message transport - it is set to `null`.
       var eng = Engine.newBuilder().allowExperimentalOptions(true).options(engineOptions);
-
       if (messageTransport != null) {
         eng.serverTransport(messageTransport);
       }

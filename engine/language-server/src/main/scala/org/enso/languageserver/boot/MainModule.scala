@@ -63,7 +63,6 @@ import java.io.{File, PrintStream}
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.time.Clock
-import java.util
 import scala.concurrent.duration.DurationInt
 
 /** A main module containing all components of the server.
@@ -317,14 +316,10 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     Runtime.getRuntime.availableProcessors().toString
   )
 
-  var extraEngineOptions: util.HashMap[String, String] = null
   if (java.lang.Boolean.getBoolean("com.oracle.graalvm.isaot")) {
-    extraEngineOptions = new util.HashMap[String, String]()
     log.trace("Running Language Server in AOT mode")
-    extraEngineOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   } else {
     log.trace("Running Language Server in non-AOT mode")
-    extraOptions.put(RuntimeServerInfo.ENABLE_OPTION, "true")
   }
 
   private val builder = ContextFactory
@@ -338,7 +333,7 @@ class MainModule(serverConfig: LanguageServerConfig, logLevel: Level) {
     .err(stdErr)
     .in(stdIn)
     .options(extraOptions)
-    .engineOptions(extraEngineOptions)
+    .enableRuntimeServerInfoKey(RuntimeServerInfo.ENABLE_OPTION)
     .messageTransport((uri: URI, peerEndpoint: MessageEndpoint) => {
       if (uri.toString == RuntimeServerInfo.URI) {
         val connection = new RuntimeConnector.Endpoint(
