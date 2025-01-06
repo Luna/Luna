@@ -6,14 +6,20 @@ import {
   FilterBy,
   type AssetId,
   type default as Backend,
+  type BackendType,
   type DirectoryId,
   type LabelName,
 } from 'enso-common/src/services/Backend'
 
+/** A key for {@link deleteAssetsMutationOptions}. */
+export function deleteAssetsMutationKey(backendType: BackendType) {
+  return [backendType, 'deletAssets']
+}
+
 /** Call "delete" mutations for a list of assets. */
 export function deleteAssetsMutationOptions(backend: Backend) {
   return mutationOptions({
-    mutationKey: [backend.type, 'deleteAssets'],
+    mutationKey: deleteAssetsMutationKey(backend.type),
     mutationFn: async ([ids, force]: readonly [ids: readonly AssetId[], force: boolean]) => {
       const results = await Promise.allSettled(
         ids.map((id) => backend.deleteAsset(id, { force }, '(unknown)')),
@@ -70,10 +76,15 @@ export function useDeleteAssetsMutationState<Result>(
   })
 }
 
+/** A key for {@link restoreAssetsMutationOptions}. */
+export function restoreAssetsMutationKey(backendType: BackendType) {
+  return [backendType, 'restoreAssets']
+}
+
 /** Call "restore" mutations for a list of assets. */
 export function restoreAssetsMutationOptions(backend: Backend) {
   return mutationOptions({
-    mutationKey: [backend.type, 'restoreAssets'],
+    mutationKey: restoreAssetsMutationKey(backend.type),
     mutationFn: async (ids: readonly AssetId[]) => {
       const results = await Promise.allSettled(
         ids.map((id) => backend.undoDeleteAsset(id, '(unknown)')),
@@ -123,10 +134,15 @@ export function useRestoreAssetsMutationState<Result>(
   })
 }
 
+/** A key for {@link copyAssetsMutationOptions}. */
+export function copyAssetsMutationKey(backendType: BackendType) {
+  return [backendType, 'copyAssets']
+}
+
 /** Call "copy" mutations for a list of assets. */
 export function copyAssetsMutationOptions(backend: Backend) {
   return mutationOptions({
-    mutationKey: [backend.type, 'copyAssets'],
+    mutationKey: copyAssetsMutationKey(backend.type),
     mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
       const results = await Promise.allSettled(
         ids.map((id) => backend.copyAsset(id, parentId, '(unknown)', '(unknown)')),
@@ -151,10 +167,15 @@ export function copyAssetsMutationOptions(backend: Backend) {
   })
 }
 
+/** A key for {@link moveAssetsMutationOptions}. */
+export function moveAssetsMutationKey(backendType: BackendType) {
+  return [backendType, 'moveAssets']
+}
+
 /** Call "move" mutations for a list of assets. */
 export function moveAssetsMutationOptions(backend: Backend) {
   return mutationOptions({
-    mutationKey: [backend.type, 'moveAssets'],
+    mutationKey: moveAssetsMutationKey(backend.type),
     mutationFn: async ([ids, parentId]: [ids: readonly AssetId[], parentId: DirectoryId]) => {
       const results = await Promise.allSettled(
         ids.map((id) =>

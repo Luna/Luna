@@ -1,5 +1,4 @@
 /** @file Functions related to displaying text. */
-
 import { unsafeKeys } from '../utilities/data/object'
 import ENGLISH from './english.json' with { type: 'json' }
 
@@ -53,10 +52,6 @@ interface PlaceholderOverrides {
   readonly youAreAlreadyAddingUser: [userEmail: string]
   readonly lastModifiedOn: [dateString: string]
   readonly versionX: [version: number | string]
-  readonly buildX: [build: string]
-  readonly electronVersionX: [electronVersion: string]
-  readonly chromeVersionX: [chromeVersion: string]
-  readonly userAgentX: [userAgent: string]
   readonly compareVersionXWithLatest: [versionNumber: number]
   readonly projectSessionX: [count: number]
   readonly onDateX: [dateString: string]
@@ -128,7 +123,6 @@ interface PlaceholderOverrides {
 
   readonly upgradeCTA: [plan: string]
   readonly priceTemplate: [price: string, interval: string]
-  readonly months: [months: number]
   readonly teamPlanSeatsDescription: [seats: number]
   readonly tryFree: [days: number]
   readonly organizationNameSettingsInputDescription: [howLong: number]
@@ -137,6 +131,10 @@ interface PlaceholderOverrides {
   readonly xIsUsingTheProject: [userName: string]
   readonly xItemsCopied: [count: number]
   readonly xItemsCut: [count: number]
+  readonly deletingXAssetsNotification: [count: number]
+  readonly restoringXAssetsNotification: [count: number]
+  readonly copyingXAssetsNotification: [count: number]
+  readonly movingXAssetsNotification: [count: number]
 
   readonly arbitraryFieldTooLarge: [maxSize: string]
   readonly arbitraryFieldTooSmall: [minSize: string]
@@ -144,6 +142,11 @@ interface PlaceholderOverrides {
 
   readonly latestVersion: [version: string, date: string]
 }
+
+// This is intentionally unused. This line throws an error if `PlaceholderOverrides` ever becomes
+// out of sync with `TextId`.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type SanityCheck<T extends TextId = keyof PlaceholderOverrides> = T
 
 /** An tuple of `string` for placeholders for each {@link TextId}. */
 export interface Replacements

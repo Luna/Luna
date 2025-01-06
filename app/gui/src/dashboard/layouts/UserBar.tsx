@@ -15,6 +15,7 @@ import { Plan } from '#/services/Backend'
 import { AnimatePresence, motion } from 'framer-motion'
 import SvgMask from '../components/SvgMask'
 import { useOffline } from '../hooks/offlineHooks'
+import { NotificationTray } from '#/layouts/NotificationTray'
 
 /** Whether the chat button should be visible. Temporarily disabled. */
 const SHOULD_SHOW_CHAT_BUTTON: boolean = false
@@ -123,6 +124,7 @@ export default function UserBar(props: UserBarProps) {
                 {getText('share')}
               </Button>
             )}
+            <NotificationTray />
             <DialogTrigger>
               <Button
                 size="custom"
