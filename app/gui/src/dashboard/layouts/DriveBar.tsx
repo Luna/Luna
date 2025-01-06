@@ -4,7 +4,7 @@
  */
 import * as React from 'react'
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import AddDatalinkIcon from '#/assets/add_datalink.svg'
 import AddFolderIcon from '#/assets/add_folder.svg'
@@ -19,7 +19,11 @@ import {
   Text,
   useVisualTooltip,
 } from '#/components/AriaComponents'
-import { downloadAssetsMutationOptions, useClearTrashMutation } from '#/hooks/backendBatchedHooks'
+import {
+  deleteAssetsMutationOptions,
+  downloadAssetsMutationOptions,
+  getAllTrashedItems,
+} from '#/hooks/backendBatchedHooks'
 import {
   useNewDatalink,
   useNewFolder,
@@ -74,6 +78,7 @@ export interface DriveBarProps {
 export default function DriveBar(props: DriveBarProps) {
   const { backend, query, setQuery, category, isEmpty, shouldDisplayStartModal, isDisabled } = props
 
+  const queryClient = useQueryClient()
   const { unsetModal } = useSetModal()
   const { getText } = useText()
   const driveStore = useDriveStore()
@@ -110,7 +115,7 @@ export default function DriveBar(props: DriveBarProps) {
   const rootDirectoryId = useRootDirectoryId(backend, category)
 
   const downloadAssetsMutation = useMutation(downloadAssetsMutationOptions(backend))
-  const clearTrashMutation = useClearTrashMutation(backend)
+  const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
   const newFolderRaw = useNewFolder(backend, category)
   const newFolder = useEventCallback(async () => {
     const parent = getTargetDirectory()
@@ -148,6 +153,10 @@ export default function DriveBar(props: DriveBarProps) {
   })
   const newProject = newProjectMutation.mutateAsync
   const isCreatingProject = newProjectMutation.isPending
+  const clearTrash = useEventCallback(async () => {
+    const allTrashedItems = await getAllTrashedItems(queryClient, backend)
+    await deleteAssetsMutation.mutateAsync([allTrashedItems.map((item) => item.id), false])
+  })
 
   React.useEffect(() => {
     return inputBindings.attach(sanitizedEventTargets.document.body, 'keydown', {
@@ -210,7 +219,7 @@ export default function DriveBar(props: DriveBarProps) {
             <ConfirmDeleteModal
               actionText={getText('allTrashedItemsForever')}
               doDelete={() => {
-                clearTrashMutation.mutate()
+                void clearTrash()
               }}
             />
           </DialogTrigger>

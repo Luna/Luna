@@ -2,11 +2,10 @@
 import { backendQueryOptions } from '#/hooks/backendHooks'
 import { getMessageOrToString } from '#/utilities/error'
 import {
-  useMutation,
   useMutationState,
-  useQueryClient,
   type DefaultError,
   type Mutation,
+  type QueryClient,
   type UseMutationOptions,
 } from '@tanstack/react-query'
 import {
@@ -199,29 +198,19 @@ export function moveAssetsMutationOptions(backend: Backend) {
   })
 }
 
-/** Clear the trash folder. */
-export function useClearTrashMutation(backend: Backend) {
-  const queryClient = useQueryClient()
-  const deleteAssetsMutation = useMutation(deleteAssetsMutationOptions(backend))
-
-  return useMutation({
-    mutationKey: [backend.type, 'clearTrash'],
-    mutationFn: async () => {
-      const trashedItems = await queryClient.ensureQueryData(
-        backendQueryOptions(backend, 'listDirectory', [
-          {
-            parentId: null,
-            labels: null,
-            filterBy: FilterBy.trashed,
-            recentProjects: false,
-          },
-          '(unknown)',
-        ]),
-      )
-      await deleteAssetsMutation.mutateAsync([trashedItems.map((item) => item.id), true])
-      return null
-    },
-  })
+/** Get a list of all items in the trash. */
+export async function getAllTrashedItems(queryClient: QueryClient, backend: Backend) {
+  return await queryClient.ensureQueryData(
+    backendQueryOptions(backend, 'listDirectory', [
+      {
+        parentId: null,
+        labels: null,
+        filterBy: FilterBy.trashed,
+        recentProjects: false,
+      },
+      '(unknown)',
+    ]),
+  )
 }
 
 /** Call "download" mutations for a list of assets. */
