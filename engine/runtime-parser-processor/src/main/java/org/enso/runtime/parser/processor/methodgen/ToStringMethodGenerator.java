@@ -12,10 +12,17 @@ public class ToStringMethodGenerator {
   }
 
   public String generateMethodCode() {
+    var docs =
+        """
+        /**
+         * Returns a one-line string representation of this IR object.
+         */
+        """;
     var sb = new StringBuilder();
+    sb.append(docs);
     sb.append("@Override").append(System.lineSeparator());
     sb.append("public String toString() {").append(System.lineSeparator());
-    sb.append("  return ").append(System.lineSeparator());
+    sb.append("  String ret = ").append(System.lineSeparator());
     sb.append("    ").append(quoted(className())).append(System.lineSeparator());
     sb.append("    + ").append(quoted("(")).append(System.lineSeparator());
     var fieldsStrRepr =
@@ -24,6 +31,8 @@ public class ToStringMethodGenerator {
             .collect(Collectors.joining(" + \", \" + " + System.lineSeparator()));
     sb.append("    + ").append(fieldsStrRepr).append(System.lineSeparator());
     sb.append("    + ").append(quoted(")")).append(";").append(System.lineSeparator());
+    sb.append("  return ret.replaceAll(System.lineSeparator(), \" \");")
+        .append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
     return sb.toString();
   }
