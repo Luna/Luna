@@ -106,7 +106,7 @@ export function useCloudCategoryList() {
     trashCategory,
   ]
 
-  const userSpace: UserCategory | null =
+  const userCategory: UserCategory | null =
     hasUserAndTeamSpaces ?
       {
         type: 'user',
@@ -119,25 +119,21 @@ export function useCloudCategoryList() {
       }
     : null
 
-  const doesHaveUserGroups = user.groups != null && user.groups.length > 0
-
-  const userGroupDynamicCategories =
-    doesHaveUserGroups ?
-      user.groups.map<TeamCategory>((group) => ({
-        type: 'team',
-        id: group.id,
-        team: group,
-        rootPath: Path(`enso://Teams/${group.name}`),
-        homeDirectoryId: group.homeDirectoryId,
-        label: getText('teamCategory', group.name),
-        icon: PeopleIcon,
-      }))
-    : null
+  const teamCategories =
+    user.groups?.map<TeamCategory>((group) => ({
+      type: 'team',
+      id: group.id,
+      team: group,
+      rootPath: Path(`enso://Teams/${group.name}`),
+      homeDirectoryId: group.homeDirectoryId,
+      label: getText('teamCategory', group.name),
+      icon: PeopleIcon,
+    })) ?? []
 
   const categories = [
     ...predefinedCloudCategories,
-    ...(userSpace != null ? [userSpace] : []),
-    ...(userGroupDynamicCategories != null ? [...userGroupDynamicCategories] : []),
+    ...(userCategory != null ? [userCategory] : []),
+    ...teamCategories,
   ] as const
 
   const getCategoryById = useEventCallback(
@@ -167,8 +163,8 @@ export function useCloudCategoryList() {
     cloudCategory,
     recentCategory,
     trashCategory,
-    userCategory: userSpace,
-    teamCategories: userGroupDynamicCategories,
+    userCategory,
+    teamCategories,
     getCategoryById,
     getCategoriesByType,
     isCloudCategory,
