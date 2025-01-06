@@ -30,6 +30,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
 
   const { data: markdownToHtml } = useSuspenseQuery({
     queryKey: ['markdownToHtml', { text, imgUrlResolver, markedInstance }] as const,
+    meta: { persist: false },
     queryFn: ({ queryKey: [, args] }) =>
       args.markedInstance.parse(args.text, {
         async: true,
@@ -38,15 +39,10 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
             const href = token.href
 
             token.raw = href
-            token.href = await args
-              .imgUrlResolver(href)
-              .then((url) => {
-                return url
-              })
-              .catch((error) => {
-                logger.error(error)
-                return null
-              })
+            token.href = await args.imgUrlResolver(href).catch((error) => {
+              logger.error(error)
+              return null
+            })
             token.text = getText('arbitraryFetchImageError')
           }
         },
