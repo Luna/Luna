@@ -31,6 +31,8 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
   const { data: markdownToHtml } = useSuspenseQuery({
     queryKey: ['markdownToHtml', { text, imgUrlResolver, markedInstance }] as const,
     meta: { persist: false },
+    gcTime: 0,
+    staleTime: 0,
     queryFn: ({ queryKey: [, args] }) =>
       args.markedInstance.parse(args.text, {
         async: true,
