@@ -396,6 +396,8 @@ export function useAssetPassiveListener(
     parentsPath: '',
     virtualParentsPath: '',
   }
+
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
   switch (true) {
     case assetId === USERS_DIRECTORY_ID: {
       return {
@@ -484,6 +486,8 @@ export function useAsset(options: UseAssetOptions) {
     parentsPath: '',
     virtualParentsPath: '',
   }
+
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
   switch (true) {
     case assetId === USERS_DIRECTORY_ID: {
       return {
@@ -919,6 +923,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
         if (file != null) {
           const fileId = method === 'new' ? null : asset.id
 
+          // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
           switch (true) {
             case backendModule.assetIsProject(asset): {
               const { extension } = backendModule.extractProjectExtension(file.name)
