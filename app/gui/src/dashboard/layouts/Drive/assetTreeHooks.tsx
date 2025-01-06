@@ -53,7 +53,7 @@ export function useAssetTree(options: UseAssetTreeOptions) {
       ...listDirectoryQueryOptions({
         backend,
         parentId: directoryId,
-        category,
+        categoryType: category.type,
       }),
       enabled: !hidden,
     })),
@@ -129,7 +129,7 @@ export function useAssetTree(options: UseAssetTreeOptions) {
       queryKey: listDirectoryQueryOptions({
         backend,
         parentId: directoryId,
-        category,
+        categoryType: category.type,
       }).queryKey,
       type: 'active',
     })

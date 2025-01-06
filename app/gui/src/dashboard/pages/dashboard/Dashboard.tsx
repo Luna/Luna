@@ -379,7 +379,7 @@ function OpenedProjectsParentsExpander() {
         listDirectoryQueryOptions({
           backend: remoteBackend,
           parentId: project.parentId,
-          category,
+          categoryType: category.type,
         }),
       ),
     )

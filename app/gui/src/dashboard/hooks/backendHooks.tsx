@@ -314,12 +314,12 @@ export function useListUserGroupsWithUsers(
 export interface ListDirectoryQueryOptions {
   readonly backend: Backend
   readonly parentId: DirectoryId
-  readonly category: Category
+  readonly categoryType: Category['type']
 }
 
 /** Build a query options object to fetch the children of a directory. */
 export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
-  const { backend, parentId, category } = options
+  const { backend, parentId, categoryType } = options
 
   return queryOptions({
     queryKey: [
@@ -328,8 +328,8 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
       parentId,
       {
         labels: null,
-        filterBy: CATEGORY_TO_FILTER_BY[category.type],
-        recentProjects: category.type === 'recent',
+        filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+        recentProjects: categoryType === 'recent',
       },
     ] as const,
     // Setting stale time to Infinity to attaching a ton of
@@ -341,9 +341,9 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         return await backend.listDirectory(
           {
             parentId,
-            filterBy: CATEGORY_TO_FILTER_BY[category.type],
+            filterBy: CATEGORY_TO_FILTER_BY[categoryType],
             labels: null,
-            recentProjects: category.type === 'recent',
+            recentProjects: categoryType === 'recent',
           },
           parentId,
         )
@@ -366,7 +366,7 @@ export function useAssetPassiveListener(
   backendType: BackendType,
   assetId: AssetId | null | undefined,
   parentId: DirectoryId | null | undefined,
-  category: Category,
+  categoryType: Category['type'],
 ) {
   const { data: asset } = useQuery<readonly AnyAsset[] | undefined, Error, AnyAsset | undefined>({
     queryKey: [
@@ -375,8 +375,8 @@ export function useAssetPassiveListener(
       parentId,
       {
         labels: null,
-        filterBy: CATEGORY_TO_FILTER_BY[category.type],
-        recentProjects: category.type === 'recent',
+        filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+        recentProjects: categoryType === 'recent',
       },
     ],
     initialData: undefined,
@@ -448,9 +448,9 @@ export function useAssetPassiveListenerStrict(
   backendType: BackendType,
   assetId: AssetId | null | undefined,
   parentId: DirectoryId | null | undefined,
-  category: Category,
+  categoryType: Category['type'],
 ) {
-  const asset = useAssetPassiveListener(backendType, assetId, parentId, category)
+  const asset = useAssetPassiveListener(backendType, assetId, parentId, categoryType)
   invariant(asset, 'Asset not found')
   return asset
 }
@@ -588,7 +588,7 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
 }
 
 /** Return query data for the children of a directory, fetching it if it does not exist. */
-function useEnsureListDirectory(backend: Backend, category: Category) {
+function useEnsureListDirectory(backend: Backend, categoryType: Category['type']) {
   const queryClient = useQueryClient()
   return useEventCallback(async (parentId: DirectoryId) => {
     return await queryClient.ensureQueryData(
@@ -596,8 +596,8 @@ function useEnsureListDirectory(backend: Backend, category: Category) {
         {
           parentId,
           labels: null,
-          filterBy: CATEGORY_TO_FILTER_BY[category.type],
-          recentProjects: category.type === 'recent',
+          filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+          recentProjects: categoryType === 'recent',
         },
         '(unknown)',
       ]),
@@ -609,9 +609,9 @@ function useEnsureListDirectory(backend: Backend, category: Category) {
  * Remove an asset from the React Query cache. Should only be called on
  * optimistically inserted assets.
  */
-function useDeleteAsset(backend: Backend, category: Category) {
+function useDeleteAsset(backend: Backend, categoryType: Category['type']) {
   const queryClient = useQueryClient()
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, categoryType)
 
   return useEventCallback(async (assetId: AssetId, parentId: DirectoryId) => {
     const siblings = await ensureListDirectory(parentId)
@@ -625,8 +625,8 @@ function useDeleteAsset(backend: Backend, category: Category) {
         parentId,
         {
           labels: null,
-          filterBy: CATEGORY_TO_FILTER_BY[category.type],
-          recentProjects: category.type === 'recent',
+          filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+          recentProjects: categoryType === 'recent',
         },
       ],
     })
@@ -641,7 +641,7 @@ function useDeleteAsset(backend: Backend, category: Category) {
 
 /** A function to create a new folder. */
 export function useNewFolder(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const setNewestFolderId = useSetNewestFolderId()
   const setSelectedKeys = useSetSelectedKeys()
@@ -684,10 +684,10 @@ export function useNewFolder(backend: Backend, category: Category) {
 
 /** A function to create a new project. */
 export function useNewProject(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const toastAndLog = useToastAndLog()
   const doOpenProject = useOpenProject()
-  const deleteAsset = useDeleteAsset(backend, category)
+  const deleteAsset = useDeleteAsset(backend, category.type)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
 
   const { user } = useFullUserSession()
@@ -847,7 +847,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
 
 /** A function to upload files. */
 export function useUploadFiles(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const toastAndLog = useToastAndLog()
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { setModal } = useSetModal()
