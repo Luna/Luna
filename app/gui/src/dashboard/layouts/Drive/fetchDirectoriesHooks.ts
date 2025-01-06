@@ -29,6 +29,6 @@ export function useRefetchDirectories(backendType: BackendType) {
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     meta: { persist: false },
-    enabled: isMutating,
+    enabled: !isMutating,
   })
 }
