@@ -2180,7 +2180,7 @@ export class Group extends BaseExpression {
     if (open) yield firstChild(open)
     const spaced = ((open && expression?.whitespace) ?? '') !== ''
     if (expression) yield open ? preferSpacedIf(expression, spaced) : firstChild(expression)
-    if (close) yield open ?? expression ? preferSpacedIf(close, spaced) : firstChild(close)
+    if (close) yield (open ?? expression) ? preferSpacedIf(close, spaced) : firstChild(close)
   }
 }
 /** TODO: Add docs */

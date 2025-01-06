@@ -472,8 +472,8 @@ const showMenuAt = ref<{ x: number; y: number }>()
     :style="nodeStyle"
     :class="nodeClass"
     :data-node-id="nodeId"
-    @pointerenter="(nodeHovered = true), updateNodeHover($event)"
-    @pointerleave="(nodeHovered = false), updateNodeHover(undefined)"
+    @pointerenter="((nodeHovered = true), updateNodeHover($event))"
+    @pointerleave="((nodeHovered = false), updateNodeHover(undefined))"
     @pointermove="updateNodeHover"
   >
     <div class="binding" v-text="node.pattern?.code()" />
@@ -481,7 +481,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
       v-if="!menuVisible && isRecordingOverridden"
       class="overrideRecordButton clickable"
       data-testid="recordingOverriddenButton"
-      @click="(isRecordingOverridden = false), setSoleSelected()"
+      @click="((isRecordingOverridden = false), setSoleSelected())"
     >
       <SvgIcon name="record" />
     </button>
@@ -527,7 +527,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
       :style="contentNodeStyle"
       v-on="dragPointer.events"
       @click="handleNodeClick"
-      @contextmenu.stop.prevent="ensureSelected(), (showMenuAt = $event)"
+      @contextmenu.stop.prevent="(ensureSelected(), (showMenuAt = $event))"
     >
       <ComponentWidgetTree
         :ast="props.node.innerExpr"
@@ -559,7 +559,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
         :nodeId="nodeId"
         :forceVisible="nodeHovered"
         @newNodeClick="
-          setSoleSelected(), emit('createNodes', [{ commit: false, content: undefined }])
+          (setSoleSelected(), emit('createNodes', [{ commit: false, content: undefined }]))
         "
         @portClick="(...args) => emit('outputPortClick', ...args)"
         @portDoubleClick="(...args) => emit('outputPortDoubleClick', ...args)"

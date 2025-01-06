@@ -689,7 +689,7 @@ export function findLeastUsedColor(labels: Iterable<Label>) {
   }
   const min = Math.min(...colorCounts.values())
   const [minColor] = [...colorCounts.entries()].find(kv => kv[1] === min) ?? []
-  return minColor == null ? COLORS[0] : COLOR_STRING_TO_COLOR.get(minColor) ?? COLORS[0]
+  return minColor == null ? COLORS[0] : (COLOR_STRING_TO_COLOR.get(minColor) ?? COLORS[0])
 }
 
 // =================

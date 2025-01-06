@@ -119,7 +119,9 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     } else {
       const [firstKey] = selectedKeys
       const soleAssetName =
-        firstKey != null ? nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)' : '(unknown)'
+        firstKey != null ?
+          (nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)')
+        : '(unknown)'
       setModal(
         <ConfirmDeleteModal
           defaultOpen
@@ -179,7 +181,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                 const [firstKey] = selectedKeys
                 const soleAssetName =
                   firstKey != null ?
-                    nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)'
+                    (nodeMapRef.current.get(firstKey)?.item.title ?? '(unknown)')
                   : '(unknown)'
                 setModal(
                   <ConfirmDeleteModal

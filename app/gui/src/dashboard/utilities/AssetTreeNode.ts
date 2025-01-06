@@ -115,7 +115,7 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
       update.directoryId ?? this.directoryId,
       // `null` MUST be special-cases in the following line.
       // eslint-disable-next-line eqeqeq
-      update.children === null ? update.children : update.children ?? this.children,
+      update.children === null ? update.children : (update.children ?? this.children),
       update.depth ?? this.depth,
       update.path ?? this.path,
       update.initialAssetEvents ?? this.initialAssetEvents,
@@ -184,7 +184,7 @@ export default class AssetTreeNode<Item extends backendModule.AnyAsset = backend
     }
     return result?.children?.length === 0 ?
         result.with({ children: null })
-      : result ?? this.asUnion()
+      : (result ?? this.asUnion())
   }
 
   /** Returns all items in the tree, flattened into an array using pre-order traversal. */
