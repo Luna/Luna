@@ -293,6 +293,7 @@
   "googleIcon": "Google icon",
   "gitHubIcon": "GitHub icon",
   "close": "Close",
+  "notifications": "Notifications",
 
   "enterSecretPath": "Enter secret path",
   "enterText": "Enter text",
@@ -518,6 +519,7 @@
   "uploadLargeFileError": "Could not upload file",
   "closeWindowDialogTitle": "Close window?",
   "anUploadIsInProgress": "An upload is in progress.",
+  "youAreAllCaughtUp": "You're all caught up!",
 
   "deleteLabelActionText": "delete the label '$0'",
   "deleteSelectedAssetActionText": "delete '$0'",

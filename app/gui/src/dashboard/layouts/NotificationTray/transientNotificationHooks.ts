@@ -31,6 +31,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
   const deleteAssetsCount = useIsMutatingForBothBackends(deleteAssetsMutationKey)
   if (deleteAssetsCount > 0) {
     notifications.push({
+      id: 'temporary-delete-assets',
       message: getText('deletingXAssetsNotification', deleteAssetsCount),
       icon: DeleteIcon,
     })
@@ -39,6 +40,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
   const restoreAssetsCount = useIsMutatingForBothBackends(restoreAssetsMutationKey)
   if (restoreAssetsCount > 0) {
     notifications.push({
+      id: 'temporary-restore-assets',
       message: getText('restoringXAssetsNotification', restoreAssetsCount),
       icon: UntrashIcon,
     })
@@ -47,6 +49,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
   const copyAssetsCount = useIsMutatingForBothBackends(copyAssetsMutationKey)
   if (copyAssetsCount > 0) {
     notifications.push({
+      id: 'temporary-copy-assets',
       message: getText('copyingXAssetsNotification', copyAssetsCount),
       icon: CopyIcon,
     })
@@ -55,6 +58,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
   const moveAssetsCount = useIsMutatingForBothBackends(moveAssetsMutationKey)
   if (moveAssetsCount > 0) {
     notifications.push({
+      id: 'temporary-move-assets',
       message: getText('movingXAssetsNotification', moveAssetsCount),
       icon: MoveIcon,
     })

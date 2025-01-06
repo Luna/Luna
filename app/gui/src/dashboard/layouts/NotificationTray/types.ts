@@ -2,6 +2,7 @@
 
 /** Information required to display a notification. */
 export interface NotificationInfo {
+  readonly id: string
   readonly message: string
   readonly icon: string
 }
