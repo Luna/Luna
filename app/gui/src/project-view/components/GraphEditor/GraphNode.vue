@@ -51,7 +51,6 @@ const contentNodeStyle = {
 const props = defineProps<{
   node: Node
   edited: boolean
-  graphNodeSelections: HTMLElement | undefined
 }>()
 
 const emit = defineEmits<{
@@ -161,7 +160,6 @@ const visibleMessage = computed(
 const nodeHovered = ref(false)
 
 const selected = computed(() => nodeSelection?.isSelected(nodeId.value) ?? false)
-const selectionVisible = ref(false)
 
 const isOnlyOneSelected = computed(
   () =>
@@ -407,7 +405,6 @@ const nodeStyle = computed(() => {
 const nodeClass = computed(() => {
   return {
     selected: selected.value,
-    selectionVisible: selectionVisible.value,
     pending: pending.value,
     inputNode: props.node.type === 'input',
     outputNode: props.node.type === 'output',
@@ -634,7 +631,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
   white-space: nowrap;
 }
 
-.selectionVisible .binding {
+.selected .binding {
   opacity: 1;
 }
 
@@ -691,7 +688,7 @@ const showMenuAt = ref<{ x: number; y: number }>()
   transition: opacity 0.2s ease-in-out;
 }
 
-.GraphNode.selectionVisible .statuses {
+.GraphNode.selected .statuses {
   opacity: 0;
 }
 

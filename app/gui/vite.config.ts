@@ -1,5 +1,4 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin'
-/// <reference types="histoire" />
 
 import react from '@vitejs/plugin-react'
 import vue from '@vitejs/plugin-vue'
@@ -9,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import postcssNesting from 'postcss-nesting'
 import tailwindcss from 'tailwindcss'
 import tailwindcssNesting from 'tailwindcss/nesting'
-import { defineConfig, type Plugin } from 'vite'
+import { defaultClientConditions, defineConfig, type Plugin } from 'vite'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import wasm from 'vite-plugin-wasm'
 import tailwindConfig from './tailwind.config'
@@ -92,7 +91,7 @@ export default defineConfig({
     ...(process.env.GUI_HOSTNAME ? { host: process.env.GUI_HOSTNAME } : {}),
   },
   resolve: {
-    conditions: ['source'],
+    conditions: ['source', ...defaultClientConditions],
     alias: {
       '/src/entrypoint.ts': fileURLToPath(new URL(entrypoint, import.meta.url)),
       shared: fileURLToPath(new URL('./shared', import.meta.url)),
