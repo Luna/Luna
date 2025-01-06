@@ -140,6 +140,11 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     case backendModule.AssetType.specialError: {
       return <AssetSpecialRow columnsLength={columns.length} depth={depth} type={type} />
     }
+    case backendModule.AssetType.project:
+    case backendModule.AssetType.file:
+    case backendModule.AssetType.secret:
+    case backendModule.AssetType.datalink:
+    case backendModule.AssetType.directory:
     default: {
       // This is safe because we filter out special asset types in the switch statement above.
       // eslint-disable-next-line no-restricted-syntax
@@ -224,6 +229,11 @@ const AssetSpecialRow = React.memo(function AssetSpecialRow(props: AssetSpecialR
         </tr>
       )
     }
+    case backendModule.AssetType.project:
+    case backendModule.AssetType.file:
+    case backendModule.AssetType.secret:
+    case backendModule.AssetType.datalink:
+    case backendModule.AssetType.directory:
     default: {
       invariant(false, 'Unsupported special asset type: ' + type)
     }
@@ -325,11 +335,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const isDeleting =
     useBackendMutationState(backend, 'deleteAsset', {
-      predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
+      predicate: ({ state: { variables } }) => variables?.[0] === asset.id,
     }).length !== 0
   const isRestoring =
     useBackendMutationState(backend, 'undoDeleteAsset', {
-      predicate: ({ state: { variables: [assetId] = [] } }) => assetId === asset.id,
+      predicate: ({ state: { variables } }) => variables?.[0] === asset.id,
     }).length !== 0
 
   const isCloud = isCloudCategory(category)
@@ -366,7 +376,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
   const visibility =
     isRemovingSelf ? Visibility.hidden
     : visibilityRaw === Visibility.visible ? insertionVisibility
-    : visibilityRaw ?? insertionVisibility
+    : (visibilityRaw ?? insertionVisibility)
   const hidden = isDeleting || isRestoring || hiddenRaw || visibility === Visibility.hidden
 
   const setSelected = useEventCallback((newSelected: boolean) => {
@@ -543,6 +553,11 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 }
                 break
               }
+              case backendModule.AssetType.secret:
+              case backendModule.AssetType.directory:
+              case backendModule.AssetType.specialLoading:
+              case backendModule.AssetType.specialEmpty:
+              case backendModule.AssetType.specialError:
               default: {
                 toastAndLog('downloadInvalidTypeError')
                 break
@@ -869,6 +884,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         </>
       )
     }
+    case backendModule.AssetType.specialLoading:
+    case backendModule.AssetType.specialEmpty:
+    case backendModule.AssetType.specialError:
     default: {
       invariant(
         false,

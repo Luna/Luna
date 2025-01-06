@@ -300,8 +300,8 @@ export function useListUserGroupsWithUsers(
       return null
     } else {
       const result = listUserGroupsQuery.data.map((userGroup) => {
-        const usersInGroup: readonly User[] = listUsersQuery.data.filter((user) =>
-          user.userGroups?.includes(userGroup.id),
+        const usersInGroup: readonly User[] = listUsersQuery.data.filter(
+          (user) => user.userGroups?.includes(userGroup.id) ?? false,
         )
         return { ...userGroup, users: usersInGroup }
       })
