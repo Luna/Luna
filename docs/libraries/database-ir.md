@@ -44,15 +44,15 @@ Top-level queries and DDL/DML commands are represented by the `Query` type.
 ## SQL_Expression
 
 Represents a column expression. Can be a single column (`Column`), a derived
-expression built from other expressions (`Operation`), or a constant value
-(`Constant`, `Literal`, `Text_Literal`).
+expression built from other expressions (`Operation`), a constant value
+(`Constant`, `Literal`, `Text_Literal`), or a let-binding (`Let` and `Let_Ref`).
 
 `SQL_Expression`s only have meaning in the context of a particular table
 expression; for example, a `SQL_Expression.Column` value consists of the
 name/alias of a table expression and the name of a column within it.
 
-This also includes `Let` and `Let_Ref` variants which are used to express
-let-style bindings using SQL `with` syntax.
+`Let` and `Let_Ref` variants are used to express let-style bindings using SQL
+`with` syntax.
 
 ## From_Spec
 
@@ -60,12 +60,18 @@ Represents a table expression. Can be a database table (`Table`), a derived
 table built from other tables (`Join`, `Union`), or a constant value (`Query`,
 `Literal_Values`).
 
+A `Query` value is a complete SQL query, either as a single `Text` or as an
+`SQL_Statement` built safely from strings and values. A `Literal_Values`
+consists of a table-shaped vector-of-vectors of values and is compiled into an
+inline literal SQL table expression.
+
 `Sub_Query` is used to nest a query as a subquery, replacing column expressions
 with aliases to those same column expressions within the subquery. This is used
 to keep query elements such as `where`, `order by`, and `group by` separate to
 prevent unwanted interactions between them. This allows `join` and `union`
 operations on complex queries, as well as more specific operations such as
-`DB_Table.add_row_number`.
+`DB_Table.add_row_number`. This is explained more fully below in the
+[`Subqueries` section](#subqueries).
 
 ## Context
 
@@ -74,11 +80,16 @@ Represents a table expression, along with `where`, `order by`, `group by` and
 
 A `DB_Column` contains its own reference to a `Context`, so it can be read
 without relying on the `DB_Table` object that it came from. In fact, `DB_Column`
-values can be thought of as not being attached to a particular table. Instead,
-they are connected to the `Context` objects they contain, and all `DB_Columns`
-from a single table expression must share the same `Context`. This corresponds
-to the idea that the columns expressions in a `SELECT` clause all refer to the
-same table expression in the `FROM` clause.
+values are standalone and not directly tied to particular `DB_Table` instance.
+Instead, they are connected to the `Context` objects they contain, and all
+`DB_Columns` from a single table expression must share the same `Context`. This
+corresponds to the idea that the columns expressions in a `SELECT` clause all
+refer to the same table expression in the `FROM` clause.
+
+And also we can 'merge' `DB_Column`s that have the same `Context` into a single
+`DB_Table` e.g. via `DB_Table.set`, allowing to add more derived expressions to
+existing tables. Compatibility between `Context`s is verified by the
+`Helpers.check_integrity` method.
 
 ## Query
 
@@ -101,12 +112,9 @@ An `Internal_Column` serves as a column expression, and contains a
 inside a `DB_Table`, and inherits its table expression from the `DB_Table`'s
 `Context`.
 
-A `Context` serves as a table expression, but really inherits this from the
-`From_Spec` that it contains. It also contains `where`, `order by`, `group by`
-and `limit` clauses.
-
-A `From_Spec` serves as a table expression, and can be a base value (table name,
-constant, etc), join, union, or subquery:
+A `From_Spec` serves as a table expression, and corresponds to the 'from' clause
+of an SQL query. It can be a base value (table name, constant, etc), join,
+union, or subquery:
 
 - `From_Spec.Join`: contains `From_Spec` values from the individual tables, as
   well as `SQL_Expressions` for join conditions
@@ -114,6 +122,10 @@ constant, etc), join, union, or subquery:
   tables.
 - `From_Spec.Sub_Query`: contains column expressions as `SQL_Expression`s, and a
   table expression as a `Context`.
+
+A `Context` serves as a table expression, and corresponds to the `from` clause
+of an SQL query, as well as everything after the `from` clause, including
+`where`, `order by`, `group by` and `limit` clauses.
 
 # Subqueries
 
