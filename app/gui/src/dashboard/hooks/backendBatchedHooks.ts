@@ -1,9 +1,5 @@
 /** @file Hooks to do batched backend operations. */
 import { backendQueryOptions } from '#/hooks/backendHooks'
-import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-import { useText } from '#/providers/TextProvider'
-import { extractTypeAndId } from '#/services/LocalBackend'
-import { download } from '#/utilities/download'
 import { getMessageOrToString } from '#/utilities/error'
 import {
   useMutation,
@@ -14,10 +10,7 @@ import {
   type UseMutationOptions,
 } from '@tanstack/react-query'
 import {
-  AssetType,
-  BackendType,
   FilterBy,
-  extractTypeFromId,
   type AssetId,
   type default as Backend,
   type DirectoryId,

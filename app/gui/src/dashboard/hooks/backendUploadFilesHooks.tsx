@@ -20,19 +20,18 @@ import { useText } from '#/providers/TextProvider'
 import LocalBackend from '#/services/LocalBackend'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
-import { UseMutationResult, useMutation } from '@tanstack/react-query'
+import { useMutation, type UseMutationResult } from '@tanstack/react-query'
 import {
-  AssetType,
-  S3_CHUNK_SIZE_BYTES,
-  UploadedLargeAsset,
   assetIsFile,
   assetIsProject,
+  AssetType,
   createPlaceholderFileAsset,
   createPlaceholderProjectAsset,
   escapeSpecialCharacters,
   extractProjectExtension,
   fileIsNotProject,
   fileIsProject,
+  S3_CHUNK_SIZE_BYTES,
   stripProjectExtension,
   type AnyAsset,
   type AssetId,
@@ -41,9 +40,10 @@ import {
   type FileId,
   type ProjectId,
   type S3MultipartPart,
+  type UploadedLargeAsset,
   type UploadFileRequestParams,
 } from 'enso-common/src/services/Backend'
-import { MergeValuesOfObjectUnion } from 'enso-common/src/utilities/data/object'
+import type { MergeValuesOfObjectUnion } from 'enso-common/src/utilities/data/object'
 import { useId, useState } from 'react'
 import { toast } from 'react-toastify'
 
@@ -511,5 +511,7 @@ export function useUploadFileMutation(
     reset,
     submittedAt,
   }
+  // This is UNSAFE. Care must be taken to ensire all state is merged properly.
+  // eslint-disable-next-line no-restricted-syntax
   return result as UploadFileMutationResult
 }

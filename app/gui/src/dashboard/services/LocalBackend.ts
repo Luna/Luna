@@ -764,6 +764,7 @@ export default class LocalBackend extends Backend {
         `${title}.enso-project`,
       )
     }
+    await Promise.resolve()
   }
 
   /** Invalid operation. */

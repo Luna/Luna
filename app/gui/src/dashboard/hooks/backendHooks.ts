@@ -1,7 +1,5 @@
 /** @file Hooks for interacting with the backend. */
 import {
-  QueryObserverResult,
-  RefetchOptions,
   queryOptions,
   useMutation,
   useMutationState,
@@ -49,7 +47,7 @@ import LocalBackend from '#/services/LocalBackend'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
-import { MergeValuesOfObjectUnion } from 'enso-common/src/utilities/data/object'
+import type { MergeValuesOfObjectUnion } from 'enso-common/src/utilities/data/object'
 import { useMemo } from 'react'
 
 /** Ensure that the given type contains only names of backend methods. */
@@ -269,6 +267,7 @@ export interface UserGroupInfoWithUsers extends UserGroupInfo {
   readonly users: readonly User[]
 }
 
+/** Create a list of {@link UserGroupInfoWithUsers} given user groups and users. */
 function createUserGroupsWithUsers(
   userGroups: readonly backendModule.UserGroupInfo[],
   users: readonly backendModule.User[],
@@ -297,7 +296,7 @@ export function useListUserGroupsWithUsers(backend: Backend): ListUserGroupsWith
       Promise.all([listUsersQuery.promise, listUserGroupsQuery.promise]).then(
         ([users, userGroups]) => createUserGroupsWithUsers(userGroups, users),
       ),
-    [],
+    [listUserGroupsQuery.promise, listUsersQuery.promise],
   )
 
   const error = listUserGroupsQuery.error ?? listUsersQuery.error
@@ -368,10 +367,14 @@ export function useListUserGroupsWithUsers(backend: Backend): ListUserGroupsWith
       error: null,
     } satisfies Partial<ListUserGroupsWithUsersQueryResult>
     return {
+      // This is UNSAFE. Care must be taken to ensure that states are merged correctly in `shared`.
+      // eslint-disable-next-line no-restricted-syntax
       ...(shared as Omit<ListUserGroupsWithUsersQueryResult, keyof typeof rest>),
       ...rest,
     }
   } else {
+    // This is UNSAFE. Care must be taken to ensure that states are merged correctly in `shared`.
+    // eslint-disable-next-line no-restricted-syntax
     return shared as ListUserGroupsWithUsersQueryResult
   }
 }
@@ -835,16 +838,15 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
     ])
   })
 
-  const mutateAsync = useEventCallback(
-    async (id: AssetId) =>
-      await createPermissionMutation.mutateAsync([
-        {
-          action: null,
-          resourceId: id,
-          actorsIds: [user.userId],
-        },
-      ]),
-  )
+  const mutateAsync = useEventCallback(async (id: AssetId) => {
+    await createPermissionMutation.mutateAsync([
+      {
+        action: null,
+        resourceId: id,
+        actorsIds: [user.userId],
+      },
+    ])
+  })
 
   return { ...createPermissionMutation, mutate, mutateAsync }
 }
