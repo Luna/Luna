@@ -12,10 +12,12 @@ import * as ariaComponents from '#/components/AriaComponents'
 import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 
-import { useDuplicateProjectMutation } from '#/hooks/backendHooks'
+import { duplicateProjectMutationOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useOpenProject } from '#/hooks/projectHooks'
 import * as dateTime from '#/utilities/dateTime'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 /** Props for a {@link AssetVersion}. */
 export interface AssetVersionProps {
@@ -32,7 +34,11 @@ export interface AssetVersionProps {
 export default function AssetVersion(props: AssetVersionProps) {
   const { placeholder = false, number, version, item, backend, latestVersion, doRestore } = props
   const { getText } = textProvider.useText()
-  const duplicateProjectMutation = useDuplicateProjectMutation(backend)
+  const queryClient = useQueryClient()
+  const openProject = useOpenProject()
+  const duplicateProjectMutation = useMutation(
+    duplicateProjectMutationOptions(backend, queryClient, openProject),
+  )
   const isProject = item.type === backendService.AssetType.project
 
   const doDuplicate = useEventCallback(async () => {

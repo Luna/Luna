@@ -1,13 +1,7 @@
 /** @file Hooks to do batched backend operations. */
-import { backendQueryOptions } from '#/hooks/backendHooks'
+import { backendQueryOptions, mutationOptions } from '#/hooks/backendHooks'
 import { getMessageOrToString } from '#/utilities/error'
-import {
-  useMutationState,
-  type DefaultError,
-  type Mutation,
-  type QueryClient,
-  type UseMutationOptions,
-} from '@tanstack/react-query'
+import { useMutationState, type Mutation, type QueryClient } from '@tanstack/react-query'
 import {
   FilterBy,
   type AssetId,
@@ -15,18 +9,6 @@ import {
   type DirectoryId,
   type LabelName,
 } from 'enso-common/src/services/Backend'
-
-/** An identity function to help in constructing options for a mutation. */
-function mutationOptions<
-  TData = unknown,
-  TError = DefaultError,
-  TVariables = void,
-  TContext = unknown,
->(
-  options: UseMutationOptions<TData, TError, TVariables, TContext>,
-): UseMutationOptions<TData, TError, TVariables, TContext> {
-  return options
-}
 
 /** Call "delete" mutations for a list of assets. */
 export function deleteAssetsMutationOptions(backend: Backend) {

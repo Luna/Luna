@@ -6,8 +6,10 @@ import {
   useQuery,
   useQueryClient,
   useSuspenseQuery,
+  type DefaultError,
   type Mutation,
   type MutationKey,
+  type QueryClient,
   type QueryKey,
   type UnusedSkipTokenOptions,
   type UseMutationOptions,
@@ -31,6 +33,7 @@ import {
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
+import type { LaunchedProject } from '#/providers/ProjectsProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
 import {
@@ -139,6 +142,18 @@ export function backendQueryOptions<Method extends BackendQueryMethod>(
     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     queryFn: () => (backend?.[method] as any)?.(...args),
   })
+}
+
+/** An identity function to help in constructing options for a mutation. */
+export function mutationOptions<
+  TData = unknown,
+  TError = DefaultError,
+  TVariables = void,
+  TContext = unknown,
+>(
+  options: UseMutationOptions<TData, TError, TVariables, TContext>,
+): UseMutationOptions<TData, TError, TVariables, TContext> {
+  return options
 }
 
 export function useBackendQuery<Method extends BackendQueryMethod>(
@@ -852,11 +867,12 @@ export function useRemoveSelfPermissionMutation(backend: Backend) {
 }
 
 /** Duplicate a specific version of a project. */
-export function useDuplicateProjectMutation(backend: Backend) {
-  const queryClient = useQueryClient()
-  const doOpenProject = useOpenProject()
-
-  return useMutation({
+export function duplicateProjectMutationOptions(
+  backend: Backend,
+  queryClient: QueryClient,
+  openProject: (project: LaunchedProject) => void,
+) {
+  return mutationOptions({
     mutationFn: async ([id, originalTitle, parentId, versionId]: [
       id: backendModule.ProjectId,
       originalTitle: string,
@@ -883,7 +899,7 @@ export function useDuplicateProjectMutation(backend: Backend) {
       }
 
       await backend.duplicateProject(id, versionId, title).then((project) => {
-        doOpenProject({
+        openProject({
           type: backend.type,
           parentId,
           title,
