@@ -109,7 +109,7 @@ export function run(props: DashboardProps) {
             (breadcrumb) =>
               breadcrumb.type === 'http' &&
               breadcrumb.category === 'fetch' &&
-              breadcrumb.data &&
+              breadcrumb.data != null &&
               breadcrumb.data.status_code === HTTP_STATUS_BAD_REQUEST &&
               typeof breadcrumb.data.url === 'string' &&
               new URL(breadcrumb.data.url).host === API_HOST,
