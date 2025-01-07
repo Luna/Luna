@@ -18,12 +18,12 @@ import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.Patterns$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import org.enso.compiler.pass.resolve.TypeSignatures$;
+import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Seq;
 import scala.collection.immutable.Seq$;
 import scala.jdk.javaapi.CollectionConverters;
-import scala.jdk.javaapi.CollectionConverters$;
 
 // TODO it may make sense to merge this pass into StaticModuleScopeAnalysis, there is little benefit
 // to keeping it separate
@@ -173,8 +173,7 @@ public final class TypeInferenceSignatures implements IRPass {
 
         TypeRepresentation returnType =
             ascribedReturnType != null ? ascribedReturnType : TypeRepresentation.UNKNOWN;
-        yield TypeRepresentation.buildFunction(
-            CollectionConverters$.MODULE$.asJava(argTypesScala), returnType);
+        yield TypeRepresentation.buildFunction(ScalaConversions.asJava(argTypesScala), returnType);
       }
 
         // Otherwise, we encountered a 0-argument method, so its type is just its return type (if

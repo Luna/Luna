@@ -24,10 +24,10 @@ import org.enso.compiler.pass.analyse.alias.graph.GraphOccurrence;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticModuleScope;
 import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
+import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
-import scala.jdk.javaapi.CollectionConverters$;
 
 /**
  * A helper class providing the logic of propagating types through the IR.
@@ -156,7 +156,7 @@ abstract class TypePropagation {
   private TypeRepresentation processCaseExpression(
       Case.Expr caseExpr, LocalBindingsTyping localBindingsTyping) {
     List<TypeRepresentation> innerTypes =
-        CollectionConverters$.MODULE$.asJava(caseExpr.branches()).stream()
+        ScalaConversions.asJava(caseExpr.branches()).stream()
             .map(
                 branch -> {
                   // Fork the bindings map for each branch, as in the future type equality
@@ -247,8 +247,7 @@ abstract class TypePropagation {
       returnType = TypeRepresentation.UNKNOWN;
     }
 
-    return TypeRepresentation.buildFunction(
-        CollectionConverters$.MODULE$.asJava(argTypesScala), returnType);
+    return TypeRepresentation.buildFunction(ScalaConversions.asJava(argTypesScala), returnType);
   }
 
   @SuppressWarnings("unchecked")
@@ -515,7 +514,7 @@ abstract class TypePropagation {
         registerBinding(typePattern.name(), type, localBindingsTyping);
       }
       case Pattern.Constructor constructorPattern -> {
-        for (var innerPattern : CollectionConverters$.MODULE$.asJava(constructorPattern.fields())) {
+        for (var innerPattern : ScalaConversions.asJava(constructorPattern.fields())) {
           registerPattern(innerPattern, localBindingsTyping);
         }
       }

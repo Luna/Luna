@@ -25,11 +25,11 @@ import org.enso.compiler.pass.analyse.types.TypeResolver;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.TypeNames$;
+import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
-import scala.jdk.javaapi.CollectionConverters$;
 
 public class StaticModuleScopeAnalysis implements IRPass {
   public static final StaticModuleScopeAnalysis INSTANCE = new StaticModuleScopeAnalysis();
@@ -180,8 +180,8 @@ public class StaticModuleScopeAnalysis implements IRPass {
       TypeScopeReference typeScope,
       Definition.Type typeDefinition) {
     var fieldTypes = new HashMap<String, List<TypeRepresentation>>();
-    for (var constructorDef : CollectionConverters$.MODULE$.asJava(typeDefinition.members())) {
-      for (var argumentDef : CollectionConverters$.MODULE$.asJava(constructorDef.arguments())) {
+    for (var constructorDef : ScalaConversions.asJava(typeDefinition.members())) {
+      for (var argumentDef : ScalaConversions.asJava(constructorDef.arguments())) {
         String fieldName = argumentDef.name().name();
         TypeRepresentation fieldType =
             argumentDef
