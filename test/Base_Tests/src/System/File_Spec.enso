@@ -1054,7 +1054,6 @@ add_create_and_delete_directory_specs group_builder ~parent_dir =
 
 add_data_specs suite_builder =
     file_maker path_element:Text = enso_project.data / "transient" / (path_element+".txt")
-
     Data_Spec.add_specs "(File) " suite_builder file_maker
 
 add_copy_edge_cases_specs group_builder ~parent_dir file_from_path=File.new =
