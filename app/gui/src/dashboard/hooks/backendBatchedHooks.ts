@@ -146,6 +146,7 @@ export function copyAssetsMutationOptions(backend: Backend) {
     meta: {
       invalidates: [[backend.type, 'listDirectory']],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }
@@ -257,6 +258,7 @@ export function addAssetsLabelsMutationOptions(backend: Backend) {
     meta: {
       invalidates: [[backend.type, 'listDirectory']],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }
@@ -295,6 +297,7 @@ export function removeAssetsLabelsMutationOptions(backend: Backend) {
     meta: {
       invalidates: [[backend.type, 'listDirectory']],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }

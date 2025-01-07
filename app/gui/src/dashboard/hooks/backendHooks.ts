@@ -254,6 +254,15 @@ export function backendMutationOptions<Method extends BackendMutationMethod>(
     'mutationFn'
   > & { readonly invalidate?: boolean },
 ): UseMutationOptions<Awaited<ReturnType<Backend[Method]>>, Error, Parameters<Backend[Method]>> {
+  const invalidates =
+    options?.invalidate === false ?
+      []
+    : [
+        ...(options?.meta?.invalidates ?? []),
+        ...(INVALIDATION_MAP[method]?.map((queryMethod) =>
+          queryMethod === INVALIDATE_ALL_QUERIES ? [backend?.type] : [backend?.type, queryMethod],
+        ) ?? []),
+      ]
   return {
     ...options,
     mutationKey: [backend?.type, method, ...(options?.mutationKey ?? [])],
@@ -261,18 +270,11 @@ export function backendMutationOptions<Method extends BackendMutationMethod>(
     mutationFn: (args) => (backend?.[method] as any)?.(...args),
     networkMode: backend?.type === BackendType.local ? 'always' : 'online',
     meta: {
-      invalidates:
-        options?.invalidate === false ?
-          []
-        : [
-            ...(options?.meta?.invalidates ?? []),
-            ...(INVALIDATION_MAP[method]?.map((queryMethod) =>
-              queryMethod === INVALIDATE_ALL_QUERIES ?
-                [backend?.type]
-              : [backend?.type, queryMethod],
-            ) ?? []),
-          ],
+      invalidates,
       awaitInvalidates: options?.meta?.awaitInvalidates ?? true,
+      refetchType:
+        options?.meta?.refetchType ??
+        (invalidates.some((key) => key[1] === 'listDirectory') ? 'all' : 'active'),
     },
   }
 }
