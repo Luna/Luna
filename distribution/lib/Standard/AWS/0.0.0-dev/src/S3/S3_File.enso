@@ -5,6 +5,7 @@ import Standard.Base.Errors.Common.Syntax_Error
 import Standard.Base.Errors.File_Error.File_Error
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 import Standard.Base.Errors.Unimplemented.Unimplemented
+import Standard.Base.Internal.Ordering_Helpers.Default_Comparator
 import Standard.Base.Runtime.Context
 import Standard.Base.System.File.Data_Link_Access.Data_Link_Access
 import Standard.Base.System.File.Generic.File_Like.File_Like
@@ -619,9 +620,11 @@ translate_file_errors related_file result =
 
 ## PRIVATE
 type S3_File_Comparator
+    ## PRIVATE
     compare x y = Ordering.compare x.s3_path y.s3_path
 
-    hash x = S3_File_Comparator.hash_builtin x
-    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+    ## PRIVATE
+    hash = Default_Comparator.hash_builtin
 
+## PRIVATE
 Comparable.from that:S3_File = Comparable.new that S3_File_Comparator

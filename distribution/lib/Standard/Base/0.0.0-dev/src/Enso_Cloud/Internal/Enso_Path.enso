@@ -79,9 +79,11 @@ normalize segments =
 
 ## PRIVATE
 type Enso_Path_Comparator
+    ## PRIVATE
     compare x y = Vector_Lexicographic_Order.compare x.path_segments y.path_segments
 
-    hash x = Enso_Path_Comparator.hash_builtin x
-    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+    ## PRIVATE
+    hash = Default_Comparator.hash_builtin
 
+## PRIVATE
 Comparable.from that:Enso_Path = Comparable.new that Enso_Path_Comparator

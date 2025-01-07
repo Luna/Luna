@@ -1,5 +1,6 @@
 from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+import Standard.Base.Internal.Ordering_Helpers.Default_Comparator
 import Standard.Base.Internal.Path_Helpers
 
 import project.Errors.S3_Error
@@ -159,9 +160,11 @@ type Decomposed_S3_Path
 
 ## PRIVATE
 type S3_Path_Comparator
+    ## PRIVATE
     compare x y = Ordering.compare x.bucket y.bucket . and_then (Ordering.compare x.key y.key)
 
-    hash x = S3_Path_Comparator.hash_builtin x
-    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+    ## PRIVATE
+    hash = Default_Comparator.hash_builtin
 
+## PRIVATE
 Comparable.from that:S3_Path = Comparable.new that S3_Path_Comparator
