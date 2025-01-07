@@ -3091,7 +3091,7 @@ type DB_Table
     @from (Widget_Helpers.make_column_name_multi_selector add_regex=True add_by_type=True)
     @remove make_data_cleanse_vector_selector
     text_cleanse : Vector (Integer | Text | Regex | By_Type) -> Vector Named_Pattern -> DB_Table
-    text_cleanse self from:(Vector (Integer | Text | Regex | By_Type)) remove =
+    text_cleanse self from:(Vector (Integer | Text | Regex | By_Type)) remove:Vector=[] =
         Feature.Text_Cleanse.if_supported_else_throw self.connection.dialect "text_cleanse" <|
             transformer col = col.text_cleanse remove
             Table_Helpers.replace_columns_with_transformed_columns self from transformer
