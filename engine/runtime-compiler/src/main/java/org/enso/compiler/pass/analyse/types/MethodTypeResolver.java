@@ -1,6 +1,5 @@
 package org.enso.compiler.pass.analyse.types;
 
-import org.enso.compiler.pass.analyse.types.scope.BuiltinsFallbackScope;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticMethodResolution;
 import org.enso.compiler.pass.analyse.types.scope.StaticModuleScope;
@@ -13,10 +12,8 @@ class MethodTypeResolver {
   private final StaticMethodResolution methodResolutionAlgorithm;
 
   MethodTypeResolver(ModuleResolver moduleResolver, StaticModuleScope currentModuleScope) {
-    BuiltinsFallbackScope builtinsFallbackScope = new BuiltinsFallbackScope();
     this.currentModuleScope = currentModuleScope;
-    this.methodResolutionAlgorithm =
-        new StaticMethodResolution(moduleResolver, builtinsFallbackScope);
+    this.methodResolutionAlgorithm = new StaticMethodResolution(moduleResolver);
   }
 
   TypeRepresentation resolveMethod(TypeScopeReference type, String methodName) {

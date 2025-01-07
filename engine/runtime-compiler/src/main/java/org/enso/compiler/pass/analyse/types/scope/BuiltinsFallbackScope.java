@@ -9,14 +9,16 @@ import org.enso.pkg.QualifiedName;
  *
  * <p>They are available even without any imports.
  */
-public class BuiltinsFallbackScope {
-  private StaticModuleScope cachedAnyScope = null;
+public final class BuiltinsFallbackScope {
+  private BuiltinsFallbackScope() {}
 
-  public StaticModuleScope fallbackAnyScope() {
-    if (cachedAnyScope != null) {
-      return cachedAnyScope;
-    }
+  private static final StaticModuleScope fallbackAnyScope = constructFallbackScope();
 
+  public static StaticModuleScope fallbackAnyScope() {
+    return fallbackAnyScope;
+  }
+
+  private static StaticModuleScope constructFallbackScope() {
     var scopeBuilder =
         new StaticModuleScope.Builder(QualifiedName.fromString("Standard.Builtins.Main"));
     scopeBuilder.registerMethod(TypeScopeReference.ANY, "to_text", BuiltinTypes.TEXT);
@@ -30,8 +32,6 @@ public class BuiltinsFallbackScope {
     var catchType =
         new TypeRepresentation.ArrowType(new TypeRepresentation.ArrowType(any, any), any);
     scopeBuilder.registerMethod(TypeScopeReference.ANY, "catch_primitive", catchType);
-
-    cachedAnyScope = scopeBuilder.build();
-    return cachedAnyScope;
+    return scopeBuilder.build();
   }
 }

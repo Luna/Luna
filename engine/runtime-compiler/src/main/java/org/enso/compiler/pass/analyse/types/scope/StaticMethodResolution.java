@@ -12,13 +12,10 @@ public final class StaticMethodResolution
     extends MethodResolutionAlgorithm<
         TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
   private final ModuleResolver moduleResolver;
-  private final BuiltinsFallbackScope builtinsFallbackScope;
   private static final Logger LOGGER = LoggerFactory.getLogger(StaticMethodResolution.class);
 
-  public StaticMethodResolution(
-      ModuleResolver moduleResolver, BuiltinsFallbackScope builtinsFallbackScope) {
+  public StaticMethodResolution(ModuleResolver moduleResolver) {
     this.moduleResolver = moduleResolver;
-    this.builtinsFallbackScope = builtinsFallbackScope;
   }
 
   @Override
@@ -57,7 +54,7 @@ public final class StaticMethodResolution
         // The runtime falls back to Standard.Builtins.Main, but that modules does not contain any
         // type information, so it is not useful for us.
         // Instead we fall back to the hardcoded definitions of the 5 builtins of Any.
-        return builtinsFallbackScope.fallbackAnyScope();
+        return BuiltinsFallbackScope.fallbackAnyScope();
       } else {
         LOGGER.error("Could not find declaration module of type: {}", typeScopeReference);
         return null;
