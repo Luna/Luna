@@ -32,7 +32,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
   private final TypeScopeReference associatedType;
   private final List<StaticImportExportScope> imports;
   private final List<StaticImportExportScope> exports;
-  private final Map<String, AtomType> typesDefinedHere;
+  private final Map<String, AtomTypeDefinition> typesDefinedHere;
   private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods;
 
   private StaticModuleScope(
@@ -40,7 +40,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
       TypeScopeReference associatedType,
       List<StaticImportExportScope> imports,
       List<StaticImportExportScope> exports,
-      Map<String, AtomType> typesDefinedHere,
+      Map<String, AtomTypeDefinition> typesDefinedHere,
       Map<TypeScopeReference, Map<String, TypeRepresentation>> methods) {
     this.moduleName = moduleName;
     this.associatedType = associatedType;
@@ -55,7 +55,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
     private final TypeScopeReference associatedType;
     private final List<StaticImportExportScope> imports = new ArrayList<>();
     private final List<StaticImportExportScope> exports = new ArrayList<>();
-    private final Map<String, AtomType> typesDefinedHere = new HashMap<>();
+    private final Map<String, AtomTypeDefinition> typesDefinedHere = new HashMap<>();
     private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods =
         new HashMap<>();
 
@@ -92,7 +92,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
       return associatedType;
     }
 
-    void registerType(AtomType type) {
+    void registerType(AtomTypeDefinition type) {
       checkSealed();
       var previous = typesDefinedHere.putIfAbsent(type.getName(), type);
       if (previous != null) {
@@ -168,7 +168,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
     return null;
   }
 
-  public AtomType getType(String name) {
+  public AtomTypeDefinition getType(String name) {
     return typesDefinedHere.get(name);
   }
 }

@@ -21,6 +21,7 @@ import org.enso.compiler.pass.analyse.AliasAnalysis$;
 import org.enso.compiler.pass.analyse.alias.AliasMetadata;
 import org.enso.compiler.pass.analyse.alias.graph.Graph;
 import org.enso.compiler.pass.analyse.alias.graph.GraphOccurrence;
+import org.enso.compiler.pass.analyse.types.scope.AtomTypeDefinition;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticModuleScope;
 import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
@@ -332,7 +333,7 @@ abstract class TypePropagation {
     return null;
   }
 
-  private AtomType findTypeDefinition(QualifiedName name) {
+  private AtomTypeDefinition findTypeDefinition(QualifiedName name) {
     var module = moduleResolver.findContainingModule(TypeScopeReference.atomType(name));
     var moduleScope = StaticModuleScope.forIR(module);
     return moduleScope.getType(name.item());

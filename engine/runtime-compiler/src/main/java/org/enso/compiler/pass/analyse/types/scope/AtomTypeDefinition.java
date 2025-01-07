@@ -3,11 +3,11 @@ package org.enso.compiler.pass.analyse.types.scope;
 import java.util.List;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 
-public final class AtomType {
+public final class AtomTypeDefinition {
   private final String name;
   private final List<Constructor> constructors;
 
-  public AtomType(String name, List<Constructor> constructors) {
+  public AtomTypeDefinition(String name, List<Constructor> constructors) {
     this.name = name;
     this.constructors = constructors;
   }
