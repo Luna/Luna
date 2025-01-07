@@ -10,10 +10,7 @@ import { DashboardTabBar } from './DashboardTabBar'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as projectHooks from '#/hooks/projectHooks'
-import {
-  CategoriesProvider,
-  type CategoriesContextValue,
-} from '#/layouts/Drive/Categories/categoriesHooks'
+import { CategoriesProvider } from '#/layouts/Drive/Categories/categoriesHooks'
 import DriveProvider from '#/providers/DriveProvider'
 
 import * as authProvider from '#/providers/AuthProvider'
@@ -45,13 +42,10 @@ import Page from '#/components/Page'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 
 import * as backendModule from '#/services/Backend'
-import type LocalBackend from '#/services/LocalBackend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
-import { useSetExpandedDirectories } from '#/providers/DriveProvider'
-import type RemoteBackend from '#/services/RemoteBackend'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
@@ -74,15 +68,26 @@ export interface DashboardProps {
 
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
+  const projectsStore = useProjectsStore()
+  // MUST NOT be reactive as it should not cause the entire dashboard to re-render.
+  const launchedProjects = projectsStore.getState().launchedProjects
+  const categoriesAPI = useCategoriesAPI()
+  const remoteBackend = backendProvider.useRemoteBackend()
+  const localBackend = backendProvider.useLocalBackend()
+
   return (
     /* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
      * due to modals being in `TheModal`. */
-    <DriveProvider>
+    <DriveProvider
+      launchedProjects={launchedProjects}
+      categoriesAPI={categoriesAPI}
+      remoteBackend={remoteBackend}
+      localBackend={localBackend}
+    >
       {({ resetAssetTableState }) => (
         <CategoriesProvider onCategoryChange={resetAssetTableState}>
           <EventListProvider>
             <ProjectsProvider>
-              <OpenedProjectsParentsExpander />
               <DashboardInner {...props} />
             </ProjectsProvider>
           </EventListProvider>
@@ -314,69 +319,4 @@ function DashboardInner(props: DashboardProps) {
       </div>
     </Page>
   )
-}
-
-/** Compute the initial set of expanded directories. */
-async function computeInitialExpandedDirectories(
-  launchedProjects: readonly LaunchedProject[],
-  categoriesAPI: CategoriesContextValue,
-  remoteBackend: RemoteBackend,
-  localBackend: LocalBackend | null,
-) {
-  const { cloudCategories, localCategories } = categoriesAPI
-  const expandedDirectories: Record<backendModule.CategoryId, Set<backendModule.DirectoryId>> = {
-    cloud: new Set(),
-    recent: new Set(),
-    trash: new Set(),
-    local: new Set(),
-  }
-  const promises: Promise<void>[] = []
-  for (const category of [...cloudCategories.categories, ...localCategories.categories]) {
-    const set = (expandedDirectories[category.id] ??= new Set())
-    for (const project of launchedProjects) {
-      const backend =
-        project.type === backendModule.BackendType.remote ? remoteBackend : localBackend
-      if (!backend) {
-        continue
-      }
-      promises.push(
-        backend.tryGetAssetAncestors(project, category.id).then((ancestors) => {
-          if (!ancestors) {
-            return
-          }
-          for (const ancestor of ancestors) {
-            set.add(ancestor)
-          }
-        }),
-      )
-    }
-  }
-
-  await Promise.all(promises)
-  return expandedDirectories
-}
-
-/** Expand the list of parents for opened projects. */
-function OpenedProjectsParentsExpander() {
-  const remoteBackend = backendProvider.useRemoteBackend()
-  const localBackend = backendProvider.useLocalBackend()
-  const categoriesAPI = useCategoriesAPI()
-  const launchedProjects = useLaunchedProjects()
-  const setExpandedDirectories = useSetExpandedDirectories()
-
-  const updateOpenedProjects = eventCallbacks.useEventCallback(async () => {
-    const expandedDirectories = await computeInitialExpandedDirectories(
-      launchedProjects,
-      categoriesAPI,
-      remoteBackend,
-      localBackend,
-    )
-    setExpandedDirectories(expandedDirectories)
-  })
-
-  React.useEffect(() => {
-    void updateOpenedProjects()
-  }, [updateOpenedProjects])
-
-  return null
 }

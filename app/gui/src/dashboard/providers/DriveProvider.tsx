@@ -6,15 +6,22 @@ import invariant from 'tiny-invariant'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category, CategoryId } from '#/layouts/CategorySwitcher/Category'
-import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
+import {
+  useCategoriesAPI,
+  type CategoriesContextValue,
+} from '#/layouts/Drive/Categories/categoriesHooks'
+import type { LaunchedProject } from '#/providers/ProjectsProvider'
+import type LocalBackend from '#/services/LocalBackend'
+import type RemoteBackend from '#/services/RemoteBackend'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
-import type {
-  AssetId,
+import { useSuspenseQuery } from '@tanstack/react-query'
+import {
   BackendType,
-  DirectoryAsset,
-  DirectoryId,
+  type AssetId,
+  type DirectoryAsset,
+  type DirectoryId,
 } from 'enso-common/src/services/Backend'
 
 // ==================
@@ -68,18 +75,69 @@ export interface ProjectsProviderProps {
         readonly store: ProjectsContextType
         readonly resetAssetTableState: () => void
       }) => React.ReactNode)
+  readonly launchedProjects: readonly LaunchedProject[]
+  readonly categoriesAPI: CategoriesContextValue
+  readonly remoteBackend: RemoteBackend
+  readonly localBackend: LocalBackend | null
 }
 
-// ========================
-// === ProjectsProvider ===
-// ========================
+/** Compute the initial set of expanded directories. */
+async function computeInitialExpandedDirectories(
+  launchedProjects: readonly LaunchedProject[],
+  categoriesAPI: CategoriesContextValue,
+  remoteBackend: RemoteBackend,
+  localBackend: LocalBackend | null,
+) {
+  const { cloudCategories, localCategories } = categoriesAPI
+  const expandedDirectories: Record<CategoryId, Set<DirectoryId>> = {
+    cloud: new Set(),
+    recent: new Set(),
+    trash: new Set(),
+    local: new Set(),
+  }
+  const promises: Promise<void>[] = []
+  for (const category of [...cloudCategories.categories, ...localCategories.categories]) {
+    const set = (expandedDirectories[category.id] ??= new Set())
+    for (const project of launchedProjects) {
+      const backend = project.type === BackendType.remote ? remoteBackend : localBackend
+      if (!backend) {
+        continue
+      }
+      promises.push(
+        backend.tryGetAssetAncestors(project, category.id).then((ancestors) => {
+          if (!ancestors) {
+            return
+          }
+          for (const ancestor of ancestors) {
+            set.add(ancestor)
+          }
+        }),
+      )
+    }
+  }
+
+  await Promise.all(promises)
+  return expandedDirectories
+}
 
 /**
  * A React provider (and associated hooks) for determining whether the current area
  * containing the current element is focused.
  */
 export default function DriveProvider(props: ProjectsProviderProps) {
-  const { children } = props
+  const { children, launchedProjects, categoriesAPI, remoteBackend, localBackend } = props
+
+  const { data: initialExpandedDirectories } = useSuspenseQuery({
+    queryKey: ['computeInitialExpandedDirectories'],
+    queryFn: () =>
+      computeInitialExpandedDirectories(
+        launchedProjects,
+        categoriesAPI,
+        remoteBackend,
+        localBackend,
+      ),
+    staleTime: Infinity,
+  })
 
   const [store] = React.useState(() =>
     zustand.createStore<DriveStore>((set, get) => ({
@@ -120,12 +178,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
           set({ pasteData })
         }
       },
-      expandedDirectories: {
-        cloud: new Set(),
-        local: new Set(),
-        recent: new Set(),
-        trash: new Set(),
-      },
+      expandedDirectories: initialExpandedDirectories,
       setExpandedDirectories: (expandedDirectories) => {
         if (get().expandedDirectories !== expandedDirectories) {
           set({ expandedDirectories })
