@@ -38,7 +38,7 @@ export function tryCreateOwnerPermission(
   category: Category,
   user: backend.User,
   users: readonly backend.User[],
-  userGroups: readonly backend.UserGroupInfo[],
+  userGroups: readonly backend.UserGroup[],
 ): readonly backend.AssetPermission[] {
   switch (category.type) {
     case 'team': {
