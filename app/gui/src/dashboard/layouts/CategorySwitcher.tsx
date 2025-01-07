@@ -362,8 +362,9 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                   <ConfirmDeleteModal
                     actionText={getText('removeTheLocalDirectoryXFromFavorites', directory.label)}
                     actionButtonLabel={getText('remove')}
-                    doDelete={() => {
+                    doDelete={async () => {
                       removeDirectory(directory.id)
+                      await Promise.resolve()
                     }}
                   />
                 </ariaComponents.DialogTrigger>

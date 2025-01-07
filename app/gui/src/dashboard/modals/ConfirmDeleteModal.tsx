@@ -13,7 +13,7 @@ export interface ConfirmDeleteModalProps {
   readonly actionText: string
   /** The label shown on the colored confirmation button. "Delete" by default. */
   readonly actionButtonLabel?: string | undefined
-  readonly doDelete: () => void
+  readonly doDelete: () => Promise<void>
 }
 
 /** A modal for confirming the deletion of an asset. */

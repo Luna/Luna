@@ -211,8 +211,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   defaultOpen
                   cannotUndo
                   actionText={getText('deleteTheAssetTypeTitleForever', asset.type, asset.title)}
-                  doDelete={() => {
-                    deleteAssetsMutation.mutate([[asset.id], true])
+                  doDelete={async () => {
+                    await deleteAssetsMutation.mutateAsync([[asset.id], true])
                   }}
                 />,
               )
@@ -406,8 +406,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                     <ConfirmDeleteModal
                       defaultOpen
                       actionText={getText('trashTheAssetTypeTitle', asset.type, asset.title)}
-                      doDelete={() => {
-                        deleteAssetsMutation.mutate([[asset.id], false])
+                      doDelete={async () => {
+                        await deleteAssetsMutation.mutateAsync([[asset.id], false])
                       }}
                     />,
                   )
@@ -419,8 +419,8 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
                   <ConfirmDeleteModal
                     defaultOpen
                     actionText={getText('deleteTheAssetTypeTitle', asset.type, asset.title)}
-                    doDelete={() => {
-                      deleteAssetsMutation.mutate([[asset.id], false])
+                    doDelete={async () => {
+                      await deleteAssetsMutation.mutateAsync([[asset.id], false])
                     }}
                   />,
                 )

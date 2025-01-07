@@ -28,6 +28,7 @@ import {
   deleteAssetsMutationOptions,
   restoreAssetsMutationOptions,
 } from '#/hooks/backendBatchedHooks'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useText } from '#/providers/TextProvider'
@@ -99,13 +100,13 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
     )
 
   // This is not a React component even though it contains JSX.
-  const doDeleteAll = () => {
+  const doDeleteAll = useEventCallback(async () => {
     const selectedKeys = selectedAssets.map((asset) => asset.id)
-    const deleteAll = () => {
+    const deleteAll = async () => {
       unsetModal()
       setSelectedAssets([])
 
-      deleteAssetsMutation.mutate([selectedKeys, false])
+      await deleteAssetsMutation.mutateAsync([selectedKeys, false])
     }
     if (
       isCloud &&
@@ -113,7 +114,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         (key) => nodeMapRef.current.get(key)?.item.type !== backendModule.AssetType.directory,
       )
     ) {
-      deleteAll()
+      await deleteAll()
     } else {
       const firstKey = selectedKeys[0]
       const soleAssetName =
@@ -130,7 +131,7 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
         />,
       )
     }
-  }
+  })
 
   const pasteAllMenuEntry = hasPasteData && (
     <ContextMenuEntry
@@ -181,9 +182,9 @@ export default function AssetsTableContextMenu(props: AssetsTableContextMenuProp
                         getText('deleteSelectedAssetForeverActionText', soleAssetName)
                       : getText('deleteSelectedAssetsForeverActionText', selectedAssets.length)
                     }
-                    doDelete={() => {
+                    doDelete={async () => {
                       setSelectedAssets([])
-                      deleteAssetsMutation.mutate([
+                      await deleteAssetsMutation.mutateAsync([
                         selectedAssets.map((otherAsset) => otherAsset.id),
                         true,
                       ])

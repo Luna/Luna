@@ -132,8 +132,8 @@ export default function Labels(props: LabelsProps) {
                         />
                         <ConfirmDeleteModal
                           actionText={getText('deleteLabelActionText', label.value)}
-                          doDelete={() => {
-                            deleteTagMutation.mutate([label.id, label.value])
+                          doDelete={async () => {
+                            await deleteTagMutation.mutateAsync([label.id, label.value])
                           }}
                         />
                       </ariaComponents.DialogTrigger>

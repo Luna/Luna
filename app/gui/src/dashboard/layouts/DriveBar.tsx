@@ -218,8 +218,8 @@ export default function DriveBar(props: DriveBarProps) {
 
             <ConfirmDeleteModal
               actionText={getText('allTrashedItemsForever')}
-              doDelete={() => {
-                void clearTrash()
+              doDelete={async () => {
+                await clearTrash()
               }}
             />
           </DialogTrigger>
