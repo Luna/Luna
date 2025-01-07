@@ -108,7 +108,7 @@ public abstract class StaticAnalysisTest {
                     Option.empty(),
                     true,
                     Option.empty());
-            return new Package<>(root, initialConfig, new TruffleFileSystem());
+            return new Package<>(root, initialConfig, TruffleFileSystem.INSTANCE);
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
