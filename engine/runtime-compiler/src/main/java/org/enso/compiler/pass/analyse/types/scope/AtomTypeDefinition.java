@@ -7,15 +7,26 @@ public final class AtomTypeDefinition {
   private final String name;
   private final List<Constructor> constructors;
 
+  /**
+   * Constructs the type definition.
+   *
+   * @param name The simple name of the type, e.g. the "Name" in `type Name`
+   * @param constructors the list of constructor representations
+   */
   public AtomTypeDefinition(String name, List<Constructor> constructors) {
     this.name = name;
     this.constructors = constructors;
   }
 
+  /** Returns the short name of the type. */
   public String getName() {
     return name;
   }
 
+  /**
+   * Returns the constructor of the type with the given name, or {@code null} if a constructor with
+   * that name does not exist.
+   */
   public Constructor getConstructor(String name) {
     return constructors.stream().filter(c -> c.name().equals(name)).findFirst().orElse(null);
   }
