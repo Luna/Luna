@@ -21,12 +21,11 @@ import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.Patterns$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import org.enso.compiler.pass.resolve.TypeSignatures$;
+import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.immutable.Seq;
-import scala.collection.immutable.Seq$;
-import scala.jdk.javaapi.CollectionConverters;
 
 /**
  * The compiler pass implementing the proof of concept of type inference.
@@ -143,13 +142,12 @@ public final class TypeInferencePropagation implements IRPass {
             TypeSignatures$.MODULE$,
             StaticModuleScopeAnalysis.INSTANCE,
             TypeInferenceSignatures.INSTANCE);
-    return CollectionConverters.asScala(passes).toList();
+    return ScalaConversions.seq(passes);
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public Seq<IRProcessingPass> invalidatedPasses() {
-    return (Seq<IRProcessingPass>) Seq$.MODULE$.empty();
+    return ScalaConversions.nil();
   }
 
   @Override
