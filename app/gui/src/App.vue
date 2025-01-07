@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { ProjectViewProps } from '#/layouts/Editor'
 import '@/assets/base.css'
 import TooltipDisplayer from '@/components/TooltipDisplayer.vue'
+import ProjectView from '@/ProjectView.vue'
 import { provideAppClassSet } from '@/providers/appClass'
 import { provideGuiConfig } from '@/providers/guiConfig'
 import { provideTooltipRegistry } from '@/providers/tooltipRegistry'
 import { registerAutoBlurHandler } from '@/util/autoBlur'
 import { baseConfig, configValue, mergeConfig, type ApplicationConfigValue } from '@/util/config'
 import { urlParams } from '@/util/urlParams'
-import ProjectView from '@/views/ProjectView.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { applyPureReactInVue } from 'veaury'
 import { computed, onMounted } from 'vue'
+import { ComponentProps } from 'vue-component-type-helpers'
 import ReactRoot from './ReactRoot'
 
 const _props = defineProps<{
   // Used in Project View integration tests. Once both test projects will be merged, this should be
   // removed
-  projectViewOnly?: { options: ProjectViewProps } | null
+  projectViewOnly?: { options: ComponentProps<typeof ProjectView> } | null
   onAuthenticated?: (accessToken: string | null) => void
 }>()
 
@@ -50,16 +50,31 @@ onMounted(() => {
   <Teleport to="body">
     <TooltipDisplayer :registry="appTooltips" />
   </Teleport>
-  <ProjectView
-    v-if="projectViewOnly"
-    v-bind="projectViewOnly.options"
-    :class="['App', ...classSet.keys()]"
-  />
-  <ReactRootWrapper
-    v-else
-    :config="appConfigValue"
-    :queryClient="queryClient"
-    :classSet="classSet"
-    @authenticated="onAuthenticated ?? (() => {})"
-  />
+  <div :class="['App', ...classSet.keys()]">
+    <ProjectView v-if="projectViewOnly" v-bind="projectViewOnly.options" />
+    <ReactRootWrapper
+      v-else
+      :config="appConfigValue"
+      :queryClient="queryClient"
+      @authenticated="onAuthenticated ?? (() => {})"
+    />
+  </div>
 </template>
+
+<style>
+.App {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+TODO [ao]: Veaury adds a wrapping elements which have `style="all: unset"`, which in turn breaks our layout.
+See https://github.com/gloriasoft/veaury/issues/158
+*/
+[__use_react_component_wrap],
+[data-use-vue-component-wrap] {
+  display: contents !important;
+}
+</style>

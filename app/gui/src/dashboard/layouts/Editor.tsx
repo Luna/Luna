@@ -13,19 +13,21 @@ import * as reactQuery from '@tanstack/react-query'
 import * as React from 'react'
 import { useTimeoutCallback } from '../hooks/timeoutHooks'
 // eslint-disable-next-line no-restricted-syntax
-import ProjectViewVue from '@/views/ProjectView.vue'
+import ProjectViewTabVue from '@/ProjectViewTab.vue'
 import { applyPureVueInReact } from 'veaury'
 import type { AllowedComponentProps, VNodeProps } from 'vue'
 import type { ComponentProps } from 'vue-component-type-helpers'
 
 /** Props for the GUI editor root component. */
-export type ProjectViewProps = Omit<
-  ComponentProps<typeof ProjectViewVue>,
+export type ProjectViewTabProps = Omit<
+  ComponentProps<typeof ProjectViewTabVue>,
   keyof AllowedComponentProps | keyof VNodeProps
 >
 
 // eslint-disable-next-line no-restricted-syntax
-const ProjectView = applyPureVueInReact(ProjectViewVue) as (props: ProjectViewProps) => JSX.Element
+const ProjectViewTab = applyPureVueInReact(ProjectViewTabVue) as (
+  props: ProjectViewTabProps,
+) => JSX.Element
 
 // ==============
 // === Editor ===
@@ -168,7 +170,7 @@ function EditorInternal(props: EditorInternalProps) {
     renameProject(newName, openedProject.projectId)
   })
 
-  const appProps = React.useMemo<ProjectViewProps>(() => {
+  const appProps = React.useMemo<ProjectViewTabProps>(() => {
     const jsonAddress = openedProject.jsonAddress
     const binaryAddress = openedProject.binaryAddress
     const ydocAddress = openedProject.ydocAddress ?? ydocUrl ?? ''
@@ -181,14 +183,16 @@ function EditorInternal(props: EditorInternalProps) {
       throw new Error(getText('noBinaryEndpointError'))
     } else {
       return {
-        projectId: openedProject.projectId,
-        projectName: openedProject.packageName,
-        projectDisplayedName: openedProject.name,
-        engine: { rpcUrl: jsonAddress, dataUrl: binaryAddress, ydocUrl: ydocAddress },
         hidden,
-        renameProject: onRenameProject,
-        projectBackend,
-        remoteBackend,
+        projectViewProps: {
+          projectId: openedProject.projectId,
+          projectName: openedProject.packageName,
+          projectDisplayedName: openedProject.name,
+          engine: { rpcUrl: jsonAddress, dataUrl: binaryAddress, ydocUrl: ydocAddress },
+          renameProject: onRenameProject,
+          projectBackend,
+          remoteBackend,
+        },
       }
     }
   }, [
@@ -202,12 +206,12 @@ function EditorInternal(props: EditorInternalProps) {
     remoteBackend,
   ])
   // EsLint does not handle types imported from vue files and their dependences.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const key: string = appProps.projectId
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const key: string = appProps.projectViewProps.projectId
 
   // Currently the GUI component needs to be fully rerendered whenever the project is changed. Once
   // this is no longer necessary, the `key` could be removed.
-  return <ProjectView key={key} {...appProps} />
+  return <ProjectViewTab key={key} {...appProps} />
 }
 
 export default React.memo(Editor)

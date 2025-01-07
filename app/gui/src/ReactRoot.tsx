@@ -45,40 +45,32 @@ export default function ReactRoot(props: ReactRootProps) {
   invariant(portalRoot, 'PortalRoot element not found')
 
   return (
-    // TODO [ao]: This wrapping element should be in App.vue, but veaury's wrapper for react sets
-    //  `style="all: unset"` breaking our layout.
-    //  See https://github.com/gloriasoft/veaury/issues/158
-    <div
-      id="enso-dashboard"
-      className={`${['App', 'enso-dashboard', ...props.classSet.keys()].join(' ')}`}
-    >
-      <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <ErrorBoundary>
-            <UIProviders locale="en-US" portalRoot={portalRoot}>
-              <Suspense fallback={<LoadingScreen />}>
-                <OfflineNotificationManager>
-                  <LoggerProvider logger={console}>
-                    <HttpClientProvider httpClient={httpClient}>
-                      <App
-                        supportsDeepLinks={supportsDeepLinks}
-                        supportsLocalBackend={!IS_CLOUD_BUILD}
-                        isAuthenticationDisabled={!shouldUseAuthentication}
-                        projectManagerUrl={projectManagerUrl}
-                        ydocUrl={ydocUrl}
-                        initialProjectName={initialProjectName}
-                        onAuthenticated={onAuthenticated}
-                      />
-                    </HttpClientProvider>
-                  </LoggerProvider>
-                </OfflineNotificationManager>
-              </Suspense>
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <UIProviders locale="en-US" portalRoot={portalRoot}>
+            <Suspense fallback={<LoadingScreen />}>
+              <OfflineNotificationManager>
+                <LoggerProvider logger={console}>
+                  <HttpClientProvider httpClient={httpClient}>
+                    <App
+                      supportsDeepLinks={supportsDeepLinks}
+                      supportsLocalBackend={!IS_CLOUD_BUILD}
+                      isAuthenticationDisabled={!shouldUseAuthentication}
+                      projectManagerUrl={projectManagerUrl}
+                      ydocUrl={ydocUrl}
+                      initialProjectName={initialProjectName}
+                      onAuthenticated={onAuthenticated}
+                    />
+                  </HttpClientProvider>
+                </LoggerProvider>
+              </OfflineNotificationManager>
+            </Suspense>
 
-              <ReactQueryDevtools />
-            </UIProviders>
-          </ErrorBoundary>
-        </QueryClientProvider>
-      </StrictMode>
-    </div>
+            <ReactQueryDevtools />
+          </UIProviders>
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </StrictMode>
   )
 }

@@ -8,7 +8,7 @@ import { LsUrls, provideProjectStore } from '@/stores/project'
 import { provideSettings } from '@/stores/settings'
 import { Opt } from '@/util/data/opt'
 import { useEventListener } from '@vueuse/core'
-import { computed, markRaw, ref, toRaw, toRef, watch } from 'vue'
+import { markRaw, onActivated, onDeactivated, ref, toRaw, toRef, watch } from 'vue'
 
 const props = defineProps<{
   readonly projectId: string
@@ -17,7 +17,6 @@ const props = defineProps<{
   readonly projectNamespace?: string
   readonly engine: LsUrls
   readonly renameProject: (newName: string) => void
-  readonly hidden: boolean
   /** The current project's backend, which may be remote or local. */
   readonly projectBackend?: Opt<Backend>
   /**
@@ -52,7 +51,11 @@ useEventListener(window, 'beforeunload', () => logger.send('ide_project_closed')
 
 provideProjectStore(props)
 provideSettings()
-provideVisibility(computed(() => !props.hidden))
+
+const visible = ref(false)
+provideVisibility(visible)
+onActivated(() => (visible.value = true))
+onDeactivated(() => (visible.value = false))
 </script>
 
 <template>
@@ -74,17 +77,6 @@ provideVisibility(computed(() => !props.hidden))
   -moz-osx-font-smoothing: grayscale;
   pointer-events: all;
   cursor: default;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  position: absolute;
-}
-
-.enso-dashboard .ProjectView {
-  /* Compensate for top bar, render the app below it. */
-  top: calc(var(--row-height) + 16px);
-  flex: 1;
 }
 
 :deep(*),
