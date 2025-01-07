@@ -41,7 +41,7 @@ public sealed interface TypeRepresentation
     }
 
     public QualifiedName getAssociatedType() {
-      return QualifiedName.fromString(BuiltinTypes.anyQualifiedName);
+      return QualifiedName.fromString(BuiltinTypes.FQN_ANY);
     }
   }
 
@@ -92,7 +92,7 @@ public sealed interface TypeRepresentation
     }
 
     public QualifiedName getAssociatedType() {
-      return QualifiedName.fromString(BuiltinTypes.functionQualifiedName);
+      return QualifiedName.fromString(BuiltinTypes.FQN_FUNCTION);
     }
   }
 

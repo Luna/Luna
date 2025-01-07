@@ -5,7 +5,7 @@ import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.pkg.QualifiedName;
 
 /** The static counterpart of {@link org.enso.interpreter.runtime.scope.ImportExportScope}. */
-public class StaticImportExportScope {
+public final class StaticImportExportScope {
   // TODO add support for only/hiding once https://github.com/enso-org/enso/issues/10796 is fixed
   private final QualifiedName referredModuleName;
 
@@ -13,7 +13,7 @@ public class StaticImportExportScope {
     this.referredModuleName = referredModuleName;
   }
 
-  private transient MaterializedImportExportScope cachedMaterializedScope = null;
+  private MaterializedImportExportScope cachedMaterializedScope = null;
 
   public MaterializedImportExportScope materialize(
       ModuleResolver moduleResolver, StaticMethodResolution methodResolutionAlgorithm) {

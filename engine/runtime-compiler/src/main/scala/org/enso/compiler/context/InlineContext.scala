@@ -18,7 +18,7 @@ import org.enso.compiler.pass.PassConfiguration
   * @param pkgRepo the compiler's package repository
   */
 case class InlineContext(
-  moduleContext: ModuleContext,
+  private val moduleContext: ModuleContext,
   compilerConfig: CompilerConfig,
   localScope: Option[LocalScope]               = None,
   isInTailPosition: Option[Boolean]            = None,

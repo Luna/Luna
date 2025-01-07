@@ -842,6 +842,10 @@ class Compiler(
     passManager.runPassesOnModule(ir, moduleContext, passes.globalTypingPasses)
   }
 
+  /** Runs the final type inference passes, if they are enabled.
+    *
+    * If they are not enabled, it will not run any passes.
+    */
   private def runFinalTypeInferencePasses(
     ir: IRModule,
     moduleContext: ModuleContext

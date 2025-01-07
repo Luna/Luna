@@ -120,7 +120,7 @@ public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, Impo
    *   <li>For a module method, this will be the type associated with the module.
    * </ul>
    */
-  protected final TypeScopeReferenceType getTypeAssociatedWithMethod(Method.Explicit method) {
+  protected final TypeScopeReferenceType getTypeDefiningMethod(Method.Explicit method) {
     var typePointerOpt = method.methodReference().typePointer();
     if (typePointerOpt.isEmpty()) {
       return getTypeAssociatedWithCurrentScope();
@@ -146,16 +146,16 @@ public abstract class BuildScopeFromModuleAlgorithm<TypeScopeReferenceType, Impo
   }
 
   /**
-   * Implementation specific piece of {@link #getTypeAssociatedWithMethod(Method.Explicit)} that
-   * specifies how to build the associated type from a resolved module.
+   * Implementation specific piece of {@link #getTypeDefiningMethod(Method.Explicit)} that specifies
+   * how to build the associated type from a resolved module.
    */
   protected abstract TypeScopeReferenceType associatedTypeFromResolvedModule(
       BindingsMap.ResolvedModule module);
 
   /**
-   * Implementation specific piece of {@link #getTypeAssociatedWithMethod(Method.Explicit)} that
-   * specifies how to build the associated type from a resolved type, depending on if the method is
-   * static or not.
+   * Implementation specific piece of {@link #getTypeDefiningMethod(Method.Explicit)} that specifies
+   * how to build the associated type from a resolved type, depending on if the method is static or
+   * not.
    */
   protected abstract TypeScopeReferenceType associatedTypeFromResolvedType(
       BindingsMap.ResolvedType type, boolean isStatic);

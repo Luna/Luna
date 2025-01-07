@@ -327,7 +327,7 @@ class IrToTruffle(
         .getMetadata(TypeSignatures)
         .flatMap(sig => getContext(sig.signature))
 
-      val cons = getTypeAssociatedWithMethod(method)
+      val cons = getTypeDefiningMethod(method)
       if (cons != null) {
         val fullMethodDefName =
           cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name

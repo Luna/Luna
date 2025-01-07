@@ -72,9 +72,11 @@ import scala.jdk.javaapi.CollectionConverters;
  */
 public final class TypeInferencePropagation implements IRPass {
   public static final TypeInferencePropagation INSTANCE = new TypeInferencePropagation();
-  private static final Logger logger = LoggerFactory.getLogger(TypeInferencePropagation.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TypeInferencePropagation.class);
   private final TypeResolver typeResolver = new TypeResolver();
   private final TypeCompatibility checker = new TypeCompatibility();
+
+  private TypeInferencePropagation() {}
 
   private TypePropagation propagationResolverInModule(
       Module module, Option<PackageRepository> packageRepository) {
@@ -159,7 +161,7 @@ public final class TypeInferencePropagation implements IRPass {
                   }
                   case Definition.Type typ -> typ;
                   default -> {
-                    logger.trace("UNEXPECTED definition {}", def.getClass().getCanonicalName());
+                    LOGGER.trace("UNEXPECTED definition {}", def.getClass().getCanonicalName());
                     yield def;
                   }
                 });

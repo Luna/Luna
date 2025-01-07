@@ -50,7 +50,9 @@ import scala.jdk.javaapi.CollectionConverters$;
  * org.enso.compiler.core.TreeToIr}). It does not look any deeper into the expressions, ensuring
  * that it is relatively quick to run.
  */
-public class TypeInferenceSignatures implements IRPass {
+public final class TypeInferenceSignatures implements IRPass {
+  private TypeInferenceSignatures() {}
+
   public static final TypeInferenceSignatures INSTANCE = new TypeInferenceSignatures();
   private static final Logger logger = LoggerFactory.getLogger(TypeInferenceSignatures.class);
   private final TypeResolver typeResolver = new TypeResolver();

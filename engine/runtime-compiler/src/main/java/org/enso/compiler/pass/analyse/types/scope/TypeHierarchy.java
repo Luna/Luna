@@ -29,8 +29,7 @@ public class TypeHierarchy {
         }
 
         if (BuiltinTypes.isInteger(name) || BuiltinTypes.isFloat(name)) {
-          return TypeScopeReference.atomType(
-              QualifiedName.fromString(BuiltinTypes.numberQualifiedName));
+          return TypeScopeReference.atomType(QualifiedName.fromString(BuiltinTypes.FQN_NUMBER));
         }
 
         return TypeScopeReference.ANY;

@@ -68,7 +68,7 @@ public abstract class StaticAnalysisTest {
     // If the module name is supposed to be put in a project, we register a synthetic project entry
     // for it
     if (qualifiedName.path().length() >= 2) {
-      LibraryName libraryName =
+      var libraryName =
           new LibraryName(qualifiedName.path().apply(0), qualifiedName.path().apply(1));
       if (!packageRepository.isPackageLoaded(libraryName)) {
         // We are able only to register a synthetic package without associated Package<> object, but

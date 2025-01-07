@@ -119,7 +119,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
     @Override
     protected void processMethodDefinition(Method.Explicit method) {
-      var typeScope = getTypeAssociatedWithMethod(method);
+      var typeScope = getTypeDefiningMethod(method);
       if (typeScope == null) {
         logger.warn(
             "Failed to process method {}, because its type scope could not be resolved.",
@@ -179,7 +179,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
       StaticModuleScope.Builder scope,
       TypeScopeReference typeScope,
       Definition.Type typeDefinition) {
-    HashMap<String, List<TypeRepresentation>> fieldTypes = new HashMap<>();
+    var fieldTypes = new HashMap<String, List<TypeRepresentation>>();
     for (var constructorDef : CollectionConverters$.MODULE$.asJava(typeDefinition.members())) {
       for (var argumentDef : CollectionConverters$.MODULE$.asJava(constructorDef.arguments())) {
         String fieldName = argumentDef.name().name();

@@ -13,7 +13,7 @@ public final class StaticMethodResolution
         TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
   private final ModuleResolver moduleResolver;
   private final BuiltinsFallbackScope builtinsFallbackScope;
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private static final Logger LOGGER = LoggerFactory.getLogger(StaticMethodResolution.class);
 
   public StaticMethodResolution(
       ModuleResolver moduleResolver, BuiltinsFallbackScope builtinsFallbackScope) {
@@ -59,7 +59,7 @@ public final class StaticMethodResolution
         // Instead we fall back to the hardcoded definitions of the 5 builtins of Any.
         return builtinsFallbackScope.fallbackAnyScope();
       } else {
-        logger.error("Could not find declaration module of type: {}", typeScopeReference);
+        LOGGER.error("Could not find declaration module of type: {}", typeScopeReference);
         return null;
       }
     }
@@ -97,9 +97,9 @@ public final class StaticMethodResolution
   protected TypeRepresentation onMultipleDefinitionsFromImports(
       String methodName,
       List<MethodFromImport<TypeRepresentation, StaticImportExportScope>> methodFromImports) {
-    if (logger.isDebugEnabled()) {
+    if (LOGGER.isDebugEnabled()) {
       var foundImportNames = methodFromImports.stream().map(MethodFromImport::origin);
-      logger.debug("Method {} is coming from multiple imports: {}", methodName, foundImportNames);
+      LOGGER.debug("Method {} is coming from multiple imports: {}", methodName, foundImportNames);
     }
 
     long foundTypesCount =
@@ -110,7 +110,7 @@ public final class StaticMethodResolution
               .distinct()
               .map(m -> m.resolutionResult() + " from " + m.origin())
               .toList();
-      logger.error(
+      LOGGER.error(
           "Method {} is coming from multiple imports with different types: {}",
           methodName,
           foundTypesWithOrigins);
