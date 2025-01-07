@@ -574,7 +574,7 @@ const config = [
       'no-restricted-syntax': [
         'error',
         ...RESTRICTED_SYNTAXES.filter(
-          syntax =>
+          (syntax) =>
             syntax.message !== 'Use a `getText()` from `useText` instead of a literal string',
         ),
       ],

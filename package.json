@@ -15,6 +15,7 @@
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "^4.1.0",
+    "prettier-plugin-tailwindcss": "^0.5.14",
     "vitest": "3.0.0-beta.3"
   },
   "dependencies": {
@@ -40,7 +41,11 @@
   },
   "pnpm": {
     "//": "To completely ignore deep dependencies, see .pnpmfile.cjs",
-    "onlyBuiltDependencies": ["electron", "esbuild", "fsevents"],
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "fsevents"
+    ],
     "overrides": {
       "jsdom": "^24.1.0",
       "@types/react": "^18.0.27",
