@@ -13,6 +13,7 @@ import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.pass.IRPass;
 import org.enso.compiler.pass.IRProcessingPass;
 import org.enso.compiler.pass.analyse.BindingAnalysis$;
+import org.enso.compiler.pass.analyse.types.scope.StaticModuleScopeAnalysis;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.Patterns$;
@@ -75,7 +76,9 @@ public final class TypeInferenceSignatures implements IRPass {
 
   @Override
   public Seq<IRProcessingPass> invalidatedPasses() {
-    return ScalaConversions.nil();
+    List<IRProcessingPass> passes =
+        List.of(TypeInferencePropagation.INSTANCE, StaticModuleScopeAnalysis.INSTANCE);
+    return ScalaConversions.seq(passes);
   }
 
   @Override

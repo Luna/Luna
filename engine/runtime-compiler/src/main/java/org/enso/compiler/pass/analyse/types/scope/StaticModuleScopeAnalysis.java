@@ -19,6 +19,7 @@ import org.enso.compiler.pass.IRPass;
 import org.enso.compiler.pass.IRProcessingPass;
 import org.enso.compiler.pass.analyse.BindingAnalysis$;
 import org.enso.compiler.pass.analyse.types.InferredType;
+import org.enso.compiler.pass.analyse.types.TypeInferencePropagation;
 import org.enso.compiler.pass.analyse.types.TypeInferenceSignatures;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.compiler.pass.analyse.types.TypeResolver;
@@ -59,7 +60,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
   @Override
   public Seq<IRProcessingPass> invalidatedPasses() {
-    List<IRProcessingPass> passes = List.of(StaticModuleScopeAnalysis.INSTANCE);
+    List<IRProcessingPass> passes = List.of(TypeInferencePropagation.INSTANCE);
     return ScalaConversions.seq(passes);
   }
 
