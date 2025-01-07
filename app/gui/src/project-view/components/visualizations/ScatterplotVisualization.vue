@@ -779,6 +779,7 @@ watchPostEffect(() => {
       .style('font-size', '15px')
       .text((d) => formatLabel(d))
       .attr('alignment-baseline', 'middle')
+      .call((labels) => labels.append('title').text((d) => d))
   }
 })
 
