@@ -197,4 +197,4 @@ type Ordering
 Comparable.from (that:Ordering) = Comparable.new that Ordering_Comparator
 
 ## PRIVATE
-default_comparator_hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
+default_comparator_hash x = Default_Comparator.hash x

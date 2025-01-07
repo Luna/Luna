@@ -42,7 +42,7 @@ import project.System.File_Format_Metadata.File_Format_Metadata
 import project.System.Input_Stream.Input_Stream
 import project.System.Output_Stream.Output_Stream
 from project.Data.Boolean import Boolean, False, True
-from project.Data.Ordering import default_comparator_hash_builtin
+from project.Data.Ordering import default_comparator_hash
 from project.Data.Text.Extensions import all
 from project.Enso_Cloud.Internal.Enso_File_Helpers import all
 from project.Enso_Cloud.Public_Utils import get_required_field
@@ -594,7 +594,7 @@ type Enso_File_Comparator
     compare x y = Ordering.compare x.enso_path y.enso_path
 
     ## PRIVATE
-    hash = default_comparator_hash_builtin
+    hash x = default_comparator_hash x
 
 ## PRIVATE
 Comparable.from that:Enso_File = Comparable.new that Enso_File_Comparator

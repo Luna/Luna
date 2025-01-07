@@ -36,8 +36,9 @@ type Default_Comparator
 
     ## PRIVATE
     hash : Number -> Integer
-    hash x = default_comparator_hash_builtin x
-
+    hash x = Default_Comparator.hash_builtin x
+    ## PRIVATE
+    hash_builtin x = @Builtin_Method "Default_Comparator.hash_builtin"
     ## PRIVATE
     less_than_builtin left right = @Builtin_Method "Default_Comparator.less_than_builtin"
 
