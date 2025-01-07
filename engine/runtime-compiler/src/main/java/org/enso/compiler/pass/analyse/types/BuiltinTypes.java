@@ -31,7 +31,7 @@ public final class BuiltinTypes {
 
   public static boolean isAny(QualifiedName qualifiedName) {
     var str = qualifiedName.toString();
-    return str.equals(FQN_ANY) || str.equals("Standard.Base.Any");
+    return str.equals(FQN_ANY);
   }
 
   public static boolean isFunction(QualifiedName qualifiedName) {
