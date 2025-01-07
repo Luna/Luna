@@ -10,7 +10,7 @@ package org.enso.runtimeversionmanager.runner
   * @param extraOptions extra options that should be added to the launched JVM
   */
 case class JVMSettings(
-  javaCommandOverride: Option[JavaCommand],
+  javaCommandOverride: Option[JavaExecCommand],
   jvmOptions: Seq[(String, String)],
   extraOptions: Seq[(String, String)],
   nativeImage: Boolean
@@ -32,7 +32,7 @@ object JVMSettings {
     nativeImage: Boolean = false
   ): JVMSettings =
     new JVMSettings(
-      if (useSystemJVM) Some(JavaCommand.systemJavaCommand) else None,
+      if (useSystemJVM) Some(JavaExecCommand.defaultSystem) else None,
       jvmOptions,
       extraOptions,
       nativeImage

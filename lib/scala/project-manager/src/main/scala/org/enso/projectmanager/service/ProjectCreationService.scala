@@ -52,8 +52,7 @@ class ProjectCreationService[
           globalConfigurationManager = configurationManager,
           editionManager             = distributionConfiguration.editionManager,
           environment                = distributionConfiguration.environment,
-          loggerConnection           = loggingServiceDescriptor.getEndpoint,
-          nativeImage                = false
+          loggerConnection           = loggingServiceDescriptor.getEndpoint
         )
 
       val settings =

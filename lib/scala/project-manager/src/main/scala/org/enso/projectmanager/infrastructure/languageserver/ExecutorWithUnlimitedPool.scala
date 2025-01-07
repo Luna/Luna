@@ -100,8 +100,7 @@ object ExecutorWithUnlimitedPool extends LanguageServerExecutor {
       globalConfigurationManager = configurationManager,
       editionManager             = distributionConfiguration.editionManager,
       environment                = distributionConfiguration.environment,
-      loggerConnection           = descriptor.deferredLoggingServiceEndpoint,
-      nativeImage                = descriptor.nativeImage
+      loggerConnection           = descriptor.deferredLoggingServiceEndpoint
     )
     val profilingPathArguments =
       descriptor.profilingPath.toSeq

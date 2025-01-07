@@ -43,7 +43,6 @@ case class LanguageServerDescriptor(
   engineVersion: SemVer,
   jvmSettings: JVMSettings,
   discardOutput: Boolean,
-  nativeImage: Boolean,
   profilingPath: Option[Path],
   profilingTime: Option[FiniteDuration],
   deferredLoggingServiceEndpoint: Future[Option[URI]],
