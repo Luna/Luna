@@ -7,6 +7,7 @@ import {
   startTransition,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
@@ -333,12 +334,16 @@ function AssetsTable(props: AssetsTableProps) {
   const resetAssetPanelProps = useResetAssetPanelProps()
   const setLabelsDragPayload = useSetLabelsDragPayload()
 
-  const columns = getColumnList(user, backend.type, category).filter((column) =>
-    enabledColumns.has(column),
+  const columns = useMemo(
+    () =>
+      getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
+    [backend.type, category, enabledColumns, user],
   )
 
-  const hiddenColumns = getColumnList(user, backend.type, category).filter(
-    (column) => !enabledColumns.has(column),
+  const hiddenColumns = useMemo(
+    () =>
+      getColumnList(user, backend.type, category).filter((column) => !enabledColumns.has(column)),
+    [backend.type, category, enabledColumns, user],
   )
 
   const [sortInfo, setSortInfo] = useState<SortInfo<SortableColumn> | null>(null)
