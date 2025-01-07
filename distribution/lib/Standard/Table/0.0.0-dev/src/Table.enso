@@ -1559,12 +1559,14 @@ type Table
                     Dictionary.from_vector <| selected_columns.map c-> [c.name, True]
 
             new_columns = self.columns.map on_problems=No_Wrap.Value column-> if selected_column_names.contains_key column.name . not then column else
-                Value_Type.expect_text column <|
-                    storage = column.java_column.getStorage
-                    new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
-                        parse_problem_aggregator = ParseProblemAggregator.make java_problem_aggregator column.name type
-                        parser.parseColumn storage parse_problem_aggregator
-                    Column.Value (Java_Column.new column.name new_storage)
+                column_value_type = column.value_type
+                if Auto != type && column_value_type.is_same_type type then column else
+                    Value_Type.expect_text column <|
+                        storage = column.java_column.getStorage
+                        new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->
+                            parse_problem_aggregator = ParseProblemAggregator.make java_problem_aggregator column.name type
+                            parser.parseColumn storage parse_problem_aggregator
+                        Column.Value (Java_Column.new column.name new_storage)
             Table.new new_columns
 
     ## GROUP Standard.Base.Conversions
