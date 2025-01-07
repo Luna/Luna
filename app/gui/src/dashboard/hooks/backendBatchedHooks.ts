@@ -36,6 +36,7 @@ export function deleteAssetsMutationOptions(backend: Backend) {
         [backend.type, 'listAssetVersions'],
       ],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }
@@ -92,6 +93,7 @@ export function restoreAssetsMutationOptions(backend: Backend) {
     meta: {
       invalidates: [[backend.type, 'listDirectory']],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }
