@@ -85,6 +85,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     entries: fileURLToPath(new URL('./index.html', import.meta.url)),
+    holdUntilCrawlEnd: true,
   },
   server: {
     headers: Object.fromEntries(COOP_COEP_CORP_HEADERS),
