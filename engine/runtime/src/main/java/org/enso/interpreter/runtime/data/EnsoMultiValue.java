@@ -42,7 +42,6 @@ import org.graalvm.collections.Pair;
 public final class EnsoMultiValue extends EnsoObject {
   private final EnsoMultiType dispatch;
   private final EnsoMultiType extra;
-
   private final int firstDispatch;
 
   @CompilationFinal(dimensions = 1)
