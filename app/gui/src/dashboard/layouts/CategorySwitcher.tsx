@@ -282,7 +282,7 @@ function CategorySwitcher(props: CategorySwitcherProps) {
             />
           )}
 
-          {teamCategories?.map((teamCategory) => (
+          {teamCategories.map((teamCategory) => (
             <CategorySwitcherItem
               key={teamCategory.id}
               {...itemProps}
@@ -291,8 +291,8 @@ function CategorySwitcher(props: CategorySwitcherProps) {
               icon={teamCategory.icon}
               label={teamCategory.label}
               isDisabled={isOffline}
-              buttonLabel={getText('teamCategoryButtonLabel', teamCategory.team.groupName)}
-              dropZoneLabel={getText('teamCategoryDropZoneLabel', teamCategory.team.groupName)}
+              buttonLabel={getText('teamCategoryButtonLabel', teamCategory.team.name)}
+              dropZoneLabel={getText('teamCategoryDropZoneLabel', teamCategory.team.name)}
             />
           ))}
 
