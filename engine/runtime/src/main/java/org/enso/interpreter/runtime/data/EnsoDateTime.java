@@ -27,10 +27,6 @@ public final class EnsoDateTime extends BuiltinObject {
     this.dateTime = dateTime;
   }
 
-  public ZonedDateTime toZonedDateTime() {
-    return dateTime;
-  }
-
   @Override
   protected String builtinName() {
     return "Date_Time";

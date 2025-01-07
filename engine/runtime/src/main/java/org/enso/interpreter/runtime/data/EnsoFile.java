@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.CopyOption;
 import java.nio.file.FileSystemException;
 import java.nio.file.LinkOption;
@@ -481,13 +480,6 @@ public final class EnsoFile extends BuiltinObject {
   public EnsoDateTime getLastModifiedTime() throws IOException {
     return new EnsoDateTime(
         ZonedDateTime.ofInstant(truffleFile.getLastModifiedTime().toInstant(), ZoneOffset.UTC));
-  }
-
-  @Builtin.Method(name = "set_last_modified_time_builtin")
-  @Builtin.WrapException(from = IOException.class)
-  @TruffleBoundary
-  public void setLastModifiedTime(EnsoDateTime dateTime) throws IOException {
-    truffleFile.setLastModifiedTime(FileTime.from(dateTime.toZonedDateTime().toInstant()));
   }
 
   @Builtin.Method(name = "posix_permissions_builtin")
