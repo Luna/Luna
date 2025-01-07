@@ -20,7 +20,16 @@ add_specs suite_builder =
     suite_builder.group "Download Mode" pending=pending_has_url group_builder->
         url_n_bytes n = base_url_with_slash+'test_download?length='+n.to_text
 
-        group_builder.specify "Will download a file if it does not exist" <|
+        group_builder.specify "Will always download a file for mode Always" <|
+            with_test_file (enso_project.data / "transient" / "if_not_exist.txt") file->
+                file.exists . should_be_false
+                Data.download (url_n_bytes 10) mode=..If_Not_Exists file
+                first_contents = file.read
+                Data.download (url_n_bytes 11) mode=..If_Not_Exists file
+                second_contents = file.read
+                first_contents . should_not_equal second_contents
+
+        group_builder.specify "Will download a file if it does not exist for mode If_Not_Exists" <|
             with_test_file (enso_project.data / "transient" / "if_not_exist.txt") file->
                 file.exists . should_be_false
                 Data.download (url_n_bytes 10) mode=..If_Not_Exists file
@@ -29,7 +38,7 @@ add_specs suite_builder =
                 second_contents = file.read
                 first_contents . should_equal second_contents
 
-        group_builder.specify "Will download a file if it is older than a specified duration" <|
+        group_builder.specify "Will download a file if it is older than a specified duration for mode If_Older_Than" <|
             with_test_file (enso_project.data / "transient" / "if_older_than.txt") file->
                 file.exists . should_be_false
 
