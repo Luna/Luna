@@ -2630,7 +2630,11 @@ class IrToTruffle(
       val log = context.getLogger()
       if (log.isLoggable(Level.FINEST)) {
         val allDefs = scope.graph.rootScope.allDefinitions
-        log.log(Level.FINEST, s"Scope for ${where} loaded with {0}", allDefs)
+        log.log(
+          Level.FINEST,
+          s"Root scope for ${where} loaded with {0}",
+          allDefs
+        )
       }
       scope
     }
@@ -2649,7 +2653,11 @@ class IrToTruffle(
       val log = context.getLogger()
       if (log.isLoggable(Level.FINEST)) {
         val allDefs = scope.graph.rootScope.allDefinitions
-        log.log(Level.FINEST, s"Scope for ${where} loaded with {0}", allDefs)
+        log.log(
+          Level.FINEST,
+          s"Child scope for ${where} loaded with {0}",
+          allDefs
+        )
       }
       scope
     }
