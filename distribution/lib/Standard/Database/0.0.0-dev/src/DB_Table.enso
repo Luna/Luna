@@ -1021,8 +1021,7 @@ type DB_Table
         Error.throw (Unsupported_Database_Operation.Error "add_group_number")
 
 
-    ## ALIAS order_by
-       GROUP Standard.Base.Selections
+    ## GROUP Standard.Base.Selections
        ICON select_row
 
        Returns a new Table that will include at most `max_rows` rows from the
@@ -1313,7 +1312,7 @@ type DB_Table
             table = self.connection.read_statement sql column_types last_row_only=True
             table.rows.first
 
-    ## ALIAS sort
+    ## ALIAS order_by
        GROUP Standard.Base.Selections
        ICON order
        Sorts the rows of the table according to the specified columns and order.
