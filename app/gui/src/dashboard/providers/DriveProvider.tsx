@@ -19,7 +19,7 @@ import type {
   LabelName,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
-import { merge } from 'enso-common/src/utilities/data/object'
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
 
 // ==================
 // === DriveStore ===
@@ -73,7 +73,7 @@ interface DriveStore {
   readonly dragTargetAssetId: AssetId | null
   readonly setDragTargetAssetId: (dragTargetAssetId: AssetId | null) => void
   readonly nodeMap: { readonly current: ReadonlyMap<AssetId, AnyAssetTreeNode> }
-  readonly setNodeMap: (dragTargetAssetId: ReadonlyMap<AssetId, AnyAssetTreeNode>) => void
+  readonly setNodeMap: (nodeMap: ReadonlyMap<AssetId, AnyAssetTreeNode>) => void
 }
 
 // =======================
@@ -190,7 +190,8 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       nodeMap: { current: new Map() },
       setNodeMap: (nodeMap) => {
         if (get().nodeMap.current !== nodeMap) {
-          set({ nodeMap: merge(get().nodeMap, { current: nodeMap }) })
+          unsafeMutable(get().nodeMap).current = nodeMap
+          set({ nodeMap: get().nodeMap })
         }
       },
     })),

@@ -7,7 +7,6 @@ import {
   startTransition,
   useEffect,
   useImperativeHandle,
-  useMemo,
   useRef,
   useState,
   type Dispatch,
@@ -334,16 +333,12 @@ function AssetsTable(props: AssetsTableProps) {
   const resetAssetPanelProps = useResetAssetPanelProps()
   const setLabelsDragPayload = useSetLabelsDragPayload()
 
-  const columns = useMemo(
-    () =>
-      getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
-    [user, backend.type, category, enabledColumns],
+  const columns = getColumnList(user, backend.type, category).filter((column) =>
+    enabledColumns.has(column),
   )
 
-  const hiddenColumns = useMemo(
-    () =>
-      getColumnList(user, backend.type, category).filter((column) => !enabledColumns.has(column)),
-    [user, backend.type, category, enabledColumns],
+  const hiddenColumns = getColumnList(user, backend.type, category).filter(
+    (column) => !enabledColumns.has(column),
   )
 
   const [sortInfo, setSortInfo] = useState<SortInfo<SortableColumn> | null>(null)
@@ -1039,25 +1034,18 @@ function AssetsTable(props: AssetsTableProps) {
     }
   })
 
-  const hideColumn = useEventCallback((column: Column) => {
-    setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
-  })
-
-  const hiddenContextMenu = useMemo(
-    () => (
-      <AssetsTableContextMenu
-        hidden
-        backend={backend}
-        category={category}
-        nodeMapRef={nodeMapRef}
-        rootDirectoryId={rootDirectoryId}
-        event={{ pageX: 0, pageY: 0 }}
-        doCopy={doCopy}
-        doCut={doCut}
-        doPaste={doPaste}
-      />
-    ),
-    [backend, category, nodeMapRef, rootDirectoryId, doCopy, doCut, doPaste],
+  const hiddenContextMenu = (
+    <AssetsTableContextMenu
+      hidden
+      backend={backend}
+      category={category}
+      nodeMapRef={nodeMapRef}
+      rootDirectoryId={rootDirectoryId}
+      event={{ pageX: 0, pageY: 0 }}
+      doCopy={doCopy}
+      doCut={doCut}
+      doPaste={doPaste}
+    />
   )
 
   const onDropzoneDragOver = (event: DragEvent<Element>) => {
@@ -1090,39 +1078,26 @@ function AssetsTable(props: AssetsTableProps) {
     (id: AssetId) => assetTree.preorderTraversal().find((node) => node.item.id === id) ?? null,
   )
 
-  const state = useMemo<AssetsTableState>(
-    // The type MUST be here to trigger excess property errors at typecheck time.
-    () => ({
-      backend,
-      rootDirectoryId,
-      scrollContainerRef: rootRef,
-      category,
-      sortInfo,
-      setSortInfo,
-      query,
-      setQuery,
-      nodeMap: nodeMapRef,
-      hideColumn,
-      doCopy,
-      doCut,
-      doPaste,
-      getAssetNodeById,
-    }),
-    [
-      backend,
-      rootDirectoryId,
-      category,
-      sortInfo,
-      query,
-      setQuery,
-      nodeMapRef,
-      hideColumn,
-      doCopy,
-      doCut,
-      doPaste,
-      getAssetNodeById,
-    ],
-  )
+  const hideColumn = useEventCallback((column: Column) => {
+    setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
+  })
+
+  const state: AssetsTableState = {
+    backend,
+    rootDirectoryId,
+    scrollContainerRef: rootRef,
+    category,
+    sortInfo,
+    setSortInfo,
+    query,
+    setQuery,
+    nodeMap: nodeMapRef,
+    hideColumn,
+    doCopy,
+    doCut,
+    doPaste,
+    getAssetNodeById,
+  }
 
   useEffect(() => {
     // In some browsers, at least in Chrome 126,
