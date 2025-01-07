@@ -45,19 +45,14 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
-import { listDirectoryQueryOptions, useBackendQuery } from '#/hooks/backendHooks'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { useDriveStore, useSetExpandedDirectories } from '#/providers/DriveProvider'
-import { userGroupIdToDirectoryId, userIdToDirectoryId } from '#/services/RemoteBackend'
-import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
-import { usePrefetchQuery, useQueryClient } from '@tanstack/react-query'
-import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
-import { unsafeEntries, unsafeMutable } from 'enso-common/src/utilities/data/object'
-import invariant from 'tiny-invariant'
+import { usePrefetchQuery } from '@tanstack/react-query'
+import { mapEntries } from 'enso-common/src/utilities/data/object'
 import { DashboardTabPanels } from './DashboardTabPanels'
 
 // =================
@@ -319,121 +314,42 @@ function DashboardInner(props: DashboardProps) {
 
 /** Expand the list of parents for opened projects. */
 function OpenedProjectsParentsExpander() {
-  const queryClient = useQueryClient()
   const remoteBackend = backendProvider.useRemoteBackend()
   const localBackend = backendProvider.useLocalBackend()
   const categoriesAPI = useCategoriesAPI()
-  const { category, cloudCategories, localCategories } = categoriesAPI
+  const { cloudCategories } = categoriesAPI
   const driveStore = useDriveStore()
   const launchedProjects = useLaunchedProjects()
   const setExpandedDirectories = useSetExpandedDirectories()
-  const { user } = authProvider.useFullUserSession()
-  const { data: userGroups } = useBackendQuery(remoteBackend, 'listUserGroups', [])
-  const { data: users } = useBackendQuery(remoteBackend, 'listUsers', [])
 
   const updateOpenedProjects = eventCallbacks.useEventCallback(async () => {
-    const userGroupDirectoryIds = new Set(
-      (user.userGroups ?? EMPTY_ARRAY).map(userGroupIdToDirectoryId),
+    const expandedDirectories = mapEntries(
+      driveStore.getState().expandedDirectories,
+      (_k, v) => new Set(v),
     )
-
-    const expandedDirectories = structuredClone(driveStore.getState().expandedDirectories)
-    for (const otherCategory of [...cloudCategories.categories, ...localCategories.categories]) {
-      expandedDirectories[otherCategory.rootPath] ??= []
-    }
-
-    if (localBackend) {
-      const localProjects = launchedProjects.filter(
-        (project) => project.type === backendModule.BackendType.local,
-      )
-      for (const project of localProjects) {
-        const path = localBackendModule.extractTypeAndId(project.parentId).id
-        for (const [rootPath, directoriesInCategory] of unsafeEntries(expandedDirectories)) {
-          const strippedPath = path.replace(`${rootPath}/`, '')
-          if (strippedPath !== path) {
-            let parentPath = String(rootPath)
-            const parents = strippedPath.split('/')
-            for (const parent of parents) {
-              parentPath += `/${parent}`
-              const currentParentPath = backendModule.Path(parentPath)
-              const currentParentId = localBackendModule.newDirectoryId(currentParentPath)
-              if (!backendModule.isDescendantPath(currentParentPath, rootPath)) {
-                continue
-              }
-              if (directoriesInCategory.includes(currentParentId)) {
-                continue
-              }
-              const id = localBackendModule.newDirectoryId(currentParentPath)
-              // This is SAFE as the value has been `structuredClone`d above.
-              unsafeMutable(directoriesInCategory).push(id)
-            }
-          }
-        }
-      }
-    }
-
-    const cloudProjects = launchedProjects.filter(
-      (project) => project.type === backendModule.BackendType.remote,
-    )
-    const promises = cloudProjects.map((project) =>
-      queryClient.ensureQueryData(
-        listDirectoryQueryOptions({
-          backend: remoteBackend,
-          parentId: project.parentId,
-          categoryType: category.type,
-        }),
-      ),
-    )
-    const projectsSiblings = await Promise.allSettled(promises)
-    const projects = projectsSiblings.flatMap((directoryResult, i) => {
-      const projectInfo = cloudProjects[i]
-      const project =
-        projectInfo && directoryResult.status === 'fulfilled' ?
-          directoryResult.value
-            .filter(backendModule.assetIsProject)
-            .find((asset) => asset.id === projectInfo.id)
-        : null
-      return project ? [project] : []
-    })
-    for (const project of projects) {
-      const parents = project.parentsPath.split('/').filter(backendModule.isDirectoryId)
-      const rootDirectoryId = parents[0]
-      const baseVirtualPath = (() => {
-        const userGroupName = userGroups?.find(
-          (userGroup) => userGroupIdToDirectoryId(userGroup.id) === rootDirectoryId,
-        )?.groupName
-        if (userGroupName != null) {
-          return `enso://Teams/${userGroupName}`
-        }
-        const userName = users?.find(
-          (otherUser) => userIdToDirectoryId(otherUser.userId) === rootDirectoryId,
-        )?.name
-        if (userName != null) {
-          return `enso://Users/${userGroupName}`
-        }
-      })()
-      const virtualPath = backendModule.Path(`${baseVirtualPath}/${project.virtualParentsPath}`)
-      invariant(
-        baseVirtualPath != null,
-        'The root directory must be either a user directory or a team directory.',
-      )
-      for (const [categoryRootPath, directoriesInCategoryRaw] of unsafeEntries(
-        expandedDirectories,
-      )) {
-        const directoriesInCategory = unsafeMutable(directoriesInCategoryRaw)
-        if (!backendModule.isDescendantPath(virtualPath, categoryRootPath)) {
+    const promises: Promise<void>[] = []
+    for (const cloudCategory of cloudCategories.categories) {
+      const set = (expandedDirectories[cloudCategory.id] ??= new Set())
+      for (const project of launchedProjects) {
+        const backend =
+          project.type === backendModule.BackendType.remote ? remoteBackend : localBackend
+        if (!backend) {
           continue
         }
-        if ((rootDirectoryId && userGroupDirectoryIds.has(rootDirectoryId)) ?? false) {
-          directoriesInCategory.push(TEAMS_DIRECTORY_ID)
-        } else {
-          directoriesInCategory.push(USERS_DIRECTORY_ID)
-        }
-        for (const parent of parents) {
-          directoriesInCategory.push(parent)
-        }
+        promises.push(
+          backend.tryGetAssetAncestors(project, cloudCategory.id).then((ancestors) => {
+            if (!ancestors) {
+              return
+            }
+            for (const ancestor of ancestors) {
+              set.add(ancestor)
+            }
+          }),
+        )
       }
     }
 
+    await Promise.all(promises)
     setExpandedDirectories(expandedDirectories)
   })
 

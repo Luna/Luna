@@ -40,10 +40,13 @@ export function isUserGroupId(id: string): id is UserGroupId {
 /** Unique identifier for a directory. */
 export type DirectoryId = newtype.Newtype<`directory-${string}`, 'DirectoryId'>
 export const DirectoryId = newtype.newtypeConstructor<DirectoryId>()
-/** Whether a given {@link string} is an {@link DirectoryId}. */
+/** Whether a given {@link string} is a {@link DirectoryId}. */
 export function isDirectoryId(id: string): id is DirectoryId {
   return id.startsWith('directory-')
 }
+
+/** Unique identifier for a category. */
+export type CategoryId = 'cloud' | 'local' | 'recent' | 'trash' | DirectoryId | UserGroupId | UserId
 
 /**
  * Unique identifier for an asset representing the items inside a directory for which the
@@ -66,6 +69,10 @@ export const ErrorAssetId = newtype.newtypeConstructor<ErrorAssetId>()
 /** Unique identifier for a user's project. */
 export type ProjectId = newtype.Newtype<string, 'ProjectId'>
 export const ProjectId = newtype.newtypeConstructor<ProjectId>()
+/** Whether a given {@link string} is a {@link ProjectId}. */
+export function isProjectId(id: string): id is ProjectId {
+  return id.startsWith('project-')
+}
 
 /** Unique identifier for an uploaded file. */
 export type FileId = newtype.Newtype<string, 'FileId'>
@@ -133,11 +140,6 @@ export type UserPermissionIdentifier = UserGroupId | UserId
 /** An filesystem path. Only present on the local backend. */
 export type Path = newtype.Newtype<string, 'Path'>
 export const Path = newtype.newtypeConstructor<Path>()
-
-/** Whether the given path is a descendant of another path. */
-export function isDescendantPath(path: Path, possibleAncestor: Path) {
-  return path.startsWith(`${possibleAncestor}/`)
-}
 
 const PLACEHOLDER_USER_GROUP_PREFIX = 'usergroup-placeholder-'
 
@@ -306,8 +308,10 @@ export interface UpdatedProject extends BaseProject {
 
 /** A user/organization's project containing and/or currently executing code. */
 export interface ProjectRaw extends ListedProjectRaw {
-  readonly ide_version: VersionNumber | null
-  readonly engine_version: VersionNumber | null
+  readonly ideVersion: VersionNumber | null
+  readonly engineVersion: VersionNumber | null
+  readonly parentsPath: string
+  readonly virtualParentsPath: string
 }
 
 /** A user/organization's project containing and/or currently executing code. */
@@ -317,6 +321,8 @@ export interface Project extends ListedProject {
   readonly openedBy?: EmailAddress
   /** On the Remote (Cloud) Backend, this is a S3 url that is valid for only 120 seconds. */
   readonly url?: HttpsUrl
+  readonly parentsPath: string
+  readonly virtualParentsPath: string
 }
 
 /** A user/organization's project containing and/or currently executing code. */
@@ -1774,6 +1780,15 @@ export default abstract class Backend {
   ): Promise<void>
   /** Download from an arbitrary URL that is assumed to originate from this backend. */
   abstract download(url: string, name?: string): Promise<void>
+  /**
+   * The list of the asset's ancestors, if and only if the asset is in the given category.
+   * Note: The `null` in the return type exists to prevent accidentally implicitly returning
+   * `undefined`.
+   */
+  abstract tryGetAssetAncestors(
+    asset: Pick<AnyAsset, 'id' | 'parentId'>,
+    category: CategoryId,
+  ): Promise<readonly DirectoryId[] | null>
 
   /**
    * Get the URL for the customer portal.

@@ -5,7 +5,7 @@ import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
-import type { Category } from '#/layouts/CategorySwitcher/Category'
+import type { Category, CategoryId } from '#/layouts/CategorySwitcher/Category'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
@@ -15,7 +15,6 @@ import type {
   BackendType,
   DirectoryAsset,
   DirectoryId,
-  Path,
 } from 'enso-common/src/services/Backend'
 
 // ==================
@@ -42,8 +41,10 @@ interface DriveStore {
   readonly setCanDownload: (canDownload: boolean) => void
   readonly pasteData: PasteData<DrivePastePayload> | null
   readonly setPasteData: (pasteData: PasteData<DrivePastePayload> | null) => void
-  readonly expandedDirectories: Record<Path, readonly DirectoryId[]>
-  readonly setExpandedDirectories: (selectedKeys: Record<Path, readonly DirectoryId[]>) => void
+  readonly expandedDirectories: Record<CategoryId, ReadonlySet<DirectoryId>>
+  readonly setExpandedDirectories: (
+    selectedKeys: Record<CategoryId, ReadonlySet<DirectoryId>>,
+  ) => void
   readonly selectedKeys: ReadonlySet<AssetId>
   readonly setSelectedKeys: (selectedKeys: ReadonlySet<AssetId>) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
@@ -119,7 +120,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
           set({ pasteData })
         }
       },
-      expandedDirectories: {},
+      expandedDirectories: {
+        cloud: new Set(),
+        local: new Set(),
+        recent: new Set(),
+        trash: new Set(),
+      },
       setExpandedDirectories: (expandedDirectories) => {
         if (get().expandedDirectories !== expandedDirectories) {
           set({ expandedDirectories })
@@ -264,19 +270,21 @@ export function useToggleDirectoryExpansion() {
 
   return useEventCallback((id: DirectoryId, override?: boolean) => {
     const expandedDirectories = driveStore.getState().expandedDirectories
-    const isExpanded = expandedDirectories[category.rootPath]?.includes(id) ?? false
+    const isExpanded = expandedDirectories[category.id]?.has(id) ?? false
     const shouldExpand = override ?? !isExpanded
 
     if (shouldExpand !== isExpanded) {
       React.startTransition(() => {
-        const expandedDirectoriesForCurrentCategory = expandedDirectories[category.rootPath] ?? []
-        const newExpandedDirectoriesForCurrentCategory =
-          shouldExpand ?
-            [...expandedDirectoriesForCurrentCategory, id]
-          : expandedDirectoriesForCurrentCategory.filter((directoryId) => directoryId !== id)
+        const directories = expandedDirectories[category.id] ?? []
+        const newDirectories = new Set(directories)
+        if (shouldExpand) {
+          newDirectories.add(id)
+        } else {
+          newDirectories.delete(id)
+        }
         setExpandedDirectories({
           ...expandedDirectories,
-          [category.rootPath]: newExpandedDirectoriesForCurrentCategory,
+          [category.id]: newDirectories,
         })
       })
     }

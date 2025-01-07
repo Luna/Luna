@@ -851,8 +851,6 @@ export default class RemoteBackend extends Backend {
       const project = await response.json()
       return {
         ...project,
-        ideVersion: project.ide_version,
-        engineVersion: project.engine_version,
         jsonAddress: project.address != null ? backend.Address(`${project.address}json`) : null,
         binaryAddress: project.address != null ? backend.Address(`${project.address}binary`) : null,
         ydocAddress: project.address != null ? backend.Address(`${project.address}project`) : null,
@@ -1336,6 +1334,55 @@ export default class RemoteBackend extends Backend {
   override async download(url: string, name?: string) {
     download.download(url, name)
     return Promise.resolve()
+  }
+
+  /** The list of the asset's ancestors, if and only if the asset is in the given category. */
+  override async tryGetAssetAncestors(
+    asset: Pick<backend.AnyAsset, 'id' | 'parentId'>,
+    category: backend.CategoryId,
+  ): Promise<readonly DirectoryId[] | null> {
+    const getAncestors = async () => {
+      if (!backend.isProjectId(asset.id)) {
+        return
+      }
+      const details = await this.getProjectDetails(asset.id, null)
+      return details.parentsPath.split('/').filter(backend.isDirectoryId)
+    }
+    switch (category) {
+      case 'cloud': {
+        return (await getAncestors()) ?? null
+      }
+      case 'recent':
+      case 'trash': {
+        // For now, this function is used to determine whether an opened project's ancestors
+        // should be expanded. This is not required in
+        return null
+      }
+      case 'local': {
+        // This is a category for the Local backend.
+        return null
+      }
+      default: {
+        if (isUserId(category)) {
+          const directoryId = userIdToDirectoryId(category)
+          const ancestors = await getAncestors()
+          if (ancestors?.[0]?.startsWith(`${directoryId}/`) !== true) {
+            return null
+          }
+          return ancestors.slice(1)
+        } else if (backend.isUserGroupId(category)) {
+          const directoryId = userGroupIdToDirectoryId(category)
+          const ancestors = await getAncestors()
+          if (ancestors?.[0]?.startsWith(`${directoryId}/`) !== true) {
+            return null
+          }
+          return ancestors.slice(1)
+        } else {
+          // This is a category for the Local backend.
+          return null
+        }
+      }
+    }
   }
 
   /** Fetch the URL of the customer portal. */

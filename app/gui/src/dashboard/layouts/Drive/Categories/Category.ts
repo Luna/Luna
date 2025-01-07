@@ -25,11 +25,7 @@ import { newDirectoryId } from '#/services/LocalBackend'
 const PATH_SCHEMA = z.string().refine((s): s is Path => true)
 const DIRECTORY_ID_SCHEMA = z.string().refine((s): s is DirectoryId => true)
 
-const EACH_CATEGORY_SCHEMA = z.object({
-  label: z.string(),
-  icon: z.string(),
-  rootPath: PATH_SCHEMA,
-})
+const EACH_CATEGORY_SCHEMA = z.object({ label: z.string(), icon: z.string() })
 
 /** A category corresponding to the root of the user or organization. */
 const CLOUD_CATEGORY_SCHEMA = z
@@ -65,6 +61,7 @@ export const USER_CATEGORY_SCHEMA = z
     type: z.literal('user'),
     user: z.custom<User>(() => true),
     id: z.custom<UserId>(() => true),
+    rootPath: PATH_SCHEMA,
     homeDirectoryId: DIRECTORY_ID_SCHEMA,
   })
   .merge(EACH_CATEGORY_SCHEMA)
@@ -77,6 +74,7 @@ export const TEAM_CATEGORY_SCHEMA = z
     type: z.literal('team'),
     id: z.custom<UserGroupId>(() => true),
     team: z.custom<UserGroupInfo>(() => true),
+    rootPath: PATH_SCHEMA,
     homeDirectoryId: DIRECTORY_ID_SCHEMA,
   })
   .merge(EACH_CATEGORY_SCHEMA)
@@ -98,6 +96,7 @@ export const LOCAL_DIRECTORY_CATEGORY_SCHEMA = z
   .object({
     type: z.literal('local-directory'),
     id: z.custom<DirectoryId>(() => true),
+    rootPath: PATH_SCHEMA,
     homeDirectoryId: DIRECTORY_ID_SCHEMA,
   })
   .merge(EACH_CATEGORY_SCHEMA)
