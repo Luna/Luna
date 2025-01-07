@@ -13,12 +13,13 @@ public final class StaticImportExportScope {
     this.referredModuleName = referredModuleName;
   }
 
-  private MaterializedImportExportScope cachedMaterializedScope = null;
+  // This field should not be serialized.
+  private Resolved cachedResolvedScope = null;
 
-  public MaterializedImportExportScope materialize(
+  public Resolved resolve(
       ModuleResolver moduleResolver, StaticMethodResolution methodResolutionAlgorithm) {
-    if (cachedMaterializedScope != null) {
-      return cachedMaterializedScope;
+    if (cachedResolvedScope != null) {
+      return cachedResolvedScope;
     }
 
     var module = moduleResolver.findModule(referredModuleName);
@@ -26,18 +27,18 @@ public final class StaticImportExportScope {
       throw new IllegalStateException("Could not find module: " + referredModuleName);
     }
     var moduleScope = StaticModuleScope.forIR(module);
-    var materialized = new MaterializedImportExportScope(moduleScope, methodResolutionAlgorithm);
-    cachedMaterializedScope = materialized;
-    return materialized;
+    var resolved = new Resolved(moduleScope, methodResolutionAlgorithm);
+    cachedResolvedScope = resolved;
+    return resolved;
   }
 
-  public static class MaterializedImportExportScope {
+  public static class Resolved {
     private final StaticModuleScope referredModuleScope;
     private final MethodResolutionAlgorithm<
             TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope>
         methodResolutionAlgorithm;
 
-    private MaterializedImportExportScope(
+    private Resolved(
         StaticModuleScope moduleScope,
         MethodResolutionAlgorithm<
                 TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope>

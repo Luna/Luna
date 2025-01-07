@@ -65,15 +65,13 @@ public final class StaticMethodResolution
   @Override
   protected TypeRepresentation getMethodForTypeFromScope(
       StaticImportExportScope scope, TypeScopeReference typeScopeReference, String methodName) {
-    return scope.materialize(moduleResolver, this).getMethodForType(typeScopeReference, methodName);
+    return scope.resolve(moduleResolver, this).getMethodForType(typeScopeReference, methodName);
   }
 
   @Override
   protected TypeRepresentation getExportedMethodFromScope(
       StaticImportExportScope scope, TypeScopeReference typeScopeReference, String methodName) {
-    return scope
-        .materialize(moduleResolver, this)
-        .getExportedMethod(typeScopeReference, methodName);
+    return scope.resolve(moduleResolver, this).getExportedMethod(typeScopeReference, methodName);
   }
 
   @Override
