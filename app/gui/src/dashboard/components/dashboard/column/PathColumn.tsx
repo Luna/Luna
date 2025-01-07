@@ -8,8 +8,7 @@ import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categori
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
 import { useSetExpandedDirectoryIds, useSetSelectedAssets } from '#/providers/DriveProvider'
-import type { DirectoryId } from '#/services/Backend'
-import { isDirectoryId } from '#/services/Backend'
+import { AssetType, DirectoryId, isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
@@ -43,8 +42,9 @@ export default function PathColumn(props: AssetColumnProps) {
 
   const navigateToDirectory = useEventCallback((targetDirectory: DirectoryId) => {
     const targetDirectoryIndex = finalPath.findIndex(({ id }) => id === targetDirectory)
+    const targetDirectoryInfo = finalPath[targetDirectoryIndex]
 
-    if (targetDirectoryIndex === -1) {
+    if (targetDirectoryIndex === -1 || !targetDirectoryInfo) {
       return
     }
 
@@ -58,9 +58,10 @@ export default function PathColumn(props: AssetColumnProps) {
     // If it happens, it means you've skrewed up
     invariant(rootDirectoryInThePath != null, 'Root directory id is null')
 
-    // If the target directory is null, we assume that this directory is outside of the current tree (in another category)
-    // Which is the default, because the path path displays in the recent and trash folders.
-    // But sometimes the user might delete a directory with its whole content, and in that case we'll find it in the tree
+    // If the target directory is null, we assume that this directory is outside of the current tree (in another category).
+    // Which is the default, because the path is only displayed in the Recent and Trash folders.
+    // But sometimes the user might delete a directory with its whole content,
+    // and in that case it will be present in the tree,
     // because the parent is always fetched before its children.
     const targetDirectoryNode = getAssetNodeById(targetDirectory)
 
@@ -69,9 +70,14 @@ export default function PathColumn(props: AssetColumnProps) {
       setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
     }
 
-    if (targetDirectoryNode) {
-      setSelectedAssets([targetDirectoryNode.item])
-    }
+    setSelectedAssets([
+      {
+        type: AssetType.directory,
+        id: targetDirectory,
+        parentId: pathToDirectory.at(-1)?.id ?? DirectoryId('directory-'),
+        title: targetDirectoryInfo.label,
+      },
+    ])
   })
 
   const finalPath = (() => {
