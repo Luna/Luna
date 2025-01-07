@@ -20,7 +20,7 @@ public final class BuiltinTypes {
 
   private static TypeRepresentation fromQualifiedName(String qualifiedName) {
     var fqn = QualifiedName$.MODULE$.fromString(qualifiedName);
-    return new TypeRepresentation.AtomType(fqn, null);
+    return new TypeRepresentation.AtomType(fqn);
   }
 
   static final String FQN_FUNCTION = "Standard.Base.Function.Function";

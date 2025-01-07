@@ -19,17 +19,19 @@ import org.enso.compiler.pass.IRPass;
 import org.enso.compiler.pass.IRProcessingPass;
 import org.enso.compiler.pass.analyse.BindingAnalysis$;
 import org.enso.compiler.pass.analyse.types.InferredType;
+import org.enso.compiler.pass.analyse.types.TypeInferencePropagation;
 import org.enso.compiler.pass.analyse.types.TypeInferenceSignatures;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.compiler.pass.analyse.types.TypeResolver;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.TypeNames$;
+import org.enso.pkg.QualifiedName;
 import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 import scala.collection.immutable.Seq;
-import scala.jdk.javaapi.CollectionConverters;
 
 public class StaticModuleScopeAnalysis implements IRPass {
   public static final StaticModuleScopeAnalysis INSTANCE = new StaticModuleScopeAnalysis();
@@ -53,13 +55,13 @@ public class StaticModuleScopeAnalysis implements IRPass {
             FullyQualifiedNames$.MODULE$,
             TypeNames$.MODULE$,
             TypeInferenceSignatures.INSTANCE);
-    return CollectionConverters.asScala(passes).toList();
+    return ScalaConversions.seq(passes);
   }
 
   @Override
   public Seq<IRProcessingPass> invalidatedPasses() {
-    List<IRProcessingPass> passes = List.of();
-    return CollectionConverters.asScala(passes).toList();
+    List<IRProcessingPass> passes = List.of(TypeInferencePropagation.INSTANCE);
+    return ScalaConversions.seq(passes);
   }
 
   @Override
@@ -136,9 +138,50 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
     @Override
     protected void processTypeDefinition(Definition.Type typ) {
-      var qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
+      QualifiedName qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
+      TypeRepresentation.TypeObject typeObject = new TypeRepresentation.TypeObject(qualifiedName);
+      List<AtomTypeDefinition.Constructor> constructors =
+          ScalaConversions.asJava(typ.members()).stream()
+              .map(
+                  constructorDef -> {
+                    TypeRepresentation type = buildAtomConstructorType(typeObject, constructorDef);
+                    return new AtomTypeDefinition.Constructor(
+                        constructorDef.name().name(), constructorDef.isPrivate(), type);
+                  })
+              .toList();
+
+      AtomTypeDefinition atomTypeDefinition =
+          new AtomTypeDefinition(typ.name().name(), constructors);
       var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
+      scopeBuilder.registerType(atomTypeDefinition);
       registerFieldGetters(scopeBuilder, atomTypeScope, typ);
+    }
+
+    private TypeRepresentation buildAtomConstructorType(
+        TypeRepresentation.TypeObject associatedType, Definition.Data constructorDef) {
+      boolean hasDefaults = constructorDef.arguments().exists(a -> a.defaultValue().isDefined());
+      if (hasDefaults) {
+        // TODO implement handling of default arguments - not only ctors will need this!
+        return null;
+      }
+
+      var arguments =
+          constructorDef
+              .arguments()
+              .map(
+                  (arg) -> {
+                    Option<Expression> typ = arg.ascribedType();
+                    if (typ.isEmpty()) {
+                      return TypeRepresentation.UNKNOWN;
+                    }
+
+                    var resolvedType = typeResolver.resolveTypeExpression(typ.get());
+                    assert resolvedType != null;
+                    return resolvedType;
+                  })
+              .toList();
+      var resultType = associatedType.instanceType();
+      return TypeRepresentation.buildFunction(ScalaConversions.asJava(arguments), resultType);
     }
 
     @Override

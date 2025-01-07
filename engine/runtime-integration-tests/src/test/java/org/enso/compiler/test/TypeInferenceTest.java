@@ -399,6 +399,36 @@ public class TypeInferenceTest extends StaticAnalysisTest {
   }
 
   @Test
+  public void nonexistentConstructor() throws Exception {
+    final URI uri = new URI("memory://nonexistentConstructor.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                    type My_Type
+                        Value x y z
+                    foo =
+                        x = My_Type.Non_Existent 1
+                        x
+                    """,
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = compile(src);
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x = ModuleUtils.findAssignment(foo, "x");
+
+    assertNoInferredType(x);
+    assertEquals(
+        List.of(
+            new Warning.NoSuchMethod(
+                x.expression().identifiedLocation(),
+                "constructor `Non_Existent` on type (type My_Type)")),
+        ModuleUtils.getImmediateDiagnostics(x.expression()));
+  }
+
+  @Test
   public void constructorWithDefaults() throws Exception {
     final URI uri = new URI("memory://constructorWithDefaults.enso");
     final Source src =
@@ -1454,6 +1484,57 @@ public class TypeInferenceTest extends StaticAnalysisTest {
 
     assertAtomType("local.Project1.modB.Typ_X", ModuleUtils.findAssignment(foo, "x1"));
     assertAtomType("local.Project1.modB.Typ_Y", ModuleUtils.findAssignment(foo, "x2"));
+  }
+
+  @Test
+  public void resolveImportedConstructor() throws Exception {
+    final URI uri = new URI("memory://local.Project1.modA.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                    from project.modA.My_Type import My_Constructor
+
+                    type My_Type
+                        My_Constructor v
+
+                    foo =
+                        x1 = My_Constructor 1
+                        x1
+                    """,
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = compile(src);
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
+    assertAtomType("local.Project1.modA.My_Type", x1);
+  }
+
+  @Ignore("TODO: for later")
+  @Test
+  public void resolveFQNConstructor() throws Exception {
+    final URI uri = new URI("memory://local.Project1.modA.enso");
+    final Source src =
+        Source.newBuilder(
+                "enso",
+                """
+                    type My_Type
+                        My_Constructor v
+
+                    foo =
+                        x1 = local.Project1.modA.My_Type.My_Constructor 1
+                        x1
+                    """,
+                uri.getAuthority())
+            .uri(uri)
+            .buildLiteral();
+
+    var module = compile(src);
+    var foo = ModuleUtils.findStaticMethod(module, "foo");
+    var x1 = ModuleUtils.findAssignment(foo, "x1");
+    assertAtomType("local.Project1.modA.My_Type", x1);
   }
 
   @Test

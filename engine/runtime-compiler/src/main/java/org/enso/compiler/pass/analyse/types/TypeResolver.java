@@ -14,7 +14,6 @@ import org.enso.compiler.pass.resolve.Patterns$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import org.enso.compiler.pass.resolve.TypeSignatures;
 import org.enso.compiler.pass.resolve.TypeSignatures$;
-import org.enso.persist.Persistance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
@@ -121,37 +120,11 @@ public class TypeResolver {
   }
 
   TypeRepresentation.TypeObject resolvedTypeAsTypeObject(BindingsMap.ResolvedType resolvedType) {
-    var iface = new AtomTypeInterfaceFromBindingsMap(resolvedType.tp());
-    return new TypeRepresentation.TypeObject(resolvedType.qualifiedName(), iface);
+    return new TypeRepresentation.TypeObject(resolvedType.qualifiedName());
   }
 
   TypeRepresentation resolvedTypeAsAtomType(BindingsMap.ResolvedType resolvedType) {
     return resolvedTypeAsTypeObject(resolvedType).instanceType();
-  }
-
-  TypeRepresentation buildAtomConstructorType(
-      TypeRepresentation.TypeObject parentType, AtomTypeInterface.Constructor constructor) {
-    boolean hasAnyDefaults =
-        constructor.arguments().stream().anyMatch(AtomTypeInterface.Argument::hasDefaultValue);
-    if (hasAnyDefaults) {
-      // TODO implement handling of default arguments - not only ctors will need this!
-      return null;
-    }
-
-    var arguments =
-        constructor.arguments().stream()
-            .map(
-                (arg) -> {
-                  var typ = arg.getType(this);
-                  return typ != null ? typ : TypeRepresentation.UNKNOWN;
-                })
-            .toList();
-    var resultType = parentType.instanceType();
-    return TypeRepresentation.buildFunction(arguments, resultType);
-  }
-
-  private TypeRepresentation resolveTypeExpression(Persistance.Reference<Expression> ref) {
-    return resolveTypeExpression(ref.get(Expression.class));
   }
 
   /** Returns the type ascribed to the given expression, if any. */

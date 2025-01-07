@@ -32,6 +32,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
   private final TypeScopeReference associatedType;
   private final List<StaticImportExportScope> imports;
   private final List<StaticImportExportScope> exports;
+  private final Map<String, AtomTypeDefinition> typesDefinedHere;
   private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods;
 
   private StaticModuleScope(
@@ -39,11 +40,13 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
       TypeScopeReference associatedType,
       List<StaticImportExportScope> imports,
       List<StaticImportExportScope> exports,
+      Map<String, AtomTypeDefinition> typesDefinedHere,
       Map<TypeScopeReference, Map<String, TypeRepresentation>> methods) {
     this.moduleName = moduleName;
     this.associatedType = associatedType;
     this.imports = imports;
     this.exports = exports;
+    this.typesDefinedHere = typesDefinedHere;
     this.methods = methods;
   }
 
@@ -52,6 +55,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
     private final TypeScopeReference associatedType;
     private final List<StaticImportExportScope> imports = new ArrayList<>();
     private final List<StaticImportExportScope> exports = new ArrayList<>();
+    private final Map<String, AtomTypeDefinition> typesDefinedHere = new HashMap<>();
     private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods =
         new HashMap<>();
 
@@ -76,6 +80,7 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
           associatedType,
           Collections.unmodifiableList(imports),
           Collections.unmodifiableList(exports),
+          Collections.unmodifiableMap(typesDefinedHere),
           Collections.unmodifiableMap(methods));
     }
 
@@ -85,6 +90,14 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
 
     public TypeScopeReference getAssociatedType() {
       return associatedType;
+    }
+
+    void registerType(AtomTypeDefinition type) {
+      checkSealed();
+      var previous = typesDefinedHere.putIfAbsent(type.getName(), type);
+      if (previous != null) {
+        throw new IllegalStateException("Type already defined: " + type.getName());
+      }
     }
 
     void registerMethod(TypeScopeReference parentType, String name, TypeRepresentation type) {
@@ -153,5 +166,9 @@ public final class StaticModuleScope implements ProcessingPass.Metadata {
   public TypeRepresentation getConversionFor(TypeScopeReference target, TypeScopeReference source) {
     // TODO conversions in static analysis
     return null;
+  }
+
+  public AtomTypeDefinition getType(String name) {
+    return typesDefinedHere.get(name);
   }
 }

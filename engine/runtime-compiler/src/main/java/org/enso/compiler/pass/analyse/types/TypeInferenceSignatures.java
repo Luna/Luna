@@ -13,6 +13,7 @@ import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.pass.IRPass;
 import org.enso.compiler.pass.IRProcessingPass;
 import org.enso.compiler.pass.analyse.BindingAnalysis$;
+import org.enso.compiler.pass.analyse.types.scope.StaticModuleScopeAnalysis;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.Patterns$;
@@ -22,8 +23,6 @@ import org.enso.scala.wrapper.ScalaConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Seq;
-import scala.collection.immutable.Seq$;
-import scala.jdk.javaapi.CollectionConverters;
 
 // TODO it may make sense to merge this pass into StaticModuleScopeAnalysis, there is little benefit
 // to keeping it separate
@@ -72,13 +71,14 @@ public final class TypeInferenceSignatures implements IRPass {
             TypeNames$.MODULE$,
             Patterns$.MODULE$,
             TypeSignatures$.MODULE$);
-    return CollectionConverters.asScala(passes).toList();
+    return ScalaConversions.seq(passes);
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public Seq<IRProcessingPass> invalidatedPasses() {
-    return (Seq<IRProcessingPass>) Seq$.MODULE$.empty();
+    List<IRProcessingPass> passes =
+        List.of(TypeInferencePropagation.INSTANCE, StaticModuleScopeAnalysis.INSTANCE);
+    return ScalaConversions.seq(passes);
   }
 
   @Override

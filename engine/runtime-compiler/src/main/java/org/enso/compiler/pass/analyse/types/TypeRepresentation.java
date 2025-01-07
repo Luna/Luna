@@ -51,8 +51,7 @@ public sealed interface TypeRepresentation
    * <p>Instances that are assigned this type are built with one of the available constructors, but
    * statically we do not necessarily know which one.
    */
-  record AtomType(QualifiedName fqn, AtomTypeInterface typeInterface)
-      implements TypeRepresentation {
+  record AtomType(QualifiedName fqn) implements TypeRepresentation {
     @Override
     public String toString() {
       return fqn.item();
@@ -157,10 +156,8 @@ public sealed interface TypeRepresentation
    * using its constructors, which will be assigned the corresponding AtomType.
    *
    * @param name the qualified name of the type
-   * @param typeInterface the declared interface of the type
    */
-  record TypeObject(QualifiedName name, AtomTypeInterface typeInterface)
-      implements TypeRepresentation {
+  record TypeObject(QualifiedName name) implements TypeRepresentation {
     @Override
     public String toString() {
       return "(type " + name.item() + ")";
@@ -179,7 +176,7 @@ public sealed interface TypeRepresentation
         return new ArrowType(TypeRepresentation.ANY, TypeRepresentation.ANY);
       }
 
-      return new AtomType(name, typeInterface);
+      return new AtomType(name);
     }
 
     @Override
