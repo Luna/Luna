@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
 import scala.collection.immutable.Seq;
-import scala.jdk.javaapi.CollectionConverters;
 
 public class StaticModuleScopeAnalysis implements IRPass {
   public static final StaticModuleScopeAnalysis INSTANCE = new StaticModuleScopeAnalysis();
@@ -55,13 +54,13 @@ public class StaticModuleScopeAnalysis implements IRPass {
             FullyQualifiedNames$.MODULE$,
             TypeNames$.MODULE$,
             TypeInferenceSignatures.INSTANCE);
-    return CollectionConverters.asScala(passes).toList();
+    return ScalaConversions.seq(passes);
   }
 
   @Override
   public Seq<IRProcessingPass> invalidatedPasses() {
-    List<IRProcessingPass> passes = List.of();
-    return CollectionConverters.asScala(passes).toList();
+    List<IRProcessingPass> passes = List.of(StaticModuleScopeAnalysis.INSTANCE);
+    return ScalaConversions.seq(passes);
   }
 
   @Override
@@ -181,7 +180,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
                   })
               .toList();
       var resultType = associatedType.instanceType();
-      return TypeRepresentation.buildFunction(CollectionConverters.asJava(arguments), resultType);
+      return TypeRepresentation.buildFunction(ScalaConversions.asJava(arguments), resultType);
     }
 
     @Override
