@@ -32,6 +32,14 @@ public final class StaticImportExportScope {
     return resolved;
   }
 
+  /**
+   * The resolved version of the import/export scope.
+   *
+   * <p>The qualified name is replaced with the actual reference to the referred scope.
+   *
+   * <p>This value should not be present in the metadata as it is not suitable for serialization. It
+   * should be constructed ad-hoc whenever needed.
+   */
   public static class Resolved {
     private final StaticModuleScope referredModuleScope;
     private final MethodResolutionAlgorithm<
