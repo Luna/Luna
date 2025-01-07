@@ -141,7 +141,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
       QualifiedName qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
       TypeRepresentation.TypeObject typeObject = new TypeRepresentation.TypeObject(qualifiedName);
       List<AtomTypeDefinition.Constructor> constructors =
-          CollectionConverters$.MODULE$.asJava(typ.members()).stream()
+          ScalaConversions.asJava(typ.members()).stream()
               .map(
                   constructorDef -> {
                     TypeRepresentation type = buildAtomConstructorType(typeObject, constructorDef);
@@ -150,7 +150,8 @@ public class StaticModuleScopeAnalysis implements IRPass {
                   })
               .toList();
 
-      AtomTypeDefinition atomTypeDefinition = new AtomTypeDefinition(typ.name().name(), constructors);
+      AtomTypeDefinition atomTypeDefinition =
+          new AtomTypeDefinition(typ.name().name(), constructors);
       var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
       scopeBuilder.registerType(atomTypeDefinition);
       registerFieldGetters(scopeBuilder, atomTypeScope, typ);
