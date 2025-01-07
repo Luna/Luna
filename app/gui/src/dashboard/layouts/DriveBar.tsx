@@ -155,7 +155,7 @@ export default function DriveBar(props: DriveBarProps) {
   const isCreatingProject = newProjectMutation.isPending
   const clearTrash = useEventCallback(async () => {
     const allTrashedItems = await getAllTrashedItems(queryClient, backend)
-    await deleteAssetsMutation.mutateAsync([allTrashedItems.map((item) => item.id), false])
+    await deleteAssetsMutation.mutateAsync([allTrashedItems.map((item) => item.id), true])
   })
 
   React.useEffect(() => {
