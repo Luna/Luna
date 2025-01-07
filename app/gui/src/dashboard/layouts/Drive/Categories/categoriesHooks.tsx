@@ -92,7 +92,6 @@ export function useCloudCategoryList() {
     id: 'cloud',
     label: getText('cloudCategory'),
     icon: CloudIcon,
-    rootPath: Path(`enso://${hasUserAndTeamSpaces ? `Users/${user.name}` : ''}`),
     homeDirectoryId,
   }
 
@@ -100,7 +99,6 @@ export function useCloudCategoryList() {
     type: 'recent',
     id: 'recent',
     label: getText('recentCategory'),
-    rootPath: Path(`(Recent)`),
     icon: RecentIcon,
   }
 
@@ -108,7 +106,6 @@ export function useCloudCategoryList() {
     type: 'trash',
     id: 'trash',
     label: getText('trashCategory'),
-    rootPath: Path(`(Trash)`),
     icon: Trash2Icon,
   }
 
@@ -222,10 +219,6 @@ export function useLocalCategoryList() {
     type: 'local',
     id: 'local',
     label: getText('localCategory'),
-    /** The root path of this category. */
-    get rootPath() {
-      return localBackend?.rootPath() ?? Path('')
-    },
     icon: ComputerIcon,
   }
 
@@ -318,10 +311,8 @@ export function useCategories() {
   return { cloudCategories, localCategories, findCategoryById }
 }
 
-/**
- * Context value for the categories.
- */
-interface CategoriesContextValue {
+/** Context value for the categories. */
+export interface CategoriesContextValue {
   readonly cloudCategories: CloudCategoryResult
   readonly localCategories: LocalCategoryResult
   readonly category: Category
