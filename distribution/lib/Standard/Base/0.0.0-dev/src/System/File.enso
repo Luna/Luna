@@ -864,11 +864,6 @@ type File
     to_display_text : Text
     to_display_text self = self.to_text
 
-    ## PRIVATE
-    copy_builtin self target options = @Builtin_Method "File.copy_builtin"
-
-    ## PRIVATE
-    move_builtin self target options = @Builtin_Method "File.move_builtin"
 
 ## PRIVATE
 
@@ -953,12 +948,12 @@ Data_Link_From_File.from (that : File) = Data_Link_From_File.Value that
 private _local_file_copy (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
     File_Error.handle_java_exceptions source <|
         copy_options = if replace_existing then [StandardCopyOption.REPLACE_EXISTING.to_text] else []
-        source.move_builtin destination copy_options
+        copy_builtin source destination copy_options
 
 private _local_file_move (source : File) (destination : File) (replace_existing : Boolean) -> Nothing =
     File_Error.handle_java_exceptions source <|
         copy_options = if replace_existing then [StandardCopyOption.REPLACE_EXISTING.to_text] else []
-        source.move_builtin destination copy_options
+        move_builtin source destination copy_options
 
 ## On some filesystems some paths may be invalid,
    we want to catch the Java exception and turn it into an Enso error.
