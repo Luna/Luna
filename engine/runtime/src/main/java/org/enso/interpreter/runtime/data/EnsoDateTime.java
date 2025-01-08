@@ -21,12 +21,16 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
     name = EnsoDateTime.builtinName,
     stdlibName = "Standard.Base.Data.Time.Date_Time.Date_Time")
 public final class EnsoDateTime extends BuiltinObject {
-  static final String builtinName = "Date_Time";
   private final ZonedDateTime dateTime;
 
   public EnsoDateTime(ZonedDateTime dateTime) {
     super(builtinName);
     this.dateTime = dateTime;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "Date_Time";
   }
 
   @Builtin.Method(

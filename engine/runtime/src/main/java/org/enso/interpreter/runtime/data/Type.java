@@ -35,6 +35,7 @@ import org.enso.interpreter.runtime.data.atom.AtomConstructor;
 import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.scope.ModuleScope;
+import org.enso.interpreter.runtime.util.CachingSupplier;
 import org.enso.pkg.QualifiedName;
 
 @ExportLibrary(TypesLibrary.class)
@@ -227,21 +228,25 @@ public final class Type extends EnsoObject {
     var roots = AtomConstructor.collectFieldAccessors(language, this);
     roots.forEach(
         (name, node) -> {
-          var schemaBldr =
-              FunctionSchema.newBuilder()
-                  .argumentDefinitions(
-                      new ArgumentDefinition(
-                          0,
-                          Constants.Names.SELF_ARGUMENT,
-                          null,
-                          null,
-                          ArgumentDefinition.ExecutionMode.EXECUTE));
-          if (isProjectPrivate) {
-            schemaBldr.projectPrivate();
-          }
-          var funcSchema = schemaBldr.build();
-          var f = new Function(node.getCallTarget(), null, funcSchema);
-          definitionScope.registerMethod(this, name, f);
+          var functionSupplier =
+              CachingSupplier.wrap(
+                  () -> {
+                    var schemaBldr =
+                        FunctionSchema.newBuilder()
+                            .argumentDefinitions(
+                                new ArgumentDefinition(
+                                    0,
+                                    Constants.Names.SELF_ARGUMENT,
+                                    null,
+                                    null,
+                                    ArgumentDefinition.ExecutionMode.EXECUTE));
+                    if (isProjectPrivate) {
+                      schemaBldr.projectPrivate();
+                    }
+                    var funcSchema = schemaBldr.build();
+                    return new Function(node.getCallTarget(), null, funcSchema);
+                  });
+          definitionScope.registerMethod(this, name, functionSupplier);
         });
   }
 

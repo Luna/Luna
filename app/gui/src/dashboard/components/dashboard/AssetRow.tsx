@@ -2,6 +2,7 @@
 import * as React from 'react'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import invariant from 'tiny-invariant'
 import { useStore } from 'zustand'
 
 import BlankIcon from '#/assets/blank.svg'
@@ -21,7 +22,6 @@ import * as textProvider from '#/providers/TextProvider'
 import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
-import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
 import AssetContextMenu from '#/layouts/AssetContextMenu'
@@ -33,6 +33,7 @@ import * as localBackend from '#/services/LocalBackend'
 import * as backendModule from '#/services/Backend'
 
 import { Text } from '#/components/AriaComponents'
+import { IndefiniteSpinner } from '#/components/Spinner'
 import type { AssetEvent } from '#/events/assetEvent'
 import { useCutAndPaste } from '#/events/assetListEvent'
 import {
@@ -56,8 +57,6 @@ import * as permissions from '#/utilities/permissions'
 import * as set from '#/utilities/set'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import invariant from 'tiny-invariant'
-import { IndefiniteSpinner } from '../Spinner'
 
 // =================
 // === Constants ===
@@ -298,7 +297,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     driveStore,
     ({ selectedKeys }) => selectedKeys.size === 0 || !selected || isSoleSelected,
   )
-  const draggableProps = dragAndDropHooks.useDraggable()
+  const draggableProps = dragAndDropHooks.useDraggable({ isDisabled: !selected })
   const { setModal, unsetModal } = modalProvider.useSetModal()
   const { getText } = textProvider.useText()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
@@ -372,6 +371,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
 
   const setSelected = useEventCallback((newSelected: boolean) => {
     const { selectedKeys } = driveStore.getState()
+
     setSelectedKeys(set.withPresence(selectedKeys, id, newSelected))
   })
 
@@ -488,7 +488,12 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.project: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getProjectDetails', [asset.id, asset.parentId]),
+                    backendQueryOptions(
+                      backend,
+                      'getProjectDetails',
+                      [asset.id, asset.parentId, true],
+                      { staleTime: 0 },
+                    ),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, `${asset.title}.enso-project`)
@@ -504,7 +509,9 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               case backendModule.AssetType.file: {
                 try {
                   const details = await queryClient.fetchQuery(
-                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title]),
+                    backendQueryOptions(backend, 'getFileDetails', [asset.id, asset.title, true], {
+                      staleTime: 0,
+                    }),
                   )
                   if (details.url != null) {
                     await backend.download(details.url, asset.title)
@@ -666,179 +673,183 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
         rowState,
         setRowState,
       }
+
+      if (hidden) {
+        return null
+      }
+
       return (
         <>
-          {!hidden && (
-            <FocusRing placement="outset">
-              <tr
-                data-testid="asset-row"
-                tabIndex={0}
-                ref={(element) => {
-                  rootRef.current = element
+          <tr
+            data-testid="asset-row"
+            tabIndex={0}
+            data-selected={selected}
+            data-id={asset.id}
+            ref={(element) => {
+              rootRef.current = element
 
-                  if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
-                    element.scrollIntoView({ block: 'nearest' })
-                    element.focus()
-                  }
-                }}
-                className={tailwindMerge.twMerge(
-                  'h-table-row rounded-full transition-all ease-in-out  rounded-rows-child',
-                  visibility,
-                  (isDraggedOver || selected) && 'selected',
-                )}
-                {...draggableProps}
-                onClick={(event) => {
+              if (isKeyboardSelected && element?.contains(document.activeElement) === false) {
+                element.scrollIntoView({ block: 'nearest' })
+                element.focus()
+              }
+            }}
+            className={tailwindMerge.twMerge(
+              'h-table-row rounded-full transition-all ease-in-out rounded-rows-child',
+              visibility,
+              (isDraggedOver || selected) && 'selected',
+            )}
+            {...draggableProps}
+            onClick={(event) => {
+              unsetModal()
+              onClick(innerProps, event)
+              if (
+                asset.type === backendModule.AssetType.directory &&
+                eventModule.isDoubleClick(event) &&
+                !rowState.isEditingName
+              ) {
+                // This must be processed on the next tick, otherwise it will be overridden
+                // by the default click handler.
+                window.setTimeout(() => {
+                  setSelected(false)
+                })
+                toggleDirectoryExpansion(asset.id)
+              }
+            }}
+            onContextMenu={(event) => {
+              if (allowContextMenu) {
+                event.preventDefault()
+                event.stopPropagation()
+                if (!selected) {
+                  select(asset)
+                }
+                setModal(
+                  <AssetContextMenu
+                    innerProps={innerProps}
+                    rootDirectoryId={rootDirectoryId}
+                    triggerRef={rootRef}
+                    event={event}
+                    eventTarget={
+                      event.target instanceof HTMLElement ? event.target : event.currentTarget
+                    }
+                    doCopy={doCopy}
+                    doCut={doCut}
+                    doPaste={doPaste}
+                    doDelete={doDelete}
+                  />,
+                )
+              }
+            }}
+            onDragStart={(event) => {
+              if (
+                rowState.isEditingName ||
+                (projectState !== backendModule.ProjectState.closed &&
+                  projectState !== backendModule.ProjectState.created &&
+                  projectState != null)
+              ) {
+                event.preventDefault()
+              } else {
+                props.onDragStart?.(event, asset)
+              }
+            }}
+            onDragEnter={(event) => {
+              if (dragOverTimeoutHandle.current != null) {
+                window.clearTimeout(dragOverTimeoutHandle.current)
+              }
+              if (asset.type === backendModule.AssetType.directory) {
+                dragOverTimeoutHandle.current = window.setTimeout(() => {
+                  toggleDirectoryExpansion(asset.id, true)
+                }, DRAG_EXPAND_DELAY_MS)
+              }
+              // Required because `dragover` does not fire on `mouseenter`.
+              props.onDragOver?.(event, asset)
+              onDragOver(event)
+            }}
+            onDragOver={(event) => {
+              if (state.category.type === 'trash') {
+                event.dataTransfer.dropEffect = 'none'
+              }
+              props.onDragOver?.(event, asset)
+              onDragOver(event)
+            }}
+            onDragEnd={(event) => {
+              clearDragState()
+              props.onDragEnd?.(event, asset)
+            }}
+            onDragLeave={(event) => {
+              if (
+                dragOverTimeoutHandle.current != null &&
+                (!(event.relatedTarget instanceof Node) ||
+                  !event.currentTarget.contains(event.relatedTarget))
+              ) {
+                window.clearTimeout(dragOverTimeoutHandle.current)
+              }
+              if (
+                event.relatedTarget instanceof Node &&
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                clearDragState()
+              }
+              props.onDragLeave?.(event, asset)
+            }}
+            onDrop={(event) => {
+              if (state.category.type !== 'trash') {
+                props.onDrop?.(event, asset)
+                clearDragState()
+                const directoryId =
+                  asset.type === backendModule.AssetType.directory ? asset.id : parentId
+                const payload = drag.ASSET_ROWS.lookup(event)
+                if (
+                  payload != null &&
+                  payload.every((innerItem) => innerItem.key !== directoryId)
+                ) {
+                  event.preventDefault()
+                  event.stopPropagation()
                   unsetModal()
-                  onClick(innerProps, event)
-                  if (
-                    asset.type === backendModule.AssetType.directory &&
-                    eventModule.isDoubleClick(event) &&
-                    !rowState.isEditingName
-                  ) {
-                    // This must be processed on the next tick, otherwise it will be overridden
-                    // by the default click handler.
-                    window.setTimeout(() => {
-                      setSelected(false)
-                    })
-                    toggleDirectoryExpansion(asset.id)
-                  }
-                }}
-                onContextMenu={(event) => {
-                  if (allowContextMenu) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    if (!selected) {
-                      select(asset)
-                    }
-                    setModal(
-                      <AssetContextMenu
-                        innerProps={innerProps}
-                        rootDirectoryId={rootDirectoryId}
-                        triggerRef={rootRef}
-                        event={event}
-                        eventTarget={
-                          event.target instanceof HTMLElement ? event.target : event.currentTarget
-                        }
-                        doCopy={doCopy}
-                        doCut={doCut}
-                        doPaste={doPaste}
-                        doDelete={doDelete}
-                      />,
-                    )
-                  }
-                }}
-                onDragStart={(event) => {
-                  if (
-                    rowState.isEditingName ||
-                    (projectState !== backendModule.ProjectState.closed &&
-                      projectState !== backendModule.ProjectState.created &&
-                      projectState != null)
-                  ) {
-                    event.preventDefault()
-                  } else {
-                    props.onDragStart?.(event, asset)
-                  }
-                }}
-                onDragEnter={(event) => {
-                  if (dragOverTimeoutHandle.current != null) {
-                    window.clearTimeout(dragOverTimeoutHandle.current)
-                  }
-                  if (asset.type === backendModule.AssetType.directory) {
-                    dragOverTimeoutHandle.current = window.setTimeout(() => {
-                      toggleDirectoryExpansion(asset.id, true)
-                    }, DRAG_EXPAND_DELAY_MS)
-                  }
-                  // Required because `dragover` does not fire on `mouseenter`.
-                  props.onDragOver?.(event, asset)
-                  onDragOver(event)
-                }}
-                onDragOver={(event) => {
-                  if (state.category.type === 'trash') {
-                    event.dataTransfer.dropEffect = 'none'
-                  }
-                  props.onDragOver?.(event, asset)
-                  onDragOver(event)
-                }}
-                onDragEnd={(event) => {
-                  clearDragState()
-                  props.onDragEnd?.(event, asset)
-                }}
-                onDragLeave={(event) => {
-                  if (
-                    dragOverTimeoutHandle.current != null &&
-                    (!(event.relatedTarget instanceof Node) ||
-                      !event.currentTarget.contains(event.relatedTarget))
-                  ) {
-                    window.clearTimeout(dragOverTimeoutHandle.current)
-                  }
-                  if (
-                    event.relatedTarget instanceof Node &&
-                    !event.currentTarget.contains(event.relatedTarget)
-                  ) {
-                    clearDragState()
-                  }
-                  props.onDragLeave?.(event, asset)
-                }}
-                onDrop={(event) => {
-                  if (state.category.type !== 'trash') {
-                    props.onDrop?.(event, asset)
-                    clearDragState()
-                    const directoryId =
-                      asset.type === backendModule.AssetType.directory ? asset.id : parentId
-                    const payload = drag.ASSET_ROWS.lookup(event)
-                    if (
-                      payload != null &&
-                      payload.every((innerItem) => innerItem.key !== directoryId)
-                    ) {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      unsetModal()
-                      toggleDirectoryExpansion(directoryId, true)
-                      const ids = payload
-                        .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
-                        .map((dragItem) => dragItem.key)
-                      cutAndPaste(
-                        directoryId,
-                        directoryId,
-                        { backendType: backend.type, ids: new Set(ids), category },
-                        nodeMap.current,
-                      )
-                    } else if (event.dataTransfer.types.includes('Files')) {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      toggleDirectoryExpansion(directoryId, true)
-                      void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
-                    }
-                  }
-                }}
-              >
-                {columns.map((column) => {
-                  const Render = columnModule.COLUMN_RENDERER[column]
-                  return (
-                    <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
-                      <Render
-                        isPlaceholder={isPlaceholder}
-                        isExpanded={isExpanded}
-                        keyProp={id}
-                        isOpened={isOpened}
-                        backendType={backend.type}
-                        item={asset}
-                        depth={depth}
-                        selected={selected}
-                        setSelected={setSelected}
-                        isSoleSelected={isSoleSelected}
-                        state={state}
-                        rowState={rowState}
-                        setRowState={setRowState}
-                        isEditable={state.category.type !== 'trash'}
-                      />
-                    </td>
+                  toggleDirectoryExpansion(directoryId, true)
+                  const ids = payload
+                    .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
+                    .map((dragItem) => dragItem.key)
+                  cutAndPaste(
+                    directoryId,
+                    directoryId,
+                    { backendType: backend.type, ids: new Set(ids), category },
+                    nodeMap.current,
                   )
-                })}
-              </tr>
-            </FocusRing>
-          )}
-          {selected && allowContextMenu && !hidden && (
+                } else if (event.dataTransfer.types.includes('Files')) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  toggleDirectoryExpansion(directoryId, true)
+                  void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
+                }
+              }
+            }}
+          >
+            {columns.map((column) => {
+              const Render = columnModule.COLUMN_RENDERER[column]
+              return (
+                <td key={column} className={columnUtils.COLUMN_CSS_CLASS[column]}>
+                  <Render
+                    isPlaceholder={isPlaceholder}
+                    isExpanded={isExpanded}
+                    keyProp={id}
+                    isOpened={isOpened}
+                    backendType={backend.type}
+                    item={asset}
+                    depth={depth}
+                    selected={selected}
+                    setSelected={setSelected}
+                    isSoleSelected={isSoleSelected}
+                    state={state}
+                    rowState={rowState}
+                    setRowState={setRowState}
+                    isEditable={state.category.type !== 'trash'}
+                  />
+                </td>
+              )
+            })}
+          </tr>
+
+          {selected && allowContextMenu && (
             // This is a copy of the context menu, since the context menu registers keyboard
             // shortcut handlers. This is a bit of a hack, however it is preferable to duplicating
             // the entire context menu (once for the keyboard actions, once for the JSX).

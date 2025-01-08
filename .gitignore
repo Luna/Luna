@@ -41,6 +41,11 @@ eslint_report.json
 .eslintcache
 
 ############
+## Python ##
+############
+**/__pycache__/
+
+############
 ## System ##
 ############
 
@@ -105,6 +110,7 @@ bench-report*.xml
 /enso.lib
 
 *.dll
+*.dylib
 *.exe
 *.pdb
 *.so

@@ -32,6 +32,11 @@ public final class EnsoBigInteger extends BuiltinObject {
   }
 
   @Override
+  protected String builtinName() {
+    return "Integer";
+  }
+
+  @Override
   @CompilerDirectives.TruffleBoundary
   public String toString() {
     return value.toString();

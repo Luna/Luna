@@ -21,12 +21,16 @@ import org.enso.polyglot.common_utils.Core_Date_Utils;
     name = EnsoTimeZone.builtinName,
     stdlibName = "Standard.Base.Data.Time.Time_Zone.Time_Zone")
 public final class EnsoTimeZone extends BuiltinObject {
-  static final String builtinName = "Time_Zone";
+
   private final ZoneId zone;
 
   public EnsoTimeZone(ZoneId zone) {
-    super(builtinName);
     this.zone = zone;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "Time_Zone";
   }
 
   @Builtin.Method(description = "Get the unique identifier for your system's current timezone.")

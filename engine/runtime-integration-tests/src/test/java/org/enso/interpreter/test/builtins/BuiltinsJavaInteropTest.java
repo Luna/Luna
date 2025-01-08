@@ -11,6 +11,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * In these tests, we call Java methods from Enso. Java methods have different signatures that
+ * accept Enso values in different ways.
+ */
 public class BuiltinsJavaInteropTest {
   private static Context ctx;
   private static final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -31,6 +35,12 @@ public class BuiltinsJavaInteropTest {
     out.reset();
   }
 
+  /**
+   * This test reflects the state of many Java methods in stdlibs that accept Enso values as {@link
+   * java.lang.Object}. If the Java method has a single argument of type {@link java.lang.Object},
+   * and we pass {@code Date_Time} in it, we expect the host interop conversion to convert it to
+   * {@link java.time.LocalDateTime}.
+   */
   @Test
   public void javaMethodAcceptsEnsoTimeOfDay_AsObject() {
     var src =

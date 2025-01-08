@@ -59,7 +59,7 @@ export type QueryClient = vueQuery.QueryClient
 const DEFAULT_QUERY_STALE_TIME_MS = Infinity
 const DEFAULT_QUERY_PERSIST_TIME_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
-const DEFAULT_BUSTER = 'v1.1'
+const DEFAULT_BUSTER = 'v1.2'
 
 export interface QueryClientOptions<TStorageValue = string> {
   readonly persisterStorage?: AsyncStorage<TStorageValue> & {
@@ -83,7 +83,7 @@ export function createQueryClient<TStorageValue = string>(
       storage: persisterStorage,
       // Prefer online first and don't rely on the local cache if user is online
       // fallback to the local cache only if the user is offline
-      maxAge: queryCore.onlineManager.isOnline() ? -1 : DEFAULT_QUERY_PERSIST_TIME_MS,
+      maxAge: DEFAULT_QUERY_PERSIST_TIME_MS,
       buster: DEFAULT_BUSTER,
       filters: { predicate: query => query.meta?.persist !== false },
       prefix: 'enso:query-persist:',
@@ -130,8 +130,18 @@ export function createQueryClient<TStorageValue = string>(
     defaultOptions: {
       queries: {
         ...(persister != null ? { persister } : {}),
+        // Default set to 'always' to don't pause ongoing queries
+        // and make them fail.
+        networkMode: 'always',
         refetchOnReconnect: 'always',
         staleTime: DEFAULT_QUERY_STALE_TIME_MS,
+        // This allows to prefetch queries in the render phase. Enables returning
+        // a promise from the `useQuery` hook, which is useful for the `Await` component,
+        // which needs to prefetch the query in the render phase to be able to display
+        // the error boundary/suspense fallback.
+        // @see [experimental_prefetchInRender](https://tanstack.com/query/latest/docs/framework/react/guides/suspense#using-usequerypromise-and-reactuse-experimental)
+        // eslint-disable-next-line camelcase
+        experimental_prefetchInRender: true,
         retry: (failureCount, error: unknown) => {
           const statusesToIgnore = [403, 404]
           const errorStatus =

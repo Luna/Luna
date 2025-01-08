@@ -1,8 +1,10 @@
 package org.enso.interpreter.runtime.builtin;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Idempotent;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -18,41 +20,28 @@ import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
  * Base class for every Enso builtin object. Not type. Note that base class for a builtin type is
  * {@link Builtin}.
  *
- * <p>The {@link InteropLibrary interop} protocol roughly corresponds to the implementation of the
- * protocol inside {@link org.enso.interpreter.runtime.data.atom.Atom}.
- *
- * <p>Note that extension methods are not resolved, because they are not defined in builtins module
- * scope. In other words, extension methods are not reported as members via interop.
+ * <p>In other words, this class represents an object of builtin type in a similar way that {@link
+ * org.enso.interpreter.runtime.data.atom.Atom} represents an object of a non-builtin type.
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(TypesLibrary.class)
 public abstract class BuiltinObject extends EnsoObject {
-
-  private final String builtinName;
-
-  @CompilationFinal private Builtin cachedBuiltinType;
-
-  /**
-   * @param builtinName Simple name of the builtin that should be contained in {@link
-   *     org.enso.interpreter.runtime.builtin.Builtins#builtinsByName}.
-   */
-  protected BuiltinObject(String builtinName) {
-    this.builtinName = builtinName;
-  }
 
   @ExportMessage
   public final boolean hasType() {
     return true;
   }
 
-  @ExportMessage
-  public final Type getType(@Bind("$node") Node node) {
-    if (cachedBuiltinType == null) {
-      CompilerDirectives.transferToInterpreterAndInvalidate();
-      var ctx = EnsoContext.get(node);
-      cachedBuiltinType = ctx.getBuiltins().getBuiltinType(builtinName);
-    }
-    return cachedBuiltinType.getType();
+  /**
+   * Returns the name of the builtin as saved inside {@link Builtins#builtinsByName}. Not fully
+   * qualified.
+   *
+   * @return
+   */
+  protected abstract String builtinName();
+
+  protected final Type getBuiltinType(Node node) {
+    return GetType.uncached(this, node);
   }
 
   /**
@@ -78,8 +67,45 @@ public abstract class BuiltinObject extends EnsoObject {
     return true;
   }
 
-  @ExportMessage
-  public final Type getMetaObject(@Bind("$node") Node node) {
-    return getType(node);
+  @ExportMessage(name = "getType", library = TypesLibrary.class)
+  @ExportMessage(name = "getMetaObject", library = InteropLibrary.class)
+  public static final class GetType {
+
+    GetType() {}
+
+    /**
+     * Caching on class of the receiver - as long as there is the same class, its {@link
+     * #builtinName()} method will return the same value. Note that we don't want to cache on the
+     * builtin name, as that would create a separate polymorph cache for every instance of the
+     * receiver.
+     */
+    @Specialization(
+        guards = {"cachedReceiverClass == receiver.getClass()", "getCtx(node) == cachedCtx"},
+        limit = "1")
+    public static Type doItCached(
+        BuiltinObject receiver,
+        @Bind("$node") Node node,
+        @Cached("receiver.getClass()") Class<? extends BuiltinObject> cachedReceiverClass,
+        @Cached(value = "getCtx(node)", allowUncached = true) EnsoContext cachedCtx,
+        @Cached(value = "getBuiltinType(receiver, cachedCtx)", allowUncached = true)
+            Builtin cachedBuiltinType) {
+      return cachedBuiltinType.getType();
+    }
+
+    @Specialization(replaces = "doItCached")
+    public static Type uncached(BuiltinObject receiver, @Bind("$node") Node node) {
+      var ctx = getCtx(node);
+      return getBuiltinType(receiver, ctx).getType();
+    }
+
+    @TruffleBoundary
+    public static Builtin getBuiltinType(BuiltinObject receiver, EnsoContext ctx) {
+      return ctx.getBuiltins().getBuiltinType(receiver.builtinName());
+    }
+
+    @Idempotent
+    public static EnsoContext getCtx(Node node) {
+      return EnsoContext.get(node);
+    }
   }
 }

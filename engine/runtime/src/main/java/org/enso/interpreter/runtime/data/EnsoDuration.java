@@ -24,11 +24,14 @@ import org.enso.interpreter.runtime.error.PanicException;
     stdlibName = "Standard.Base.Data.Time.Duration.Duration")
 public final class EnsoDuration extends BuiltinObject {
   private final Duration duration;
-  static final String builtinName = "Duration";
 
   public EnsoDuration(Duration duration) {
-    super(builtinName);
     this.duration = duration;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "Duration";
   }
 
   @Builtin.Method(

@@ -14,19 +14,22 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.data.hash.EnsoHashMap;
 import org.enso.interpreter.runtime.data.hash.HashMapInsertNode;
 
-@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning", name = Warning.builtinName)
+@Builtin(pkg = "error", stdlibName = "Standard.Base.Warning.Warning")
 @ExportLibrary(value = InteropLibrary.class, delegateTo = "value")
 public final class Warning extends BuiltinObject {
-  static final String builtinName = "Warning";
   final Object value;
   private final Object origin;
   private final long sequenceId;
 
   private Warning(Object value, Object origin, long sequenceId) {
-    super(builtinName);
     this.value = value;
     this.origin = origin;
     this.sequenceId = sequenceId;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "Warning";
   }
 
   @Builtin.Method(name = "value", description = "Gets the payload of the warning.")

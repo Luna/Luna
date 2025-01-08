@@ -20,12 +20,16 @@ import org.enso.interpreter.runtime.data.text.Text;
     name = EnsoTimeOfDay.builtinName,
     stdlibName = "Standard.Base.Data.Time.Time_Of_Day.Time_Of_Day")
 public final class EnsoTimeOfDay extends BuiltinObject {
-  static final String builtinName = "Time_Of_Day";
+
   private final LocalTime localTime;
 
   public EnsoTimeOfDay(LocalTime localTime) {
-    super(builtinName);
     this.localTime = localTime;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "Time_Of_Day";
   }
 
   @Builtin.Method(

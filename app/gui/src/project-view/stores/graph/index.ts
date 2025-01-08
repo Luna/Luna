@@ -15,7 +15,7 @@ import {
 import { useUnconnectedEdges, type UnconnectedEdge } from '@/stores/graph/unconnectedEdges'
 import { type ProjectStore } from '@/stores/project'
 import { type SuggestionDbStore } from '@/stores/suggestionDatabase'
-import { assert, assertNever, bail } from '@/util/assert'
+import { assert, assertDefined, assertNever, bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import type { AstId, Identifier, MutableModule } from '@/util/ast/abstract'
 import { isAstId, isIdentifier } from '@/util/ast/abstract'
@@ -53,7 +53,7 @@ import type {
 import { reachable } from 'ydoc-shared/util/data/graph'
 import type { LocalUserActionOrigin, Origin, VisualizationMetadata } from 'ydoc-shared/yjsModel'
 import { defaultLocalOrigin, visMetadataEquals } from 'ydoc-shared/yjsModel'
-import { UndoManager } from 'yjs'
+import * as Y from 'yjs'
 
 const FALLBACK_BINDING_PREFIX = 'node'
 
@@ -335,7 +335,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
             // Skip ports on already deleted nodes.
             if (nodeId && deletedNodes.has(nodeId)) continue
 
-            updatePortValue(edit, usage, undefined)
+            updatePortValue(edit, usage, undefined, false)
           }
           const outerAst = edit.getVersion(node.outerAst)
           if (outerAst.isStatement()) Ast.deleteFromParentBlock(outerAst)
@@ -376,7 +376,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
     const undoManagerStatus = reactive({
       canUndo: false,
       canRedo: false,
-      update(m: UndoManager) {
+      update(m: Y.UndoManager) {
         this.canUndo = m.canUndo()
         this.canRedo = m.canRedo()
       },
@@ -386,7 +386,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       (m) => {
         if (m) {
           const update = () => undoManagerStatus.update(m)
-          const events = stringUnionToArray<keyof Events<UndoManager>>()(
+          const events = stringUnionToArray<keyof Events<Y.UndoManager>>()(
             'stack-item-added',
             'stack-item-popped',
             'stack-cleared',
@@ -577,6 +577,8 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
      * Emit a value update to a port view under specific ID. Returns `true` if the port view is
      * registered and the update was emitted, or `false` otherwise.
      *
+     * The properties are analogous to {@link WidgetUpdate fields}.
+     *
      * NOTE: If this returns `true,` The update handlers called `graph.commitEdit` on their own.
      * Therefore, the passed in `edit` should not be modified afterward, as it is already committed.
      */
@@ -584,10 +586,15 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       edit: MutableModule,
       id: PortId,
       value: Ast.Owned<Ast.MutableExpression> | undefined,
+      directInteraction: boolean = true,
     ): boolean {
       const update = getPortPrimaryInstance(id)?.onUpdate
       if (!update) return false
-      update({ edit, portUpdate: { value, origin: id } })
+      update({
+        edit,
+        portUpdate: { value, origin: id },
+        directInteraction,
+      })
       return true
     }
 
@@ -610,7 +617,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
         console.error(`BUG: Cannot commit edit: No module root block.`)
         return
       }
-      if (!skipTreeRepair) Ast.repair(root, edit)
+      if (!skipTreeRepair) edit.transact(() => Ast.repair(root, edit))
       syncModule.value!.applyEdit(edit, origin)
     }
 
@@ -622,8 +629,8 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
      *  to `true` for better performance.
      */
     function edit<T>(f: (edit: MutableModule) => T, skipTreeRepair?: boolean): T {
-      const edit = syncModule.value?.edit()
-      assert(edit != null)
+      assertDefined(syncModule.value)
+      const edit = syncModule.value.edit()
       let result
       edit.transact(() => {
         result = f(edit)
@@ -632,17 +639,9 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
           assert(root instanceof Ast.BodyBlock)
           Ast.repair(root, edit)
         }
-        syncModule.value!.applyEdit(edit)
       })
+      syncModule.value.applyEdit(edit)
       return result!
-    }
-
-    /**
-     * Obtain a version of the given `Ast` for direct mutation. The `ast` must exist in the current module.
-     *  This can be more efficient than creating and committing an edit, but skips tree-repair and cannot be aborted.
-     */
-    function getMutable<T extends Ast.Ast>(ast: T): Ast.Mutable<T> {
-      return syncModule.value!.getVersion(ast)
     }
 
     function batchEdits(f: () => void, origin: Origin = defaultLocalOrigin) {
@@ -794,6 +793,11 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       { onError: console.error },
     )
 
+    function onBeforeEdit(f: (transaction: Y.Transaction) => void): { unregister: () => void } {
+      proj.module?.doc.ydoc.on('beforeTransaction', f)
+      return { unregister: () => proj.module?.doc.ydoc.off('beforeTransaction', f) }
+    }
+
     return proxyRefs({
       db: markRaw(db),
       mockExpressionUpdate,
@@ -814,7 +818,6 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       pickInCodeOrder,
       ensureCorrectNodeOrder,
       batchEdits,
-      getMutable,
       overrideNodeColor,
       getNodeColorOverride,
       setNodeContent,
@@ -835,6 +838,7 @@ export const [provideGraphStore, useGraphStore] = createContextStore(
       startEdit,
       commitEdit,
       edit,
+      onBeforeEdit,
       viewModule,
       addMissingImports,
       addMissingImportsDisregardConflicts,

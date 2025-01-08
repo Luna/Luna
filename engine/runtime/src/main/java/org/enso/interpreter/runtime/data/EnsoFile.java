@@ -50,17 +50,21 @@ import org.enso.interpreter.runtime.error.PanicException;
  * please refer to {@link TruffleFile}.
  */
 @ExportLibrary(InteropLibrary.class)
-@Builtin(pkg = "io", name = EnsoFile.builtinName, stdlibName = "Standard.Base.System.File.File")
+@Builtin(pkg = "io", name = "File", stdlibName = "Standard.Base.System.File.File")
 public final class EnsoFile extends BuiltinObject {
-  static final String builtinName = "File";
+
   private final TruffleFile truffleFile;
 
   public EnsoFile(TruffleFile truffleFile) {
-    super(builtinName);
     if (truffleFile == null) {
       throw CompilerDirectives.shouldNotReachHere();
     }
     this.truffleFile = truffleFile;
+  }
+
+  @Override
+  protected String builtinName() {
+    return "File";
   }
 
   @Builtin.Method(name = "output_stream_builtin")

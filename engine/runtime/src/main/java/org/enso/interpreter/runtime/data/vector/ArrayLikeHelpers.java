@@ -9,16 +9,10 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.data.EnsoObject;
 
 /** Publicly available operations on array-like classes. */
-@Builtin(
-    pkg = "immutable",
-    stdlibName = "Standard.Base.Internal.Array_Like_Helpers",
-    name = ArrayLikeHelpers.builtinName)
+@Builtin(pkg = "immutable", stdlibName = "Standard.Base.Internal.Array_Like_Helpers")
 public final class ArrayLikeHelpers extends BuiltinObject {
-  static final String builtinName = "Array_Like_Helpers";
 
-  private ArrayLikeHelpers() {
-    super(builtinName);
-  }
+  private ArrayLikeHelpers() {}
 
   @Builtin.Method(
       name = "new_array_proxy_builtin",
