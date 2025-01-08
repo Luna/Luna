@@ -19,6 +19,7 @@ import {
 } from '@testing-library/react'
 import { createQueryClient } from 'enso-common/src/queryClient'
 import { useState, type PropsWithChildren, type ReactElement, type ReactNode } from 'react'
+import invariant from 'tiny-invariant'
 
 /**
  * A wrapper that passes through its children.
@@ -147,7 +148,8 @@ function renderHookWithRoot<Result, Props>(
   hook: (props: Props) => Result,
   options?: Omit<RenderHookOptions<Props>, 'queries'>,
 ): RenderHookWithRootResult<Result, Props> {
-  let queryClient: QueryClient
+  let queryClient: QueryClient | undefined
+  console.log(':3')
 
   const result = renderHook(hook, {
     wrapper: ({ children }) => (
@@ -160,13 +162,9 @@ function renderHookWithRoot<Result, Props>(
     ),
     ...options,
   })
+  invariant(queryClient, 'QueryClient must exist')
 
-  return {
-    ...result,
-    // @ts-expect-error - This is safe because we render before returning the result,
-    // so the queryClient is guaranteed to be set.
-    queryClient,
-  } as const
+  return { ...result, queryClient } as const
 }
 
 /**
