@@ -27,13 +27,9 @@ import ProjectsProvider, {
   type LaunchedProject,
 } from '#/providers/ProjectsProvider'
 
-import AssetListEventType from '#/events/AssetListEventType'
-
 import type * as assetTable from '#/layouts/AssetsTable'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
-import EventListProvider, * as eventListProvider from '#/layouts/Drive/EventListProvider'
-import type * as editor from '#/layouts/Editor'
 import UserBar from '#/layouts/UserBar'
 
 import * as aria from '#/components/aria'
@@ -45,6 +41,7 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
+import { useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
@@ -53,15 +50,10 @@ import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery } from '@tanstack/react-query'
 import { DashboardTabPanels } from './DashboardTabPanels'
 
-// =================
-// === Dashboard ===
-// =================
-
 /** Props for {@link Dashboard}s that are common to all platforms. */
 export interface DashboardProps {
   /** Whether the application may have the local backend running. */
   readonly supportsLocalBackend: boolean
-  readonly appRunner: editor.GraphEditorRunner | null
   readonly initialProjectName: string | null
   readonly ydocUrl: string | null
 }
@@ -74,11 +66,9 @@ export default function Dashboard(props: DashboardProps) {
     <DriveProvider>
       {({ resetAssetTableState }) => (
         <CategoriesProvider onCategoryChange={resetAssetTableState}>
-          <EventListProvider>
-            <ProjectsProvider>
-              <DashboardInner {...props} />
-            </ProjectsProvider>
-          </EventListProvider>
+          <ProjectsProvider>
+            <DashboardInner {...props} />
+          </ProjectsProvider>
         </CategoriesProvider>
       )}
     </DriveProvider>
@@ -106,7 +96,7 @@ function fileURLToPath(url: string): string | null {
 
 /** The component that contains the entire UI. */
 function DashboardInner(props: DashboardProps) {
-  const { appRunner, initialProjectName: initialProjectNameRaw, ydocUrl } = props
+  const { initialProjectName: initialProjectNameRaw, ydocUrl } = props
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
   const { modalRef } = modalProvider.useModalRef()
@@ -114,7 +104,6 @@ function DashboardInner(props: DashboardProps) {
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const assetManagementApiRef = React.useRef<assetTable.AssetManagementApi | null>(null)
 
   const initialLocalProjectPath =
@@ -122,6 +111,7 @@ function DashboardInner(props: DashboardProps) {
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
   const categoriesAPI = useCategoriesAPI()
+  const backend = backendProvider.useBackend(categoriesAPI.category)
 
   const projectsStore = useProjectsStore()
   const page = usePage()
@@ -136,6 +126,7 @@ function DashboardInner(props: DashboardProps) {
   const closeProject = projectHooks.useCloseProject()
   const closeAllProjects = projectHooks.useCloseAllProjects()
   const clearLaunchedProjects = useClearLaunchedProjects()
+  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
 
   usePrefetchQuery({
     queryKey: ['loadInitialLocalProject'],
@@ -151,7 +142,7 @@ function DashboardInner(props: DashboardProps) {
         )
         openProject({
           type: backendModule.BackendType.local,
-          id: localBackendModule.newProjectId(projectManager.UUID(id)),
+          id: localBackendModule.newProjectId(projectManager.UUID(id), localBackend.rootPath()),
           title: projectName,
           parentId: localBackendModule.newDirectoryId(localBackend.rootPath()),
         })
@@ -165,7 +156,10 @@ function DashboardInner(props: DashboardProps) {
     window.projectManagementApi?.setOpenProjectHandler((project) => {
       categoriesAPI.setCategory('local')
 
-      const projectId = localBackendModule.newProjectId(projectManager.UUID(project.id))
+      const projectId = localBackendModule.newProjectId(
+        projectManager.UUID(project.id),
+        projectManager.Path(project.parentDirectory),
+      )
 
       openProject({
         type: backendModule.BackendType.local,
@@ -178,7 +172,7 @@ function DashboardInner(props: DashboardProps) {
     return () => {
       window.projectManagementApi?.setOpenProjectHandler(() => {})
     }
-  }, [dispatchAssetListEvent, openEditor, openProject, categoriesAPI])
+  }, [openEditor, openProject, categoriesAPI])
 
   React.useEffect(
     () =>
@@ -216,7 +210,7 @@ function DashboardInner(props: DashboardProps) {
   }, [inputBindings])
 
   const doRemoveSelf = eventCallbacks.useEventCallback((project: LaunchedProject) => {
-    dispatchAssetListEvent({ type: AssetListEventType.removeSelf, id: project.id })
+    removeSelfPermissionMutation.mutate(project.id)
     closeProject(project)
   })
 
@@ -282,7 +276,6 @@ function DashboardInner(props: DashboardProps) {
           </div>
 
           <DashboardTabPanels
-            appRunner={appRunner}
             initialProjectName={initialProjectName}
             ydocUrl={ydocUrl}
             assetManagementApiRef={assetManagementApiRef}

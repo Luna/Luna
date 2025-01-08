@@ -8,7 +8,6 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProjectMutation, useRenameProjectMutation } from '#/hooks/projectHooks'
 import type { AssetManagementApi } from '#/layouts/AssetsTable'
 import Drive from '#/layouts/Drive'
-import type { GraphEditorRunner } from '#/layouts/Editor'
 import Editor from '#/layouts/Editor'
 import Settings from '#/layouts/Settings'
 import { TabType, useLaunchedProjects, usePage } from '#/providers/ProjectsProvider'
@@ -18,7 +17,6 @@ import { Collection } from 'react-aria-components'
 
 /** The props for the {@link DashboardTabPanels} component. */
 export interface DashboardTabPanelsProps {
-  readonly appRunner: GraphEditorRunner | null
   readonly initialProjectName: string | null
   readonly ydocUrl: string | null
   readonly assetManagementApiRef: React.RefObject<AssetManagementApi> | null
@@ -26,7 +24,7 @@ export interface DashboardTabPanelsProps {
 
 /** The tab panels for the dashboard page. */
 export function DashboardTabPanels(props: DashboardTabPanelsProps) {
-  const { appRunner, initialProjectName, ydocUrl, assetManagementApiRef } = props
+  const { initialProjectName, ydocUrl, assetManagementApiRef } = props
 
   const page = usePage()
 
@@ -69,7 +67,6 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
           ydocUrl={ydocUrl}
           project={project}
           projectId={project.id}
-          appRunner={appRunner}
           isOpeningFailed={openProjectMutation.isError}
           openingError={openProjectMutation.error}
           startProject={openProjectMutation.mutate}
