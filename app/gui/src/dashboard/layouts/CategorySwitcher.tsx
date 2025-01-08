@@ -18,7 +18,6 @@ import {
   useTransferBetweenCategories,
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
-import * as eventListProvider from '#/layouts/Drive/EventListProvider'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
@@ -220,14 +219,13 @@ function CategorySwitcher(props: CategorySwitcherProps) {
 
   const { getText } = textProvider.useText()
   const [, setSearchParams] = useSearchParams()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
 
   const { isOffline } = offlineHooks.useOffline()
 
   const cloudCategories = useCloudCategoryList()
   const localCategories = useLocalCategoryList()
 
-  const itemProps = { currentCategory: category, setCategoryId, dispatchAssetEvent }
+  const itemProps = { currentCategory: category, setCategoryId }
 
   const { cloudCategory, recentCategory, trashCategory, userCategory, teamCategories } =
     cloudCategories
@@ -364,8 +362,9 @@ function CategorySwitcher(props: CategorySwitcherProps) {
                   <ConfirmDeleteModal
                     actionText={getText('removeTheLocalDirectoryXFromFavorites', directory.label)}
                     actionButtonLabel={getText('remove')}
-                    doDelete={() => {
+                    doDelete={async () => {
                       removeDirectory(directory.id)
+                      await Promise.resolve()
                     }}
                   />
                 </ariaComponents.DialogTrigger>

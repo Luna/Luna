@@ -12,16 +12,11 @@ import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
 import * as result from '#/components/Result'
 import { Result } from '#/components/Result'
 import SvgMask from '#/components/SvgMask'
-import AssetListEventType from '#/events/AssetListEventType'
 import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline } from '#/hooks/offlineHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { AssetPanel } from '#/layouts/AssetPanel'
-import AssetsTable, {
-  AssetsTableAssetsUnselector,
-  type AssetManagementApi,
-} from '#/layouts/AssetsTable'
+import AssetsTable, { AssetManagementApi, AssetsTableAssetsUnselector } from '#/layouts/AssetsTable'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
@@ -41,13 +36,12 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { Suspense } from '../components/Suspense'
 import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
-import { useDispatchAssetListEvent } from './Drive/EventListProvider'
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
   readonly hidden: boolean
   readonly initialProjectName: string | null
-  readonly assetsManagementApiRef: Ref<AssetManagementApi>
+  readonly assetsManagementApiRef: React.Ref<AssetManagementApi>
 }
 
 const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
@@ -165,7 +159,6 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
   const { user } = useFullUserSession()
   const localBackend = useLocalBackend()
   const backend = useBackend(category)
-  const dispatchAssetListEvent = useDispatchAssetListEvent()
 
   const [query, setQuery] = useState(() => AssetQuery.fromString(''))
   const [shouldForceHideStartModal, setShouldForceHideStartModal] = useState(false)
@@ -179,10 +172,6 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
     isCloud && isOffline ? 'offline'
     : isCloud && !user.isEnabled ? 'not-enabled'
     : 'ok'
-
-  const doEmptyTrash = useEventCallback(() => {
-    dispatchAssetListEvent({ type: AssetListEventType.emptyTrash })
-  })
 
   const { rootDirectoryId } = useDirectoryIds({ category })
 
@@ -254,7 +243,6 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
           query={query}
           setQuery={setQuery}
           category={category}
-          doEmptyTrash={doEmptyTrash}
           isEmpty={isEmpty}
           shouldDisplayStartModal={shouldDisplayStartModal}
           isDisabled={shouldDisableActions}
@@ -295,7 +283,7 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
   )
 }
 
-/** Props for {@link OfflineMessage}. */
+/** Props for an {@link OfflineMessage}. */
 interface OfflineMessageProps {
   readonly supportLocalBackend: boolean
   readonly setCategory: (category: categoryModule.Category['id']) => void

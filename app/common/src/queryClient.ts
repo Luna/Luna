@@ -39,6 +39,7 @@ declare module '@tanstack/query-core' {
        * @default false
        */
       readonly awaitInvalidates?: queryCore.QueryKey[] | boolean
+      readonly refetchType?: queryCore.InvalidateQueryFilters['refetchType']
     }
 
     readonly queryMeta: {
@@ -59,7 +60,7 @@ export type QueryClient = vueQuery.QueryClient
 const DEFAULT_QUERY_STALE_TIME_MS = Infinity
 const DEFAULT_QUERY_PERSIST_TIME_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
-const DEFAULT_BUSTER = 'v1.1'
+const DEFAULT_BUSTER = 'v1.2'
 
 export interface QueryClientOptions<TStorageValue = string> {
   readonly persisterStorage?: AsyncStorage<TStorageValue> & {
@@ -98,6 +99,7 @@ export function createQueryClient<TStorageValue = string>(
     mutationCache: new queryCore.MutationCache({
       onSuccess: (_data, _variables, _context, mutation) => {
         const shouldAwaitInvalidates = mutation.meta?.awaitInvalidates ?? false
+        const refetchType = mutation.meta?.refetchType ?? 'active'
         const invalidates = mutation.meta?.invalidates ?? []
         const invalidatesToAwait = (() => {
           if (Array.isArray(shouldAwaitInvalidates)) {
@@ -113,6 +115,7 @@ export function createQueryClient<TStorageValue = string>(
         for (const queryKey of invalidatesToIgnore) {
           void queryClient.invalidateQueries({
             predicate: query => queryCore.matchQuery({ queryKey }, query),
+            refetchType,
           })
         }
 
@@ -121,6 +124,7 @@ export function createQueryClient<TStorageValue = string>(
             invalidatesToAwait.map(queryKey =>
               queryClient.invalidateQueries({
                 predicate: query => queryCore.matchQuery({ queryKey }, query),
+                refetchType,
               }),
             ),
           )

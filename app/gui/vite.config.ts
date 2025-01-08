@@ -1,6 +1,4 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin'
-/// <reference types="histoire" />
-
 import react from '@vitejs/plugin-react'
 import vue from '@vitejs/plugin-vue'
 import { COOP_COEP_CORP_HEADERS } from 'enso-common'
@@ -77,7 +75,6 @@ export default defineConfig({
         sentryVitePlugin({
           org: process.env.ENSO_CLOUD_SENTRY_ORGANIZATION,
           project: process.env.ENSO_CLOUD_SENTRY_PROJECT,
-          reactComponentAnnotation: { enabled: true },
           ...(process.env.ENSO_VERSION != null ?
             { release: { name: process.env.ENSO_VERSION } }
           : {}),
