@@ -24,6 +24,7 @@ export type ProjectViewTabProps = Omit<
   keyof AllowedComponentProps | keyof VNodeProps
 >
 
+// applyPureVuewInReact returns Function, but this is not enough to satisfy TSX.
 // eslint-disable-next-line no-restricted-syntax
 const ProjectViewTab = applyPureVueInReact(ProjectViewTabVue) as (
   props: ProjectViewTabProps,
