@@ -347,7 +347,12 @@ lprodsum = prod.let "prod" prod->
 ```
 IR:
 ```
-(Select [['let_prodsum', (Let 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing) (Operation 'ADD_NUMBER' [(Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)), (Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing))] Nothing))]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+(Select
+  [['let_prodsum',
+      (Let 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d'
+           (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)
+           (Operation 'ADD_NUMBER' [(Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d'), (Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d')] Nothing))]]
+  (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
