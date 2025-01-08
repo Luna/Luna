@@ -913,10 +913,9 @@ lazy val `syntax-rust-definition` = project
   .enablePlugins(JPMSPlugin)
   .configs(Test)
   .settings(
-    version := mavenUploadVersion,
-    Compile / exportJars := true,
     javadocSettings,
-    publish / skip := false,
+    publishLocalSetting,
+    Compile / exportJars := true,
     autoScalaLibrary := false,
     crossPaths := false,
     libraryDependencies ++= Seq(
@@ -2029,13 +2028,12 @@ lazy val `ydoc-server` = project
 lazy val `persistance` = (project in file("lib/java/persistance"))
   .enablePlugins(JPMSPlugin)
   .settings(
-    version := mavenUploadVersion,
     Test / fork := true,
     commands += WithDebugCommand.withDebug,
     frgaalJavaCompilerSetting,
     annotationProcSetting,
     javadocSettings,
-    publish / skip := false,
+    publishLocalSetting,
     autoScalaLibrary := false,
     crossPaths := false,
     Compile / javacOptions := ((Compile / javacOptions).value),
@@ -2055,9 +2053,8 @@ lazy val `persistance` = (project in file("lib/java/persistance"))
 
 lazy val `persistance-dsl` = (project in file("lib/java/persistance-dsl"))
   .settings(
-    version := mavenUploadVersion,
     frgaalJavaCompilerSetting,
-    publish / skip := false,
+    publishLocalSetting,
     autoScalaLibrary := false,
     crossPaths := false,
     javadocSettings,
@@ -2582,6 +2579,18 @@ lazy val mixedJavaScalaProjectSetting: SettingsDefinition = Seq(
   */
 lazy val javaMethodParametersSetting: SettingsDefinition = Seq(
   javacOptions += "-parameters"
+)
+
+/** Projects that are published to the local Maven repository via `publishM2` task
+  * should incorporate these settings. We need to publish some projects to the local
+  * Maven repo, because they are dependencies of some external projects like `enso4igv`.
+  * By default, all projects are set `publish / skip := true`.
+  */
+lazy val publishLocalSetting: SettingsDefinition = Seq(
+  version := mavenUploadVersion,
+  publish / skip := false,
+  packageDoc / publishArtifact := false,
+  packageSrc / publishArtifact := false
 )
 
 def customFrgaalJavaCompilerSettings(targetJdk: String) = {
@@ -3212,11 +3221,8 @@ lazy val `runtime-parser` =
       scalaModuleDependencySetting,
       mixedJavaScalaProjectSetting,
       javaMethodParametersSetting,
-      version := mavenUploadVersion,
+      publishLocalSetting,
       javadocSettings,
-      publish / skip := false,
-      packageDoc / publishArtifact := false,
-      packageSrc / publishArtifact := false,
       crossPaths := false,
       frgaalJavaCompilerSetting,
       annotationProcSetting,
@@ -3263,7 +3269,8 @@ lazy val `runtime-parser-dsl` =
     .enablePlugins(JPMSPlugin)
     .settings(
       frgaalJavaCompilerSetting,
-      javaMethodParametersSetting
+      javaMethodParametersSetting,
+      publishLocalSetting
     )
 
 lazy val `runtime-parser-processor-tests` =
@@ -3296,6 +3303,7 @@ lazy val `runtime-parser-processor` =
     .settings(
       frgaalJavaCompilerSetting,
       javaMethodParametersSetting,
+      publishLocalSetting,
       Compile / internalModuleDependencies := Seq(
         (`runtime-parser-dsl` / Compile / exportedModule).value
       )
