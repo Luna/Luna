@@ -352,7 +352,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
     isDeleting || isRestoring ? Visibility.faded
     : isRemovingSelf ? Visibility.hidden
     : visibilityRaw === Visibility.visible ? insertionVisibility
-    : (visibilityRaw ?? insertionVisibility)
+    : visibilityRaw ?? insertionVisibility
   const hidden = hiddenRaw || visibility === Visibility.hidden
 
   const setSelected = useEventCallback((newSelected: boolean) => {
