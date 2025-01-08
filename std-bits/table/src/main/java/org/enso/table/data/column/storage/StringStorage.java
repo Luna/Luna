@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountUntrimmed;
@@ -88,13 +89,13 @@ public final class StringStorage extends SpecializedStorage<String> {
   }
 
   /**
-   * Counts the number of cells in the columns with whitespace. If the calculation fails then it
+   * Counts the number of cells in the columns with non trivial whitespace. If the calculation fails then it
    * returns null.
    *
    * @return the number of cells with whitespace
    */
   public Long cachedWhitespaceCount() throws InterruptedException {
-    if (untrimmedCount.isCancelled()) {
+    if (whitespaceCount.isCancelled()) {
       // Need to recompute the value, as was cancelled.
       whitespaceCount =
           CompletableFuture.completedFuture(
@@ -103,7 +104,7 @@ public final class StringStorage extends SpecializedStorage<String> {
     }
 
     try {
-      return untrimmedCount.get();
+      return whitespaceCount.get();
     } catch (ExecutionException e) {
       LOGGER.error("Failed to compute non trivial whitespace count", e);
       return null;
