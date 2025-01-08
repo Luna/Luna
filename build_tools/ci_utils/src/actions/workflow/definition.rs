@@ -82,11 +82,11 @@ pub fn setup_bazel_env() -> Step {
     Step {
         name: Some("Setup required bazel environment".into()),
         r#if: Some(is_windows_runner()),
-        shell: Some(Shell::Cmd),
+        shell: Some(Shell::Pwsh),
         run: Some(
             r#"
-echo "BAZEL_SH=C:\Program Files\Git\bin\bash.exe" >> %GITHUB_ENV%
-echo "BAZEL_VC=C:\BuildTools\VC" >> %GITHUB_ENV%
+"BAZEL_SH=C:\Program Files\Git\bin\bash.exe" >> $env:GITHUB_ENV
+"BAZEL_VC=C:\BuildTools\VC" >> $env:GITHUB_ENV
         "#
             .to_string(), // 17.9.34728.123
         ),
