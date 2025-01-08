@@ -2283,12 +2283,13 @@ lazy val `language-server` = (project in file("engine/language-server"))
     javaModuleName := "org.enso.language.server",
     Compile / moduleDependencies ++=
       Seq(
-        "org.graalvm.polyglot"   % "polyglot"         % graalMavenPackagesVersion,
-        "org.slf4j"              % "slf4j-api"        % slf4jVersion,
-        "commons-cli"            % "commons-cli"      % commonsCliVersion,
-        "commons-io"             % "commons-io"       % commonsIoVersion,
-        "com.google.flatbuffers" % "flatbuffers-java" % flatbuffersVersion,
-        "org.eclipse.jgit"       % "org.eclipse.jgit" % jgitVersion
+        "org.graalvm.polyglot"   % "polyglot"                % graalMavenPackagesVersion,
+        "org.slf4j"              % "slf4j-api"               % slf4jVersion,
+        "commons-cli"            % "commons-cli"             % commonsCliVersion,
+        "commons-io"             % "commons-io"              % commonsIoVersion,
+        "com.google.flatbuffers" % "flatbuffers-java"        % flatbuffersVersion,
+        "org.eclipse.jgit"       % "org.eclipse.jgit"        % jgitVersion,
+        "org.netbeans.api"       % "org-openide-util-lookup" % netbeansApiVersion
       ),
     Compile / internalModuleDependencies := Seq(
       (`akka-wrapper` / Compile / exportedModule).value,
@@ -3697,6 +3698,9 @@ lazy val `engine-runner` = project
       val epbLang =
         (`runtime-language-epb` / Compile / fullClasspath).value
           .map(_.data.getAbsolutePath)
+      val langServer =
+        (`language-server` / Compile / fullClasspath).value
+          .map(_.data.getAbsolutePath)
       val core = (
         runnerDeps ++
           runtimeDeps ++
@@ -3704,6 +3708,7 @@ lazy val `engine-runner` = project
           replDebugInstr ++
           runtimeServerInstr ++
           idExecInstr ++
+          langServer ++
           epbLang
       ).distinct
       val stdLibsJars =
@@ -3795,7 +3800,8 @@ lazy val `engine-runner` = project
               // "-H:-DeleteLocalSymbols",
               // you may need to set smallJdk := None to use following flags:
               // "--trace-class-initialization=org.enso.syntax2.Parser",
-              "-Dnic=nic"
+              "-Dnic=nic",
+              "-Dorg.enso.feature.native.lib.output=" + (engineDistributionRoot.value / "bin")
             ),
             mainClass = Some("org.enso.runner.Main"),
             initializeAtRuntime = Seq(
@@ -3804,6 +3810,7 @@ lazy val `engine-runner` = project
               "org.jline",
               "io.methvin.watchservice",
               "zio.internal",
+              "zio",
               "org.enso.runner",
               "sun.awt",
               "sun.java2d",
@@ -3815,7 +3822,8 @@ lazy val `engine-runner` = project
               "akka.http",
               "org.enso.base",
               "org.enso.image",
-              "org.enso.table"
+              "org.enso.table",
+              "org.eclipse.jgit"
             )
           )
       }
@@ -4570,6 +4578,7 @@ def stdLibComponentRoot(name: String): File =
 val `base-polyglot-root`  = stdLibComponentRoot("Base") / "polyglot" / "java"
 val `table-polyglot-root` = stdLibComponentRoot("Table") / "polyglot" / "java"
 val `image-polyglot-root` = stdLibComponentRoot("Image") / "polyglot" / "java"
+val `image-native-libs`   = stdLibComponentRoot("Image") / "polyglot" / "lib"
 val `google-api-polyglot-root` =
   stdLibComponentRoot("Google_Api") / "polyglot" / "java"
 val `database-polyglot-root` =
@@ -4737,6 +4746,10 @@ lazy val `std-table` = project
   )
   .dependsOn(`std-base` % "provided")
 
+lazy val extractNativeLibs = taskKey[Unit](
+  "Helper task to extract native libraries from OpenCV JAR"
+)
+
 lazy val `std-image` = project
   .in(file("std-bits") / "image")
   .settings(
@@ -4752,15 +4765,21 @@ lazy val `std-image` = project
       "org.netbeans.api"     % "org-openide-util-lookup" % netbeansApiVersion        % "provided",
       "org.openpnp"          % "opencv"                  % opencvVersion
     ),
-    Compile / packageBin := Def.task {
-      val result = (Compile / packageBin).value
-      val _ = StdBits
-        .copyDependencies(
+    // Extract native libraries from opencv.jar, and put them under
+    // Standard/Image/polyglot/lib directory. The minimized opencv.jar will
+    // be put under Standard/Image/polyglot/java directory.
+    extractNativeLibs := {
+      StdBits
+        .extractNativeLibsFromOpenCV(
           `image-polyglot-root`,
-          Seq("std-image.jar"),
-          ignoreScalaLibrary = true
+          `image-native-libs`,
+          opencvVersion
         )
         .value
+    },
+    Compile / packageBin := Def.task {
+      val result = (Compile / packageBin).value
+      val _      = extractNativeLibs.value
       result
     }.value
   )

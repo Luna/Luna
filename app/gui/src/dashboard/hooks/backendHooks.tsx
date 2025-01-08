@@ -10,6 +10,8 @@ import {
   useSuspenseQuery,
   type Mutation,
   type MutationKey,
+  type QueryKey,
+  type UnusedSkipTokenOptions,
   type UseMutationOptions,
   type UseQueryOptions,
   type UseQueryResult,
@@ -54,9 +56,11 @@ import { tryCreateOwnerPermission } from '#/utilities/permissions'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
 
-// The number of bytes in 1 megabyte.
+/** The number of bytes in 1 megabyte. */
 const MB_BYTES = 1_000_000
 const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES)
+/** The maximum number of file chunks to upload at the same time. */
+const FILE_UPLOAD_CONCURRENCY = 5
 
 // ============================
 // === DefineBackendMethods ===
@@ -124,14 +128,24 @@ export function backendQueryOptions<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>
+): UnusedSkipTokenOptions<
+  Awaited<ReturnType<Backend[Method]>>,
+  Error,
+  Awaited<ReturnType<Backend[Method]>>,
+  QueryKey
+>
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
   method: Method,
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
+): UnusedSkipTokenOptions<
+  Awaited<ReturnType<Backend[Method]> | undefined>,
+  Error,
+  Awaited<ReturnType<Backend[Method]> | undefined>,
+  QueryKey
+>
 /** Wrap a backend method call in a React Query. */
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
@@ -1186,20 +1200,31 @@ export function useUploadFileMutation(backend: Backend, options: UploadFileMutat
           body,
           file,
         ])
+        let i = 0
+        let completedChunkCount = 0
         const parts: backendModule.S3MultipartPart[] = []
-        for (const [url, i] of Array.from(
-          presignedUrls,
-          (presignedUrl, index) => [presignedUrl, index] as const,
-        )) {
-          parts.push(await uploadFileChunkMutation.mutateAsync([url, file, i]))
-          const newSentMb = Math.min((i + 1) * S3_CHUNK_SIZE_MB, fileSizeMb)
+        const uploadNextChunk = async (): Promise<void> => {
+          const currentI = i
+          const url = presignedUrls[i]
+          if (url == null) {
+            return
+          }
+          i += 1
+          const promise = uploadFileChunkMutation.mutateAsync([url, file, currentI])
+          // Queue the next chunk to be uploaded after this one.
+          const fullPromise = promise.then(uploadNextChunk)
+          parts[currentI] = await promise
+          completedChunkCount += 1
+          const newSentMb = Math.min(completedChunkCount * S3_CHUNK_SIZE_MB, fileSizeMb)
           setSentMb(newSentMb)
           options.onChunkSuccess?.({
             event: 'chunk',
             sentMb: newSentMb,
             totalMb: fileSizeMb,
           })
+          return fullPromise
         }
+        await Promise.all(Array.from({ length: FILE_UPLOAD_CONCURRENCY }).map(uploadNextChunk))
         const result = await uploadFileEndMutation.mutateAsync([
           {
             parentDirectoryId: body.parentDirectoryId,
