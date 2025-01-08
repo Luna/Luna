@@ -128,9 +128,6 @@ jobs:
           java-version: "21"
           distribution: "graalvm-community"
 
-      - name: Clean sbt
-        run: sbt clean
-
       - name: Publish Enso Libraries to Local Maven Repository
         run: sbt publishM2
 
