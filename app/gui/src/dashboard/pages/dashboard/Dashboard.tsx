@@ -30,7 +30,6 @@ import ProjectsProvider, {
 import type * as assetTable from '#/layouts/AssetsTable'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
-import type * as editor from '#/layouts/Editor'
 import UserBar from '#/layouts/UserBar'
 
 import * as aria from '#/components/aria'
@@ -55,7 +54,6 @@ import { DashboardTabPanels } from './DashboardTabPanels'
 export interface DashboardProps {
   /** Whether the application may have the local backend running. */
   readonly supportsLocalBackend: boolean
-  readonly appRunner: editor.GraphEditorRunner | null
   readonly initialProjectName: string | null
   readonly ydocUrl: string | null
 }
@@ -98,7 +96,7 @@ function fileURLToPath(url: string): string | null {
 
 /** The component that contains the entire UI. */
 function DashboardInner(props: DashboardProps) {
-  const { appRunner, initialProjectName: initialProjectNameRaw, ydocUrl } = props
+  const { initialProjectName: initialProjectNameRaw, ydocUrl } = props
   const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
   const { modalRef } = modalProvider.useModalRef()
@@ -278,7 +276,6 @@ function DashboardInner(props: DashboardProps) {
           </div>
 
           <DashboardTabPanels
-            appRunner={appRunner}
             initialProjectName={initialProjectName}
             ydocUrl={ydocUrl}
             assetManagementApiRef={assetManagementApiRef}
