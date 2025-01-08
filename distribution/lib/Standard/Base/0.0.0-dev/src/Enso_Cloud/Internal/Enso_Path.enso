@@ -1,8 +1,5 @@
 private
 
-import project.Data.Ordering.Comparable
-import project.Data.Ordering.Ordering
-import project.Data.Ordering.Vector_Lexicographic_Order
 import project.Data.Text.Text
 import project.Data.Vector.Vector
 import project.Enso_Cloud.Enso_File.Enso_File
@@ -13,7 +10,6 @@ import project.Errors.Unimplemented.Unimplemented
 import project.Internal.Path_Helpers
 import project.Nothing.Nothing
 from project.Data.Boolean import Boolean, False, True
-from project.Data.Ordering import default_comparator_hash
 from project.Data.Text.Extensions import all
 
 ## PRIVATE
@@ -76,14 +72,3 @@ normalize segments =
         ## We need to call normalize again, because technically a path `enso://a/../~/../../~` is a valid path
            that points to the user home and it should be correctly normalized, but requires numerous passes to do so.
         @Tail_Call normalize new_segments
-
-## PRIVATE
-type Enso_Path_Comparator
-    ## PRIVATE
-    compare x y = Vector_Lexicographic_Order.compare x.path_segments y.path_segments
-
-    ## PRIVATE
-    hash x = default_comparator_hash x
-
-## PRIVATE
-Comparable.from that:Enso_Path = Comparable.new that Enso_Path_Comparator
