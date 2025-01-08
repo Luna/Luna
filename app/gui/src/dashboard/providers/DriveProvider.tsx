@@ -283,14 +283,6 @@ export function useExpandedDirectories() {
   return zustand.useStore(store, (state) => state.expandedDirectories)
 }
 
-/** A function to set the expanded directoyIds in the Asset Table. */
-export function useSetExpandedDirectories() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setExpandedDirectories, {
-    unsafeEnableTransition: true,
-  })
-}
-
 /** The selected keys in the Asset Table. */
 export function useSelectedKeys() {
   const store = useDriveStore()
@@ -323,7 +315,10 @@ export function useSetVisuallySelectedKeys() {
 export function useToggleDirectoryExpansion() {
   const driveStore = useDriveStore()
   const { category } = useCategoriesAPI()
-  const setExpandedDirectories = useSetExpandedDirectories()
+  const setExpandedDirectories = zustand.useStore(
+    driveStore,
+    (store) => store.setExpandedDirectories,
+  )
 
   return useEventCallback(
     (ids: readonly DirectoryId[], override?: boolean, categoryId = category.id) => {
