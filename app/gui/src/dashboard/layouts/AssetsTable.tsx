@@ -139,7 +139,6 @@ import {
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
-import { withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'

@@ -1,5 +1,5 @@
 /** @file The directory header bar and directory item listing. */
-import { memo, useDeferredValue, useEffect, useState, type Ref } from 'react'
+import { memo, useDeferredValue, useEffect, useState } from 'react'
 
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
@@ -16,7 +16,10 @@ import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
 import { useOffline } from '#/hooks/offlineHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { AssetPanel } from '#/layouts/AssetPanel'
-import AssetsTable, { AssetManagementApi, AssetsTableAssetsUnselector } from '#/layouts/AssetsTable'
+import AssetsTable, {
+  type AssetManagementApi,
+  AssetsTableAssetsUnselector,
+} from '#/layouts/AssetsTable'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
