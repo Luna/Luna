@@ -198,49 +198,104 @@ table expression as a `From_Spec`, a set of simple column expressions as
 
 # Examples
 
+In each of the examples below, there is an Enso value, followed by the SQL that the value is compiled into, and the results of the query. The first three examples are table expressions, and the second three are column expressions.
 
+Enso:
+```
 t = table_builder [['x', [1, 2]], ['y', [10, 20]]]
+```
+SQL:
+```
 SQL_Statement SELECT table_0.x AS x, table_0.y AS y FROM table_0 AS table_0 with values []
+```
+Results:
+```
  x | y
 ---+----
  1 | 10
  2 | 20
+```
 
+Enso:
+```
 tc = t . set ((t.at 'x') * (t.at 'x')) as="prod"
+```
+SQL:
+```
 SQL_Statement SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod FROM table_0 AS table_0 with values []
+```
+Results:
+```
  x | y  | prod
 ---+----+------
  1 | 10 | 1
  2 | 20 | 4
+```
 
+Enso:
+```
 tcsq = tc.as_subquery
+```
+SQL:
+```
 SQL_Statement SELECT table_0.x AS x, table_0.y AS y, table_0.prod AS prod FROM (SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod FROM table_0 AS table_0) AS table_0 with values []
+```
+Results:
+```
  x | y  | prod
 ---+----+------
  1 | 10 | 1
  2 | 20 | 4
+```
 
+Enso:
+```
 prod = tc.at "prod"
+```
+SQL:
+```
 SQL_Statement SELECT (table_0.x * table_0.x) AS prod FROM table_0 AS table_0 with values []
+```
+Results:
+```
  prod
 ------
  1
  4
+```
 
+Enso:
+```
 prodsum = (prod + prod) . rename "prodsum"
+```
+SQL:
+```
 SQL_Statement SELECT ((table_0.x * table_0.x) + (table_0.x * table_0.x)) AS prodsum FROM table_0 AS table_0 with values []
+```
+Results:
+```
  prodsum
 ---------
  2
  8
+```
 
+Enso:
+```
 lprodsum = prod.let "prod" prod->
+```
+SQL:
+```
     (prod + prod) . rename "let_prodsum"
+    ```
+Results:
+```
 SQL_Statement SELECT (WITH prod_0 AS (SELECT ((table_0.x * table_0.x)) AS x) SELECT (prod_0.x + prod_0.x) FROM prod_0) AS let_prodsum FROM table_0 AS table_0 with values []
  let_prodsum
 -------------
  2
  8
+```
 
 # Context Extensions
 
