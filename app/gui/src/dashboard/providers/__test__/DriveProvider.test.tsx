@@ -1,5 +1,6 @@
+import { Suspense } from '#/components/Suspense'
 import { DirectoryId } from '#/services/Backend'
-import { act, renderHook, type RenderHookOptions, type RenderHookResult } from '#/test'
+import { act, renderHook, waitFor, type RenderHookOptions, type RenderHookResult } from '#/test'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
 import { useStore } from 'zustand'
@@ -20,6 +21,7 @@ function renderDriveProviderHook<Result, Props>(
       return { ...result, setCategoryId }
     },
     {
+      ...options,
       wrapper: ({ children }) => {
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const [category, setCategory] = useState(() => currentCategoryId)
@@ -28,51 +30,59 @@ function renderDriveProviderHook<Result, Props>(
           setCategory(nextCategoryId)
           doResetAssetTableState()
         }
+        console.log('C2')
 
         return (
-          <DriveProvider
-            launchedProjects={[]}
-            cloudCategories={[]}
-            localCategories={[]}
-            // UNSAFE, but fine in this case as this value is not accessed as
-            // the categories lists above are empty.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            remoteBackend={null!}
-            localBackend={null}
-          >
-            {({ resetAssetTableState }) => {
-              doResetAssetTableState = resetAssetTableState
-              return children
-            }}
-          </DriveProvider>
+          <Suspense>
+            <DriveProvider
+              launchedProjects={[]}
+              cloudCategories={[]}
+              localCategories={[]}
+              // UNSAFE, but fine in this case as this value is not accessed as
+              // the categories lists above are empty.
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              remoteBackend={null!}
+              localBackend={null}
+            >
+              {({ resetAssetTableState }) => {
+                doResetAssetTableState = resetAssetTableState
+                console.log('C')
+                return children
+              }}
+            </DriveProvider>
+          </Suspense>
         )
       },
-      ...options,
     },
   )
 }
 
-describe('<DriveProvider />', () => {
-  it('Should reset expanded directory ids when category changes', () => {
-    const driveAPI = renderDriveProviderHook((setCategoryId: (categoryId: CategoryId) => void) => {
-      const store = useDriveStore()
-      return useStore(
-        store,
-        ({
-          toggleDirectoryExpansion,
-          expandedDirectories,
-          selectedKeys,
-          visuallySelectedKeys,
-        }) => ({
-          expandedDirectories,
-          toggleDirectoryExpansion,
-          setCategoryId,
-          selectedKeys,
-          visuallySelectedKeys,
-        }),
-      )
-    })
+describe('<DriveProvider />', async () => {
+  const driveAPI = renderDriveProviderHook((setCategoryId: (categoryId: CategoryId) => void) => {
+    const store = useDriveStore()
+    return useStore(
+      store,
+      ({ toggleDirectoryExpansion, expandedDirectories, selectedKeys, visuallySelectedKeys }) => ({
+        expandedDirectories,
+        toggleDirectoryExpansion,
+        setCategoryId,
+        selectedKeys,
+        visuallySelectedKeys,
+      }),
+    )
+  })
 
+  await waitFor(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (driveAPI.result.current == null) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000)
+      })
+      throw new Error()
+    }
+  })
+
+  it('Should reset expanded directory ids when category changes', () => {
     act(() => {
       driveAPI.result.current.toggleDirectoryExpansion(
         [DirectoryId('directory-test-123')],

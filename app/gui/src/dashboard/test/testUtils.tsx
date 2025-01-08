@@ -21,16 +21,12 @@ import { createQueryClient } from 'enso-common/src/queryClient'
 import { useState, type PropsWithChildren, type ReactElement, type ReactNode } from 'react'
 import invariant from 'tiny-invariant'
 
-/**
- * A wrapper that passes through its children.
- */
+/** A wrapper that passes through its children. */
 function PassThroughWrapper({ children }: PropsWithChildren) {
   return children
 }
 
-/**
- * A wrapper that provides the {@link UIProviders} context.
- */
+/** A wrapper that provides the {@link UIProviders} context. */
 function UIProvidersWrapper({
   children,
 }: {
@@ -47,25 +43,19 @@ function UIProvidersWrapper({
   )
 }
 
-/**
- * A wrapper that provides the {@link Form} context.
- */
+/** A wrapper that provides the {@link Form} context. */
 function FormWrapper<Schema extends TSchema, SubmitResult = void>(
   props: FormProps<Schema, SubmitResult>,
 ) {
   return <Form {...props} />
 }
 
-/**
- * Result type for {@link renderWithRoot}.
- */
+/** Result type for {@link renderWithRoot}. */
 interface RenderWithRootResult extends RenderResult {
   readonly queryClient: QueryClient
 }
 
-/**
- * Custom render function for tests.
- */
+/** Custom render function for tests. */
 function renderWithRoot(
   ui: ReactElement,
   options?: Omit<RenderOptions, 'queries'>,
@@ -75,6 +65,7 @@ function renderWithRoot(
   let queryClient: QueryClient
 
   const result = render(ui, {
+    ...rest,
     wrapper: ({ children }) => (
       <UIProvidersWrapper>
         {({ queryClient: queryClientFromWrapper }) => {
@@ -83,7 +74,6 @@ function renderWithRoot(
         }}
       </UIProvidersWrapper>
     ),
-    ...rest,
   })
 
   return {
@@ -94,16 +84,12 @@ function renderWithRoot(
   } as const
 }
 
-/**
- * Result type for {@link renderWithForm}.
- */
+/** Result type for {@link renderWithForm}. */
 interface RenderWithFormResult<Schema extends TSchema> extends RenderWithRootResult {
   readonly form: FormInstance<Schema>
 }
 
-/**
- * Adds a form wrapper to the component.
- */
+/** Adds a form wrapper to the component. */
 function renderWithForm<Schema extends TSchema, SubmitResult = void>(
   ui: ReactElement,
   options: Omit<RenderOptions, 'queries' | 'wrapper'> & {
@@ -134,50 +120,44 @@ function renderWithForm<Schema extends TSchema, SubmitResult = void>(
   } as const
 }
 
-/**
- * Result type for {@link renderHookWithRoot}.
- */
+/** Result type for {@link renderHookWithRoot}. */
 interface RenderHookWithRootResult<Result, Props> extends RenderHookResult<Result, Props> {
   readonly queryClient: QueryClient
 }
 
-/**
- * A custom renderHook function for tests.
- */
+/** A custom renderHook function for tests. */
 function renderHookWithRoot<Result, Props>(
   hook: (props: Props) => Result,
   options?: Omit<RenderHookOptions<Props>, 'queries'>,
 ): RenderHookWithRootResult<Result, Props> {
   let queryClient: QueryClient | undefined
-  console.log(':3')
 
-  const result = renderHook(hook, {
-    wrapper: ({ children }) => (
-      <UIProvidersWrapper>
-        {({ queryClient: queryClientFromWrapper }) => {
-          queryClient = queryClientFromWrapper
-          return <>{children}</>
-        }}
-      </UIProvidersWrapper>
-    ),
+  const result = renderHook((props) => hook(props), {
     ...options,
+    wrapper: ({ children }) => {
+      children = options?.wrapper ? <options.wrapper>{children}</options.wrapper> : children
+      return (
+        <UIProvidersWrapper>
+          {({ queryClient: queryClientFromWrapper }) => {
+            queryClient = queryClientFromWrapper
+            return <>{children}</>
+          }}
+        </UIProvidersWrapper>
+      )
+    },
   })
-  invariant(queryClient, 'QueryClient must exist')
+  invariant(queryClient, '`QueryClient` must exist')
 
   return { ...result, queryClient } as const
 }
 
-/**
- * Result type for {@link renderHookWithForm}.
- */
+/** Result type for {@link renderHookWithForm}. */
 interface RenderHookWithFormResult<Result, Props, Schema extends TSchema>
   extends RenderHookWithRootResult<Result, Props> {
   readonly form: FormInstance<Schema>
 }
 
-/**
- * A custom renderHook function for tests that provides the {@link Form} context.
- */
+/** A custom renderHook function for tests that provides the {@link Form} context. */
 function renderHookWithForm<Result, Props, Schema extends TSchema, SubmitResult = void>(
   hook: (props: Props) => Result,
   options: Omit<RenderHookOptions<Props>, 'queries' | 'wrapper'> & {

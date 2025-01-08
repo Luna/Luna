@@ -112,10 +112,7 @@ async function computeInitialExpandedDirectories(
       }
       promises.push(
         backend.tryGetAssetAncestors(project, category.id).then((ancestors) => {
-          if (!ancestors) {
-            return
-          }
-          for (const ancestor of ancestors) {
+          for (const ancestor of ancestors ?? []) {
             set.add(ancestor)
           }
         }),
