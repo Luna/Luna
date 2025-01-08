@@ -97,7 +97,7 @@ function DashboardInner2(props: DashboardInner2Props) {
   const projectsStore = useProjectsStore()
   // MUST NOT be reactive as it should not cause the entire dashboard to re-render.
   const launchedProjects = projectsStore.getState().launchedProjects
-  const categoriesAPI = useCategoriesAPI()
+  const { cloudCategories, localCategories } = useCategoriesAPI()
   const remoteBackend = backendProvider.useRemoteBackend()
   const localBackend = backendProvider.useLocalBackend()
 
@@ -106,7 +106,8 @@ function DashboardInner2(props: DashboardInner2Props) {
      * due to modals being in `TheModal`. */
     <DriveProvider
       launchedProjects={launchedProjects}
-      categoriesAPI={categoriesAPI}
+      cloudCategories={cloudCategories.categories}
+      localCategories={localCategories.categories}
       remoteBackend={remoteBackend}
       localBackend={localBackend}
     >
