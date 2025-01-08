@@ -18,10 +18,7 @@ import org.enso.interpreter.runtime.builtin.BuiltinObject;
 import org.enso.interpreter.runtime.error.PanicException;
 
 @ExportLibrary(InteropLibrary.class)
-@Builtin(
-    pkg = "date",
-    name = EnsoDuration.builtinName,
-    stdlibName = "Standard.Base.Data.Time.Duration.Duration")
+@Builtin(pkg = "date", name = "Duration", stdlibName = "Standard.Base.Data.Time.Duration.Duration")
 public final class EnsoDuration extends BuiltinObject {
   private final Duration duration;
 

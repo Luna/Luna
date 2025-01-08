@@ -19,7 +19,6 @@ public final class EnsoBigInteger extends BuiltinObject {
    * @param value the value to wrap.
    */
   public EnsoBigInteger(BigInteger value) {
-    super("Integer");
     assert (value.bitLength() > 63) : "Too small BigInteger: " + value;
     this.value = value;
   }

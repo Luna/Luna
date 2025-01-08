@@ -17,7 +17,7 @@ import org.enso.interpreter.runtime.data.text.Text;
 @ExportLibrary(InteropLibrary.class)
 @Builtin(
     pkg = "date",
-    name = EnsoTimeOfDay.builtinName,
+    name = "TimeOfDay",
     stdlibName = "Standard.Base.Data.Time.Time_Of_Day.Time_Of_Day")
 public final class EnsoTimeOfDay extends BuiltinObject {
 

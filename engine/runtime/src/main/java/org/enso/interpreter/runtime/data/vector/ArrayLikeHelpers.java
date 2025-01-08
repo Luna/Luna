@@ -14,6 +14,11 @@ public final class ArrayLikeHelpers extends BuiltinObject {
 
   private ArrayLikeHelpers() {}
 
+  @Override
+  protected String builtinName() {
+    return "Array_Like_Helpers";
+  }
+
   @Builtin.Method(
       name = "new_array_proxy_builtin",
       description = "Creates an array backed by a proxy object.")

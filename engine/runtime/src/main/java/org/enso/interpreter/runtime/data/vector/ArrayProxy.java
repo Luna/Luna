@@ -28,7 +28,6 @@ final class ArrayProxy extends BuiltinObject {
   private final Object at;
 
   private ArrayProxy(long length, Object at) {
-    super("Array");
     assert length >= 0;
     assert InteropLibrary.getUncached().isExecutable(at);
     this.length = length;

@@ -33,12 +33,10 @@ public final class Text extends BuiltinObject {
   }
 
   private Text(String string) {
-    super("Text");
     this.contents = string;
   }
 
   private Text(ConcatRope contents) {
-    super("Text");
     this.contents = contents;
   }
 
