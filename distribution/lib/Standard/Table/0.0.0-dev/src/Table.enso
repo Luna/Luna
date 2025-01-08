@@ -1560,7 +1560,8 @@ type Table
 
             new_columns = self.columns.map on_problems=No_Wrap.Value column-> if selected_column_names.contains_key column.name . not then column else
                 column_value_type = column.value_type
-                if Auto != type && column_value_type.is_same_type type then column else
+                already_parsed = Auto != type && column_value_type.is_same_type type
+                if already_parsed then column else
                     Value_Type.expect_text column <|
                         storage = column.java_column.getStorage
                         new_storage = Java_Problems.with_problem_aggregator on_problems java_problem_aggregator->

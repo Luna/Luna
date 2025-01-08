@@ -2321,7 +2321,7 @@ type DB_Table
         selected.fold self table-> column_to_parse->
             column_value_type = column_to_parse.value_type
             already_parsed = Auto != type && column_value_type.is_same_type type
-            if already_parsed.not then
+            if already_parsed then table else
                 new_column = column_to_parse.parse type format on_problems
                 table.set new_column as=column_to_parse.name set_mode=Set_Mode.Update
 
