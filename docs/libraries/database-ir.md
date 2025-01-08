@@ -219,7 +219,8 @@ IR:
 ```
 SQL:
 ```
-SQL_Statement SELECT table_0.x AS x, table_0.y AS y FROM table_0 AS table_0 with values []
+SELECT table_0.x AS x, table_0.y AS y
+FROM table_0 AS table_0
 ```
 Results:
 ```
@@ -245,7 +246,8 @@ IR:
 ```
 SQL:
 ```
-SQL_Statement SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod FROM table_0 AS table_0 with values []
+SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod
+FROM table_0 AS table_0
 ```
 Results:
 ```
@@ -275,7 +277,9 @@ IR:
 ```
 SQL:
 ```
-SQL_Statement SELECT table_0.x AS x, table_0.y AS y, table_0.prod AS prod FROM (SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod FROM table_0 AS table_0) AS table_0 with values []
+SELECT table_0.x AS x, table_0.y AS y, table_0.prod AS prod
+FROM (SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod
+      FROM table_0 AS table_0) AS table_0
 ```
 Results:
 ```
@@ -301,7 +305,8 @@ IR:
 ```
 SQL:
 ```
-SQL_Statement SELECT (table_0.x * table_0.x) AS prod FROM table_0 AS table_0 with values []
+SELECT (table_0.x * table_0.x) AS prod
+FROM table_0 AS table_0
 ```
 Results:
 ```
@@ -327,7 +332,8 @@ IR:
 ```
 SQL:
 ```
-SQL_Statement SELECT ((table_0.x * table_0.x) + (table_0.x * table_0.x)) AS prodsum FROM table_0 AS table_0 with values []
+SELECT ((table_0.x * table_0.x) + (table_0.x * table_0.x)) AS prodsum
+FROM table_0 AS table_0
 ```
 Results:
 ```
@@ -344,6 +350,7 @@ This nests the product column expression inside a `with` clause, so it is not re
 Enso:
 ```
 lprodsum = prod.let "prod" prod->
+    (prod + prod) . rename "let_prodsum"
 ```
 IR:
 ```
@@ -356,11 +363,12 @@ IR:
 ```
 SQL:
 ```
-    (prod + prod) . rename "let_prodsum"
-    ```
+SELECT (WITH prod_0 AS (SELECT ((table_0.x * table_0.x)) AS x)\
+             SELECT (prod_0.x + prod_0.x) FROM prod_0) AS let_prodsum
+             FROM table_0 AS table_0
+```
 Results:
 ```
-SQL_Statement SELECT (WITH prod_0 AS (SELECT ((table_0.x * table_0.x)) AS x) SELECT (prod_0.x + prod_0.x) FROM prod_0) AS let_prodsum FROM table_0 AS table_0 with values []
  let_prodsum
 -------------
  2
