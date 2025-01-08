@@ -17,16 +17,15 @@ import type { AssetColumnProps } from '../column'
 /** Information for a path segment. */
 interface PathSegmentInfo {
   readonly id: DirectoryId
-  readonly categoryId: AnyCloudCategory['id'] | null
+  readonly categoryId: AnyCloudCategory['id']
   readonly label: AnyCloudCategory['label']
   readonly icon: AnyCloudCategory['icon']
 }
 
 /** A column displaying the path of the asset. */
 export default function PathColumn(props: AssetColumnProps) {
-  const { item, state } = props
+  const { item } = props
   const { virtualParentsPath, parentsPath } = item
-  const { getAssetNodeById } = state
 
   const { setCategory } = useCategoriesAPI()
   const setSelectedKeys = useSetSelectedKeys()
@@ -66,18 +65,9 @@ export default function PathColumn(props: AssetColumnProps) {
       // If it happens, it means you've skrewed up
       invariant(rootDirectoryInThePath != null, 'Root directory id is null')
 
-      // If the target directory is null, we assume that this directory is outside of the current tree (in another category)
-      // Which is the default, because the path path displays in the recent and trash folders.
-      // But sometimes the user might delete a directory with its whole content, and in that case we'll find it in the tree
-      // because the parent is always fetched before its children.
-      const targetDirectoryNode = getAssetNodeById(targetDirectory)
-
-      if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
-        setCategory(rootDirectoryInThePath.categoryId)
-      }
-
+      setCategory(rootDirectoryInThePath.categoryId)
       const newItems = segments.map(({ id }) => id).concat(targetDirectory)
-      toggleDirectoryExpansion(newItems, true, rootDirectoryInThePath.categoryId ?? undefined)
+      toggleDirectoryExpansion(newItems, rootDirectoryInThePath.categoryId, true)
 
       setSelectedKeys(new Set([targetDirectory]))
     },
@@ -120,7 +110,7 @@ export default function PathColumn(props: AssetColumnProps) {
         id,
         label: name,
         icon: FolderIcon,
-        categoryId: null,
+        categoryId: rootCategory.id,
       })
     }
 

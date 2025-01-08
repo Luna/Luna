@@ -11,7 +11,6 @@ import type {
   Category,
   CategoryId,
 } from '#/layouts/CategorySwitcher/Category'
-import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { LaunchedProject } from '#/providers/ProjectsProvider'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
@@ -373,14 +372,13 @@ export function useSetVisuallySelectedKeys() {
 /** Toggle whether a specific directory is expanded. */
 export function useToggleDirectoryExpansion() {
   const driveStore = useDriveStore()
-  const { category } = useCategoriesAPI()
   const setExpandedDirectories = zustand.useStore(
     driveStore,
     (store) => store.setExpandedDirectories,
   )
 
   return useEventCallback(
-    (ids: readonly DirectoryId[], override?: boolean, categoryId = category.id) => {
+    (ids: readonly DirectoryId[], categoryId: CategoryId, override?: boolean) => {
       const expandedDirectories = driveStore.getState().expandedDirectories
       const directories = expandedDirectories[categoryId]
       let count = 0

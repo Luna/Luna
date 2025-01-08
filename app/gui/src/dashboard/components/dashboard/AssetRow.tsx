@@ -712,7 +712,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 window.setTimeout(() => {
                   setSelected(false)
                 })
-                toggleDirectoryExpansion([asset.id])
+                toggleDirectoryExpansion([asset.id], category.id)
               }
             }}
             onContextMenu={(event) => {
