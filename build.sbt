@@ -3215,6 +3215,8 @@ lazy val `runtime-parser` =
       version := mavenUploadVersion,
       javadocSettings,
       publish / skip := false,
+      packageDoc / publishArtifact := false,
+      packageSrc / publishArtifact := false,
       crossPaths := false,
       frgaalJavaCompilerSetting,
       annotationProcSetting,
