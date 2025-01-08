@@ -449,7 +449,7 @@ type Enso_File
                             file = Enso_File.Value (self.enso_path.resolve asset.name)
                             Asset_Cache.update file asset
                             file
-                        results.sort on=(f-> f.enso_path.path_segments) by=Vector_Lexicographic_Order.compare
+                        results.sort on=.path
 
     ## GROUP Output
        ICON folder_add

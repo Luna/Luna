@@ -188,7 +188,7 @@ type S3_File
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
                     files = pair.second . map key->
                         S3_File.Value (S3_Path.Value bucket key) self.credentials
-                    (sub_folders + files) . sort on=(f-> [f.s3_path.bucket, f.s3_path.key]) by=Vector_Lexicographic_Order.compare
+                    (sub_folders + files) . sort on=.path
 
     ## ALIAS load bytes, open bytes
        ICON data_input
