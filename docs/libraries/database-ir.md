@@ -213,7 +213,9 @@ t = table_builder [['x', [1, 2]], ['y', [10, 20]]]
 ```
 IR:
 ```
-(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+(Select
+  [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')]]
+  (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -237,7 +239,9 @@ tc = t . set ((t.at 'x') * (t.at 'x')) as="prod"
 ```
 IR:
 ```
-(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+(Select
+  [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]]
+  (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -261,7 +265,13 @@ tcsq = tc.as_subquery
 ```
 IR:
 ```
-(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Column 'table_0' 'prod')]] (Context.Value (Sub_Query [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []) 'table_0') [] [] [] Nothing []))
+(Select
+  [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Column 'table_0' 'prod')]]
+  (Context.Value
+    (Sub_Query
+      [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]]
+      (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []) 'table_0')
+    [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -285,7 +295,9 @@ prod = tc.at "prod"
 ```
 IR:
 ```
-(Select [['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+(Select
+  [['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]]
+  (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -309,7 +321,9 @@ prodsum = (prod + prod) . rename "prodsum"
 ```
 IR:
 ```
-(Select [['prodsum', (Operation 'ADD_NUMBER' [(Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing), (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+(Select
+  [['prodsum', (Operation 'ADD_NUMBER' [(Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing), (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)] Nothing)]]
+  (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
