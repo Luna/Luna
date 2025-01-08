@@ -41,7 +41,7 @@ polyglot java import org.enso.base.Time_Utils
 polyglot java import org.enso.table.data.column.operation.cast.CastProblemAggregator
 polyglot java import org.enso.table.data.column.operation.CountNothing
 polyglot java import org.enso.table.data.column.operation.CountUntrimmed
-polyglot java import org.enso.table.data.column.operation.CountWhitespace
+polyglot java import org.enso.table.data.column.operation.CountNonTrivialWhitespace
 polyglot java import org.enso.table.data.column.operation.unary.DatePartOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsEmptyOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsFiniteOperation
@@ -2230,7 +2230,7 @@ type Column
     count_non_trivial_whitespace : Integer -> Integer | Nothing
     count_non_trivial_whitespace self sample_size:Integer=Column.default_sample_size =
         if (self.value_type == Value_Type.Mixed || self.value_type.is_text).not then Nothing else
-            CountWhitespace.apply self.java_column sample_size
+            CountNonTrivialWhitespace.apply self.java_column sample_size
 
     ## PRIVATE
        Default size for sampling data quality indicators.

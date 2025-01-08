@@ -7,8 +7,8 @@ import java.util.concurrent.Future;
 
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
+import org.enso.table.data.column.operation.CountNonTrivialWhitespace;
 import org.enso.table.data.column.operation.CountUntrimmed;
-import org.enso.table.data.column.operation.CountWhitespace;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.MapOperationStorage;
@@ -47,7 +47,7 @@ public final class StringStorage extends SpecializedStorage<String> {
 
     whitespaceCount =
         CompletableFuture.supplyAsync(
-            () -> CountWhitespace.compute(this, CountWhitespace.DEFAULT_SAMPLE_SIZE, null));
+            () -> CountNonTrivialWhitespace.compute(this, CountNonTrivialWhitespace.DEFAULT_SAMPLE_SIZE, null));
   }
 
   @Override
@@ -99,8 +99,8 @@ public final class StringStorage extends SpecializedStorage<String> {
       // Need to recompute the value, as was cancelled.
       whitespaceCount =
           CompletableFuture.completedFuture(
-              CountWhitespace.compute(
-                  this, CountWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+              CountNonTrivialWhitespace.compute(
+                  this, CountNonTrivialWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {

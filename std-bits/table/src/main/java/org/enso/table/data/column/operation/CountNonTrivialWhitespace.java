@@ -1,13 +1,14 @@
 package org.enso.table.data.column.operation;
 
 import java.util.Random;
+
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.storage.ColumnStorage;
 import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.table.Column;
 import org.graalvm.polyglot.Context;
 
-public class CountWhitespace {
+public class CountNonTrivialWhitespace {
   // Default seed for random number generation (no specific reason for this value, just stability on
   // result).
 
