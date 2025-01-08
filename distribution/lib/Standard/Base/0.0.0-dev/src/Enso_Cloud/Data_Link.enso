@@ -183,6 +183,7 @@ type Data_Link
    A type class that file systems can implement to indicate their custom logic for handling data links.
    A type that implements this type class should provide `is_data_link` method.
 type Data_Link_From_File
+    ## PRIVATE
     Value underlying
 
     ## PRIVATE
