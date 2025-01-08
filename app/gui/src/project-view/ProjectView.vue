@@ -132,8 +132,4 @@ onDeactivated(() => (visible.value = false))
 :deep(.clickable) {
   cursor: pointer;
 }
-
-:deep([data-use-vue-component-wrap]) {
-  display: contents !important;
-}
 </style>

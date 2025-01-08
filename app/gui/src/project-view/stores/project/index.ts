@@ -83,20 +83,27 @@ function initializeDataConnection(clientId: Uuid, url: string, abort: AbortScope
 export type ProjectStore = ReturnType<typeof useProjectStore>
 
 /**
+ * Properties of the project.
+ *
+ * This is a subset of ProjectView props which is used to set up the store.
+ */
+export interface ProjectProps {
+  projectId: string
+  projectName: string
+  projectDisplayedName: string
+  projectNamespace?: string | undefined
+  renameProject: (newName: string) => void
+  engine: LsUrls
+}
+
+/**
  * The project store synchronizes and holds the open project-related data. The synchronization is
  * performed using a CRDT data types from Yjs. Once the data is synchronized with a "LS bridge"
  * client, it is submitted to the language server as a document update.
  */
 export const [provideProjectStore, useProjectStore] = createContextStore(
   'project',
-  (props: {
-    projectId: string
-    projectName: string
-    projectDisplayedName: string
-    projectNamespace?: string | undefined
-    renameProject: (newName: string) => void
-    engine: LsUrls
-  }) => {
+  (props: ProjectProps) => {
     const { projectId, renameProject: renameProjectBackend } = props
     const abort = useAbortScope()
 

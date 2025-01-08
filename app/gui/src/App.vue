@@ -47,9 +47,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
-    <TooltipDisplayer :registry="appTooltips" />
-  </Teleport>
   <div :class="['App', ...classSet.keys()]">
     <ProjectView v-if="projectViewOnly" v-bind="projectViewOnly.options" />
     <ReactRootWrapper
@@ -59,6 +56,7 @@ onMounted(() => {
       @authenticated="onAuthenticated ?? (() => {})"
     />
   </div>
+  <TooltipDisplayer :registry="appTooltips" />
 </template>
 
 <style>
