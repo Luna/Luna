@@ -44,7 +44,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const isExpanded = useStore(
     driveStore,
-    (storeState) => storeState.expandedDirectories[category.rootPath]?.includes(item.id) ?? false,
+    (storeState) => storeState.expandedDirectories[category.id]?.has(item.id) ?? false,
   )
 
   const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))

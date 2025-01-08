@@ -14,7 +14,7 @@ import {
 } from '#/providers/DriveProvider'
 import type { DirectoryId } from '#/services/Backend'
 import { isDirectoryId } from '#/services/Backend'
-import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+import { mapEntries, unsafeMutable } from 'enso-common/src/utilities/data/object'
 import { Fragment, useTransition } from 'react'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
@@ -72,13 +72,18 @@ export default function PathColumn(props: AssetColumnProps) {
 
     if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
       setCategory(rootDirectoryInThePath.categoryId)
-      const expandedDirectories = structuredClone(driveStore.getState().expandedDirectories)
+      const expandedDirectories = mapEntries(
+        driveStore.getState().expandedDirectories,
+        (_k, v) => new Set(v),
+      )
       // This is SAFE, as it is a fresh copy that has been deep cloned above.
-      const directoryList = expandedDirectories[category.rootPath]
+      const directoryList = expandedDirectories[category.id]
       if (directoryList) {
-        unsafeMutable(directoryList).push(
-          ...pathToDirectory.map(({ id }) => id).concat(targetDirectory),
-        )
+        const mutableDirectoryList = unsafeMutable(directoryList)
+        const newItems = pathToDirectory.map(({ id }) => id).concat(targetDirectory)
+        for (const newItem of newItems) {
+          mutableDirectoryList.add(newItem)
+        }
       }
       setExpandedDirectories(expandedDirectories)
     }

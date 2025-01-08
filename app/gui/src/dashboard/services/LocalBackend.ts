@@ -91,11 +91,6 @@ export function extractTypeAndId<Id extends backend.AssetId>(id: Id): AssetTypeA
   }
 }
 
-/** Whether the given path is a descendant of another path. */
-export function isDescendantPath(path: backend.Path, possibleAncestor: backend.Path) {
-  return path.startsWith(`${possibleAncestor}/`)
-}
-
 // ====================
 // === LocalBackend ===
 // ====================
@@ -787,20 +782,18 @@ export default class LocalBackend extends Backend {
           category = newDirectoryId(this.rootPath())
         }
         if (backend.isDirectoryId(category)) {
+          const categoryPath = extractTypeAndId(category).id
           const path = extractTypeAndId(asset.parentId).id
-          const strippedPath = path.replace(`${category}/`, '')
+          const strippedPath = path.replace(`${categoryPath}/`, '')
           if (strippedPath === path) {
             return null
           }
-          let parentPath = String(category)
+          let parentPath = String(categoryPath)
           const parents = strippedPath.split('/')
           const parentIds: backend.DirectoryId[] = []
           for (const parent of parents) {
             parentPath += `/${parent}`
             const currentParentPath = backend.Path(parentPath)
-            if (!isDescendantPath(currentParentPath, path)) {
-              continue
-            }
             parentIds.push(newDirectoryId(currentParentPath))
           }
           return parentIds

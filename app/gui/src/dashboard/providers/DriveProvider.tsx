@@ -137,6 +137,10 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         localBackend,
       ),
     staleTime: Infinity,
+    meta: {
+      // The query is not JSON-serializable as-is, so it MUST NOT be persisted.
+      persist: false,
+    },
   })
 
   const [store] = React.useState(() =>
