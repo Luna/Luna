@@ -11,8 +11,6 @@ import {
   type CategoriesContextValue,
 } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { LaunchedProject } from '#/providers/ProjectsProvider'
-import type LocalBackend from '#/services/LocalBackend'
-import type RemoteBackend from '#/services/RemoteBackend'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
@@ -20,6 +18,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   BackendType,
   type AssetId,
+  type default as Backend,
   type DirectoryAsset,
   type DirectoryId,
 } from 'enso-common/src/services/Backend'
@@ -77,16 +76,16 @@ export interface ProjectsProviderProps {
       }) => React.ReactNode)
   readonly launchedProjects: readonly LaunchedProject[]
   readonly categoriesAPI: CategoriesContextValue
-  readonly remoteBackend: RemoteBackend
-  readonly localBackend: LocalBackend | null
+  readonly remoteBackend: Backend
+  readonly localBackend: Backend | null
 }
 
 /** Compute the initial set of expanded directories. */
 async function computeInitialExpandedDirectories(
   launchedProjects: readonly LaunchedProject[],
   categoriesAPI: CategoriesContextValue,
-  remoteBackend: RemoteBackend,
-  localBackend: LocalBackend | null,
+  remoteBackend: Backend,
+  localBackend: Backend | null,
 ) {
   const { cloudCategories, localCategories } = categoriesAPI
   const expandedDirectories: Record<CategoryId, Set<DirectoryId>> = {
