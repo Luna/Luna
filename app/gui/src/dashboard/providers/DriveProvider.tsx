@@ -283,6 +283,15 @@ export function useExpandedDirectories() {
   return zustand.useStore(store, (state) => state.expandedDirectories)
 }
 
+/** Whether the given directory is expanded. */
+export function useIsDirectoryExpanded(directoryId: DirectoryId, categoryId: CategoryId): boolean {
+  const store = useDriveStore()
+  return zustand.useStore(
+    store,
+    (state) => state.expandedDirectories[categoryId]?.has(directoryId) ?? false,
+  )
+}
+
 /** The selected keys in the Asset Table. */
 export function useSelectedKeys() {
   const store = useDriveStore()
