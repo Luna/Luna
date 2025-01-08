@@ -438,6 +438,15 @@ post (uri:(URI | Text)=(Missing_Argument.throw "uri")) (body:Request_Body=..Empt
    Arguments:
    - uri: The URI to fetch.
    - file: The file to write the response to.
+   - replace_existing: Determines when `download` should proceed with the
+     download, if the destination file already exists. (If the destination file
+     does not exist, the download always proceeds).
+     Options include:
+         - `If_Not_Exists`: Download the file if it does not already exist on
+           disk. (The default.)
+         - `If_Older_Than age`: Download the file if it is older than the
+           specified age.
+         - `Always`: Always download.
    - method: The HTTP method to use. Must be one of `HTTP_Method.Get`,
      `HTTP_Method.Head`, `HTTP_Method.Delete`, `HTTP_Method.Options`.
      Defaults to `HTTP_Method.Get`.
@@ -445,7 +454,7 @@ post (uri:(URI | Text)=(Missing_Argument.throw "uri")) (body:Request_Body=..Empt
 @uri (Text_Input display=..Always)
 @headers Header.default_widget
 download : (URI | Text) -> Writable_File -> Download_Mode -> HTTP_Method -> Vector (Header | Pair Text Text) -> File ! Request_Error | HTTP_Error
-download (uri:(URI | Text)=(Missing_Argument.throw "uri")) file:Writable_File (mode:Download_Mode=..If_Not_Exists) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) =
+download (uri:(URI | Text)=(Missing_Argument.throw "uri")) file:Writable_File (replace_existing:Download_Mode=..If_Not_Exists) (method:HTTP_Method=..Get) (headers:(Vector (Header | Pair Text Text))=[]) =
     Context.Output.if_enabled disabled_message="As writing is disabled, cannot download to a file. Press the Write button ▶ to perform the operation." panic=False <|
         if mode.should_download file then
             response = HTTP.fetch uri method headers cache_policy=Cache_Policy.No_Cache
