@@ -2,6 +2,7 @@ import { Suspense } from '#/components/Suspense'
 import { DirectoryId } from '#/services/Backend'
 import { act, renderHook, waitFor, type RenderHookOptions, type RenderHookResult } from '#/test'
 import { useState } from 'react'
+import invariant from 'tiny-invariant'
 import { describe, expect, it } from 'vitest'
 import { useStore } from 'zustand'
 import type { CategoryId } from '../../layouts/CategorySwitcher/Category'
@@ -30,7 +31,6 @@ function renderDriveProviderHook<Result, Props>(
           setCategory(nextCategoryId)
           doResetAssetTableState()
         }
-        console.log('C2')
 
         return (
           <Suspense>
@@ -46,7 +46,6 @@ function renderDriveProviderHook<Result, Props>(
             >
               {({ resetAssetTableState }) => {
                 doResetAssetTableState = resetAssetTableState
-                console.log('C')
                 return children
               }}
             </DriveProvider>
@@ -72,14 +71,9 @@ describe('<DriveProvider />', async () => {
     )
   })
 
-  await waitFor(async () => {
+  await waitFor(() => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (driveAPI.result.current == null) {
-      await new Promise((resolve) => {
-        setTimeout(resolve, 1000)
-      })
-      throw new Error()
-    }
+    invariant(driveAPI.result.current != null)
   })
 
   it('Should reset expanded directory ids when category changes', () => {
@@ -91,20 +85,56 @@ describe('<DriveProvider />', async () => {
       )
     })
 
-    expect(driveAPI.result.current.expandedDirectories).toEqual([DirectoryId('directory-test-123')])
+    expect(driveAPI.result.current.expandedDirectories.cloud).toEqual(
+      new Set(['directory-test-123']),
+    )
 
     act(() => {
-      driveAPI.result.current.setCategoryId('recent')
+      driveAPI.result.current.setCategoryId('local')
     })
 
-    expect(driveAPI.result.current.expandedDirectories).toEqual([])
+    expect(driveAPI.result.current.expandedDirectories.local).toEqual(new Set())
     expect(driveAPI.result.current.selectedKeys).toEqual(new Set())
     expect(driveAPI.result.current.visuallySelectedKeys).toEqual(null)
+
+    act(() => {
+      driveAPI.result.current.toggleDirectoryExpansion(
+        [DirectoryId('directory-test-124')],
+        true,
+        'local',
+      )
+    })
+    expect(driveAPI.result.current.expandedDirectories.local).toEqual(
+      new Set(['directory-test-124']),
+    )
 
     act(() => {
       // Set the category back to the default category (`cloud`).
       driveAPI.result.current.setCategoryId('cloud')
     })
-    // The original expanded directories should be back.
+    // The original expanded directories should be retained.
+    expect(driveAPI.result.current.expandedDirectories.cloud).toEqual(
+      new Set(['directory-test-123']),
+    )
+    act(() => {
+      driveAPI.result.current.toggleDirectoryExpansion(
+        // Allow removing extra directories
+        [DirectoryId('directory-test-123'), DirectoryId('directory-test-124')],
+        false,
+        'cloud',
+      )
+    })
+
+    act(() => {
+      driveAPI.result.current.setCategoryId('local')
+    })
+    expect(driveAPI.result.current.expandedDirectories.local).toEqual(
+      new Set(['directory-test-124']),
+    )
+
+    act(() => {
+      driveAPI.result.current.setCategoryId('cloud')
+    })
+    expect(driveAPI.result.current.expandedDirectories.cloud).toEqual(new Set())
   })
 })
