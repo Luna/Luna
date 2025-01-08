@@ -289,7 +289,8 @@ class PackageManager[F](implicit val fileSystem: FileSystem[F]) {
     authors: List[Contact]                   = List(),
     maintainers: List[Contact]               = List(),
     license: String                          = "",
-    componentGroups: Option[ComponentGroups] = None
+    componentGroups: Option[ComponentGroups] = None,
+    services: List[ProvidesWith]             = List()
   ): Package[F] = {
     val config = Config(
       name                 = name,
@@ -301,7 +302,8 @@ class PackageManager[F](implicit val fileSystem: FileSystem[F]) {
       edition              = edition,
       preferLocalLibraries = true,
       maintainers          = maintainers,
-      componentGroups      = componentGroups
+      componentGroups      = componentGroups,
+      services             = services
     )
     create(root, config, template)
   }
