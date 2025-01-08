@@ -99,7 +99,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
           isExpanded && 'rotate-90',
         )}
         onPress={() => {
-          toggleDirectoryExpansion(item.id)
+          toggleDirectoryExpansion([item.id])
         }}
       />
 

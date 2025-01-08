@@ -651,7 +651,7 @@ export function useNewFolder(backend: Backend, category: Category) {
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
-    toggleDirectoryExpansion(parentId, true)
+    toggleDirectoryExpansion([parentId], true)
     const siblings = await ensureListDirectory(parentId)
     const directoryIndices = siblings
       .filter(backendModule.assetIsDirectory)
@@ -709,7 +709,7 @@ export function useNewProject(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], true)
 
       const siblings = await ensureListDirectory(parentId)
       const projectName = (() => {
@@ -781,7 +781,7 @@ export function useNewSecret(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], true)
       const placeholderItem = backendModule.createPlaceholderSecretAsset(
         name,
         parentId,
@@ -820,7 +820,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], true)
       const placeholderItem = backendModule.createPlaceholderDatalinkAsset(
         name,
         parentId,
@@ -961,7 +961,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
       }
 
       if (duplicateFiles.length === 0 && duplicateProjects.length === 0) {
-        toggleDirectoryExpansion(parentId, true)
+        toggleDirectoryExpansion([parentId], true)
         const assets = [...files, ...projects].map(({ asset }) => asset)
         void Promise.all(assets.map((asset) => doUploadFile(asset, 'new')))
       } else {
@@ -1009,7 +1009,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
             nonConflictingFileCount={files.length - conflictingFiles.length}
             nonConflictingProjectCount={projects.length - conflictingProjects.length}
             doUpdateConflicting={async (resolvedConflicts) => {
-              toggleDirectoryExpansion(parentId, true)
+              toggleDirectoryExpansion([parentId], true)
 
               await Promise.allSettled(
                 resolvedConflicts.map((conflict) => {
@@ -1021,7 +1021,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
               )
             }}
             doUploadNonConflicting={async () => {
-              toggleDirectoryExpansion(parentId, true)
+              toggleDirectoryExpansion([parentId], true)
 
               const newFiles = files
                 .filter((file) => !siblingFileTitles.has(file.asset.title))

@@ -325,25 +325,39 @@ export function useToggleDirectoryExpansion() {
   const { category } = useCategoriesAPI()
   const setExpandedDirectories = useSetExpandedDirectories()
 
-  return useEventCallback((id: DirectoryId, override?: boolean) => {
-    const expandedDirectories = driveStore.getState().expandedDirectories
-    const isExpanded = expandedDirectories[category.id]?.has(id) ?? false
-    const shouldExpand = override ?? !isExpanded
-
-    if (shouldExpand !== isExpanded) {
-      React.startTransition(() => {
-        const directories = expandedDirectories[category.id] ?? []
-        const newDirectories = new Set(directories)
-        if (shouldExpand) {
-          newDirectories.add(id)
-        } else {
-          newDirectories.delete(id)
+  return useEventCallback(
+    (ids: readonly DirectoryId[], override?: boolean, categoryId = category.id) => {
+      const expandedDirectories = driveStore.getState().expandedDirectories
+      const directories = expandedDirectories[categoryId]
+      let count = 0
+      if (directories) {
+        for (const id of ids) {
+          if (directories.has(id)) {
+            count += 1
+          }
         }
-        setExpandedDirectories({
-          ...expandedDirectories,
-          [category.id]: newDirectories,
+      }
+      const isExpanded = count * 2 >= ids.length
+      const shouldExpand = override ?? !isExpanded
+
+      if (shouldExpand !== isExpanded) {
+        React.startTransition(() => {
+          const newDirectories = new Set(directories)
+          if (shouldExpand) {
+            for (const id of ids) {
+              newDirectories.add(id)
+            }
+          } else {
+            for (const id of ids) {
+              newDirectories.delete(id)
+            }
+          }
+          setExpandedDirectories({
+            ...expandedDirectories,
+            [categoryId]: newDirectories,
+          })
         })
-      })
-    }
-  })
+      }
+    },
+  )
 }

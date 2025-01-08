@@ -852,7 +852,7 @@ function AssetsTable(props: AssetsTableProps) {
       resetAssetPanelProps()
     }
     if (asset.type === AssetType.directory) {
-      toggleDirectoryExpansion(asset.id, false)
+      toggleDirectoryExpansion([asset.id], false)
     }
 
     if (asset.type === AssetType.project && backend.type === BackendType.local) {
@@ -920,7 +920,7 @@ function AssetsTable(props: AssetsTableProps) {
               case AssetType.directory: {
                 event.preventDefault()
                 event.stopPropagation()
-                toggleDirectoryExpansion(item.item.id)
+                toggleDirectoryExpansion([item.item.id])
                 break
               }
               case AssetType.project: {
@@ -976,7 +976,7 @@ function AssetsTable(props: AssetsTableProps) {
               // The folder is expanded; collapse it.
               event.preventDefault()
               event.stopPropagation()
-              toggleDirectoryExpansion(item.item.id, false)
+              toggleDirectoryExpansion([item.item.id], false)
             } else if (prevIndex != null) {
               // Focus parent if there is one.
               let index = prevIndex - 1
@@ -1001,7 +1001,7 @@ function AssetsTable(props: AssetsTableProps) {
             // The folder is collapsed; expand it.
             event.preventDefault()
             event.stopPropagation()
-            toggleDirectoryExpansion(item.item.id, true)
+            toggleDirectoryExpansion([item.item.id], true)
           }
           break
         }
@@ -1250,7 +1250,7 @@ function AssetsTable(props: AssetsTableProps) {
       if (pasteData.data.ids.has(newParentKey)) {
         toast.error('Cannot paste a folder into itself.')
       } else {
-        toggleDirectoryExpansion(newParentId, true)
+        toggleDirectoryExpansion([newParentId], true)
         if (pasteData.type === 'copy') {
           const assets = Array.from(pasteData.data.ids, (id) => nodeMapRef.current.get(id)).flatMap(
             (asset) => (asset ? [asset.item] : []),
