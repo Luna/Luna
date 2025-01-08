@@ -31,10 +31,25 @@ public class ToStringMethodGenerator {
             .collect(Collectors.joining(" + \", \" + " + System.lineSeparator()));
     sb.append("    + ").append(fieldsStrRepr).append(System.lineSeparator());
     sb.append("    + ").append(quoted(")")).append(";").append(System.lineSeparator());
-    sb.append("  return ret.replaceAll(System.lineSeparator(), \" \");")
-        .append(System.lineSeparator());
+    sb.append("  return toSingleLine(ret);").append(System.lineSeparator());
     sb.append("}").append(System.lineSeparator());
+
+    sb.append(toSingleLineMethod()).append(System.lineSeparator());
     return sb.toString();
+  }
+
+  private String toSingleLineMethod() {
+    return """
+        private static String toSingleLine(String str) {
+          String[] lines = str.trim().split(System.lineSeparator());
+          var body = new StringBuilder();
+          for (int i = 1; i < lines.length - 1; i++) {
+            body.append(lines[i].trim());
+            body.append(" ");
+          }
+          return lines[0] + body.toString().trim() + lines[lines.length - 1];
+        }
+        """;
   }
 
   private String className() {
