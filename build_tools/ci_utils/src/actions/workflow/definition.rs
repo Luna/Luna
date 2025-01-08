@@ -85,8 +85,8 @@ pub fn setup_bazel_env() -> Step {
         shell: Some(Shell::Cmd),
         run: Some(
             r#"
-echo BAZEL_SH=C:\Program Files\Git\bin\bash.exe >> %GITHUB_ENV%
-echo BAZEL_VC=C:\BuildTools\VC >> %GITHUB_ENV%
+echo "BAZEL_SH=C:\Program Files\Git\bin\bash.exe" >> %GITHUB_ENV%
+echo "BAZEL_VC=C:\BuildTools\VC" >> %GITHUB_ENV%
         "#
             .to_string(), // 17.9.34728.123
         ),
