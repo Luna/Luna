@@ -200,6 +200,8 @@ table expression as a `From_Spec`, a set of simple column expressions as
 
 In each of the examples below, there is an Enso value, followed by the SQL that the value is compiled into, and the results of the query. The first three examples are table expressions, and the second three are column expressions.
 
+## Query a simple table
+
 Enso:
 ```
 t = table_builder [['x', [1, 2]], ['y', [10, 20]]]
@@ -215,6 +217,8 @@ Results:
  1 | 10
  2 | 20
 ```
+
+## Add a derived column
 
 Enso:
 ```
