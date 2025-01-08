@@ -52,7 +52,10 @@ expression; for example, a `SQL_Expression.Column` value consists of the
 name/alias of a table expression and the name of a column within it.
 
 `Let` and `Let_Ref` variants are used to express let-style bindings using SQL
-`with` syntax.
+`with` syntax. This is used to reduce duplication. This is not so much for
+efficiency, since backends often do their own de-duplication, but rather for
+reducing the size of the SQL, which can grow exponentially with certain kinds of
+nesting.
 
 ## From_Spec
 
@@ -202,6 +205,8 @@ In each of the examples below, there is an Enso value, followed by the SQL that 
 
 ## Query a simple table
 
+This is a simple `select *`.
+
 Enso:
 ```
 t = table_builder [['x', [1, 2]], ['y', [10, 20]]]
@@ -220,6 +225,8 @@ Results:
 
 ## Add a derived column
 
+This adds a derived column, resulting in a more complex column expression.
+
 Enso:
 ```
 tc = t . set ((t.at 'x') * (t.at 'x')) as="prod"
@@ -235,6 +242,10 @@ Results:
  1 | 10 | 1
  2 | 20 | 4
 ```
+
+## As subquery
+
+This uses `as_subquery` to nest the table in a subselect, so that the top-level column expressions are all simple, and the complex product column expression is nested inside the subselect.
 
 Enso:
 ```
@@ -252,6 +263,10 @@ Results:
  2 | 20 | 4
 ```
 
+## Derived column expression
+
+Complex column expression.
+
 Enso:
 ```
 prod = tc.at "prod"
@@ -268,6 +283,10 @@ Results:
  4
 ```
 
+## More complex derived column expression
+
+Even more complex column expression, with a repeated subexpression.
+
 Enso:
 ```
 prodsum = (prod + prod) . rename "prodsum"
@@ -283,6 +302,10 @@ Results:
  2
  8
 ```
+
+## More complex derived column expression, with `Let`
+
+This nests the product column expression inside a `with` clause, so it is not repeated in the main `select`.
 
 Enso:
 ```
