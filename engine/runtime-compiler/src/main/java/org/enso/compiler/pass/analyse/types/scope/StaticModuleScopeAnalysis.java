@@ -5,6 +5,7 @@ import static org.enso.compiler.MetadataInteropHelpers.getMetadata;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.enso.compiler.MetadataInteropHelpers;
 import org.enso.compiler.common.BuildScopeFromModuleAlgorithm;
 import org.enso.compiler.context.InlineContext;
@@ -222,7 +223,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
       StaticModuleScope.Builder scope,
       TypeScopeReference typeScope,
       Definition.Type typeDefinition) {
-    var fieldTypes = new HashMap<String, List<TypeRepresentation>>();
+    Map<String, List<TypeRepresentation>> fieldTypes = new HashMap<>();
     for (var constructorDef : ScalaConversions.asJava(typeDefinition.members())) {
       for (var argumentDef : ScalaConversions.asJava(constructorDef.arguments())) {
         String fieldName = argumentDef.name().name();
