@@ -50,6 +50,7 @@ import { baseName } from '#/utilities/fileInfo'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
+import { unsafeWriteValue } from '#/utilities/write'
 import { usePrefetchQuery } from '@tanstack/react-query'
 import { DashboardTabPanels } from './DashboardTabPanels'
 
@@ -68,6 +69,31 @@ export interface DashboardProps {
 
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
+  const resetAssetTableStateRef = React.useRef(() => {})
+
+  const stableResetAssetTableState = eventCallbacks.useEventCallback(() => {
+    resetAssetTableStateRef.current()
+  })
+
+  return (
+    /* Ideally this would be in `Drive.tsx`, but it currently must be all the way out here
+     * due to modals being in `TheModal`. */
+    <ProjectsProvider>
+      <CategoriesProvider onCategoryChange={stableResetAssetTableState}>
+        <DashboardInner2 resetAssetTableStateRef={resetAssetTableStateRef} {...props} />
+      </CategoriesProvider>
+    </ProjectsProvider>
+  )
+}
+
+/** Props for a {@link DashboardInner2}. */
+interface DashboardInner2Props extends DashboardProps {
+  readonly resetAssetTableStateRef: React.MutableRefObject<() => void>
+}
+
+/** The component that contains the entire UI. */
+function DashboardInner2(props: DashboardInner2Props) {
+  const { resetAssetTableStateRef } = props
   const projectsStore = useProjectsStore()
   // MUST NOT be reactive as it should not cause the entire dashboard to re-render.
   const launchedProjects = projectsStore.getState().launchedProjects
@@ -84,15 +110,14 @@ export default function Dashboard(props: DashboardProps) {
       remoteBackend={remoteBackend}
       localBackend={localBackend}
     >
-      {({ resetAssetTableState }) => (
-        <CategoriesProvider onCategoryChange={resetAssetTableState}>
+      {({ resetAssetTableState }) => {
+        unsafeWriteValue(resetAssetTableStateRef, 'current', resetAssetTableState)
+        return (
           <EventListProvider>
-            <ProjectsProvider>
-              <DashboardInner {...props} />
-            </ProjectsProvider>
+            <DashboardInner {...props} />
           </EventListProvider>
-        </CategoriesProvider>
-      )}
+        )
+      }}
     </DriveProvider>
   )
 }
