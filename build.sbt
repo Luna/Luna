@@ -13,8 +13,6 @@ import src.main.scala.licenses.{
   SBTDistributionComponent
 }
 
-import scala.collection.mutable.ArrayBuffer
-
 // This import is unnecessary, but bit adds a proper code completion features
 // to IntelliJ.
 import JPMSPlugin.autoImport._
@@ -3210,7 +3208,6 @@ lazy val `runtime-benchmarks` =
 lazy val `runtime-parser` =
   (project in file("engine/runtime-parser"))
     .enablePlugins(JPMSPlugin)
-    .enablePlugins(PackageListPlugin)
     .settings(
       scalaModuleDependencySetting,
       mixedJavaScalaProjectSetting,
@@ -3221,24 +3218,6 @@ lazy val `runtime-parser` =
       crossPaths := false,
       frgaalJavaCompilerSetting,
       annotationProcSetting,
-      // Explicitly list generated sources so that `scaladoc` knows where to find them.
-      // This is necessary because some Java classes extend from the generated classes.
-      // By default, `scaladoc` is unaware of the generated Java sources and would fail.
-      Compile / doc / sources ++= {
-        val managedSrcDir     = (Compile / sourceManaged).value
-        val pkgs              = (Compile / packages).value
-        val generatedJavaSrcs = new ArrayBuffer[File]()
-        pkgs.foreach { pkg =>
-          val pathPart = pkg.replace(".", File.separator)
-          val dir      = managedSrcDir.toPath.resolve(pathPart)
-          IO.listFiles(dir.toFile).foreach { file =>
-            if (file.getName.endsWith(".java")) {
-              generatedJavaSrcs += file
-            }
-          }
-        }
-        generatedJavaSrcs.toList
-      },
       commands += WithDebugCommand.withDebug,
       fork := true,
       libraryDependencies ++= Seq(

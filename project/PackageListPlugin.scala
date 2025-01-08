@@ -61,11 +61,9 @@ object PackageListPlugin extends AutoPlugin {
       if (file.isFile) {
         val fPath        = file.toPath
         val relativePath = rootDir.relativize(fPath)
-        if (relativePath.getNameCount > 1) {
-          val pkgPart = relativePath.subpath(0, relativePath.getNameCount - 1)
-          val pkg     = pkgPart.toString.replace(File.separator, ".")
-          pkgs.add(pkg)
-        }
+        val pkgPart      = relativePath.subpath(0, relativePath.getNameCount - 1)
+        val pkg          = pkgPart.toString.replace(File.separator, ".")
+        pkgs.add(pkg)
       } else if (file.isDirectory) {
         listOfPackages(rootDir, file, pkgs)
       }
