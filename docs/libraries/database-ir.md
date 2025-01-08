@@ -211,6 +211,10 @@ Enso:
 ```
 t = table_builder [['x', [1, 2]], ['y', [10, 20]]]
 ```
+IR:
+```
+(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+```
 SQL:
 ```
 SQL_Statement SELECT table_0.x AS x, table_0.y AS y FROM table_0 AS table_0 with values []
@@ -230,6 +234,10 @@ This adds a derived column, resulting in a more complex column expression.
 Enso:
 ```
 tc = t . set ((t.at 'x') * (t.at 'x')) as="prod"
+```
+IR:
+```
+(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -251,6 +259,10 @@ Enso:
 ```
 tcsq = tc.as_subquery
 ```
+IR:
+```
+(Select [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Column 'table_0' 'prod')]] (Context.Value (Sub_Query [['x', (Column 'table_0' 'x')], ['y', (Column 'table_0' 'y')], ['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []) 'table_0') [] [] [] Nothing []))
+```
 SQL:
 ```
 SQL_Statement SELECT table_0.x AS x, table_0.y AS y, table_0.prod AS prod FROM (SELECT table_0.x AS x, table_0.y AS y, (table_0.x * table_0.x) AS prod FROM table_0 AS table_0) AS table_0 with values []
@@ -270,6 +282,10 @@ Complex column expression.
 Enso:
 ```
 prod = tc.at "prod"
+```
+IR:
+```
+(Select [['prod', (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
@@ -291,6 +307,10 @@ Enso:
 ```
 prodsum = (prod + prod) . rename "prodsum"
 ```
+IR:
+```
+(Select [['prodsum', (Operation 'ADD_NUMBER' [(Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing), (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)] Nothing)]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
+```
 SQL:
 ```
 SQL_Statement SELECT ((table_0.x * table_0.x) + (table_0.x * table_0.x)) AS prodsum FROM table_0 AS table_0 with values []
@@ -310,6 +330,10 @@ This nests the product column expression inside a `with` clause, so it is not re
 Enso:
 ```
 lprodsum = prod.let "prod" prod->
+```
+IR:
+```
+(Select [['let_prodsum', (Let 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing) (Operation 'ADD_NUMBER' [(Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing)), (Let_Ref 'prod' 'enso-table-eea768aa-06bb-4aab-88b0-e5cd45fdd35d' (Operation '*' [(Column 'table_0' 'x'), (Column 'table_0' 'x')] Nothing))] Nothing))]] (Context.Value (Table 'table_0' 'table_0' Nothing) [] [] [] Nothing []))
 ```
 SQL:
 ```
