@@ -537,7 +537,7 @@ val jmh = Seq(
   "org.openjdk.jmh" % "jmh-generator-annprocess" % jmhVersion % Benchmark
 )
 
-// === Scala Compiler =========================================================
+// === Scala =========================================================
 val scalaReflect = Seq(
   "org.scala-lang" % "scala-reflect" % scalacVersion
 )
@@ -1433,7 +1433,7 @@ lazy val `akka-wrapper` = project
   .settings(
     modularFatJarWrapperSettings,
     scalaModuleDependencySetting,
-    libraryDependencies ++= akka ++ scalaLibrary ++ scalaReflect ++ jline ++ Seq(
+    libraryDependencies ++= akka ++ scalaLibrary ++ scalaReflect ++ Seq(
       "org.scala-lang.modules"   %% "scala-parser-combinators" % scalaParserCombinatorsVersion,
       "org.scala-lang.modules"   %% "scala-java8-compat"       % scalaJavaCompatVersion,
       akkaURL                    %% "akka-http"                % akkaHTTPVersion,
@@ -1459,7 +1459,7 @@ lazy val `akka-wrapper` = project
     assembly / assemblyExcludedJars := {
       val excludedJars = JPMSUtils.filterModulesFromUpdate(
         update.value,
-        scalaLibrary ++ scalaReflect ++ jline ++ Seq(
+        scalaLibrary ++ scalaReflect ++ Seq(
           "org.scala-lang.modules"   %% "scala-java8-compat" % scalaJavaCompatVersion,
           "org.slf4j"                 % "slf4j-api"          % slf4jVersion,
           "com.typesafe"              % "config"             % typesafeConfigVersion,
@@ -2345,7 +2345,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       necessaryModules
     },
     // More dependencies needed for modules for testing
-    libraryDependencies ++= ioSentry.map(_ % Test) ++ jline.map(_ % Test) ++
+    libraryDependencies ++= ioSentry.map(_ % Test) ++
     logbackTest ++ Seq(
       "com.google.protobuf"    % "protobuf-java"                % googleProtobufVersion  % Test,
       "org.reactivestreams"    % "reactive-streams"             % reactiveStreamsVersion % Test,
@@ -2358,7 +2358,7 @@ lazy val `language-server` = (project in file("engine/language-server"))
       "com.ibm.icu"            % "icu4j"                        % icuVersion             % Test
     ),
     Test / moduleDependencies := {
-      GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ ioSentry ++ bouncyCastle ++ scalaLibrary ++ scalaReflect ++ jline ++ Seq(
+      GraalVM.modules ++ GraalVM.langsPkgs ++ logbackPkg ++ helidon ++ ioSentry ++ bouncyCastle ++ scalaLibrary ++ scalaReflect ++ Seq(
         "org.slf4j"              % "slf4j-api"                    % slf4jVersion,
         "org.netbeans.api"       % "org-netbeans-modules-sampler" % netbeansApiVersion,
         "com.google.flatbuffers" % "flatbuffers-java"             % flatbuffersVersion,
