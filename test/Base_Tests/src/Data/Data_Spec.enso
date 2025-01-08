@@ -23,9 +23,9 @@ add_specs prefix suite_builder file_maker =
         group_builder.specify prefix+"Will always download a file for mode Always" <|
             with_test_file (file_maker "always") file->
                 file.exists . should_be_false
-                Data.download (url_n_bytes 10) mode=..Always file
+                Data.download (url_n_bytes 10) replace_existing=..Always file
                 first_contents = file.read
-                Data.download (url_n_bytes 11) mode=..Always file
+                Data.download (url_n_bytes 11) replace_existing=..Always file
                 second_contents = file.read
                 first_contents . should_not_equal second_contents
 
@@ -47,12 +47,12 @@ add_specs prefix suite_builder file_maker =
                 Data.download (url_n_bytes 10) file
                 first_contents = file.read
 
-                Data.download (url_n_bytes 11) (mode=..If_Older_Than (Duration.new seconds=sleep_duration_secs)) file
+                Data.download (url_n_bytes 11) (replace_existing=..If_Older_Than (Duration.new seconds=sleep_duration_secs)) file
                 second_contents = file.read
                 first_contents . should_equal second_contents
 
                 Thread.sleep (sleep_duration_secs * 1000)
 
-                Data.download (url_n_bytes 12) (mode=..If_Older_Than (Duration.new seconds=sleep_duration_secs)) file
+                Data.download (url_n_bytes 12) (replace_existing=..If_Older_Than (Duration.new seconds=sleep_duration_secs)) file
                 third_contents = file.read
                 first_contents . should_not_equal third_contents
