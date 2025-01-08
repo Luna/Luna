@@ -647,7 +647,6 @@ export function useNewFolder(backend: Backend, category: Category) {
   const setSelectedKeys = useSetSelectedKeys()
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
@@ -667,7 +666,7 @@ export function useNewFolder(backend: Backend, category: Category) {
         category,
         user,
         users ?? [],
-        userGroups ?? [],
+        user.groups ?? [],
       ),
     )
 
@@ -692,7 +691,6 @@ export function useNewProject(backend: Backend, category: Category) {
 
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const createProjectMutation = useMutation(backendMutationOptions(backend, 'createProject'))
 
   return useEventCallback(
@@ -732,7 +730,7 @@ export function useNewProject(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
         user,
         path,
@@ -769,9 +767,11 @@ export function useNewProject(backend: Backend, category: Category) {
 /** A function to create a new secret. */
 export function useNewSecret(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
+
   const { user } = useFullUserSession()
+
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+
   const createSecretMutation = useMutation(backendMutationOptions(backend, 'createSecret'))
 
   return useEventCallback(
@@ -790,7 +790,7 @@ export function useNewSecret(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
       )
 
@@ -809,8 +809,9 @@ export function useNewSecret(backend: Backend, category: Category) {
 export function useNewDatalink(backend: Backend, category: Category) {
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { user } = useFullUserSession()
+
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
+
   const createDatalinkMutation = useMutation(backendMutationOptions(backend, 'createDatalink'))
 
   return useEventCallback(
@@ -829,7 +830,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
       )
 
@@ -853,7 +854,6 @@ export function useUploadFiles(backend: Backend, category: Category) {
   const { setModal } = useSetModal()
   const { user } = useFullUserSession()
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
   const uploadFileMutation = useUploadFileWithToastMutation(backend)
   const setSelectedKeys = useSetSelectedKeys()
 
@@ -875,7 +875,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
         category,
         user,
         users ?? [],
-        userGroups ?? [],
+        user.groups ?? [],
       )
       const files = reversedFiles.filter(backendModule.fileIsNotProject).map((file) => {
         const asset = backendModule.createPlaceholderFileAsset(
