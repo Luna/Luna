@@ -131,9 +131,6 @@ jobs:
       - name: Clean sbt
         run: sbt clean
 
-      - name: WIP Print sbt config
-        run: sbt 'print runtime-parser/Compile/doc/sources'
-
       - name: Publish Enso Libraries to Local Maven Repository
         run: sbt publishM2
 
