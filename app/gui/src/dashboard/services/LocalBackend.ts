@@ -321,7 +321,7 @@ export default class LocalBackend extends Backend {
     const { id, directory } = extractTypeAndId(projectId)
     const state = this.projectManager.projects.get(id)
     if (state == null) {
-      const parentsPath = directory ?? this.rootPath()
+      const parentsPath = directory
       const entries = await this.projectManager.listDirectory(parentsPath)
       const project = entries
         .flatMap((entry) =>
@@ -355,7 +355,7 @@ export default class LocalBackend extends Backend {
       }
     } else {
       const cachedProject = await state.data
-      const parentsPath = directory ?? this.rootPath()
+      const parentsPath = directory
       return {
         name: cachedProject.projectName,
         engineVersion: {

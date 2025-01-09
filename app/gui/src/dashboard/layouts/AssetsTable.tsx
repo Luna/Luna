@@ -1078,10 +1078,6 @@ function AssetsTable(props: AssetsTableProps) {
     }
   }
 
-  const getAssetNodeById = useEventCallback(
-    (id: AssetId) => assetTree.preorderTraversal().find((node) => node.item.id === id) ?? null,
-  )
-
   const hideColumn = useEventCallback((column: Column) => {
     setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
   })
