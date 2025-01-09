@@ -385,6 +385,7 @@ public final class Type extends EnsoObject {
   }
 
   @ExportMessage
+  @TruffleBoundary
   boolean isMemberInvocable(String member) {
     return methods().containsKey(member);
   }
