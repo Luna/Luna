@@ -186,7 +186,7 @@ object StdBits {
     if (osName.contains("linux")) {
       "linux"
     } else if (osName.contains("mac")) {
-      "macos"
+      "osx"
     } else if (osName.contains("windows")) {
       "windows"
     } else {
