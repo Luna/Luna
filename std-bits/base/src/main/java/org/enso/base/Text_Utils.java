@@ -1,18 +1,5 @@
 package org.enso.base;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.enso.base.text.CaseFoldedString;
-import org.enso.base.text.CaseFoldedString.Grapheme;
-import org.enso.base.text.GraphemeSpan;
-import org.enso.base.text.Utf16Span;
-import org.enso.polyglot.common_utils.Core_Text_Utils;
-import org.graalvm.polyglot.Context;
-
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.text.CaseMap.Fold;
@@ -20,6 +7,17 @@ import com.ibm.icu.text.Normalizer;
 import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.Normalizer2.Mode;
 import com.ibm.icu.text.StringSearch;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.enso.base.text.CaseFoldedString;
+import org.enso.base.text.CaseFoldedString.Grapheme;
+import org.enso.base.text.GraphemeSpan;
+import org.enso.base.text.Utf16Span;
+import org.enso.polyglot.common_utils.Core_Text_Utils;
+import org.graalvm.polyglot.Context;
 
 /** Utils for standard library operations on Text. */
 public class Text_Utils {
