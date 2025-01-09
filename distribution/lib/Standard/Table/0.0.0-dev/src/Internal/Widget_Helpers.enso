@@ -349,7 +349,7 @@ private get_column_value_type table cache parameter:Text="column" default:Value_
         if Nothing == column then default else column.value_type
 
 ## PRIVATE
-   Treat Value_Type as all
+   Treat Value_Type as if it could be any type (i.e. include all constants and types).
 private include_all value_type:Value_Type -> Boolean =
     case value_type of
         Value_Type.Mixed -> True
