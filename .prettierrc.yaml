@@ -8,6 +8,7 @@ overrides:
       - "*.cjs"
       - "*.vue"
       - "*.json"
+      - "*.html"
     options:
       plugins:
         - "prettier-plugin-organize-imports"
