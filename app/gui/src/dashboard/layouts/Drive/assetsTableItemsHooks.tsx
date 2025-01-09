@@ -5,6 +5,7 @@ import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
 import { PermissionAction } from 'enso-common/src/utilities/permissions'
 
+import { useLocale } from '#/components/aria'
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import { Column } from '#/components/dashboard/column/columnUtils'
 import type { DirectoryId } from '#/services/ProjectManager'
@@ -63,6 +64,7 @@ export function useAssetStrict(id: AssetId) {
 export function useAssetsTableItems(options: UseAssetsTableOptions) {
   const { assetTree, sortInfo, query, expandedDirectoryIds } = options
 
+  const locale = useLocale()
   const setAssetItems = useStore(ASSET_ITEMS_STORE, (store) => store.setItems)
 
   const filter = useMemo(() => {
@@ -219,7 +221,7 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
       switch (sortInfo.field) {
         case Column.name: {
           compare = (a, b) =>
-            multiplier * a.item.title.localeCompare(b.item.title, 'en', { numeric: true })
+            multiplier * a.item.title.localeCompare(b.item.title, locale.locale, { numeric: true })
           break
         }
         case Column.modified: {
@@ -239,7 +241,7 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
 
       return flatTree
     }
-  }, [sortInfo, assetTree, expandedDirectoryIds])
+  }, [sortInfo, assetTree, expandedDirectoryIds, locale.locale])
 
   setAssetItems(displayItems.map((item) => item.item))
 
