@@ -6,8 +6,8 @@ import * as detect from 'enso-common/src/detect'
 
 import * as eventModule from '#/utilities/event'
 import * as newtype from '#/utilities/newtype'
-import * as object from '#/utilities/object'
 import * as string from '#/utilities/string'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // ================
 // === Newtypes ===

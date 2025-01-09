@@ -42,9 +42,9 @@ import { usePasteData } from '#/providers/DriveProvider'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
-import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
-import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
+import * as object from 'enso-common/src/utilities/data/object'
+import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyOpen } from './AssetPanel'
 
 /** Props for a {@link AssetContextMenu}. */
 export interface AssetContextMenuProps {
@@ -76,7 +76,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
+  const setIsAssetPanelTemporarilyOpen = useSetIsAssetPanelTemporarilyOpen()
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
@@ -345,7 +345,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
               hidden={hidden}
               action="edit"
               doAction={() => {
-                setIsAssetPanelTemporarilyVisible(true)
+                setIsAssetPanelTemporarilyOpen(true)
                 const assetPanelProps = { backend, item: asset }
                 switch (asset.type) {
                   case backendModule.AssetType.secret: {
@@ -374,7 +374,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
             action="editDescription"
             label={getText('editDescriptionShortcut')}
             doAction={() => {
-              setIsAssetPanelTemporarilyVisible(true)
+              setIsAssetPanelTemporarilyOpen(true)
               setAssetPanelProps({
                 backend,
                 item: asset,

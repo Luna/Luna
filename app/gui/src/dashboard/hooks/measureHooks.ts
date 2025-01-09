@@ -1,21 +1,22 @@
 /**
  * @file
  *
- * This file contains the useMeasure hook, which is used to measure the size and position of an element.
+ * This file contains the useMeasure hook, which is used to measure the size and position
+ * of an element.
  */
+import { useEffect, useRef, useState } from 'react'
+
 import { frame, useMotionValue } from 'framer-motion'
 
-import { useEffect, useRef, useState } from 'react'
-import { unsafeMutable } from '../utilities/object'
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
+
 import { findScrollContainers, type HTMLOrSVGElement } from '../utilities/scrollContainers'
 import { useDebouncedCallback } from './debounceCallbackHooks'
 import { useEventCallback } from './eventCallbackHooks'
 import { useEventListener } from './eventListenerHooks'
 import { useUnmount } from './unmountHooks'
 
-/**
- * A read-only version of the DOMRect object.
- */
+/** A read-only version of {@link DOMRect}. */
 export interface RectReadOnly {
   readonly x: number
   readonly y: number

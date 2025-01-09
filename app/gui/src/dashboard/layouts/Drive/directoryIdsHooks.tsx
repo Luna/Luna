@@ -4,11 +4,11 @@ import invariant from 'tiny-invariant'
 
 import { Path, createRootDirectoryAsset } from 'enso-common/src/services/Backend'
 
+import { useLocalRootDirectoryState } from '#/appLocalStorage'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useBackend } from '#/providers/BackendProvider'
 import { useExpandedDirectoryIds, useSetExpandedDirectoryIds } from '#/providers/DriveProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 
 /** Options for {@link useDirectoryIds}. */
 export interface UseDirectoryIdsOptions {
@@ -36,7 +36,7 @@ export function useDirectoryIds(options: UseDirectoryIdsOptions) {
   const privateExpandedDirectoryIds = useExpandedDirectoryIds()
   const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [localRootDirectory] = useLocalRootDirectoryState()
 
   const rootDirectoryId = (() => {
     const localRootPath = localRootDirectory != null ? Path(localRootDirectory) : null

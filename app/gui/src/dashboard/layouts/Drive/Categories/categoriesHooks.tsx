@@ -22,8 +22,8 @@ import { backendQueryOptions } from '#/hooks/backendHooks'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOffline } from '#/hooks/offlineHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
+import { useLocalRootDirectoriesState } from '#/layouts/CategorySwitcher/categorySwitcherLocalStorage'
 import { useBackend, useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { type DirectoryId, Path, userHasUserAndTeamSpaces } from '#/services/Backend'
@@ -34,11 +34,10 @@ import {
   userIdToDirectoryId,
 } from '#/services/RemoteBackend'
 import { getFileName } from '#/utilities/fileInfo'
-import LocalStorage from '#/utilities/LocalStorage'
+import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
 import type { ReactNode } from 'react'
 import { createContext, useContext } from 'react'
 import invariant from 'tiny-invariant'
-import { z } from 'zod'
 import type {
   AnyCloudCategory,
   AnyLocalCategory,
@@ -55,25 +54,10 @@ import type {
 } from './Category'
 import { isCloudCategory, isLocalCategory } from './Category'
 
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly localRootDirectories: z.infer<typeof LOCAL_ROOT_DIRECTORIES_SCHEMA>
-  }
-}
-
-const LOCAL_ROOT_DIRECTORIES_SCHEMA = z.string().array().readonly()
-
-LocalStorage.registerKey('localRootDirectories', { schema: LOCAL_ROOT_DIRECTORIES_SCHEMA })
-
-/**
- * Result of the useCloudCategoryList hook.
- */
+/** Result of the {@link useCloudCategoryList} hook. */
 export type CloudCategoryResult = ReturnType<typeof useCloudCategoryList>
 
-/**
- * List of categories in the Cloud.
- */
+/** List of categories in the Cloud. */
 export function useCloudCategoryList() {
   const remoteBackend = useRemoteBackend()
 
@@ -202,14 +186,12 @@ export function useCloudCategoryList() {
   } as const
 }
 
-/**
- * Result of the useLocalCategoryList hook.
- */
+/** Result of the {@link useLocalCategoryList} hook. */
 export type LocalCategoryResult = ReturnType<typeof useLocalCategoryList>
 
 /**
  * List of all categories in the LocalBackend.
- * Usually these are the root folder and the list of favorites
+ * These are the root folder and the list of favorite folders.
  */
 export function useLocalCategoryList() {
   const { getText } = useText()
@@ -224,10 +206,7 @@ export function useLocalCategoryList() {
 
   const predefinedLocalCategories: AnyLocalCategory[] = [localCategory]
 
-  const [localRootDirectories, setLocalRootDirectories] = useLocalStorageState(
-    'localRootDirectories',
-    [],
-  )
+  const [localRootDirectories, setLocalRootDirectories] = useLocalRootDirectoriesState(EMPTY_ARRAY)
 
   const localCategories = localRootDirectories.map<LocalDirectoryCategory>((directory) => ({
     type: 'local-directory',

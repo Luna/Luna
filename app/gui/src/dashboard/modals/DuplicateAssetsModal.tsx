@@ -12,8 +12,8 @@ import Modal from '#/components/Modal'
 import * as backendModule from '#/services/Backend'
 
 import * as fileInfo from '#/utilities/fileInfo'
-import * as object from '#/utilities/object'
 import { useMutation } from '@tanstack/react-query'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // =============
 // === Types ===

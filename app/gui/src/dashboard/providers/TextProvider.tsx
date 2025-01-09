@@ -6,7 +6,7 @@ import * as React from 'react'
 
 import * as text from 'enso-common/src/text'
 
-import * as object from '#/utilities/object'
+import * as object from 'enso-common/src/utilities/data/object'
 
 // ===================
 // === TextContext ===

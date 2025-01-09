@@ -23,7 +23,6 @@ import {
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import * as z from 'zod'
 
 import DropFilesImage from '#/assets/drop_files.svg'
 import { FileTrigger, mergeProps, usePress } from '#/components/aria'
@@ -33,12 +32,12 @@ import { AssetRow } from '#/components/dashboard/AssetRow'
 import { INITIAL_ROW_STATE } from '#/components/dashboard/AssetRow/assetRowUtils'
 import type { SortableColumn } from '#/components/dashboard/column/columnUtils'
 import {
-  Column,
   COLUMN_CSS_CLASS,
   COLUMN_ICONS,
   COLUMN_SHOW_TEXT_ID,
   DEFAULT_ENABLED_COLUMNS,
   getColumnList,
+  type Column,
 } from '#/components/dashboard/column/columnUtils'
 import NameColumn from '#/components/dashboard/column/NameColumn'
 import { COLUMN_HEADING } from '#/components/dashboard/columnHeading'
@@ -70,7 +69,7 @@ import {
   assetPanelStore,
   useResetAssetPanelProps,
   useSetAssetPanelProps,
-  useSetIsAssetPanelTemporarilyVisible,
+  useSetIsAssetPanelTemporarilyOpen,
 } from '#/layouts/AssetPanel'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import { useSetSuggestions } from '#/layouts/AssetSearchBar'
@@ -81,6 +80,7 @@ import {
   type Category,
 } from '#/layouts/CategorySwitcher/Category'
 import { useAssetsTableItems } from '#/layouts/Drive/assetsTableItemsHooks'
+import { useEnabledColumnsState } from '#/layouts/Drive/assetsTableLocalStorage'
 import { useAssetTree, type DirectoryQuery } from '#/layouts/Drive/assetTreeHooks'
 import { useDirectoryIds } from '#/layouts/Drive/directoryIdsHooks'
 import DragModal from '#/modals/DragModal'
@@ -107,7 +107,6 @@ import {
   type SelectedAssetInfo,
 } from '#/providers/DriveProvider'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
-import { useLocalStorage } from '#/providers/LocalStorageProvider'
 import { useSetModal } from '#/providers/ModalProvider'
 import { useNavigator2D } from '#/providers/Navigator2DProvider'
 import { useLaunchedProjects } from '#/providers/ProjectsProvider'
@@ -134,14 +133,12 @@ import { ASSET_ROWS, LABELS, setDragImageToBlank } from '#/utilities/drag'
 import { fileExtension } from '#/utilities/fileInfo'
 import { noop } from '#/utilities/functions'
 import { DEFAULT_HANDLER } from '#/utilities/inputBindings'
-import LocalStorage from '#/utilities/LocalStorage'
 import {
   canPermissionModifyDirectoryContents,
   PermissionAction,
   tryFindSelfPermission,
 } from '#/utilities/permissions'
 import { document } from '#/utilities/sanitizedEventTargets'
-import { withPresence } from '#/utilities/set'
 import type { SortInfo } from '#/utilities/sorting'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
@@ -152,17 +149,6 @@ import {
   SUGGESTIONS_FOR_NO,
   SUGGESTIONS_FOR_TYPE,
 } from './Drive/suggestionsConstants'
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly enabledColumns: readonly Column[]
-  }
-}
-
-LocalStorage.registerKey('enabledColumns', {
-  schema: z.nativeEnum(Column).array().readonly(),
-})
 
 /**
  * If the ratio of intersection between the main dropzone that should be visible, and the
@@ -238,7 +224,6 @@ function AssetsTable(props: AssetsTableProps) {
   const backend = useBackend(category)
   const { data: labels } = useBackendQuery(backend, 'listTags', [])
   const { setModal, unsetModal } = useSetModal()
-  const { localStorage } = useLocalStorage()
   const { getText } = useText()
   const inputBindings = useInputBindings()
   const navigator2D = useNavigator2D()
@@ -247,21 +232,25 @@ function AssetsTable(props: AssetsTableProps) {
   const setTargetDirectoryInStore = useSetTargetDirectory()
   const didLoadingProjectManagerFail = useDidLoadingProjectManagerFail()
   const reconnectToProjectManager = useReconnectToProjectManager()
-  const [enabledColumns, setEnabledColumns] = useState(DEFAULT_ENABLED_COLUMNS)
-  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
+  const [enabledColumns, setEnabledColumns] = useEnabledColumnsState(DEFAULT_ENABLED_COLUMNS)
+  const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyOpen()
   const setAssetPanelProps = useSetAssetPanelProps()
   const resetAssetPanelProps = useResetAssetPanelProps()
   const setLabelsDragPayload = useSetLabelsDragPayload()
 
   const columns = useMemo(
     () =>
-      getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
+      getColumnList(user, backend.type, category).filter((column) =>
+        enabledColumns.includes(column),
+      ),
     [backend.type, category, enabledColumns, user],
   )
 
   const hiddenColumns = useMemo(
     () =>
-      getColumnList(user, backend.type, category).filter((column) => !enabledColumns.has(column)),
+      getColumnList(user, backend.type, category).filter(
+        (column) => !enabledColumns.includes(column),
+      ),
     [backend.type, category, enabledColumns, user],
   )
 
@@ -673,17 +662,6 @@ function AssetsTable(props: AssetsTableProps) {
     }
   }, [initialProjectName, initialProjectNameDeps])
 
-  useEffect(() => {
-    const savedEnabledColumns = localStorage.get('enabledColumns')
-    if (savedEnabledColumns != null) {
-      setEnabledColumns(new Set(savedEnabledColumns))
-    }
-  }, [localStorage])
-
-  useEffect(() => {
-    localStorage.set('enabledColumns', [...enabledColumns])
-  }, [enabledColumns, localStorage])
-
   useEffect(
     () =>
       driveStore.subscribe(({ selectedKeys }) => {
@@ -1007,7 +985,9 @@ function AssetsTable(props: AssetsTableProps) {
   )
 
   const hideColumn = useEventCallback((column: Column) => {
-    setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
+    setEnabledColumns((currentColumns) =>
+      currentColumns.filter((otherColumn) => otherColumn !== column),
+    )
   })
 
   const state: AssetsTableState = useMemo(
@@ -1569,12 +1549,7 @@ function AssetsTable(props: AssetsTableProps) {
               })}
             >
               {hiddenColumns.map((column) => (
-                <HiddenColumn
-                  key={column}
-                  column={column}
-                  enabledColumns={enabledColumns}
-                  onColumnClick={setEnabledColumns}
-                />
+                <HiddenColumn key={column} column={column} />
               ))}
             </div>
           )}
@@ -1655,27 +1630,24 @@ function AssetsTable(props: AssetsTableProps) {
   )
 }
 
-/** Props for the {@link HiddenColumn} component. */
+/** Props for a {@link HiddenColumn}. */
 interface HiddenColumnProps {
   readonly column: Column
-  readonly enabledColumns: ReadonlySet<Column>
-  readonly onColumnClick: (columns: ReadonlySet<Column>) => void
 }
 
 /** Display a button to show/hide a column. */
 const HiddenColumn = memo(function HiddenColumn(props: HiddenColumnProps) {
-  const { column, enabledColumns, onColumnClick } = props
+  const { column } = props
+  const [enabledColumns, setEnabledColumns] = useEnabledColumnsState(DEFAULT_ENABLED_COLUMNS)
 
   const { getText } = useText()
 
   const onPress = useEventCallback(() => {
-    const newExtraColumns = new Set(enabledColumns)
-    if (enabledColumns.has(column)) {
-      newExtraColumns.delete(column)
-    } else {
-      newExtraColumns.add(column)
-    }
-    onColumnClick(newExtraColumns)
+    setEnabledColumns(
+      enabledColumns.includes(column) ?
+        enabledColumns.filter((otherColumn) => otherColumn !== column)
+      : [...enabledColumns, column],
+    )
   })
 
   return (

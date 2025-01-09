@@ -1,6 +1,2 @@
-/**
- * @file
- *
- * Barrel export for Setup page
- */
+/** @file Barrel export for Setup page. */
 export * from './Setup'

@@ -1,62 +1,22 @@
-/** @file The React provider (and associated hooks) for providing reactive events. */
-import * as React from 'react'
+/** @file Provider for the list of opened projects. */
+import { createContext, useContext, useMemo, type PropsWithChildren } from 'react'
 
 import invariant from 'tiny-invariant'
-import * as z from 'zod'
 
-import * as eventCallbacks from '#/hooks/eventCallbackHooks'
-import * as searchParamsState from '#/hooks/searchParamsStateHooks'
-import * as localStorageProvider from '#/providers/LocalStorageProvider'
-import * as backendModule from '#/services/Backend'
-import * as array from '#/utilities/array'
-import LocalStorage from '#/utilities/LocalStorage'
-
-/** Main content of the screen. Only one should be visible at a time. */
-export enum TabType {
-  drive = 'drive',
-  settings = 'settings',
-}
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-    readonly page: z.infer<typeof PAGES_SCHEMA>
-    readonly launchedProjects: z.infer<typeof LAUNCHED_PROJECT_SCHEMA>
-  }
-}
-
-const PROJECT_SCHEMA = z
-  .object({
-    id: z.custom<backendModule.ProjectId>((x) => typeof x === 'string' && x.startsWith('project-')),
-    parentId: z.custom<backendModule.DirectoryId>(
-      (x) => typeof x === 'string' && x.startsWith('directory-'),
-    ),
-    title: z.string(),
-    type: z.nativeEnum(backendModule.BackendType),
-  })
-  .readonly()
-const LAUNCHED_PROJECT_SCHEMA = z.array(PROJECT_SCHEMA).readonly()
-
-/** Launched project information. */
-export type LaunchedProject = z.infer<typeof PROJECT_SCHEMA>
-/** Launched project ID. */
-export type LaunchedProjectId = backendModule.ProjectId
-
-LocalStorage.registerKey('launchedProjects', {
-  isUserSpecific: true,
-  schema: LAUNCHED_PROJECT_SCHEMA,
-})
-
-export const PAGES_SCHEMA = z
-  .nativeEnum(TabType)
-  .or(
-    z.custom<LaunchedProjectId>(
-      (value) => typeof value === 'string' && value.startsWith('project-'),
-    ),
-  )
-
-LocalStorage.registerKey('page', { schema: PAGES_SCHEMA })
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
+import { EMPTY_ARRAY, includes } from '#/utilities/array'
+import {
+  TabType,
+  useLaunchedProjectsState,
+  type LaunchedProject,
+  type LaunchedProjectId,
+} from './ProjectsProvider/projectsLocalStorage'
+export {
+  TabType,
+  type LaunchedProject,
+  type LaunchedProjectId,
+} from './ProjectsProvider/projectsLocalStorage'
 
 /** State contained in a `ProjectsContext`. */
 export interface ProjectsContextType {
@@ -73,53 +33,44 @@ export interface ProjectsContextType {
   readonly setPage: (page: LaunchedProjectId | TabType) => void
 }
 
-const ProjectsContext = React.createContext<ProjectsContextType | null>(null)
-const PageContext = React.createContext<LaunchedProjectId | TabType | null>(null)
-const LaunchedProjectsContext = React.createContext<readonly LaunchedProject[] | null>(null)
+const ProjectsContext = createContext<ProjectsContextType | null>(null)
+const PageContext = createContext<LaunchedProjectId | TabType | null>(null)
+const LaunchedProjectsContext = createContext<readonly LaunchedProject[] | null>(null)
 
 /** Props for a {@link ProjectsProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
+export type ProjectsProviderProps = Readonly<PropsWithChildren>
 
-/**
- * A React provider (and associated hooks) for determining whether the current area
- * containing the current element is focused.
- */
+/** Provider for the list of opened projects. */
 export default function ProjectsProvider(props: ProjectsProviderProps) {
   const { children } = props
 
-  const [launchedProjects, setLaunchedProjects] = localStorageProvider.useLocalStorageState(
-    'launchedProjects',
-    array.EMPTY_ARRAY,
-  )
-  const [page, setPage] = searchParamsState.useSearchParamsState(
+  const [launchedProjects, setLaunchedProjects] = useLaunchedProjectsState(EMPTY_ARRAY)
+  const [page, setPage] = useSearchParamsState(
     'page',
     () => TabType.drive,
     (value: unknown): value is LaunchedProjectId | TabType => {
-      return (
-        array.includes(Object.values(TabType), value) ||
-        launchedProjects.some((p) => p.id === value)
-      )
+      return includes(Object.values(TabType), value) || launchedProjects.some((p) => p.id === value)
     },
   )
 
-  const addLaunchedProject = eventCallbacks.useEventCallback((project: LaunchedProject) => {
+  const addLaunchedProject = useEventCallback((project: LaunchedProject) => {
     setLaunchedProjects((current) => [...current, project])
   })
-  const removeLaunchedProject = eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
+  const removeLaunchedProject = useEventCallback((projectId: LaunchedProjectId) => {
     setLaunchedProjects((current) => current.filter(({ id }) => id !== projectId))
   })
-  const updateLaunchedProjects = eventCallbacks.useEventCallback(
+  const updateLaunchedProjects = useEventCallback(
     (update: (projects: readonly LaunchedProject[]) => readonly LaunchedProject[]) => {
       setLaunchedProjects((current) => update(current))
     },
   )
 
-  const getState = eventCallbacks.useEventCallback(() => ({
+  const getState = useEventCallback(() => ({
     launchedProjects,
     page,
   }))
 
-  const projectsContextValue = React.useMemo(
+  const projectsContextValue = useMemo(
     () => ({
       updateLaunchedProjects,
       addLaunchedProject,
@@ -151,39 +102,33 @@ export default function ProjectsProvider(props: ProjectsProviderProps) {
 
 /** The projects store. */
 export function useProjectsStore() {
-  const context = React.useContext(ProjectsContext)
-
+  const context = useContext(ProjectsContext)
   invariant(context != null, 'Projects store can only be used inside an `ProjectsProvider`.')
-
   return context
 }
 
 /** The page context. */
 export function usePage() {
-  const context = React.useContext(PageContext)
-
+  const context = useContext(PageContext)
   invariant(context != null, 'Page context can only be used inside an `ProjectsProvider`.')
-
   return context
 }
 
 /** A function to set the current page. */
 export function useSetPage() {
   const { setPage } = useProjectsStore()
-  return eventCallbacks.useEventCallback((page: LaunchedProjectId | TabType) => {
+  return useEventCallback((page: LaunchedProjectId | TabType) => {
     setPage(page)
   })
 }
 
 /** Returns the launched projects context. */
 export function useLaunchedProjects() {
-  const context = React.useContext(LaunchedProjectsContext)
-
+  const context = useContext(LaunchedProjectsContext)
   invariant(
     context != null,
     'Launched projects context can only be used inside an `ProjectsProvider`.',
   )
-
   return context
 }
 
@@ -208,8 +153,7 @@ export function useRemoveLaunchedProject() {
 /** A function to remove all launched projects. */
 export function useClearLaunchedProjects() {
   const { setLaunchedProjects } = useProjectsStore()
-
-  return eventCallbacks.useEventCallback(() => {
-    setLaunchedProjects([])
+  return useEventCallback(() => {
+    setLaunchedProjects(EMPTY_ARRAY)
   })
 }

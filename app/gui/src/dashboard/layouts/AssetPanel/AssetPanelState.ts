@@ -4,45 +4,28 @@
  * selected tab, and other properties from outside the component.
  */
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import type { AssetPropertiesSpotlight } from '#/layouts/AssetProperties'
 import type Backend from '#/services/Backend'
 import type { AnyAsset } from '#/services/Backend'
-import LocalStorage from '#/utilities/LocalStorage'
 import * as zustand from '#/utilities/zustand'
 import { startTransition } from 'react'
-import { z } from 'zod'
-import type { AssetPropertiesSpotlight } from '../AssetProperties'
-import { ASSET_PANEL_TABS, type AssetPanelTab } from './types'
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-    readonly isAssetPanelHidden: boolean
-    readonly assetPanelTab: AssetPanelTab
-    readonly assetPanelWidth: number
-  }
-}
-
-const ASSET_PANEL_TAB_SCHEMA = z.enum(ASSET_PANEL_TABS)
-
-LocalStorage.register({
-  assetPanelTab: { schema: ASSET_PANEL_TAB_SCHEMA },
-  assetPanelWidth: { schema: z.number().int() },
-  isAssetPanelHidden: { schema: z.boolean() },
-  isAssetPanelVisible: { schema: z.boolean() },
-})
+import {
+  storedAssetPanelTab,
+  storedIsAssetPanelHidden,
+  storedIsAssetPanelOpen,
+} from './assetPanelLocalStorage'
+import { type AssetPanelTab } from './types'
 
 /** The state of the asset panel. */
 export interface AssetPanelState {
   readonly selectedTab: AssetPanelTab
   readonly setSelectedTab: (tab: AssetPanelTab) => void
-  readonly isAssetPanelPermanentlyVisible: boolean
-  readonly isAssetPanelExpanded: boolean
-  readonly setIsAssetPanelExpanded: (isAssetPanelExpanded: boolean) => void
-  readonly setIsAssetPanelPermanentlyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
-  readonly toggleIsAssetPanelPermanentlyVisible: () => void
-  readonly isAssetPanelTemporarilyVisible: boolean
-  readonly setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
+  readonly isAssetPanelPermanentlyOpen: boolean
+  readonly setIsAssetPanelOpen: (isAssetPanelOpen: boolean) => void
+  readonly setIsAssetPanelPermanentlyOpen: (isAssetPanelPermanentlyOpen: boolean) => void
+  readonly toggleIsAssetPanelPermanentlyOpen: () => void
+  readonly isAssetPanelTemporarilyOpen: boolean
+  readonly setIsAssetPanelTemporarilyOpen: (isAssetPanelTemporarilyOpen: boolean) => void
   readonly assetPanelProps: AssetPanelContextProps
   readonly setAssetPanelProps: (assetPanelProps: Partial<AssetPanelContextProps>) => void
   readonly isAssetPanelHidden: boolean
@@ -50,53 +33,48 @@ export interface AssetPanelState {
 }
 
 export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) => {
-  const localStorage = LocalStorage.getInstance()
   return {
-    selectedTab: localStorage.get('assetPanelTab') ?? 'settings',
+    selectedTab: storedAssetPanelTab.get() ?? 'settings',
     setSelectedTab: (tab) => {
       set({ selectedTab: tab })
-      localStorage.set('assetPanelTab', tab)
+      storedAssetPanelTab.set(tab)
     },
-    isAssetPanelPermanentlyVisible: false,
-    toggleIsAssetPanelPermanentlyVisible: () => {
-      const state = get()
-      const next = !state.isAssetPanelPermanentlyVisible
-
-      state.setIsAssetPanelPermanentlyVisible(next)
+    isAssetPanelPermanentlyOpen: false,
+    toggleIsAssetPanelPermanentlyOpen: () => {
+      get().setIsAssetPanelPermanentlyOpen(!get().isAssetPanelPermanentlyOpen)
     },
-    setIsAssetPanelPermanentlyVisible: (isAssetPanelPermanentlyVisible) => {
-      if (get().isAssetPanelPermanentlyVisible !== isAssetPanelPermanentlyVisible) {
-        set({ isAssetPanelPermanentlyVisible })
-        localStorage.set('isAssetPanelVisible', isAssetPanelPermanentlyVisible)
+    setIsAssetPanelPermanentlyOpen: (isAssetPanelPermanentlyOpen) => {
+      if (get().isAssetPanelPermanentlyOpen !== isAssetPanelPermanentlyOpen) {
+        set({ isAssetPanelPermanentlyOpen })
+        storedIsAssetPanelOpen.set(isAssetPanelPermanentlyOpen)
       }
     },
-    isAssetPanelExpanded: false,
-    setIsAssetPanelExpanded: (isAssetPanelExpanded) => {
+    setIsAssetPanelOpen: (isAssetPanelExpanded) => {
       const state = get()
 
-      if (state.isAssetPanelPermanentlyVisible !== isAssetPanelExpanded) {
-        state.setIsAssetPanelPermanentlyVisible(isAssetPanelExpanded)
-        state.setIsAssetPanelTemporarilyVisible(false)
+      if (state.isAssetPanelPermanentlyOpen !== isAssetPanelExpanded) {
+        state.setIsAssetPanelPermanentlyOpen(isAssetPanelExpanded)
+        state.setIsAssetPanelTemporarilyOpen(false)
       }
 
       if (state.isAssetPanelHidden && isAssetPanelExpanded) {
         state.setIsAssetPanelHidden(false)
       }
     },
-    isAssetPanelTemporarilyVisible: false,
-    setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible) => {
+    isAssetPanelTemporarilyOpen: false,
+    setIsAssetPanelTemporarilyOpen: (isAssetPanelTemporarilyOpen) => {
       const state = get()
 
-      if (state.isAssetPanelHidden && isAssetPanelTemporarilyVisible) {
+      if (state.isAssetPanelHidden && isAssetPanelTemporarilyOpen) {
         state.setIsAssetPanelHidden(false)
       }
 
-      if (state.isAssetPanelTemporarilyVisible !== isAssetPanelTemporarilyVisible) {
-        set({ isAssetPanelTemporarilyVisible })
+      if (state.isAssetPanelTemporarilyOpen !== isAssetPanelTemporarilyOpen) {
+        set({ isAssetPanelTemporarilyOpen })
       }
     },
     assetPanelProps: {
-      selectedTab: localStorage.get('assetPanelTab') ?? 'settings',
+      selectedTab: storedAssetPanelTab.get() ?? 'settings',
       backend: null,
       item: null,
       spotlightOn: null,
@@ -108,13 +86,13 @@ export const assetPanelStore = zustand.createStore<AssetPanelState>((set, get) =
         set({ assetPanelProps: { ...current, ...assetPanelProps } })
       }
     },
-    isAssetPanelHidden: localStorage.get('isAssetPanelHidden') ?? false,
+    isAssetPanelHidden: storedIsAssetPanelHidden.get() ?? false,
     setIsAssetPanelHidden: (isAssetPanelHidden) => {
       const state = get()
 
       if (state.isAssetPanelHidden !== isAssetPanelHidden) {
         set({ isAssetPanelHidden })
-        localStorage.set('isAssetPanelHidden', isAssetPanelHidden)
+        storedIsAssetPanelHidden.set(isAssetPanelHidden)
       }
     },
   }
@@ -130,53 +108,46 @@ export interface AssetPanelContextProps {
 }
 
 /** Whether the Asset Panel is toggled on. */
-export function useIsAssetPanelPermanentlyVisible() {
-  return zustand.useStore(assetPanelStore, (state) => state.isAssetPanelPermanentlyVisible, {
+export function useIsAssetPanelPermanentlyOpen() {
+  return zustand.useStore(assetPanelStore, (state) => state.isAssetPanelPermanentlyOpen, {
     unsafeEnableTransition: true,
   })
 }
 
 /** A function to set whether the Asset Panel is toggled on. */
-export function useSetIsAssetPanelPermanentlyVisible() {
-  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelPermanentlyVisible, {
+export function useSetIsAssetPanelPermanentlyOpen() {
+  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelPermanentlyOpen, {
     unsafeEnableTransition: true,
   })
 }
 
-/** Whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
-export function useIsAssetPanelTemporarilyVisible() {
-  return zustand.useStore(assetPanelStore, (state) => state.isAssetPanelTemporarilyVisible, {
+/** Whether the Asset Panel is currently open (e.g. for editing a Datalink). */
+export function useIsAssetPanelTemporarilyOpen() {
+  return zustand.useStore(assetPanelStore, (state) => state.isAssetPanelTemporarilyOpen, {
     unsafeEnableTransition: true,
   })
 }
 
-/** A function to set whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
-export function useSetIsAssetPanelTemporarilyVisible() {
-  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelTemporarilyVisible, {
+/** A function to set whether the Asset Panel is currently open (e.g. for editing a Datalink). */
+export function useSetIsAssetPanelTemporarilyOpen() {
+  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelTemporarilyOpen, {
     unsafeEnableTransition: true,
   })
 }
 
-/** Whether the Asset Panel is currently visible, either temporarily or permanently. */
-export function useIsAssetPanelVisible() {
-  const isAssetPanelPermanentlyVisible = useIsAssetPanelPermanentlyVisible()
-  const isAssetPanelTemporarilyVisible = useIsAssetPanelTemporarilyVisible()
-  return isAssetPanelPermanentlyVisible || isAssetPanelTemporarilyVisible
-}
-
-/** Whether the Asset Panel is expanded. */
-export function useIsAssetPanelExpanded() {
+/** Whether the Asset Panel is open. */
+export function useIsAssetPanelOpen() {
   return zustand.useStore(
     assetPanelStore,
-    ({ isAssetPanelPermanentlyVisible, isAssetPanelTemporarilyVisible }) =>
-      isAssetPanelPermanentlyVisible || isAssetPanelTemporarilyVisible,
+    ({ isAssetPanelPermanentlyOpen, isAssetPanelTemporarilyOpen }) =>
+      isAssetPanelPermanentlyOpen || isAssetPanelTemporarilyOpen,
     { unsafeEnableTransition: true },
   )
 }
 
-/** A function to set whether the Asset Panel is expanded. */
-export function useSetIsAssetPanelExpanded() {
-  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelExpanded, {
+/** A function to set whether the Asset Panel is open. */
+export function useSetIsAssetPanelOpen() {
+  return zustand.useStore(assetPanelStore, (state) => state.setIsAssetPanelOpen, {
     unsafeEnableTransition: true,
   })
 }

@@ -1,17 +1,9 @@
 /** @file Functions related to manipulating objects. */
 
-// ===============
-// === Mutable ===
-// ===============
-
 /** Remove the `readonly` modifier from all fields in a type. */
 export type Mutable<T> = {
   -readonly [K in keyof T]: T[K]
 }
-
-// =============
-// === merge ===
-// =============
 
 /** Prevents generic parameter inference by hiding the type parameter behind a conditional type. */
 type NoInfer<T> = [T][T extends T ? 0 : never]
@@ -35,27 +27,15 @@ export function merger<T extends object>(update: Partial<NoInfer<T>>): (object: 
   return (object) => merge(object, update)
 }
 
-// ================
-// === readonly ===
-// ================
-
 /** Makes all properties readonly at the type level. They are still mutable at the runtime level. */
 export function readonly<T extends object>(object: T): Readonly<T> {
   return object
 }
 
-// =====================
-// === unsafeMutable ===
-// =====================
-
 /** Removes the readonly modifier from all properties on the object. UNSAFE. */
 export function unsafeMutable<T extends object>(object: T): { -readonly [K in keyof T]: T[K] } {
   return object
 }
-
-// =====================
-// === unsafeEntries ===
-// =====================
 
 /**
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
@@ -93,10 +73,6 @@ export function unsafeFromEntries<T extends object>(
   return Object.fromEntries(entries)
 }
 
-// =============================
-// === unsafeRemoveUndefined ===
-// =============================
-
 /** A the object with `undefined` unsafely removed from the value types of all of its keys. */
 export function unsafeRemoveUndefined<T extends object>(
   object: T,
@@ -104,10 +80,6 @@ export function unsafeRemoveUndefined<T extends object>(
   // This function intentionally performs an mostly safe, but ultimately unsafe cast.
   return object as never
 }
-
-// ==================
-// === mapEntries ===
-// ==================
 
 /**
  * Return the entries of an object. UNSAFE only when it is possible for an object to have
@@ -127,27 +99,15 @@ export function mapEntries<K extends PropertyKey, V, W>(
   )
 }
 
-// ================
-// === asObject ===
-// ================
-
 /** Either return the object unchanged, if the input was an object, or `null`. */
 export function asObject(value: unknown): object | null {
   return typeof value === 'object' && value != null ? value : null
 }
 
-// =============================
-// === singletonObjectOrNull ===
-// =============================
-
 /** Either return a singleton object, if the input was an object, or an empty array. */
 export function singletonObjectOrNull(value: unknown): [] | [object] {
   return typeof value === 'object' && value != null ? [value] : []
 }
-
-// ============
-// === omit ===
-// ============
 
 /** UNSAFE when `Ks` contains strings that are not in the runtime array. */
 export function omit<T, Ks extends readonly [string & keyof T, ...(string & keyof T)[]]>(
@@ -161,10 +121,6 @@ export function omit<T, Ks extends readonly [string & keyof T, ...(string & keyo
   ) as Omit<T, Ks[number]>
 }
 
-// ============
-// === pick ===
-// ============
-
 /** UNSAFE when `Ks` contains strings that are not in the runtime array. */
 export function pick<T, Ks extends readonly [string & keyof T, ...(string & keyof T)[]]>(
   object: T,
@@ -177,25 +133,13 @@ export function pick<T, Ks extends readonly [string & keyof T, ...(string & keyo
   ) as Pick<T, Ks[number]>
 }
 
-// ===================
-// === ExtractKeys ===
-// ===================
-
 /** Filter a type `T` to include only the properties extending the given type `U`. */
 export type ExtractKeys<T, U> = {
   [K in keyof T]: T[K] extends U ? K : never
 }[keyof T]
 
-// ================
-// === MethodOf ===
-// ================
-
 /** An instance method of the given type. */
 export type MethodOf<T> = (this: T, ...args: never) => unknown
-
-// ===================
-// === useObjectId ===
-// ===================
 
 /** Composable providing support for managing object identities. */
 export function useObjectId() {
@@ -212,6 +156,11 @@ export function useObjectId() {
     return id
   }
   return { objectId }
+}
+
+/** Create an object given its prototype. */
+export function createObject<T extends object>(parent: T): T {
+  return Object.create(parent)
 }
 
 /**

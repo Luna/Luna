@@ -23,6 +23,7 @@ import {
   type BackendMethods,
 } from 'enso-common/src/backendQuery'
 
+import { useLocalRootDirectoryState } from '#/appLocalStorage'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
 import { CATEGORY_TO_FILTER_BY, type Category } from '#/layouts/CategorySwitcher/Category'
@@ -32,7 +33,6 @@ import {
   useSetSelectedAssets,
   useToggleDirectoryExpansion,
 } from '#/providers/DriveProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import type { LaunchedProject } from '#/providers/ProjectsProvider'
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
@@ -567,7 +567,7 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
     queryKey: [backend.type, 'getOrganization'],
     queryFn: () => backend.getOrganization(),
   })
-  const [localRootDirectory] = useLocalStorageState('localRootDirectory')
+  const [localRootDirectory] = useLocalRootDirectoryState()
 
   const localRootPath = localRootDirectory != null ? backendModule.Path(localRootDirectory) : null
   const id =

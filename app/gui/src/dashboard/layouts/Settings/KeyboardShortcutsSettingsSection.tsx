@@ -17,7 +17,7 @@ import CaptureKeyboardShortcutModal from '#/modals/CaptureKeyboardShortcutModal'
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
 import { useInputBindings } from '#/providers/InputBindingsProvider'
 import { useText } from '#/providers/TextProvider'
-import { unsafeEntries } from '#/utilities/object'
+import { unsafeEntries } from 'enso-common/src/utilities/data/object'
 
 // ========================================
 // === KeyboardShortcutsSettingsSection ===

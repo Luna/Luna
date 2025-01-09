@@ -10,13 +10,8 @@ import DocsIcon from '#/assets/docs.svg'
 import PeopleIcon from '#/assets/people.svg'
 import TagIcon from '#/assets/tag.svg'
 import TimeIcon from '#/assets/time.svg'
-
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import * as backend from '#/services/Backend'
-
-// =============
-// === Types ===
-// =============
 
 /** Column type. */
 export enum Column {
@@ -33,17 +28,13 @@ export enum Column {
 /** Columns that can be used as a sort column. */
 export type SortableColumn = Column.modified | Column.name
 
-// =================
-// === Constants ===
-// =================
-
-export const DEFAULT_ENABLED_COLUMNS: ReadonlySet<Column> = new Set([
+export const DEFAULT_ENABLED_COLUMNS: readonly Column[] = [
   Column.name,
   Column.modified,
   Column.sharedWith,
   Column.labels,
   Column.path,
-])
+]
 
 export const COLUMN_ICONS: Readonly<Record<Column, string>> = {
   /* The file column does not have an icon, however this does not matter as it is not
@@ -84,10 +75,6 @@ export const COLUMN_CSS_CLASS: Readonly<Record<Column, string>> = {
   [Column.docs]: `min-w-drive-docs-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
   [Column.path]: `min-w-drive-path-column rounded-rows-have-level ${NORMAL_COLUMN_CSS_CLASSES}`,
 }
-
-// =====================
-// === getColumnList ===
-// =====================
 
 /** Return the full list of columns given the relevant current state. */
 export function getColumnList(

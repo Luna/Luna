@@ -40,7 +40,6 @@ import * as React from 'react'
 import * as reactQuery from '@tanstack/react-query'
 import * as router from 'react-router-dom'
 import * as toastify from 'react-toastify'
-import * as z from 'zod'
 
 import * as detect from 'enso-common/src/detect'
 
@@ -52,7 +51,7 @@ import AuthProvider, * as authProvider from '#/providers/AuthProvider'
 import BackendProvider, { useLocalBackend } from '#/providers/BackendProvider'
 import { useHttpClientStrict } from '#/providers/HttpClientProvider'
 import InputBindingsProvider from '#/providers/InputBindingsProvider'
-import LocalStorageProvider, * as localStorageProvider from '#/providers/LocalStorageProvider'
+import LocalStorageProvider from '#/providers/LocalStorageProvider'
 import { useLogger } from '#/providers/LoggerProvider'
 import ModalProvider, * as modalProvider from '#/providers/ModalProvider'
 import * as navigator2DProvider from '#/providers/Navigator2DProvider'
@@ -88,46 +87,20 @@ import RemoteBackend from '#/services/RemoteBackend'
 
 import * as appBaseUrl from '#/utilities/appBaseUrl'
 import * as eventModule from '#/utilities/event'
-import LocalStorage from '#/utilities/LocalStorage'
-import * as object from '#/utilities/object'
 import { Path } from '#/utilities/path'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
+import * as object from 'enso-common/src/utilities/data/object'
 
+import {
+  useAcceptedPrivacyPolicyVersionState,
+  useAcceptedTermsOfServiceVersionState,
+  useInputBindings,
+  useLocalRootDirectoryState,
+} from '#/appLocalStorage'
 import { useInitAuthService } from '#/authentication/service'
 import { InvitedToOrganizationModal } from '#/modals/InvitedToOrganizationModal'
 import { useMutation } from '@tanstack/react-query'
 import { useOffline } from './hooks/offlineHooks'
-
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly inputBindings: Readonly<Record<string, readonly string[]>>
-    readonly localRootDirectory: string
-  }
-}
-
-LocalStorage.registerKey('inputBindings', {
-  schema: z.record(z.string().array().readonly()).transform((value) =>
-    Object.fromEntries(
-      Object.entries<unknown>({ ...value }).flatMap((kv) => {
-        const [k, v] = kv
-        return Array.isArray(v) && v.every((item): item is string => typeof item === 'string') ?
-            [[k, v]]
-          : []
-      }),
-    ),
-  ),
-})
-
-LocalStorage.registerKey('localRootDirectory', { schema: z.string() })
-
-// ======================
-// === getMainPageUrl ===
-// ======================
 
 /** Returns the URL to the main page. This is the current URL, with the current route removed. */
 function getMainPageUrl() {
@@ -135,10 +108,6 @@ function getMainPageUrl() {
   mainPageUrl.pathname = mainPageUrl.pathname.replace(appUtils.ALL_PATHS_REGEX, '')
   return mainPageUrl
 }
-
-// ===========
-// === App ===
-// ===========
 
 /** Global configuration for the `App` component. */
 export interface AppProps {
@@ -279,10 +248,6 @@ export default function App(props: AppProps) {
   )
 }
 
-// =================
-// === AppRouter ===
-// =================
-
 /** Props for an {@link AppRouter}. */
 export interface AppRouterProps extends AppProps {
   readonly projectManagerRootDirectory: projectManager.Path | null
@@ -303,7 +268,6 @@ function AppRouter(props: AppRouterProps) {
   const navigate = router.useNavigate()
 
   const { getText } = textProvider.useText()
-  const { localStorage } = localStorageProvider.useLocalStorage()
   const { setModal } = modalProvider.useSetModal()
 
   const navigator2D = navigator2DProvider.useNavigator2D()
@@ -325,8 +289,10 @@ function AppRouter(props: AppRouterProps) {
 
   const [inputBindingsRaw] = React.useState(() => inputBindingsModule.createBindings())
 
+  const { get: getInputBindings, set: setInputBindings } = useInputBindings()
+
   React.useEffect(() => {
-    const savedInputBindings = localStorage.get('inputBindings')
+    const savedInputBindings = getInputBindings()
     if (savedInputBindings != null) {
       const filteredInputBindings = object.mapEntries(
         inputBindingsRaw.metadata,
@@ -341,12 +307,11 @@ function AppRouter(props: AppRouterProps) {
         }
       }
     }
-  }, [localStorage, inputBindingsRaw])
+  }, [inputBindingsRaw, getInputBindings])
 
   const inputBindings = React.useMemo(() => {
     const updateLocalStorage = () => {
-      localStorage.set(
-        'inputBindings',
+      setInputBindings(
         Object.fromEntries(
           Object.entries(inputBindingsRaw.metadata).map((kv) => {
             const [k, v] = kv
@@ -389,14 +354,14 @@ function AppRouter(props: AppRouterProps) {
         return inputBindingsRaw.unregister.bind(inputBindingsRaw)
       },
     }
-  }, [localStorage, inputBindingsRaw])
+  }, [inputBindingsRaw, setInputBindings])
 
   const mainPageUrl = getMainPageUrl()
 
-  // Subscribe to `localStorage` updates to trigger a rerender when the terms of service
-  // or privacy policy have been accepted.
-  localStorageProvider.useLocalStorageState('termsOfService')
-  localStorageProvider.useLocalStorageState('privacyPolicy')
+  // Subscribe to `localStorage` updates (and ignore the value)
+  // to trigger a rerender when the terms of service or privacy policy have been accepted.
+  useAcceptedTermsOfServiceVersionState()
+  useAcceptedPrivacyPolicyVersionState()
 
   const authService = useInitAuthService(props)
 
@@ -562,7 +527,7 @@ function AppRouter(props: AppRouterProps) {
 
 /** Keep `localBackend.rootPath` in sync with the saved root path state. */
 function LocalBackendPathSynchronizer() {
-  const [localRootDirectory] = localStorageProvider.useLocalStorageState('localRootDirectory')
+  const [localRootDirectory] = useLocalRootDirectoryState()
   const localBackend = useLocalBackend()
   if (localBackend) {
     if (localRootDirectory != null) {

@@ -1,7 +1,4 @@
-/**
- * @file
- * Setup page
- */
+/** @file Setup page. */
 import * as React from 'react'
 
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'

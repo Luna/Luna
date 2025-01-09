@@ -9,8 +9,8 @@ import { useBackendQuery } from '#/hooks/backendHooks'
 import { useRemoteBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { constantValueOfSchema, getSchemaName, lookupDef } from '#/utilities/jsonSchema'
-import { asObject, singletonObjectOrNull } from '#/utilities/object'
 import { twMerge } from '#/utilities/tailwindMerge'
+import { asObject, singletonObjectOrNull } from 'enso-common/src/utilities/data/object'
 import { twJoin } from 'tailwind-merge'
 
 // =======================

@@ -1,32 +1,29 @@
 /**
  * @file
- * @description
  * The asset panel is a sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
+import { memo, startTransition } from 'react'
+
+import { AnimatePresence, motion } from 'framer-motion'
+
+import type { BackendType } from 'enso-common/src/services/Backend'
+
 import docsIcon from '#/assets/file_text.svg'
 import sessionsIcon from '#/assets/group.svg'
 import inspectIcon from '#/assets/inspect.svg'
 import versionsIcon from '#/assets/versions.svg'
-
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { AssetDocs } from '#/layouts/AssetDocs'
+import AssetProjectSessions from '#/layouts/AssetProjectSessions'
+import AssetProperties from '#/layouts/AssetProperties'
+import AssetVersions from '#/layouts/AssetVersions/AssetVersions'
+import { isLocalCategory, type Category } from '#/layouts/CategorySwitcher/Category'
 import { useBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useStore } from '#/utilities/zustand'
-import type { BackendType } from 'enso-common/src/services/Backend'
-import { AnimatePresence, motion } from 'framer-motion'
-import { memo, startTransition } from 'react'
-import { AssetDocs } from '../AssetDocs'
-import AssetProjectSessions from '../AssetProjectSessions'
-import AssetProperties from '../AssetProperties'
-import AssetVersions from '../AssetVersions/AssetVersions'
-import { isLocalCategory, type Category } from '../CategorySwitcher/Category'
-import {
-  assetPanelStore,
-  useIsAssetPanelExpanded,
-  useSetIsAssetPanelExpanded,
-} from './AssetPanelState'
+import { assetPanelStore, useIsAssetPanelOpen, useSetIsAssetPanelOpen } from './AssetPanelState'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
 import { AssetPanelToggle } from './components/AssetPanelToggle'
 import { type AssetPanelTab } from './types'
@@ -35,31 +32,28 @@ const ASSET_SIDEBAR_COLLAPSED_WIDTH = 48
 const ASSET_PANEL_WIDTH = 480
 const ASSET_PANEL_TOTAL_WIDTH = ASSET_PANEL_WIDTH + ASSET_SIDEBAR_COLLAPSED_WIDTH
 
-/**
- * Props for an {@link AssetPanel}.
- */
+/** Props for an {@link AssetPanel}. */
 export interface AssetPanelProps {
   readonly backendType: BackendType
   readonly category: Category
 }
 
 /**
- * The asset panel is a sidebar that can be expanded or collapsed.
+ * A sidebar that can be expanded or collapsed.
  * It is used to view and interact with assets in the drive.
  */
 export const AssetPanel = memo(function AssetPanel(props: AssetPanelProps) {
   const isHidden = useStore(assetPanelStore, (state) => state.isAssetPanelHidden, {
     unsafeEnableTransition: true,
   })
-  const isExpanded = useIsAssetPanelExpanded()
-
-  const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
+  const isOpen = useIsAssetPanelOpen()
+  const panelWidth = isOpen ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
   const isVisible = !isHidden
 
   const compensationWidth = isVisible ? panelWidth : 0
 
   return (
-    // We use hex color here to avoid muliplying bg colors due to opacity.
+    // We use a hex color here to avoid muliplying bg colors due to opacity.
     <div className="relative flex h-full flex-col">
       <div style={{ width: compensationWidth, height: 0 }} />
 
@@ -84,7 +78,7 @@ export const AssetPanel = memo(function AssetPanel(props: AssetPanelProps) {
               event.stopPropagation()
             }}
           >
-            <InternalAssetPanelTabs panelWidth={panelWidth} {...props} />
+            <AssetPanelTabsInternal panelWidth={panelWidth} {...props} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -92,10 +86,8 @@ export const AssetPanel = memo(function AssetPanel(props: AssetPanelProps) {
   )
 })
 
-/**
- * The internal implementation of the Asset Panel Tabs.
- */
-const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
+/** Tabs for an {@link AssetPanel}. */
+const AssetPanelTabsInternal = memo(function AssetPanelTabsInternal(
   props: AssetPanelProps & { panelWidth: number },
 ) {
   const { category, panelWidth } = props
@@ -119,11 +111,11 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
 
   const { getText } = useText()
 
-  const isExpanded = useIsAssetPanelExpanded()
-  const setIsExpanded = useSetIsAssetPanelExpanded()
+  const isOpen = useIsAssetPanelOpen()
+  const setIsOpen = useSetIsAssetPanelOpen()
 
   const expandTab = useEventCallback(() => {
-    setIsExpanded(true)
+    setIsOpen(true)
   })
 
   const backend = useBackend(category)
@@ -143,19 +135,19 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
         }
 
         startTransition(() => {
-          if (key === selectedTab && isExpanded) {
-            setIsExpanded(false)
+          if (key === selectedTab && isOpen) {
+            setIsOpen(false)
           } else {
             // This is safe because we know the key is a valid AssetPanelTab.
             // eslint-disable-next-line no-restricted-syntax
             setSelectedTab(key as AssetPanelTab)
-            setIsExpanded(true)
+            setIsOpen(true)
           }
         })
       }}
     >
-      <AnimatePresence initial={!isExpanded} mode="sync">
-        {isExpanded && (
+      <AnimatePresence initial={!isOpen} mode="sync">
+        {isOpen && (
           <motion.div
             initial="initial"
             animate="animate"
@@ -212,9 +204,9 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
             id="settings"
             icon={inspectIcon}
             label={isLocal ? getText('assetProperties.localBackend') : getText('properties')}
-            isExpanded={isExpanded}
-            onPress={expandTab}
+            isExpanded={isOpen}
             isDisabled={isLocal}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
@@ -222,9 +214,9 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
             label={
               isLocal ? getText('assetVersions.localAssetsDoNotHaveVersions') : getText('versions')
             }
-            isExpanded={isExpanded}
-            onPress={expandTab}
+            isExpanded={isOpen}
             isDisabled={isLocal}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="sessions"
@@ -232,15 +224,15 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(
             label={
               isLocal ? getText('assetProjectSessions.localBackend') : getText('projectSessions')
             }
-            isExpanded={isExpanded}
-            onPress={expandTab}
+            isExpanded={isOpen}
             isDisabled={isLocal}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="docs"
             icon={docsIcon}
             label={getText('docs')}
-            isExpanded={isExpanded}
+            isExpanded={isOpen}
             onPress={expandTab}
           />
         </AssetPanelTabs.TabList>

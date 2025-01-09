@@ -1,66 +1,61 @@
 /** @file The directory header bar and directory item listing. */
-import * as React from 'react'
+import { memo, useDeferredValue, useEffect, useState } from 'react'
 
-import * as appUtils from '#/appUtils'
-import Offline from '#/assets/offline_filled.svg'
+import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
-import * as offlineHooks from '#/hooks/offlineHooks'
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as authProvider from '#/providers/AuthProvider'
-import * as backendProvider from '#/providers/BackendProvider'
-import * as textProvider from '#/providers/TextProvider'
-
+import { SUBSCRIBE_PATH } from '#/appUtils'
+import OfflineIcon from '#/assets/offline_filled.svg'
+import * as ariaComponents from '#/components/AriaComponents'
+import { Button, ButtonGroup } from '#/components/AriaComponents'
+import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
+import * as result from '#/components/Result'
+import { Result } from '#/components/Result'
+import SvgMask from '#/components/SvgMask'
+import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
+import { useOffline } from '#/hooks/offlineHooks'
+import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import { AssetPanel } from '#/layouts/AssetPanel'
-import type * as assetsTable from '#/layouts/AssetsTable'
-import AssetsTable, { AssetsTableAssetsUnselector } from '#/layouts/AssetsTable'
+import AssetsTable, {
+  type AssetManagementApi,
+  AssetsTableAssetsUnselector,
+} from '#/layouts/AssetsTable'
 import CategorySwitcher from '#/layouts/CategorySwitcher'
+import type { Category } from '#/layouts/CategorySwitcher/Category'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import DriveBar from '#/layouts/DriveBar'
 import Labels from '#/layouts/Labels'
-
-import * as ariaComponents from '#/components/AriaComponents'
-import * as result from '#/components/Result'
-
-import { ErrorBoundary, useErrorBoundary } from '#/components/ErrorBoundary'
-import SvgMask from '#/components/SvgMask'
-import { listDirectoryQueryOptions } from '#/hooks/backendHooks'
-import type { Category } from '#/layouts/CategorySwitcher/Category'
+import { useFullUserSession } from '#/providers/AuthProvider'
+import { useBackend, useLocalBackend } from '#/providers/BackendProvider'
 import { useTargetDirectory } from '#/providers/DriveProvider'
+import { useText } from '#/providers/TextProvider'
 import { DirectoryDoesNotExistError, Plan } from '#/services/Backend'
 import AssetQuery from '#/utilities/AssetQuery'
-import * as download from '#/utilities/download'
-import * as github from '#/utilities/github'
+import { download } from '#/utilities/download'
+import { getDownloadUrl } from '#/utilities/github'
 import { OfflineError } from '#/utilities/HttpClient'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { useDeferredValue, useEffect } from 'react'
-import { toast } from 'react-toastify'
 import { Suspense } from '../components/Suspense'
 import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
-
-// =============
-// === Drive ===
-// =============
 
 /** Props for a {@link Drive}. */
 export interface DriveProps {
   readonly hidden: boolean
   readonly initialProjectName: string | null
-  readonly assetsManagementApiRef: React.Ref<assetsTable.AssetManagementApi>
+  readonly assetsManagementApiRef: React.Ref<AssetManagementApi>
 }
 
 const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 function Drive(props: DriveProps) {
-  const { isOffline } = offlineHooks.useOffline()
-  const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const { getText } = textProvider.useText()
+  const { isOffline } = useOffline()
+  const toastAndLog = useToastAndLog()
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const { getText } = useText()
   const categoriesAPI = useCategoriesAPI()
   const { category, resetCategory, setCategory } = categoriesAPI
 
@@ -76,36 +71,36 @@ function Drive(props: DriveProps) {
   switch (status) {
     case 'not-enabled': {
       return (
-        <result.Result
+        <Result
           status="error"
           title={getText('notEnabledTitle')}
           testId="not-enabled-stub"
           subtitle={`${getText('notEnabledSubtitle')}${localBackend == null ? ' ' + getText('downloadFreeEditionMessage') : ''}`}
         >
-          <ariaComponents.ButtonGroup align="center">
-            <ariaComponents.Button variant="primary" size="medium" href={appUtils.SUBSCRIBE_PATH}>
+          <ButtonGroup align="center">
+            <Button variant="primary" size="medium" href={SUBSCRIBE_PATH}>
               {getText('upgrade')}
-            </ariaComponents.Button>
+            </Button>
 
             {!supportLocalBackend && (
-              <ariaComponents.Button
+              <Button
                 data-testid="download-free-edition"
                 size="medium"
                 variant="accent"
                 onPress={async () => {
-                  const downloadUrl = await github.getDownloadUrl()
+                  const downloadUrl = await getDownloadUrl()
                   if (downloadUrl == null) {
                     toastAndLog('noAppDownloadError')
                   } else {
-                    download.download(downloadUrl)
+                    download(downloadUrl)
                   }
                 }}
               >
                 {getText('downloadFreeEdition')}
-              </ariaComponents.Button>
+              </Button>
             )}
-          </ariaComponents.ButtonGroup>
-        </result.Result>
+          </ButtonGroup>
+        </Result>
       )
     }
     case 'offline':
@@ -150,9 +145,7 @@ interface DriveAssetsViewProps extends DriveProps {
   readonly setCategory: (categoryId: Category['id']) => void
 }
 
-/**
- * The assets view of the Drive.
- */
+/** The assets view of the Drive. */
 function DriveAssetsView(props: DriveAssetsViewProps) {
   const {
     category,
@@ -165,13 +158,13 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
   const deferredCategory = useDeferredValue(category)
   const { showBoundary } = useErrorBoundary()
 
-  const { isOffline } = offlineHooks.useOffline()
-  const { user } = authProvider.useFullUserSession()
-  const localBackend = backendProvider.useLocalBackend()
-  const backend = backendProvider.useBackend(category)
+  const { isOffline } = useOffline()
+  const { user } = useFullUserSession()
+  const localBackend = useLocalBackend()
+  const backend = useBackend(category)
 
-  const [query, setQuery] = React.useState(() => AssetQuery.fromString(''))
-  const [shouldForceHideStartModal, setShouldForceHideStartModal] = React.useState(false)
+  const [query, setQuery] = useState(() => AssetQuery.fromString(''))
+  const [shouldForceHideStartModal, setShouldForceHideStartModal] = useState(false)
 
   const isCloud = categoryModule.isCloudCategory(category)
   const supportLocalBackend = localBackend != null
@@ -299,18 +292,14 @@ interface OfflineMessageProps {
   readonly setCategory: (category: categoryModule.Category['id']) => void
 }
 
-/**
- * Offline message component.
- * Displays info that the ctegory selected in unavailable
- * in offline mode
- */
+/** Display info that the category selected is unavailable in offline mode. */
 function OfflineMessage(props: OfflineMessageProps) {
   const { supportLocalBackend, setCategory } = props
-  const { getText } = textProvider.useText()
+  const { getText } = useText()
 
   return (
     <result.Result
-      status={<SvgMask src={Offline} className="aspect-square h-6" />}
+      status={<SvgMask src={OfflineIcon} className="aspect-square h-6" />}
       className="my-12"
       centered="horizontal"
       title={getText('cloudUnavailableOffline')}
@@ -331,4 +320,4 @@ function OfflineMessage(props: OfflineMessageProps) {
   )
 }
 
-export default React.memo(Drive)
+export default memo(Drive)

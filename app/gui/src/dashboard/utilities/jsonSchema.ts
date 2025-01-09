@@ -1,5 +1,5 @@
 /** @file Utilities for using JSON schemas. */
-import * as objectModule from '#/utilities/object'
+import * as objectModule from 'enso-common/src/utilities/data/object'
 
 // =================
 // === lookupDef ===

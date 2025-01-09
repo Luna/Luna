@@ -1,14 +1,10 @@
-/**
- * @file
- *
- * Feature flags provider.
- * Feature flags are used to enable or disable certain features in the application.
- */
+/** @file Provider for enabling or disabling certain features. */
+import { unsafeWriteValue } from '#/utilities/write'
 import { IS_DEV_MODE, isOnElectron } from 'enso-common/src/detect'
-import { z } from 'zod'
+import * as z from 'zod'
 import { createStore, useStore } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { unsafeWriteValue } from '../utilities/write'
+
 export const FEATURE_FLAGS_SCHEMA = z.object({
   enableMultitabs: z.boolean(),
   enableAssetsTableBackgroundRefresh: z.boolean(),
@@ -47,10 +43,8 @@ const flagsStore = createStore<FeatureFlagsStore>()(
       name: 'featureFlags',
       version: 1,
       merge: (persistedState, newState) => {
-        /**
-         * Mutates the state with provided feature flags
-         */
-        function unsafeMutateFeatureFlags(flags: Partial<FeatureFlags>) {
+        /** Mutate the state with provided feature flags. */
+        const unsafeMutateFeatureFlags = (flags: Partial<FeatureFlags>) => {
           unsafeWriteValue(newState, 'featureFlags', {
             ...newState.featureFlags,
             ...flags,
