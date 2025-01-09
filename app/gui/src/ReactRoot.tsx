@@ -43,6 +43,7 @@ export default function ReactRoot(props: ReactRootProps) {
   const ydocUrl = (config.engine.ydocUrl || resolveEnvUrl($config.YDOC_SERVER_URL)) ?? null
   const initialProjectName = config.startup.project || null
   invariant(portalRoot, 'PortalRoot element not found')
+  const isCloudBuild = $config.CLOUD_BUILD === 'true'
 
   return (
     <StrictMode>
@@ -55,7 +56,7 @@ export default function ReactRoot(props: ReactRootProps) {
                   <HttpClientProvider httpClient={httpClient}>
                     <App
                       supportsDeepLinks={supportsDeepLinks}
-                      supportsLocalBackend={!$config.CLOUD_BUILD}
+                      supportsLocalBackend={!isCloudBuild}
                       isAuthenticationDisabled={!shouldUseAuthentication}
                       projectManagerUrl={projectManagerUrl}
                       ydocUrl={ydocUrl}
