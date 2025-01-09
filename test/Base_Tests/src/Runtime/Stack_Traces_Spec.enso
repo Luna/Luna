@@ -47,11 +47,8 @@ add_specs suite_builder = suite_builder.group "Stack traces" group_builder->
         top_lines = lines.take (..While l-> l.contains "Vector.type" . not)
         out = top_lines.join '\n'
 
-        forbidden1 = out.contains "my_exception_handler"
-        forbidden2 = out.contains "do_the_handling"
-
-        if forbidden1 || forbidden2 then
-            Test.fail 'Frames from exception handling should not be in the stacktrace:\n'+out
+        out . should_not_contain "my_exception_handler"
+        out . should_not_contain "do_the_handling"
 
     group_builder.specify "should capture traces correctly" <|
         modname = Meta.get_simple_type_name Stack_Traces_Spec
