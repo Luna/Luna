@@ -55,13 +55,18 @@ public class PrivateConstructorAccessTest {
       var polyCtx = new PolyglotContext(ctx);
       var mainMod = polyCtx.evalModule(mainSrcPath.toFile());
       var myType = mainMod.getType("My_Type");
-      ContextUtils.executeInContext(ctx, () -> {
-        var myTypeUnwrapped = ContextUtils.unwrapValue(ctx, myType);
-        var interop = InteropLibrary.getUncached();
-        var members = interop.getMembers(myTypeUnwrapped, false);
-        assertThat("My_Type should not have any 'public' members", interop.getArraySize(members), is(0L));
-        return null;
-      });
+      ContextUtils.executeInContext(
+          ctx,
+          () -> {
+            var myTypeUnwrapped = ContextUtils.unwrapValue(ctx, myType);
+            var interop = InteropLibrary.getUncached();
+            var members = interop.getMembers(myTypeUnwrapped, false);
+            assertThat(
+                "My_Type should not have any 'public' members",
+                interop.getArraySize(members),
+                is(0L));
+            return null;
+          });
     }
   }
 
