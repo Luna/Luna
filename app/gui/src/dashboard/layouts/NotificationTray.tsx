@@ -28,7 +28,7 @@ function NotificationTrayDialog() {
 
   return (
     <Popover placement="bottom right" offset={DIALOG_OFFSET} crossOffset={DIALOG_CROSS_OFFSET}>
-      <div className="flex flex-col">
+      <div className="flex max-h-[90vh] flex-col overflow-y-auto">
         <Text.Heading level={3} variant="subtitle">
           {getText('notifications')}
         </Text.Heading>
@@ -36,8 +36,8 @@ function NotificationTrayDialog() {
           <Result centered className="min-h-10" title={getText('youAreAllCaughtUp')} />
         )}
         {hasNotifications && (
-          <GridList items={transientNotifications}>
-            {(info) => <NotificationItem key={info.id} {...info} />}
+          <GridList selectionMode="none" items={transientNotifications}>
+            {(info) => <div>a</div>}
           </GridList>
         )}
       </div>
