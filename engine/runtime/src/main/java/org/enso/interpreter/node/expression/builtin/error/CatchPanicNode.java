@@ -1,5 +1,6 @@
 package org.enso.interpreter.node.expression.builtin.error;
 
+import com.oracle.truffle.api.TruffleStackTrace;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.exception.AbstractTruffleException;
@@ -89,6 +90,12 @@ public abstract class CatchPanicNode extends Node {
     if (profile.profile(isValueOfTypeNode.execute(panicType, payload, true))) {
       var builtins = EnsoContext.get(this).getBuiltins();
       var cons = builtins.caughtPanic().getUniqueConstructor();
+      // if (originalException instanceof PanicException panic) {
+      //   panic.caughtBy(this);
+      // } else
+      {
+        TruffleStackTrace.fillIn(originalException);
+      }
       var caughtPanic =
           AtomNewInstanceNode.getUncached().newInstance(cons, payload, originalException);
       return invokeCallableNode.execute(handler, frame, state, new Object[] {caughtPanic});
