@@ -13,9 +13,9 @@ const globals = {
 }
 
 const ctx = await esbuild.context({
-  outfile: 'dist/main.cjs',
+  outdir: 'dist',
   sourcemap: 'linked',
-  entryPoints: ['src/main.ts'],
+  entryPoints: ['src/main.ts', 'src/insight.ts'],
   bundle: true,
   platform: 'browser',
   define: {

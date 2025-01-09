@@ -10,13 +10,15 @@
   "main": "./dist/main.js",
   "scripts": {
     "compile": "node ./build.mjs build",
-    "start": "node ./dist/main.cjs",
+    "start": "node ./dist/main.js",
     "dev:watch": "node ./build.mjs watch",
     "lint": "eslint . --cache --max-warnings=0"
   },
   "dependencies": {
+    "y-websocket": "^1.5.0",
     "ydoc-server": "workspace:*",
-    "ydoc-shared": "workspace:*"
+    "ydoc-shared": "workspace:*",
+    "yjs": "^13.6.7"
   },
   "devDependencies": {
     "@fal-works/esbuild-plugin-global-externals": "^2.1.2",

@@ -62,7 +62,7 @@ object Ydoc {
           }
 
           val generatedYdocServerJs =
-            base / "app" / "ydoc-server-polyglot" / "dist" / "main.cjs"
+            base / "app" / "ydoc-server-polyglot" / "dist" / "main.js"
           IO.copyFile(generatedYdocServerJs, resourceYdocServerJs)
         }
 
