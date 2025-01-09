@@ -1,10 +1,10 @@
 package org.enso.table.data.column.operation;
 
-import java.util.Random;
-
-import org.enso.base.Text_Utils;
 import static org.enso.table.data.column.operation.SampleOperation.DEFAULT_SAMPLE_SIZE;
 import static org.enso.table.data.column.operation.SampleOperation.RANDOM_SEED;
+
+import java.util.Random;
+import org.enso.base.Text_Utils;
 import org.enso.table.data.column.storage.ColumnStorage;
 import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.table.Column;
@@ -17,8 +17,11 @@ public class CountNonTrivialWhitespace {
     return applyToStorage(storage, sampleSize);
   }
 
-  /** Counts the number of cells in the given storage with non trivial whitespace
-     * @return  */
+  /**
+   * Counts the number of cells in the given storage with non trivial whitespace
+   *
+   * @return
+   */
   public static Long applyToStorage(ColumnStorage storage, long sampleSize)
       throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)

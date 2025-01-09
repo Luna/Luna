@@ -38,21 +38,12 @@ public class Text_Utils {
   /**
    * Checks if the string has leading or trailing whitespace.
    *
-   * @param s the string to check
+   * @param initialString the string to check
    * @return whether the string has leading or trailing whitespace
    */
-  public static boolean has_leading_trailing_whitespace(String s) {
-    if (s == null || s.isEmpty()) {
-      return false;
-    }
-
-    var leading = Text_Utils.take_prefix(s, 1);
-    if (leading != null && is_all_whitespace(leading)) {
-      return true;
-    }
-
-    var trailing = Text_Utils.take_suffix(s, 1);
-    return trailing != null && is_all_whitespace(trailing);
+  public static boolean has_leading_trailing_whitespace(String initialString) {
+    String trimmedString = initialString.trim();
+    return trimmedString.length() != initialString.length();
   }
 
   /**
@@ -62,18 +53,7 @@ public class Text_Utils {
    * @return whether the string contains any of the non trivial whitespace listed
    */
   public static boolean has_non_trivial_whitespace(String s) {
-    List<String> trivialWhiteSpaceList =
-        List.of(
-            "\u200A", "\u200B", "\u205F", "\u2004", "\u2005", "\u2006", "\u2008", "\u2009",
-            "\u2007", "\r", "\n", "\t", "\u2002", "\u00A0", "\u3000", "\u2003");
-
-    for (String white_space_to_check : trivialWhiteSpaceList) {
-      if (s.contains(white_space_to_check)) {
-        return true;
-      }
-    }
-
-    return false;
+    return s.chars().mapToObj(c -> (char) c).anyMatch(UCharacter::isUWhiteSpace);
   }
 
   /**

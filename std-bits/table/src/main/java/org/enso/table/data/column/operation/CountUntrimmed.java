@@ -1,10 +1,10 @@
 package org.enso.table.data.column.operation;
 
-import java.util.Random;
-
-import org.enso.base.Text_Utils;
 import static org.enso.table.data.column.operation.SampleOperation.DEFAULT_SAMPLE_SIZE;
 import static org.enso.table.data.column.operation.SampleOperation.RANDOM_SEED;
+
+import java.util.Random;
+import org.enso.base.Text_Utils;
 import org.enso.table.data.column.storage.ColumnStorage;
 import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.table.Column;

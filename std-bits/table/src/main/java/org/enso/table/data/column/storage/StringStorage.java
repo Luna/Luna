@@ -4,7 +4,6 @@ import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountNonTrivialWhitespace;
@@ -30,7 +29,10 @@ public final class StringStorage extends SpecializedStorage<String> {
   private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StringStorage.class);
 
   private final TextType type;
-  record DataQualityMetrics (Long untrimmedCount, Long whitespaceCount) {};
+
+  record DataQualityMetrics(Long untrimmedCount, Long whitespaceCount) {}
+  ;
+
   private Future<DataQualityMetrics> dataQualityMetricsValues;
 
   /**
@@ -42,11 +44,13 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    dataQualityMetricsValues = CompletableFuture.supplyAsync(() ->
-      new DataQualityMetrics(
-        CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
-        CountNonTrivialWhitespace.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)  
-    ));
+    dataQualityMetricsValues =
+        CompletableFuture.supplyAsync(
+            () ->
+                new DataQualityMetrics(
+                    CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                    CountNonTrivialWhitespace.compute(
+                        this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
   }
 
   @Override
@@ -73,11 +77,13 @@ public final class StringStorage extends SpecializedStorage<String> {
   public Long cachedUntrimmedCount() throws InterruptedException {
     if (dataQualityMetricsValues.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      dataQualityMetricsValues = CompletableFuture.supplyAsync(() ->
-      new DataQualityMetrics(
-        CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
-        CountNonTrivialWhitespace.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)  
-    ));
+      dataQualityMetricsValues =
+          CompletableFuture.supplyAsync(
+              () ->
+                  new DataQualityMetrics(
+                      CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                      CountNonTrivialWhitespace.compute(
+                          this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
     }
 
     try {
@@ -89,19 +95,21 @@ public final class StringStorage extends SpecializedStorage<String> {
   }
 
   /**
-   * Counts the number of cells in the columns with non trivial whitespace. If the calculation fails then it
-   * returns null.
+   * Counts the number of cells in the columns with non trivial whitespace. If the calculation fails
+   * then it returns null.
    *
    * @return the number of cells with whitespace
    */
   public Long cachedWhitespaceCount() throws InterruptedException {
     if (dataQualityMetricsValues.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      dataQualityMetricsValues = CompletableFuture.supplyAsync(() ->
-      new DataQualityMetrics(
-        CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
-        CountNonTrivialWhitespace.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)  
-    ));
+      dataQualityMetricsValues =
+          CompletableFuture.supplyAsync(
+              () ->
+                  new DataQualityMetrics(
+                      CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                      CountNonTrivialWhitespace.compute(
+                          this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
     }
 
     try {
