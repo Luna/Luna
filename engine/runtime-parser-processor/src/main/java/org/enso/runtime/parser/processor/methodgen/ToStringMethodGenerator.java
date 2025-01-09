@@ -40,15 +40,11 @@ public class ToStringMethodGenerator {
 
   private String toSingleLineMethod() {
     return """
-        private static String toSingleLine(String str) {
-          String[] lines = str.trim().split(System.lineSeparator());
-          var body = new StringBuilder();
-          for (int i = 1; i < lines.length - 1; i++) {
-            body.append(lines[i].trim());
-            body.append(" ");
+          private static String toSingleLine(String str) {
+            return str.trim().lines()
+              .map(s -> s.trim())
+              .collect(Collectors.joining(" "));
           }
-          return lines[0] + body.toString().trim() + lines[lines.length - 1];
-        }
         """;
   }
 

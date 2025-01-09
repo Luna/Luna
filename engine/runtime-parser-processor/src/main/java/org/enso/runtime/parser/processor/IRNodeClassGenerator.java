@@ -44,6 +44,7 @@ final class IRNodeClassGenerator {
           "java.util.ArrayList",
           "java.util.function.Function",
           "java.util.Objects",
+          "java.util.stream.Collectors",
           "org.enso.compiler.core.Identifier",
           "org.enso.compiler.core.IR",
           "org.enso.compiler.core.ir.DiagnosticStorage",
