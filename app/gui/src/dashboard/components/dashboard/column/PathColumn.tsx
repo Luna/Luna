@@ -7,9 +7,8 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import { useSetSelectedKeys, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
-import type { DirectoryId } from '#/services/Backend'
-import { isDirectoryId } from '#/services/Backend'
+import { useSetSelectedAssets, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
+import { AssetType, DirectoryId, isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
@@ -28,8 +27,8 @@ export default function PathColumn(props: AssetColumnProps) {
   const { virtualParentsPath, parentsPath } = item
 
   const { setCategory } = useCategoriesAPI()
-  const setSelectedKeys = useSetSelectedKeys()
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
+  const setSelectedAssets = useSetSelectedAssets()
 
   // Path navigation exist only for cloud categories.
   const { getCategoryByDirectoryId } = useCloudCategoryList()
@@ -69,7 +68,14 @@ export default function PathColumn(props: AssetColumnProps) {
       const newItems = segments.map(({ id }) => id).concat(targetDirectory)
       toggleDirectoryExpansion(newItems, rootDirectoryInThePath.categoryId, true)
 
-      setSelectedKeys(new Set([targetDirectory]))
+      setSelectedAssets([
+        {
+          type: AssetType.directory,
+          id: targetDirectory,
+          parentId: pathToDirectory.at(-1)?.id ?? DirectoryId('directory-'),
+          title: targetDirectoryInfo.label,
+        },
+      ])
     },
   )
 
