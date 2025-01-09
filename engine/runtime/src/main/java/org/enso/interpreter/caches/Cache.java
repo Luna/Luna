@@ -215,18 +215,22 @@ public final class Cache<T, M> {
                             + "].");
                     return Optional.of(localCache);
                   } catch (IOException localEx) {
-                    logger.log(
-                        Level.FINE,
-                        "Unable to load a global cache [" + logName + "]: " + globalEx.getMessage(),
-                        globalEx);
-                    logger.log(
-                        Level.FINE,
-                        "Unable to load a local cache [" + logName + "]: " + localEx.getMessage(),
-                        localEx);
+                    logCacheLoadFailure(
+                        logger, "Unable to load a global cache [" + logName + "]: ", globalEx);
+                    logCacheLoadFailure(
+                        logger, "Unable to load a local cache [" + logName + "]: ", localEx);
                   }
                   return Optional.empty();
                 }
               });
+    }
+  }
+
+  private void logCacheLoadFailure(TruffleLogger logger, String prefix, IOException ex) {
+    if (ex instanceof FileNotFoundException) {
+      logger.log(Level.FINE, prefix + ex.getMessage());
+    } else {
+      logger.log(Level.FINE, prefix + ex.getMessage(), ex);
     }
   }
 
