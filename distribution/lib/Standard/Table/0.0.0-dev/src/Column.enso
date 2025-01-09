@@ -42,6 +42,7 @@ polyglot java import org.enso.table.data.column.operation.cast.CastProblemAggreg
 polyglot java import org.enso.table.data.column.operation.CountNothing
 polyglot java import org.enso.table.data.column.operation.CountUntrimmed
 polyglot java import org.enso.table.data.column.operation.CountNonTrivialWhitespace
+polyglot java import org.enso.table.data.column.operation.SampleOperation
 polyglot java import org.enso.table.data.column.operation.unary.DatePartOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsEmptyOperation
 polyglot java import org.enso.table.data.column.operation.unary.IsFiniteOperation
@@ -2235,7 +2236,7 @@ type Column
     ## PRIVATE
        Default size for sampling data quality indicators.
     default_sample_size -> Integer =
-        CountUntrimmed.DEFAULT_SAMPLE_SIZE
+        SampleOperation.DEFAULT_SAMPLE_SIZE
 
     ## GROUP Standard.Base.Metadata
        ICON metadata

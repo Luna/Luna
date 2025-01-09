@@ -9,6 +9,7 @@ import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
 import org.enso.table.data.column.operation.CountNonTrivialWhitespace;
 import org.enso.table.data.column.operation.CountUntrimmed;
+import org.enso.table.data.column.operation.SampleOperation;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.MapOperationStorage;
@@ -43,11 +44,11 @@ public final class StringStorage extends SpecializedStorage<String> {
 
     untrimmedCount =
         CompletableFuture.supplyAsync(
-            () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
+            () -> CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null));
 
     whitespaceCount =
         CompletableFuture.supplyAsync(
-            () -> CountNonTrivialWhitespace.compute(this, CountNonTrivialWhitespace.DEFAULT_SAMPLE_SIZE, null));
+            () -> CountNonTrivialWhitespace.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null));
   }
 
   @Override
@@ -77,7 +78,7 @@ public final class StringStorage extends SpecializedStorage<String> {
       untrimmedCount =
           CompletableFuture.completedFuture(
               CountUntrimmed.compute(
-                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+                  this, SampleOperation.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
@@ -100,7 +101,7 @@ public final class StringStorage extends SpecializedStorage<String> {
       whitespaceCount =
           CompletableFuture.completedFuture(
               CountNonTrivialWhitespace.compute(
-                  this, CountNonTrivialWhitespace.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+                  this, SampleOperation.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
     }
 
     try {
