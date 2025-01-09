@@ -364,14 +364,16 @@ public final class Type extends EnsoObject {
   EnsoObject getMembers(boolean includeInternal) {
     if (isProjectPrivate) {
       return ArrayLikeHelpers.empty();
-    } else {
-      var consNames = constructors.keySet();
-      var methodNames = methods().keySet();
-      var allNames = new HashSet<String>();
-      allNames.addAll(consNames);
-      allNames.addAll(methodNames);
-      return ArrayLikeHelpers.wrapStrings(allNames.toArray(String[]::new));
     }
+    var consNames = constructors.keySet();
+    if (!includeInternal) {
+      return ArrayLikeHelpers.wrapStrings(consNames.toArray(String[]::new));
+    }
+    var methodNames = methods().keySet();
+    var allNames = new HashSet<String>();
+    allNames.addAll(consNames);
+    allNames.addAll(methodNames);
+    return ArrayLikeHelpers.wrapStrings(allNames.toArray(String[]::new));
   }
 
   @ExportMessage
