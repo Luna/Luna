@@ -73,7 +73,7 @@ class DateTest extends InterpreterTest {
            |""".stripMargin
       val ensoDate = eval(code)
       consumeOut shouldEqual List("2022", "4", "1", "2022-04-01")
-      ensoDate.getMemberKeys().size() shouldNot be(0)
+      ensoDate.getMemberKeys().size() shouldEqual 0
     }
   }
 }
