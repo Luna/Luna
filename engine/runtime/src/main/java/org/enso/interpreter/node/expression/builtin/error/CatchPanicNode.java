@@ -90,10 +90,11 @@ public abstract class CatchPanicNode extends Node {
     if (profile.profile(isValueOfTypeNode.execute(panicType, payload, true))) {
       var builtins = EnsoContext.get(this).getBuiltins();
       var cons = builtins.caughtPanic().getUniqueConstructor();
-      // if (originalException instanceof PanicException panic) {
-      //   panic.caughtBy(this);
-      // } else
-      {
+      if (originalException instanceof PanicException panic) {
+        panic.assignCaughtLocation(this);
+      } else {
+        // materializes stack trace of non-Enso
+        // exceptions in case it is needed by the handler
         TruffleStackTrace.fillIn(originalException);
       }
       var caughtPanic =

@@ -1,6 +1,8 @@
 package org.enso.interpreter.runtime.error;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleStackTrace;
+import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NeverDefault;
@@ -13,10 +15,13 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
+import java.util.ArrayList;
+import java.util.List;
 import org.enso.interpreter.node.BaseNode.TailStatus;
 import org.enso.interpreter.node.callable.IndirectInvokeMethodNode;
 import org.enso.interpreter.node.callable.InvokeCallableNode.ArgumentsExecutionMode;
 import org.enso.interpreter.node.callable.InvokeCallableNode.DefaultsExecutionMode;
+import org.enso.interpreter.node.expression.builtin.error.CatchPanicNode;
 import org.enso.interpreter.node.expression.builtin.text.util.TypeToDisplayTextNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
@@ -24,6 +29,7 @@ import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.atom.Atom;
 import org.enso.interpreter.runtime.data.text.Text;
+import org.enso.interpreter.runtime.data.vector.ArrayLikeHelpers;
 import org.enso.interpreter.runtime.library.dispatch.TypesLibrary;
 import org.enso.interpreter.runtime.state.State;
 import org.slf4j.Logger;
@@ -35,6 +41,7 @@ import org.slf4j.LoggerFactory;
 public final class PanicException extends AbstractTruffleException {
   final Object payload;
   private String cacheMessage;
+  private Node caughtBy;
 
   /**
    * Creates new user visible panic.
@@ -209,6 +216,50 @@ public final class PanicException extends AbstractTruffleException {
   }
 
   @ExportMessage
+  boolean hasExceptionStackTrace() {
+    return true;
+  }
+
+  @ExportMessage
+  @CompilerDirectives.TruffleBoundary
+  Object getExceptionStackTrace(@Bind("$node") Node queryNode) throws UnsupportedMessageException {
+    var rawStack = TruffleStackTrace.getStackTrace(this);
+    var caughtIndex = findNodeIndexInStack(caughtBy, rawStack);
+    if (caughtIndex >= 0) {
+      var queryIndex = findNodeIndexInStack(queryNode, rawStack);
+      if (caughtIndex > queryIndex) {
+        // skip the part of stack between queryNode and caughtBy
+        var arr = new ArrayList<Object>();
+        for (var frame : rawStack.subList(0, queryIndex)) {
+          arr.add(frame.getGuestObject());
+        }
+        for (var frame : rawStack.subList(caughtIndex, rawStack.size())) {
+          arr.add(frame.getGuestObject());
+        }
+        return ArrayLikeHelpers.asVectorWithCheckAt(arr.toArray());
+      }
+    }
+    var fullArr = new ArrayList<Object>();
+    for (var frame : rawStack) {
+      fullArr.add(frame.getGuestObject());
+    }
+    return ArrayLikeHelpers.asVectorWithCheckAt(fullArr);
+  }
+
+  private static int findNodeIndexInStack(Node n, List<TruffleStackTraceElement> stack) {
+    if (n == null) {
+      return -1;
+    }
+    var rn = n.getRootNode();
+    for (int idx = 0; idx < stack.size(); idx++) {
+      if (rn == stack.get(idx).getTarget().getRootNode()) {
+        return idx;
+      }
+    }
+    return -1;
+  }
+
+  @ExportMessage
   boolean isExceptionIncompleteSource() {
     return false;
   }
@@ -230,5 +281,16 @@ public final class PanicException extends AbstractTruffleException {
   private static Logger logger() {
     CompilerDirectives.transferToInterpreter();
     return LoggerFactory.getLogger(PanicException.class);
+  }
+
+  /**
+   * Whoever catches a {@code PanicException} should associate its location with it, so proper stack
+   * traces can be computed later. Because the stacktrace information is relative to the caught
+   * location
+   *
+   * @param node the node who caught the panic
+   */
+  public final void assignCaughtLocation(CatchPanicNode node) {
+    this.caughtBy = node;
   }
 }
