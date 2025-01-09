@@ -117,7 +117,7 @@ make_column_ref_by_name_selector_for_type table display:Display=..Always value_t
     expression = if table.is_nothing then [] else [Option "<Expression>" "(expr '["+table.column_names.first+"]')"]
 
     col_names = if table.is_nothing then [] else
-        names = if is_all then table.column_names else (table.select_columns [..By_Type value_type] . column_names)
+        names = if is_all then table.column_names else (table.select_columns [..By_Type value_type, ..By_Type Value_Type.Mixed] . column_names)
         names.map (name -> Option name "(..Name "+name.pretty+")")
 
     values = constants + expression + col_names
@@ -146,7 +146,7 @@ make_filter_condition_selector table display:Display=..Always cache=Nothing =
         builder.append (Option "Equals" "..Equal" [["to", column_chooser]])
         builder.append (Option "Not Equals" "..Not_Equal" [["to", column_chooser]])
 
-        if column_value_type != Value_Type.Boolean then
+        if column_value_type.has_ordering && column_value_type!=Value_Type.Boolean then
             builder.append (Option "Less Than" "..Less" [["than", column_chooser]])
             builder.append (Option "Less Than Or Equal" "..Equal_Or_Less" [["than", column_chooser]])
             builder.append (Option "Greater Than" "..Greater" [["than", column_chooser]])
