@@ -218,7 +218,8 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
       let compare: (a: AnyAssetTreeNode, b: AnyAssetTreeNode) => number
       switch (sortInfo.field) {
         case Column.name: {
-          compare = (a, b) => multiplier * a.item.title.localeCompare(b.item.title, 'en')
+          compare = (a, b) =>
+            multiplier * a.item.title.localeCompare(b.item.title, 'en', { numeric: true })
           break
         }
         case Column.modified: {
