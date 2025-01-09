@@ -11,6 +11,7 @@ import {
   type MutationKey,
   type QueryClient,
   type QueryKey,
+  type UndefinedInitialDataOptions,
   type UnusedSkipTokenOptions,
   type UseMutationOptions,
   type UseQueryOptions,
@@ -407,7 +408,7 @@ export interface ListDirectoryQueryOptions {
 export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
   const { backend, parentId, categoryType } = options
 
-  return queryOptions({
+  return {
     queryKey: [
       backend.type,
       'listDirectory',
@@ -441,7 +442,7 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         }
       }
     },
-  })
+  } satisfies UndefinedInitialDataOptions<readonly AnyAsset<AssetType>[]>
 }
 
 /** The type of directory listings in the React Query cache. */

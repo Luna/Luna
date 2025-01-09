@@ -130,13 +130,19 @@ test('can navigate to parent directory of an asset in the Recent category', ({ p
       api.addProject({ title: 'c', parentId: subDirectory.id })
     },
   })
+    .driveTable.withRows(async (rows) => {
+      await test.expect(rows).toHaveText([/^d/, /^b/, /^a/])
+    })
     .driveTable.expandDirectory(0)
     .driveTable.expandDirectory(1)
     // Project in the nested directory (c)
     .driveTable.rightClickRow(2)
     .contextMenu.moveNonFolderToTrash()
+    .driveTable.withRows(async (rows) => {
+      await test.expect(rows).toHaveText([/^d/, /^e/, /^b/, /^a/])
+    })
     // Project in the root (a)
-    .driveTable.rightClickRow(2)
+    .driveTable.rightClickRow(3)
     .contextMenu.moveNonFolderToTrash()
     .goToCategory.trash()
     .driveTable.withPathColumnCell('a', async (cell) => {

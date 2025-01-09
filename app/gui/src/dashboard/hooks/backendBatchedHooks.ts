@@ -179,6 +179,7 @@ export function moveAssetsMutationOptions(backend: Backend) {
         [backend.type, 'listAssetVersions'],
       ],
       awaitInvalidates: true,
+      refetchType: 'all',
     },
   })
 }
