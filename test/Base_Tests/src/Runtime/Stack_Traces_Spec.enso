@@ -49,6 +49,8 @@ add_specs suite_builder = suite_builder.group "Stack traces" group_builder->
 
         out . should_not_contain "my_exception_handler"
         out . should_not_contain "do_the_handling"
+        out . should_contain "f1"
+        out . should_contain "f5"
 
     group_builder.specify "should capture traces correctly" <|
         modname = Meta.get_simple_type_name Stack_Traces_Spec
