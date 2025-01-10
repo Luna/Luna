@@ -102,7 +102,7 @@ async function ensoPackageSignables(resourcesDir: string): Promise<Signable[]> {
     ],
     ['component/jna-*.jar', ['com/sun/jna/*/libjnidispatch.jnilib']],
     [
-      'component/jline-*.jar',
+      'component/jline-native-*.jar',
       [
         'org/jline/nativ/Mac/arm64/libjlinenative.jnilib',
         'org/jline/nativ/Mac/x86_64/libjlinenative.jnilib',
@@ -194,7 +194,7 @@ class ArchiveToSign implements Signable {
 
   /** Looks up for archives to sign using the given path pattern. */
   static async lookup(base: string, [pattern, binaries]: ArchivePattern) {
-    return lookupHelper(path => new ArchiveToSign(path, binaries))(base, pattern)
+    return lookupHelper((path) => new ArchiveToSign(path, binaries))(base, pattern)
   }
 
   /**
@@ -253,7 +253,7 @@ class ArchiveToSign implements Signable {
 /** A single code binary file to be signed. */
 class BinaryToSign implements Signable {
   /** Looks up for binaries to sign using the given path pattern. */
-  static lookup = lookupHelper(path => new BinaryToSign(path))
+  static lookup = lookupHelper((path) => new BinaryToSign(path))
 
   /** Looks up for binaries to sign using the given path patterns. */
   static lookupMany = lookupManyHelper(BinaryToSign.lookup)
@@ -326,7 +326,7 @@ function lookupManyHelper<T, R extends Signable>(
 ) {
   return async function (base: string, patterns: T[]) {
     const results = await Promise.all(
-      patterns.map(async pattern => {
+      patterns.map(async (pattern) => {
         const ret = await lookup(base, pattern)
         if (ret.length === 0) {
           console.warn(`No files found for pattern ${String(pattern)} in ${base}`)
