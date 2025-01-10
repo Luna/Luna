@@ -187,7 +187,7 @@ const RESTRICTED_SYNTAXES = [
 // === ESLint configuration ===
 // ============================
 
-export default [
+const config = [
   {
     // Playwright build cache and Vite build directory.
     ignores: [
@@ -455,7 +455,10 @@ export default [
       '@typescript-eslint/restrict-template-expressions': 'error',
       '@typescript-eslint/sort-type-constituents': 'error',
       '@typescript-eslint/strict-boolean-expressions': 'error',
-      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { allowDefaultCaseForExhaustiveSwitch: true },
+      ],
       'default-param-last': 'off',
       '@typescript-eslint/default-param-last': 'error',
       'no-invalid-this': 'off',
@@ -581,7 +584,7 @@ export default [
       'no-restricted-syntax': [
         'error',
         ...RESTRICTED_SYNTAXES.filter(
-          syntax =>
+          (syntax) =>
             syntax.message !== 'Use a `getText()` from `useText` instead of a literal string',
         ),
       ],
@@ -595,3 +598,5 @@ export default [
     rules: { 'react-compiler/react-compiler': 'error' },
   },
 ]
+
+export default config

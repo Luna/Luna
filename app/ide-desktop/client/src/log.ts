@@ -73,7 +73,9 @@ export class FileConsumer extends Consumer {
   /** Append a message to the log. */
   override message(level: LogLevel, ...args: unknown[]): void {
     const timestamp = new Date().toISOString()
-    const message = args.map(arg => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' ')
+    const message = args
+      .map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
+      .join(' ')
     const timestampedMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`
 
     if (this.logFileHandle) {

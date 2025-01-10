@@ -61,7 +61,7 @@ declare module '@lezer/markdown' {
 }
 
 function getType({ parser }: { parser: MarkdownParser }, name: string) {
-  const ty = parser.nodeSet.types.find(ty => ty.name === name)
+  const ty = parser.nodeSet.types.find((ty) => ty.name === name)
   assertDefined(ty)
   return ty.id
 }
@@ -449,13 +449,13 @@ export function debugTree(tree: { cursor: () => TreeCursor }, doc: string): Debu
   let current: (string | DebugTree)[] = []
   const stack: (string | DebugTree)[][] = []
   cursor.iterate(
-    node => {
+    (node) => {
       const child: (string | DebugTree)[] = [node.name]
       current.push(child)
       stack.push(current)
       current = child
     },
-    node => {
+    (node) => {
       if (current.length === 1) current.push(doc.slice(node.from, node.to))
       current = stack.pop()!
     },
