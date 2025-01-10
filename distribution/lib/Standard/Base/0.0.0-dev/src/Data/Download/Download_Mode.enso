@@ -22,6 +22,6 @@ type Download_Mode
             Download_Mode.If_Not_Exists ->
                 file.file.exists.not
             Download_Mode.If_Older_Than age ->
-                file.file.exists.not || file.file.creation_time < (Date_Time.now - age)
+                file.file.exists.not || file.file.last_modified_time < (Date_Time.now - age)
             Download_Mode.Always ->
                 True

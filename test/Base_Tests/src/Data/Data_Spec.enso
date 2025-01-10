@@ -1,9 +1,9 @@
 from Standard.Base import all
 
+from project.Network.Http.Http_Test_Setup import base_url_with_slash, pending_has_url
+
 from Standard.Test import all
 import Standard.Test.Test_Environment
-
-from enso_dev.Base_Tests.Network.Http.Http_Test_Setup import base_url_with_slash, pending_has_url
 
 polyglot java import java.lang.Thread
 
@@ -38,7 +38,8 @@ add_specs prefix suite_builder file_maker =
                 second_contents = file.read
                 first_contents . should_equal second_contents
 
-        group_builder.specify prefix+"Will download a file if it is older than a specified duration for mode If_Older_Than" <|
+        # With retries because it relies on a short `sleep`
+        group_builder.specify prefix+"Will download a file if it is older than a specified duration for mode If_Older_Than" <| Test.with_retries <|
             with_test_file (file_maker "if_older_than") file->
                 sleep_duration_secs = 3
 
