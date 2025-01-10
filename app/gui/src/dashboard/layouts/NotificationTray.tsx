@@ -37,7 +37,7 @@ function NotificationTrayDialog() {
         )}
         {hasNotifications && (
           <GridList selectionMode="none" items={transientNotifications}>
-            {(info) => <div>a</div>}
+            {(info) => <NotificationItem {...info} />}
           </GridList>
         )}
       </div>

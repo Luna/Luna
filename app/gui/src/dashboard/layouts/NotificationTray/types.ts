@@ -5,4 +5,5 @@ export interface NotificationInfo {
   readonly id: string
   readonly message: string
   readonly icon: string
+  readonly colorClassName?: string
 }
