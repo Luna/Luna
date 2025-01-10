@@ -38,7 +38,6 @@ public class PrivateConstructorAccessTest {
     }
   }
 
-  // FIXME
   @Test
   public void privateConstructorIsNotExposedToPolyglot() throws IOException {
     var mainSrc = """
