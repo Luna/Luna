@@ -201,10 +201,26 @@ safely.
 ### Engine runner Configuration
 
 The Native Image generation for the Engine Runner is currently in a preview
-state. To generate the Native Image for runner simply execute
+state. It is triggered by `ENSO_LAUNCHER` environment variable. Its value can be
+one of the following:
+
+- `shell`: The default value. `buildEngineDistribution` command does not build
+  the native image.
+- `debugnative`: `buildEngineDistribution` command builds native image with
+  assertions enabled (`-ea`). Useful for running tests on the CI.
+- `native` or `espresso`: `buildEngineDistribution` command builds native image
+  with assertions disabled (`-ea`). Used when building the release by default.
+
+To generate the Native Image for runner either explicitly execute
 
 ```bash
 sbt> engine-runner/buildNativeImage
+```
+
+or
+
+```bash
+$ ENSO_LAUNCHER=native sbt buildEngineDistribution
 ```
 
 and execute any program with that binary - for example `test/Base_Tests`
