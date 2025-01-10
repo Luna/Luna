@@ -3786,7 +3786,6 @@ lazy val `engine-runner` = project
               "-H:IncludeResources=.*Main.enso$",
               "-H:+AddAllCharsets",
               "-H:+IncludeAllLocales",
-              "-ea",
               // useful perf & debug switches:
               // "-g",
               // "-H:+SourceLevelDebug",
@@ -5126,10 +5125,33 @@ buildEngineDistribution := {
   log.info(s"Engine package created at $root")
 }
 
+lazy val shouldBuildNativeImage = taskKey[Boolean](
+  "Whether native image should be build within buildEngineDistribution task"
+)
+
+ThisBuild / shouldBuildNativeImage := {
+  val prop = System.getProperty("ENSO_LAUNCHER")
+  BuildInfo.isReleaseMode || prop == "native" || prop == "debugnative"
+}
+
+ThisBuild / NativeImage.additionalOpts := {
+  val prop = System.getProperty("ENSO_LAUNCHER")
+  if (BuildInfo.isReleaseMode || prop == "native") {
+    Seq("-O3")
+  } else {
+    Seq("-ea", "-Ob", "-H:GenerateDebugInfo=1")
+  }
+}
+
 // This makes the buildEngineDistribution task usable as a dependency
 // of other tasks.
-ThisBuild / buildEngineDistribution := {
-  buildEngineDistribution.result.value
+ThisBuild / buildEngineDistribution := Def.taskIf {
+  if (shouldBuildNativeImage.value) {
+    buildEngineDistribution.result.value
+    (`engine-runner` / buildNativeImage).value
+  } else {
+    buildEngineDistribution.result.value
+  }
 }
 
 ThisBuild / engineDistributionRoot := {
