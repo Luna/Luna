@@ -217,7 +217,7 @@ const config = [
         projectService: {
           allowDefaultProject: [
             'eslint.config.mjs',
-            'app/ydoc-server/vitest.config.ts',
+            // 'app/ydoc-server/vitest.config.ts',
             'app/ydoc-shared/vitest.config.ts',
             'app/ide-desktop/icons/src/index.js',
           ],
