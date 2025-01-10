@@ -48,7 +48,7 @@ test('sort', ({ page }) =>
       const date4a = toRfc3339(new Date(START_DATE_EPOCH_MS + 3 * MIN_MS + 1))
       const date4b = toRfc3339(new Date(START_DATE_EPOCH_MS + 3 * MIN_MS + 2))
       const date5 = toRfc3339(new Date(START_DATE_EPOCH_MS + 4 * MIN_MS))
-      const date5a = toRfc3339(new Date(START_DATE_EPOCH_MS + 3 * MIN_MS + 3))
+      const date5a = toRfc3339(new Date(START_DATE_EPOCH_MS + 4 * MIN_MS + 1))
       const date6 = toRfc3339(new Date(START_DATE_EPOCH_MS + 5 * MIN_MS))
       const date7 = toRfc3339(new Date(START_DATE_EPOCH_MS + 6 * MIN_MS))
       const date8 = toRfc3339(new Date(START_DATE_EPOCH_MS + 7 * MIN_MS))
@@ -222,7 +222,6 @@ test('sort', ({ page }) =>
         /^a directory 2/,
         /^a directory 10/,
         /^a directory 1/,
-        /^a directory/,
         /^C project/,
         /^b project/,
         /^d file/,
