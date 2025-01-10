@@ -32,7 +32,9 @@ import {
   type AnyAsset,
   type AssetPermission,
   type UserGroupInfo,
+  type UserGroupPermission,
   type UserInfo,
+  type UserPermission,
   type UserPermissionIdentifier,
 } from '#/services/Backend'
 import { PermissionAction } from '#/utilities/permissions'
@@ -193,11 +195,13 @@ export default function ManagePermissionsModal<Asset extends AnyAsset = AnyAsset
       }
     } else {
       setUserAndUserGroups([])
-      const addedPermissions = usersAndUserGroups.map<AssetPermission>((newUserOrUserGroup) =>
-        'userId' in newUserOrUserGroup ?
-          { user: newUserOrUserGroup, permission: action }
-        : { userGroup: newUserOrUserGroup, permission: action },
-      )
+      const addedPermissions = usersAndUserGroups.map<AssetPermission>((newUserOrUserGroup) => {
+        if ('userId' in newUserOrUserGroup) {
+          return { user: newUserOrUserGroup, permission: action } satisfies UserPermission
+        } else {
+          return { userGroup: newUserOrUserGroup, permission: action } satisfies UserGroupPermission
+        }
+      })
       const addedUsersIds = new Set(
         addedPermissions.flatMap((permission) =>
           isUserPermission(permission) ? [permission.user.userId] : [],

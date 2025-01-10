@@ -361,7 +361,6 @@ function AssetsTable(props: AssetsTableProps) {
   const setPasteData = useSetPasteData()
 
   const { data: users } = useBackendQuery(backend, 'listUsers', [])
-  const { data: userGroups } = useBackendQuery(backend, 'listUserGroups', [])
 
   const nameOfProjectToImmediatelyOpenRef = useRef(initialProjectName)
 
@@ -1132,7 +1131,7 @@ function AssetsTable(props: AssetsTableProps) {
             category,
             user,
             users ?? [],
-            userGroups ?? [],
+            user.groups ?? [],
           ),
           projectState: {
             type: ProjectState.placeholder,
@@ -2100,7 +2099,11 @@ export function AssetsTableAssetsUnselector(props: AssetsTableAssetsUnselectorPr
     invariant(onlyChild != null, 'Children must be a single element when `asChild` is true')
     invariant(isValidElement(onlyChild), 'Children must be a JSX element when `asChild` is true')
 
-    return cloneElement(onlyChild, pressProps)
+    return cloneElement(
+      onlyChild,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, no-restricted-syntax
+      mergeProps<any>()(pressProps as any, onlyChild.props as any),
+    )
   }
 
   return (
