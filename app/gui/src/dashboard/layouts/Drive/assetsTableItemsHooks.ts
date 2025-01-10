@@ -1,6 +1,4 @@
 /** @file A hook to return the items in the assets table. */
-import { useMemo } from 'react'
-
 import type { AnyAsset, AssetId } from 'enso-common/src/services/Backend'
 import { AssetType, getAssetPermissionName } from 'enso-common/src/services/Backend'
 import { PermissionAction } from 'enso-common/src/utilities/permissions'
@@ -66,7 +64,7 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
   const { locale } = useText()
   const setAssetItems = useStore(ASSET_ITEMS_STORE, (store) => store.setItems)
 
-  const filter = useMemo(() => {
+  const filter = (() => {
     const globCache: Record<string, RegExp> = {}
     if (/^\s*$/.test(query.query)) {
       return null
@@ -172,9 +170,9 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
         )
       }
     }
-  }, [query])
+  })()
 
-  const visibilities = useMemo(() => {
+  const visibilities = (() => {
     const map = new Map<AssetId, Visibility>()
 
     const processNode = (node: AnyAssetTreeNode) => {
@@ -205,9 +203,9 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
     processNode(assetTree)
 
     return map
-  }, [assetTree, filter])
+  })()
 
-  const displayItems = useMemo(() => {
+  const displayItems = (() => {
     if (sortInfo == null) {
       const flatTree = assetTree.preorderTraversal((children) =>
         children.filter((child) => expandedDirectoryIds.includes(child.item.parentId)),
@@ -225,13 +223,12 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
 
       return flatTree
     }
-  }, [sortInfo, assetTree, expandedDirectoryIds, locale])
+  })()
 
   setAssetItems(displayItems.map((item) => item.item))
 
-  const visibleItems = useMemo(
-    () => displayItems.filter((item) => visibilities.get(item.item.id) !== Visibility.hidden),
-    [displayItems, visibilities],
+  const visibleItems = displayItems.filter(
+    (item) => visibilities.get(item.item.id) !== Visibility.hidden,
   )
 
   return { visibilities, displayItems, visibleItems } as const
