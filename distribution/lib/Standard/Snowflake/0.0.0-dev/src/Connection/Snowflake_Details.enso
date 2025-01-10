@@ -10,6 +10,7 @@ import Standard.Database.Connection.Credentials.Credentials
 import Standard.Database.Internal.Data_Link_Setup.Data_Link_Setup
 
 import project.Snowflake_Connection.Snowflake_Connection
+import project.OAuth_Test.Access_Token
 
 polyglot java import net.snowflake.client.jdbc.SnowflakeDriver
 
@@ -24,7 +25,7 @@ type Snowflake_Details
        - warehouse: The name of the warehouse to use.
     @account (Text_Input display=..Always)
     @credentials Credentials.default_widget
-    Snowflake (account:Text=(Missing_Argument.throw "account")) (credentials:Credentials=(Missing_Argument.throw "credentials")) database:Text="SNOWFLAKE" schema:Text="PUBLIC" warehouse:Text=""
+    Snowflake (account:Text=(Missing_Argument.throw "account")) (credentials:Credentials|Access_Token=(Missing_Argument.throw "credentials")) database:Text="SNOWFLAKE" schema:Text="PUBLIC" warehouse:Text=""
 
     ## PRIVATE
        Attempt to resolve the constructor.
@@ -64,7 +65,13 @@ type Snowflake_Details
         ## should be prepended to properties. That would make it fallback to plain `json`.
 
         account = [Pair.new 'account' self.account]
-        credentials = [Pair.new 'user' self.credentials.username, Pair.new 'password' self.credentials.password]
+        credentials = case self.credentials of
+            _ : Credentials ->
+                [Pair.new 'user' self.credentials.username, Pair.new 'password' self.credentials.password]
+            token : Access_Token ->
+                if Date_Time.now > token.expiry then
+                    Error.throw (Illegal_State.Error "Access token has expired on "+token.expiry.to_display_text)
+                [Pair.new 'authenticator' 'oauth', Pair.new 'user' token.username, Pair.new 'token' token.token]
         database = [Pair.new 'db' self.database]
         schema = [Pair.new 'schema' self.schema]
         warehouse = if self.warehouse=="" then [] else [Pair.new 'warehouse' self.warehouse]
