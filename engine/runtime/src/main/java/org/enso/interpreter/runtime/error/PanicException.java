@@ -26,6 +26,7 @@ import org.enso.interpreter.node.expression.builtin.text.util.TypeToDisplayTextN
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.UnresolvedSymbol;
 import org.enso.interpreter.runtime.callable.argument.CallArgumentInfo;
+import org.enso.interpreter.runtime.data.EnsoObject;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.runtime.data.atom.Atom;
 import org.enso.interpreter.runtime.data.text.Text;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public final class PanicException extends AbstractTruffleException {
   final Object payload;
   private String cacheMessage;
+  private EnsoObject stackTrace;
   private Node caughtBy;
 
   /**
@@ -222,7 +224,15 @@ public final class PanicException extends AbstractTruffleException {
 
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
-  Object getExceptionStackTrace(@Bind("$node") Node queryNode) throws UnsupportedMessageException {
+  final Object getExceptionStackTrace(@Bind("$node") Node queryNode) {
+    if (stackTrace == null) {
+      stackTrace = computeStackTrace(queryNode);
+    }
+    return stackTrace;
+  }
+
+  @CompilerDirectives.TruffleBoundary
+  private EnsoObject computeStackTrace(Node queryNode) {
     var rawStack = TruffleStackTrace.getStackTrace(this);
     var caughtIndex = findNodeIndexInStack(caughtBy, rawStack);
     if (caughtIndex >= 0) {
@@ -285,10 +295,10 @@ public final class PanicException extends AbstractTruffleException {
 
   /**
    * Whoever catches a {@code PanicException} should associate its location with it, so proper stack
-   * traces can be computed later. Because the stacktrace information is relative to the caught
-   * location
+   * traces can be computed later. Because the proper stacktrace information is relative to the last
+   * caught location.
    *
-   * @param node the node who caught the panic
+   * @param node the node who caught the panic the last time
    */
   public final void assignCaughtLocation(CatchPanicNode node) {
     this.caughtBy = node;
