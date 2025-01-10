@@ -215,7 +215,8 @@ export function useAssetsTableItems(options: UseAssetsTableOptions) {
 
       return flatTree
     } else {
-      const compare = assetCompareFunction(sortInfo, locale)
+      const compareAssets = assetCompareFunction(sortInfo, locale)
+      const compare = (a: AnyAssetTreeNode, b: AnyAssetTreeNode) => compareAssets(a.item, b.item)
       const flatTree = assetTree.preorderTraversal((tree) =>
         [...tree]
           .filter((child) => expandedDirectoryIds.includes(child.item.parentId))
