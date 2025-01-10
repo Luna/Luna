@@ -239,6 +239,7 @@ public final class PanicException extends AbstractTruffleException {
       var queryIndex = findNodeIndexInStack(queryNode, rawStack);
       if (caughtIndex > queryIndex) {
         // skip the part of stack between queryNode and caughtBy
+        // See https://github.com/enso-org/enso/pull/12024#discussion_r1909850986 for deeper explanation.
         var arr = new ArrayList<Object>();
         for (var frame : rawStack.subList(0, queryIndex)) {
           arr.add(frame.getGuestObject());
