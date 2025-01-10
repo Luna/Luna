@@ -236,8 +236,10 @@ public final class PanicException extends AbstractTruffleException {
     var rawStack = TruffleStackTrace.getStackTrace(this);
     var caughtIndex = findNodeIndexInStack(caughtBy, rawStack);
     if (caughtIndex >= 0) {
-      var queryIndex = findNodeIndexInStack(queryNode, rawStack);
-      if (queryIndex != -1 && caughtIndex > queryIndex) {
+      var nowEx = new PanicException(0L, queryNode);
+      var nowStack = TruffleStackTrace.getStackTrace(nowEx);
+      var queryIndex = rawStack.size() - nowStack.size();
+      if (queryIndex >= 0 && caughtIndex > queryIndex) {
         // skip the part of stack between queryNode and caughtBy
         // See https://github.com/enso-org/enso/pull/12024#discussion_r1909850986 for deeper
         // explanation.
