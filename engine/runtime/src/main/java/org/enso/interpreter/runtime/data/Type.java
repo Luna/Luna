@@ -412,6 +412,7 @@ public final class Type extends EnsoObject {
     }
 
     @Specialization(replaces = "doCached")
+    @TruffleBoundary
     static Object doUncached(
         Type receiver,
         String member,
