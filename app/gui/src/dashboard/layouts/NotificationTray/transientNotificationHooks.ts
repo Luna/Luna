@@ -31,6 +31,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
     id: 'temporary-delete-assets',
     message: getText('deletingXAssetsNotification', 1234),
     icon: DeleteIcon,
+    color: 'danger',
   })
 
   const deleteAssetsCount = useIsMutatingForBothBackends(deleteAssetsMutationKey)
@@ -39,6 +40,7 @@ export function useTransientNotifications(): readonly NotificationInfo[] {
       id: 'temporary-delete-assets',
       message: getText('deletingXAssetsNotification', deleteAssetsCount),
       icon: DeleteIcon,
+      color: 'danger',
     })
   }
 
