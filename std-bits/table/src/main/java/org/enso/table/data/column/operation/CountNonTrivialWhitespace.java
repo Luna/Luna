@@ -10,18 +10,22 @@ import org.enso.table.data.column.storage.StringStorage;
 import org.enso.table.data.table.Column;
 import org.graalvm.polyglot.Context;
 
-public class CountUntrimmed {
-  /** Counts the number of cells in the columns with leading or trailing whitespace. */
+public class CountNonTrivialWhitespace {
+  /** Counts the number of cells in the columns with non trivial whitespace */
   public static Long apply(Column column, long sampleSize) throws InterruptedException {
     ColumnStorage storage = column.getStorage();
     return applyToStorage(storage, sampleSize);
   }
 
-  /** Counts the number of cells in the given storage with leading or trailing whitespace. */
+  /**
+   * Counts the number of cells in the given storage with non trivial whitespace
+   *
+   * @return
+   */
   public static Long applyToStorage(ColumnStorage storage, long sampleSize)
       throws InterruptedException {
     return (sampleSize == DEFAULT_SAMPLE_SIZE && storage instanceof StringStorage stringStorage)
-        ? stringStorage.cachedUntrimmedCount()
+        ? stringStorage.cachedWhitespaceCount()
         : (Long) compute(storage, sampleSize, Context.getCurrent());
   }
 
@@ -35,7 +39,7 @@ public class CountUntrimmed {
       for (int i = 0; i < sampleSize; i++) {
         long idx = rng.nextInt(Math.toIntExact(size));
         var val = storage.getItemAsObject(idx);
-        if (val instanceof String str && Text_Utils.has_leading_trailing_whitespace(str)) {
+        if (val instanceof String str && Text_Utils.has_non_trivial_whitespace(str)) {
           count++;
         }
 
@@ -47,7 +51,7 @@ public class CountUntrimmed {
     } else {
       for (long i = 0; i < storage.getSize(); i++) {
         var val = storage.getItemAsObject(i);
-        if (val instanceof String str && Text_Utils.has_leading_trailing_whitespace(str)) {
+        if (val instanceof String str && Text_Utils.has_non_trivial_whitespace(str)) {
           count++;
         }
 

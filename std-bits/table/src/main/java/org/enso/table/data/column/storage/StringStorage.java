@@ -6,7 +6,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.enso.base.CompareException;
 import org.enso.base.Text_Utils;
+import org.enso.table.data.column.operation.CountNonTrivialWhitespace;
 import org.enso.table.data.column.operation.CountUntrimmed;
+import org.enso.table.data.column.operation.SampleOperation;
 import org.enso.table.data.column.operation.map.BinaryMapOperation;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.operation.map.MapOperationStorage;
@@ -23,10 +25,15 @@ import org.slf4j.Logger;
 
 /** A column storing strings. */
 public final class StringStorage extends SpecializedStorage<String> {
+
   private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StringStorage.class);
 
   private final TextType type;
-  private Future<Long> untrimmedCount;
+
+  record DataQualityMetrics(Long untrimmedCount, Long whitespaceCount) {}
+  ;
+
+  private Future<DataQualityMetrics> dataQualityMetricsValues;
 
   /**
    * @param data the underlying data
@@ -37,9 +44,13 @@ public final class StringStorage extends SpecializedStorage<String> {
     super(data, size, buildOps());
     this.type = type;
 
-    untrimmedCount =
+    dataQualityMetricsValues =
         CompletableFuture.supplyAsync(
-            () -> CountUntrimmed.compute(this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, null));
+            () ->
+                new DataQualityMetrics(
+                    CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                    CountNonTrivialWhitespace.compute(
+                        this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
   }
 
   @Override
@@ -64,18 +75,47 @@ public final class StringStorage extends SpecializedStorage<String> {
    * @return the number of cells with whitespace
    */
   public Long cachedUntrimmedCount() throws InterruptedException {
-    if (untrimmedCount.isCancelled()) {
+    if (dataQualityMetricsValues.isCancelled()) {
       // Need to recompute the value, as was cancelled.
-      untrimmedCount =
-          CompletableFuture.completedFuture(
-              CountUntrimmed.compute(
-                  this, CountUntrimmed.DEFAULT_SAMPLE_SIZE, Context.getCurrent()));
+      dataQualityMetricsValues =
+          CompletableFuture.supplyAsync(
+              () ->
+                  new DataQualityMetrics(
+                      CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                      CountNonTrivialWhitespace.compute(
+                          this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
     }
 
     try {
-      return untrimmedCount.get();
+      return dataQualityMetricsValues.get().untrimmedCount;
     } catch (ExecutionException e) {
       LOGGER.error("Failed to compute untrimmed count", e);
+      return null;
+    }
+  }
+
+  /**
+   * Counts the number of cells in the columns with non trivial whitespace. If the calculation fails
+   * then it returns null.
+   *
+   * @return the number of cells with whitespace
+   */
+  public Long cachedWhitespaceCount() throws InterruptedException {
+    if (dataQualityMetricsValues.isCancelled()) {
+      // Need to recompute the value, as was cancelled.
+      dataQualityMetricsValues =
+          CompletableFuture.supplyAsync(
+              () ->
+                  new DataQualityMetrics(
+                      CountUntrimmed.compute(this, SampleOperation.DEFAULT_SAMPLE_SIZE, null),
+                      CountNonTrivialWhitespace.compute(
+                          this, SampleOperation.DEFAULT_SAMPLE_SIZE, null)));
+    }
+
+    try {
+      return dataQualityMetricsValues.get().whitespaceCount;
+    } catch (ExecutionException e) {
+      LOGGER.error("Failed to compute non trivial whitespace count", e);
       return null;
     }
   }
@@ -277,6 +317,7 @@ public final class StringStorage extends SpecializedStorage<String> {
   }
 
   private abstract static class StringComparisonOp extends StringBooleanOp {
+
     public StringComparisonOp(String name) {
       super(name);
     }
