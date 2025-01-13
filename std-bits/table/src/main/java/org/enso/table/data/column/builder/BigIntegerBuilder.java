@@ -16,7 +16,7 @@ import org.enso.table.error.ValueTypeMismatchException;
 import org.enso.table.problems.ProblemAggregator;
 import org.graalvm.polyglot.Context;
 
-public class BigIntegerBuilder extends TypedBuilderImpl<BigInteger> {
+public class BigIntegerBuilder extends TypedBuilder<BigInteger> {
   // The problem aggregator is only used so that when we are retyping, we can pass it on.
   private final ProblemAggregator problemAggregator;
 
@@ -31,11 +31,6 @@ public class BigIntegerBuilder extends TypedBuilderImpl<BigInteger> {
   }
 
   @Override
-  public void retypeToMixed(Object[] items) {
-    super.retypeToMixed(items);
-  }
-
-  @Override
   public boolean canRetypeTo(StorageType type) {
     return type instanceof FloatType
         || type instanceof BigDecimalType
@@ -43,7 +38,7 @@ public class BigIntegerBuilder extends TypedBuilderImpl<BigInteger> {
   }
 
   @Override
-  public TypedBuilder retypeTo(StorageType type) {
+  public Builder retypeTo(StorageType type) {
     if (type instanceof FloatType) {
       DoubleBuilder res =
           NumericBuilder.createInferringDoubleBuilder(currentSize, problemAggregator);
