@@ -41,11 +41,21 @@ export function SetupOrganizationAfterSubscribe() {
   return <router.Outlet context={session} />
 }
 
+/**
+ * Props for the SetupOrganizationAfterSubscribeInternal component.
+ * @param props - The props for the component.
+ * @returns The component.
+ */
 interface SetupOrganizationAfterSubscribeInternalProps {
   readonly userId: string
   readonly backend: RemoteBackend
 }
 
+/**
+ * Internal implementation of the SetupOrganizationAfterSubscribe modal.
+ * @param props - The props for the component.
+ * @returns The component.
+ */
 function SetupOrganizationAfterSubscribeInternal(
   props: SetupOrganizationAfterSubscribeInternalProps,
 ) {
@@ -141,8 +151,8 @@ function SetupOrganizationAfterSubscribeInternal(
       >
         <Stepper
           state={stepperState}
-          renderStep={(props) => (
-            <Stepper.Step {...props} title={steps[props.index]?.title ?? ''} />
+          renderStep={(stepProps) => (
+            <Stepper.Step {...stepProps} title={steps[stepProps.index]?.title ?? ''} />
           )}
         >
           {({ currentStep, nextStep }) => <>{steps[currentStep]?.component({ nextStep })}</>}

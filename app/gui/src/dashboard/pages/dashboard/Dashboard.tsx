@@ -13,18 +13,15 @@ import * as projectHooks from '#/hooks/projectHooks'
 import { CategoriesProvider } from '#/layouts/Drive/Categories/categoriesHooks'
 import DriveProvider from '#/providers/DriveProvider'
 
-import * as authProvider from '#/providers/AuthProvider'
 import * as backendProvider from '#/providers/BackendProvider'
 import * as inputBindingsProvider from '#/providers/InputBindingsProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import ProjectsProvider, {
   TabType,
   useClearLaunchedProjects,
-  useLaunchedProjects,
   usePage,
   useProjectsStore,
   useSetPage,
-  type LaunchedProject,
 } from '#/providers/ProjectsProvider'
 
 import type * as assetTable from '#/layouts/AssetsTable'
@@ -39,10 +36,8 @@ import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
 
-import { useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
 import { useCategoriesAPI } from '#/layouts/Drive/Categories/categoriesHooks'
 import { baseName } from '#/utilities/fileInfo'
-import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery } from '@tanstack/react-query'
@@ -95,10 +90,9 @@ function fileURLToPath(url: string): string | null {
 /** The component that contains the entire UI. */
 function DashboardInner(props: DashboardProps) {
   const { initialProjectName: initialProjectNameRaw, ydocUrl } = props
-  const { user } = authProvider.useFullUserSession()
   const localBackend = backendProvider.useLocalBackend()
   const { modalRef } = modalProvider.useModalRef()
-  const { updateModal, unsetModal, setModal } = modalProvider.useSetModal()
+  const { updateModal, unsetModal } = modalProvider.useSetModal()
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
@@ -109,14 +103,9 @@ function DashboardInner(props: DashboardProps) {
   const initialProjectName = initialLocalProjectPath != null ? null : initialProjectNameRaw
 
   const categoriesAPI = useCategoriesAPI()
-  const backend = backendProvider.useBackend(categoriesAPI.category)
 
   const projectsStore = useProjectsStore()
   const page = usePage()
-  const launchedProjects = useLaunchedProjects()
-  // There is no shared enum type, but the other union member is the same type.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-  const selectedProject = launchedProjects.find((p) => p.id === page) ?? null
 
   const setPage = useSetPage()
   const openEditor = projectHooks.useOpenEditor()
@@ -124,7 +113,6 @@ function DashboardInner(props: DashboardProps) {
   const closeProject = projectHooks.useCloseProject()
   const closeAllProjects = projectHooks.useCloseAllProjects()
   const clearLaunchedProjects = useClearLaunchedProjects()
-  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
 
   usePrefetchQuery({
     queryKey: ['loadInitialLocalProject'],
@@ -206,11 +194,6 @@ function DashboardInner(props: DashboardProps) {
       })
     }
   }, [inputBindings])
-
-  const doRemoveSelf = eventCallbacks.useEventCallback((project: LaunchedProject) => {
-    removeSelfPermissionMutation.mutate(project.id)
-    closeProject(project)
-  })
 
   const onSignOut = eventCallbacks.useEventCallback(() => {
     setPage(TabType.drive)
