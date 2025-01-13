@@ -658,7 +658,7 @@ export function useNewFolder(backend: Backend, category: Category) {
         category,
         user,
         users ?? [],
-        userGroups ?? [],
+        user.groups ?? [],
       ),
     )
 
@@ -721,7 +721,7 @@ export function useNewProject(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
         user,
         path,
@@ -778,7 +778,7 @@ export function useNewSecret(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
       )
 
@@ -817,7 +817,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
           category,
           user,
           users ?? [],
-          userGroups ?? [],
+          user.groups ?? [],
         ),
       )
 
