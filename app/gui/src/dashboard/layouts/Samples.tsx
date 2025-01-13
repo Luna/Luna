@@ -35,9 +35,9 @@ export interface Sample {
 }
 
 /** The full list of templates. */
-export const SAMPLES: Sample[] = [
+export const SAMPLES = [
   {
-    title: 'New Project',
+    title: 'Blank Project',
     id: 'Default',
     description: '',
     background: `url("${BlankImage}") center / cover`,
@@ -117,7 +117,7 @@ export const SAMPLES: Sample[] = [
     title: 'Web API analysis',
     id: 'Bank_Holiday_Rain',
     description: 'Learn whether it rains on UK Bank Holidays via REST APIs.',
-    background: `url('${WeatherImage}') center / 100% no-repeat, rgba(255, 255, 255, 0.30)`,
+    background: `url('${WeatherImage}') center / cover no-repeat, rgba(255, 255, 255, 0.30)`,
     group: 'Examples',
   },
   {
@@ -127,7 +127,12 @@ export const SAMPLES: Sample[] = [
     background: `url('${GeoImage}') 50% 20% / 100% no-repeat`,
     group: 'Examples',
   },
-]
+] as const
+
+/**
+ * The possible groups of samples.
+ */
+export type SamplesGroup = (typeof SAMPLES)[number]['group']
 
 // ===================
 // === ProjectTile ===
@@ -176,7 +181,7 @@ function ProjectTile(props: InternalProjectTileProps) {
 
 /** Props for a {@link Samples}. */
 export interface SamplesProps {
-  readonly groupName: string
+  readonly groupName: SamplesGroup
   readonly createProject: (templateId?: string | null, templateName?: string | null) => void
 }
 
@@ -195,4 +200,11 @@ export default function Samples(props: SamplesProps) {
       </div>
     </div>
   )
+}
+
+/**
+ * Get the samples for a given group.
+ */
+export function getSamplesGroup(groupName: SamplesGroup) {
+  return SAMPLES.filter((s) => s.group === groupName)
 }

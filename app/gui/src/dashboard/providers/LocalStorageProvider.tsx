@@ -99,3 +99,22 @@ export function useLocalStorageState<K extends LocalStorageKey>(
 
   return [value, setValue]
 }
+
+/**
+ * A hook to toggle a value in Local Storage.
+ * @param key - The key to toggle.
+ * @param defaultValue - The default value.
+ * @returns An array with the current value and a function to toggle the value.
+ */
+export function useLocalStorageToggle<Key extends LocalStorageKey>(
+  key: Key,
+  defaultValue: LocalStorageData[Key] extends boolean ? LocalStorageData[Key] : never,
+) {
+  const [value, setValue] = useLocalStorageState(key, defaultValue)
+
+  const toggle = useEventCallback(() => {
+    setValue((currentValue) => !currentValue)
+  })
+
+  return [value, toggle] as const
+}

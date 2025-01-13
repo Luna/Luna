@@ -11,13 +11,19 @@ import AddFolderIcon from '#/assets/add_folder.svg'
 import AddKeyIcon from '#/assets/add_key.svg'
 import DataDownloadIcon from '#/assets/data_download.svg'
 import DataUploadIcon from '#/assets/data_upload.svg'
+import ExpandArrowDownIcon from '#/assets/expand_arrow_down.svg'
+import ExpandArrowRightIcon from '#/assets/expand_arrow_right.svg'
 import Plus2Icon from '#/assets/plus2.svg'
 import {
   Button,
   ButtonGroup,
   DialogTrigger,
+  Form,
+  Input,
+  Popover,
   Text,
   useVisualTooltip,
+  VisuallyHidden,
 } from '#/components/AriaComponents'
 import AssetEventType from '#/events/AssetEventType'
 import {
@@ -53,13 +59,25 @@ import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import type AssetQuery from '#/utilities/AssetQuery'
 import { inputFiles } from '#/utilities/input'
+import LocalStorage from '#/utilities/LocalStorage'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
+import { z } from 'zod'
+import { TemplatesCarousel } from '../pages/dashboard/components/TemplatesCarousel'
 import { useFullUserSession } from '../providers/AuthProvider'
+import { WithFeatureFlag } from '../providers/FeatureFlagsProvider'
+import { useLocalStorageToggle } from '../providers/LocalStorageProvider'
 import { AssetPanelToggle } from './AssetPanel'
 
-// ================
-// === DriveBar ===
-// ================
+declare module '#/utilities/LocalStorage' {
+  /** */
+  interface LocalStorageData {
+    readonly displayExamples: boolean
+  }
+}
+
+LocalStorage.registerKey('displayExamples', {
+  schema: z.boolean(),
+})
 
 /** Props for a {@link DriveBar}. */
 export interface DriveBarProps {
@@ -100,6 +118,11 @@ export default function DriveBar(props: DriveBarProps) {
   const { isOffline } = useOffline()
   const { user } = useFullUserSession()
   const canDownload = useCanDownload()
+
+  const [shouldDisplayExamples, toggleShouldDisplayExamples] = useLocalStorageToggle(
+    'displayExamples',
+    true,
+  )
 
   const shouldBeDisabled = (isCloud && isOffline) || !canCreateAssets || isDisabled
 
@@ -240,116 +263,255 @@ export default function DriveBar(props: DriveBarProps) {
     case 'team':
     case 'local-directory': {
       return (
-        <ButtonGroup className="my-0.5 grow-0">
-          <ButtonGroup
-            ref={createAssetButtonsRef}
-            className="grow-0"
-            {...createAssetsVisualTooltip.targetProps}
-          >
-            <DialogTrigger defaultOpen={shouldDisplayStartModal}>
-              <Button
-                size="medium"
-                variant="accent"
-                isDisabled={shouldBeDisabled || isCreatingProject}
-                icon={Plus2Icon}
-                loaderPosition="icon"
-              >
-                {getText('startWithATemplate')}
+        <>
+          <div className="flex w-full min-w-0 flex-row gap-2">
+            <ButtonGroup
+              buttonVariants={{ isDisabled: shouldBeDisabled }}
+              ref={createAssetButtonsRef}
+              verticalAlign="center"
+              className="shrink grow-0 basis-0 "
+              {...createAssetsVisualTooltip.targetProps}
+            >
+              <DialogTrigger defaultOpen={shouldDisplayStartModal}>
+                <VisuallyHidden>
+                  <Button
+                    size="medium"
+                    variant="outline"
+                    isDisabled={shouldBeDisabled || isCreatingProject}
+                    icon={Plus2Icon}
+                    loaderPosition="icon"
+                  >
+                    {getText('startWithATemplate')}
+                  </Button>
+                </VisuallyHidden>
+
+                <StartModal
+                  createProject={(templateId, templateName) => {
+                    void newProject([templateId, templateName])
+                  }}
+                />
+              </DialogTrigger>
+
+              <WithFeatureFlag flag="newProjectButtonView" showIf={['tab_bar', 'table']}>
+                <Button variant="outline" icon={Plus2Icon}>
+                  {getText('newEmptyProject')}
+                </Button>
+              </WithFeatureFlag>
+
+              <WithFeatureFlag flag="newProjectButtonView" showIf="popover">
+                <Popover.Trigger>
+                  <Button variant="accent" icon={Plus2Icon} iconPosition="start">
+                    {getText('newEmptyProject')}
+                  </Button>
+
+                  <Popover size="xxxlarge">
+                    <div className="flex w-full flex-col gap-4">
+                      <Text variant="h1">{getText('chooseATemplate')}</Text>
+                      <Form
+                        schema={z.object({
+                          templateId: z.string().optional(),
+                          name: z.string().min(1),
+                        })}
+                        defaultValues={{
+                          name: 'New Project',
+                        }}
+                        onSubmit={async (values) => {
+                          await newProject([values.templateId, values.name])
+                          close()
+                        }}
+                      >
+                        <div className="flex w-full flex-col gap-1">
+                          <Text variant="subtitle">{getText('basicTemplates')}</Text>
+                          <TemplatesCarousel
+                            className="-mx-12 w-auto px-12"
+                            group="Get Started"
+                            isDisabled={shouldBeDisabled || isCreatingProject}
+                            onSelectTemplate={async (templateId, templateName) => {
+                              await newProject([templateId, templateName])
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex w-full flex-col gap-1">
+                          <Text variant="subtitle">{getText('advancedTemplates')}</Text>
+                          <TemplatesCarousel
+                            group={['Examples', 'Advanced']}
+                            className="-mx-12 w-auto px-12"
+                            isDisabled={shouldBeDisabled || isCreatingProject}
+                            onSelectTemplate={async (templateId, templateName) => {
+                              await newProject([templateId, templateName])
+                            }}
+                          />
+                        </div>
+                      </Form>
+                    </div>
+                  </Popover>
+                </Popover.Trigger>
+              </WithFeatureFlag>
+
+              <WithFeatureFlag flag="newProjectButtonView" showIf="expand">
+                {/* <Button.Group
+                  className="shrink grow-0 basis-0"
+                  buttonVariants={{
+                    isDisabled: shouldBeDisabled || isCreatingProject,
+                    variant: 'outline',
+                  }}
+                > */}
+                <Button
+                  variant="icon"
+                  icon={shouldDisplayExamples ? ExpandArrowDownIcon : ExpandArrowRightIcon}
+                  onPress={toggleShouldDisplayExamples}
+                />
+                {/* </Button.Group> */}
+              </WithFeatureFlag>
+
+              <WithFeatureFlag flag="newProjectButtonView" showIf="button_with_popover">
+                <Button.GroupJoin
+                  buttonVariants={{
+                    isDisabled: shouldBeDisabled || isCreatingProject,
+                    size: 'medium',
+                    variant: 'accent',
+                  }}
+                >
+                  <Button
+                    icon={Plus2Icon}
+                    onPress={async () => {
+                      await newProject([null, null])
+                    }}
+                  >
+                    {getText('newEmptyProject')}
+                  </Button>
+
+                  <Popover.Trigger>
+                    <Button icon={ExpandArrowDownIcon} />
+
+                    <Popover size="xlarge">
+                      {({ close }) => (
+                        <div className="flex w-full flex-col gap-4">
+                          <Text variant="subtitle">{getText('newEmptyProject')}</Text>
+                          <Form
+                            schema={z.object({
+                              templateId: z.string().optional(),
+                              name: z.string().min(1),
+                            })}
+                            defaultValues={{
+                              name: 'New Project',
+                            }}
+                            onSubmit={async (values) => {
+                              await newProject([values.templateId, values.name])
+                              close()
+                            }}
+                          >
+                            <TemplatesCarousel
+                              isDisabled={shouldBeDisabled || isCreatingProject}
+                              onSelectTemplate={async (templateId, templateName) => {
+                                await newProject([templateId, templateName])
+                              }}
+                            />
+
+                            <Input name="name" label={getText('projectName')} autoFocus />
+
+                            <Form.Submit>{getText('create')}</Form.Submit>
+                          </Form>
+                        </div>
+                      )}
+                    </Popover>
+                  </Popover.Trigger>
+                </Button.GroupJoin>
+              </WithFeatureFlag>
+
+              <Button variant="primary" size="medium" icon={Plus2Icon} iconPosition="end">
+                {getText('newEmptyProject')}
               </Button>
 
-              <StartModal
-                createProject={(templateId, templateName) => {
-                  void newProject([templateId, templateName])
-                }}
-              />
-            </DialogTrigger>
-            <Button
-              size="medium"
-              variant="outline"
-              isDisabled={shouldBeDisabled || isCreatingProject}
-              icon={Plus2Icon}
-              loaderPosition="icon"
-              onPress={async () => {
-                await newProject([null, null])
-              }}
-            >
-              {getText('newEmptyProject')}
-            </Button>
-            <div className="flex h-row items-center gap-4 rounded-full border-0.5 border-primary/20 px-[11px]">
-              <Button
-                variant="icon"
-                size="medium"
-                icon={AddFolderIcon}
-                isDisabled={shouldBeDisabled}
-                aria-label={getText('newFolder')}
-                onPress={async () => {
-                  await newFolder()
-                }}
-              />
-              {isCloud && (
-                <DialogTrigger>
-                  <Button
-                    variant="icon"
-                    size="medium"
-                    icon={AddKeyIcon}
-                    isDisabled={shouldBeDisabled}
-                    aria-label={getText('newSecret')}
-                  />
-                  <UpsertSecretModal
-                    id={null}
-                    name={null}
-                    doCreate={async (name, value) => {
-                      await newSecret(name, value)
-                    }}
-                  />
-                </DialogTrigger>
-              )}
+              <div className="flex h-full flex-initial items-center gap-4 rounded-full border-0.5 border-primary/20 px-[11px]">
+                <Button
+                  variant="icon"
+                  size="medium"
+                  icon={AddFolderIcon}
+                  aria-label={getText('newFolder')}
+                  onPress={async () => {
+                    await newFolder()
+                  }}
+                />
+                {isCloud && (
+                  <DialogTrigger>
+                    <Button
+                      variant="icon"
+                      size="medium"
+                      icon={AddKeyIcon}
+                      aria-label={getText('newSecret')}
+                    />
+                    <UpsertSecretModal
+                      id={null}
+                      name={null}
+                      doCreate={async (name, value) => {
+                        await newSecret(name, value)
+                      }}
+                    />
+                  </DialogTrigger>
+                )}
 
-              {isCloud && (
-                <DialogTrigger>
-                  <Button
-                    variant="icon"
-                    size="medium"
-                    icon={AddDatalinkIcon}
-                    isDisabled={shouldBeDisabled}
-                    aria-label={getText('newDatalink')}
-                  />
-                  <UpsertDatalinkModal
-                    doCreate={async (name, value) => {
-                      await newDatalink(name, value)
-                    }}
-                  />
-                </DialogTrigger>
-              )}
-              <Button
-                variant="icon"
-                size="medium"
-                icon={DataUploadIcon}
-                isDisabled={shouldBeDisabled}
-                aria-label={getText('uploadFiles')}
-                onPress={async () => {
-                  const files = await inputFiles()
-                  await uploadFiles(Array.from(files))
-                }}
-              />
-              <Button
-                isDisabled={!canDownload || shouldBeDisabled}
-                variant="icon"
-                size="medium"
-                icon={DataDownloadIcon}
-                aria-label={getText('downloadFiles')}
-                onPress={() => {
-                  unsetModal()
-                  dispatchAssetEvent({ type: AssetEventType.downloadSelected })
-                }}
-              />
-            </div>
-            {createAssetsVisualTooltip.tooltip}
-          </ButtonGroup>
-          {pasteDataStatus}
-          {searchBar}
-          {assetPanelToggle}
-        </ButtonGroup>
+                {isCloud && (
+                  <DialogTrigger>
+                    <Button
+                      variant="icon"
+                      size="medium"
+                      icon={AddDatalinkIcon}
+                      aria-label={getText('newDatalink')}
+                    />
+                    <UpsertDatalinkModal
+                      doCreate={async (name, value) => {
+                        await newDatalink(name, value)
+                      }}
+                    />
+                  </DialogTrigger>
+                )}
+
+                <Button
+                  variant="icon"
+                  size="medium"
+                  icon={DataUploadIcon}
+                  aria-label={getText('uploadFiles')}
+                  onPress={async () => {
+                    const files = await inputFiles()
+                    await uploadFiles(Array.from(files))
+                  }}
+                />
+                <Button
+                  isDisabled={!canDownload || shouldBeDisabled}
+                  variant="icon"
+                  size="medium"
+                  icon={DataDownloadIcon}
+                  aria-label={getText('downloadFiles')}
+                  onPress={() => {
+                    unsetModal()
+                    dispatchAssetEvent({ type: AssetEventType.downloadSelected })
+                  }}
+                />
+              </div>
+              {createAssetsVisualTooltip.tooltip}
+            </ButtonGroup>
+            {pasteDataStatus}
+            {searchBar}
+            {assetPanelToggle}
+          </div>
+
+          <WithFeatureFlag flag="newProjectButtonView" showIf="expand">
+            {shouldDisplayExamples && (
+              <div className="flex min-h-0 w-full min-w-0 max-w-full flex-none flex-col gap-2">
+                <Text variant="subtitle">{getText('startWithTemplate')}</Text>
+                <TemplatesCarousel
+                  className="-mx-4 w-auto px-4"
+                  isDisabled={shouldBeDisabled || isCreatingProject}
+                  onSelectTemplate={async (templateId, templateName) => {
+                    await newProject([templateId, templateName])
+                  }}
+                />
+              </div>
+            )}
+          </WithFeatureFlag>
+        </>
       )
     }
   }

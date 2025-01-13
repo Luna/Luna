@@ -101,16 +101,37 @@ export function useMeasure(options: Options = {}): Result {
 export function useMeasureSignal(options: Options = {}) {
   const { onResize, onInitialMeasure } = options
 
-  const bounds = useMotionValue<RectReadOnly | null>(null)
+  const x = useMotionValue<RectReadOnly['x'] | null>(null)
+  const y = useMotionValue<RectReadOnly['y'] | null>(null)
+  const width = useMotionValue<RectReadOnly['width'] | null>(null)
+  const height = useMotionValue<RectReadOnly['height'] | null>(null)
+  const top = useMotionValue<RectReadOnly['top'] | null>(null)
+  const right = useMotionValue<RectReadOnly['right'] | null>(null)
+  const bottom = useMotionValue<RectReadOnly['bottom'] | null>(null)
+  const left = useMotionValue<RectReadOnly['left'] | null>(null)
 
   const onResizeStableCallback = useEventCallback<OnResizeCallback>((nextBounds) => {
-    bounds.set(nextBounds)
+    x.set(nextBounds.x)
+    y.set(nextBounds.y)
+    width.set(nextBounds.width)
+    height.set(nextBounds.height)
+    top.set(nextBounds.top)
+    right.set(nextBounds.right)
+    bottom.set(nextBounds.bottom)
+    left.set(nextBounds.left)
 
     onResize?.(nextBounds)
   })
 
   const onInitialMeasureStableCallback = useEventCallback<OnResizeCallback>((nextBounds) => {
-    bounds.set(nextBounds)
+    x.set(nextBounds.x)
+    y.set(nextBounds.y)
+    width.set(nextBounds.width)
+    height.set(nextBounds.height)
+    top.set(nextBounds.top)
+    right.set(nextBounds.right)
+    bottom.set(nextBounds.bottom)
+    left.set(nextBounds.left)
 
     onInitialMeasure?.(nextBounds)
   })
@@ -121,7 +142,7 @@ export function useMeasureSignal(options: Options = {}) {
     onInitialMeasure: onInitialMeasureStableCallback,
   })
 
-  return [ref, bounds, forceRefresh] as const
+  return [ref, { x, y, width, height, top, right, bottom, left }, forceRefresh] as const
 }
 
 const DEFAULT_MAX_WAIT = 500

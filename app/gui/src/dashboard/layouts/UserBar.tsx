@@ -2,8 +2,9 @@
 import { SUBSCRIBE_PATH } from '#/appUtils'
 import ChatIcon from '#/assets/chat.svg'
 import DefaultUserIcon from '#/assets/default_user.svg'
+import ArrowDownIcon from '#/assets/expand_arrow_down.svg'
 import Offline from '#/assets/offline_filled.svg'
-import { Button, DialogTrigger, Text } from '#/components/AriaComponents'
+import { Button, DialogTrigger, Popover, Text } from '#/components/AriaComponents'
 import { PaywallDialogButton } from '#/components/Paywall'
 import FocusArea from '#/components/styled/FocusArea'
 import { usePaywall } from '#/hooks/billing'
@@ -43,6 +44,8 @@ export default function UserBar(props: UserBarProps) {
 
   const shouldShowUpgradeButton =
     user.isOrganizationAdmin && user.plan !== Plan.enterprise && user.plan !== Plan.team
+
+  const upgradeButtonVariant = user.plan === Plan.free ? 'primary' : 'outline'
   // eslint-disable-next-line no-restricted-syntax
   const shouldShowPaywallButton = (false as boolean) && isFeatureUnderPaywall('inviteUser')
   // FIXME[sb]: Re-enable when they are wanted again.
@@ -57,7 +60,7 @@ export default function UserBar(props: UserBarProps) {
       {(innerProps) => (
         <div className="bg-primary/10 pt-0.5">
           <div
-            className="flex h-[46px] shrink-0 cursor-default items-center gap-user-bar pl-icons-x pr-3"
+            className="flex h-full shrink-0 cursor-default items-center gap-user-bar pl-icons-x pr-2"
             {...innerProps}
           >
             <AnimatePresence initial={false}>
@@ -107,8 +110,62 @@ export default function UserBar(props: UserBarProps) {
               </DialogTrigger>
             )}
 
+            <Button.Group gap="small" buttonVariants={{ variant: 'icon' }}>
+              <Button
+                rel="noreferrer"
+                target="_blank"
+                href="https://community.ensoanalytics.com/c/what-is-new-in-enso/"
+              >
+                {getText('whatsNew')}
+              </Button>
+
+              <Button.GroupJoin buttonVariants={{ variant: 'icon' }}>
+                <Button href="https://community.ensoanalytics.com/">{getText('community')}</Button>
+
+                <Popover.Trigger>
+                  <Button icon={ArrowDownIcon} />
+
+                  <Popover size="auto" placement="bottom end">
+                    <Button.Group
+                      direction="column"
+                      gap="small"
+                      buttonVariants={{ variant: 'icon' }}
+                    >
+                      <Button
+                        rel="noreferrer"
+                        target="_blank"
+                        href="https://community.ensoanalytics.com/"
+                      >
+                        {getText('askAQuestion')}
+                      </Button>
+
+                      <Button
+                        rel="noreferrer"
+                        target="_blank"
+                        href="https://community.ensoanalytics.com/c/enso101/"
+                      >
+                        {getText('enso101')}
+                      </Button>
+
+                      <Button
+                        rel="noreferrer"
+                        target="_blank"
+                        href="https://community.ensoanalytics.com/c/enso-component-examples/"
+                      >
+                        {getText('componentExamples')}
+                      </Button>
+                    </Button.Group>
+                  </Popover>
+                </Popover.Trigger>
+              </Button.GroupJoin>
+
+              <Button rel="noreferrer" target="_blank" href="https://help.enso.org/">
+                {getText('docs')}
+              </Button>
+            </Button.Group>
+
             {shouldShowUpgradeButton && (
-              <Button variant="primary" size="medium" href={SUBSCRIBE_PATH}>
+              <Button variant={upgradeButtonVariant} size="medium" href={SUBSCRIBE_PATH}>
                 {getText('upgrade')}
               </Button>
             )}
@@ -123,7 +180,8 @@ export default function UserBar(props: UserBarProps) {
                 {getText('share')}
               </Button>
             )}
-            <DialogTrigger>
+
+            <Popover.Trigger>
               <Button
                 size="custom"
                 variant="icon"
@@ -136,7 +194,7 @@ export default function UserBar(props: UserBarProps) {
                 contentClassName="size-8"
               />
               <UserMenu goToSettingsPage={goToSettingsPage} onSignOut={onSignOut} />
-            </DialogTrigger>
+            </Popover.Trigger>
 
             {/* Required for shortcuts to work. */}
             <div className="hidden">

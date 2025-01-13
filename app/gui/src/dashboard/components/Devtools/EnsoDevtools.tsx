@@ -258,6 +258,25 @@ export function EnsoDevtools() {
                       setFeatureFlags('enableCloudExecution', value)
                     }}
                   />
+
+                  <ariaComponents.Radio.Group
+                    name="newProjectButtonView"
+                    label="New Project Button View"
+                    onChange={(value) => {
+                      setFeatureFlags('newProjectButtonView', value)
+                    }}
+                  >
+                    <ariaComponents.Radio value="expand">Expand</ariaComponents.Radio>
+                    <ariaComponents.Radio value="tab_bar">Tab Bar</ariaComponents.Radio>
+
+                    <ariaComponents.Radio value="button_with_popover">
+                      Button with Popover
+                    </ariaComponents.Radio>
+
+                    <ariaComponents.Radio value="popover">Popover</ariaComponents.Radio>
+
+                    <ariaComponents.Radio value="table">Table</ariaComponents.Radio>
+                  </ariaComponents.Radio.Group>
                 </>
               )}
             </ariaComponents.Form>

@@ -3,6 +3,9 @@ import DriveIcon from '#/assets/drive.svg'
 import NetworkIcon from '#/assets/network.svg'
 import SettingsIcon from '#/assets/settings.svg'
 
+import ExpandArrowDownIcon from '#/assets/expand_arrow_down.svg'
+import Plus2Icon from '#/assets/plus2.svg'
+import { Button, Form, Input, Popover, Text } from '#/components/AriaComponents'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import TabBar from '#/layouts/TabBar'
 
@@ -16,6 +19,9 @@ import {
 import { useText } from '#/providers/TextProvider'
 import type { ProjectId } from '#/services/Backend'
 import type { TextId } from 'enso-common/src/text'
+import { z } from 'zod'
+import { WithFeatureFlag } from '../../providers/FeatureFlagsProvider'
+import { TemplatesCarousel } from './components/TemplatesCarousel'
 
 /** The props for the {@link DashboardTabBar} component. */
 export interface DashboardTabBarProps {
@@ -87,9 +93,50 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
   ]
 
   return (
-    <TabBar className="bg-primary/10" items={tabs}>
-      {/* @ts-expect-error - Making ts happy here requires too much attention */}
-      {(tab) => <tab.Component {...tab} />}
-    </TabBar>
+    <div className="flex flex-grow items-center bg-primary/10">
+      <TabBar items={tabs} className="flex-none">
+        {/* @ts-expect-error - Making ts happy here requires too much attention */}
+        {(tab) => <tab.Component {...tab} />}
+      </TabBar>
+
+      <WithFeatureFlag flag="newProjectButtonView" showIf="tab_bar">
+        <Button.GroupJoin
+          buttonVariants={{ size: 'small', variant: 'ghost' }}
+          verticalAlign="center"
+        >
+          <Button icon={Plus2Icon} tooltip={getText('newEmptyProject')} />
+
+          <Popover.Trigger>
+            <Button icon={ExpandArrowDownIcon} tooltip={getText('chooseATemplate')} />
+
+            <Popover size="xlarge">
+              {({ close }) => (
+                <div className="flex w-full flex-col gap-4">
+                  <Text variant="subtitle">{getText('newEmptyProject')}</Text>
+                  <Form
+                    schema={z.object({
+                      templateId: z.string().optional(),
+                      name: z.string().min(1),
+                    })}
+                    defaultValues={{
+                      name: 'New Project',
+                    }}
+                    onSubmit={async (values) => {
+                      close()
+                    }}
+                  >
+                    <TemplatesCarousel onSelectTemplate={async (templateId, templateName) => {}} />
+
+                    <Input name="name" label={getText('projectName')} autoFocus />
+
+                    <Form.Submit>{getText('create')}</Form.Submit>
+                  </Form>
+                </div>
+              )}
+            </Popover>
+          </Popover.Trigger>
+        </Button.GroupJoin>
+      </WithFeatureFlag>
+    </div>
   )
 }

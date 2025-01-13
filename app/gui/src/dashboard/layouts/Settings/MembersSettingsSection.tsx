@@ -62,18 +62,17 @@ export default function MembersSettingsSection() {
           </ariaComponents.DialogTrigger>
 
           {seatsLeft != null && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 self-center">
               <ariaComponents.Text>
                 {seatsLeft <= 0 ?
                   getText('noSeatsLeft')
-                : getText('seatsLeft', seatsLeft, seatsTotal)}
+                : getText('seatsLeft', seatsLeft, seatsTotal)}{' '}
+                <paywall.PaywallDialogButton
+                  feature="inviteUserFull"
+                  variant="link"
+                  showIcon={false}
+                />
               </ariaComponents.Text>
-
-              <paywall.PaywallDialogButton
-                feature="inviteUserFull"
-                variant="link"
-                showIcon={false}
-              />
             </div>
           )}
         </ariaComponents.ButtonGroup>

@@ -33,11 +33,9 @@ export interface TabBarProps<T extends object> extends aria.TabListProps<T> {
 export default function TabBar<T extends object>(props: TabBarProps<T>) {
   const { className, ...rest } = props
 
-  const classes = React.useMemo(() => tailwindMerge.twJoin('flex grow', className), [className])
-
   return (
     <AnimatedBackground>
-      <div className={classes}>
+      <div className={tailwindMerge.twMerge('flex grow', className)}>
         <aria.TabList<T> className="flex h-12 shrink-0 grow px-2" {...rest} />
       </div>
     </AnimatedBackground>

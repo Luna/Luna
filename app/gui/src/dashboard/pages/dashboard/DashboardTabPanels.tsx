@@ -47,6 +47,7 @@ export function DashboardTabPanels(props: DashboardTabPanelsProps) {
     {
       id: TabType.drive,
       className: 'flex min-h-0 grow [&[data-inert]]:hidden',
+      shouldForceMount: true,
       children: (
         <Drive
           assetsManagementApiRef={assetManagementApiRef}

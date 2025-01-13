@@ -39,9 +39,13 @@ import { OfflineError } from '#/utilities/HttpClient'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { useDeferredValue, useEffect } from 'react'
+import { useDeferredValue, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { toast } from 'react-toastify'
+import { Await } from '../components/Await'
 import { Suspense } from '../components/Suspense'
+import { TemplatesCarousel } from '../pages/dashboard/components/TemplatesCarousel'
+import { TemplatesGrid } from '../pages/dashboard/components/TemplatesGrid'
+import { useFeatureFlag } from '../providers/FeatureFlagsProvider'
 import { useCategoriesAPI } from './Drive/Categories/categoriesHooks'
 import { useDirectoryIds } from './Drive/directoryIdsHooks'
 
@@ -60,6 +64,8 @@ const CATEGORIES_TO_DISPLAY_START_MODAL = ['cloud', 'local', 'local-directory']
 
 /** Contains directory path and directory contents (projects, folders, secrets and files). */
 function Drive(props: DriveProps) {
+  const { hidden } = props
+
   const { isOffline } = offlineHooks.useOffline()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
   const { user } = authProvider.useFullUserSession()
@@ -68,7 +74,27 @@ function Drive(props: DriveProps) {
   const categoriesAPI = useCategoriesAPI()
   const { category, resetCategory, setCategory } = categoriesAPI
 
+  const [promise, setPromise] = React.useState<Promise<void>>(() => Promise.resolve())
+
   const isCloud = categoryModule.isCloudCategory(category)
+
+  React.useEffect(() => {
+    if (!hidden) {
+      return
+    }
+
+    let resolve = () => {}
+
+    setPromise(
+      new Promise((res) => {
+        resolve = res
+      }),
+    )
+
+    return () => {
+      resolve()
+    }
+  }, [hidden])
 
   const supportLocalBackend = localBackend != null
 
@@ -115,34 +141,36 @@ function Drive(props: DriveProps) {
     case 'offline':
     case 'ok': {
       return (
-        <ErrorBoundary
-          onBeforeFallbackShown={({ resetErrorBoundary, error, resetQueries }) => {
-            if (error instanceof DirectoryDoesNotExistError) {
-              toast.error(getText('directoryDoesNotExistError'), {
-                toastId: 'directory-does-not-exist-error',
-              })
-              resetCategory()
-              resetQueries()
-              resetErrorBoundary()
-            }
+        <Await promise={promise}>
+          <ErrorBoundary
+            onBeforeFallbackShown={({ resetErrorBoundary, error, resetQueries }) => {
+              if (error instanceof DirectoryDoesNotExistError) {
+                toast.error(getText('directoryDoesNotExistError'), {
+                  toastId: 'directory-does-not-exist-error',
+                })
+                resetCategory()
+                resetQueries()
+                resetErrorBoundary()
+              }
 
-            if (error instanceof OfflineError) {
-              return (
-                <OfflineMessage
-                  supportLocalBackend={supportLocalBackend}
-                  setCategory={(nextCategory) => {
-                    setCategory(nextCategory)
-                    resetErrorBoundary()
-                  }}
-                />
-              )
-            }
-          }}
-        >
-          <Suspense>
-            <DriveAssetsView {...props} category={category} setCategory={setCategory} />
-          </Suspense>
-        </ErrorBoundary>
+              if (error instanceof OfflineError) {
+                return (
+                  <OfflineMessage
+                    supportLocalBackend={supportLocalBackend}
+                    setCategory={(nextCategory) => {
+                      setCategory(nextCategory)
+                      resetErrorBoundary()
+                    }}
+                  />
+                )
+              }
+            }}
+          >
+            <Suspense>
+              <DriveAssetsView {...props} category={category} setCategory={setCategory} />
+            </Suspense>
+          </ErrorBoundary>
+        </Await>
       )
     }
   }
@@ -253,25 +281,13 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
     !hasPermissionToCreateAssets
 
   return (
-    <div className={tailwindMerge.twMerge('relative flex grow', hidden && 'hidden')}>
+    <div className={tailwindMerge.twMerge('relative flex max-w-full grow', hidden && 'hidden')}>
       <div
         data-testid="drive-view"
-        className="mt-4 flex flex-1 flex-col gap-4 overflow-visible px-page-x"
+        className="mt-4 flex min-w-0 max-w-full flex-1 flex-col gap-4 overflow-visible px-page-x"
       >
-        <DriveBar
-          key={rootDirectoryId}
-          backend={backend}
-          query={query}
-          setQuery={setQuery}
-          category={category}
-          doEmptyTrash={doEmptyTrash}
-          isEmpty={isEmpty}
-          shouldDisplayStartModal={shouldDisplayStartModal}
-          isDisabled={shouldDisableActions}
-        />
-
-        <div className="flex flex-1 gap-drive overflow-hidden">
-          <div className="flex w-40 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden py-drive-sidebar-y">
+        <div className="flex flex-1 gap-drive">
+          <div className="flex w-40 flex-none flex-col gap-drive-sidebar overflow-y-auto overflow-x-hidden">
             <CategorySwitcher category={category} setCategoryId={setCategory} />
 
             {isCloud && (
@@ -286,21 +302,124 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
             <AssetsTableAssetsUnselector />
           </div>
 
-          {status === 'offline' ?
-            <OfflineMessage supportLocalBackend={supportLocalBackend} setCategory={setCategory} />
-          : <AssetsTable
-              assetManagementApiRef={assetsManagementApiRef}
-              hidden={hidden}
+          <div className="flex w-full min-w-0 flex-col gap-2">
+            <DriveBar
+              key={rootDirectoryId}
+              backend={backend}
               query={query}
               setQuery={setQuery}
-              category={deferredCategory}
-              initialProjectName={initialProjectName}
+              category={category}
+              doEmptyTrash={doEmptyTrash}
+              isEmpty={isEmpty}
+              shouldDisplayStartModal={shouldDisplayStartModal}
+              isDisabled={shouldDisableActions}
             />
-          }
+
+            <DriveBody
+              query={query}
+              setQuery={setQuery}
+              isEmpty={isEmpty}
+              isOffline={status === 'offline'}
+              supportLocalBackend={supportLocalBackend}
+              category={category}
+              setCategory={setCategory}
+              initialProjectName={initialProjectName}
+              assetsManagementApiRef={assetsManagementApiRef}
+              hidden={false}
+            />
+          </div>
         </div>
       </div>
 
       <AssetPanel backendType={backend.type} category={deferredCategory} />
+    </div>
+  )
+}
+
+/**
+ * Props for a {@link DriveBody}.
+ */
+interface DriveBodyProps extends DriveProps {
+  readonly category: Category
+  readonly setCategory: (category: Category['id']) => void
+  readonly query: AssetQuery
+  readonly setQuery: Dispatch<SetStateAction<AssetQuery>>
+  readonly isEmpty: boolean
+  readonly isOffline: boolean
+  readonly supportLocalBackend: boolean
+}
+
+/**
+ * The body of the Drive.
+ */
+function DriveBody(props: DriveBodyProps) {
+  const {
+    setCategory,
+    query,
+    setQuery,
+    hidden = false,
+    initialProjectName,
+    assetsManagementApiRef,
+    category,
+    isEmpty,
+    isOffline,
+    supportLocalBackend,
+  } = props
+
+  const featureFlag = useFeatureFlag('newProjectButtonView')
+
+  if (isOffline) {
+    return <OfflineMessage supportLocalBackend={supportLocalBackend} setCategory={setCategory} />
+  }
+
+  if (isEmpty && featureFlag === 'table') {
+    return <EmptyDriveBody />
+  }
+
+  return (
+    <>
+      <AssetsTable
+        assetManagementApiRef={assetsManagementApiRef}
+        hidden={hidden}
+        query={query}
+        setQuery={setQuery}
+        category={category}
+        initialProjectName={initialProjectName}
+      />
+    </>
+  )
+}
+
+/**
+ * The empty body of the Drive.
+ */
+function EmptyDriveBody() {
+  const { getText } = textProvider.useText()
+  return (
+    <div className="flex w-full min-w-0 flex-1 justify-center pt-2">
+      <div className="flex w-full flex-col gap-4">
+        <ariaComponents.Text variant="subtitle" className="mb-7">
+          {getText('startWithTemplate')}
+        </ariaComponents.Text>
+
+        <div className="flex w-full min-w-0 flex-col gap-1">
+          <ariaComponents.Text variant="body">{getText('basicTemplates')}</ariaComponents.Text>
+          <TemplatesCarousel
+            className="-mx-12 w-auto px-12"
+            group="Get Started"
+            onSelectTemplate={async (templateId, templateName) => {}}
+          />
+        </div>
+
+        <div className="flex w-full min-w-0 flex-col gap-1">
+          <ariaComponents.Text variant="body">{getText('advancedTemplates')}</ariaComponents.Text>
+          <TemplatesCarousel
+            group={['Examples', 'Advanced']}
+            className="-mx-12 w-auto px-12"
+            onSelectTemplate={async (templateId, templateName) => {}}
+          />
+        </div>
+      </div>
     </div>
   )
 }

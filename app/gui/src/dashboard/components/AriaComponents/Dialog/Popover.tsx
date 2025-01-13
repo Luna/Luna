@@ -13,6 +13,7 @@ import * as suspense from '#/components/Suspense'
 import * as twv from '#/utilities/tailwindVariants'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
+import { ResetButtonGroupContext } from '../Button'
 import * as dialogProvider from './DialogProvider'
 import * as dialogStackProvider from './DialogStackProvider'
 import { DialogTrigger } from './DialogTrigger'
@@ -50,7 +51,9 @@ export const POPOVER_STYLES = twv.tv({
       small: { base: 'max-w-sm', dialog: 'py-3 px-2' },
       medium: { base: 'max-w-md', dialog: 'p-3.5 px-2.5' },
       large: { base: 'max-w-lg', dialog: 'px-4 py-3' },
-      hero: { base: 'max-w-xl', dialog: 'px-6 py-5' },
+      xlarge: { base: 'max-w-xl', dialog: 'px-6 py-5' },
+      xxlarge: { base: 'max-w-2xl', dialog: 'px-8 py-7' },
+      xxxlarge: { base: 'max-w-3xl', dialog: 'px-10 py-9' },
     },
     rounded: {
       none: { base: 'rounded-none', dialog: 'rounded-none' },
@@ -182,7 +185,7 @@ function PopoverContent(props: PopoverContentProps) {
   })
 
   return (
-    <>
+    <ResetButtonGroupContext>
       <dialogStackProvider.DialogStackRegistrar id={dialogId} type="popover" />
       <div
         id={dialogId}
@@ -205,7 +208,7 @@ function PopoverContent(props: PopoverContentProps) {
           </errorBoundary.ErrorBoundary>
         </dialogProvider.DialogProvider>
       </div>
-    </>
+    </ResetButtonGroupContext>
   )
 }
 
