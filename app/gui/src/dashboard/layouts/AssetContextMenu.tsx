@@ -35,7 +35,7 @@ import {
   downloadAssetsMutationOptions,
   restoreAssetsMutationOptions,
 } from '#/hooks/backendBatchedHooks'
-import { useNewProject, useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
+import { useNewProject } from '#/hooks/backendHooks'
 import { useUploadFileWithToastMutation } from '#/hooks/backendUploadFilesHooks'
 import { usePasteData } from '#/providers/DriveProvider'
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
@@ -99,9 +99,6 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
   const copyMutation = copyHooks.useCopy({ copyText: path ?? '' })
   const uploadFileToCloudMutation = useUploadFileWithToastMutation(remoteBackend)
   const disabledTooltip = !canOpenProjects ? getText('downloadToOpenWorkflow') : undefined
-
-  const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
-  const isUnderPaywall = isFeatureUnderPaywall('share')
 
   const newProject = useNewProject(backend, category)
 
