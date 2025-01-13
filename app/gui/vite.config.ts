@@ -82,7 +82,7 @@ export default defineConfig({
     ...(process.env.GUI_HOSTNAME ? { host: process.env.GUI_HOSTNAME } : {}),
   },
   resolve: {
-    conditions: isDevMode ? ['source', ...defaultClientConditions] : [],
+    conditions: isDevMode ? ['source', ...defaultClientConditions] : [...defaultClientConditions],
     alias: {
       '/src/entrypoint.ts': fileURLToPath(new URL(entrypoint, import.meta.url)),
       shared: fileURLToPath(new URL('./shared', import.meta.url)),
