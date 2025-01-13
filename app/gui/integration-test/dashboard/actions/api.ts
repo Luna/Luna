@@ -23,6 +23,16 @@ import invariant from 'tiny-invariant'
 // === Constants ===
 // =================
 
+let lastTimestamp = 0
+
+/** Return a new date that has not yet been returned. */
+function newUniqueDate(): Date {
+  const timestamp = Number(new Date())
+  const newTimestamp = Math.max(timestamp, lastTimestamp + 1)
+  lastTimestamp = newTimestamp
+  return new Date(newTimestamp)
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const MOCK_SVG = `
@@ -358,7 +368,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         projectState: null,
         extension: null,
         title,
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         description: rest.description ?? '',
         labels: [],
         parentId,
@@ -411,7 +421,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         },
         extension: null,
         title,
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         description: rest.description ?? '',
         labels: [],
         parentId: defaultDirectoryId,
@@ -452,7 +462,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         projectState: null,
         extension: '',
         title: rest.title ?? '',
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         description: rest.description ?? '',
         labels: [],
         parentId: defaultDirectoryId,
@@ -494,7 +504,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         projectState: null,
         extension: null,
         title: rest.title ?? '',
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         description: rest.description ?? '',
         labels: [],
         parentId: defaultDirectoryId,
@@ -536,7 +546,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         projectState: null,
         extension: null,
         title: rest.title ?? '',
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         description: rest.description ?? '',
         labels: [],
         parentId: defaultDirectoryId,
@@ -808,9 +818,13 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
           break
         }
       }
-      filteredAssets.sort(
-        (a, b) => backend.ASSET_TYPE_ORDER[a.type] - backend.ASSET_TYPE_ORDER[b.type],
-      )
+      filteredAssets.sort((a, b) => {
+        const order = backend.ASSET_TYPE_ORDER[a.type] - backend.ASSET_TYPE_ORDER[b.type]
+        if (order !== 0) {
+          return order
+        }
+        return Number(new Date(b.modifiedAt)) - Number(new Date(a.modifiedAt))
+      })
       const json: remoteBackend.ListDirectoryResponseBody = { assets: filteredAssets }
 
       route.fulfill({ json })
@@ -875,14 +889,14 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         name: 'example project name',
         state: project.projectState,
         packageName: 'Project_root',
-        // eslint-disable-next-line camelcase
-        ide_version: null,
-        // eslint-disable-next-line camelcase
-        engine_version: {
+        ideVersion: null,
+        engineVersion: {
           value: '2023.2.1-nightly.2023.9.29',
           lifecycle: backend.VersionLifecycle.development,
         },
         address: backend.Address('ws://localhost/'),
+        parentsPath: getParentPath(project.parentId),
+        virtualParentsPath: getVirtualParentPath(project.parentId, project.title),
       } satisfies backend.ProjectRaw
     })
 
@@ -1322,7 +1336,7 @@ async function mockApiInternal({ page, setupAPI }: MockParams) {
         description: null,
         id,
         labels: [],
-        modifiedAt: dateTime.toRfc3339(new Date()),
+        modifiedAt: dateTime.toRfc3339(newUniqueDate()),
         parentId,
         permissions: [
           {

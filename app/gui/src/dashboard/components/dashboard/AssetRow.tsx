@@ -500,7 +500,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 window.setTimeout(() => {
                   setSelected(false)
                 })
-                toggleDirectoryExpansion(asset.id)
+                toggleDirectoryExpansion([asset.id], category.id)
               }
             }}
             onContextMenu={(event) => {
@@ -544,7 +544,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
               }
               if (asset.type === backendModule.AssetType.directory) {
                 dragOverTimeoutHandle.current = window.setTimeout(() => {
-                  toggleDirectoryExpansion(asset.id, true)
+                  toggleDirectoryExpansion([asset.id], category.id, true)
                 }, DRAG_EXPAND_DELAY_MS)
               }
               // Required because `dragover` does not fire on `mouseenter`.
@@ -591,7 +591,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                   event.preventDefault()
                   event.stopPropagation()
                   unsetModal()
-                  toggleDirectoryExpansion(directoryId, true)
+                  toggleDirectoryExpansion([directoryId], category.id, true)
                   const ids = payload
                     .filter((payloadItem) => payloadItem.asset.parentId !== directoryId)
                     .map((dragItem) => dragItem.key)
@@ -604,7 +604,7 @@ export function RealAssetInternalRow(props: RealAssetRowInternalProps) {
                 } else if (event.dataTransfer.types.includes('Files')) {
                   event.preventDefault()
                   event.stopPropagation()
-                  toggleDirectoryExpansion(directoryId, true)
+                  toggleDirectoryExpansion([directoryId], category.id, true)
                   void uploadFiles(Array.from(event.dataTransfer.files), directoryId, null)
                 }
               }

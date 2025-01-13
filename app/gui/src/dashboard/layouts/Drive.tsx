@@ -188,7 +188,7 @@ function DriveAssetsView(props: DriveAssetsViewProps) {
   const queryClient = useQueryClient()
   const rootDirectoryQuery = listDirectoryQueryOptions({
     backend,
-    category,
+    categoryType: category.type,
     parentId: rootDirectoryId,
   })
 

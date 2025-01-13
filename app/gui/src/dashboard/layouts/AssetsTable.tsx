@@ -199,7 +199,6 @@ export interface AssetsTableState {
   readonly doCopy: () => void
   readonly doCut: () => void
   readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
-  readonly getAssetNodeById: (id: AssetId) => AnyAssetTreeNode | null
 }
 
 /** Data associated with a {@link AssetRow}, used for rendering. */
@@ -741,7 +740,7 @@ function AssetsTable(props: AssetsTableProps) {
               case AssetType.directory: {
                 event.preventDefault()
                 event.stopPropagation()
-                toggleDirectoryExpansion(item.item.id)
+                toggleDirectoryExpansion([item.item.id], category.id)
                 break
               }
               case AssetType.project: {
@@ -801,7 +800,7 @@ function AssetsTable(props: AssetsTableProps) {
               // The folder is expanded; collapse it.
               event.preventDefault()
               event.stopPropagation()
-              toggleDirectoryExpansion(item.item.id, false)
+              toggleDirectoryExpansion([item.item.id], category.id, false)
             } else if (prevIndex != null) {
               // Focus parent if there is one.
               let index = prevIndex - 1
@@ -826,7 +825,7 @@ function AssetsTable(props: AssetsTableProps) {
             // The folder is collapsed; expand it.
             event.preventDefault()
             event.stopPropagation()
-            toggleDirectoryExpansion(item.item.id, true)
+            toggleDirectoryExpansion([item.item.id], category.id, true)
           }
           break
         }
@@ -951,7 +950,7 @@ function AssetsTable(props: AssetsTableProps) {
       if (pasteData.data.ids.has(newParentKey)) {
         toast.error('Cannot paste a folder into itself.')
       } else {
-        toggleDirectoryExpansion(newParentId, true)
+        toggleDirectoryExpansion([newParentId], category.id, true)
         if (pasteData.type === 'copy') {
           copyAssetsMutation.mutate([[...pasteData.data.ids], newParentId])
         } else {
@@ -1002,46 +1001,25 @@ function AssetsTable(props: AssetsTableProps) {
     }
   }
 
-  const getAssetNodeById = useEventCallback(
-    (id: AssetId) => assetTree.preorderTraversal().find((node) => node.item.id === id) ?? null,
-  )
-
   const hideColumn = useEventCallback((column: Column) => {
     setEnabledColumns((currentColumns) => withPresence(currentColumns, column, false))
   })
 
-  const state: AssetsTableState = useMemo(
-    () => ({
-      backend,
-      rootDirectoryId,
-      scrollContainerRef: rootRef,
-      category,
-      sortInfo,
-      setSortInfo,
-      query,
-      setQuery,
-      nodeMap: nodeMapRef,
-      hideColumn,
-      doCopy,
-      doCut,
-      doPaste,
-      getAssetNodeById,
-    }),
-    [
-      backend,
-      category,
-      doCopy,
-      doCut,
-      doPaste,
-      getAssetNodeById,
-      hideColumn,
-      nodeMapRef,
-      query,
-      rootDirectoryId,
-      setQuery,
-      sortInfo,
-    ],
-  )
+  const state: AssetsTableState = {
+    backend,
+    rootDirectoryId,
+    scrollContainerRef: rootRef,
+    category,
+    sortInfo,
+    setSortInfo,
+    query,
+    setQuery,
+    nodeMap: nodeMapRef,
+    hideColumn,
+    doCopy,
+    doCut,
+    doPaste,
+  }
 
   useEffect(() => {
     // In some browsers, at least in Chrome 126,

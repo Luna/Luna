@@ -7,23 +7,28 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useCategoriesAPI, useCloudCategoryList } from '#/layouts/Drive/Categories/categoriesHooks'
 import type { AnyCloudCategory } from '#/layouts/Drive/Categories/Category'
 import { useUser } from '#/providers/AuthProvider'
-import { useSetExpandedDirectoryIds, useSetSelectedAssets } from '#/providers/DriveProvider'
+import { useSetSelectedAssets, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
 import { AssetType, DirectoryId, isDirectoryId } from '#/services/Backend'
 import { Fragment, useTransition } from 'react'
 import invariant from 'tiny-invariant'
 import type { AssetColumnProps } from '../column'
 
+/** Information for a path segment. */
+interface PathSegmentInfo {
+  readonly id: DirectoryId
+  readonly categoryId: AnyCloudCategory['id']
+  readonly label: AnyCloudCategory['label']
+  readonly icon: AnyCloudCategory['icon']
+}
+
 /** A column displaying the path of the asset. */
 export default function PathColumn(props: AssetColumnProps) {
-  const { item, state } = props
-
+  const { item } = props
   const { virtualParentsPath, parentsPath } = item
 
-  const { getAssetNodeById } = state
-
   const { setCategory } = useCategoriesAPI()
+  const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const setSelectedAssets = useSetSelectedAssets()
-  const setExpandedDirectoryIds = useSetExpandedDirectoryIds()
 
   // Path navigation exist only for cloud categories.
   const { getCategoryByDirectoryId } = useCloudCategoryList()
@@ -40,53 +45,42 @@ export default function PathColumn(props: AssetColumnProps) {
 
   const { rootDirectoryId } = useUser()
 
-  const navigateToDirectory = useEventCallback((targetDirectory: DirectoryId) => {
-    const targetDirectoryIndex = finalPath.findIndex(({ id }) => id === targetDirectory)
-    const targetDirectoryInfo = finalPath[targetDirectoryIndex]
+  const navigateToDirectory = useEventCallback(
+    (targetDirectory: DirectoryId, segments: readonly PathSegmentInfo[]) => {
+      const targetDirectoryIndex = finalPath.findIndex(({ id }) => id === targetDirectory)
+      const targetDirectoryInfo = finalPath[targetDirectoryIndex]
 
-    if (targetDirectoryIndex === -1 || !targetDirectoryInfo) {
-      return
-    }
+      if (!targetDirectoryInfo) {
+        return
+      }
 
-    const pathToDirectory = finalPath
-      .slice(0, targetDirectoryIndex + 1)
-      .map(({ id, categoryId }) => ({ id, categoryId }))
+      const pathToDirectory = finalPath
+        .slice(0, targetDirectoryIndex + 1)
+        .map(({ id, categoryId }) => ({ id, categoryId }))
 
-    const rootDirectoryInThePath = pathToDirectory.at(0)
+      const rootDirectoryInThePath = pathToDirectory.at(0)
 
-    // This should never happen, as we always have the root directory in the path.
-    // If it happens, it means you've skrewed up
-    invariant(rootDirectoryInThePath != null, 'Root directory id is null')
+      // This should never happen, as we always have the root directory in the path.
+      // If it happens, it means you've skrewed up
+      invariant(rootDirectoryInThePath != null, 'Root directory id is null')
 
-    // If the target directory is null, we assume that this directory is outside of the current tree (in another category).
-    // Which is the default, because the path is only displayed in the Recent and Trash folders.
-    // But sometimes the user might delete a directory with its whole content,
-    // and in that case it will be present in the tree,
-    // because the parent is always fetched before its children.
-    const targetDirectoryNode = getAssetNodeById(targetDirectory)
-
-    if (targetDirectoryNode == null && rootDirectoryInThePath.categoryId != null) {
       setCategory(rootDirectoryInThePath.categoryId)
-      setExpandedDirectoryIds(pathToDirectory.map(({ id }) => id).concat(targetDirectory))
-    }
+      const newItems = segments.map(({ id }) => id).concat(targetDirectory)
+      toggleDirectoryExpansion(newItems, rootDirectoryInThePath.categoryId, true)
 
-    setSelectedAssets([
-      {
-        type: AssetType.directory,
-        id: targetDirectory,
-        parentId: pathToDirectory.at(-1)?.id ?? DirectoryId('directory-'),
-        title: targetDirectoryInfo.label,
-      },
-    ])
-  })
+      setSelectedAssets([
+        {
+          type: AssetType.directory,
+          id: targetDirectory,
+          parentId: pathToDirectory.at(-1)?.id ?? DirectoryId('directory-'),
+          title: targetDirectoryInfo.label,
+        },
+      ])
+    },
+  )
 
   const finalPath = (() => {
-    const result: {
-      id: DirectoryId
-      categoryId: AnyCloudCategory['id'] | null
-      label: AnyCloudCategory['label']
-      icon: AnyCloudCategory['icon']
-    }[] = []
+    const result: PathSegmentInfo[] = []
 
     if (rootDirectoryInPath == null) {
       return result
@@ -122,7 +116,7 @@ export default function PathColumn(props: AssetColumnProps) {
         id,
         label: name,
         icon: FolderIcon,
-        categoryId: null,
+        categoryId: rootCategory.id,
       })
     }
 
@@ -152,7 +146,9 @@ export default function PathColumn(props: AssetColumnProps) {
           id={lastItemInPath.id}
           label={lastItemInPath.label}
           icon={lastItemInPath.icon}
-          onNavigate={navigateToDirectory}
+          onNavigate={(id) => {
+            navigateToDirectory(id, finalPath)
+          }}
         />
       </div>
     )
@@ -185,7 +181,9 @@ export default function PathColumn(props: AssetColumnProps) {
                   id={entry.id}
                   label={entry.label}
                   icon={entry.icon}
-                  onNavigate={navigateToDirectory}
+                  onNavigate={(id) => {
+                    navigateToDirectory(id, finalPath.slice(0, index + 1))
+                  }}
                 />
 
                 {index < finalPath.length - 1 && (

@@ -11,6 +11,7 @@ import {
   type MutationKey,
   type QueryClient,
   type QueryKey,
+  type UndefinedInitialDataOptions,
   type UnusedSkipTokenOptions,
   type UseMutationOptions,
   type UseQueryOptions,
@@ -400,22 +401,22 @@ export function useListUserGroupsWithUsers(backend: Backend): ListUserGroupsWith
 export interface ListDirectoryQueryOptions {
   readonly backend: Backend
   readonly parentId: DirectoryId
-  readonly category: Category
+  readonly categoryType: Category['type']
 }
 
 /** Build a query options object to fetch the children of a directory. */
 export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
-  const { backend, parentId, category } = options
+  const { backend, parentId, categoryType } = options
 
-  return queryOptions({
+  return {
     queryKey: [
       backend.type,
       'listDirectory',
       parentId,
       {
         labels: null,
-        filterBy: CATEGORY_TO_FILTER_BY[category.type],
-        recentProjects: category.type === 'recent',
+        filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+        recentProjects: categoryType === 'recent',
       },
     ] as const,
     // Setting stale time to `Infinity` avoids attaching a ton of
@@ -427,9 +428,9 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         return await backend.listDirectory(
           {
             parentId,
-            filterBy: CATEGORY_TO_FILTER_BY[category.type],
+            filterBy: CATEGORY_TO_FILTER_BY[categoryType],
             labels: null,
-            recentProjects: category.type === 'recent',
+            recentProjects: categoryType === 'recent',
           },
           parentId,
         )
@@ -441,7 +442,7 @@ export function listDirectoryQueryOptions(options: ListDirectoryQueryOptions) {
         }
       }
     },
-  })
+  } satisfies UndefinedInitialDataOptions<readonly AnyAsset<AssetType>[]>
 }
 
 /** The type of directory listings in the React Query cache. */
@@ -579,7 +580,7 @@ export function useRootDirectoryId(backend: Backend, category: Category) {
 }
 
 /** Return query data for the children of a directory, fetching it if it does not exist. */
-export function useEnsureListDirectory(backend: Backend, category: Category) {
+export function useEnsureListDirectory(backend: Backend, categoryType: Category['type']) {
   const queryClient = useQueryClient()
   return useEventCallback(async (parentId: DirectoryId) => {
     return await queryClient.ensureQueryData(
@@ -587,8 +588,8 @@ export function useEnsureListDirectory(backend: Backend, category: Category) {
         {
           parentId,
           labels: null,
-          filterBy: CATEGORY_TO_FILTER_BY[category.type],
-          recentProjects: category.type === 'recent',
+          filterBy: CATEGORY_TO_FILTER_BY[categoryType],
+          recentProjects: categoryType === 'recent',
         },
         '(unknown)',
       ]),
@@ -602,7 +603,7 @@ export function useEnsureListDirectory(backend: Backend, category: Category) {
  */
 function useDeleteAsset(backend: Backend, category: Category) {
   const queryClient = useQueryClient()
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
 
   return useEventCallback(async (assetId: AssetId, parentId: DirectoryId) => {
     const siblings = await ensureListDirectory(parentId)
@@ -632,7 +633,7 @@ function useDeleteAsset(backend: Backend, category: Category) {
 
 /** A function to create a new folder. */
 export function useNewFolder(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const setNewestFolderId = useSetNewestFolderId()
   const setSelectedAssets = useSetSelectedAssets()
@@ -642,7 +643,7 @@ export function useNewFolder(backend: Backend, category: Category) {
   const createDirectoryMutation = useMutation(backendMutationOptions(backend, 'createDirectory'))
 
   return useEventCallback(async (parentId: DirectoryId, parentPath: string | null | undefined) => {
-    toggleDirectoryExpansion(parentId, true)
+    toggleDirectoryExpansion([parentId], category.id, true)
     const siblings = await ensureListDirectory(parentId)
     const directoryIndices = siblings
       .filter(backendModule.assetIsDirectory)
@@ -674,7 +675,7 @@ export function useNewFolder(backend: Backend, category: Category) {
 
 /** A function to create a new project. */
 export function useNewProject(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const doOpenProject = useOpenProject()
   const deleteAsset = useDeleteAsset(backend, category)
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
@@ -698,7 +699,7 @@ export function useNewProject(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], category.id, true)
 
       const siblings = await ensureListDirectory(parentId)
       const projectName = (() => {
@@ -769,7 +770,7 @@ export function useNewSecret(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], category.id, true)
       const placeholderItem = backendModule.createPlaceholderSecretAsset(
         name,
         parentId,
@@ -808,7 +809,7 @@ export function useNewDatalink(backend: Backend, category: Category) {
       parentId: DirectoryId,
       parentPath: string | null | undefined,
     ) => {
-      toggleDirectoryExpansion(parentId, true)
+      toggleDirectoryExpansion([parentId], category.id, true)
       const placeholderItem = backendModule.createPlaceholderDatalinkAsset(
         name,
         parentId,

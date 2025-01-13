@@ -55,7 +55,7 @@ const FILE_UPLOAD_CONCURRENCY = 5
 
 /** A function to upload files. */
 export function useUploadFiles(backend: Backend, category: Category) {
-  const ensureListDirectory = useEnsureListDirectory(backend, category)
+  const ensureListDirectory = useEnsureListDirectory(backend, category.type)
   const toastAndLog = useToastAndLog()
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
   const { setModal } = useSetModal()
@@ -179,7 +179,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
       }
 
       if (duplicateFiles.length === 0 && duplicateProjects.length === 0) {
-        toggleDirectoryExpansion(parentId, true)
+        toggleDirectoryExpansion([parentId], category.id, true)
         const assets = [...files, ...projects].map(({ asset }) => asset)
         void Promise.all(assets.map((asset) => doUploadFile(asset, 'new')))
       } else {
@@ -223,7 +223,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
             nonConflictingFileCount={files.length - conflictingFiles.length}
             nonConflictingProjectCount={projects.length - conflictingProjects.length}
             doUpdateConflicting={async (resolvedConflicts) => {
-              toggleDirectoryExpansion(parentId, true)
+              toggleDirectoryExpansion([parentId], category.id, true)
 
               await Promise.allSettled(
                 resolvedConflicts.map((conflict) => {
@@ -235,7 +235,7 @@ export function useUploadFiles(backend: Backend, category: Category) {
               )
             }}
             doUploadNonConflicting={async () => {
-              toggleDirectoryExpansion(parentId, true)
+              toggleDirectoryExpansion([parentId], category.id, true)
 
               const newFiles = files
                 .filter((file) => !siblingFileTitles.has(file.asset.title))

@@ -6,7 +6,11 @@ import FolderArrowIcon from '#/assets/folder_arrow.svg'
 
 import { backendMutationOptions } from '#/hooks/backendHooks'
 
-import { useDriveStore, useToggleDirectoryExpansion } from '#/providers/DriveProvider'
+import {
+  useDriveStore,
+  useIsDirectoryExpanded,
+  useToggleDirectoryExpansion,
+} from '#/providers/DriveProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import type * as column from '#/components/dashboard/column'
@@ -15,7 +19,6 @@ import EditableSpan from '#/components/EditableSpan'
 import * as backendModule from '#/services/Backend'
 
 import { Button } from '#/components/AriaComponents'
-import { useStore } from '#/hooks/storeHooks'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
@@ -38,13 +41,11 @@ export interface DirectoryNameColumnProps extends column.AssetColumnProps {
  */
 export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
   const { item, depth, selected, state, rowState, setRowState, isEditable } = props
-  const { backend, nodeMap } = state
+  const { backend, nodeMap, category } = state
   const { getText } = textProvider.useText()
   const driveStore = useDriveStore()
   const toggleDirectoryExpansion = useToggleDirectoryExpansion()
-  const isExpanded = useStore(driveStore, (storeState) =>
-    storeState.expandedDirectoryIds.includes(item.id),
-  )
+  const isExpanded = useIsDirectoryExpanded(item.id, category.id)
 
   const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))
 
@@ -98,7 +99,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
           isExpanded && 'rotate-90',
         )}
         onPress={() => {
-          toggleDirectoryExpansion(item.id)
+          toggleDirectoryExpansion([item.id], category.id)
         }}
       />
 

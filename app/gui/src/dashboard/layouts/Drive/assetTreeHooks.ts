@@ -47,14 +47,21 @@ export function useAssetTree(options: UseAssetTreeOptions) {
 
   const directories = useQueries({
     // We query only expanded directories, as we don't want to load the data for directories that are not visible.
-    queries: expandedDirectoryIds.map((directoryId) => ({
-      ...listDirectoryQueryOptions({
+    queries: expandedDirectoryIds.map((directoryId) => {
+      const queryOptions = listDirectoryQueryOptions({
         backend,
         parentId: directoryId,
-        category,
-      }),
-      enabled: !hidden,
-    })),
+        categoryType: category.type,
+      })
+      return {
+        ...queryOptions,
+        queryFn: async () => {
+          const children = await queryOptions.queryFn()
+          return { directoryId, children }
+        },
+        enabled: !hidden,
+      }
+    }),
     combine: (results) => {
       const rootQuery = results[expandedDirectoryIds.indexOf(rootDirectory.id)]
 
@@ -64,17 +71,17 @@ export function useAssetTree(options: UseAssetTreeOptions) {
           isLoading: rootQuery?.isLoading ?? true,
           isError: rootQuery?.isError ?? false,
           error: rootQuery?.error,
-          data: rootQuery?.data,
+          data: rootQuery?.data?.children,
         },
         directories: new Map(
-          results.map((res, i) => [
-            expandedDirectoryIds[i],
+          results.map((res) => [
+            res.data?.directoryId,
             {
               isFetching: res.isFetching,
               isLoading: res.isLoading,
               isError: res.isError,
               error: res.error,
-              data: res.data,
+              data: res.data?.children,
             },
           ]),
         ),
@@ -90,7 +97,7 @@ export function useAssetTree(options: UseAssetTreeOptions) {
       queryKey: listDirectoryQueryOptions({
         backend,
         parentId: directoryId,
-        category,
+        categoryType: category.type,
       }).queryKey,
       type: 'active',
     })

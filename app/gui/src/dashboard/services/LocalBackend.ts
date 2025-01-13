@@ -157,6 +157,7 @@ export default class LocalBackend extends Backend {
   ): Promise<readonly backend.AnyAsset[]> {
     const parentIdRaw = query.parentId == null ? null : extractTypeAndId(query.parentId).id
     const parentId = query.parentId ?? newDirectoryId(this.projectManager.rootDirectory)
+    const parentsPath = extractTypeAndId(parentId).id
 
     // Catch the case where the directory does not exist.
     let result: backend.AnyAsset[] = []
@@ -177,8 +178,8 @@ export default class LocalBackend extends Backend {
                 extension: null,
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.DirectoryAsset
             }
             case projectManager.FileSystemEntryType.ProjectEntry: {
@@ -198,8 +199,8 @@ export default class LocalBackend extends Backend {
                 extension: null,
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.ProjectAsset
             }
             case projectManager.FileSystemEntryType.FileEntry: {
@@ -214,8 +215,8 @@ export default class LocalBackend extends Backend {
                 extension: fileExtension(entry.path),
                 labels: [],
                 description: null,
-                parentsPath: '',
-                virtualParentsPath: '',
+                parentsPath,
+                virtualParentsPath: parentsPath,
               } satisfies backend.FileAsset
             }
           }
@@ -321,7 +322,8 @@ export default class LocalBackend extends Backend {
     const { id, directory } = extractTypeAndId(projectId)
     const state = this.projectManager.projects.get(id)
     if (state == null) {
-      const entries = await this.projectManager.listDirectory(directory)
+      const parentsPath = directory
+      const entries = await this.projectManager.listDirectory(parentsPath)
       const project = entries
         .flatMap((entry) =>
           entry.type === projectManager.FileSystemEntryType.ProjectEntry ? [entry.metadata] : [],
@@ -341,6 +343,8 @@ export default class LocalBackend extends Backend {
           name: project.name,
           engineVersion: version,
           ideVersion: version,
+          parentsPath,
+          virtualParentsPath: parentsPath,
           jsonAddress: null,
           binaryAddress: null,
           ydocAddress: null,
@@ -352,6 +356,7 @@ export default class LocalBackend extends Backend {
       }
     } else {
       const cachedProject = await state.data
+      const parentsPath = directory
       return {
         name: cachedProject.projectName,
         engineVersion: {
@@ -362,6 +367,8 @@ export default class LocalBackend extends Backend {
           lifecycle: backend.detectVersionLifecycle(cachedProject.engineVersion),
           value: cachedProject.engineVersion,
         },
+        parentsPath,
+        virtualParentsPath: parentsPath,
         jsonAddress: ipWithSocketToAddress(cachedProject.languageServerJsonAddress),
         binaryAddress: ipWithSocketToAddress(cachedProject.languageServerBinaryAddress),
         ydocAddress: null,
@@ -766,6 +773,50 @@ export default class LocalBackend extends Backend {
       )
     }
     await Promise.resolve()
+  }
+
+  /** The list of the asset's ancestors, if and only if the asset is in the given category. */
+  override async tryGetAssetAncestors(
+    asset: Pick<backend.AnyAsset, 'id' | 'parentId'>,
+    category: backend.CategoryId,
+  ): Promise<readonly backend.DirectoryId[] | null> {
+    await Promise.resolve()
+    switch (category) {
+      // This is a category for the Remote backend.
+      case 'cloud':
+      case 'recent':
+      case 'trash': {
+        return null
+      }
+      // For now, this function is used to determine whether an opened project's ancestors
+      // should be expanded. This is not required in
+      case 'local':
+      default: {
+        if (category === 'local') {
+          category = newDirectoryId(this.rootPath())
+        }
+        if (backend.isDirectoryId(category)) {
+          const categoryPath = extractTypeAndId(category).id
+          const path = extractTypeAndId(asset.parentId).id
+          const strippedPath = path.replace(`${categoryPath}/`, '')
+          if (strippedPath === path) {
+            return null
+          }
+          let parentPath = String(categoryPath)
+          const parents = strippedPath.split('/')
+          const parentIds: backend.DirectoryId[] = []
+          for (const parent of parents) {
+            parentPath += `/${parent}`
+            const currentParentPath = backend.Path(parentPath)
+            parentIds.push(newDirectoryId(currentParentPath))
+          }
+          return parentIds
+        } else {
+          // This is a category for the Remote backend.
+          return null
+        }
+      }
+    }
   }
 
   /** Invalid operation. */

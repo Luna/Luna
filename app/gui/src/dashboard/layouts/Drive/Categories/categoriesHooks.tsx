@@ -84,15 +84,15 @@ export function useCloudCategoryList() {
 
   const hasUserAndTeamSpaces = userHasUserAndTeamSpaces(user)
 
+  const homeDirectoryId =
+    hasUserAndTeamSpaces ? organizationIdToDirectoryId(organizationId) : userIdToDirectoryId(userId)
+
   const cloudCategory: CloudCategory = {
     type: 'cloud',
     id: 'cloud',
     label: getText('cloudCategory'),
     icon: CloudIcon,
-    homeDirectoryId:
-      hasUserAndTeamSpaces ?
-        organizationIdToDirectoryId(organizationId)
-      : userIdToDirectoryId(userId),
+    homeDirectoryId,
   }
 
   const recentCategory: RecentCategory = {
@@ -311,10 +311,8 @@ export function useCategories() {
   return { cloudCategories, localCategories, findCategoryById }
 }
 
-/**
- * Context value for the categories.
- */
-interface CategoriesContextValue {
+/** Context value for the categories. */
+export interface CategoriesContextValue {
   readonly cloudCategories: CloudCategoryResult
   readonly localCategories: LocalCategoryResult
   readonly category: Category
