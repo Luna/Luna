@@ -7,6 +7,7 @@ import org.enso.compiler.core.ir.{Expression, Function, Pattern, Warning}
 import org.enso.compiler.core.ir.module.scope.definition
 import org.enso.compiler.core.ir.expression.Application
 import org.enso.compiler.core.ir.expression.Case
+import org.enso.compiler.core.ir.expression.IfThenElse
 import org.enso.compiler.pass.PassConfiguration._
 import org.enso.compiler.pass.analyse.TailCall.TailPosition
 import org.enso.compiler.pass.analyse.{AliasAnalysis, TailCall}
@@ -238,9 +239,9 @@ class TailCallTest extends MiniPassTest {
           fnBody
             .asInstanceOf[Expression.Block]
             .returnValue
-            .asInstanceOf[Application.Prefix]
-            .arguments(2)
-            .value
+            .asInstanceOf[IfThenElse]
+            .falseBranch
+            .get
             .asInstanceOf[Expression.Block]
             .returnValue
             .asInstanceOf[Application.Prefix]

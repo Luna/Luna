@@ -12,6 +12,7 @@ import org.enso.compiler.core.ir.expression.{
   Comment,
   Error,
   Foreign,
+  IfThenElse,
   Operator
 }
 import org.enso.compiler.core.ir.{
@@ -244,6 +245,7 @@ case object DataflowAnalysis extends IRPass {
       case app: Application   => analyseApplication(app, info)
       case typ: Type          => analyseType(typ, info)
       case name: Name         => analyseName(name, info)
+      case ife: IfThenElse    => analyseIfThenElse(ife, info)
       case cse: Case          => analyseCase(cse, info)
       case literal: Literal =>
         literal.updateMetadata(new MetadataPair(this, info))
@@ -578,6 +580,31 @@ case object DataflowAnalysis extends IRPass {
 
         name.updateMetadata(new MetadataPair(this, info))
     }
+  }
+
+  /** Performs dependency analysis on a if then else expression.
+    *
+    * The value of a if expression is dependent on both its condition and the
+    * definitions of its branches. The computation of the branches also depends
+    * on the condition.
+    *
+    * @param ife the expression
+    * @param info the dependency information for the module
+    * @return `ife`, with attached dependency information
+    */
+  private def analyseIfThenElse(
+    ife: IfThenElse,
+    info: DependencyInfo
+  ): IfThenElse = {
+    val ifeDep  = asStatic(ife)
+    val condDep = asStatic(ife.cond)
+    info.dependents.updateAt(condDep, Set(ifeDep))
+    info.dependencies.updateAt(ifeDep, Set(condDep))
+    ife
+      .copy(
+        cond = analyseExpression(ife.cond, info)
+      )
+      .updateMetadata(new MetadataPair(this, info))
   }
 
   /** Performs dependency analysis on a case expression.

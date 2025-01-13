@@ -486,9 +486,9 @@ add_join_specs suite_builder setup =
             Problems.assume_no_problems r2
 
             if setup.supports_custom_objects then
-                t1 = table_builder [["X", [My_Type.Value 1 2, 2.0, 2]], ["Y", [10, 20, 30]]]
-                t2 = table_builder [["Z", [2.0, 1.5, 2.0]], ["W", [1, 2, 3]]]
-                r3 = t1.join t2 join_kind=Join_Kind.Inner on=(Join_Condition.Equals "X" "Z") on_problems=..Report_Warning
+                t8 = table_builder [["X", [My_Type.Value 1 2, 2.0, 2]], ["Y", [10, 20, 30]]]
+                t9 = table_builder [["Z", [2.0, 1.5, 2.0]], ["W", [1, 2, 3]]]
+                r3 = t8.join t9 join_kind=Join_Kind.Inner on=(Join_Condition.Equals "X" "Z") on_problems=..Report_Warning
                 r3.column_names.should_equal ["X", "Y", "Z", "W"]
                 r4 = r3.sort ["Y", "W"]
                 r4.at "X" . to_vector . should_equal [2.0, 2.0, 2, 2]

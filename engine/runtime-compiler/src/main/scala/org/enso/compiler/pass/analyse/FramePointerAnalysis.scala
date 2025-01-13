@@ -4,7 +4,7 @@ import org.enso.compiler.pass.analyse.FramePointer
 import org.enso.compiler.context.{InlineContext, LocalScope, ModuleContext}
 import org.enso.compiler.core.ir.Name.GenericAnnotation
 import org.enso.compiler.core.{CompilerError, IR}
-import org.enso.compiler.core.ir.expression.{Application, Case}
+import org.enso.compiler.core.ir.expression.{Application, Case, IfThenElse}
 import org.enso.compiler.core.ir.{
   CallArgument,
   DefinitionArgument,
@@ -159,6 +159,10 @@ case object FramePointerAnalysis extends IRPass {
         processExpression(expr, graph)
         maybeAttachFramePointer(binding, graph)
       case app: Application => processApplication(app, graph)
+      case ife: IfThenElse =>
+        processExpression(ife.cond, graph)
+        processExpression(ife.trueBranch, graph)
+        ife.falseBranch.map(processExpression(_, graph))
       case caseExpr: Case.Expr =>
         processExpression(caseExpr.scrutinee, graph)
         caseExpr.branches.foreach { branch =>
@@ -318,16 +322,36 @@ case object FramePointerAnalysis extends IRPass {
     ir: IR,
     newMeta: FrameAnalysisMeta
   ): Unit = {
+
+    def toString(ir: IR): String = {
+      ir.getClass().getName() + "@" + Integer.toHexString(
+        System.identityHashCode(ir)
+      )
+    }
+
+    ir match {
+      case ca: CallArgument
+          if ca.location.isDefined && ca.location.orNull.start == 1946 && ca.location.orNull.end == 1950 =>
+        val ex = new Exception("Assigning ca: " + ca)
+        ex.setStackTrace(ex.getStackTrace().slice(0, 20))
+        ex.printStackTrace()
+      case _ =>
+    }
     ir.passData().get(this) match {
       case None =>
         ir.passData()
           .update(this, newMeta)
       case Some(meta) =>
-        val ex = new IllegalStateException(
-          "Unexpected FrameAnalysisMeta associated with IR " + ir + "\nOld: " + meta + " new " + newMeta
-        )
-        ex.setStackTrace(ex.getStackTrace().slice(0, 10))
-        throw ex
+        if (meta != newMeta) {
+          val ex = new IllegalStateException(
+            "Unexpected FrameAnalysisMeta associated with IR " + toString(
+              ir
+            ) + "\n" + ir + "\nOld: " + meta + " new " + newMeta
+          )
+          ex.setStackTrace(ex.getStackTrace().slice(0, 10))
+          ex.printStackTrace()
+          // throw ex
+        }
     }
   }
 
@@ -356,7 +380,8 @@ case object FramePointerAnalysis extends IRPass {
           "Def occurrence must be in the given scope"
         )
       )
-    idxInScope + LocalScope.internalSlotsSize
+    val parentOffset = 0
+    parentOffset + idxInScope + LocalScope.internalSlotsSize
   }
 
   /** Returns the *scope distance* of the given `childScope` to the given `parentScope`.
@@ -372,8 +397,8 @@ case object FramePointerAnalysis extends IRPass {
     var currScope: Option[Graph.Scope] = Some(childScope)
     var scopeDistance                  = 0
     while (currScope.isDefined && currScope.get != parentScope) {
-      currScope = currScope.get.parent
       scopeDistance += 1
+      currScope = currScope.get.parent
     }
     scopeDistance
   }

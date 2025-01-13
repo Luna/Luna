@@ -10,6 +10,7 @@ import org.enso.compiler.core.ir.expression.{
   Case,
   Comment,
   Error,
+  IfThenElse,
   Operator,
   Section
 }
@@ -385,7 +386,8 @@ case object AliasAnalysis extends IRPass {
           isConstructorNameInPatternContext = false,
           builder
         )
-      case cse: Case => analyseCase(cse, builder)
+      case ife: IfThenElse => analyseIfThenElse(ife, builder)
+      case cse: Case       => analyseCase(cse, builder)
       case block: Expression.Block =>
         val currentScope =
           if (!block.suspended) builder else builder.addChild()
@@ -410,7 +412,7 @@ case object AliasAnalysis extends IRPass {
             )
           )
       case binding @ Expression.Binding(name, expression, _, _) =>
-        if (builder.findDef(name.name) == -1) {
+        if (true /* XXX: builder.findDef(name.name) == -1 */ ) {
           val isSuspended = expression match {
             case Expression.Block(_, _, _, isSuspended, _) => isSuspended
             case _                                         => false
@@ -439,7 +441,8 @@ case object AliasAnalysis extends IRPass {
               )
             )
         } else {
-          errors.Redefined.Binding(binding)
+          // errors.Redefined.Binding(binding)
+          binding
         }
       case app: Application =>
         analyseApplication(app, builder)
@@ -756,6 +759,28 @@ case object AliasAnalysis extends IRPass {
     )
   }
 
+  /** Performs alias analysis on a if then else expression.
+    *
+    * @param ir          the expression to analyse
+    * @param builder     the graph builder
+    * @return `ir`, possibly with alias analysis information attached
+    */
+  private def analyseIfThenElse(
+    ir: IfThenElse,
+    builder: GraphBuilder
+  ): IfThenElse = {
+    val condScope  = builder; // .addChild()
+    val trueScope  = builder; // .addChild()
+    val falseScope = builder; // .addChild()
+    ir.copy(
+      cond       = analyseExpression(ir.cond, condScope),
+      trueBranch = analyseExpression(ir.trueBranch, trueScope),
+      falseBranchOrNull = ir.falseBranch.map {
+        analyseExpression(_, falseScope)
+      }.orNull
+    )
+  }
+
   /** Performs alias analysis on a case expression.
     *
     * @param ir          the case expression to analyse
@@ -763,7 +788,7 @@ case object AliasAnalysis extends IRPass {
     * @param parentScope the scope in which the case expression occurs
     * @return `ir`, possibly with alias analysis information attached
     */
-  def analyseCase(
+  private def analyseCase(
     ir: Case,
     builder: GraphBuilder
   ): Case = {

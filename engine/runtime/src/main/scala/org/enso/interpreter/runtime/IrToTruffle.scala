@@ -35,6 +35,7 @@ import org.enso.compiler.core.ir.expression.{
   Comment,
   Error,
   Foreign,
+  IfThenElse,
   Operator,
   Section
 }
@@ -73,6 +74,7 @@ import org.enso.interpreter.node.callable.{
   InvokeCallableNode,
   SequenceLiteralNode
 }
+import org.enso.interpreter.node.controlflow.IfThenElseNode
 import org.enso.interpreter.node.controlflow.caseexpr._
 import org.enso.interpreter.node.expression.foreign.HostValueToEnsoNode
 import org.enso.interpreter.node.expression.builtin.BuiltinRootNode
@@ -1268,6 +1270,8 @@ class IrToTruffle(
         case name: Name                  => processName(name)
         case function: Function          => processFunction(function, binding)
         case binding: Expression.Binding => processBinding(binding)
+        case ife: IfThenElse =>
+          processIfThenElse(ife, subjectToInstrumentation)
         case caseExpr: Case =>
           processCase(caseExpr, subjectToInstrumentation)
         case asc: Tpe.Ascription =>
@@ -1389,12 +1393,27 @@ class IrToTruffle(
       )
     }
 
+    /** Code generation for if then else expression.
+      */
+    private def processIfThenElse(
+      ife: IfThenElse,
+      subjectToInstrumentation: Boolean
+    ): RuntimeExpression = {
+      val condNode = this.run(ife.cond, subjectToInstrumentation)
+      val trueNode = this.run(ife.trueBranch, subjectToInstrumentation)
+      val falseNode =
+        ife.falseBranch.map(this.run(_, subjectToInstrumentation)).orNull
+      val ifeNode = IfThenElseNode.build(condNode, trueNode, falseNode)
+      setLocation(ifeNode, ife.location)
+      ifeNode
+    }
+
     /** Performs code generation for an Enso case expression.
       *
       * @param caseExpr the case expression to generate code for
       * @return the truffle nodes corresponding to `caseExpr`
       */
-    def processCase(
+    private def processCase(
       caseExpr: Case,
       subjectToInstrumentation: Boolean
     ): RuntimeExpression =

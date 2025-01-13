@@ -755,10 +755,13 @@ object Redefined {
         || diagnostics != this.diagnostics
         || id != this.id
       ) {
+        /*
         val res = Binding(invalidBinding, passData)
         res.diagnostics = diagnostics
         res.id          = id
         res
+         */
+        this
       } else this
     }
 

@@ -45,10 +45,13 @@ public abstract class ReadLocalVariableNode extends ExpressionNode {
    */
   @Specialization(rewriteOn = FrameSlotTypeException.class)
   protected long readLong(VirtualFrame frame) throws FrameSlotTypeException {
-    if (getFramePointer().parentLevel() == 0)
-      return frame.getLong(getFramePointer().frameSlotIdx());
-    MaterializedFrame currentFrame = getProperFrame(frame);
-    return currentFrame.getLong(getFramePointer().frameSlotIdx());
+    var fp = getFramePointer();
+    if (fp.parentLevel() == 0) {
+      return frame.getLong(fp.frameSlotIdx());
+    }
+    var currentFrame = getProperFrame(frame);
+    assert currentFrame != null : "No frame for " + fp;
+    return currentFrame.getLong(fp.frameSlotIdx());
   }
 
   /**
@@ -96,9 +99,12 @@ public abstract class ReadLocalVariableNode extends ExpressionNode {
    */
   @ExplodeLoop
   public MaterializedFrame getProperFrame(Frame frame) {
-    MaterializedFrame currentFrame = getParentFrame(frame);
-    for (int i = 1; i < getFramePointer().parentLevel(); i++) {
-      currentFrame = getParentFrame(currentFrame);
+    var currentFrame = getParentFrame(frame);
+    var fp = getFramePointer();
+    for (int i = 1; i < fp.parentLevel(); i++) {
+      var next = getParentFrame(currentFrame);
+      assert next != null : "No parent frame for " + fp;
+      currentFrame = next;
     }
     return currentFrame;
   }

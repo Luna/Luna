@@ -14,7 +14,9 @@ import com.oracle.truffle.api.profiles.CountingConditionProfile;
 import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.callable.function.Function;
-import org.enso.interpreter.runtime.error.*;
+import org.enso.interpreter.runtime.error.DataflowError;
+import org.enso.interpreter.runtime.error.PanicException;
+import org.enso.interpreter.runtime.error.PanicSentinel;
 import org.enso.interpreter.runtime.state.State;
 import org.enso.interpreter.runtime.type.TypesGen;
 import org.enso.interpreter.runtime.warning.AppendWarningNode;
@@ -64,7 +66,7 @@ public abstract class CaseNode extends ExpressionNode {
    * @return the result of executing the case expression on {@code error}
    */
   @Specialization
-  public Object doError(VirtualFrame frame, DataflowError error) {
+  final Object doError(VirtualFrame frame, DataflowError error) {
     return error;
   }
 
@@ -76,13 +78,13 @@ public abstract class CaseNode extends ExpressionNode {
    * @return nothing
    */
   @Specialization
-  public Object doPanicSentinel(VirtualFrame frame, PanicSentinel sentinel) {
+  final Object doPanicSentinel(VirtualFrame frame, PanicSentinel sentinel) {
     CompilerDirectives.transferToInterpreter();
     throw sentinel;
   }
 
   @Specialization(guards = {"object != null", "warnings.hasWarnings(object)"})
-  Object doWarning(
+  final Object doWarning(
       VirtualFrame frame,
       Object object,
       @Shared("warnsLib") @CachedLibrary(limit = "3") WarningsLibrary warnings,
@@ -110,7 +112,7 @@ public abstract class CaseNode extends ExpressionNode {
         "!warnings.hasWarnings(object)"
       })
   @ExplodeLoop
-  public Object doMatch(
+  final Object doMatch(
       VirtualFrame frame,
       Object object,
       @Shared("warnsLib") @CachedLibrary(limit = "3") WarningsLibrary warnings) {

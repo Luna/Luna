@@ -361,7 +361,7 @@ case object TailCallMegaPass extends IRPass {
         caseExpr
           .copy(
             scrutinee = analyseExpression(scrutinee, isInTailPosition = false),
-            // Note [Analysing Branches in Case Expressions]
+            // Note [Analysing Branches in Conditional Expressions]
             branches = branches.map(analyseCaseBranch(_, isInTailPosition))
           )
       case _: Case.Branch =>
@@ -370,9 +370,9 @@ case object TailCallMegaPass extends IRPass {
     updateMetaIfInTailPosition(isInTailPosition, newCaseExpr)
   }
 
-  /* Note [Analysing Branches in Case Expressions]
+  /* Note [Analysing Branches in Conditional Expressions]
    * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   * When performing tail call analysis on a case expression it is very
+   * When performing tail call analysis on a case or if/then/else expression it is very
    * important to recognise that the branches of a case expression should all
    * have the same tail call state. The branches should only be marked as being
    * in tail position when the case expression _itself_ is in tail position.

@@ -20,6 +20,7 @@ import org.enso.compiler.core.ir.expression.{
   Comment,
   Error,
   Foreign,
+  IfThenElse,
   Operator
 }
 import org.enso.compiler.core.CompilerError
@@ -114,6 +115,8 @@ case object DemandAnalysis extends IRPass {
         analyseApplication(app, isInsideCallArgument)
       case typ: Type =>
         analyseType(typ, isInsideCallArgument)
+      case ite: IfThenElse =>
+        analyseIfThenElse(ite, isInsideCallArgument)
       case cse: Case =>
         analyseCase(cse, isInsideCallArgument)
       case block @ Expression.Block(expressions, retVal, _, _, _) =>
@@ -308,6 +311,25 @@ case object DemandAnalysis extends IRPass {
     isInsideCallArgument: Boolean
   ): Type =
     typ.mapExpressions(x => analyseExpression(x, isInsideCallArgument))
+
+  /** Performs demand analysis on an if/then/else expression.
+    *
+    * @param ife the expression
+    * @param isInsideCallArgument whether expression occurs inside a
+    *                             function call argument
+    * @return `cse`, transformed by the demand analysis process
+    */
+  private def analyseIfThenElse(
+    ife: IfThenElse,
+    isInsideCallArgument: Boolean
+  ): IfThenElse = {
+    ife.copy(
+      cond       = analyseExpression(ife.cond, isInsideCallArgument),
+      trueBranch = analyseExpression(ife.trueBranch, false),
+      falseBranchOrNull =
+        ife.falseBranch.map(analyseExpression(_, false)).orNull
+    )
+  }
 
   /** Performs demand analysis on a case expression.
     *

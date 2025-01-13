@@ -2,7 +2,7 @@ from Standard.Base import all
 import Standard.Base.Data.Vector.Builder
 from Standard.Test import all
 
-fib n b=1 = if n <= 1 then b else
+fib n d=1 = if n <= 1 then d else
     a = fib n-1
     b = fib n-2
     a+b

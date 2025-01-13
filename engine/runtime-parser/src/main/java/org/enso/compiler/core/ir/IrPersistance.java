@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.enso.compiler.core.ir.expression.Application;
 import org.enso.compiler.core.ir.expression.Case;
 import org.enso.compiler.core.ir.expression.Foreign;
+import org.enso.compiler.core.ir.expression.IfThenElse;
 import org.enso.compiler.core.ir.expression.Operator;
 import org.enso.compiler.core.ir.expression.warnings.Unused;
 import org.enso.compiler.core.ir.module.scope.Definition;
@@ -49,6 +50,7 @@ import scala.collection.immutable.Seq;
 @Persistable(clazz = Application.Prefix.class, id = 753)
 @Persistable(clazz = Application.Force.class, id = 754)
 @Persistable(clazz = Application.Sequence.class, id = 755)
+@Persistable(clazz = IfThenElse.class, id = 760)
 @Persistable(clazz = Case.Expr.class, id = 761)
 @Persistable(clazz = Case.Branch.class, id = 762)
 @Persistable(clazz = Pattern.Constructor.class, id = 763)

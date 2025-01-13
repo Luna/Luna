@@ -190,7 +190,7 @@ class LambdaShorthandToLambdaTest extends CompilerTest {
 
       val ir =
         """
-          |if _ then a
+          |_.if_then a
           |""".stripMargin.preprocessExpression.get.desugar
 
       ir shouldBe an[Function.Lambda]

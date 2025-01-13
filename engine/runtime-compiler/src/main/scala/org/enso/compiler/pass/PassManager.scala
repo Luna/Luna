@@ -92,7 +92,19 @@ class PassManager(
         (factory, ctx) => factory.createForModuleCompilation(ctx),
       miniPassCompile = (miniPass, ir) =>
         MiniIRPass.compile[Module](classOf[Module], ir, miniPass),
-      megaPassCompile = (megaPass, ir, ctx) => megaPass.runModule(ir, ctx)
+      megaPassCompile = (megaPass, ir, ctx) =>
+        try {
+          megaPass.runModule(ir, ctx)
+        } catch {
+          case ex: Exception =>
+            val newEx = new IllegalStateException(
+              "Error processing " + ctx.module.getName + "\n" + ex
+                .getClass()
+                .getName() + ": " + ex.getMessage
+            )
+            newEx.setStackTrace(ex.getStackTrace)
+            throw newEx
+        }
     )
   }
 

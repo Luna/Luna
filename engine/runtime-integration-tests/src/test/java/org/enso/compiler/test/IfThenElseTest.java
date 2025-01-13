@@ -15,12 +15,12 @@ import org.enso.test.utils.ContextUtils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AllOf;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class IfThenElseTest {
@@ -69,6 +69,20 @@ public class IfThenElseTest {
   }
 
   @Test
+  public void indexSubRange() throws Exception {
+    var code =
+        """
+    check step first = case step of
+      _ -> "Every " + step.to_display_text + (if first == 0 then "" else " from " + first.to_display_text)
+    """;
+
+    var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+
+    assertEquals("Every Prefix", check.execute("Prefix", 0).asString());
+    assertEquals("Every Count from 1", check.execute("Count", 1).asString());
+  }
+
+  @Test
   public void variableDefinedInThen() throws Exception {
     var code = """
     check x = if x then
@@ -94,6 +108,43 @@ public class IfThenElseTest {
 
     assertEquals("OKeyish:True", check.execute(true).asString());
     assertEquals("Bad:False", check.execute(false).asString());
+  }
+
+  @Test
+  public void variableInMultipleIfBranches() throws Exception {
+    var code =
+        """
+    check x =
+        if x then
+            xt = "Yes"
+        if x.not then
+            xt = "No"
+        "Hooo"
+    """;
+    var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+
+    assertEquals("Hooo", check.execute(true).asString());
+    assertEquals("Hooo", check.execute(false).asString());
+  }
+
+  @Test
+  public void variableNotVisibleAfterBranches() throws Exception {
+    var code =
+        """
+    check x =
+        if x then
+            xt = "Yes"
+        if x.not then
+            xt = "No"
+        xt
+    """;
+    try {
+      var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+      fail("The code should not compile, but returned: " + check);
+    } catch (PolyglotException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), Matchers.containsString("name `xt` could not be found"));
+    }
   }
 
   @Test
@@ -160,7 +211,6 @@ public class IfThenElseTest {
     assertEquals("No", check.execute("Ne").asString());
   }
 
-  @Ignore
   @Test
   public void truffleObjectConvertibleToBooleanIsSupported() throws Exception {
     var code =
@@ -295,5 +345,27 @@ public class IfThenElseTest {
     } catch (PolyglotException ex) {
       assertEquals(txt, ex.getMessage());
     }
+  }
+
+  @Test
+  public void dontOverrideVariablesFromOuterScope() throws Exception {
+    var code =
+        """
+    type Hello
+        World msg good
+
+        join self init =
+            if self.good then "Ciao" else
+                x = init
+                x + self.msg
+
+    hello state =
+        Hello.World "World" state . join "Hello "
+    """;
+
+    var hello = ContextUtils.getMethodFromModule(ctx, code, "hello");
+
+    assertEquals("Ciao", hello.execute(true).asString());
+    assertEquals("Hello World", hello.execute(false).asString());
   }
 }
