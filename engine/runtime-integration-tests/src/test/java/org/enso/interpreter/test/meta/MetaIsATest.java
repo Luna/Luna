@@ -9,7 +9,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.enso.common.RuntimeOptions;
 import org.enso.interpreter.runtime.data.Type;
 import org.enso.interpreter.test.ValuesGenerator;
 import org.enso.interpreter.test.ValuesGenerator.Language;
@@ -29,19 +28,15 @@ public class MetaIsATest {
 
   @BeforeClass
   public static void prepareCtx() throws Exception {
-    ctx =
-        ContextUtils.defaultContextBuilder()
-            .option(RuntimeOptions.DISABLE_PRIVATE_CHECK, "true")
-            .build();
+    ctx = ContextUtils.createDefaultContext();
     final URI uri = new URI("memory://choose.enso");
     final Source src =
         Source.newBuilder(
                 "enso",
                 """
-    import Standard.Base.Meta_Helpers
-    from Standard.Base import Warning
+    from Standard.Base import Meta, Warning
 
-    check x y = Meta_Helpers.is_a_builtin x y
+    check x y = Meta.is_a x y
     check_warning x = Warning.has_warnings x
     """,
                 "check.enso")

@@ -132,8 +132,8 @@ add_specs suite_builder =
             1.0.is_a Text . should_be_false
 
             random_gen = Java_Random.new
-            random_gen.is_a Java_Random . should_be_true
-            random_gen.is_a Integer . should_be_false
+            Meta.is_a random_gen Java_Random . should_be_true
+            Meta.is_a random_gen Integer . should_be_false
 
             (My_Type.Value 1 "foo" Nothing).is_a My_Type . should_be_true
             (My_Type.Value 1 "foo" Nothing).is_a Test_Type . should_be_false
@@ -143,16 +143,16 @@ add_specs suite_builder =
             1.is_a Error . should_be_false
             err.is_a Error . should_be_true
             err.is_a Text . should_be_false
-            err.is_a Error . should_be_true
-            err.is_a Text . should_be_false
+            Meta.is_a err Error . should_be_true
+            Meta.is_a err Text . should_be_false
 
-            Date.today.is_a Date . should_be_true
-            Date_Time.now.is_a Date_Time . should_be_true
-            Date_Time.now.is_a Date . should_be_false
-            Time_Of_Day.now.is_a Time_Of_Day . should_be_true
-            Time_Of_Day.now.is_a Date . should_be_false
-            Date_Time.now.zone.is_a Time_Zone . should_be_true
-            Date_Time.now.zone.is_a Date . should_be_false
+            Meta.is_a Date.today Date . should_be_true
+            Meta.is_a Date_Time.now Date_Time . should_be_true
+            Meta.is_a Date_Time.now Date . should_be_false
+            Meta.is_a Time_Of_Day.now Time_Of_Day . should_be_true
+            Meta.is_a Time_Of_Day.now Date . should_be_false
+            Meta.is_a Date_Time.now.zone Time_Zone . should_be_true
+            Meta.is_a Date_Time.now.zone Date . should_be_false
 
         group_builder.specify "constructor variants check" <|
             (Sum_Type.Variant_A 42).is_a Sum_Type . should_be_true

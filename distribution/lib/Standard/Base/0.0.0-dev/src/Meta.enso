@@ -14,7 +14,7 @@ import project.Errors.Common.Not_Found
 import project.Function.Function
 import project.Nothing.Nothing
 import project.Polyglot.Java
-import project.internal.Meta_Helpers
+import project.Internal.Meta_Helpers
 from project.Data.Boolean import Boolean, False, True
 from project.Runtime.Managed_Resource import Managed_Resource
 
@@ -337,6 +337,17 @@ meta value = if Meta_Helpers.is_atom_builtin value then Atom.Value value else
    - value_2: The second value.
 is_same_object : Any -> Any -> Boolean
 is_same_object value_1 value_2 = @Tail_Call Meta_Helpers.is_same_object_builtin value_1 value_2
+
+## PRIVATE
+   ADVANCED
+
+   Checks if `value` is an instance of `typ`.
+
+   Arguments:
+   - value: The value to check for being an instance of `typ`.
+   - typ: The type to check `self` against.
+is_a : Any -> Any -> Boolean
+is_a value typ = @Builtin_Method "Meta.is_a"
 
 ## PRIVATE
 java_instance_check value typ =

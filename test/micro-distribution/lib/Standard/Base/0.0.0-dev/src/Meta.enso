@@ -18,9 +18,6 @@ meta value =
     if is_unresolved_symbol value then Unresolved_Symbol.Value value else
         Primitive.Value value
 
-Any.is_a self typ = is_a_builtin self typ
-
-is_a_builtin value = @Builtin_Method "Meta.is_a"
 is_unresolved_symbol value = @Builtin_Method "Meta.is_unresolved_symbol"
 get_unresolved_symbol_name symbol = @Builtin_Method "Meta.get_unresolved_symbol_name"
 get_unresolved_symbol_scope symbol = @Builtin_Method "Meta.get_unresolved_symbol_scope"
