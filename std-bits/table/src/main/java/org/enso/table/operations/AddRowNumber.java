@@ -30,7 +30,7 @@ public class AddRowNumber {
     return numberingStatistic.getResult();
   }
 
-  private static class NumberingStatistic implements RunningStatistic<Long> {
+  private static class NumberingStatistic implements RunningStatistic<RunningIterator<Long>> {
 
     private final long start;
     private final long step;
@@ -55,6 +55,10 @@ public class AddRowNumber {
     }
 
     @Override
+    public void finalise(RunningIterator<Long> it) {
+
+    }
+
     public Storage<Long> getResult() {
       return new LongStorage(numbers, IntegerType.INT_64);
     }
