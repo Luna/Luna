@@ -14,7 +14,7 @@ import project.Errors.Common.Not_Found
 import project.Function.Function
 import project.Nothing.Nothing
 import project.Polyglot.Java
-import project.Meta_Helpers
+import project.internal.Meta_Helpers
 from project.Data.Boolean import Boolean, False, True
 from project.Runtime.Managed_Resource import Managed_Resource
 
