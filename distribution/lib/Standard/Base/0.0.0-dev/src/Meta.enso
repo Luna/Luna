@@ -96,7 +96,14 @@ type Type
             _ -> Base_Error.throw Not_Found
 
 type Atom
-    private Value value
+    private Value impl
+
+    ## ADVANCED
+       GROUP Metadata
+       ICON metadata
+
+       Obtains the real atom value
+    value self = self.impl
 
     ## ADVANCED
        GROUP Metadata
@@ -112,8 +119,8 @@ type Atom
        Returns a constructor value of the given atom.
     constructor : Constructor
     constructor self =
-        c = Meta_Helpers.get_atom_constructor_builtin (self.value...)
-        Meta.Constructor.Value c
+        c = Meta_Helpers.get_atom_constructor_builtin self.impl ...
+        Meta.Constructor.Value c...
 
 type Constructor
     private Value impl

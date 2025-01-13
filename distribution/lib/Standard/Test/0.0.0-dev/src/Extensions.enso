@@ -465,7 +465,7 @@ Any.should_be_a self typ =
         atom : Meta.Atom ->
             ctor = atom . constructor
             if ctor.fields.not_empty then fail_on_wrong_arg_type else
-                self.should_be_a (ctor.to Function ...)
+                self.should_equal atom.value
         _ : Meta.Polyglot ->
             ok = self.is_a typ
             if ok then Spec_Result.Success else
