@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.AllOf.allOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
@@ -38,6 +39,29 @@ public class PrivateConstructorAccessTest {
   }
 
   @Test
+  public void accessTypesWithPrivateConstructor() throws Exception {
+    var codeA =
+        """
+        type A
+            private Cons data
+
+            find d = A.Cons d
+
+        main = A
+        """;
+    var codeUse = """
+        create module_a x = module_a.find x
+        main = create
+        """;
+    try (var ctx = ContextUtils.createDefaultContext()) {
+      var typeA = ContextUtils.evalModule(ctx, codeA);
+      var create = ContextUtils.evalModule(ctx, codeUse);
+      var res = create.execute(typeA, "Hello");
+      assertEquals("It is object: " + res, "(Cons 'Hello')", res.toString());
+    }
+  }
+
+  @Test
   public void privateConstructorIsNotExposedToPolyglot() throws IOException {
     var mainSrc = """
         type My_Type
@@ -53,7 +77,7 @@ public class PrivateConstructorAccessTest {
       var polyCtx = new PolyglotContext(ctx);
       var mainMod = polyCtx.evalModule(mainSrcPath.toFile());
       var myType = mainMod.getType("My_Type");
-      assertThat(myType.hasMember("Cons"), is(false));
+      assertThat("Type is always public regardless of constructors", myType.hasMember("Cons"), is(true));
     }
   }
 

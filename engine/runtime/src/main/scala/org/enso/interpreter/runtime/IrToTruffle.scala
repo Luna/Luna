@@ -1016,7 +1016,7 @@ class IrToTruffle(
         )
         .build()
       new RuntimeFunction(
-        new ConstantNode(language, tp).getCallTarget,
+        new ConstantNode(language, tp.getDefinitionScope, tp).getCallTarget,
         null,
         funcSchema
       )

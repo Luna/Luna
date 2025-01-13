@@ -19,22 +19,16 @@ from project.Data.Boolean import Boolean, False, True
 from project.Runtime.Managed_Resource import Managed_Resource
 
 type Type
-    ## PRIVATE
-       ADVANCED
-
-       Type meta-representation.
-
-       Arguments:
-       - value: The value of the type in the meta representation.
-    Value value
+    private Value value
 
     ## ADVANCED
        ICON metadata
 
        Returns a vector of `Meta.Constructor` for this type
-    constructors : Vector
+    constructors : Vector Constructor
     constructors self =
-        Vector.from_polyglot_array (Meta_Helpers.get_type_constructors_builtin self.value Meta.Constructor.Value)
+        arr = Meta_Helpers.get_type_constructors_builtin self.value Meta.Constructor.Value
+        Vector.from_polyglot_array arr
 
     ## ADVANCED
        GROUP Metadata
@@ -102,14 +96,7 @@ type Type
             _ -> Base_Error.throw Not_Found
 
 type Atom
-    ## PRIVATE
-       ADVANCED
-
-       An Atom meta-representation.
-
-       Arguments:
-       - value: The value of the atom in the meta representation.
-    Value value
+    private Value value
 
     ## ADVANCED
        GROUP Metadata
@@ -129,14 +116,7 @@ type Atom
         Meta.Constructor.Value java_constructor
 
 type Constructor
-    ## PRIVATE
-       ADVANCED
-
-       A constructor meta-representation.
-
-       Arguments:
-       - value: The value of the constructor in the meta representation.
-    Value value
+    private Value value
 
     ## ADVANCED
        GROUP Metadata
@@ -181,24 +161,10 @@ type Constructor
         Type.Value (Meta_Helpers.get_constructor_declaring_type_builtin c)
 
 type Primitive
-    ## PRIVATE
-       ADVANCED
-
-       A primitive value meta-representation.
-
-       Arguments:
-       - value: The value of the primitive object in the meta representation.
-    Value value
+    private Value value
 
 type Unresolved_Symbol
-    ## PRIVATE
-       ADVANCED
-
-       An unresolved symbol meta-representation.
-
-       Arguments:
-       - value: The value of the unresolved symbol in the meta representation.
-    Value value
+    private Value value
 
     ## PRIVATE
        ADVANCED
@@ -229,24 +195,10 @@ type Unresolved_Symbol
     instrument self = Instrumentor.Value (Meta_Helpers.instrumentor_builtin "newBuilder" [ self.value ])
 
 type Error
-    ## PRIVATE
-       ADVANCED
-
-       An error meta-representation, containing the payload of a dataflow error.
-
-       Arguments:
-       - value: The payload of the error.
-    Value value
+    private Value value
 
 type Polyglot
-    ## PRIVATE
-       ADVANCED
-
-       A polyglot value meta-representation.
-
-       Arguments:
-       - value: The polyglot value contained in the meta representation.
-    Value value
+    private Value value
 
     ## ADVANCED
        GROUP Metadata
@@ -475,8 +427,7 @@ get_qualified_type_name value = @Tail_Call Meta_Helpers.get_qualified_type_name_
 
    Builder to create instrumentation for a function
 type Instrumentor
-    ## PRIVATE
-    Value impl
+    private Value impl
 
     ## PRIVATE
     uuid id:Text -> Any = Meta_Helpers.instrumentor_builtin "uuid" id

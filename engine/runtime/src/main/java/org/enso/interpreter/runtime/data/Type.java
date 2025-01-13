@@ -69,6 +69,7 @@ public final class Type extends EnsoObject {
   }
 
   public static Type create(
+      EnsoLanguage lang,
       String name,
       ModuleScope.Builder definitionScope,
       Type supertype,
@@ -77,7 +78,7 @@ public final class Type extends EnsoObject {
       boolean isProjectPrivate) {
     var eigentype = new Type(name + ".type", definitionScope, any, null, builtin, isProjectPrivate);
     var result = new Type(name, definitionScope, supertype, eigentype, builtin, isProjectPrivate);
-    result.generateQualifiedAccessor();
+    result.generateQualifiedAccessor(lang);
     return result;
   }
 
@@ -85,8 +86,9 @@ public final class Type extends EnsoObject {
     return new Type("null", null, null, null, false, false);
   }
 
-  private void generateQualifiedAccessor() {
-    var node = new ConstantNode(null, this);
+  private void generateQualifiedAccessor(EnsoLanguage lang) {
+    assert lang != null;
+    var node = new ConstantNode(lang, getDefinitionScope(), this);
     var schemaBldr =
         FunctionSchema.newBuilder()
             .argumentDefinitions(
@@ -108,17 +110,18 @@ public final class Type extends EnsoObject {
     }
   }
 
-  public void setShadowDefinitions(ModuleScope.Builder scope, boolean generateAccessorsInTarget) {
+  public void setShadowDefinitions(
+      EnsoLanguage lang, ModuleScope.Builder scope, boolean generateAccessorsInTarget) {
     if (builtin) {
       // Ensure that synthetic methods, such as getters for fields are in the scope.
       CompilerAsserts.neverPartOfCompilation();
       this.definitionScope.registerAllMethodsOfTypeToScope(this, scope);
       this.definitionScope = scope;
       if (generateAccessorsInTarget) {
-        generateQualifiedAccessor();
+        generateQualifiedAccessor(lang);
       }
       if (getEigentype() != this) {
-        getEigentype().setShadowDefinitions(scope, false);
+        getEigentype().setShadowDefinitions(lang, scope, false);
       }
     } else {
       throw new RuntimeException(

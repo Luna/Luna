@@ -44,13 +44,13 @@ class RuntimeStubsGenerator(builtins: Builtins) {
           )
         }
         scope.registerType(builtinType.getType)
-        builtinType.getType.setShadowDefinitions(scope, true)
+        builtinType.getType.setShadowDefinitions(builtins.getLanguage(), scope, true)
       } else {
-        val isTypeProjectPrivate =
-          tp.members.nonEmpty && tp.members.forall(_.isProjectPrivate)
+        val isTypeProjectPrivate = false
         val createdType =
           if (tp.members.nonEmpty || tp.builtinType) {
             Type.create(
+              builtins.getLanguage(),
               tp.name,
               scope,
               builtins.any(),
