@@ -94,8 +94,12 @@ add_specs suite_builder =
             atom_2 = Meta.meta My_Type.Value . new [1,"foo", Nothing].to_array
             (Meta.meta atom_2).constructor.value . should_equal My_Type.Value
         group_builder.specify "should correctly return representations of different classes of objects" <|
-            Meta.meta 1 . should_equal (Meta.Primitive.Value 1)
-            Meta.meta "foo" . should_equal (Meta.Primitive.Value "foo")
+            case Meta.meta 1 of
+                p : Meta.Primitive -> p.value . should_equal 1
+                w -> Test.fail "Expecting Meta.Primitive, but was: "+w.to_text
+            case Meta.meta "foo" of
+                p : Meta.Primitive -> p.value . should_equal "foo"
+                w -> Test.fail "Expecting Meta.Primitive, but was: "+w.to_text
         group_builder.specify "should allow manipulation of error values" <|
             err = Error.throw "My Error"
             meta_err = Meta.meta err
@@ -250,7 +254,7 @@ add_specs suite_builder =
             meta_typ . should_be_a Meta.Type
             meta_typ.name . should_equal "Boolean"
             cons = case meta_typ of
-                Meta.Type.Value _ -> meta_typ.constructors
+                mt : Meta.Type -> mt.constructors
                 _ -> Test.fail "Should be a Meta.Type.Value: " + meta_typ.to_text
 
             cons.length . should_equal 2
@@ -266,7 +270,7 @@ add_specs suite_builder =
             meta_typ . should_be_a Meta.Type
             meta_typ.name . should_equal "My_Type"
             cons = case meta_typ of
-                Meta.Type.Value _ -> meta_typ.constructors
+                mt : Meta.Type -> mt.constructors
                 _ -> Test.fail "Should be a Meta.Type.Value: " + meta_typ.to_text
 
             cons.length . should_equal 1
