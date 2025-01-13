@@ -116,15 +116,14 @@ type Atom
         Meta.Constructor.Value java_constructor
 
 type Constructor
-    private Value value
+    private Value value:Function
 
     ## ADVANCED
        GROUP Metadata
        ICON metadata
 
        Returns a vector of field names defined by a constructor.
-    fields : Vector
-    fields self =
+    fields self -> Vector Text =
         c = self.value ...
         Vector.from_polyglot_array (Meta_Helpers.get_constructor_fields_builtin c)
 
@@ -133,8 +132,7 @@ type Constructor
        ICON metadata
 
        Returns the name of a constructor.
-    name : Text
-    name self =
+    name self -> Text =
         c = self.value ...
         Meta_Helpers.get_constructor_name_builtin c
 
@@ -146,8 +144,7 @@ type Constructor
        Arguments:
        - fields: A vector of arguments to pass to the constructor when creating the
          new atom.
-    new : Vector -> Any
-    new self fields =
+    new self fields:Vector =
         ctor = self.value ...
         @Tail_Call Meta_Helpers.new_atom_builtin ctor fields
 
@@ -159,6 +156,11 @@ type Constructor
     declaring_type self =
         c = self.value ...
         Type.Value (Meta_Helpers.get_constructor_declaring_type_builtin c)
+
+## PRIVATE
+   Converts Constructor into its accessor function which can be used
+   to construct the atoms from the constructor
+Function.from (that:Constructor) = that.value...
 
 type Primitive
     private Value impl
@@ -277,8 +279,8 @@ atom_with_hole factory = @Tail_Call Meta_Helpers.atom_with_hole_builtin factory
    Arguments:
    - value: The runtime entity to get the meta representation of.
 meta : Any -> Atom | Constructor | Primitive | Polyglot | Unresolved_Symbol | Error
-meta value = if Meta_Helpers.is_atom_builtin value then Atom.Value value else
-    if Meta_Helpers.is_atom_constructor_builtin value then Constructor.Value value else
+meta ~value = if Meta_Helpers.is_atom_builtin value... then Atom.Value value... else
+    if Meta_Helpers.is_atom_constructor_builtin value... then Constructor.Value value... else
         if Meta_Helpers.is_polyglot_builtin value then Polyglot.Value value else
             if Meta_Helpers.is_unresolved_symbol_builtin value then Unresolved_Symbol.Value value else
                 if Meta_Helpers.is_error_builtin value then Error.Value value.catch else
