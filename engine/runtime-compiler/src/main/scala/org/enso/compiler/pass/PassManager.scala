@@ -169,7 +169,12 @@ class PassManager(
         pendingMiniPasses.clear()
         if (combinedPass != null) {
           logger.trace("  flushing pending mini pass: {}", combinedPass)
-          miniPassCompile(combinedPass, in)
+          val res = miniPassCompile(combinedPass, in)
+          IRHelpers.checkDuplicates(
+            "Flushing mini passes: " + combinedPass,
+            res
+          )
+          res
         } else {
           in
         }
@@ -216,7 +221,8 @@ class PassManager(
               "  mega running: {}",
               megaPass
             )
-            megaPassCompile(megaPass, flushedIR, context)
+            val res = megaPassCompile(megaPass, flushedIR, context)
+            IRHelpers.checkDuplicates("" + megaPass.getClass().getName(), res)
         }
     }
 

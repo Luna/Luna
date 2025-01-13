@@ -50,7 +50,8 @@ case object Imports extends IRPass {
             val parts = newName.parts
             if (parts.length == 2) {
               i.copy(
-                name = newName.copy(parts = parts :+ mainModuleName),
+                name =
+                  newName.copy(parts = parts :+ mainModuleName.duplicate()),
                 rename = computeRename(
                   i.rename,
                   i.onlyNames.nonEmpty || i.isAll,
