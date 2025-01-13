@@ -20,8 +20,8 @@ import SessionProvider from '../SessionProvider'
 class MockAuthService implements ISessionProvider {
   saveAccessToken = vi.fn()
   refreshUserSession = vi.fn(() => Promise.resolve(null))
-  userSession = vi.fn<[], Promise<UserSession>>(() =>
-    Promise.resolve({
+  userSession = vi.fn(() =>
+    Promise.resolve<UserSession>({
       email: 'test@test.com',
       accessToken: 'accessToken',
       refreshToken: 'refreshToken',
