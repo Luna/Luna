@@ -7,6 +7,7 @@ import org.enso.table.data.column.builder.BigIntegerBuilder;
 import org.enso.table.data.column.builder.Builder;
 import org.enso.table.data.column.builder.DoubleBuilder;
 import org.enso.table.data.column.builder.InferredIntegerBuilder;
+import org.enso.table.data.column.builder.NullBuilder;
 import org.enso.table.data.column.operation.map.MapOperationProblemAggregator;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.numeric.AbstractLongStorage;
@@ -15,6 +16,7 @@ import org.enso.table.data.column.storage.numeric.DoubleStorage;
 import org.enso.table.data.column.storage.type.BigIntegerType;
 import org.enso.table.data.column.storage.type.FloatType;
 import org.enso.table.data.column.storage.type.IntegerType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.table.Column;
 import org.enso.table.problems.ProblemAggregator;
@@ -37,6 +39,7 @@ public class Sum extends Aggregator {
       case IntegerType integerType -> new InferredIntegerBuilder(size, problemAggregator);
       case BigIntegerType bigIntegerType -> new BigIntegerBuilder(size, problemAggregator);
       case FloatType floatType -> DoubleBuilder.createDoubleBuilder(size, problemAggregator);
+      case NullType nullType -> new NullBuilder();
       default -> throw new IllegalStateException(
           "Unexpected input type for Sum aggregate: " + inputType);
     };
@@ -56,6 +59,7 @@ public class Sum extends Aggregator {
       case IntegerType integerType -> new IntegerSumAccumulator();
       case BigIntegerType bigIntegerType -> new IntegerSumAccumulator();
       case FloatType floatType -> new FloatSumAccumulator();
+      case NullType nullType -> new NullAccumulator();
       default -> throw new IllegalStateException(
           "Unexpected input type for Sum aggregate: " + inputType);
     };
@@ -197,6 +201,18 @@ public class Sum extends Aggregator {
 
     Double summarize() {
       return accumulator;
+    }
+  }
+
+  private static final class NullAccumulator extends SumAccumulator {
+    @Override
+    void accumulate(List<Integer> indexes, Storage<?> storage) {
+      assert storage.getType() instanceof NullType;
+    }
+
+    @Override
+    Object summarize() {
+      return null;
     }
   }
 }

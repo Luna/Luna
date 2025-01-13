@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.enso.table.data.column.storage.SpecializedStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 
 public abstract class TypedBuilderImpl<T> extends TypedBuilder {
@@ -70,6 +71,8 @@ public abstract class TypedBuilderImpl<T> extends TypedBuilder {
                 + storage
                 + ". This is a bug in the Table library.");
       }
+    } else if (storage.getType() instanceof NullType) {
+      appendNulls(storage.size());
     } else {
       throw new StorageTypeMismatchException(getType(), storage.getType());
     }

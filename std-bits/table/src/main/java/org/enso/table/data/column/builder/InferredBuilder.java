@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import org.enso.base.polyglot.NumericConverter;
 import org.enso.base.polyglot.Polyglot_Utils;
+import org.enso.table.data.column.storage.NullStorage;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.*;
 import org.enso.table.problems.ProblemAggregator;
@@ -104,8 +105,12 @@ public class InferredBuilder extends Builder {
 
   @Override
   public void appendBulkStorage(Storage<?> storage) {
-    for (int i = 0; i < storage.size(); i++) {
-      append(storage.getItemBoxed(i));
+    if (storage.getType() instanceof NullType) {
+      appendNulls(storage.size());
+    } else {
+      for (int i = 0; i < storage.size(); i++) {
+        append(storage.getItemBoxed(i));
+      }
     }
   }
 
@@ -194,7 +199,8 @@ public class InferredBuilder extends Builder {
   @Override
   public Storage<?> seal() {
     if (currentBuilder == null) {
-      initBuilderFor(null);
+      // If all values that the builder got were nulls, we can return a special null storage.
+      return new NullStorage(currentSize);
     }
     return currentBuilder.seal();
   }

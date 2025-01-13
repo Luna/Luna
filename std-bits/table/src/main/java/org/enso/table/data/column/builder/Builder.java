@@ -1,5 +1,6 @@
 package org.enso.table.data.column.builder;
 
+import java.util.Objects;
 import org.enso.table.data.column.storage.Storage;
 import org.enso.table.data.column.storage.type.AnyObjectType;
 import org.enso.table.data.column.storage.type.BigDecimalType;
@@ -9,6 +10,7 @@ import org.enso.table.data.column.storage.type.DateTimeType;
 import org.enso.table.data.column.storage.type.DateType;
 import org.enso.table.data.column.storage.type.FloatType;
 import org.enso.table.data.column.storage.type.IntegerType;
+import org.enso.table.data.column.storage.type.NullType;
 import org.enso.table.data.column.storage.type.StorageType;
 import org.enso.table.data.column.storage.type.TextType;
 import org.enso.table.data.column.storage.type.TimeOfDayType;
@@ -41,9 +43,10 @@ public abstract class Builder {
           case TextType textType -> new StringBuilder(size, textType);
           case BigDecimalType x -> new BigDecimalBuilder(size);
           case BigIntegerType x -> new BigIntegerBuilder(size, problemAggregator);
+          case NullType x -> new NullBuilder();
           case null -> new InferredBuilder(size, problemAggregator);
         };
-    assert java.util.Objects.equals(builder.getType(), type);
+    assert Objects.equals(builder.getType(), type);
     return builder;
   }
 
