@@ -472,8 +472,8 @@ Any.should_be_a self typ =
                 actual_type = Meta.get_qualified_type_name self
                 message = "Expected a value of Java class "+typ.to_text+" but got a value ["+self.to_text+"] of type "+actual_type+" instead (at "+loc+")."
                 Test.fail message
-        Meta.Primitive.Value (b : Boolean) ->
-            ok = self == b
+        p : Meta.Primitive ->
+            ok = self == p.value
             if ok then Spec_Result.Success else
                 actual_type = Meta.get_qualified_type_name self
                 message = "Expected a value of "+typ.to_text+" but got a value ["+self.to_text+"] of type "+actual_type+" instead (at "+loc+")."

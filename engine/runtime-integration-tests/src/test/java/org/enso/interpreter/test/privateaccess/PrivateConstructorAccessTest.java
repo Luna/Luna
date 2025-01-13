@@ -77,7 +77,7 @@ public class PrivateConstructorAccessTest {
       var polyCtx = new PolyglotContext(ctx);
       var mainMod = polyCtx.evalModule(mainSrcPath.toFile());
       var myType = mainMod.getType("My_Type");
-      assertThat("Type is always public regardless of constructors", myType.hasMember("Cons"), is(true));
+      assertThat("Cons isn't publicly visible", myType.hasMember("Cons"), is(false));
     }
   }
 

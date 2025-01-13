@@ -17,9 +17,6 @@ public final class ConstantNode extends EnsoRootNode {
    */
   public ConstantNode(EnsoLanguage language, ModuleScope moduleScope, Object constant) {
     super(language, LocalScope.empty(), moduleScope, constant.toString(), null);
-    if (constant.toString().equals("Type")) {
-      System.err.println("constatn: " + constant);
-    }
     this.constant = constant;
   }
 

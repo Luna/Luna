@@ -39,7 +39,7 @@ public final class Type extends EnsoObject {
   private final Type supertype;
   private final Type eigentype;
   private final Map<String, AtomConstructor> constructors;
-  private final boolean isProjectPrivate;
+  private final boolean hasAllConstructorsPrivate;
 
   private boolean gettersGenerated;
 
@@ -49,12 +49,12 @@ public final class Type extends EnsoObject {
       Type supertype,
       Type eigentype,
       boolean builtin,
-      boolean isProjectPrivate) {
+      boolean hasAllConstructorsPrivate) {
     this.name = name;
     this.definitionScope = definitionScope;
     this.supertype = supertype;
     this.builtin = builtin;
-    this.isProjectPrivate = isProjectPrivate;
+    this.hasAllConstructorsPrivate = hasAllConstructorsPrivate;
     this.eigentype = Objects.requireNonNullElse(eigentype, this);
     this.constructors = new HashMap<>();
   }
@@ -64,8 +64,8 @@ public final class Type extends EnsoObject {
       ModuleScope.Builder definitionScope,
       Type supertype,
       boolean builtin,
-      boolean isProjectPrivate) {
-    return new Type(name, definitionScope, supertype, null, builtin, isProjectPrivate);
+      boolean hasAllConstructorsPrivate) {
+    return new Type(name, definitionScope, supertype, null, builtin, hasAllConstructorsPrivate);
   }
 
   public static Type create(
@@ -94,7 +94,7 @@ public final class Type extends EnsoObject {
             .argumentDefinitions(
                 new ArgumentDefinition(
                     0, "this", null, null, ArgumentDefinition.ExecutionMode.EXECUTE));
-    if (isProjectPrivate) {
+    if (isProjectPrivate()) {
       schemaBldr.projectPrivate();
     }
     var function = new Function(node.getCallTarget(), null, schemaBldr.build());
@@ -142,15 +142,24 @@ public final class Type extends EnsoObject {
   }
 
   /**
-   * Returns true iff this type is project-private. A type is project-private iff all its
-   * constructors are project-private. Note that during the compilation, it is ensured by the {@link
+   * Right now types cannot be project private. Waiting for implementation of #8835.
+   *
+   * @return {@code false}
+   */
+  public final boolean isProjectPrivate() {
+    return false;
+  }
+
+  /**
+   * Returns true iff this type has project-private constructors only. Note that during the
+   * compilation, it is ensured by the {@link
    * org.enso.compiler.pass.analyse.PrivateConstructorAnalysis} compiler pass that all the
    * constructors are either public or project-private.
    *
-   * @return true iff this type is project-private.
+   * @return true iff this type constructors are project-private.
    */
-  public boolean isProjectPrivate() {
-    return isProjectPrivate;
+  public boolean hasAllConstructorsPrivate() {
+    return hasAllConstructorsPrivate;
   }
 
   private Type getSupertype() {
@@ -233,7 +242,7 @@ public final class Type extends EnsoObject {
                                     null,
                                     null,
                                     ArgumentDefinition.ExecutionMode.EXECUTE));
-                    if (isProjectPrivate) {
+                    if (hasAllConstructorsPrivate) {
                       schemaBldr.projectPrivate();
                     }
                     var funcSchema = schemaBldr.build();
@@ -348,7 +357,7 @@ public final class Type extends EnsoObject {
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
   EnsoObject getMembers(boolean includeInternal) {
-    if (isProjectPrivate) {
+    if (hasAllConstructorsPrivate) {
       return ArrayLikeHelpers.empty();
     } else {
       return ArrayLikeHelpers.wrapStrings(constructors.keySet().toArray(String[]::new));
@@ -358,7 +367,7 @@ public final class Type extends EnsoObject {
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
   boolean isMemberReadable(String member) {
-    if (isProjectPrivate) {
+    if (hasAllConstructorsPrivate) {
       return false;
     } else {
       return constructors.containsKey(member);
@@ -368,7 +377,7 @@ public final class Type extends EnsoObject {
   @ExportMessage
   @CompilerDirectives.TruffleBoundary
   Object readMember(String member) throws UnknownIdentifierException {
-    if (isProjectPrivate) {
+    if (hasAllConstructorsPrivate) {
       throw UnknownIdentifierException.create(member);
     }
     var result = constructors.get(member);

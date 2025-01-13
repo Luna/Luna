@@ -161,7 +161,13 @@ type Constructor
         Type.Value (Meta_Helpers.get_constructor_declaring_type_builtin c)
 
 type Primitive
-    private Value value
+    private Value impl
+
+    ## ADVANCED
+       GROUP Metadata
+       ICON metadata
+       Returns the (primitive) value wrapped by this type
+    value self = self.impl
 
 type Unresolved_Symbol
     private Value value
