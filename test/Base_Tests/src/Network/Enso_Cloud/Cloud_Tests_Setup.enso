@@ -2,6 +2,7 @@ from Standard.Base import all
 import Standard.Base.Enso_Cloud.Data_Link.Data_Link
 import Standard.Base.Errors.Illegal_State.Illegal_State
 import Standard.Base.Runtime.Context
+import Standard.Base.Runtime.Managed_Resource.Managed_Resource
 import Standard.Base.Runtime.Ref.Ref
 
 from Standard.Test import Problems
@@ -176,18 +177,25 @@ type Mock_Credentials
         Mock_Credentials.Value self.access_token new_expire_at self.refresh_token self.refresh_url self.client_id
 
 type Temporary_Directory
-    Value was_initialized:Ref ~get
+    Value was_initialized:Ref gc_sentinel:Managed_Resource ~initialize
 
     timestamp_text -> Text = Date_Time.now.format "yyyy-MM-dd_HHmmss.fV" . replace "/" "."
 
     make (name : Text) (with_initializer : (Enso_File -> Any) = (_->Nothing)) -> Temporary_Directory =
         was_initialized = Ref.new False
-        Temporary_Directory.Value was_initialized <|
+        gc_sentinel = Managed_Resource.register [name, was_initialized] _check_on_gc
+        Temporary_Directory.Value was_initialized gc_sentinel <|
             directory_name = "test-run-"+name+"-"+Temporary_Directory.timestamp_text
             test_root = (Enso_File.home / directory_name).create_directory
             test_root.if_not_error <|
                 was_initialized.put True
                 with_initializer test_root . if_not_error test_root
+
+    get self =
+        directory = self.initialize
+        if self.was_initialized.get.not then
+            Panic.throw (Illegal_State.Error "Temporary directory "+directory.path+" is being used after it has been cleaned up.")
+        directory
 
     cleanup self =
         ## Only run the cleanup if the directory was initialized.
@@ -195,6 +203,17 @@ type Temporary_Directory
            initialize it - creating a new directory just to delete it, wasting time.
         if self.was_initialized.get then
             self.get.delete_if_exists recursive=True
+
+            # Avoid double cleanup - unset the flag.
+            self.was_initialized.put False
+
+_check_on_gc sentinel_pair =
+    name = sentinel_pair.first
+    is_initialized = sentinel_pair.second
+    if is_initialized.get then
+        message = "Temporary_Directory "+name+" has not been cleaned up before being GCed."
+        IO.println message
+        Panic.throw (Illegal_State.Error message)
 
 create_local_datalink_to enso_file:Enso_File =
     config = JS_Object.from_pairs [["type", "Enso_File"], ["libraryName", "Standard.Base"], ["path", enso_file.path]]
