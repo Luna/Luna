@@ -430,29 +430,6 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
         )}
         {isCloud && <Separator hidden={hidden} />}
 
-        {isCloud && managesThisAsset && self != null && (
-          <PaywallContextMenuEntry
-            feature="share"
-            isUnderPaywall={isUnderPaywall}
-            action="share"
-            hidden={hidden}
-            doAction={() => {
-              setModal(
-                <ManagePermissionsModal
-                  backend={backend}
-                  category={category}
-                  item={asset}
-                  self={self}
-                  eventTarget={eventTarget}
-                  doRemoveSelf={() => {
-                    removeSelfPermissionMutation.mutate(asset.id)
-                  }}
-                />,
-              )
-            }}
-          />
-        )}
-
         {isCloud && (
           <ContextMenuEntry
             hidden={hidden}

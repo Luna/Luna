@@ -35,8 +35,6 @@ import UserBar from '#/layouts/UserBar'
 import * as aria from '#/components/aria'
 import Page from '#/components/Page'
 
-import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
-
 import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 import * as projectManager from '#/services/ProjectManager'
@@ -220,28 +218,6 @@ function DashboardInner(props: DashboardProps) {
     clearLaunchedProjects()
   })
 
-  const doOpenShareModal = eventCallbacks.useEventCallback(() => {
-    if (assetManagementApiRef.current != null && selectedProject != null) {
-      const asset = assetManagementApiRef.current.getAsset(selectedProject.id)
-      const self = tryFindSelfPermission(user, asset?.permissions)
-
-      if (asset != null && self != null) {
-        setModal(
-          <ManagePermissionsModal
-            backend={categoriesAPI.associatedBackend}
-            category={categoriesAPI.category}
-            item={asset}
-            self={self}
-            doRemoveSelf={() => {
-              doRemoveSelf(selectedProject)
-            }}
-            eventTarget={null}
-          />,
-        )
-      }
-    }
-  })
-
   const goToSettings = eventCallbacks.useEventCallback(() => {
     setPage(TabType.settings)
   })
@@ -268,7 +244,6 @@ function DashboardInner(props: DashboardProps) {
             <DashboardTabBar onCloseProject={closeProject} onOpenEditor={openEditor} />
 
             <UserBar
-              onShareClick={selectedProject ? doOpenShareModal : undefined}
               setIsHelpChatOpen={setIsHelpChatOpen}
               goToSettingsPage={goToSettings}
               onSignOut={onSignOut}
