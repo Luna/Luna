@@ -18,7 +18,7 @@ const IGNORE_INTERACT_OUTSIDE_ELEMENTS = [
   // ReactQuery devtools
   '.tsqd-parent-container',
   // Our components that should ignore the interact outside event
-  ':is(.enso-dashboard, .enso-chat, .enso-portal-root) [data-ignore-click-outside]',
+  ':is(.enso-app, .enso-chat, .enso-portal-root) [data-ignore-click-outside]',
 ]
 
 const IGNORE_INTERACT_OUTSIDE_ELEMENTS_SELECTOR = `:is(${IGNORE_INTERACT_OUTSIDE_ELEMENTS.join(', ')})`
@@ -64,4 +64,15 @@ export function useInteractOutside(props: UseInteractOutsideProps) {
     onInteractOutsideStart: onInteractOutsideStartCb,
     onInteractOutside: onInteractOutsideCb,
   })
+}
+
+/**
+ * Animates the scale of the element.
+ */
+export function animateScale(element: HTMLElement, scale: number) {
+  const duration = 200
+  element.animate(
+    [{ transform: 'scale(1)' }, { transform: `scale(${scale})` }, { transform: 'scale(1)' }],
+    { duration, iterations: 1, direction: 'alternate' },
+  )
 }

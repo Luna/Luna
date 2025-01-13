@@ -21,7 +21,7 @@ export const ROW_INDEX_HEADER = '#'
 /** A default prefix added to the column's index in newly created columns. */
 export const DEFAULT_COLUMN_PREFIX = 'Column #'
 const NOTHING_PATH = 'Standard.Base.Nothing.Nothing' as QualifiedName
-const NOTHING_NAME = qnLastSegment(NOTHING_PATH)
+export const NOTHING_NAME = qnLastSegment(NOTHING_PATH) as Ast.Identifier
 /**
  * The cells limit of the table; any modification which would exceed this limt should be
  * disallowed in UI
@@ -263,7 +263,7 @@ export function useTableInputArgument(
       const edit = graph.startEdit()
       fixColumns(edit)
       removeRow(edit, node.data.index)
-      onUpdate({ edit })
+      onUpdate({ edit, directInteraction: true })
     },
   }
 
@@ -273,7 +273,7 @@ export function useTableInputArgument(
       const edit = graph.startEdit()
       fixColumns(edit)
       removeColumn(edit, colId)
-      onUpdate({ edit })
+      onUpdate({ edit, directInteraction: true })
     },
   })
 
@@ -293,7 +293,7 @@ export function useTableInputArgument(
         const edit = graph.startEdit()
         fixColumns(edit)
         addColumn(edit, `${DEFAULT_COLUMN_PREFIX}${columns.value.length + 1}`)
-        onUpdate({ edit })
+        onUpdate({ edit, directInteraction: true })
       },
     },
     mainMenuItems: ['autoSizeThis', 'autoSizeAll'],
@@ -351,7 +351,7 @@ export function useTableInputArgument(
               if (astId != null) edit.replaceValue(astId, newValueAst)
               else edit.getVersion(col.data).set(data.index, newValueAst)
             }
-            onUpdate({ edit })
+            onUpdate({ edit, directInteraction: true })
             return true
           },
           headerComponentParams: {
@@ -361,7 +361,7 @@ export function useTableInputArgument(
                 const edit = graph.startEdit()
                 fixColumns(edit)
                 edit.getVersion(col.name).setRawTextContent(newName)
-                onUpdate({ edit })
+                onUpdate({ edit, directInteraction: true })
               },
             },
           },
@@ -369,7 +369,7 @@ export function useTableInputArgument(
           contextMenuItems: [
             commonContextMenuActions.cut,
             commonContextMenuActions.copy,
-            'copyWithHeaders',
+            commonContextMenuActions.copyWithHeaders,
             commonContextMenuActions.paste,
             'separator',
             removeRowMenuItem,
@@ -429,7 +429,7 @@ export function useTableInputArgument(
     const fromIndex = iter.find(columns.enumerate(), ([, ast]) => ast?.id === colId)?.[0]
     if (fromIndex != null) {
       columns.move(fromIndex, toIndex - 1)
-      onUpdate({ edit })
+      onUpdate({ edit, directInteraction: true })
     }
   }
 
@@ -449,7 +449,7 @@ export function useTableInputArgument(
       const editedCol = edit.getVersion(col.data)
       editedCol.move(rowIndex, overIndex)
     }
-    onUpdate({ edit })
+    onUpdate({ edit, directInteraction: true })
   }
 
   function pasteFromClipboard(data: string[][], focusedCell: { rowIndex: number; colId: string }) {
@@ -511,7 +511,7 @@ export function useTableInputArgument(
         modifiedColumnsAst,
       )
     }
-    onUpdate({ edit })
+    onUpdate({ edit, directInteraction: true })
     return {
       rows: actuallyPastedRowsEnd - focusedCell.rowIndex,
       columns: actuallyPastedColsEnd - focusedColIndex,

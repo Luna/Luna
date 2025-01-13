@@ -3,72 +3,78 @@ import { useEnsoDiagnostics } from '@/components/CodeEditor/diagnostics'
 import { ensoSyntax } from '@/components/CodeEditor/ensoSyntax'
 import { useEnsoSourceSync } from '@/components/CodeEditor/sync'
 import { ensoHoverTooltip } from '@/components/CodeEditor/tooltips'
-import EditorRoot from '@/components/codemirror/EditorRoot.vue'
-import { testSupport } from '@/components/codemirror/testSupport'
+import CodeMirrorRoot from '@/components/CodeMirrorRoot.vue'
+import VueComponentHost from '@/components/VueComponentHost.vue'
 import { useGraphStore } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { useAutoBlur } from '@/util/autoBlur'
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  foldGutter,
-  syntaxHighlighting,
-} from '@codemirror/language'
+import { useCodeMirror } from '@/util/codemirror'
+import { highlightStyle } from '@/util/codemirror/highlight'
+import { testSupport } from '@/util/codemirror/testSupport'
+import { indentWithTab, insertNewlineKeepIndent } from '@codemirror/commands'
+import { bracketMatching, foldGutter } from '@codemirror/language'
 import { lintGutter } from '@codemirror/lint'
 import { highlightSelectionMatches } from '@codemirror/search'
-import { EditorState } from '@codemirror/state'
-import { EditorView } from '@codemirror/view'
-import { type Highlighter } from '@lezer/highlight'
+import { keymap } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
-import { computed, onMounted, ref, watch, type ComponentInstance } from 'vue'
+import {
+  computed,
+  onMounted,
+  toRef,
+  useCssModule,
+  useTemplateRef,
+  type ComponentInstance,
+} from 'vue'
 
 const projectStore = useProjectStore()
 const graphStore = useGraphStore()
 const suggestionDbStore = useSuggestionDbStore()
-const editorRoot = ref<ComponentInstance<typeof EditorRoot>>()
+
+const vueComponentHost =
+  useTemplateRef<ComponentInstance<typeof VueComponentHost>>('vueComponentHost')
+const editorRoot = useTemplateRef<ComponentInstance<typeof CodeMirrorRoot>>('editorRoot')
 const rootElement = computed(() => editorRoot.value?.rootElement)
 useAutoBlur(rootElement)
 
-const editorView = new EditorView()
+const autoindentOnEnter = {
+  key: 'Enter',
+  run: insertNewlineKeepIndent,
+}
+
+const vueHost = computed(() => vueComponentHost.value || undefined)
+const { editorView, setExtraExtensions } = useCodeMirror(editorRoot, {
+  extensions: [
+    keymap.of([indentWithTab, autoindentOnEnter]),
+    minimalSetup,
+    bracketMatching(),
+    foldGutter(),
+    lintGutter(),
+    highlightSelectionMatches(),
+    ensoSyntax(toRef(graphStore, 'moduleRoot')),
+    highlightStyle(useCssModule()),
+    ensoHoverTooltip(graphStore, suggestionDbStore, vueHost),
+  ],
+  vueHost,
+})
 ;(window as any).__codeEditorApi = testSupport(editorView)
-
-const { updateListener, connectModuleListener } = useEnsoSourceSync(graphStore, editorView)
-const ensoDiagnostics = useEnsoDiagnostics(projectStore, graphStore, editorView)
-
-watch(
-  () => projectStore.module,
-  (module) => {
-    if (!module) return
-    editorView.setState(
-      EditorState.create({
-        extensions: [
-          minimalSetup,
-          syntaxHighlighting(defaultHighlightStyle as Highlighter),
-          bracketMatching(),
-          foldGutter(),
-          lintGutter(),
-          highlightSelectionMatches(),
-          ensoSyntax(),
-          updateListener,
-          ensoHoverTooltip(graphStore, suggestionDbStore),
-          ensoDiagnostics,
-        ],
-      }),
-    )
-    connectModuleListener()
-  },
-  { immediate: true },
+const { updateListener, connectModuleListener } = useEnsoSourceSync(
+  projectStore,
+  graphStore,
+  editorView,
 )
+const ensoDiagnostics = useEnsoDiagnostics(projectStore, graphStore, editorView)
+setExtraExtensions([updateListener, ensoDiagnostics])
+connectModuleListener()
 
 onMounted(() => {
   editorView.focus()
-  rootElement.value?.prepend(editorView.dom)
 })
 </script>
 
 <template>
-  <EditorRoot ref="editorRoot" class="CodeEditor" />
+  <CodeMirrorRoot ref="editorRoot" class="CodeEditor" @keydown.tab.stop.prevent />
+  <VueComponentHost ref="vueComponentHost" />
 </template>
 
 <style scoped>
@@ -81,7 +87,6 @@ onMounted(() => {
 }
 
 :deep(.cm-scroller) {
-  font-family: var(--font-mono);
   /* Prevent touchpad back gesture, which can be triggered while panning. */
   overscroll-behavior: none;
 }
@@ -119,5 +124,34 @@ onMounted(() => {
 :deep(.cm-gutters) {
   border-radius: 3px 0 0 3px;
   min-width: 32px;
+}
+</style>
+
+<!--suppress CssUnusedSymbol -->
+<style module>
+.keyword,
+.moduleKeyword,
+.modifier {
+  color: #708;
+}
+.number {
+  color: #164;
+}
+.string {
+  color: #a11;
+}
+.escape {
+  color: #e40;
+}
+.variableName,
+.definition-variableName {
+  color: #00f;
+}
+.lineComment,
+.docComment {
+  color: #940;
+}
+.invalid {
+  color: #f00;
 }
 </style>

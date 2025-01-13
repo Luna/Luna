@@ -14,20 +14,36 @@ export const S3_CHUNK_SIZE_BYTES = 10_000_000
 // ================
 
 /** Unique identifier for an organization. */
-export type OrganizationId = newtype.Newtype<string, 'OrganizationId'>
+export type OrganizationId = newtype.Newtype<`organization-${string}`, 'OrganizationId'>
 export const OrganizationId = newtype.newtypeConstructor<OrganizationId>()
+/** Whether a given {@link string} is an {@link OrganizationId}. */
+export function isOrganizationId(id: string): id is OrganizationId {
+  return id.startsWith('organization-')
+}
 
 /** Unique identifier for a user in an organization. */
 export type UserId = newtype.Newtype<string, 'UserId'>
 export const UserId = newtype.newtypeConstructor<UserId>()
+/** Whether a given {@link string} is an {@link UserId}. */
+export function isUserId(id: string): id is UserId {
+  return id.startsWith('user-')
+}
 
 /** Unique identifier for a user group. */
-export type UserGroupId = newtype.Newtype<string, 'UserGroupId'>
+export type UserGroupId = newtype.Newtype<`usergroup-${string}`, 'UserGroupId'>
 export const UserGroupId = newtype.newtypeConstructor<UserGroupId>()
+/** Whether a given {@link string} is an {@link UserGroupId}. */
+export function isUserGroupId(id: string): id is UserGroupId {
+  return id.startsWith('usergroup-')
+}
 
 /** Unique identifier for a directory. */
-export type DirectoryId = newtype.Newtype<string, 'DirectoryId'>
+export type DirectoryId = newtype.Newtype<`directory-${string}`, 'DirectoryId'>
 export const DirectoryId = newtype.newtypeConstructor<DirectoryId>()
+/** Whether a given {@link string} is an {@link DirectoryId}. */
+export function isDirectoryId(id: string): id is DirectoryId {
+  return id.startsWith('directory-')
+}
 
 /**
  * Unique identifier for an asset representing the items inside a directory for which the
@@ -73,6 +89,7 @@ export const S3ObjectVersionId = newtype.newtypeConstructor<S3ObjectVersionId>()
 
 /** Unique identifier for an arbitrary asset. */
 export type AssetId = IdType[keyof IdType]
+export const AssetId = newtype.newtypeConstructor<AssetId>()
 
 /** Unique identifier for a payment checkout session. */
 export type CheckoutSessionId = newtype.Newtype<string, 'CheckoutSessionId'>
@@ -117,16 +134,6 @@ export type UserPermissionIdentifier = UserGroupId | UserId
 export type Path = newtype.Newtype<string, 'Path'>
 export const Path = newtype.newtypeConstructor<Path>()
 
-/** Whether a given {@link string} is an {@link UserId}. */
-export function isUserId(id: string): id is UserId {
-  return id.startsWith('user-')
-}
-
-/** Whether a given {@link string} is an {@link UserGroupId}. */
-export function isUserGroupId(id: string): id is UserGroupId {
-  return id.startsWith('usergroup-')
-}
-
 const PLACEHOLDER_USER_GROUP_PREFIX = 'usergroup-placeholder-'
 
 /**
@@ -142,7 +149,7 @@ export function isPlaceholderUserGroupId(id: string) {
  * being created on the backend.
  */
 export function newPlaceholderUserGroupId() {
-  return UserGroupId(`${PLACEHOLDER_USER_GROUP_PREFIX}${uniqueString.uniqueString()}`)
+  return UserGroupId(`${PLACEHOLDER_USER_GROUP_PREFIX}${uniqueString.uniqueString()}` as const)
 }
 
 // =============
@@ -386,18 +393,6 @@ export interface Label {
   readonly color: LChColor
 }
 
-/**
- * Type of application that a {@link Version} applies to.
- *
- * We keep track of both backend and IDE versions, so that we can update the two independently.
- * However the format of the version numbers is the same for both, so we can use the same type for
- * both. We just need this enum to disambiguate.
- */
-export enum VersionType {
-  backend = 'Backend',
-  ide = 'Ide',
-}
-
 /** Stability of an IDE or backend version. */
 export enum VersionLifecycle {
   stable = 'Stable',
@@ -410,14 +405,6 @@ export enum VersionLifecycle {
 export interface VersionNumber {
   readonly value: string
   readonly lifecycle: VersionLifecycle
-}
-
-/** A version describing a release of the backend or IDE. */
-export interface Version {
-  readonly number: VersionNumber
-  readonly ami: Ami | null
-  readonly created: dateTime.Rfc3339DateTime
-  readonly version_type: VersionType
 }
 
 /** Credentials that need to be passed to libraries to give them access to the Cloud API. */
@@ -688,10 +675,10 @@ export function lChColorToCssColor(color: LChColor): string {
 }
 
 export const COLOR_STRING_TO_COLOR = new Map(
-  COLORS.map(color => [lChColorToCssColor(color), color]),
+  COLORS.map((color) => [lChColorToCssColor(color), color]),
 )
 
-export const INITIAL_COLOR_COUNTS = new Map(COLORS.map(color => [lChColorToCssColor(color), 0]))
+export const INITIAL_COLOR_COUNTS = new Map(COLORS.map((color) => [lChColorToCssColor(color), 0]))
 
 /** The color that is used for the least labels. Ties are broken by order. */
 export function findLeastUsedColor(labels: Iterable<Label>) {
@@ -701,8 +688,8 @@ export function findLeastUsedColor(labels: Iterable<Label>) {
     colorCounts.set(colorString, (colorCounts.get(colorString) ?? 0) + 1)
   }
   const min = Math.min(...colorCounts.values())
-  const [minColor] = [...colorCounts.entries()].find(kv => kv[1] === min) ?? []
-  return minColor == null ? COLORS[0] : COLOR_STRING_TO_COLOR.get(minColor) ?? COLORS[0]
+  const [minColor] = [...colorCounts.entries()].find((kv) => kv[1] === min) ?? []
+  return minColor == null ? COLORS[0] : (COLOR_STRING_TO_COLOR.get(minColor) ?? COLORS[0])
 }
 
 // =================
@@ -849,7 +836,7 @@ export function createRootDirectoryAsset(directoryId: DirectoryId): DirectoryAss
     title: '(root)',
     id: directoryId,
     modifiedAt: dateTime.toRfc3339(new Date()),
-    parentId: DirectoryId(''),
+    parentId: DirectoryId('directory-'),
     permissions: [],
     projectState: null,
     extension: null,
@@ -924,7 +911,7 @@ export function createPlaceholderDirectoryAsset(
 ): DirectoryAsset {
   return {
     type: AssetType.directory,
-    id: DirectoryId(createPlaceholderId()),
+    id: DirectoryId(`directory-${createPlaceholderId()}` as const),
     title,
     parentId,
     permissions: assetPermissions,
@@ -990,9 +977,7 @@ export function createSpecialLoadingAsset(directoryId: DirectoryId): SpecialLoad
   return {
     type: AssetType.specialLoading,
     title: '',
-    id: LoadingAssetId(
-      createPlaceholderId(`${AssetType.specialLoading}-${uniqueString.uniqueString()}`),
-    ),
+    id: LoadingAssetId(createPlaceholderId(`${AssetType.specialLoading}-${directoryId}`)),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
@@ -1018,7 +1003,7 @@ export function createSpecialEmptyAsset(directoryId: DirectoryId): SpecialEmptyA
   return {
     type: AssetType.specialEmpty,
     title: '',
-    id: EmptyAssetId(`${AssetType.specialEmpty}-${uniqueString.uniqueString()}`),
+    id: EmptyAssetId(`${AssetType.specialEmpty}-${directoryId}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
@@ -1044,7 +1029,7 @@ export function createSpecialErrorAsset(directoryId: DirectoryId): SpecialErrorA
   return {
     type: AssetType.specialError,
     title: '',
-    id: ErrorAssetId(`${AssetType.specialError}-${uniqueString.uniqueString()}`),
+    id: ErrorAssetId(`${AssetType.specialError}-${directoryId}`),
     modifiedAt: dateTime.toRfc3339(new Date()),
     parentId: directoryId,
     permissions: [],
@@ -1085,6 +1070,18 @@ export function assetIsType<Type extends AssetType>(type: Type) {
   return (asset: AnyAsset): asset is Extract<AnyAsset, Asset<Type>> => asset.type === type
 }
 
+/** Extract the type of an id and return a discriminated union containing both id and type. */
+export function extractTypeFromId(id: AssetId): AnyAsset extends infer T ?
+  T extends T ?
+    Pick<T, ('id' | 'type') & keyof T>
+  : never
+: never {
+  return {
+    type: id.match(/^(.+?)-/)?.[1],
+    id,
+  } as never
+}
+
 /** Creates a new placeholder asset id for the given asset type. */
 export function createPlaceholderAssetId<Type extends AssetType>(
   type: Type,
@@ -1096,7 +1093,7 @@ export function createPlaceholderAssetId<Type extends AssetType>(
   let result: AssetId
   switch (assetType) {
     case AssetType.directory: {
-      result = DirectoryId(id)
+      result = DirectoryId(`directory-${id}` as const)
       break
     }
     case AssetType.project: {
@@ -1305,7 +1302,8 @@ export interface CreateSecretRequestBody {
 
 /** HTTP request body for the "update secret" endpoint. */
 export interface UpdateSecretRequestBody {
-  readonly value: string
+  readonly title: string | null
+  readonly value: string | null
 }
 
 /** HTTP request body for the "create datalink" endpoint. */
@@ -1400,12 +1398,6 @@ export interface UploadPictureRequestParams {
   readonly fileName: string | null
 }
 
-/** URL query string parameters for the "list versions" endpoint. */
-export interface ListVersionsRequestParams {
-  readonly versionType: VersionType
-  readonly default: boolean
-}
-
 // ==============================
 // === detectVersionLifecycle ===
 // ==============================
@@ -1430,19 +1422,26 @@ export function detectVersionLifecycle(version: string) {
 /** Return a positive number if `a > b`, a negative number if `a < b`, and zero if `a === b`. */
 export function compareAssets(a: AnyAsset, b: AnyAsset) {
   const relativeTypeOrder = ASSET_TYPE_ORDER[a.type] - ASSET_TYPE_ORDER[b.type]
+
   if (relativeTypeOrder !== 0) {
     return relativeTypeOrder
   } else {
+    // We sort by modified date, because the running/recent projects should be at the top,
+    // but below the folders.
     const aModified = Number(new Date(a.modifiedAt))
     const bModified = Number(new Date(b.modifiedAt))
     const modifiedDelta = aModified - bModified
+
+    const aTitle = a.title.toLowerCase()
+    const bTitle = b.title.toLowerCase()
+
     if (modifiedDelta !== 0) {
       // Sort by date descending, rather than ascending.
       return -modifiedDelta
     } else {
       return (
-        a.title > b.title ? 1
-        : a.title < b.title ? -1
+        aTitle > bTitle ? 1
+        : aTitle < bTitle ? -1
         : 0
       )
     }
@@ -1534,17 +1533,27 @@ export function isNewTitleValid(
   newTitle: string,
   siblings?: readonly AnyAsset[] | null,
 ) {
+  return newTitle !== '' && newTitle !== item.title && isNewTitleUnique(item, newTitle, siblings)
+}
+
+/**
+ * Check whether a new title is unique among the siblings.
+ */
+export function isNewTitleUnique(
+  item: AnyAsset,
+  newTitle: string,
+  siblings?: readonly AnyAsset[] | null,
+) {
   siblings ??= []
-  return (
-    newTitle !== '' &&
-    newTitle !== item.title &&
-    siblings.every(sibling => {
-      const isSelf = sibling.id === item.id
-      const hasSameType = sibling.type === item.type
-      const hasSameTitle = sibling.title === newTitle
-      return !(!isSelf && hasSameType && hasSameTitle)
-    })
-  )
+
+  return siblings.every((sibling) => {
+    if (sibling.id === item.id) {
+      return true
+    }
+
+    const hasSameTitle = sibling.title.toLowerCase() === newTitle.toLowerCase()
+    return !hasSameTitle
+  })
 }
 
 /** Network error class. */
@@ -1677,10 +1686,7 @@ export default abstract class Backend {
     title: string,
   ): Promise<CreatedProject>
   /** Return project details. */
-  abstract getProjectDetails(
-    projectId: ProjectId,
-    directoryId: DirectoryId | null,
-  ): Promise<Project>
+  abstract getProjectDetails(projectId: ProjectId, getPresignedUrl?: boolean): Promise<Project>
   /** Return Language Server logs for a project session. */
   abstract getProjectSessionLogs(
     projectSessionId: ProjectSessionId,
@@ -1716,7 +1722,11 @@ export default abstract class Backend {
   /** Change the name of a file. */
   abstract updateFile(fileId: FileId, body: UpdateFileRequestBody, title: string): Promise<void>
   /** Return file details. */
-  abstract getFileDetails(fileId: FileId, title: string): Promise<FileDetails>
+  abstract getFileDetails(
+    fileId: FileId,
+    title: string,
+    getPresignedUrl?: boolean,
+  ): Promise<FileDetails>
   /** Create a Datalink. */
   abstract createDatalink(body: CreateDatalinkRequestBody): Promise<DatalinkInfo>
   /** Return a Datalink. */
@@ -1753,8 +1763,6 @@ export default abstract class Backend {
   abstract deleteUserGroup(userGroupId: UserGroupId, name: string): Promise<void>
   /** Return all user groups in the organization. */
   abstract listUserGroups(): Promise<readonly UserGroupInfo[]>
-  /** Return a list of backend or IDE versions. */
-  abstract listVersions(params: ListVersionsRequestParams): Promise<readonly Version[]>
   /** Create a payment checkout session. */
   abstract createCheckoutSession(body: CreateCheckoutSessionRequestBody): Promise<CheckoutSession>
   /** Get the status of a payment checkout session. */
@@ -1767,8 +1775,8 @@ export default abstract class Backend {
     projectId?: string | null,
     metadata?: object | null,
   ): Promise<void>
-  /** Download from an arbitrary URL that is assumed to originate from this backend. */
-  abstract download(url: string, name?: string): Promise<void>
+  /** Download an asset. */
+  abstract download(assetId: AssetId, title: string): Promise<void>
 
   /**
    * Get the URL for the customer portal.
@@ -1779,4 +1787,18 @@ export default abstract class Backend {
 
   /** Resolve the path of an asset relative to a project. */
   abstract resolveProjectAssetPath(projectId: ProjectId, relativePath: string): Promise<string>
+}
+
+// ==============================
+// ====== Custom Errors =========
+// ==============================
+
+/** Error thrown when a directory does not exist. */
+export class DirectoryDoesNotExistError extends Error {
+  /**
+   * Create a new instance of the {@link DirectoryDoesNotExistError} class.
+   */
+  constructor() {
+    super('Directory does not exist.')
+  }
 }

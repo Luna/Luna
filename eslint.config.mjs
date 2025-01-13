@@ -186,7 +186,7 @@ const RESTRICTED_SYNTAXES = [
 // === ESLint configuration ===
 // ============================
 
-export default [
+const config = [
   {
     // Playwright build cache and Vite build directory.
     ignores: [
@@ -198,6 +198,7 @@ export default [
       '**/*.timestamp-*.mjs',
       '**/node_modules',
       '**/generated',
+      '**/*.json',
       'app/rust-ffi/pkg/',
     ],
   },
@@ -211,12 +212,6 @@ export default [
         tsconfigRootDir: DIR_NAME,
         ecmaVersion: 'latest',
         extraFileExtensions: ['.vue'],
-        projectService: {
-          allowDefaultProject: [
-            'app/ydoc-server/vitest.config.ts',
-            'app/ydoc-shared/vitest.config.ts',
-          ],
-        },
       },
     },
     rules: {
@@ -284,14 +279,7 @@ export default [
 
   // === Dashboard Rules ===
   {
-    files: [
-      'app/gui/src/dashboard/**/*.ts',
-      'app/gui/src/dashboard/**/*.mts',
-      'app/gui/src/dashboard/**/*.cts',
-      'app/gui/src/dashboard/**/*.tsx',
-      'app/gui/src/dashboard/**/*.mtsx',
-      'app/gui/src/dashboard/**/*.ctsx',
-    ],
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
     settings: {
       react: {
         version: '18.2',
@@ -302,7 +290,6 @@ export default [
       '@typescript-eslint': tsEslint,
       react: react,
       'react-hooks': reactHooks,
-      'react-compiler': reactCompiler,
     },
     languageOptions: {
       parserOptions: {
@@ -386,10 +373,6 @@ export default [
       'react-hooks/exhaustive-deps': ['error', { additionalHooks: 'useOnScroll|useLazyMemoHooks' }],
       'react/jsx-pascal-case': ['error', { allowNamespace: true }],
 
-      // We use warnings instead of errors because we want to gradually migrate the codebase to the new compiler.
-      // see: https://github.com/reactwg/react-compiler/discussions/8
-      'react-compiler/react-compiler': 'warn',
-
       // Prefer `interface` over `type`.
       '@typescript-eslint/consistent-type-definitions': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
@@ -462,7 +445,10 @@ export default [
       '@typescript-eslint/restrict-template-expressions': 'error',
       '@typescript-eslint/sort-type-constituents': 'error',
       '@typescript-eslint/strict-boolean-expressions': 'error',
-      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { allowDefaultCaseForExhaustiveSwitch: true },
+      ],
       'default-param-last': 'off',
       '@typescript-eslint/default-param-last': 'error',
       'no-invalid-this': 'off',
@@ -568,4 +554,39 @@ export default [
       '@typescript-eslint/naming-convention': 'off',
     },
   },
+  {
+    files: ['app/gui/src/dashboard/**/*.test.tsx', 'app/gui/src/dashboard/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/require-param-type': 'off',
+      'jsdoc/require-file-overview': 'off',
+      '@typescript-eslint/no-magic-numbers': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
+  // === EnsoDevtools Rules ===
+  // Allow JSX strings in EnsoDevtools.tsx.
+  {
+    files: ['app/gui/src/dashboard/**/EnsoDevtools.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...RESTRICTED_SYNTAXES.filter(
+          (syntax) =>
+            syntax.message !== 'Use a `getText()` from `useText` instead of a literal string',
+        ),
+      ],
+    },
+  },
+  // === React Compiler Rules ===
+  {
+    files: ['app/gui/src/dashboard/**/*.ts', 'app/gui/src/dashboard/**/*.tsx'],
+    ignores: ['**/*.d.ts', '**/*.spec.ts', '**/*.stories.tsx', '**/*.test.tsx', '**/*.test.ts'],
+    plugins: { 'react-compiler': reactCompiler },
+    rules: { 'react-compiler/react-compiler': 'error' },
+  },
 ]
+
+export default config

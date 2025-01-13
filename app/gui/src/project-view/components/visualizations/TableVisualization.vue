@@ -1,9 +1,13 @@
 <script lang="ts">
 import icons from '@/assets/icons.svg'
 import AgGridTableView, { commonContextMenuActions } from '@/components/shared/AgGridTableView.vue'
-import { useTableVizToolbar, type SortModel } from '@/components/visualizations/tableVizToolbar'
+import {
+  useTableVizToolbar,
+  type SortModel,
+} from '@/components/visualizations/TableVisualization/tableVizToolbar'
 import { Ast } from '@/util/ast'
 import { Pattern } from '@/util/ast/match'
+import { LINKABLE_URL_REGEX } from '@/util/link'
 import { useVisualizationConfig } from '@/util/visualizationBuiltins'
 import type {
   CellClassParams,
@@ -14,7 +18,8 @@ import type {
   SortChangedEvent,
 } from 'ag-grid-enterprise'
 import { computed, onMounted, ref, shallowRef, watchEffect, type Ref } from 'vue'
-import { TableVisualisationTooltip } from './TableVisualisationTooltip'
+import { TableVisualisationTooltip } from './TableVisualization/TableVisualisationTooltip'
+import { getCellValueType, isNumericType } from './TableVisualization/tableVizUtils'
 
 export const name = 'Table'
 export const icon = 'table'
@@ -46,6 +51,8 @@ interface Matrix {
   json: unknown[][]
   value_type: ValueType[]
   get_child_node_action: string
+  child_label: string
+  visualization_header: string
 }
 
 interface Excel_Workbook {
@@ -55,6 +62,8 @@ interface Excel_Workbook {
   sheet_names: string[]
   json: unknown[][]
   get_child_node_action: string
+  child_label: string
+  visualization_header: string
 }
 
 interface ObjectMatrix {
@@ -64,6 +73,8 @@ interface ObjectMatrix {
   json: object[]
   value_type: ValueType[]
   get_child_node_action: string
+  child_label: string
+  visualization_header: string
 }
 
 interface UnknownTable {
@@ -81,6 +92,8 @@ interface UnknownTable {
   get_child_node_action: string
   get_child_node_link_name: string
   link_value_type: string
+  child_label: string
+  visualization_header: string
   data_quality_metrics?: DataQualityMetric[]
 }
 
@@ -101,14 +114,7 @@ const TABLE_NODE_TYPE = 'Standard.Table.Table.Table'
 const DB_TABLE_NODE_TYPE = 'Standard.Database.DB_Table.DB_Table'
 const VECTOR_NODE_TYPE = 'Standard.Base.Data.Vector.Vector'
 const COLUMN_NODE_TYPE = 'Standard.Table.Column.Column'
-const EXCEL_WORKBOOK_NODE_TYPE = 'Standard.Table.Excel.Excel_Workbook.Excel_Workbook'
 const ROW_NODE_TYPE = 'Standard.Table.Row.Row'
-const SQLITE_CONNECTIONS_NODE_TYPE =
-  'Standard.Database.Internal.SQLite.SQLite_Connection.SQLite_Connection'
-const POSTGRES_CONNECTIONS_NODE_TYPE =
-  'Standard.Database.Internal.Postgres.Postgres_Connection.Postgres_Connection'
-const SNOWFLAKE_CONNECTIONS_NODE_TYPE =
-  'Standard.Snowflake.Snowflake_Connection.Snowflake_Connection'
 
 const rowLimit = ref(0)
 const page = ref(0)
@@ -128,7 +134,12 @@ const defaultColDef: Ref<ColDef> = ref({
   minWidth: 25,
   cellRenderer: cellRenderer,
   cellClass: cellClass,
-  contextMenuItems: [commonContextMenuActions.copy, 'copyWithHeaders', 'separator', 'export'],
+  contextMenuItems: [
+    commonContextMenuActions.copy,
+    commonContextMenuActions.copyWithHeaders,
+    'separator',
+    'export',
+  ],
 } satisfies ColDef)
 const rowData = ref<Record<string, any>[]>([])
 const columnDefs: Ref<ColDef[]> = ref([])
@@ -148,35 +159,6 @@ const selectableRowLimits = computed(() => {
     defaults.push(rowLimit.value)
   }
   return defaults
-})
-
-const newNodeSelectorValues = computed(() => {
-  let tooltipValue
-  let headerName
-  switch (config.nodeType) {
-    case COLUMN_NODE_TYPE:
-    case VECTOR_NODE_TYPE:
-    case ROW_NODE_TYPE:
-      tooltipValue = 'value'
-      break
-    case EXCEL_WORKBOOK_NODE_TYPE:
-      tooltipValue = 'sheet'
-      headerName = 'Sheets'
-      break
-    case SQLITE_CONNECTIONS_NODE_TYPE:
-    case POSTGRES_CONNECTIONS_NODE_TYPE:
-    case SNOWFLAKE_CONNECTIONS_NODE_TYPE:
-      tooltipValue = 'table'
-      headerName = 'Tables'
-      break
-    case TABLE_NODE_TYPE:
-    case DB_TABLE_NODE_TYPE:
-      tooltipValue = 'row'
-  }
-  return {
-    tooltipValue,
-    headerName,
-  }
 })
 
 const isFilterSortNodeEnabled = computed(
@@ -216,7 +198,8 @@ function formatText(params: ICellRendererParams) {
     .replaceAll('>', '&gt;')
 
   if (textFormatterSelected.value === 'off') {
-    return htmlEscaped.replace(/^\s+|\s+$/g, '&nbsp;')
+    const replaceLinks = replaceLinksWithTag(htmlEscaped)
+    return replaceLinks.replace(/^\s+|\s+$/g, '&nbsp;')
   }
 
   const partialMappings = {
@@ -237,10 +220,7 @@ function formatText(params: ICellRendererParams) {
         return `<span style="color: #df8800">${match.replaceAll(' ', '&#183;')}</span>`
       })
 
-  const replaceLinks = replaceSpaces.replace(
-    /https?:\/\/([-()_.!~*';/?:@&=+$,A-Za-z0-9])+/g,
-    (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
-  )
+  const replaceLinks = replaceLinksWithTag(replaceSpaces)
 
   const replaceReturns = replaceLinks.replace(
     /\r\n/g,
@@ -270,6 +250,13 @@ function setRowLimit(newRowLimit: number) {
   }
 }
 
+function replaceLinksWithTag(str: string) {
+  return str.replace(
+    LINKABLE_URL_REGEX,
+    (url: string) => `<a href="${url}" target="_blank" class="link">${url}</a>`,
+  )
+}
+
 function escapeHTML(str: string) {
   const mapping: Record<string, string> = {
     '&': '&amp;',
@@ -286,8 +273,7 @@ function cellClass(params: CellClassParams) {
   if (typeof params.value === 'number' || params.value === null) return 'ag-right-aligned-cell'
   if (typeof params.value === 'object') {
     const valueType = params.value?.type
-    if (valueType === 'BigInt' || valueType === 'Float' || valueType === 'Decimal')
-      return 'ag-right-aligned-cell'
+    if (isNumericType(valueType)) return 'ag-right-aligned-cell'
   }
   return null
 }
@@ -302,10 +288,9 @@ function cellRenderer(params: ICellRendererParams) {
   else if (Array.isArray(params.value)) return `[Vector ${params.value.length} items]`
   else if (typeof params.value === 'object') {
     const valueType = params.value?.type
-    if (valueType === 'BigInt') return formatNumber(params)
-    else if (valueType === 'Decimal') return formatNumber(params)
-    else if (valueType === 'Float')
+    if (valueType === 'Float')
       return `<span style="color:grey; font-style: italic;">${params.value?.value ?? 'Unknown'}</span>`
+    else if (isNumericType(valueType)) return formatNumber(params)
     else if ('_display_text_' in params.value && params.value['_display_text_'])
       return String(params.value['_display_text_'])
     else return `{ ${valueType} Object }`
@@ -383,10 +368,11 @@ function toField(
   const template =
     icon ?
       `<span style='${styles}'><span data-ref="eLabel" class="ag-header-cell-label" role="presentation" style='${styles}'><span data-ref="eText" class="ag-header-cell-text"></span></span>${menu} ${filterButton} ${sort} ${getSvgTemplate(icon)} ${svgTemplateWarning}</span>`
-    : `<span style='${styles}' data-ref="eLabel"><span data-ref="eText" class="ag-header-cell-text"></span> ${menu} ${filterButton} ${sort} ${svgTemplateWarning}</span>`
+    : `<span style='${styles}' data-ref="eLabel"><span data-ref="eText" class="ag-header-cell-label"></span> ${menu} ${filterButton} ${sort} ${svgTemplateWarning}</span>`
 
   return {
     field: name,
+    headerName: name, // AGGrid would demangle it its own way if not specified.
     headerComponentParams: {
       template,
       setAriaSort: () => {},
@@ -441,20 +427,24 @@ function createNode(
   }
 }
 
-function toLinkField(fieldName: string, getChildAction?: string, castValueTypes?: string): ColDef {
+interface LinkFieldOptions {
+  tooltipValue?: string | undefined
+  headerName?: string | undefined
+  getChildAction?: string | undefined
+  castValueTypes?: string | undefined
+}
+
+function toLinkField(fieldName: string, options: LinkFieldOptions = {}): ColDef {
+  const { tooltipValue, headerName, getChildAction, castValueTypes } = options
   return {
-    headerName:
-      newNodeSelectorValues.value.headerName ? newNodeSelectorValues.value.headerName : fieldName,
+    headerName: headerName ? headerName : fieldName,
     field: fieldName,
     onCellDoubleClicked: (params) => createNode(params, fieldName, getChildAction, castValueTypes),
     tooltipValueGetter: (params: ITooltipParams) =>
       params.node?.rowPinned === 'top' ?
         null
-      : `Double click to view this ${newNodeSelectorValues.value.tooltipValue} in a separate component`,
-    cellRenderer: (params: ICellRendererParams) =>
-      params.node.rowPinned === 'top' ?
-        `<div> ${params.value}</div>`
-      : `<div class='link'> ${params.value} </div>`,
+      : `Double click to view this ${tooltipValue ?? 'value'} in a separate component`,
+    cellRenderer: (params: ICellRendererParams) => `<div class='link'> ${params.value} </div>`,
   }
 }
 
@@ -484,6 +474,10 @@ watchEffect(() => {
         // eslint-disable-next-line camelcase
         get_child_node_link_name: undefined,
         // eslint-disable-next-line camelcase
+        child_label: undefined,
+        // eslint-disable-next-line camelcase
+        visualization_header: undefined,
+        // eslint-disable-next-line camelcase
         link_value_type: undefined,
       }
   if ('error' in data_) {
@@ -495,14 +489,26 @@ watchEffect(() => {
     ]
     rowData.value = [{ Error: data_.error }]
   } else if (data_.type === 'Matrix') {
-    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
+    columnDefs.value = [
+      toLinkField(INDEX_FIELD_NAME, {
+        tooltipValue: data_.child_label,
+        headerName: data_.visualization_header,
+        getChildAction: data_.get_child_node_action,
+      }),
+    ]
     for (let i = 0; i < data_.column_count; i++) {
       columnDefs.value.push(toField(i.toString()))
     }
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
   } else if (data_.type === 'Object_Matrix') {
-    columnDefs.value = [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action)]
+    columnDefs.value = [
+      toLinkField(INDEX_FIELD_NAME, {
+        tooltipValue: data_.child_label,
+        headerName: data_.visualization_header,
+        getChildAction: data_.get_child_node_action,
+      }),
+    ]
     const keys = new Set<string>()
     for (const val of data_.json) {
       if (val != null) {
@@ -517,18 +523,36 @@ watchEffect(() => {
     rowData.value = addRowIndex(data_.json)
     isTruncated.value = data_.all_rows_count !== data_.json.length
   } else if (data_.type === 'Excel_Workbook') {
-    columnDefs.value = [toLinkField('Value', data_.get_child_node_action)]
+    columnDefs.value = [
+      toLinkField('Value', {
+        tooltipValue: data_.child_label,
+        headerName: data_.visualization_header,
+        getChildAction: data_.get_child_node_action,
+      }),
+    ]
     rowData.value = data_.sheet_names.map((name) => ({ Value: name }))
   } else if (Array.isArray(data_.json)) {
     columnDefs.value = [
-      toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action),
+      toLinkField(INDEX_FIELD_NAME, {
+        tooltipValue: data_.child_label,
+        headerName: data_.visualization_header,
+        getChildAction: data_.get_child_node_action,
+      }),
       toField('Value'),
     ]
     rowData.value = data_.json.map((row, i) => ({ [INDEX_FIELD_NAME]: i, Value: toRender(row) }))
     isTruncated.value = data_.all_rows_count ? data_.all_rows_count !== data_.json.length : false
   } else if (data_.json !== undefined) {
     columnDefs.value =
-      data_.links ? [toLinkField('Value', data_.get_child_node_action)] : [toField('Value')]
+      data_.links ?
+        [
+          toLinkField('Value', {
+            tooltipValue: data_.child_label,
+            headerName: data_.visualization_header,
+            getChildAction: data_.get_child_node_action,
+          }),
+        ]
+      : [toField('Value')]
     rowData.value =
       data_.links ?
         data_.links.map((link) => ({
@@ -540,7 +564,12 @@ watchEffect(() => {
       ('header' in data_ ? data_.header : [])?.map((v, i) => {
         const valueType = data_.value_type ? data_.value_type[i] : null
         if (data_.get_child_node_link_name === v) {
-          return toLinkField(v, data_.get_child_node_action, data_.link_value_type)
+          return toLinkField(v, {
+            tooltipValue: data_.child_label,
+            headerName: data_.visualization_header,
+            getChildAction: data_.get_child_node_action,
+            castValueTypes: data_.link_value_type,
+          })
         }
         if (config.nodeType === ROW_NODE_TYPE) {
           return toRowField(v, i, valueType)
@@ -550,9 +579,16 @@ watchEffect(() => {
 
     columnDefs.value =
       data_.has_index_col ?
-        [toLinkField(INDEX_FIELD_NAME, data_.get_child_node_action), ...dataHeader]
+        [
+          toLinkField(INDEX_FIELD_NAME, {
+            tooltipValue: data_.child_label,
+            headerName: data_.visualization_header,
+            getChildAction: data_.get_child_node_action,
+          }),
+          ...dataHeader,
+        ]
       : dataHeader
-    const rows = data_.data && data_.data.length > 0 ? data_.data[0]?.length ?? 0 : 0
+    const rows = data_.data && data_.data.length > 0 ? (data_.data[0]?.length ?? 0) : 0
     rowData.value = Array.from({ length: rows }, (_, i) => {
       const shift = data_.has_index_col ? 1 : 0
       return Object.fromEntries(
@@ -584,7 +620,7 @@ watchEffect(() => {
       const needsGrouping = rowData.value.some((row) => {
         if (header in row && row[header] != null) {
           const value = typeof row[header] === 'object' ? row[header].value : row[header]
-          return value > 9999
+          return value > 999999 || value < -999999
         }
       })
       headerGroupingMap.set(header, needsGrouping)
@@ -613,31 +649,56 @@ const colTypeMap = computed(() => {
 
 const getColumnValueToEnso = (columnName: string) => {
   const columnType = colTypeMap.value.get(columnName) ?? ''
-  const isNumber = ['Integer', 'Float', 'Decimal', 'Byte']
-  if (isNumber.indexOf(columnType) != -1) {
+  if (isNumericType(columnType)) {
     return (item: string, module: Ast.MutableModule) => Ast.tryNumberToEnso(Number(item), module)!
   }
-  const createDateTimePattern = (pattern: string, numberOfParts: number) => {
-    const dateOrTimePattern = Pattern.parseExpression(pattern)
-    return (item: string, module: Ast.MutableModule) => {
-      const dateTimeParts = item.match(/\d+/g)!.map(Number)
-      const dateTimePartsNumeric = []
-      for (let i = 0; i < numberOfParts; i++) {
-        dateTimePartsNumeric.push(Ast.tryNumberToEnso(Number(dateTimeParts[i] ?? 0), module)!)
-      }
-      return dateOrTimePattern.instantiateCopied(dateTimePartsNumeric)
-    }
-  }
   if (columnType === 'Date') {
-    return createDateTimePattern('(Date.new __ __ __)', 3)
+    return (item: string, module: Ast.MutableModule) => createDateValue(item, module)
   }
   if (columnType === 'Time') {
-    return createDateTimePattern('(Time_Of_Day.new __ __ __ __ __ __)', 6)
+    return (item: string, module: Ast.MutableModule) =>
+      createDateTimeValue('Time_Of_Day.parse (__)', item, module)
   }
   if (columnType === 'Date_Time') {
-    return (item: string) => Ast.parseExpression(`(Date_Time.parse '${item}')`)!
+    return (item: string, module: Ast.MutableModule) =>
+      createDateTimeValue('Date_Time.parse (__)', item, module)
+  }
+  if (columnType == 'Mixed') {
+    return (item: string, module: Ast.MutableModule) => {
+      const parsedCellType = getCellValueType(item)
+      return getFormattedValueForCell(item, module, parsedCellType)
+    }
   }
   return (item: string) => Ast.TextLiteral.new(item)
+}
+
+const getFormattedValueForCell = (item: string, module: Ast.MutableModule, cellType: string) => {
+  if (isNumericType(cellType)) {
+    return Ast.tryNumberToEnso(Number(item), module)!
+  }
+  if (cellType === 'Date') {
+    return createDateValue(item, module)
+  }
+  if (cellType === 'Time') {
+    return createDateTimeValue('Time_Of_Day.parse (__)', item, module)
+  }
+  if (cellType === 'Date_Time') {
+    return createDateTimeValue('Date_Time.parse (__)', item, module)
+  }
+  return Ast.TextLiteral.new(item)
+}
+
+const createDateTimeValue = (patternString: string, item: string, module: Ast.MutableModule) => {
+  const pattern = Pattern.parseExpression(patternString)!
+  return pattern.instantiateCopied([Ast.TextLiteral.new(item, module)])
+}
+
+const createDateValue = (item: string, module: Ast.MutableModule) => {
+  const dateOrTimePattern = Pattern.parseExpression('(Date.new __ __ __)')
+  const dateTimeParts = item
+    .match(/\d+/g)!
+    .map((part) => Ast.tryNumberToEnso(Number(part), module)!)
+  return dateOrTimePattern.instantiateCopied([...dateTimeParts])
 }
 
 function checkSortAndFilter(e: SortChangedEvent) {
@@ -749,15 +810,16 @@ config.setToolbar(
 
 .table-visualization-status-bar {
   height: 20px;
-  background-color: white;
   font-size: 14px;
+  color: var(--color-ag-header-text);
   white-space: nowrap;
   padding: 0 5px;
   overflow: hidden;
 }
 
-.TableVisualization > .ag-theme-alpine > :deep(.ag-root-wrapper.ag-layout-normal) {
-  border-radius: 0 0 var(--radius-default) var(--radius-default);
+.TableVisualization:deep(.ag-root-wrapper) {
+  --ag-wrapper-border-radius: 0 0 var(--radius-default) var(--radius-default);
+  border: none;
 }
 
 /* Tag selectors are inefficient to compute, and should be replaced with a class selector

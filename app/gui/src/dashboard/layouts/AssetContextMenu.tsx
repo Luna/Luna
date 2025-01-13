@@ -14,18 +14,12 @@ import * as backendProvider from '#/providers/BackendProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
-import AssetEventType from '#/events/AssetEventType'
-import AssetListEventType from '#/events/AssetListEventType'
-
-import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import { GlobalContextMenu } from '#/layouts/GlobalContextMenu'
 
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
-import ContextMenus from '#/components/ContextMenus'
 import type * as assetRow from '#/components/dashboard/AssetRow'
-import * as paywall from '#/components/Paywall'
 import Separator from '#/components/styled/Separator'
 
 import ConfirmDeleteModal from '#/modals/ConfirmDeleteModal'
@@ -35,17 +29,22 @@ import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 import * as backendModule from '#/services/Backend'
 import * as localBackendModule from '#/services/LocalBackend'
 
-import { useNewProject, useUploadFileWithToastMutation } from '#/hooks/backendHooks'
+import { ContextMenuEntry as PaywallContextMenuEntry } from '#/components/Paywall'
+import {
+  copyAssetsMutationOptions,
+  deleteAssetsMutationOptions,
+  downloadAssetsMutationOptions,
+  restoreAssetsMutationOptions,
+} from '#/hooks/backendBatchedHooks'
+import { useNewProject, useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
+import { useUploadFileWithToastMutation } from '#/hooks/backendUploadFilesHooks'
 import { usePasteData } from '#/providers/DriveProvider'
+import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
 import * as object from '#/utilities/object'
 import * as permissions from '#/utilities/permissions'
 import { useSetAssetPanelProps, useSetIsAssetPanelTemporarilyVisible } from './AssetPanel'
-
-// ========================
-// === AssetContextMenu ===
-// ========================
 
 /** Props for a {@link AssetContextMenu}. */
 export interface AssetContextMenuProps {
@@ -55,7 +54,6 @@ export interface AssetContextMenuProps {
   readonly triggerRef: React.MutableRefObject<HTMLElement | null>
   readonly event: Pick<React.MouseEvent, 'pageX' | 'pageY'>
   readonly eventTarget: HTMLElement | null
-  readonly doDelete: () => void
   readonly doCopy: () => void
   readonly doCut: () => void
   readonly doPaste: (
@@ -67,22 +65,26 @@ export interface AssetContextMenuProps {
 /** The context menu for an arbitrary {@link backendModule.Asset}. */
 export default function AssetContextMenu(props: AssetContextMenuProps) {
   const { innerProps, rootDirectoryId, event, eventTarget, hidden = false, triggerRef } = props
-  const { doCopy, doCut, doPaste, doDelete } = props
+  const { doCopy, doCut, doPaste } = props
   const { asset, path: pathRaw, state, setRowState } = innerProps
   const { backend, category, nodeMap } = state
 
+  const canOpenProjects = projectHooks.useCanOpenProjects()
   const { user } = authProvider.useFullUserSession()
   const { setModal } = modalProvider.useSetModal()
   const remoteBackend = backendProvider.useRemoteBackend()
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
   const toastAndLog = toastAndLogHooks.useToastAndLog()
-  const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
-  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
   const openProject = projectHooks.useOpenProject()
   const closeProject = projectHooks.useCloseProject()
+  const deleteAssetsMutation = reactQuery.useMutation(deleteAssetsMutationOptions(backend))
+  const restoreAssetsMutation = reactQuery.useMutation(restoreAssetsMutationOptions(backend))
+  const copyAssetsMutation = reactQuery.useMutation(copyAssetsMutationOptions(backend))
+  const downloadAssetsMutation = reactQuery.useMutation(downloadAssetsMutationOptions(backend))
+  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
   const openProjectMutation = projectHooks.useOpenProjectMutation()
   const self = permissions.tryFindSelfPermission(user, asset.permissions)
   const isCloud = categoryModule.isCloudCategory(category)
@@ -98,6 +100,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
     : pathComputed
   const copyMutation = copyHooks.useCopy({ copyText: path ?? '' })
   const uploadFileToCloudMutation = useUploadFileWithToastMutation(remoteBackend)
+  const disabledTooltip = !canOpenProjects ? getText('downloadToOpenWorkflow') : undefined
 
   const { isFeatureUnderPaywall } = billingHooks.usePaywall({ plan: user.plan })
   const isUnderPaywall = isFeatureUnderPaywall('share')
@@ -106,6 +109,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
 
   const systemApi = window.systemApi
   const ownsThisAsset = !isCloud || self?.permission === permissions.PermissionAction.own
+  const canManageThisAsset = asset.id !== USERS_DIRECTORY_ID && asset.id !== TEAMS_DIRECTORY_ID
   const managesThisAsset = ownsThisAsset || self?.permission === permissions.PermissionAction.admin
   const canEditThisAsset =
     managesThisAsset || self?.permission === permissions.PermissionAction.edit
@@ -120,7 +124,7 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       new Map(
         Array.from(nodeMap.current.entries()).map(([id, otherAsset]) => [
           id,
-          otherAsset.directoryKey,
+          otherAsset.item.parentId,
         ]),
       )
     )
@@ -150,10 +154,9 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
       // see `enabled` property below.
       // eslint-disable-next-line no-restricted-syntax
       assetId: asset.id as backendModule.ProjectId,
-      parentId: asset.parentId,
       backend,
     }),
-    enabled: asset.type === backendModule.AssetType.project,
+    enabled: asset.type === backendModule.AssetType.project && canOpenProjects,
   })
 
   const isRunningProject =
@@ -184,339 +187,329 @@ export default function AssetContextMenu(props: AssetContextMenuProps) {
     />
   )
 
+  const canUploadToCloud = user.plan !== backendModule.Plan.free
+
   return (
     category.type === 'trash' ?
       !ownsThisAsset ? null
-      : <ContextMenus hidden={hidden} key={asset.id} event={event}>
-          <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden}>
+      : <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden} event={event}>
+          <ContextMenuEntry
+            hidden={hidden}
+            action="undelete"
+            label={getText('restoreFromTrashShortcut')}
+            doAction={() => {
+              restoreAssetsMutation.mutate([asset.id])
+            }}
+          />
+          <ContextMenuEntry
+            hidden={hidden}
+            action="delete"
+            label={getText('deleteForeverShortcut')}
+            doAction={() => {
+              setModal(
+                <ConfirmDeleteModal
+                  defaultOpen
+                  cannotUndo
+                  actionText={getText('deleteTheAssetTypeTitleForever', asset.type, asset.title)}
+                  doDelete={async () => {
+                    await deleteAssetsMutation.mutateAsync([[asset.id], true])
+                  }}
+                />,
+              )
+            }}
+          />
+          {pasteMenuEntry}
+        </ContextMenu>
+    : !canManageThisAsset ? null
+    : <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden} event={event}>
+        {asset.type === backendModule.AssetType.datalink && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="useInNewProject"
+            doAction={() => {
+              void newProject(
+                { templateName: asset.title, datalinkId: asset.id },
+                asset.parentId,
+                path,
+              )
+            }}
+          />
+        )}
+        {asset.type === backendModule.AssetType.project &&
+          canExecute &&
+          !isRunningProject &&
+          !isOtherUserUsingProject && (
             <ContextMenuEntry
               hidden={hidden}
-              action="undelete"
-              label={getText('restoreFromTrashShortcut')}
+              action="open"
+              isDisabled={!canOpenProjects}
+              tooltip={disabledTooltip}
               doAction={() => {
-                dispatchAssetEvent({ type: AssetEventType.restore, ids: new Set([asset.id]) })
-              }}
-            />
-            <ContextMenuEntry
-              hidden={hidden}
-              action="delete"
-              label={getText('deleteForeverShortcut')}
-              doAction={() => {
-                setModal(
-                  <ConfirmDeleteModal
-                    defaultOpen
-                    actionText={`delete the ${asset.type} '${asset.title}' forever`}
-                    doDelete={() => {
-                      const ids = new Set([asset.id])
-                      dispatchAssetEvent({ type: AssetEventType.deleteForever, ids })
-                    }}
-                  />,
-                )
-              }}
-            />
-            {pasteMenuEntry}
-          </ContextMenu>
-        </ContextMenus>
-    : <ContextMenus hidden={hidden} key={asset.id} event={event}>
-        <ContextMenu aria-label={getText('assetContextMenuLabel')} hidden={hidden}>
-          {asset.type === backendModule.AssetType.datalink && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="useInNewProject"
-              doAction={() => {
-                void newProject(
-                  { templateName: asset.title, datalinkId: asset.id },
-                  asset.parentId,
-                  path,
-                )
-              }}
-            />
-          )}
-          {asset.type === backendModule.AssetType.project &&
-            canExecute &&
-            !isRunningProject &&
-            !isOtherUserUsingProject && (
-              <ContextMenuEntry
-                hidden={hidden}
-                action="open"
-                doAction={() => {
-                  openProject({
-                    id: asset.id,
-                    title: asset.title,
-                    parentId: asset.parentId,
-                    type: state.backend.type,
-                  })
-                }}
-              />
-            )}
-          {asset.type === backendModule.AssetType.project && isCloud && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="run"
-              doAction={() => {
-                openProjectMutation.mutate({
+                openProject({
                   id: asset.id,
                   title: asset.title,
                   parentId: asset.parentId,
                   type: state.backend.type,
-                  inBackground: true,
                 })
               }}
             />
           )}
-          {!isCloud && path != null && systemApi && (
+        {asset.type === backendModule.AssetType.project && isCloud && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="run"
+            isDisabled={!canOpenProjects}
+            tooltip={disabledTooltip}
+            doAction={() => {
+              openProjectMutation.mutate({
+                id: asset.id,
+                title: asset.title,
+                parentId: asset.parentId,
+                type: state.backend.type,
+                inBackground: true,
+              })
+            }}
+          />
+        )}
+        {!isCloud && path != null && systemApi && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="openInFileBrowser"
+            doAction={() => {
+              systemApi.showItemInFolder(path)
+            }}
+          />
+        )}
+        {asset.type === backendModule.AssetType.project &&
+          canExecute &&
+          isRunningProject &&
+          !isOtherUserUsingProject && (
             <ContextMenuEntry
               hidden={hidden}
-              action="openInFileBrowser"
+              action="close"
               doAction={() => {
-                systemApi.showItemInFolder(path)
+                closeProject({
+                  id: asset.id,
+                  title: asset.title,
+                  parentId: asset.parentId,
+                  type: state.backend.type,
+                })
               }}
             />
           )}
-          {asset.type === backendModule.AssetType.project &&
-            canExecute &&
-            isRunningProject &&
-            !isOtherUserUsingProject && (
-              <ContextMenuEntry
-                hidden={hidden}
-                action="close"
-                doAction={() => {
-                  closeProject({
-                    id: asset.id,
-                    title: asset.title,
-                    parentId: asset.parentId,
-                    type: state.backend.type,
-                  })
-                }}
-              />
-            )}
-          {asset.type === backendModule.AssetType.project && !isCloud && (
+        {asset.type === backendModule.AssetType.project && !isCloud && (
+          <PaywallContextMenuEntry
+            hidden={hidden}
+            isUnderPaywall={!canUploadToCloud}
+            feature="uploadToCloud"
+            action="uploadToCloud"
+            doAction={async () => {
+              try {
+                const projectResponse = await fetch(
+                  `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
+                )
+                const fileName = `${asset.title}.enso-project`
+                await uploadFileToCloudMutation.mutateAsync([
+                  {
+                    fileName,
+                    fileId: null,
+                    parentDirectoryId: null,
+                  },
+                  new File([await projectResponse.blob()], fileName),
+                ])
+                toast.toast.success(getText('uploadProjectToCloudSuccess'))
+              } catch (error) {
+                toastAndLog('uploadProjectToCloudError', error)
+              }
+            }}
+          />
+        )}
+        {canExecute &&
+          !isRunningProject &&
+          !isOtherUserUsingProject &&
+          (!isCloud ||
+            asset.type === backendModule.AssetType.project ||
+            asset.type === backendModule.AssetType.directory) && (
             <ContextMenuEntry
               hidden={hidden}
-              action="uploadToCloud"
-              doAction={async () => {
-                try {
-                  const projectResponse = await fetch(
-                    `./api/project-manager/projects/${localBackendModule.extractTypeAndId(asset.id).id}/enso-project`,
-                  )
-                  // This DOES NOT update the cloud assets list when it
-                  // completes, as the current backend is not the remote
-                  // (cloud) backend. The user may change to the cloud backend
-                  // while this request is in progress, however this is
-                  // uncommon enough that it is not worth the added complexity.
-                  const fileName = `${asset.title}.enso-project`
-                  await uploadFileToCloudMutation.mutateAsync(
-                    {
-                      fileName,
-                      fileId: null,
-                      parentDirectoryId: null,
-                    },
-                    new File([await projectResponse.blob()], fileName),
-                  )
-                  toast.toast.success(getText('uploadProjectToCloudSuccess'))
-                } catch (error) {
-                  toastAndLog('uploadProjectToCloudError', error)
+              action="rename"
+              doAction={() => {
+                setRowState(object.merger({ isEditingName: true }))
+              }}
+            />
+          )}
+        {(asset.type === backendModule.AssetType.secret ||
+          asset.type === backendModule.AssetType.datalink) &&
+          canEditThisAsset && (
+            <ContextMenuEntry
+              hidden={hidden}
+              action="edit"
+              doAction={() => {
+                setIsAssetPanelTemporarilyVisible(true)
+                const assetPanelProps = { backend, item: asset }
+                switch (asset.type) {
+                  case backendModule.AssetType.secret: {
+                    setAssetPanelProps({
+                      ...assetPanelProps,
+                      path: pathRaw,
+                      spotlightOn: 'secret',
+                    })
+                    break
+                  }
+                  case backendModule.AssetType.datalink: {
+                    setAssetPanelProps({
+                      ...assetPanelProps,
+                      path: pathRaw,
+                      spotlightOn: 'datalink',
+                    })
+                    break
+                  }
                 }
               }}
             />
           )}
-          {canExecute &&
-            !isRunningProject &&
-            !isOtherUserUsingProject &&
-            (!isCloud ||
-              asset.type === backendModule.AssetType.project ||
-              asset.type === backendModule.AssetType.directory) && (
-              <ContextMenuEntry
-                hidden={hidden}
-                action="rename"
-                doAction={() => {
-                  setRowState(object.merger({ isEditingName: true }))
-                }}
-              />
-            )}
-          {(asset.type === backendModule.AssetType.secret ||
-            asset.type === backendModule.AssetType.datalink) &&
-            canEditThisAsset && (
-              <ContextMenuEntry
-                hidden={hidden}
-                action="edit"
-                doAction={() => {
-                  setIsAssetPanelTemporarilyVisible(true)
-                  const assetPanelProps = { backend, item: asset }
-                  switch (asset.type) {
-                    case backendModule.AssetType.secret: {
-                      setAssetPanelProps({
-                        ...assetPanelProps,
-                        path: pathRaw,
-                        spotlightOn: 'secret',
-                      })
-                      break
-                    }
-                    case backendModule.AssetType.datalink: {
-                      setAssetPanelProps({
-                        ...assetPanelProps,
-                        path: pathRaw,
-                        spotlightOn: 'datalink',
-                      })
-                      break
-                    }
-                  }
-                }}
-              />
-            )}
-          {isCloud && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="editDescription"
-              label={getText('editDescriptionShortcut')}
-              doAction={() => {
-                setIsAssetPanelTemporarilyVisible(true)
-                setAssetPanelProps({
-                  backend,
-                  item: asset,
-                  path: pathRaw,
-                  spotlightOn: 'description',
-                })
-              }}
-            />
-          )}
-          {isCloud && (
-            <ContextMenuEntry
-              hidden={hidden}
-              isDisabled
-              action="snapshot"
-              doAction={() => {
-                // No backend support yet.
-              }}
-            />
-          )}
-          {ownsThisAsset && !isRunningProject && !isOtherUserUsingProject && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="delete"
-              label={isCloud ? getText('moveToTrashShortcut') : getText('deleteShortcut')}
-              doAction={() => {
-                if (isCloud) {
-                  if (asset.type === backendModule.AssetType.directory) {
-                    setModal(
-                      <ConfirmDeleteModal
-                        defaultOpen
-                        actionText={getText('trashTheAssetTypeTitle', asset.type, asset.title)}
-                        doDelete={doDelete}
-                      />,
-                    )
-                  } else {
-                    doDelete()
-                  }
-                } else {
+        {isCloud && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="editDescription"
+            label={getText('editDescriptionShortcut')}
+            doAction={() => {
+              setIsAssetPanelTemporarilyVisible(true)
+              setAssetPanelProps({
+                backend,
+                item: asset,
+                path: pathRaw,
+                spotlightOn: 'description',
+              })
+            }}
+          />
+        )}
+        {isCloud && (
+          <ContextMenuEntry
+            hidden={hidden}
+            isDisabled
+            action="snapshot"
+            doAction={() => {
+              // No backend support yet.
+            }}
+          />
+        )}
+        {ownsThisAsset && !isRunningProject && !isOtherUserUsingProject && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="delete"
+            label={isCloud ? getText('moveToTrashShortcut') : getText('deleteShortcut')}
+            doAction={() => {
+              if (isCloud) {
+                if (asset.type === backendModule.AssetType.directory) {
                   setModal(
                     <ConfirmDeleteModal
                       defaultOpen
-                      actionText={getText('deleteTheAssetTypeTitle', asset.type, asset.title)}
-                      doDelete={doDelete}
+                      actionText={getText('trashTheAssetTypeTitle', asset.type, asset.title)}
+                      doDelete={async () => {
+                        await deleteAssetsMutation.mutateAsync([[asset.id], false])
+                      }}
                     />,
                   )
+                } else {
+                  deleteAssetsMutation.mutate([[asset.id], false])
                 }
-              }}
-            />
-          )}
-          {isCloud && <Separator hidden={hidden} />}
-
-          {isCloud && managesThisAsset && self != null && (
-            <>
-              {isUnderPaywall && (
-                <paywall.ContextMenuEntry feature="share" action="share" hidden={hidden} />
-              )}
-
-              {!isUnderPaywall && (
-                <ContextMenuEntry
-                  hidden={hidden}
-                  action="share"
-                  doAction={() => {
-                    setModal(
-                      <ManagePermissionsModal
-                        backend={backend}
-                        category={category}
-                        item={asset}
-                        self={self}
-                        eventTarget={eventTarget}
-                        doRemoveSelf={() => {
-                          dispatchAssetEvent({
-                            type: AssetEventType.removeSelf,
-                            id: asset.id,
-                          })
-                        }}
-                      />,
-                    )
-                  }}
-                />
-              )}
-            </>
-          )}
-
-          {isCloud && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="label"
-              doAction={() => {
+              } else {
                 setModal(
-                  <ManageLabelsModal backend={backend} item={asset} triggerRef={triggerRef} />,
+                  <ConfirmDeleteModal
+                    defaultOpen
+                    actionText={getText('deleteTheAssetTypeTitle', asset.type, asset.title)}
+                    doDelete={async () => {
+                      await deleteAssetsMutation.mutateAsync([[asset.id], false])
+                    }}
+                  />,
                 )
-              }}
-            />
-          )}
-          {isCloud && managesThisAsset && self != null && <Separator hidden={hidden} />}
-          {asset.type === backendModule.AssetType.project && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="duplicate"
-              doAction={() => {
-                dispatchAssetListEvent({
-                  type: AssetListEventType.copy,
-                  newParentId: asset.parentId,
-                  newParentKey: asset.parentId,
-                  items: [asset],
-                })
-              }}
-            />
-          )}
-          {isCloud && <ContextMenuEntry hidden={hidden} action="copy" doAction={doCopy} />}
-          {path != null && (
-            <ContextMenuEntry
-              hidden={hidden}
-              action="copyAsPath"
-              doAction={copyMutation.mutateAsync}
-            />
-          )}
-          {!isRunningProject && !isOtherUserUsingProject && (
-            <ContextMenuEntry hidden={hidden} action="cut" doAction={doCut} />
-          )}
-          {(isCloud ?
-            asset.type !== backendModule.AssetType.directory
-          : asset.type === backendModule.AssetType.project) && (
-            <ContextMenuEntry
-              hidden={hidden}
-              isDisabled={asset.type === backendModule.AssetType.secret}
-              action="download"
-              doAction={() => {
-                dispatchAssetEvent({ type: AssetEventType.download, ids: new Set([asset.id]) })
-              }}
-            />
-          )}
-          {pasteMenuEntry}
-        </ContextMenu>
+              }
+            }}
+          />
+        )}
+        {isCloud && <Separator hidden={hidden} />}
+
+        {isCloud && managesThisAsset && self != null && (
+          <PaywallContextMenuEntry
+            feature="share"
+            isUnderPaywall={isUnderPaywall}
+            action="share"
+            hidden={hidden}
+            doAction={() => {
+              setModal(
+                <ManagePermissionsModal
+                  backend={backend}
+                  category={category}
+                  item={asset}
+                  self={self}
+                  eventTarget={eventTarget}
+                  doRemoveSelf={() => {
+                    removeSelfPermissionMutation.mutate(asset.id)
+                  }}
+                />,
+              )
+            }}
+          />
+        )}
+
+        {isCloud && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="label"
+            doAction={() => {
+              setModal(<ManageLabelsModal backend={backend} item={asset} triggerRef={triggerRef} />)
+            }}
+          />
+        )}
+        {isCloud && managesThisAsset && self != null && <Separator hidden={hidden} />}
+        {asset.type === backendModule.AssetType.project && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="duplicate"
+            doAction={() => {
+              copyAssetsMutation.mutate([[asset.id], asset.parentId])
+            }}
+          />
+        )}
+        {isCloud && <ContextMenuEntry hidden={hidden} action="copy" doAction={doCopy} />}
+        {path != null && (
+          <ContextMenuEntry
+            hidden={hidden}
+            action="copyAsPath"
+            doAction={copyMutation.mutateAsync}
+          />
+        )}
+        {!isRunningProject && !isOtherUserUsingProject && (
+          <ContextMenuEntry hidden={hidden} action="cut" doAction={doCut} />
+        )}
+        {(isCloud ?
+          asset.type !== backendModule.AssetType.directory
+        : asset.type === backendModule.AssetType.project) && (
+          <ContextMenuEntry
+            hidden={hidden}
+            isDisabled={asset.type === backendModule.AssetType.secret}
+            action="download"
+            doAction={() => {
+              downloadAssetsMutation.mutate([{ id: asset.id, title: asset.title }])
+            }}
+          />
+        )}
+        {pasteMenuEntry}
+        {canAddToThisDirectory && <Separator hidden={hidden} />}
         {canAddToThisDirectory && (
           <GlobalContextMenu
+            noWrapper
             hidden={hidden}
             backend={backend}
             category={category}
             rootDirectoryId={rootDirectoryId}
-            directoryKey={asset.id}
             directoryId={asset.id}
             path={path}
             doPaste={doPaste}
+            event={event}
           />
         )}
-      </ContextMenus>
+      </ContextMenu>
   )
 }

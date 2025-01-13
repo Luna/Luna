@@ -37,6 +37,7 @@ import * as errorModule from '#/utilities/error'
 
 import * as cognitoModule from '#/authentication/cognito'
 import type * as authServiceModule from '#/authentication/service'
+import { isOrganizationId } from '#/services/RemoteBackend'
 import { unsafeWriteValue } from '#/utilities/write'
 
 // ===================
@@ -255,17 +256,6 @@ export default function AuthProvider(props: AuthProviderProps) {
     meta: { invalidates: [usersMeQueryOptions.queryKey], awaitInvalidates: true },
   })
 
-  /**
-   * Wrap a function returning a {@link Promise} to display a loading toast notification
-   * until the returned {@link Promise} finishes loading.
-   */
-  const withLoadingToast =
-    <T extends unknown[], R>(action: (...args: T) => Promise<R>) =>
-    async (...args: T) => {
-      toast.toast.loading(getText('pleaseWait'), { toastId })
-      return await action(...args)
-    }
-
   const toastSuccess = (message: string) => {
     toast.toast.update(toastId, {
       isLoading: null,
@@ -274,18 +264,6 @@ export default function AuthProvider(props: AuthProviderProps) {
       closeButton: null,
       draggable: null,
       type: toast.toast.TYPE.SUCCESS,
-      render: message,
-    })
-  }
-
-  const toastError = (message: string) => {
-    toast.toast.update(toastId, {
-      isLoading: null,
-      autoClose: null,
-      closeOnClick: null,
-      closeButton: null,
-      draggable: null,
-      type: toast.toast.TYPE.ERROR,
       render: message,
     })
   }
@@ -353,11 +331,15 @@ export default function AuthProvider(props: AuthProviderProps) {
       const organizationId = await cognito.organizationId()
       const email = session?.email ?? ''
 
+      invariant(
+        organizationId == null || isOrganizationId(organizationId),
+        'Invalid organization ID',
+      )
+
       await createUserMutation.mutateAsync({
         userName: username,
         userEmail: backendModule.EmailAddress(email),
-        organizationId:
-          organizationId != null ? backendModule.OrganizationId(organizationId) : null,
+        organizationId: organizationId != null ? organizationId : null,
       })
     }
     // Wait until the backend returns a value from `users/me`,
@@ -426,10 +408,8 @@ export default function AuthProvider(props: AuthProviderProps) {
   const changePassword = useEventCallback(async (oldPassword: string, newPassword: string) => {
     const result = await cognito.changePassword(oldPassword, newPassword)
 
-    if (result.ok) {
-      toastSuccess(getText('changePasswordSuccess'))
-    } else {
-      toastError(result.val.message)
+    if (result.err) {
+      throw new Error(result.val.message)
     }
 
     return result.ok
@@ -525,7 +505,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     signInWithPassword,
     forgotPassword,
     resetPassword,
-    changePassword: withLoadingToast(changePassword),
+    changePassword,
     refetchSession,
     session: userData,
     signOut: logoutMutation.mutateAsync,
@@ -582,7 +562,14 @@ export function ProtectedLayout() {
   } else if (session.type === UserSessionType.partial) {
     return <router.Navigate to={appUtils.SETUP_PATH} />
   } else {
-    return <router.Outlet context={session} />
+    return (
+      <>
+        {/* This div is used as a flag to indicate that the dashboard has been loaded and the user is authenticated. */}
+        {/* also it guarantees that the top-level suspense boundary is already resolved */}
+        <div data-testid="after-auth-layout" aria-hidden />
+        <router.Outlet context={session} />
+      </>
+    )
   }
 }
 
@@ -635,7 +622,14 @@ export function GuestLayout() {
       return <router.Navigate to={appUtils.DASHBOARD_PATH} />
     }
   } else {
-    return <router.Outlet />
+    return (
+      <>
+        {/* This div is used as a flag to indicate that the user is not logged in. */}
+        {/* also it guarantees that the top-level suspense boundary is already resolved */}
+        <div data-testid="before-auth-layout" aria-hidden />
+        <router.Outlet />
+      </>
+    )
   }
 }
 
@@ -703,4 +697,11 @@ export function useFullUserSession(): FullUserSession {
   invariant(session?.type === UserSessionType.full, 'Expected a full user session.')
 
   return session
+}
+
+/** A React context hook returning the user session for a user that is fully logged in. */
+export function useUser() {
+  const { user } = useFullUserSession()
+
+  return user
 }

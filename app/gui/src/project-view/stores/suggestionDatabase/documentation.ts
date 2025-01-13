@@ -4,6 +4,7 @@ import { isSome, type Opt } from '@/util/data/opt'
 import { parseDocs, type Doc } from '@/util/docParser'
 import type { Icon } from '@/util/iconName'
 import { type QualifiedName } from '@/util/qualifiedName'
+import { type DeepReadonly } from 'vue'
 
 export interface DocumentationData {
   documentation: Doc.Section[]
@@ -31,7 +32,7 @@ export function tagValue(doc: Doc.Section[], tag: string): Opt<string> {
 export function getGroupIndex(
   groupName: string,
   entryModule: QualifiedName,
-  groups: Group[],
+  groups: DeepReadonly<Group[]>,
 ): Opt<number> {
   let normalized: string
   if (groupName.indexOf('.') >= 0) {
@@ -48,7 +49,7 @@ export function getGroupIndex(
 export function documentationData(
   documentation: Opt<string>,
   definedIn: QualifiedName,
-  groups: Group[],
+  groups: DeepReadonly<Group[]>,
 ): DocumentationData {
   const parsed = documentation != null ? parseDocs(documentation) : []
   const groupName = tagValue(parsed, 'Group')
@@ -66,4 +67,15 @@ export function documentationData(
     isPrivate: isSome(tagValue(parsed, 'Private')),
     isUnstable: isSome(tagValue(parsed, 'Unstable')) || isSome(tagValue(parsed, 'Advanced')),
   }
+}
+
+/**
+ * Get the ICON tag value from the documentation block. Only use this function
+ * if all you need is icon, since the docs parsing is an expensive operation.
+ * @param documentation String representation of documentation block.
+ * @returns Value of icon tag within the docs.
+ */
+export function getDocsIcon(documentation: Opt<string>): Opt<Icon> {
+  const parsed = documentation != null ? parseDocs(documentation) : []
+  return tagValue(parsed, 'Icon') as Opt<Icon>
 }

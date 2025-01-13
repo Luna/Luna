@@ -36,13 +36,14 @@ const value = computed({
   set(value) {
     const edit = graph.startEdit()
     const theImport = value ? trueImport.value : falseImport.value
-    if (props.input.value instanceof Ast.Ast) {
+    const inputValue: Ast.Expression | string | undefined = props.input.value
+    if (inputValue instanceof Ast.Ast) {
       const { requiresImport } = setBoolNode(
-        edit.getVersion(props.input.value),
+        edit.getVersion(inputValue),
         value ? ('True' as Identifier) : ('False' as Identifier),
       )
       if (requiresImport) graph.addMissingImports(edit, theImport)
-      props.onUpdate({ edit })
+      props.onUpdate({ edit, directInteraction: true })
     } else {
       graph.addMissingImports(edit, theImport)
       props.onUpdate({
@@ -51,6 +52,7 @@ const value = computed({
           value: value ? 'True' : 'False',
           origin: props.input.portId,
         },
+        directInteraction: true,
       })
     }
   },
@@ -64,7 +66,7 @@ const argumentName = computed(() => {
 </script>
 
 <script lang="ts">
-function isBoolNode(ast: Ast.Expression) {
+function isBoolNode(ast: Ast.Ast) {
   const candidate =
     ast instanceof Ast.PropertyAccess && ast.lhs?.code() === 'Boolean' ? ast.rhs
     : ast instanceof Ast.Ident ? ast.token

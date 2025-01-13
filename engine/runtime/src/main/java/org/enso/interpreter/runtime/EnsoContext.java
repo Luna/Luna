@@ -170,7 +170,7 @@ public final class EnsoContext {
 
   /** Perform expensive initialization logic for the context. */
   public void initialize() {
-    TruffleFileSystem fs = new TruffleFileSystem();
+    TruffleFileSystem fs = TruffleFileSystem.INSTANCE;
     PackageManager<TruffleFile> packageManager = new PackageManager<>(fs);
 
     Optional<TruffleFile> projectRoot = OptionsHelper.getProjectRoot(environment);
@@ -272,8 +272,8 @@ public final class EnsoContext {
         with root nodes: {r}
         """
                   .replace("{n}", "" + n)
-                  .replace("{s}", "" + n.getEncapsulatingSourceSection())
-                  .replace("{r}", "" + n.getRootNode()));
+                  .replace("{s}", "" + (n != null ? n.getEncapsulatingSourceSection() : null))
+                  .replace("{r}", "" + (n != null ? n.getRootNode() : null)));
       ex.printStackTrace();
       checkUntil = System.currentTimeMillis() + 10000;
       var assertsOn = false;

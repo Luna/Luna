@@ -16,6 +16,7 @@ import { Rect } from '@/util/data/rect'
 import { Vec2 } from '@/util/data/vec2'
 import { qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
 import type { ToValue } from '@/util/reactivity'
+import { identity } from '@vueuse/core'
 import * as iter from 'enso-common/src/utilities/data/iter'
 import { nextTick, toValue } from 'vue'
 import { assert, assertNever } from 'ydoc-shared/util/assert'
@@ -73,18 +74,14 @@ export function useNodeCreation(
   function placeNode(placement: PlacementStrategy, place: (nodes?: Iterable<Rect>) => Vec2): Vec2 {
     return (
       placement.type === 'viewport' ? place()
-      : placement.type === 'mouse' ? tryMouse() ?? place()
-      : placement.type === 'mouseRelative' ? tryMouseRelative(placement.posOffset) ?? place()
+      : placement.type === 'mouse' ? (tryMouse() ?? place())
+      : placement.type === 'mouseRelative' ? (tryMouseRelative(placement.posOffset) ?? place())
       : placement.type === 'mouseEvent' ? mouseDictatedPlacement(placement.position)
       : placement.type === 'source' ?
         place(iter.filterDefined([graphStore.visibleArea(placement.node)]))
       : placement.type === 'fixed' ? placement.position
       : assertNever(placement)
     )
-  }
-
-  function identity<T>(value: T): T {
-    return value
   }
 
   function placeNodes(nodesOptions: Iterable<NodeCreationOptions>): NodeCreationOptions[] {

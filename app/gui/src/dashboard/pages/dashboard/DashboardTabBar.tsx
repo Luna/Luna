@@ -1,7 +1,7 @@
 /** @file The tab bar for the dashboard page. */
 import DriveIcon from '#/assets/drive.svg'
+import NetworkIcon from '#/assets/network.svg'
 import SettingsIcon from '#/assets/settings.svg'
-import WorkspaceIcon from '#/assets/workspace.svg'
 
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import TabBar from '#/layouts/TabBar'
@@ -59,7 +59,7 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
       (project) =>
         ({
           id: project.id,
-          icon: WorkspaceIcon,
+          icon: NetworkIcon,
           'data-testid': 'editor-tab-button',
           labelId: 'editorPageName' satisfies TextId,
           // There is no shared enum type, but the other union member is the same type.
@@ -87,7 +87,7 @@ export function DashboardTabBar(props: DashboardTabBarProps) {
   ]
 
   return (
-    <TabBar className="bg-primary/5" items={tabs}>
+    <TabBar className="bg-primary/10" items={tabs}>
       {/* @ts-expect-error - Making ts happy here requires too much attention */}
       {(tab) => <tab.Component {...tab} />}
     </TabBar>

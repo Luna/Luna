@@ -7,15 +7,19 @@ import invariant from 'tiny-invariant'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import type { PasteData } from '#/utilities/pasteData'
 import { EMPTY_SET } from '#/utilities/set'
 import type {
+  AnyAsset,
   AssetId,
   BackendType,
   DirectoryAsset,
   DirectoryId,
+  LabelName,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { unsafeMutable } from 'enso-common/src/utilities/data/object'
 
 // ==================
 // === DriveStore ===
@@ -28,10 +32,23 @@ export interface DrivePastePayload {
   readonly ids: ReadonlySet<AssetId>
 }
 
+/** The subset of asset information required for selections. */
+export type SelectedAssetInfo =
+  AnyAsset extends infer T ?
+    T extends T ?
+      Pick<T, keyof T & ('id' | 'parentId' | 'title' | 'type')>
+    : never
+  : never
+
+/** Payload for labels being dragged. */
+export interface LabelsDragPayload {
+  readonly typeWhenAppliedToSelection: 'add' | 'remove'
+  readonly labels: readonly LabelName[]
+}
+
 /** The state of this zustand store. */
 interface DriveStore {
-  readonly category: Category
-  readonly setCategory: (category: Category) => void
+  readonly resetAssetTableState: () => void
   readonly targetDirectory: AssetTreeNode<DirectoryAsset> | null
   readonly setTargetDirectory: (targetDirectory: AssetTreeNode<DirectoryAsset> | null) => void
   readonly newestFolderId: DirectoryId | null
@@ -45,9 +62,18 @@ interface DriveStore {
   readonly expandedDirectoryIds: readonly DirectoryId[]
   readonly setExpandedDirectoryIds: (selectedKeys: readonly DirectoryId[]) => void
   readonly selectedKeys: ReadonlySet<AssetId>
-  readonly setSelectedKeys: (selectedKeys: ReadonlySet<AssetId>) => void
+  readonly selectedAssets: readonly SelectedAssetInfo[]
+  readonly setSelectedAssets: (selectedAssets: readonly SelectedAssetInfo[]) => void
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
+  readonly labelsDragPayload: LabelsDragPayload | null
+  readonly setLabelsDragPayload: (labelsDragPayload: LabelsDragPayload | null) => void
+  readonly isDraggingOverSelectedRow: boolean
+  readonly setIsDraggingOverSelectedRow: (isDraggingOverSelectedRow: boolean) => void
+  readonly dragTargetAssetId: AssetId | null
+  readonly setDragTargetAssetId: (dragTargetAssetId: AssetId | null) => void
+  readonly nodeMap: { readonly current: ReadonlyMap<AssetId, AnyAssetTreeNode> }
+  readonly setNodeMap: (nodeMap: ReadonlyMap<AssetId, AnyAssetTreeNode>) => void
 }
 
 // =======================
@@ -60,31 +86,32 @@ export type ProjectsContextType = zustand.StoreApi<DriveStore>
 const DriveContext = React.createContext<ProjectsContextType | null>(null)
 
 /** Props for a {@link DriveProvider}. */
-export type ProjectsProviderProps = Readonly<React.PropsWithChildren>
+export interface ProjectsProviderProps {
+  readonly children:
+    | React.ReactNode
+    | ((context: {
+        readonly store: ProjectsContextType
+        readonly resetAssetTableState: () => void
+      }) => React.ReactNode)
+}
 
 // ========================
 // === ProjectsProvider ===
 // ========================
 
-/**
- * A React provider (and associated hooks) for determining whether the current area
- * containing the current element is focused.
- */
+/** A React provider for Drive-specific metadata. */
 export default function DriveProvider(props: ProjectsProviderProps) {
   const { children } = props
 
   const [store] = React.useState(() =>
     zustand.createStore<DriveStore>((set, get) => ({
-      category: { type: 'cloud' },
-      setCategory: (category) => {
-        if (get().category !== category) {
-          set({
-            category,
-            targetDirectory: null,
-            selectedKeys: EMPTY_SET,
-            visuallySelectedKeys: null,
-          })
-        }
+      resetAssetTableState: () => {
+        set({
+          targetDirectory: null,
+          selectedKeys: EMPTY_SET,
+          visuallySelectedKeys: null,
+          expandedDirectoryIds: EMPTY_ARRAY,
+        })
       },
       targetDirectory: null,
       setTargetDirectory: (targetDirectory) => {
@@ -123,21 +150,60 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         }
       },
       selectedKeys: EMPTY_SET,
-      setSelectedKeys: (selectedKeys) => {
-        if (get().selectedKeys !== selectedKeys) {
-          set({ selectedKeys })
+      selectedAssets: EMPTY_ARRAY,
+      setSelectedAssets: (selectedAssets) => {
+        if (selectedAssets.length === 0) {
+          selectedAssets = EMPTY_ARRAY
+        }
+        if (get().selectedAssets !== selectedAssets) {
+          set({
+            selectedAssets,
+            selectedKeys:
+              selectedAssets.length === 0 ?
+                EMPTY_SET
+              : new Set(selectedAssets.map((asset) => asset.id)),
+          })
         }
       },
       visuallySelectedKeys: null,
       setVisuallySelectedKeys: (visuallySelectedKeys) => {
-        if (get().visuallySelectedKeys !== visuallySelectedKeys) {
-          set({ visuallySelectedKeys })
+        set({ visuallySelectedKeys })
+      },
+      labelsDragPayload: null,
+      setLabelsDragPayload: (labelsDragPayload) => {
+        if (get().labelsDragPayload !== labelsDragPayload) {
+          set({ labelsDragPayload })
+        }
+      },
+      isDraggingOverSelectedRow: false,
+      setIsDraggingOverSelectedRow: (isDraggingOverSelectedRow) => {
+        if (get().isDraggingOverSelectedRow !== isDraggingOverSelectedRow) {
+          set({ isDraggingOverSelectedRow })
+        }
+      },
+      dragTargetAssetId: null,
+      setDragTargetAssetId: (dragTargetAssetId) => {
+        if (get().dragTargetAssetId !== dragTargetAssetId) {
+          set({ dragTargetAssetId })
+        }
+      },
+      nodeMap: { current: new Map() },
+      setNodeMap: (nodeMap) => {
+        if (get().nodeMap.current !== nodeMap) {
+          unsafeMutable(get().nodeMap).current = nodeMap
+          set({ nodeMap: get().nodeMap })
         }
       },
     })),
   )
 
-  return <DriveContext.Provider value={store}>{children}</DriveContext.Provider>
+  const resetAssetTableState = zustand.useStore(store, (state) => state.resetAssetTableState)
+
+  return (
+    <DriveContext.Provider value={store}>
+      {typeof children === 'function' ? children({ store, resetAssetTableState }) : children}
+    </DriveContext.Provider>
+  )
 }
 
 /** The drive store. */
@@ -147,18 +213,6 @@ export function useDriveStore() {
   invariant(store, 'Drive store can only be used inside an `DriveProvider`.')
 
   return store
-}
-
-/** The category of the Asset Table. */
-export function useCategory() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.category)
-}
-
-/** A function to set the category of the Asset Table. */
-export function useSetCategory() {
-  const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setCategory)
 }
 
 /** The target directory of the Asset Table selection. */
@@ -230,7 +284,9 @@ export function useExpandedDirectoryIds() {
 /** A function to set the expanded directoyIds in the Asset Table. */
 export function useSetExpandedDirectoryIds() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setExpandedDirectoryIds)
+  return zustand.useStore(store, (state) => state.setExpandedDirectoryIds, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** The selected keys in the Asset Table. */
@@ -239,10 +295,16 @@ export function useSelectedKeys() {
   return zustand.useStore(store, (state) => state.selectedKeys)
 }
 
-/** A function to set the selected keys in the Asset Table. */
-export function useSetSelectedKeys() {
+/** The selected assets in the Asset Table. */
+export function useSelectedAssets() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setSelectedKeys)
+  return zustand.useStore(store, (state) => state.selectedAssets)
+}
+
+/** A function to set the selected assets in the Asset Table. */
+export function useSetSelectedAssets() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setSelectedAssets)
 }
 
 /** The visually selected keys in the Asset Table. */
@@ -259,6 +321,57 @@ export function useSetVisuallySelectedKeys() {
   return zustand.useStore(store, (state) => state.setVisuallySelectedKeys, {
     unsafeEnableTransition: true,
   })
+}
+
+/** The drag payload of labels. */
+export function useLabelsDragPayload() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.labelsDragPayload)
+}
+
+/** A function to set the drag payload of labels. */
+export function useSetLabelsDragPayload() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setLabelsDragPayload)
+}
+
+/** The map of keys to {@link AssetTreeNode}s. */
+export function useNodeMap() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.nodeMap)
+}
+
+/** A function to set the map of keys to {@link AssetTreeNode}s. */
+export function useSetNodeMap() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setNodeMap)
+}
+
+/**
+ * Whether dragging is currently active for a selected row.
+ * This is true if and only if this row, or another selected row, is being dragged over.
+ */
+export function useIsDraggingOverSelectedRow(selected: boolean) {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => selected && state.isDraggingOverSelectedRow)
+}
+
+/** A function to set whether dragging is currently over a selected row. */
+export function useSetIsDraggingOverSelectedRow() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setIsDraggingOverSelectedRow)
+}
+
+/** Whether the given {@link AssetId} is the one currently being dragged over. */
+export function useIsDragTargetAssetId(assetId: AssetId) {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => assetId === state.dragTargetAssetId)
+}
+
+/** A function to set which {@link AssetId} is the one currently being dragged over. */
+export function useSetDragTargetAssetId() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.setDragTargetAssetId)
 }
 
 /** Toggle whether a specific directory is expanded. */

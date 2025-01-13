@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NodeWidget from '@/components/GraphEditor/NodeWidget.vue'
 import { useWidgetFunctionCallInfo } from '@/components/GraphEditor/widgets/WidgetFunction/widgetFunctionCallInfo'
-import { FunctionName } from '@/components/GraphEditor/widgets/WidgetFunctionName.vue'
 import { injectFunctionInfo, provideFunctionInfo } from '@/providers/functionInfo'
 import {
   Score,
@@ -65,13 +64,7 @@ const innerInput = computed(() => {
     input = { ...props.input }
   }
   const callInfo = methodCallInfo.value
-  if (callInfo) {
-    input[CallInfo] = callInfo
-    if (input.value instanceof Ast.PropertyAccess || input.value instanceof Ast.Ident) {
-      const definition = graph.getMethodAst(callInfo.methodCall.methodPointer)
-      if (definition.ok) input[FunctionName] = { editableName: definition.value.name.externalId }
-    }
-  }
+  if (callInfo) input[CallInfo] = callInfo
   return input
 })
 
@@ -87,7 +80,11 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
         console.error('Tried to set metadata on arg placeholder. This is not implemented yet!')
       return false
     }
-    const { value, origin } = update.portUpdate
+    const {
+      portUpdate: { value, origin },
+      directInteraction,
+    } = update
+
     const edit = update.edit ?? graph.startEdit()
     // Find the updated argument by matching origin port/expression with the appropriate argument.
     // We are interested only in updates at the top level of the argument AST. Updates from nested
@@ -114,7 +111,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
       edit
         .getVersion(argApp.appTree)
         .updateValue((oldAppTree) => Ast.App.new(edit, oldAppTree, name, newArg))
-      props.onUpdate({ edit })
+      props.onUpdate({ edit, directInteraction })
       return true
     } else if (value == null && argApp?.argument instanceof ArgumentAst) {
       /* Case: Removing existing argument. */
@@ -155,6 +152,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
             value: func,
             origin: argApp.appTree.id,
           },
+          directInteraction,
         })
         return true
       } else if (argApp.appTree instanceof Ast.OprApp) {
@@ -169,6 +167,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
               value: lhs,
               origin: argApp.appTree.id,
             },
+            directInteraction,
           })
         }
         return true
@@ -191,7 +190,7 @@ function handleArgUpdate(update: WidgetUpdate): boolean {
             } else {
               appTree.update((appTree) => appTree.function.take())
             }
-            props.onUpdate({ edit })
+            props.onUpdate({ edit, directInteraction })
             return true
           } else {
             // Process an argument to the right of the removed argument.

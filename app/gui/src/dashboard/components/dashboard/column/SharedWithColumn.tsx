@@ -5,8 +5,7 @@ import Plus2Icon from '#/assets/plus2.svg'
 import { Button } from '#/components/AriaComponents'
 import type { AssetColumnProps } from '#/components/dashboard/column'
 import PermissionDisplay from '#/components/dashboard/PermissionDisplay'
-import AssetEventType from '#/events/AssetEventType'
-import { useDispatchAssetEvent } from '#/layouts/AssetsTable/EventListProvider'
+import { useRemoveSelfPermissionMutation } from '#/hooks/backendHooks'
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
 import { useFullUserSession } from '#/providers/AuthProvider'
 import { useSetModal } from '#/providers/ModalProvider'
@@ -36,7 +35,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
 
   const { user } = useFullUserSession()
 
-  const dispatchAssetEvent = useDispatchAssetEvent()
+  const removeSelfPermissionMutation = useRemoveSelfPermissionMutation(backend)
 
   const assetPermissions = item.permissions ?? []
   const { setModal } = useSetModal()
@@ -48,7 +47,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
     (self?.permission === PermissionAction.own || self?.permission === PermissionAction.admin)
 
   return (
-    <div className="group flex items-center gap-column-items contain-strict [contain-intrinsic-size:37px] [content-visibility:auto]">
+    <div className="group flex items-center gap-column-items [content-visibility:auto]">
       {(category.type === 'trash' ?
         assetPermissions.filter((permission) => permission.permission === PermissionAction.own)
       : assetPermissions
@@ -90,7 +89,7 @@ export default function SharedWithColumn(props: SharedWithColumnPropsInternal) {
                 self={self}
                 eventTarget={plusButtonRef.current}
                 doRemoveSelf={() => {
-                  dispatchAssetEvent({ type: AssetEventType.removeSelf, id: item.id })
+                  removeSelfPermissionMutation.mutate(item.id)
                 }}
               />,
             )
