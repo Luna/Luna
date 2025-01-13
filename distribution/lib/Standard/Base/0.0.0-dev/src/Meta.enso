@@ -347,7 +347,7 @@ is_same_object value_1 value_2 = @Tail_Call Meta_Helpers.is_same_object_builtin 
    - value: The value to check for being an instance of `typ`.
    - typ: The type to check `self` against.
 is_a : Any -> Any -> Boolean
-is_a value typ = @Builtin_Method "Meta.is_a"
+is_a value typ = @Tail_Call Meta_Helpers.is_a_builtin value typ
 
 ## PRIVATE
 java_instance_check value typ =
